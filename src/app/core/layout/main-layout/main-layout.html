@@ -1,9 +1,18 @@
 <div class="layout-wrapper">
+    <!-- Overlay para móviles -->
+    <div class="sidebar-overlay" 
+         *ngIf="layoutService.sidebarOpen()"
+         (click)="layoutService.closeSidebar()">
+    </div>
+
     <!-- Left Sidebar Fixed -->
-    <app-sidebar class="layout-sidebar"></app-sidebar>
+    <app-sidebar 
+        class="layout-sidebar" 
+        [class.sidebar-hidden]="!layoutService.sidebarOpen()">
+    </app-sidebar>
 
     <!-- Main Content Area -->
-    <div class="layout-main-container">
+    <div class="layout-main-container" [class.sidebar-collapsed]="!layoutService.sidebarOpen()">
         <!-- Top Header Fixed -->
         <app-header class="layout-header"></app-header>
 

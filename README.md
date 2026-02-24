@@ -35,7 +35,24 @@ ng serve
 ```
 Navega a `http://localhost:4200/`. La aplicación se recargará automáticamente al modificar los archivos fuente.
 
-## 🛠️ Generación de Código
+## � Credenciales de Prueba
+
+El sistema está configurado con 4 usuarios de prueba para desarrollo (**sin backend**):
+
+| Usuario | Email | Contraseña | Rol |
+|---------|-------|------------|-----|
+| Admin | admin@japo.com | 123456 | Admin |
+| Presidente | presidente@japo.com | 123456 | Presidente |
+| Secretario | secretario@japo.com | 123456 | Secretario |
+| Tesorero | tesorero@japo.com | 123456 | Tesorero |
+
+**Funcionalidad clave:** El menú de navegación se carga dinámicamente según el rol del usuario, simulando el comportamiento que tendrá cuando se conecte con el backend real.
+
+> **Nota:** Estas credenciales están hardcodeadas en el frontend para permitir el desarrollo de la UI sin depender del backend. Cuando el backend esté disponible, se debe modificar el método `login()` en `src/app/core/services/auth.service.ts`.
+
+Para más información, consulta [CREDENCIALES_DEMO.md](CREDENCIALES_DEMO.md).
+
+## �🛠️ Generación de Código
 
 Usa el Angular CLI para generar nuevos elementos. Por ejemplo, para crear un nuevo componente dentro de un feature:
 

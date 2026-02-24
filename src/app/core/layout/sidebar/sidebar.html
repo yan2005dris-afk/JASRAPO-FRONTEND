@@ -6,66 +6,49 @@
     </div>
 
     <!-- Navigation Menu -->
-    <div class="sidebar-nav pt-3 flex-grow-1 overflow-auto">
+    <div class="sidebar-nav pt-3 grow overflow-auto">
         <ul class="nav flex-column mb-auto">
+            <!-- Menú Dinámico -->
+            <ng-container *ngFor="let item of menuService.menuItems()">
+                <li class="nav-item">
+                    <!-- Item con hijos (collapsible) -->
+                    <ng-container *ngIf="item.children && item.children.length > 0">
+                        <a class="nav-link nav-link-custom d-flex justify-content-between align-items-center"
+                            (click)="toggleItem(item.id)" 
+                            [attr.aria-expanded]="isExpanded(item.id)" 
+                            role="button">
+                            <span class="text-dark">
+                                <i class="bi bi-chevron-down align-middle me-2 fw-bold"
+                                    [ngClass]="{'rotate-icon': isExpanded(item.id)}"></i>
+                                <i *ngIf="item.icon" [class]="'bi ' + item.icon + ' me-2'"></i>
+                                {{ item.label }}
+                            </span>
+                        </a>
 
-            <!-- Contratos (Collapsible) -->
-            <li class="nav-item">
-                <a class="nav-link nav-link-custom d-flex justify-content-between align-items-center"
-                    (click)="toggleContratos()" [attr.aria-expanded]="isContratosOpen" role="button">
-                    <span class="text-dark"><i class="bi bi-chevron-down align-middle me-2 fw-bold"
-                            [ngClass]="{'rotate-icon': isContratosOpen}"></i> Contratos</span>
-                </a>
+                        <div class="collapse" [class.show]="isExpanded(item.id)">
+                            <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small ps-4">
+                                <li *ngFor="let child of item.children">
+                                    <a [routerLink]="child.route" 
+                                       routerLinkActive="active"
+                                       class="nav-link-sub rounded">
+                                        {{ child.label }}
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </ng-container>
 
-                <div class="collapse" [class.show]="isContratosOpen">
-                    <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small ps-4">
-                        <li><a href="#" class="nav-link-sub rounded">Item 1</a></li>
-                        <li><a href="#" class="nav-link-sub rounded">Item 2</a></li>
-                    </ul>
-                </div>
-            </li>
-
-            <!-- Clientes (Active) -->
-            <li class="nav-item">
-                <a routerLink="/dashboard" routerLinkActive="active"
-                    class="nav-link nav-link-custom d-flex justify-content-between align-items-center text-dark">
-                    <span>
-                        <span class="ps-4">Clientes</span>
-                    </span>
-                </a>
-
-                <!-- Expanded automatically as per mockup showing sub items -->
-                <div class="collapse show">
-                    <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small ps-4">
-                        <li><a href="#" class="nav-link-sub rounded">Item 2</a></li>
-                        <li><a href="#" class="nav-link-sub rounded">Item 3</a></li>
-                    </ul>
-                </div>
-            </li>
-
-            <!-- Facturación (Collapsible) -->
-            <li class="nav-item">
-                <a class="nav-link nav-link-custom d-flex justify-content-between align-items-center"
-                    (click)="toggleFacturacion()" [attr.aria-expanded]="isFacturacionOpen" role="button">
-                    <span class="text-dark"><i class="bi bi-chevron-down align-middle me-2 fw-bold"
-                            [ngClass]="{'rotate-icon': isFacturacionOpen}"></i> Facturación</span>
-                </a>
-
-                <div class="collapse" [class.show]="isFacturacionOpen">
-                    <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small ps-4">
-                        <li><a href="#" class="nav-link-sub rounded">Item 1</a></li>
-                        <li><a href="#" class="nav-link-sub rounded">Item 2</a></li>
-                    </ul>
-                </div>
-            </li>
-
-            <!-- Reportes -->
-            <li class="nav-item">
-                <a href="#" class="nav-link nav-link-custom d-flex align-items-center text-dark">
-                    <i class="bi bi-chevron-right align-middle me-2 fw-bold"></i> Reportes
-                </a>
-            </li>
-
+                    <!-- Item sin hijos (link directo) -->
+                    <ng-container *ngIf="!item.children || item.children.length === 0">
+                        <a [routerLink]="item.route" 
+                           routerLinkActive="active"
+                           class="nav-link nav-link-custom d-flex align-items-center text-dark">
+                            <i *ngIf="item.icon" [class]="'bi ' + item.icon + ' me-2'"></i>
+                            <span [class.ps-4]="!item.icon">{{ item.label }}</span>
+                        </a>
+                    </ng-container>
+                </li>
+            </ng-container>
         </ul>
     </div>
 </nav>

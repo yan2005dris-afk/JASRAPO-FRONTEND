@@ -18,12 +18,18 @@
             </div>
 
             <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" @staggerFormElements>
+                <!-- Mensaje de error general -->
+                <div *ngIf="errorMessage()" class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                    {{ errorMessage() }}
+                    <button type="button" class="btn-close" (click)="errorMessage.set(null)" aria-label="Close"></button>
+                </div>
+
                 <!-- Usuario input -->
                 <div class="mb-3">
                     <label class="form-label text-muted small fw-semibold mb-1" for="email">Usuario</label>
                     <input type="email" id="email" class="form-control form-control-simple" formControlName="email"
-                        placeholder="Ejm: angel123" [ngClass]="{ 'is-invalid': submitted && f['email'].errors }" />
-                    <div *ngIf="submitted && f['email'].errors" class="invalid-feedback">
+                        placeholder="admin@japo.com" [ngClass]="{ 'is-invalid': submitted() && f['email'].errors }" />
+                    <div *ngIf="submitted() && f['email'].errors" class="invalid-feedback">
                         <div *ngIf="f['email'].errors['required']">El usuario es requerido</div>
                         <div *ngIf="f['email'].errors['email']">Debe ser un correo válido</div>
                     </div>
@@ -33,9 +39,9 @@
                 <div class="mb-4">
                     <label class="form-label text-muted small fw-semibold mb-1" for="password">contraseña</label>
                     <input type="password" id="password" class="form-control form-control-simple"
-                        formControlName="password" placeholder="********"
-                        [ngClass]="{ 'is-invalid': submitted && f['password'].errors }" />
-                    <div *ngIf="submitted && f['password'].errors" class="invalid-feedback">
+                        formControlName="password" placeholder="123456"
+                        [ngClass]="{ 'is-invalid': submitted() && f['password'].errors }" />
+                    <div *ngIf="submitted() && f['password'].errors" class="invalid-feedback">
                         <div *ngIf="f['password'].errors['required']">La contraseña es requerida</div>
                         <div *ngIf="f['password'].errors['minlength']">Mínimo 6 caracteres</div>
                     </div>
@@ -43,8 +49,14 @@
 
                 <!-- Submit Button -->
                 <div class="d-grid mb-3">
-                    <button type="submit" class="btn btn-brand-primary py-2 fw-semibold rounded-2 text-white shadow-sm">
-                        Iniciar Sesión
+                    <button type="submit" 
+                            class="btn btn-brand-primary py-2 fw-semibold rounded-2 text-white shadow-sm"
+                            [disabled]="loading()">
+                        <span *ngIf="!loading()">Iniciar Sesión</span>
+                        <span *ngIf="loading()">
+                            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                            Cargando...
+                        </span>
                     </button>
                 </div>
 

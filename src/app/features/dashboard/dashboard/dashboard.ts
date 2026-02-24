@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { AuthService } from '../../../core/services/auth.service';
 
 interface Client {
   id: number;
@@ -11,12 +12,14 @@ interface Client {
 
 @Component({
   selector: 'app-dashboard',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Dashboard {
+  readonly authService = inject(AuthService);
+
   clients: Client[] = [
     { id: 1, nombre: 'Ana María Torres', sector: 'Centro', consumo: 125, estado: 'Activo' },
     { id: 2, nombre: 'Juan Carlos Mena', sector: 'Norte', consumo: 0, estado: 'Sin lectura' },
