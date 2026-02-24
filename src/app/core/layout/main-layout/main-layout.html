@@ -1,1 +1,15 @@
-<p>main-layout works!</p>
+<div class="layout-wrapper">
+    <!-- Left Sidebar Fixed -->
+    <app-sidebar class="layout-sidebar"></app-sidebar>
+
+    <!-- Main Content Area -->
+    <div class="layout-main-container">
+        <!-- Top Header Fixed -->
+        <app-header class="layout-header"></app-header>
+
+        <!-- Scrollable Content -->
+        <main class="layout-content">
+            <router-outlet></router-outlet>
+        </main>
+    </div>
+</div>

@@ -1,1 +1,71 @@
-<p>sidebar works!</p>
+<nav class="h-100 d-flex flex-column bg-white">
+    <!-- Brand/Logo Section -->
+    <div class="sidebar-brand text-center py-4 border-bottom">
+        <img src="assets/water_drop_icon_175805.png" alt="AquaSync Olón Logo" class="brand-logo mb-2">
+        <h5 class="fw-bold mb-0 text-dark" style="font-size: 1.1rem; letter-spacing: -0.5px;">AquaSync Olón</h5>
+    </div>
+
+    <!-- Navigation Menu -->
+    <div class="sidebar-nav pt-3 flex-grow-1 overflow-auto">
+        <ul class="nav flex-column mb-auto">
+
+            <!-- Contratos (Collapsible) -->
+            <li class="nav-item">
+                <a class="nav-link nav-link-custom d-flex justify-content-between align-items-center"
+                    (click)="toggleContratos()" [attr.aria-expanded]="isContratosOpen" role="button">
+                    <span class="text-dark"><i class="bi bi-chevron-down align-middle me-2 fw-bold"
+                            [ngClass]="{'rotate-icon': isContratosOpen}"></i> Contratos</span>
+                </a>
+
+                <div class="collapse" [class.show]="isContratosOpen">
+                    <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small ps-4">
+                        <li><a href="#" class="nav-link-sub rounded">Item 1</a></li>
+                        <li><a href="#" class="nav-link-sub rounded">Item 2</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Clientes (Active) -->
+            <li class="nav-item">
+                <a routerLink="/dashboard" routerLinkActive="active"
+                    class="nav-link nav-link-custom d-flex justify-content-between align-items-center text-dark">
+                    <span>
+                        <span class="ps-4">Clientes</span>
+                    </span>
+                </a>
+
+                <!-- Expanded automatically as per mockup showing sub items -->
+                <div class="collapse show">
+                    <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small ps-4">
+                        <li><a href="#" class="nav-link-sub rounded">Item 2</a></li>
+                        <li><a href="#" class="nav-link-sub rounded">Item 3</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Facturación (Collapsible) -->
+            <li class="nav-item">
+                <a class="nav-link nav-link-custom d-flex justify-content-between align-items-center"
+                    (click)="toggleFacturacion()" [attr.aria-expanded]="isFacturacionOpen" role="button">
+                    <span class="text-dark"><i class="bi bi-chevron-down align-middle me-2 fw-bold"
+                            [ngClass]="{'rotate-icon': isFacturacionOpen}"></i> Facturación</span>
+                </a>
+
+                <div class="collapse" [class.show]="isFacturacionOpen">
+                    <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small ps-4">
+                        <li><a href="#" class="nav-link-sub rounded">Item 1</a></li>
+                        <li><a href="#" class="nav-link-sub rounded">Item 2</a></li>
+                    </ul>
+                </div>
+            </li>
+
+            <!-- Reportes -->
+            <li class="nav-item">
+                <a href="#" class="nav-link nav-link-custom d-flex align-items-center text-dark">
+                    <i class="bi bi-chevron-right align-middle me-2 fw-bold"></i> Reportes
+                </a>
+            </li>
+
+        </ul>
+    </div>
+</nav>

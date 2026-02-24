@@ -1,1 +1,26 @@
-<p>header works!</p>
+<header class="navbar navbar-expand-lg border-bottom px-4" style="background-color: var(--white); height: 64px;">
+    <div class="container-fluid px-0">
+        <!-- Hamburger Menu toggle (for sidebar) -->
+        <button class="btn btn-link link-dark px-0 text-decoration-none d-flex align-items-center">
+            <i class="bi bi-list fs-4"></i>
+        </button>
+
+        <!-- Right Side Icons -->
+        <div class="d-flex align-items-center ms-auto gap-3">
+            <button class="btn btn-link link-dark text-muted btn-icon p-1">
+                <i class="bi bi-search fs-5"></i>
+            </button>
+            <button class="btn btn-link link-dark text-muted btn-icon p-1 position-relative">
+                <i class="bi bi-bell fs-5"></i>
+                <!-- Optional notification dot -->
+                <span
+                    class="position-absolute top-25 start-100 translate-middle p-1 bg-danger border border-light rounded-circle">
+                    <span class="visually-hidden">New alerts</span>
+                </span>
+            </button>
+            <button class="btn btn-link link-dark text-muted btn-icon p-1">
+                <i class="bi bi-moon fs-5"></i>
+            </button>
+        </div>
+    </div>
+</header>

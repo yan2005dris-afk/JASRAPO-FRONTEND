@@ -1,0 +1,14 @@
+/* Header specifics */
+.btn-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 50%;
+    transition: background-color 0.2s;
+    text-decoration: none;
+}
+
+.btn-icon:hover {
+    background-color: var(--light-bg);
+    color: var(--dark-text) !important;
+}

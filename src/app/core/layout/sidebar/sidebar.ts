@@ -1,11 +1,23 @@
 import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [],
+  standalone: true,
+  imports: [CommonModule, RouterModule],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.css',
 })
 export class Sidebar {
+  isContratosOpen = false;
+  isFacturacionOpen = false;
 
+  toggleContratos() {
+    this.isContratosOpen = !this.isContratosOpen;
+  }
+
+  toggleFacturacion() {
+    this.isFacturacionOpen = !this.isFacturacionOpen;
+  }
 }
