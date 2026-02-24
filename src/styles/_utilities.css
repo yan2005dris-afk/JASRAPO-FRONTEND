@@ -1,0 +1,21 @@
+/* 
+  Utility Classes
+  Single-purpose classes to tweak layout or styling quickly.
+  Many times handled by Tailwind or Bootstrap, but custom ones go here.
+*/
+
+.transition-colors {
+    transition: color 0.2s;
+}
+
+.hover-primary:hover {
+    color: var(--primary-color) !important;
+}
+
+.text-glow {
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+}
+
+.cursor-pointer {
+    cursor: pointer;
+}

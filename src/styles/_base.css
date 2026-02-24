@@ -1,0 +1,40 @@
+/* 
+  Base Styles
+  Unopinionated HTML element styles, resets, and typography defaults.
+*/
+
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-family-base);
+    background-color: var(--light-bg);
+    color: var(--dark-text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.6;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.025em;
+    /* Tighter letter spacing for modern corporate look */
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+    transition: all 0.2s ease-in-out;
+}
+
+a:hover {
+    color: var(--secondary-color);
+    text-decoration: underline;
+}
