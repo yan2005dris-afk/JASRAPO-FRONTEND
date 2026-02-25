@@ -5,8 +5,15 @@ export interface LoginRequest {
 
 export interface LoginResponse {
     token: string;
-    refreshToken?: string;
+    createdAt: string; // ISO 8601 date string
+    expiresAt: string; // ISO 8601 date string
     user: User;
+}
+
+export interface RefreshTokenResponse {
+    token: string;
+    createdAt: string;
+    expiresAt: string;
 }
 
 export interface User {
@@ -21,4 +28,6 @@ export interface AuthState {
     isAuthenticated: boolean;
     user: User | null;
     token: string | null;
+    tokenCreatedAt: string | null;
+    tokenExpiresAt: string | null;
 }
