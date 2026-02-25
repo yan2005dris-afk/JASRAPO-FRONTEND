@@ -149,7 +149,6 @@ export class MenuService {
      */
     readonly menuItems = computed(() => {
         const user = this.authService.currentUser();
-        
         if (!user) {
             return [];
         }

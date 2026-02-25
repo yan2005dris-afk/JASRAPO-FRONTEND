@@ -22,7 +22,7 @@ export const routes: Routes = [
                 children: [
                     {
                         path: 'users',
-                        loadComponent: () => import('./features/admin/admin-section.component').then(m => m.AdminSectionComponent)
+                        loadComponent: () => import('./features/users/user-management/user-management').then(m => m.UserManagement)
                     },
                     {
                         path: 'roles',
