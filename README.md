@@ -51,7 +51,39 @@ El sistema está configurado con 4 usuarios de prueba para desarrollo (**sin bac
 > **Nota:** Estas credenciales están hardcodeadas en el frontend para permitir el desarrollo de la UI sin depender del backend. Cuando el backend esté disponible, se debe modificar el método `login()` en `src/app/core/services/auth.service.ts`.
 
 Para más información, consulta [CREDENCIALES_DEMO.md](CREDENCIALES_DEMO.md).
+## 🔐 Sistema de Autenticación
 
+El proyecto implementa un **sistema híbrido de autenticación** con dos tipos de tokens:
+
+### Access Token (Header)
+- Enviado en header `Authorization: Bearer {token}`
+- Incluye fechas de creación y expiración
+- Duración corta (15 minutos)
+- Almacenado en localStorage
+- Auto-refresh automático 2 minutos antes de expirar
+
+### Refresh Token (Cookie HttpOnly)
+- Enviado como cookie HttpOnly (no accesible desde JavaScript)
+- Duración larga (7 días)
+- Protección contra XSS
+- Usado solo para renovar el access token
+
+**Documentación completa**: [API_AUTH_HYBRID_DOCUMENTATION.md](API_AUTH_HYBRID_DOCUMENTATION.md)
+
+**Características implementadas**:
+- ✅ Login con credenciales
+- ✅ Auto-refresh de tokens (sin intervención del usuario)
+- ✅ Guards de rutas (`authGuard`, `guestGuard`)
+- ✅ Interceptor HTTP que agrega token automáticamente
+- ✅ Logout con limpieza de cookies
+- ✅ Gestión de fechas de expiración
+- ✅ Manejo de errores y redirección automática
+
+**Archivos principales**:
+- `src/app/core/models/auth.model.ts` - Interfaces TypeScript
+- `src/app/core/services/auth.service.ts` - Lógica de autenticación
+- `src/app/core/guards/auth.guard.ts` - Protección de rutas
+- `src/app/core/interceptors/auth.interceptor.ts` - Inyección de tokens
 ## �🛠️ Generación de Código
 
 Usa el Angular CLI para generar nuevos elementos. Por ejemplo, para crear un nuevo componente dentro de un feature:
