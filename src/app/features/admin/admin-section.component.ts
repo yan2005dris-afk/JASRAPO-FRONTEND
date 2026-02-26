@@ -1,0 +1,58 @@
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+@Component({
+    selector: 'app-admin-section',
+    imports: [CommonModule],
+    template: `
+        <div class="container-fluid p-4">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="mb-4">Panel de Administración</h2>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Esta sección está disponible solo para Administradores.
+                    </div>
+                    
+                    <div class="row g-4 mt-3">
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-people-fill me-2"></i>Gestión de Usuarios</h5>
+                                    <p class="card-text">Administra usuarios del sistema</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-shield-check me-2"></i>Roles y Permisos</h5>
+                                    <p class="card-text">Configura roles y permisos</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-gear-fill me-2"></i>Configuración</h5>
+                                    <p class="card-text">Ajustes generales del sistema</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `,
+    styles: [`
+        .card {
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+    `],
+    changeDetection: ChangeDetectionStrategy.OnPush
+})
+export class AdminSectionComponent {}
