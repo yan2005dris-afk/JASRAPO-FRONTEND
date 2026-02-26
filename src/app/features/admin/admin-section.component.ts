@@ -1,9 +1,10 @@
 import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink, RouterOutlet } from '@angular/router';
 
 @Component({
     selector: 'app-admin-section',
-    imports: [CommonModule],
+    imports: [CommonModule, RouterOutlet, RouterLink],
     template: `
         <div class="container-fluid p-4">
             <div class="row">
@@ -16,7 +17,7 @@ import { CommonModule } from '@angular/common';
                     
                     <div class="row g-4 mt-3">
                         <div class="col-md-4">
-                            <div class="card">
+                            <div class="card" routerLink="users" style="cursor:pointer">
                                 <div class="card-body">
                                     <h5 class="card-title"><i class="bi bi-people-fill me-2"></i>Gestión de Usuarios</h5>
                                     <p class="card-text">Administra usuarios del sistema</p>
@@ -24,7 +25,7 @@ import { CommonModule } from '@angular/common';
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="card">
+                            <div class="card" routerLink="roles" style="cursor:pointer">
                                 <div class="card-body">
                                     <h5 class="card-title"><i class="bi bi-shield-check me-2"></i>Roles y Permisos</h5>
                                     <p class="card-text">Configura roles y permisos</p>
@@ -32,7 +33,7 @@ import { CommonModule } from '@angular/common';
                             </div>
                         </div>
                         <div class="col-md-4">
-                            <div class="card">
+                            <div class="card" routerLink="config" style="cursor:pointer">
                                 <div class="card-body">
                                     <h5 class="card-title"><i class="bi bi-gear-fill me-2"></i>Configuración</h5>
                                     <p class="card-text">Ajustes generales del sistema</p>
@@ -43,6 +44,7 @@ import { CommonModule } from '@angular/common';
                 </div>
             </div>
         </div>
+        <router-outlet></router-outlet>
     `,
     styles: [`
         .card {
@@ -55,4 +57,4 @@ import { CommonModule } from '@angular/common';
     `],
     changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class AdminSectionComponent {}
+export class AdminSectionComponent { }
