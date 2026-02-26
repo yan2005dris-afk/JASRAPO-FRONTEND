@@ -19,6 +19,7 @@ export const routes: Routes = [
             // Sección Administración (Solo Admin)
             {
                 path: 'admin',
+                loadComponent: () => import('./features/admin/admin-section.component').then(m => m.AdminSectionComponent),
                 children: [
                     {
                         path: 'users',
