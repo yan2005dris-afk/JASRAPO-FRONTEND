@@ -12,7 +12,7 @@ import { environment } from '../../../environments/environment';
 export class MenuService {
     private readonly http = inject(HttpClient);
     private readonly authService = inject(AuthService);
-    private readonly API_URL = `${environment.apiUrl}/menu`;
+    private readonly API_URL = `${environment.apiUrl}/menus`;
 
     // Signal que almacena el menú recibido del backend
     private readonly menuItemsSignal = signal<MenuItem[]>([]);
@@ -25,13 +25,15 @@ export class MenuService {
      * El backend ya envía el menú filtrado según el rol del usuario
      */
     getMenuFromBackend(): Observable<MenuItem[]> {
+        // El interceptor de autenticación se encarga de añadir el token
         return this.http.get<MenuItem[]>(
-            `${this.API_URL}`,
+            `${this.API_URL}/my`,
             { withCredentials: true }
         ).pipe(
             tap(menu => this.menuItemsSignal.set(menu))
         );
     }
+
     /**
      * Limpia el menú almacenado (útil en logout)
      */
@@ -39,4 +41,3 @@ export class MenuService {
         this.menuItemsSignal.set([]);
     }
 }
-

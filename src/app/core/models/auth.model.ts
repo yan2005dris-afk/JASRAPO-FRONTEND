@@ -5,18 +5,21 @@ export interface LoginRequest {
 
 export interface LoginResponse {
     accessToken: string;
-    iat: string; // ISO 8601 date string
-    exp: string; // ISO 8601 date string
-    sub: number;
-    sid: number;
+    sid: string;
+    sub: string; // User ID
+    email: string;
+    name: string;
+    roleId: number;
+    avatar?: string;
+    createdAt: string; // ISO 8601 date string
+    expiresAt: string; // ISO 8601 date string
 }
 
 export interface RefreshTokenResponse {
-    accessToken: string;
-    iat: string;
-    exp: string;
+    token: string;
+    createdAt: string;
+    expiresAt: string;
 }
-
 
 export interface User {
     id: string;
@@ -31,6 +34,7 @@ export interface AuthState {
     isAuthenticated: boolean;
     user: User | null;
     token: string | null;
+    sid: string | null;
     tokenCreatedAt: string | null;
     tokenExpiresAt: string | null;
 }
