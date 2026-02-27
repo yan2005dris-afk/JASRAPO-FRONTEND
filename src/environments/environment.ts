@@ -1,5 +1,5 @@
 export const environment = {
     production: true,
-    apiUrl: 'https://jasrapo-backend.onrender.com/api/v1',
+    apiUrl: 'https://api.tudominio.com/api',
     apiTimeout: 30000,
 };
