@@ -30,238 +30,337 @@ export class MenuService {
         // ============================================
         const user = this.authService.currentUser();
         
-        // Menús mock según roleId
+        // Menús mock según roleId (estructura coincide con backend)
         const menusByRole: Record<number, MenuItem[]> = {
             // roleId 1: Admin (acceso completo)
             1: [
                 {
-                    id: 'dashboard',
-                    label: 'Dashboard',
+                    id: 1,
+                    name: 'Dashboard',
                     icon: 'bi-speedometer2',
-                    route: '/app/dashboard'
+                    route: '/features/dashboard',
+                    menu_order: 1,
+                    is_active: true
                 },
                 {
-                    id: 'admin',
-                    label: 'Administración',
+                    id: 2,
+                    name: 'Administración',
                     icon: 'bi-gear-fill',
+                    menu_order: 2,
+                    is_active: true,
                     children: [
                         {
-                            id: 'admin-users',
-                            label: 'Gestión de Usuarios',
-                            route: '/app/admin/users'
+                            id: 21,
+                            name: 'Gestión de Usuarios',
+                            route: '/features/admin/users',
+                            parent_menu_id: 2,
+                            menu_order: 1,
+                            is_active: true
                         },
                         {
-                            id: 'admin-roles',
-                            label: 'Roles y Permisos',
-                            route: '/app/admin/roles'
+                            id: 22,
+                            name: 'Roles y Permisos',
+                            route: '/features/admin/roles',
+                            parent_menu_id: 2,
+                            menu_order: 2,
+                            is_active: true
                         },
                         {
-                            id: 'admin-config',
-                            label: 'Configuración',
-                            route: '/app/admin/config'
+                            id: 23,
+                            name: 'Configuración',
+                            route: '/features/admin/config',
+                            parent_menu_id: 2,
+                            menu_order: 3,
+                            is_active: true
                         }
                     ]
                 },
                 {
-                    id: 'presidente',
-                    label: 'Presidencia',
+                    id: 3,
+                    name: 'Presidencia',
                     icon: 'bi-person-badge-fill',
+                    menu_order: 3,
+                    is_active: true,
                     children: [
                         {
-                            id: 'presidente-aprobaciones',
-                            label: 'Aprobaciones',
-                            route: '/app/presidente/aprobaciones'
+                            id: 31,
+                            name: 'Aprobaciones',
+                            route: '/features/presidente/aprobaciones',
+                            parent_menu_id: 3,
+                            menu_order: 1,
+                            is_active: true
                         },
                         {
-                            id: 'presidente-reportes',
-                            label: 'Reportes Ejecutivos',
-                            route: '/app/presidente/reportes'
+                            id: 32,
+                            name: 'Reportes Ejecutivos',
+                            route: '/features/presidente/reportes',
+                            parent_menu_id: 3,
+                            menu_order: 2,
+                            is_active: true
                         },
                         {
-                            id: 'presidente-actas',
-                            label: 'Actas de Reunión',
-                            route: '/app/presidente/actas'
+                            id: 33,
+                            name: 'Actas de Reunión',
+                            route: '/features/presidente/actas',
+                            parent_menu_id: 3,
+                            menu_order: 3,
+                            is_active: true
                         }
                     ]
                 },
                 {
-                    id: 'secretario',
-                    label: 'Secretaría',
+                    id: 4,
+                    name: 'Secretaría',
                     icon: 'bi-file-earmark-text-fill',
+                    menu_order: 4,
+                    is_active: true,
                     children: [
                         {
-                            id: 'secretario-documentos',
-                            label: 'Documentos',
-                            route: '/app/secretario/documentos'
+                            id: 41,
+                            name: 'Documentos',
+                            route: '/features/secretario/documentos',
+                            parent_menu_id: 4,
+                            menu_order: 1,
+                            is_active: true
                         },
                         {
-                            id: 'secretario-correspondencia',
-                            label: 'Correspondencia',
-                            route: '/app/secretario/correspondencia'
+                            id: 42,
+                            name: 'Correspondencia',
+                            route: '/features/secretario/correspondencia',
+                            parent_menu_id: 4,
+                            menu_order: 2,
+                            is_active: true
                         },
                         {
-                            id: 'secretario-archivo',
-                            label: 'Archivo General',
-                            route: '/app/secretario/archivo'
+                            id: 43,
+                            name: 'Archivo General',
+                            route: '/features/secretario/archivo',
+                            parent_menu_id: 4,
+                            menu_order: 3,
+                            is_active: true
                         }
                     ]
                 },
                 {
-                    id: 'tesorero',
-                    label: 'Tesorería',
+                    id: 5,
+                    name: 'Tesorería',
                     icon: 'bi-cash-coin',
+                    menu_order: 5,
+                    is_active: true,
                     children: [
                         {
-                            id: 'tesorero-ingresos',
-                            label: 'Ingresos',
-                            route: '/app/tesorero/ingresos'
+                            id: 51,
+                            name: 'Ingresos',
+                            route: '/features/tesorero/ingresos',
+                            parent_menu_id: 5,
+                            menu_order: 1,
+                            is_active: true
                         },
                         {
-                            id: 'tesorero-egresos',
-                            label: 'Egresos',
-                            route: '/app/tesorero/egresos'
+                            id: 52,
+                            name: 'Egresos',
+                            route: '/features/tesorero/egresos',
+                            parent_menu_id: 5,
+                            menu_order: 2,
+                            is_active: true
                         },
                         {
-                            id: 'tesorero-balance',
-                            label: 'Balance General',
-                            route: '/app/tesorero/balance'
+                            id: 53,
+                            name: 'Balance General',
+                            route: '/features/tesorero/balance',
+                            parent_menu_id: 5,
+                            menu_order: 3,
+                            is_active: true
                         }
                     ]
                 },
                 {
-                    id: 'water-sources',
-                    label: 'Fuentes de Agua',
+                    id: 6,
+                    name: 'Fuentes de Agua',
                     icon: 'bi-droplet-fill',
-                    route: '/app/water-sources'
+                    route: '/features/water-sources',
+                    menu_order: 6,
+                    is_active: true
                 },
                 {
-                    id: 'billing',
-                    label: 'Facturación',
+                    id: 7,
+                    name: 'Facturación',
                     icon: 'bi-receipt',
-                    route: '/app/billing'
+                    route: '/features/billing',
+                    menu_order: 7,
+                    is_active: true
                 },
                 {
-                    id: 'reports',
-                    label: 'Reportes',
+                    id: 8,
+                    name: 'Reportes',
                     icon: 'bi-file-bar-graph',
-                    route: '/app/reports'
+                    route: '/features/reports',
+                    menu_order: 8,
+                    is_active: true
                 }
             ],
             // roleId 2: Presidente
             2: [
                 {
-                    id: 'dashboard',
-                    label: 'Dashboard',
+                    id: 1,
+                    name: 'Dashboard',
                     icon: 'bi-speedometer2',
-                    route: '/app/dashboard'
+                    route: '/features/dashboard',
+                    menu_order: 1,
+                    is_active: true
                 },
                 {
-                    id: 'presidente',
-                    label: 'Presidencia',
+                    id: 3,
+                    name: 'Presidencia',
                     icon: 'bi-person-badge-fill',
+                    menu_order: 2,
+                    is_active: true,
                     children: [
                         {
-                            id: 'presidente-aprobaciones',
-                            label: 'Aprobaciones',
-                            route: '/app/presidente/aprobaciones'
+                            id: 31,
+                            name: 'Aprobaciones',
+                            route: '/features/presidente/aprobaciones',
+                            parent_menu_id: 3,
+                            menu_order: 1,
+                            is_active: true
                         },
                         {
-                            id: 'presidente-reportes',
-                            label: 'Reportes Ejecutivos',
-                            route: '/app/presidente/reportes'
+                            id: 32,
+                            name: 'Reportes Ejecutivos',
+                            route: '/features/presidente/reportes',
+                            parent_menu_id: 3,
+                            menu_order: 2,
+                            is_active: true
                         },
                         {
-                            id: 'presidente-actas',
-                            label: 'Actas de Reunión',
-                            route: '/app/presidente/actas'
+                            id: 33,
+                            name: 'Actas de Reunión',
+                            route: '/features/presidente/actas',
+                            parent_menu_id: 3,
+                            menu_order: 3,
+                            is_active: true
                         }
                     ]
                 },
                 {
-                    id: 'reports',
-                    label: 'Reportes',
+                    id: 8,
+                    name: 'Reportes',
                     icon: 'bi-file-bar-graph',
-                    route: '/app/reports'
+                    route: '/features/reports',
+                    menu_order: 3,
+                    is_active: true
                 }
             ],
             // roleId 3: Secretario
             3: [
                 {
-                    id: 'dashboard',
-                    label: 'Dashboard',
+                    id: 1,
+                    name: 'Dashboard',
                     icon: 'bi-speedometer2',
-                    route: '/app/dashboard'
+                    route: '/features/dashboard',
+                    menu_order: 1,
+                    is_active: true
                 },
                 {
-                    id: 'secretario',
-                    label: 'Secretaría',
+                    id: 4,
+                    name: 'Secretaría',
                     icon: 'bi-file-earmark-text-fill',
+                    menu_order: 2,
+                    is_active: true,
                     children: [
                         {
-                            id: 'secretario-documentos',
-                            label: 'Documentos',
-                            route: '/app/secretario/documentos'
+                            id: 41,
+                            name: 'Documentos',
+                            route: '/features/secretario/documentos',
+                            parent_menu_id: 4,
+                            menu_order: 1,
+                            is_active: true
                         },
                         {
-                            id: 'secretario-correspondencia',
-                            label: 'Correspondencia',
-                            route: '/app/secretario/correspondencia'
+                            id: 42,
+                            name: 'Correspondencia',
+                            route: '/features/secretario/correspondencia',
+                            parent_menu_id: 4,
+                            menu_order: 2,
+                            is_active: true
                         },
                         {
-                            id: 'secretario-archivo',
-                            label: 'Archivo General',
-                            route: '/app/secretario/archivo'
+                            id: 43,
+                            name: 'Archivo General',
+                            route: '/features/secretario/archivo',
+                            parent_menu_id: 4,
+                            menu_order: 3,
+                            is_active: true
                         }
                     ]
                 },
                 {
-                    id: 'water-sources',
-                    label: 'Fuentes de Agua',
+                    id: 6,
+                    name: 'Fuentes de Agua',
                     icon: 'bi-droplet-fill',
-                    route: '/app/water-sources'
+                    route: '/features/water-sources',
+                    menu_order: 3,
+                    is_active: true
                 }
             ],
             // roleId 4: Tesorero
             4: [
                 {
-                    id: 'dashboard',
-                    label: 'Dashboard',
+                    id: 1,
+                    name: 'Dashboard',
                     icon: 'bi-speedometer2',
-                    route: '/app/dashboard'
+                    route: '/features/dashboard',
+                    menu_order: 1,
+                    is_active: true
                 },
                 {
-                    id: 'tesorero',
-                    label: 'Tesorería',
+                    id: 5,
+                    name: 'Tesorería',
                     icon: 'bi-cash-coin',
+                    menu_order: 2,
+                    is_active: true,
                     children: [
                         {
-                            id: 'tesorero-ingresos',
-                            label: 'Ingresos',
-                            route: '/app/tesorero/ingresos'
+                            id: 51,
+                            name: 'Ingresos',
+                            route: '/features/tesorero/ingresos',
+                            parent_menu_id: 5,
+                            menu_order: 1,
+                            is_active: true
                         },
                         {
-                            id: 'tesorero-egresos',
-                            label: 'Egresos',
-                            route: '/app/tesorero/egresos'
+                            id: 52,
+                            name: 'Egresos',
+                            route: '/features/tesorero/egresos',
+                            parent_menu_id: 5,
+                            menu_order: 2,
+                            is_active: true
                         },
                         {
-                            id: 'tesorero-balance',
-                            label: 'Balance General',
-                            route: '/app/tesorero/balance'
+                            id: 53,
+                            name: 'Balance General',
+                            route: '/features/tesorero/balance',
+                            parent_menu_id: 5,
+                            menu_order: 3,
+                            is_active: true
                         }
                     ]
                 },
                 {
-                    id: 'billing',
-                    label: 'Facturación',
+                    id: 7,
+                    name: 'Facturación',
                     icon: 'bi-receipt',
-                    route: '/app/billing'
+                    route: '/features/billing',
+                    menu_order: 3,
+                    is_active: true
                 },
                 {
-                    id: 'reports',
-                    label: 'Reportes',
+                    id: 8,
+                    name: 'Reportes',
                     icon: 'bi-file-bar-graph',
-                    route: '/app/reports'
+                    route: '/features/reports',
+                    menu_order: 4,
+                    is_active: true
                 }
             ]
         };

@@ -49,14 +49,18 @@ Navega a `http://localhost:4200/`. La aplicación se recargará automáticamente
 
 El sistema está configurado con 4 usuarios de prueba para desarrollo (**sin backend**):
 
-| Usuario | Email | Contraseña | Rol |
-|---------|-------|------------|-----|
-| Admin | admin@japo.com | 123456 | Admin |
-| Presidente | presidente@japo.com | 123456 | Presidente |
-| Secretario | secretario@japo.com | 123456 | Secretario |
-| Tesorero | tesorero@japo.com | 123456 | Tesorero |
+| Usuario | Email | Contraseña | roleId | roleName |
+|---------|-------|------------|--------|----------|
+| Administrador | admin@japo.com | 123456 | **1** | Admin |
+| Presidente | presidente@japo.com | 123456 | **2** | Presidente |
+| Secretario | secretario@japo.com | 123456 | **3** | Secretario |
+| Tesorero | tesorero@japo.com | 123456 | **4** | Tesorero |
 
-**Funcionalidad clave:** El menú de navegación se carga dinámicamente según el rol del usuario, simulando el comportamiento que tendrá cuando se conecte con el backend real.
+**Funcionalidad clave:** 
+- El sistema usa `roleId` numérico (1-4) como identificador principal del rol
+- El menú de navegación viene **pre-filtrado desde el backend** según el `roleId`
+- El frontend NO filtra el menú, solo muestra lo que el backend envía
+- Cada usuario ve solo las opciones de menú permitidas para su rol
 
 > **Nota:** Estas credenciales están hardcodeadas en el frontend para permitir el desarrollo de la UI sin depender del backend. Cuando el backend esté disponible, se debe modificar el método `login()` en `src/app/core/services/auth.service.ts`.
 
@@ -90,10 +94,50 @@ El proyecto implementa un **sistema híbrido de autenticación** con dos tipos d
 - ✅ Manejo de errores y redirección automática
 
 **Archivos principales**:
-- `src/app/core/models/auth.model.ts` - Interfaces TypeScript
+- `src/app/core/models/auth.model.ts` - Interfaces TypeScript (User con roleId/roleName)
+- `src/app/core/models/menu.model.ts` - Interface MenuItem con estructura del backend
 - `src/app/core/services/auth.service.ts` - Lógica de autenticación
+- `src/app/core/services/menu.service.ts` - Carga de menú desde backend (pre-filtrado)
 - `src/app/core/guards/auth.guard.ts` - Protección de rutas
 - `src/app/core/interceptors/auth.interceptor.ts` - Inyección de tokens
+
+### Sistema de Roles y Menú
+
+**Modelo de Usuario:**
+```typescript
+interface User {
+    id: string;
+    email: string;
+    name: string;
+    roleId: number;        // 1=Admin, 2=Presidente, 3=Secretario, 4=Tesorero
+    roleName?: string;     // Nombre del rol para UI (opcional)
+    avatar?: string;
+}
+```
+
+**Modelo de Menú (desde Backend):**
+```typescript
+interface MenuItem {
+    id: number;                // ID numérico de la BD
+    name: string;              // Nombre a mostrar
+    route?: string;            // Ruta de navegación
+    icon?: string;             // Icono Bootstrap
+    parent_menu_id?: number;   // ID del menú padre
+    menu_order: number;        // Orden de visualización
+    is_active: boolean;        // Estado activo
+    created_at?: string;       // Timestamp
+    children?: MenuItem[];     // Submenús anidados
+}
+```
+
+**Flujo del Menú:**
+1. Usuario inicia sesión → Backend retorna `user.roleId`
+2. `MainLayout` llama `GET /api/menu` con JWT en header
+3. Backend filtra menús según `roleId` del token
+4. Backend retorna menú pre-filtrado con estructura jerárquica
+5. Frontend muestra menú sin modificaciones (NO filtra)
+
+**Responsabilidad del filtrado:** 100% en el backend
 ## 🛠️ Generación de Código
 
 Usa el Angular CLI para generar nuevos elementos. Por ejemplo, para crear un nuevo componente dentro de un feature:

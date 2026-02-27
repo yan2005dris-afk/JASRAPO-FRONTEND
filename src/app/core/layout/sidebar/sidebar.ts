@@ -1,8 +1,8 @@
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { MenuService } from '../../core/services/menu.service';
-import { MenuItem } from '../../core/models/menu.model';
+import { MenuService } from '../../services/menu.service';
+import { MenuItem } from '../../models/menu.model';
 
 @Component({
   selector: 'app-sidebar',
@@ -18,13 +18,13 @@ export class Sidebar {
   toggleItem(itemId: number): void {
     const expanded = this.expandedItems();
     const newExpanded = new Set(expanded);
-
+    
     if (newExpanded.has(itemId)) {
       newExpanded.delete(itemId);
     } else {
       newExpanded.add(itemId);
     }
-
+    
     this.expandedItems.set(newExpanded);
   }
 

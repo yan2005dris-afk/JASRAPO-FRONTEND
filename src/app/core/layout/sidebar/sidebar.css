@@ -1,0 +1,58 @@
+/* Sidebar Styling */
+.sidebar-brand {
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+}
+
+.brand-logo {
+    width: 45px;
+    height: 45px;
+    object-fit: contain;
+}
+
+/* Nav Links */
+.nav-link-custom {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.95rem;
+    color: var(--dark-text);
+    transition: all 0.2s ease-in-out;
+}
+
+.nav-link-custom:hover {
+    background-color: var(--light-bg);
+}
+
+.nav-link-custom i {
+    font-size: 0.8rem;
+    transition: transform 0.2s ease-in-out;
+}
+
+.rotate-icon {
+    transform: rotate(-180deg);
+}
+
+/* Active State matched to mockup */
+.nav-link.active {
+    background-color: #e0f2fe;
+    /* Light blue */
+    color: var(--primary-color) !important;
+    font-weight: 500;
+}
+
+.nav-link.active .ps-4 {
+    color: var(--primary-color);
+}
+
+/* Sub Links */
+.nav-link-sub {
+    color: var(--muted-text);
+    text-decoration: none;
+    padding: 0.6rem 1rem 0.6rem 1.5rem;
+    display: block;
+    transition: all 0.2s ease-in-out;
+}
+
+.nav-link-sub:hover {
+    background-color: var(--light-bg);
+    color: var(--dark-text);
+}
