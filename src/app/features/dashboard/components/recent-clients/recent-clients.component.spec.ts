@@ -29,4 +29,16 @@ describe('RecentClientsComponent', () => {
     const rows = fixture.nativeElement.querySelectorAll('tbody tr');
     expect(rows.length).toBe(1);
   });
+
+  it('getStatusClass: should return badge-soft-success for Activo', () => {
+    expect(fixture.componentInstance.getStatusClass('Activo')).toBe('badge-soft-success');
+  });
+
+  it('getStatusClass: should return badge-soft-warning for Sin lectura', () => {
+    expect(fixture.componentInstance.getStatusClass('Sin lectura')).toBe('badge-soft-warning');
+  });
+
+  it('getStatusClass: should return badge-soft-danger for Moroso', () => {
+    expect(fixture.componentInstance.getStatusClass('Moroso')).toBe('badge-soft-danger');
+  });
 });
