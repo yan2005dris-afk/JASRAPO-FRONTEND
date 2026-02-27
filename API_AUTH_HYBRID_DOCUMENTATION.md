@@ -43,13 +43,31 @@ El sistema implementa una **arquitectura híbrida de tokens** para máxima segur
         id: string;
         email: string;
         name: string;
-        role: string;
+        roleId: number;      // 1=Admin, 2=Presidente, 3=Secretario, 4=Tesorero
+        roleName?: string;   // Nombre del rol para mostrar en UI (opcional)
         avatar?: string;
     }
 }
 ```
 
 **Nota**: El refresh token NO viene en el body, viene como cookie `Set-Cookie`.
+
+### MenuItem (Estructura del Backend)
+```typescript
+{
+    id: number;                // ID del menú en la base de datos
+    name: string;              // Nombre del menú (NOT NULL)
+    route?: string;            // Ruta de navegación (nullable)
+    icon?: string;             // Icono del menú (nullable)
+    parent_menu_id?: number;   // ID del menú padre (nullable, para jerarquía)
+    menu_order: number;        // Orden de visualización
+    is_active: boolean;        // Estado activo/inactivo
+    created_at?: string;       // Fecha de creación (timestamp)
+    children?: MenuItem[];     // Submenús (calculado)
+}
+```
+
+**Nota importante**: El backend debe enviar el menú **ya filtrado** según el `roleId` del usuario autenticado.
 
 ### RefreshTokenResponse
 ```typescript
@@ -89,7 +107,8 @@ Set-Cookie: refreshToken=eyJhbG...; HttpOnly; Secure; SameSite=Strict; Max-Age=6
         "id": "1",
         "email": "admin@japo.com",
         "name": "Administrador JAPO",
-        "role": "Admin",
+        "roleId": 1,
+        "roleName": "Admin",
         "avatar": "https://..."
     }
 }
@@ -154,6 +173,72 @@ Set-Cookie: refreshToken=; HttpOnly; Secure; SameSite=Strict; Max-Age=0
 
 ---
 
+### GET /api/menu
+
+**Descripción**: Obtiene el menú de navegación **pre-filtrado** según el rol del usuario autenticado.
+
+**Authentication**: Requiere header `Authorization: Bearer {token}`
+
+**Request Headers**:
+```
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Response Body** (200 OK):
+```json
+[
+    {
+        "id": 1,
+        "name": "Dashboard",
+        "icon": "bi-speedometer2",
+        "route": "/app/dashboard",
+        "menu_order": 1,
+        "is_active": true
+    },
+    {
+        "id": 2,
+        "name": "Administración",
+        "icon": "bi-gear-fill",
+        "menu_order": 2,
+        "is_active": true,
+        "children": [
+            {
+                "id": 21,
+                "name": "Gestión de Usuarios",
+                "route": "/app/admin/users",
+                "parent_menu_id": 2,
+                "menu_order": 1,
+                "is_active": true
+            },
+            {
+                "id": 22,
+                "name": "Roles y Permisos",
+                "route": "/app/admin/roles",
+                "parent_menu_id": 2,
+                "menu_order": 2,
+                "is_active": true
+            }
+        ]
+    }
+]
+```
+
+**Response** (401 Unauthorized):
+```json
+{
+    "message": "Token inválido o expirado"
+}
+```
+
+**Notas importantes**:
+- El backend debe filtrar el menú según el `roleId` del usuario extraído del JWT
+- El array `children` debe estar anidado correctamente
+- Solo retornar ítems con `is_active: true`
+- Ordenar por `menu_order` ascendente
+- El frontend NO filtra el menú, confía en lo que envía el backend
+
+---
+
 ## ⚙️ Configuración del Backend
 
 ### 1. CORS (IMPORTANTE)
@@ -197,7 +282,8 @@ app.post('/api/auth/login', async (req, res) => {
             id: user.id,
             email: user.email,
             name: user.name,
-            role: user.role
+            roleId: user.roleId,     // 1, 2, 3, o 4
+            roleName: user.roleName  // "Admin", "Presidente", etc.
         }
     });
 });
@@ -448,6 +534,7 @@ Access-Control-Allow-Credentials: true
 
 ## 📝 Checklist de Implementación Backend
 
+### Autenticación
 - [ ] Configurar CORS con `credentials: true`
 - [ ] Endpoint `POST /auth/login` con cookie `Set-Cookie`
 - [ ] Endpoint `POST /auth/refresh` que lee cookie y genera nuevo token
@@ -458,6 +545,16 @@ Access-Control-Allow-Credentials: true
 - [ ] Manejo de errores 401 para tokens inválidos/expirados
 - [ ] Rate limiting en endpoints de autenticación
 - [ ] Logging de intentos de login y refresh
+
+### Sistema de Roles y Menú
+- [ ] Base de datos con tabla `menus` (id, name, route, icon, parent_menu_id, menu_order, is_active, created_at)
+- [ ] Tabla de relación `role_menus` (role_id, menu_id) para asignar menús a roles
+- [ ] Endpoint `GET /api/menu` que retorna menú filtrado por roleId del usuario
+- [ ] Lógica de filtrado por roleId extraído del JWT
+- [ ] Construcción jerárquica de menú (items con children anidados)
+- [ ] Ordenamiento por `menu_order`
+- [ ] Filtrado por `is_active: true`
+- [ ] User model con campos `roleId` (number) y `roleName` (string opcional)
 
 ---
 
@@ -487,7 +584,8 @@ Content-Type: application/json
     "id": "1",
     "email": "admin@japo.com",
     "name": "Administrador JAPO",
-    "role": "Admin"
+    "roleId": 1,
+    "roleName": "Admin"
   }
 }
 ```

@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, inject, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { AuthService } from '../../services/auth.service';
-import { LayoutService } from '../../services/layout.service';
+import { AuthService } from '../../core/services/auth.service';
+import { LayoutService } from '../../core/services/layout.service';
 
 @Component({
   selector: 'app-header',
@@ -36,7 +36,7 @@ export class Header {
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
     const dropdown = target.closest('.dropdown');
-    
+
     if (!dropdown && this.userDropdownOpen()) {
       this.closeUserDropdown();
     }

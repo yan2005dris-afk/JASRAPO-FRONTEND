@@ -35,7 +35,7 @@
                         </div>
                         <div class="d-none d-md-block text-start">
                             <div class="fw-semibold text-dark" style="font-size: 0.875rem;">{{ user.name }}</div>
-                            <div class="text-muted" style="font-size: 0.75rem;">{{ user.role }}</div>
+                            <div class="text-muted" style="font-size: 0.75rem;">{{ user.roleName || 'Usuario' }}</div>
                         </div>
                         <i class="bi text-muted" 
                            [class.bi-chevron-down]="!userDropdownOpen()"

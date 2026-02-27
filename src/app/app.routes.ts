@@ -9,7 +9,7 @@ export const routes: Routes = [
     },
     {
         path: 'app',
-        loadComponent: () => import('./core/layout/main-layout/main-layout').then(m => m.MainLayout),
+        loadComponent: () => import('./layout/main-layout/main-layout').then(m => m.MainLayout),
         canActivate: [authGuard],
         children: [
             {
@@ -19,10 +19,11 @@ export const routes: Routes = [
             // Sección Administración (Solo Admin)
             {
                 path: 'admin',
+                loadComponent: () => import('./features/admin/admin-section.component').then(m => m.AdminSectionComponent),
                 children: [
                     {
                         path: 'users',
-                        loadComponent: () => import('./features/admin/admin-section.component').then(m => m.AdminSectionComponent)
+                        loadComponent: () => import('./features/users/user-management/user-management').then(m => m.UserManagement)
                     },
                     {
                         path: 'roles',

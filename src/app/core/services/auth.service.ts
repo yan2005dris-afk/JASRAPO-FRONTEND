@@ -13,20 +13,20 @@ export class AuthService {
     private readonly router = inject(Router);
 
     private readonly API_URL = `${environment.apiUrl}/auth`;
-    
+
     // Signals para el estado de autenticación
     private readonly tokenSignal = signal<string | null>(this.getStoredToken());
     private readonly tokenCreatedAtSignal = signal<string | null>(this.getStoredTokenCreatedAt());
     private readonly tokenExpiresAtSignal = signal<string | null>(this.getStoredTokenExpiresAt());
     private readonly userSignal = signal<User | null>(this.getStoredUser());
-    
+
     // Estado público computed
     readonly isAuthenticated = computed(() => !!this.tokenSignal());
     readonly currentUser = computed(() => this.userSignal());
     readonly token = computed(() => this.tokenSignal());
     readonly tokenCreatedAt = computed(() => this.tokenCreatedAtSignal());
     readonly tokenExpiresAt = computed(() => this.tokenExpiresAtSignal());
-    
+
     // Timer para auto-refresh del token
     private refreshTimerSubscription: any = null;
 
@@ -36,124 +36,36 @@ export class AuthService {
      * @returns Observable con la respuesta del login
      */
     login(credentials: LoginRequest): Observable<LoginResponse> {
-        // ============================================
-        // SIMULACIÓN DE BACKEND - SOLO PARA DESARROLLO
-        // ============================================
-        // Usuarios de prueba con diferentes roles
-        const DEMO_USERS = [
-            {
-                email: 'admin@japo.com',
-                password: '123456',
-                userData: {
-                    id: '1',
-                    email: 'admin@japo.com',
-                    name: 'Administrador JAPO',
-                    role: 'Admin',
-                    avatar: 'https://ui-avatars.com/api/?name=Admin+JAPO&background=0D6EFD&color=fff'
-                }
-            },
-            {
-                email: 'presidente@japo.com',
-                password: '123456',
-                userData: {
-                    id: '2',
-                    email: 'presidente@japo.com',
-                    name: 'Carlos Mendoza',
-                    role: 'Presidente',
-                    avatar: 'https://ui-avatars.com/api/?name=Carlos+Mendoza&background=198754&color=fff'
-                }
-            },
-            {
-                email: 'secretario@japo.com',
-                password: '123456',
-                userData: {
-                    id: '3',
-                    email: 'secretario@japo.com',
-                    name: 'María González',
-                    role: 'Secretario',
-                    avatar: 'https://ui-avatars.com/api/?name=Maria+Gonzalez&background=FFC107&color=000'
-                }
-            },
-            {
-                email: 'tesorero@japo.com',
-                password: '123456',
-                userData: {
-                    id: '4',
-                    email: 'tesorero@japo.com',
-                    name: 'Roberto Silva',
-                    role: 'Tesorero',
-                    avatar: 'https://ui-avatars.com/api/?name=Roberto+Silva&background=DC3545&color=fff'
-                }
-            }
-        ];
-
-        // Buscar usuario por email y password
-        const foundUser = DEMO_USERS.find(
-            user => user.email === credentials.email && user.password === credentials.password
+        return this.http.post<LoginResponse>(
+            `${this.API_URL}/login`,
+            credentials,
+            { withCredentials: true }
+        ).pipe(
+            tap(response => this.handleLoginSuccess(response)),
+            catchError(error => this.handleError(error))
         );
-
-        if (foundUser) {
-            // Simular respuesta exitosa del backend
-            const now = new Date();
-            const expiresIn = 15 * 60 * 1000; // 15 minutos en milisegundos
-            const mockResponse: LoginResponse = {
-                token: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${btoa(JSON.stringify(foundUser.userData))}.demo-signature`,
-                createdAt: now.toISOString(),
-                expiresAt: new Date(now.getTime() + expiresIn).toISOString(),
-                user: foundUser.userData
-            };
-
-            return of(mockResponse).pipe(
-                delay(800), // Simula latencia de red
-                tap(response => this.handleLoginSuccess(response))
-            );
-        } else {
-            // Simular error de credenciales inválidas
-            return throwError(() => new Error('Credenciales inválidas')).pipe(
-                delay(800)
-            );
-        }
-
-        // ============================================
-        // CÓDIGO REAL PARA BACKEND
-        // Descomentar cuando el backend esté listo
-        // ============================================
-        // return this.http.post<LoginResponse>(
-        //     `${this.API_URL}/login`,
-        //     credentials,
-        //     { withCredentials: true } // Para recibir la cookie del refresh token
-        // ).pipe(
-        //     tap(response => this.handleLoginSuccess(response)),
-        //     catchError(error => this.handleError(error))
-        // );
     }
 
     /**
      * Cierra la sesión del usuario
      */
     logout(): void {
-        // Cancelar el timer de auto-refresh
         this.cancelRefreshTimer();
-        
-        // Llamar al backend para eliminar la cookie del refresh token
-        // this.http.post(
-        //     `${this.API_URL}/logout`,
-        //     {},
-        //     { withCredentials: true }
-        // ).subscribe({
-        //     next: () => {
-        //         this.clearAuthData();
-        //         this.router.navigate(['/login']);
-        //     },
-        //     error: () => {
-        //         this.clearAuthData();
-        //         this.router.navigate(['/login']);
-        //     }
-        // });
-        
-        // Mientras tanto, solo limpiamos datos locales
-        this.clearAuthData();
-        this.router.navigate(['/login']);
+
+        this.http.post(
+            `${this.API_URL}/logout`,
+            {},
+            { withCredentials: true }
+        ).subscribe({
+            next: () => {
+                this.clearAuthData();
+                this.router.navigate(['/login']);
+            },
+            error: () => {
+                this.clearAuthData();
+                this.router.navigate(['/login']);
+            }
+        });
     }
 
     /**
@@ -183,11 +95,11 @@ export class AuthService {
     private shouldRefreshToken(): boolean {
         const expiresAt = this.tokenExpiresAtSignal();
         if (!expiresAt) return false;
-        
+
         const expirationTime = new Date(expiresAt).getTime();
         const now = Date.now();
         const twoMinutes = 2 * 60 * 1000;
-        
+
         return (expirationTime - now) <= twoMinutes;
     }
 
@@ -198,15 +110,15 @@ export class AuthService {
     private calculateRefreshDelay(): number {
         const expiresAt = this.tokenExpiresAtSignal();
         if (!expiresAt) return 0;
-        
+
         const expirationTime = new Date(expiresAt).getTime();
         const now = Date.now();
         const twoMinutes = 2 * 60 * 1000;
-        
+
         // Refrescar 2 minutos antes de la expiración
         const refreshTime = expirationTime - twoMinutes;
         const delay = refreshTime - now;
-        
+
         return delay > 0 ? delay : 0;
     }
 
@@ -215,7 +127,7 @@ export class AuthService {
      */
     private startRefreshTimer(): void {
         this.cancelRefreshTimer();
-        
+
         const delay = this.calculateRefreshDelay();
         if (delay > 0) {
             this.refreshTimerSubscription = timer(delay).pipe(
@@ -241,18 +153,24 @@ export class AuthService {
      * Maneja la respuesta exitosa del login
      */
     private handleLoginSuccess(response: LoginResponse): void {
-        this.tokenSignal.set(response.token);
-        this.tokenCreatedAtSignal.set(response.createdAt);
-        this.tokenExpiresAtSignal.set(response.expiresAt);
-        this.userSignal.set(response.user);
-        
-        // Guardar en localStorage (excepto refresh token que está en cookie)
-        localStorage.setItem('token', response.token);
-        localStorage.setItem('tokenCreatedAt', response.createdAt);
-        localStorage.setItem('tokenExpiresAt', response.expiresAt);
-        localStorage.setItem('user', JSON.stringify(response.user));
-        
-        // Iniciar el timer para auto-refresh
+        this.tokenSignal.set(response.accessToken);
+        this.tokenCreatedAtSignal.set(response.iat);
+        this.tokenExpiresAtSignal.set(response.exp);
+
+        // El backend no retorna objeto user completo, creamos uno básico con el ID (sub)
+        const user: User = {
+            id: response.sub.toString(),
+            email: '',
+            name: `Usuario ${response.sub}`,
+            roleId: response.sid || 1
+        };
+        this.userSignal.set(user);
+
+        localStorage.setItem('token', response.accessToken);
+        localStorage.setItem('tokenCreatedAt', response.iat);
+        localStorage.setItem('tokenExpiresAt', response.exp);
+        localStorage.setItem('user', JSON.stringify(user));
+
         this.startRefreshTimer();
     }
 
@@ -260,16 +178,14 @@ export class AuthService {
      * Maneja la respuesta exitosa del refresh token
      */
     private handleRefreshSuccess(response: RefreshTokenResponse): void {
-        this.tokenSignal.set(response.token);
-        this.tokenCreatedAtSignal.set(response.createdAt);
-        this.tokenExpiresAtSignal.set(response.expiresAt);
-        
-        // Actualizar en localStorage
-        localStorage.setItem('token', response.token);
-        localStorage.setItem('tokenCreatedAt', response.createdAt);
-        localStorage.setItem('tokenExpiresAt', response.expiresAt);
-        
-        // Reiniciar el timer para el próximo refresh
+        this.tokenSignal.set(response.accessToken);
+        this.tokenCreatedAtSignal.set(response.iat);
+        this.tokenExpiresAtSignal.set(response.exp);
+
+        localStorage.setItem('token', response.accessToken);
+        localStorage.setItem('tokenCreatedAt', response.iat);
+        localStorage.setItem('tokenExpiresAt', response.exp);
+
         this.startRefreshTimer();
     }
 
@@ -281,12 +197,12 @@ export class AuthService {
         this.tokenCreatedAtSignal.set(null);
         this.tokenExpiresAtSignal.set(null);
         this.userSignal.set(null);
-        
+
         localStorage.removeItem('token');
         localStorage.removeItem('tokenCreatedAt');
         localStorage.removeItem('tokenExpiresAt');
         localStorage.removeItem('user');
-        
+
         this.cancelRefreshTimer();
     }
 
@@ -336,9 +252,9 @@ export class AuthService {
      */
     private handleError(error: any): Observable<never> {
         console.error('Error en autenticación:', error);
-        
+
         let errorMessage = 'Ocurrió un error en el servidor';
-        
+
         if (error.error?.message) {
             errorMessage = error.error.message;
         } else if (error.status === 401) {
@@ -346,7 +262,7 @@ export class AuthService {
         } else if (error.status === 0) {
             errorMessage = 'No se pudo conectar con el servidor';
         }
-        
+
         return throwError(() => new Error(errorMessage));
     }
 }
