@@ -25,6 +25,7 @@ export class MenuService {
      * El backend ya envía el menú filtrado según el rol del usuario
      */
     getMenuFromBackend(): Observable<MenuItem[]> {
+        /*
         // ============================================
         // SIMULACIÓN - SOLO PARA DESARROLLO
         // ============================================
@@ -370,18 +371,18 @@ export class MenuService {
         return of(mockMenu).pipe(
             delay(500), // Simula latencia de red
             tap(menu => this.menuItemsSignal.set(menu))
-        );
+        );*/
 
         // ============================================
         // CÓDIGO REAL PARA BACKEND
         // Descomentar cuando el backend esté listo
         // ============================================
-        // return this.http.get<MenuItem[]>(
-        //     `${this.API_URL}`,
-        //     { withCredentials: true }
-        // ).pipe(
-        //     tap(menu => this.menuItemsSignal.set(menu))
-        // );
+         return this.http.get<MenuItem[]>(
+             `${this.API_URL}`,
+             { withCredentials: true }
+         ).pipe(
+             tap(menu => this.menuItemsSignal.set(menu))
+         );
     }
 
     /**

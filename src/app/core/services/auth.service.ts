@@ -16,6 +16,7 @@ export class AuthService {
     
     // Signals para el estado de autenticación
     private readonly tokenSignal = signal<string | null>(this.getStoredToken());
+    private readonly sidSignal = signal<string | null>(this.getStoredSid());
     private readonly tokenCreatedAtSignal = signal<string | null>(this.getStoredTokenCreatedAt());
     private readonly tokenExpiresAtSignal = signal<string | null>(this.getStoredTokenExpiresAt());
     private readonly userSignal = signal<User | null>(this.getStoredUser());
@@ -24,6 +25,7 @@ export class AuthService {
     readonly isAuthenticated = computed(() => !!this.tokenSignal());
     readonly currentUser = computed(() => this.userSignal());
     readonly token = computed(() => this.tokenSignal());
+    readonly sid = computed(() => this.sidSignal());
     readonly tokenCreatedAt = computed(() => this.tokenCreatedAtSignal());
     readonly tokenExpiresAt = computed(() => this.tokenExpiresAtSignal());
     
@@ -36,6 +38,7 @@ export class AuthService {
      * @returns Observable con la respuesta del login
      */
     login(credentials: LoginRequest): Observable<LoginResponse> {
+        /*
         // ============================================
         // SIMULACIÓN DE BACKEND - SOLO PARA DESARROLLO
         // ============================================
@@ -101,10 +104,15 @@ export class AuthService {
             const now = new Date();
             const expiresIn = 15 * 60 * 1000; // 15 minutos en milisegundos
             const mockResponse: LoginResponse = {
-                token: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${btoa(JSON.stringify(foundUser.userData))}.demo-signature`,
+                accessToken: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${btoa(JSON.stringify(foundUser.userData))}.demo-signature`,
+                sid: 'mock-session-id',
+                sub: foundUser.userData.id,
+                email: foundUser.userData.email,
+                name: foundUser.userData.name,
+                roleId: foundUser.userData.roleId,
+                avatar: foundUser.userData.avatar,
                 createdAt: now.toISOString(),
-                expiresAt: new Date(now.getTime() + expiresIn).toISOString(),
-                user: foundUser.userData
+                expiresAt: new Date(now.getTime() + expiresIn).toISOString()
             };
 
             return of(mockResponse).pipe(
@@ -116,20 +124,20 @@ export class AuthService {
             return throwError(() => new Error('Credenciales inválidas')).pipe(
                 delay(800)
             );
-        }
+        }*/
 
         // ============================================
         // CÓDIGO REAL PARA BACKEND
         // Descomentar cuando el backend esté listo
         // ============================================
-        // return this.http.post<LoginResponse>(
-        //     `${this.API_URL}/login`,
-        //     credentials,
-        //     { withCredentials: true } // Para recibir la cookie del refresh token
-        // ).pipe(
-        //     tap(response => this.handleLoginSuccess(response)),
-        //     catchError(error => this.handleError(error))
-        // );
+         return this.http.post<LoginResponse>(
+             `${this.API_URL}/login`,
+             credentials,
+             { withCredentials: true } // Para recibir la cookie del refresh token
+         ).pipe(
+             tap(response => this.handleLoginSuccess(response)),
+             catchError(error => this.handleError(error))
+         );
     }
 
     /**
@@ -140,20 +148,20 @@ export class AuthService {
         this.cancelRefreshTimer();
         
         // Llamar al backend para eliminar la cookie del refresh token
-        // this.http.post(
-        //     `${this.API_URL}/logout`,
-        //     {},
-        //     { withCredentials: true }
-        // ).subscribe({
-        //     next: () => {
-        //         this.clearAuthData();
-        //         this.router.navigate(['/login']);
-        //     },
-        //     error: () => {
-        //         this.clearAuthData();
-        //         this.router.navigate(['/login']);
-        //     }
-        // });
+         this.http.post(
+             `${this.API_URL}/logout`,
+             {},
+             { withCredentials: true }
+         ).subscribe({
+             next: () => {
+                 this.clearAuthData();
+                 this.router.navigate(['/login']);
+             },
+             error: () => {
+                 this.clearAuthData();
+                 this.router.navigate(['/login']);
+             }
+         });
         
         // Mientras tanto, solo limpiamos datos locales
         this.clearAuthData();
@@ -245,16 +253,26 @@ export class AuthService {
      * Maneja la respuesta exitosa del login
      */
     private handleLoginSuccess(response: LoginResponse): void {
-        this.tokenSignal.set(response.token);
+        const user: User = {
+            id: response.sub,
+            email: response.email,
+            name: response.name,
+            roleId: response.roleId,
+            avatar: response.avatar
+        };
+
+        this.tokenSignal.set(response.accessToken);
+        this.sidSignal.set(response.sid);
         this.tokenCreatedAtSignal.set(response.createdAt);
         this.tokenExpiresAtSignal.set(response.expiresAt);
-        this.userSignal.set(response.user);
+        this.userSignal.set(user);
         
         // Guardar en localStorage (excepto refresh token que está en cookie)
-        localStorage.setItem('token', response.token);
+        localStorage.setItem('token', response.accessToken);
+        localStorage.setItem('sid', response.sid);
         localStorage.setItem('tokenCreatedAt', response.createdAt);
         localStorage.setItem('tokenExpiresAt', response.expiresAt);
-        localStorage.setItem('user', JSON.stringify(response.user));
+        localStorage.setItem('user', JSON.stringify(user));
         
         // Iniciar el timer para auto-refresh
         this.startRefreshTimer();
@@ -282,11 +300,13 @@ export class AuthService {
      */
     private clearAuthData(): void {
         this.tokenSignal.set(null);
+        this.sidSignal.set(null);
         this.tokenCreatedAtSignal.set(null);
         this.tokenExpiresAtSignal.set(null);
         this.userSignal.set(null);
         
         localStorage.removeItem('token');
+        localStorage.removeItem('sid');
         localStorage.removeItem('tokenCreatedAt');
         localStorage.removeItem('tokenExpiresAt');
         localStorage.removeItem('user');
@@ -300,6 +320,16 @@ export class AuthService {
     private getStoredToken(): string | null {
         if (typeof window !== 'undefined') {
             return localStorage.getItem('token');
+        }
+        return null;
+    }
+
+    /**
+     * Obtiene el sid almacenado
+     */
+    private getStoredSid(): string | null {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('sid');
         }
         return null;
     }
