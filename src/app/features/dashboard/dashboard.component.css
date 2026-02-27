@@ -1,0 +1,10 @@
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.dashboard-avatar {
+  width: 48px;
+  height: 48px;
+  font-size: 1.2rem;
+}

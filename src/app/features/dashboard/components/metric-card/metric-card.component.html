@@ -1,0 +1,23 @@
+<div class="metric-card" [class]="card().colorClass">
+  <div class="metric-card__icon">
+    <i [class]="card().icon" aria-hidden="true"></i>
+  </div>
+  <div class="metric-card__body">
+    <p class="metric-card__title">{{ card().title }}</p>
+    <p class="metric-card__value">
+      {{ card().value }}@if (card().unit) { <span class="metric-card__unit">{{ card().unit }}</span> }
+    </p>
+    <p class="metric-card__trend" [class.trend-up]="card().trend === 'up'" [class.trend-down]="card().trend === 'down'">
+      @if (card().trend === 'up') {
+        <i class="bi bi-arrow-up-short" aria-hidden="true"></i>
+      } @else if (card().trend === 'down') {
+        <i class="bi bi-arrow-down-short" aria-hidden="true"></i>
+      }
+      @if (card().trendValue !== 0) {
+        {{ card().trendValue }} este mes
+      } @else {
+        Sin cambios
+      }
+    </p>
+  </div>
+</div>

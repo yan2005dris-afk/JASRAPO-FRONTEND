@@ -14,7 +14,7 @@ export const routes: Routes = [
         children: [
             {
                 path: 'dashboard',
-                loadComponent: () => import('./features/dashboard/dashboard/dashboard').then(m => m.Dashboard)
+                loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent)
             },
             // Sección Administración (Solo Admin)
             {

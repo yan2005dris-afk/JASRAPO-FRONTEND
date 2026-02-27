@@ -1,0 +1,5 @@
+<div class="metrics-grid">
+  @for (card of metrics(); track card.id) {
+    <app-metric-card [card]="card" />
+  }
+</div>
