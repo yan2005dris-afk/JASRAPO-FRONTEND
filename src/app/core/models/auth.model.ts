@@ -4,17 +4,19 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-    token: string;
-    createdAt: string; // ISO 8601 date string
-    expiresAt: string; // ISO 8601 date string
-    user: User;
+    accessToken: string;
+    iat: string; // ISO 8601 date string
+    exp: string; // ISO 8601 date string
+    sub: number;
+    sid: number;
 }
 
 export interface RefreshTokenResponse {
-    token: string;
-    createdAt: string;
-    expiresAt: string;
+    accessToken: string;
+    iat: string;
+    exp: string;
 }
+
 
 export interface User {
     id: string;
