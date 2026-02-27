@@ -48,7 +48,8 @@ export class AuthService {
                     id: '1',
                     email: 'admin@japo.com',
                     name: 'Administrador JAPO',
-                    role: 'Admin',
+                    roleId: 1,
+                    roleName: 'Administrador',
                     avatar: 'https://ui-avatars.com/api/?name=Admin+JAPO&background=0D6EFD&color=fff'
                 }
             },
@@ -59,7 +60,8 @@ export class AuthService {
                     id: '2',
                     email: 'presidente@japo.com',
                     name: 'Carlos Mendoza',
-                    role: 'Presidente',
+                    roleId: 2,
+                    roleName: 'Presidente',
                     avatar: 'https://ui-avatars.com/api/?name=Carlos+Mendoza&background=198754&color=fff'
                 }
             },
@@ -70,7 +72,8 @@ export class AuthService {
                     id: '3',
                     email: 'secretario@japo.com',
                     name: 'María González',
-                    role: 'Secretario',
+                    roleId: 3,
+                    roleName: 'Secretario',
                     avatar: 'https://ui-avatars.com/api/?name=Maria+Gonzalez&background=FFC107&color=000'
                 }
             },
@@ -81,7 +84,8 @@ export class AuthService {
                     id: '4',
                     email: 'tesorero@japo.com',
                     name: 'Roberto Silva',
-                    role: 'Tesorero',
+                    roleId: 4,
+                    roleName: 'Tesorero',
                     avatar: 'https://ui-avatars.com/api/?name=Roberto+Silva&background=DC3545&color=fff'
                 }
             }

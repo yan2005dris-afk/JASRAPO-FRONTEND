@@ -4,8 +4,7 @@ export interface MenuItem {
     icon?: string;
     route?: string;
     children?: MenuItem[];
-    roles: string[];  // Roles que pueden ver este item
-    expanded?: boolean;
+    expanded?: boolean;  // Estado de expansión en el sidebar
 }
 
 export interface MenuConfig {

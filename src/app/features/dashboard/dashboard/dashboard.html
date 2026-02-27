@@ -10,7 +10,7 @@
                 <h5 class="mb-1">¡Bienvenido, {{ user.name }}!</h5>
                 <p class="mb-0 text-muted">
                     <i class="bi bi-shield-check me-1"></i>
-                    Rol: <strong>{{ user.role }}</strong> | Email: {{ user.email }}
+                    Rol: <strong>{{ user.roleName || 'Usuario' }}</strong> | Email: {{ user.email }}
                 </p>
             </div>
         </div>

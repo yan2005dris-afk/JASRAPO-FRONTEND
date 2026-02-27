@@ -20,7 +20,8 @@ export interface User {
     id: string;
     email: string;
     name: string;
-    role: string;
+    roleId: number;        // ID numérico del rol
+    roleName?: string;     // Nombre del rol (opcional, para display)
     avatar?: string;
 }
 
