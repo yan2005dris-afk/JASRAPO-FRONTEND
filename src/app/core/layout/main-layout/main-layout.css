@@ -1,0 +1,109 @@
+/* 
+  CSS Grid/Flexbox Layout for the Application Shell 
+  Matches the Sidebar + Main Content exact structure from the design reference.
+*/
+
+.layout-wrapper {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background-color: var(--light-bg);
+}
+
+.layout-sidebar {
+    width: 260px;
+    /* Fixed width sidebar based on mockup */
+    flex-shrink: 0;
+    height: 100%;
+    background-color: var(--white);
+    border-right: 1px solid var(--border-color);
+    z-index: 1000;
+    transition: transform 0.3s ease-in-out, margin-left 0.3s ease-in-out;
+}
+
+.layout-sidebar.sidebar-hidden {
+    transform: translateX(-100%);
+    margin-left: -260px;
+}
+
+.layout-main-container {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    transition: margin-left 0.3s ease-in-out;
+}
+
+.layout-main-container.sidebar-collapsed {
+    margin-left: 0;
+}
+
+.layout-header {
+    height: 64px;
+    /* Fixed header height */
+    flex-shrink: 0;
+    background-color: var(--light-bg);
+    /* O border-bottom en blanco dependiendo del diseno final */
+    z-index: 900;
+}
+
+.layout-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 2rem;
+    background-color: var(--light-bg);
+}
+
+/* Overlay para móviles */
+.sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    transition: opacity 0.3s ease-in-out;
+}
+
+/* Responsive Overrides */
+@media (max-width: 991px) {
+    .sidebar-overlay {
+        display: block;
+    }
+
+    .layout-sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        z-index: 1050;
+    }
+
+    .layout-sidebar.sidebar-hidden {
+        transform: translateX(-100%);
+        margin-left: 0;
+    }
+
+    .layout-main-container {
+        width: 100%;
+    }
+
+    .layout-main-container.sidebar-collapsed {
+        margin-left: 0;
+    }
+}
+
+@media (min-width: 992px) {
+    .sidebar-overlay {
+        display: none !important;
+    }
+
+    .layout-sidebar.sidebar-hidden {
+        transform: translateX(-100%);
+        margin-left: -260px;
+    }
+}
