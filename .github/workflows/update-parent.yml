@@ -1,35 +1,39 @@
-name: Actualizar Repo Unificado
+name: Actualizar Develop en JASRAPO (Frontend)
 
 on:
   push:
     branches:
-      - main  # O 'master', revisa cómo se llama tu rama principal
+      - develop  # <--- SOLO se ejecuta cuando hay cambios en tu rama develop
 
 jobs:
-  update-parent:
+  update-parent-develop:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout del Repo Padre (JASRAPO)
+      # 1. Bajamos el repositorio PADRE (JASRAPO) en la rama develop
+      - name: Checkout del Repo Padre
         uses: actions/checkout@v4
         with:
           repository: Brydyan/JASRAPO
           token: ${{ secrets.PERSONAL_TOKEN }}
+          ref: develop       # <--- Importante: Bajamos la rama develop del padre
           submodules: true
           fetch-depth: 0
 
-      - name: Actualizar Referencia del Submódulo
+      # 2. Actualizamos la referencia del submódulo
+      - name: Actualizar Submódulo Frontend
         run: |
+          # Configuración del bot para firmar el commit
           git config user.name "GitHub Action Bot"
           git config user.email "action@github.com"
-          
-          # Actualizar el submódulo específico (ajusta el nombre de la carpeta si es diferente)
+
+          # Actualizamos el submódulo 'frontend' a lo último de su rama remota
           git submodule update --remote frontend
-          
-          # Verificar si hay cambios para confirmar
+
+          # 3. Verificamos y subimos cambios
           if [[ -n $(git status -s) ]]; then
             git add frontend
-            git commit -m "Auto-update: Sincronizando cambios desde JAPO-FRONTEND"
-            git push origin main
+            git commit -m "Auto-update: Actualizando Frontend desde rama develop"
+            git push origin develop  # <--- Subimos a la rama develop del padre
           else
             echo "No hay cambios detectados en el puntero del submódulo."
           fi
