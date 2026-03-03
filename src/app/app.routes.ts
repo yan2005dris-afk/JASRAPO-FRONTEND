@@ -89,6 +89,84 @@ export const routes: Routes = [
                     }
                 ]
             },
+            // Sección Contratos
+            {
+                path: 'Contratos',
+                children: [
+                    {
+                        path: 'Cliente',
+                        loadComponent: () => import('./features/Contratos/cliente/cliente').then(m => m.Cliente)
+                    },
+                    {
+                        path: 'ContratosDeServicios',
+                        loadComponent: () => import('./features/Contratos/contratos-de-servicios/contratos-de-servicios').then(m => m.ContratosDeServicios)
+                    },
+                    {
+                        path: 'ConveniosDePago',
+                        loadComponent: () => import('./features/Contratos/convenios-de-pago/convenios-de-pago').then(m => m.ConveniosDePago)
+                    },
+                    {
+                        path: 'LecturaDeConsumo',
+                        loadComponent: () => import('./features/Contratos/lectura-de-consumo/lectura-de-consumo').then(m => m.LecturaDeConsumo)
+                    },
+                    {
+                        path: 'Medidores',
+                        loadComponent: () => import('./features/Contratos/medidores/medidores').then(m => m.Medidores)
+                    },
+                    {
+                        path: 'TarifasYCategorias',
+                        loadComponent: () => import('./features/Contratos/tarifas-ycategorias/tarifas-ycategorias').then(m => m.TarifasYCategorias)
+                    }
+                ]
+            },
+            // Sección Facturación
+            {
+                path: 'Facturacion',
+                children: [
+                    {
+                        path: 'EnvioDeFacturacion',
+                        loadComponent: () => import('./features/Facturacion/envio-de-facturacion/envio-de-facturacion').then(m => m.EnvioDeFacturacion)
+                    },
+                    {
+                        path: 'FacturacionElectronica',
+                        loadComponent: () => import('./features/Facturacion/facturacion-electronica/facturacion-electronica').then(m => m.FacturacionElectronica)
+                    },
+                    {
+                        path: 'GeneracionPlanilla',
+                        loadComponent: () => import('./features/Facturacion/generacion-planilla/generacion-planilla').then(m => m.GeneracionPlanilla)
+                    },
+                    {
+                        path: 'NotasDeCreditoDebito',
+                        loadComponent: () => import('./features/Facturacion/notas-de-credito-debito/notas-de-credito-debito').then(m => m.NotasDeCreditoDebito)
+                    },
+                    {
+                        path: 'RecaudacionYPagos',
+                        loadComponent: () => import('./features/Facturacion/recaudacion-ypagos/recaudacion-ypagos').then(m => m.RecaudacionYPagos)
+                    }
+                ]
+            },
+            // Sección Reportes
+            {
+                path: 'Reportes',
+                children: [
+                    {
+                        path: 'ConsumoZonas',
+                        loadComponent: () => import('./features/Reportes/consumo-zonas/consumo-zonas').then(m => m.ConsumoZonas)
+                    },
+                    {
+                        path: 'DashboardKpi',
+                        loadComponent: () => import('./features/Reportes/dashboard-kpi/dashboard-kpi').then(m => m.DashboardKpi)
+                    },
+                    {
+                        path: 'EstadoCuentaCliente',
+                        loadComponent: () => import('./features/Reportes/estado-cuenta-cliente/estado-cuenta-cliente').then(m => m.EstadoCuentaCliente)
+                    },
+                    {
+                        path: 'RecaudacionMorosida',
+                        loadComponent: () => import('./features/Reportes/recaudacion-morosida/recaudacion-morosida').then(m => m.RecaudacionMorosida)
+                    }
+                ]
+            },
             // Otras secciones comunes
             {
                 path: 'water-sources',

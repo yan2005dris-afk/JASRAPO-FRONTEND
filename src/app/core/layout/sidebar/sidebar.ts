@@ -8,27 +8,23 @@ import { MenuItem } from '../../models/menu.model';
   selector: 'app-sidebar',
   imports: [CommonModule, RouterModule],
   templateUrl: './sidebar.html',
-  styleUrl: './sidebar.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  styleUrl: './sidebar.css'
 })
 export class Sidebar {
   readonly menuService = inject(MenuService);
-  readonly expandedItems = signal<Set<number>>(new Set());
+  expandedItems = signal<Record<number, boolean>>({});
 
   toggleItem(itemId: number): void {
-    const expanded = this.expandedItems();
-    const newExpanded = new Set(expanded);
-    
-    if (newExpanded.has(itemId)) {
-      newExpanded.delete(itemId);
-    } else {
-      newExpanded.add(itemId);
-    }
-    
-    this.expandedItems.set(newExpanded);
+    console.log('>>> [Sidebar] Clic en el menú padre con ID:', itemId);
+
+    this.expandedItems.update(state => {
+      const newState = { ...state, [itemId]: !state[itemId] };
+      console.log('    - Nuevo estado de abiertos:', newState);
+      return newState;
+    });
   }
 
   isExpanded(itemId: number): boolean {
-    return this.expandedItems().has(itemId);
+    return !!this.expandedItems()[itemId];
   }
 }
