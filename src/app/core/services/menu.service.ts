@@ -32,7 +32,7 @@ export class MenuService {
         ).pipe(
             map(menu => this.formatRoutes(menu)),
             tap(menu => {
-                console.log('>>> Menús recibidos del backend:', menu);
+                // console.log('>>> Menús recibidos del backend:', menu);
                 this.menuItemsSignal.set(menu);
             })
         );
