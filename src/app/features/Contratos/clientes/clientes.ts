@@ -11,13 +11,13 @@ interface Client {
 }
 
 @Component({
-  selector: 'app-client-management',
+  selector: 'app-clientes',
   imports: [CommonModule],
-  templateUrl: './client-management.html',
-  styleUrl: './client-management.css',
+  templateUrl: './clientes.html',
+  styleUrl: './clientes.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class ClientManagement {
+export class Clientes {
   readonly authService = inject(AuthService);
 
   clients: Client[] = [

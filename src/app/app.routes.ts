@@ -95,7 +95,7 @@ export const routes: Routes = [
                 children: [
                     {
                         path: 'Cliente',
-                        loadComponent: () => import('./features/Contratos/cliente/cliente').then(m => m.Cliente)
+                        loadComponent: () => import('./features/Contratos/clientes/clientes').then(m => m.Clientes)
                     },
                     {
                         path: 'ContratosDeServicios',
