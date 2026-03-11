@@ -27,7 +27,7 @@ export class MainLayout implements OnInit {
       if (user) {
         // Usuario autenticado: cargar menú
         this.menuService.getMenuFromBackend().subscribe({
-          next: (menu) => console.log('Menú cargado:', menu),
+          // next: (menu) => console.log('Menú cargado:', menu),
           error: (error) => console.error('Error al cargar menú:', error)
         });
       } else {

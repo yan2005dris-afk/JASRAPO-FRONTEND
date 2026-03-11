@@ -46,9 +46,9 @@ export class LoginComponent {
         // Llamar al servicio de autenticación
         this.authService.login(this.loginForm.value).subscribe({
             next: (response) => {
-                console.log('Login exitoso:', response);
+                // console.log('Login exitoso:', response);
                 this.loading.set(false);
-                
+
                 // Redirigir a la URL solicitada o al dashboard
                 const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/app/dashboard';
                 this.router.navigate([returnUrl]);
