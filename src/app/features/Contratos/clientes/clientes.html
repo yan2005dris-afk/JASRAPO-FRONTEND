@@ -49,8 +49,8 @@
                 (click)="setFilter('Todos')">Todos</button>
             <button class="btn btn-filter rounded-pill px-3 py-1" [class.active]="activeFilter === 'Morosos'"
                 (click)="setFilter('Morosos')">Morosos</button>
-            <button class="btn btn-filter rounded-pill px-3 py-1" [class.active]="activeFilter === 'Sin Lectura'"
-                (click)="setFilter('Sin Lectura')">Sin Lectura</button>
+            <button class="btn btn-filter rounded-pill px-3 py-1" [class.active]="activeFilter === 'Sin lectura'"
+                (click)="setFilter('Sin lectura')">Sin Lectura</button>
 
             <!-- Regular Dropdown -->
             <button
@@ -122,7 +122,7 @@
         <!-- Footer / Pagination -->
         <div
             class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap">
-            <span class="text-muted small" style="line-height: 1.2;">Total: 6<br>clientes</span>
+            <span class="text-muted small" style="line-height: 1.2;">Total: {{clients?.length || 0}}<br>clientes</span>
 
             <nav>
                 <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
