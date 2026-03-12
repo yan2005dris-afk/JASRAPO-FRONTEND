@@ -1,0 +1,67 @@
+name: Actualizar Submódulo Frontend en JASRAPO (Develop)
+
+on:
+  push:
+    branches: [ develop ]
+
+jobs:
+  update-submodule:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Configuración de credenciales para que Git pueda acceder a todos los repos privados
+      - name: Configura autenticación global para submódulos
+        run: |
+          git config --global url."https://${{ secrets.PERSONAL_TOKEN }}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+      
+      # 2. Clonamos el repositorio PADRE (JASRAPO) dentro de una carpeta llamada 'jasrapo'
+      - name: Clona repo padre (JASRAPO) con submódulos
+        uses: actions/checkout@v4
+        with:
+          repository: Brydyan/JASRAPO
+          ref: develop
+          token: ${{ secrets.PERSONAL_TOKEN }}
+          submodules: 'recursive'
+          fetch-depth: 0
+          path: jasrapo
+
+      # 3. Entramos a la carpeta, actualizamos el frontend y registramos el cambio
+      - name: Actualiza submódulo frontend a última versión de develop
+        run: |
+          cd jasrapo
+          # Nos aseguramos de inicializar bien los submódulos
+          git submodule update --init --recursive
+          
+          # Entramos específicamente a la carpeta del frontend
+          cd frontend
+          
+          # Forzamos la descarga de la rama develop y nos movemos a ella
+          git fetch origin develop
+          git checkout origin/develop
+          
+          # Volvemos a la raíz del padre (jasrapo)
+          cd ..
+          
+          # Le decimos a git: "Registra este nuevo estado del frontend"
+          git add frontend
+          
+          # Mostramos el estado para depuración
+          git status
+
+      # 4. Verificamos si hubo cambios reales y hacemos el Push
+      - name: Commit y push en JASRAPO develop
+        working-directory: jasrapo
+        env:
+          GIT_AUTHOR_NAME: GitHub Action Bot
+          GIT_AUTHOR_EMAIL: action@github.com
+        run: |
+          git config user.name "$GIT_AUTHOR_NAME"
+          git config user.email "$GIT_AUTHOR_EMAIL"
+          
+          # Si "git diff" encuentra cambios en el área de preparación (staged), hacemos commit
+          if ! git diff --cached --quiet; then
+            git commit -m "Auto-update submodule frontend: develop actualizado a ${{ github.sha }}"
+            git push origin develop
+            echo "✅ Actualización enviada exitosamente."
+          else
+            echo "⚠️ No hay cambios en el submódulo para commitear (ya estaba actualizado)."
+          fi
