@@ -8,6 +8,10 @@ export const routes: Routes = [
         canActivate: [guestGuard]
     },
     {
+        path: 'consulta-planilla',
+        loadComponent: () => import('./features/consulta-planilla/consulta-planilla.component').then(m => m.ConsultaPlanillaComponent)
+    },
+    {
         path: 'app',
         loadComponent: () => import('./layout/main-layout/main-layout').then(m => m.MainLayout),
         canActivate: [authGuard],
@@ -111,7 +115,7 @@ export const routes: Routes = [
     },
     {
         path: '',
-        redirectTo: 'login',
+        redirectTo: 'consulta-planilla',
         pathMatch: 'full'
     }
 ];
