@@ -1,9 +1,12 @@
 <section class="vh-100 d-flex m-0 p-0 overflow-hidden" @fadeAnimation>
     <!-- Left Side: Full Bleed Image / Illustration -->
     <!-- Muestra la imagen a la izquierda al 50% en escritorio y 60% en pantallas grandes -->
-    <div class="image-side col-12 col-lg-6 col-xl-7 d-none d-lg-block p-0 m-0 position-relative h-100">
+    <div class="image-side col-lg-6 col-xl-7 d-none d-lg-block p-0 m-0" style="height: 100vh;">
         <!-- Reemplazar con la foto del edificio de la Regional de Agua -->
-        <img src="https://n9.cl/sab8a" class="w-100 h-100" style="object-position: center;" alt="AquaManage Background">
+        <img src="https://e9e04baf2d.cbaul-cdnwnd.com/bd0274cfacdf956c1d85bfe31bf67f70/200000041-d7af4d8ac7/700/3-1.png?ph=e9e04baf2d"
+             class="w-100 h-100 object-fit-cover"
+             style="display: block;"
+             alt="AquaManage Background">
     </div>
 
     <!-- Right Side: Form Container -->
@@ -13,7 +16,7 @@
         <div class="w-100 mx-auto" style="max-width: 320px;">
             <!-- Opcional: Logo Corporativo para mantener la identidad del proyecto -->
             <div class="mb-5 d-flex justify-content-center w-100">
-                <img src="https://i.imgur.com/jnupTgt.png" class="img-fluid custom-logo-small mb-3" alt="Logo-Jasrapo">
+                <img src="https://i.imgur.com/oHyMUhU.png" class="img-fluid custom-logo-small mb-3" alt="Logo-Jasrapo">
             </div>
 
             <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" @staggerFormElements>
