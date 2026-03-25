@@ -19,7 +19,7 @@ export const routes: Routes = [
             // Sección Administración (Solo Admin)
             {
                 path: 'admin',
-                loadComponent: () => import('./features/admin/admin-section.component').then(m => m.AdminSectionComponent),
+                loadComponent: () => import('./features/admin/admin.component/admin.component').then(m => m.AdminComponent),
                 children: [
                     {
                         path: 'users',
@@ -27,11 +27,11 @@ export const routes: Routes = [
                     },
                     {
                         path: 'roles',
-                        loadComponent: () => import('./features/admin/admin-section.component').then(m => m.AdminSectionComponent)
+                        loadComponent: () => import('./features/admin/admin.component/admin.component').then(m => m.AdminComponent)
                     },
                     {
                         path: 'config',
-                        loadComponent: () => import('./features/admin/admin-section.component').then(m => m.AdminSectionComponent)
+                        loadComponent: () => import('./features/admin/admin.component/admin.component').then(m => m.AdminComponent)
                     }
                 ]
             },
@@ -41,15 +41,15 @@ export const routes: Routes = [
                 children: [
                     {
                         path: 'aprobaciones',
-                        loadComponent: () => import('./features/presidente/presidente-section.component').then(m => m.PresidenteSectionComponent)
+                        loadComponent: () => import('./features/presidente/presidente.component/presidente.component').then(m => m.PresidenteComponent)
                     },
                     {
                         path: 'reportes',
-                        loadComponent: () => import('./features/presidente/presidente-section.component').then(m => m.PresidenteSectionComponent)
+                        loadComponent: () => import('./features/presidente/presidente.component/presidente.component').then(m => m.PresidenteComponent)
                     },
                     {
                         path: 'actas',
-                        loadComponent: () => import('./features/presidente/presidente-section.component').then(m => m.PresidenteSectionComponent)
+                        loadComponent: () => import('./features/presidente/presidente.component/presidente.component').then(m => m.PresidenteComponent)
                     }
                 ]
             },
@@ -59,15 +59,15 @@ export const routes: Routes = [
                 children: [
                     {
                         path: 'documentos',
-                        loadComponent: () => import('./features/secretario/secretario-section.component').then(m => m.SecretarioSectionComponent)
+                        loadComponent: () => import('./features/secretario/secretario.component/secretario.component').then(m => m.SecretarioComponent)
                     },
                     {
                         path: 'correspondencia',
-                        loadComponent: () => import('./features/secretario/secretario-section.component').then(m => m.SecretarioSectionComponent)
+                        loadComponent: () => import('./features/secretario/secretario.component/secretario.component').then(m => m.SecretarioComponent)
                     },
                     {
                         path: 'archivo',
-                        loadComponent: () => import('./features/secretario/secretario-section.component').then(m => m.SecretarioSectionComponent)
+                        loadComponent: () => import('./features/secretario/secretario.component/secretario.component').then(m => m.SecretarioComponent)
                     }
                 ]
             },
@@ -77,15 +77,15 @@ export const routes: Routes = [
                 children: [
                     {
                         path: 'ingresos',
-                        loadComponent: () => import('./features/tesorero/tesorero-section.component').then(m => m.TesoreroSectionComponent)
+                        loadComponent: () => import('./features/tesorero/tesorero.component/tesorero.component').then(m => m.TesoreroComponent)
                     },
                     {
                         path: 'egresos',
-                        loadComponent: () => import('./features/tesorero/tesorero-section.component').then(m => m.TesoreroSectionComponent)
+                        loadComponent: () => import('./features/tesorero/tesorero.component/tesorero.component').then(m => m.TesoreroComponent)
                     },
                     {
                         path: 'balance',
-                        loadComponent: () => import('./features/tesorero/tesorero-section.component').then(m => m.TesoreroSectionComponent)
+                        loadComponent: () => import('./features/tesorero/tesorero.component/tesorero.component').then(m => m.TesoreroComponent)
                     }
                 ]
             },
