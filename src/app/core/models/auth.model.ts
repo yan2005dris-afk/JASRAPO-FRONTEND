@@ -24,7 +24,7 @@ export interface RefreshTokenResponse {
 export interface User {
     id: string;
     email: string;
-    name: string;
+    name: string | null;
     roleId: number;        // ID numérico del rol
     roleName?: string;     // Nombre del rol (opcional, para display)
     avatar?: string;
