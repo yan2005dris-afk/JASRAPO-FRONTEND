@@ -92,7 +92,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr *ngFor="let client of clients">
+                        <tr *ngFor="let client of pagedClients">
                             <td>
                                 <input class="form-check-input table-checkbox" type="checkbox">
                             </td>
@@ -114,6 +114,14 @@
                                 </button>
                             </td>
                         </tr>
+
+                        <!-- Empty state -->
+                        <tr *ngIf="pagedClients.length === 0">
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="bi bi-people fs-3 d-block mb-2"></i>
+                                No se encontraron clientes
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -121,29 +129,55 @@
 
         <!-- Footer / Pagination -->
         <div
-            class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap">
-            <span class="text-muted small" style="line-height: 1.2;">Total: {{clients?.length || 0}}<br>clientes</span>
+            class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            
+            <!-- Left: total + page size selector -->
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-muted small">
+                    Total: <strong>{{ filteredClients.length }}</strong> cliente{{ filteredClients.length !== 1 ? 's' : '' }}
+                </span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted small">Mostrar:</span>
+                    <select class="form-select form-select-sm page-size-select shadow-none" [value]="pageSize"
+                        (change)="setPageSize(+$any($event.target).value)">
+                        <option *ngFor="let opt of pageSizeOptions" [value]="opt">{{ opt }}</option>
+                    </select>
+                </div>
+            </div>
 
+            <!-- Right: pagination controls -->
             <nav>
                 <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
-                    <li class="page-item disabled">
-                        <a class="page-link border-0 text-dark bg-transparent fw-medium small" href="#" tabindex="-1"
-                            aria-disabled="true">
+
+                    <!-- Previous -->
+                    <li class="page-item" [class.disabled]="currentPage === 1">
+                        <a class="page-link border-0 text-dark bg-transparent fw-medium small" href="#"
+                            (click)="$event.preventDefault(); goToPage(currentPage - 1)"
+                            [attr.tabindex]="currentPage === 1 ? -1 : null"
+                            [attr.aria-disabled]="currentPage === 1">
                             <i class="bi bi-chevron-left me-1" style="font-size: 0.7rem;"></i> Previous
                         </a>
                     </li>
-                    <li class="page-item active" aria-current="page">
-                        <a class="page-link shadow-sm border text-dark fw-semibold"
-                            style="border-radius: 6px; background-color: white;" href="#">1</a>
+
+                    <!-- Page numbers -->
+                    <li class="page-item" *ngFor="let page of pageNumbers" [class.active]="currentPage === page"
+                        [attr.aria-current]="currentPage === page ? 'page' : null">
+                        <a class="page-link fw-medium" [class.shadow-sm]="currentPage === page"
+                            [class.border-0]="currentPage !== page" [class.bg-transparent]="currentPage !== page"
+                            [class.text-dark]="true" style="border-radius: 6px;" href="#"
+                            (click)="$event.preventDefault(); goToPage(page)">{{ page }}</a>
                     </li>
-                    <li class="page-item"><a class="page-link border-0 text-dark bg-transparent fw-medium"
-                            href="#">2</a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link border-0 text-dark bg-transparent fw-medium small" href="#">
+
+                    <!-- Next -->
+                    <li class="page-item" [class.disabled]="currentPage === totalPages">
+                        <a class="page-link border-0 text-dark bg-transparent fw-medium small" href="#"
+                            (click)="$event.preventDefault(); goToPage(currentPage + 1)"
+                            [attr.tabindex]="currentPage === totalPages ? -1 : null"
+                            [attr.aria-disabled]="currentPage === totalPages">
                             Next <i class="bi bi-chevron-right ms-1" style="font-size: 0.7rem;"></i>
                         </a>
                     </li>
+
                 </ul>
             </nav>
         </div>
