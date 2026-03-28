@@ -23,10 +23,7 @@ describe('Cliente', () => {
 
     await TestBed.configureTestingModule({
       imports: [Clientes],
-      providers: [
-        { provide: AuthService, useValue: mockAuthService },
-        provideRouter([]),
-      ],
+      providers: [{ provide: AuthService, useValue: mockAuthService }, provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Clientes);
