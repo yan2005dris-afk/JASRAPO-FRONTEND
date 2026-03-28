@@ -36,6 +36,6 @@ export class Spinner implements OnInit, OnDestroy {
     });
   }
   ngOnDestroy() {
-    this.routerSub.unsubscribe();
+    this.routerSub?.unsubscribe();
   }
 }
