@@ -6,6 +6,4 @@ import { Component } from '@angular/core';
   templateUrl: './envio-de-facturacion.html',
   styleUrl: './envio-de-facturacion.css',
 })
-export class EnvioDeFacturacion {
-
-}
+export class EnvioDeFacturacion {}

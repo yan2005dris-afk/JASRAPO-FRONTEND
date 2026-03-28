@@ -2,28 +2,39 @@ import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MenuService } from '../../core/services/menu.service';
-import { MenuItem } from '../../core/models/menu.model';
 
 @Component({
   selector: 'app-sidebar',
+  standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './sidebar.html',
-  styleUrl: './sidebar.css'
+  styleUrl: './sidebar.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Sidebar {
   readonly menuService = inject(MenuService);
-  expandedItems = signal<Record<number, boolean>>({});
 
+  /**
+   * Estado reactivo para controlar qué elementos del menú están expandidos.
+   * Usamos Record<number, boolean> para manejar múltiples submenús abiertos.
+   */
+  readonly expandedItems = signal<Record<number, boolean>>({});
+
+  /**
+   * Alterna la visibilidad de un submenú.
+   * @param itemId ID único del elemento del menú.
+   */
   toggleItem(itemId: number): void {
-    console.log('>>> [Sidebar] Clic en el menú padre con ID:', itemId);
-
-    this.expandedItems.update(state => {
-      const newState = { ...state, [itemId]: !state[itemId] };
-      console.log('    - Nuevo estado de abiertos:', newState);
-      return newState;
-    });
+    this.expandedItems.update((state) => ({
+      ...state,
+      [itemId]: !state[itemId],
+    }));
   }
 
+  /**
+   * Verifica si un ítem específico está expandido.
+   * @param itemId ID único del elemento del menú.
+   */
   isExpanded(itemId: number): boolean {
     return !!this.expandedItems()[itemId];
   }

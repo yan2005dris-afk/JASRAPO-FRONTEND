@@ -1,14 +1,14 @@
 import { Component, ChangeDetectionStrategy, inject, signal, HostListener } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { AuthService } from '../../core/services/auth.service';
 import { LayoutService } from '../../core/services/layout.service';
 
 @Component({
   selector: 'app-header',
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './header.html',
   styleUrl: './header.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Header {
   readonly authService = inject(AuthService);
@@ -20,7 +20,7 @@ export class Header {
   }
 
   toggleUserDropdown(): void {
-    this.userDropdownOpen.update(value => !value);
+    this.userDropdownOpen.update((value) => !value);
   }
 
   closeUserDropdown(): void {

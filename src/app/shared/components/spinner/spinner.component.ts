@@ -1,7 +1,13 @@
 import { Component, inject, OnInit, OnDestroy } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { SpinnerService } from '../../../core/services/spinner.service';
-import { NavigationCancel, NavigationEnd, NavigationError, NavigationStart, Router } from '@angular/router';
+import {
+  NavigationCancel,
+  NavigationEnd,
+  NavigationError,
+  NavigationStart,
+  Router,
+} from '@angular/router';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -17,7 +23,7 @@ export class Spinner implements OnInit, OnDestroy {
   customSpinner = this.spinnerService.customSpinner;
   spinner = this.spinnerService.spinner;
   ngOnInit() {
-    this.routerSub = this.router.events.subscribe(event => {
+    this.routerSub = this.router.events.subscribe((event) => {
       if (event instanceof NavigationStart) {
         this.spinnerService.loadingOn();
       } else if (

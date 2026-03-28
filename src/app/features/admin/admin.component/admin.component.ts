@@ -6,6 +6,6 @@ import { RouterLink, RouterOutlet } from '@angular/router';
   imports: [RouterOutlet, RouterLink],
   templateUrl: './admin.component.html',
   styleUrl: './admin.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class AdminComponent { }
+export class AdminComponent {}

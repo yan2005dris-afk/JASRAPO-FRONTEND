@@ -8,9 +8,8 @@ describe('EnvioDeFacturacion', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [EnvioDeFacturacion]
-    })
-    .compileComponents();
+      imports: [EnvioDeFacturacion],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(EnvioDeFacturacion);
     component = fixture.componentInstance;

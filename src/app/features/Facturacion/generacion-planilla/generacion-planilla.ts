@@ -6,6 +6,4 @@ import { Component } from '@angular/core';
   templateUrl: './generacion-planilla.html',
   styleUrl: './generacion-planilla.css',
 })
-export class GeneracionPlanilla {
-
-}
+export class GeneracionPlanilla {}

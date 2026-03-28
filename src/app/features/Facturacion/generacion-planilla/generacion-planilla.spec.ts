@@ -8,9 +8,8 @@ describe('GeneracionPlanilla', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [GeneracionPlanilla]
-    })
-    .compileComponents();
+      imports: [GeneracionPlanilla],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(GeneracionPlanilla);
     component = fixture.componentInstance;

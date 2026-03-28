@@ -8,9 +8,8 @@ describe('TesoreroComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [TesoreroComponent]
-    })
-    .compileComponents();
+      imports: [TesoreroComponent],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(TesoreroComponent);
     component = fixture.componentInstance;

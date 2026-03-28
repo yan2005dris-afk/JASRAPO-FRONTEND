@@ -6,6 +6,4 @@ import { Component } from '@angular/core';
   templateUrl: './consumo-zonas.html',
   styleUrl: './consumo-zonas.css',
 })
-export class ConsumoZonas {
-
-}
+export class ConsumoZonas {}

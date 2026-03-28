@@ -8,9 +8,8 @@ describe('RecaudacionYPagos', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [RecaudacionYPagos]
-    })
-    .compileComponents();
+      imports: [RecaudacionYPagos],
+    }).compileComponents();
 
     fixture = TestBed.createComponent(RecaudacionYPagos);
     component = fixture.componentInstance;

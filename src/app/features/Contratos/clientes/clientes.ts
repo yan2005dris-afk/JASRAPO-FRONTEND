@@ -34,7 +34,7 @@ const MOCK_CLIENTS: Client[] = [
   imports: [CommonModule],
   templateUrl: './clientes.html',
   styleUrl: './clientes.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Clientes {
   readonly authService = inject(AuthService);
@@ -61,7 +61,7 @@ export class Clientes {
   currentPage = 1;
 
   get filteredClients(): Client[] {
-    return this.clients.filter(c => {
+    return this.clients.filter((c) => {
       if (this.activeFilter === 'Todos') return true;
       if (this.activeFilter === 'Morosos' && c.estado === 'Moroso') return true;
       if (this.activeFilter === 'Sin lectura' && c.estado === 'Sin lectura') return true;
@@ -102,7 +102,7 @@ export class Clientes {
     this.isLoading = true;
     // simulamos la latencia de red con un timeout de 800 ms
     setTimeout(() => {
-      this.clients = MOCK_CLIENTS;   // ← aquí irá: this.clienteService.getAll()
+      this.clients = MOCK_CLIENTS; // ← aquí irá: this.clienteService.getAll()
       this.hasFetched = true;
       this.isLoading = false;
       this.currentPage = 1;

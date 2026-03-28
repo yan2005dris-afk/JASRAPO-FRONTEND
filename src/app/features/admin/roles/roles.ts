@@ -6,8 +6,6 @@ import { RouterOutlet, RouterLink } from '@angular/router';
   imports: [RouterOutlet, RouterLink],
   templateUrl: './roles.html',
   styleUrl: './roles.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Roles {
-
-}
+export class Roles {}

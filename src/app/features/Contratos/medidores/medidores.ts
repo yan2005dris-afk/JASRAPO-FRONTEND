@@ -6,6 +6,4 @@ import { Component } from '@angular/core';
   templateUrl: './medidores.html',
   styleUrl: './medidores.css',
 })
-export class Medidores {
-
-}
+export class Medidores {}

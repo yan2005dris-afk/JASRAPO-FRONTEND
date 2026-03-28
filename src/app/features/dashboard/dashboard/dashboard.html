@@ -1,20 +1,22 @@
 <div class="dashboard-container">
-    <!-- Mensaje de Bienvenida -->
-    <div class="alert alert-light border mb-4" *ngIf="authService.currentUser() as user">
-        <div class="d-flex align-items-center">
-            <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3"
-                style="width: 48px; height: 48px; font-size: 1.2rem;">
-                {{ user.name?.charAt(0)?.toUpperCase() }}
-            </div>
-            <div>
-                <h5 class="mb-1">¡Bienvenido, {{ user.name }}!</h5>
-                <p class="mb-0 text-muted">
-                    <i class="bi bi-shield-check me-1"></i>
-                    Rol: <strong>{{ user.roleName || 'Usuario' }}</strong> | Email: {{ user.email }}
-                </p>
-            </div>
+  <!-- Mensaje de Bienvenida -->
+  @if (authService.currentUser(); as user) {
+    <div class="alert alert-light border mb-4">
+      <div class="d-flex align-items-center">
+        <div
+          class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3"
+          style="width: 48px; height: 48px; font-size: 1.2rem"
+        >
+          {{ user.name?.charAt(0)?.toUpperCase() }}
         </div>
+        <div>
+          <h5 class="mb-1">¡Bienvenido, {{ user.name }}!</h5>
+          <p class="mb-0 text-muted">
+            <i class="bi bi-shield-check me-1"></i>
+            Rol: <strong>{{ user.roleName || 'Usuario' }}</strong> | Email: {{ user.email }}
+          </p>
+        </div>
+      </div>
     </div>
-
-
+  }
 </div>
