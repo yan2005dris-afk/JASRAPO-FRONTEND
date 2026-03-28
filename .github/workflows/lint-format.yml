@@ -30,4 +30,4 @@ jobs:
         run: npm run lint
 
       - name: Ejecutar Pruebas Unitarias (Vitest)
-        run: npm test -- --run 
+        run: npm test
