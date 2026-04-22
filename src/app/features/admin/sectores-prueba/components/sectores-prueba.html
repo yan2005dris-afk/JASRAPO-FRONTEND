@@ -19,12 +19,12 @@
                         <i class="bi bi-search"></i>
                     </span>
                     <input type="text" class="form-control border-start-0 ps-0 shadow-none"
-                        placeholder="Buscar cliente..." />
+                        placeholder="Buscar sector..." />
                 </div>
 
-                <!-- El evento (click) llama al método buscarClientes() del componente -->
+                <!-- El evento (click) llama al método mostrarSectores() del componente -->
                 <button class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
-                    (click)="buscarSectores()" [disabled]="isLoading">
+                    (click)="mostrarSectores()" [disabled]="isLoading">
                     <!-- Si está cargando mostramos un spinner de Bootstrap, si no el ícono normal -->
                     @if (isLoading) {
                     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -40,33 +40,6 @@
                     Acciones Masivas <i class="bi bi-chevron-down ms-1" style="font-size: 0.75rem"></i>
                 </button>
             </div>
-        </div>
-
-        <!-- Sub-Header (Filters) -->
-        <div class="px-4 pb-3 d-flex align-items-center border-bottom flex-wrap gap-2">
-            <span class="text-muted small me-2 d-flex align-items-center gap-1">
-                <i class="bi bi-funnel"></i> Filtros rápidos:
-            </span>
-
-            <!-- Pill Filters -->
-            <button class="btn btn-filter rounded-pill px-3 py-1" [class.active]="activeFilter === 'Todos'"
-                (click)="setFilter('Todos')">
-                Todos
-            </button>
-            <button class="btn btn-filter rounded-pill px-3 py-1" [class.active]="activeFilter === 'A'"
-                (click)="setFilter('A')">
-                Activos
-            </button>
-            <button class="btn btn-filter rounded-pill px-3 py-1" [class.active]="activeFilter === 'I'"
-                (click)="setFilter('I')">
-                Inactivos
-            </button>
-
-            <!-- Regular Dropdown -->
-            <button
-                class="btn btn-outline-secondary btn-sm ms-2 d-flex align-items-center gap-2 bg-white text-muted px-3 py-1 rounded-3">
-                Option 1 <i class="bi bi-chevron-down ms-1" style="font-size: 0.7rem"></i>
-            </button>
         </div>
 
         <!-- Data Table -->
@@ -87,7 +60,7 @@
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Cargando...</span>
                 </div>
-                <p class="mt-3 mb-0">Cargando clientes...</p>
+                <p class="mt-3 mb-0">Cargando sectores...</p>
             </div>
             }
 
@@ -99,9 +72,9 @@
                             <th scope="col" style="width: 40px">
                                 <input class="form-check-input table-checkbox" type="checkbox" />
                             </th>
-                            <th scope="col" class="text-muted fw-semibold small">ID</th>
-                            <th scope="col" class="text-muted fw-semibold small">Descripción</th>
-                            <th scope="col" class="text-muted fw-semibold small">Estado</th>
+                            <th scope="col" class="text-muted fw-semibold small">Comunidad ID</th>
+                            <th scope="col" class="text-muted fw-semibold small">Código</th>
+                            <th scope="col" class="text-muted fw-semibold small">Nombre</th>
                             <th scope="col" class="text-muted fw-semibold small">Acciones</th>
                         </tr>
                     </thead>
@@ -112,21 +85,10 @@
                                 <input class="form-check-input table-checkbox" type="checkbox" />
                             </td>
                             <td class="fw-medium text-dark" style="font-size: 0.95rem">
-                                {{ sector.id }}
+                                {{ sector.comunidadId }}
                             </td>
-                            <td class="text-muted small">{{ sector.descripcion }}</td>
-                            <!-- <td class="text-dark small">{{ sector.estado }}</td> -->
-                            <td>
-                                @if (sector.estado === 'A') {
-                                <span class="badge rounded-pill fw-medium badge-soft-success">
-                                    Activo
-                                </span>
-                                } @else {
-                                <span class="badge rounded-pill fw-medium badge-soft-danger">
-                                    Inactivo
-                                </span>
-                                }
-                            </td>
+                            <td class="text-muted small">{{ sector.codigo }}</td>
+                            <td class="text-muted small">{{ sector.nombre }}</td>
                             <td class="text-center">
                                 <button class="btn btn-link text-muted p-0 shadow-none">
                                     <i class="bi bi-three-dots-vertical"></i>
@@ -147,6 +109,62 @@
                 </table>
             </div>
             }
+        </div>
+
+        <!-- Footer / Pagination -->
+        <div
+            class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <!-- Left: total + page size selector -->
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-muted small">
+                    Total: <strong>{{ filteredSectores.length }}</strong> sector{{ filteredSectores.length !== 1 ? 'es'
+                    : '' }}
+                </span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted small">Mostrar:</span>
+                    <select class="form-select form-select-sm page-size-select shadow-none" [value]="pageSize"
+                        (change)="setPageSize(+$any($event.target).value)">
+                        @for (opt of pageSizeOptions; track opt) {
+                        <option [value]="opt">{{ opt }}</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <!-- Right: pagination controls -->
+            <nav>
+                <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
+                    <!-- Previous -->
+                    <li class="page-item" [class.disabled]="currentPage === 1">
+                        <a class="page-link border-0 text-dark bg-transparent fw-medium small" href="#"
+                            (click)="$event.preventDefault(); goToPage(currentPage - 1)"
+                            [attr.tabindex]="currentPage === 1 ? -1 : null" [attr.aria-disabled]="currentPage === 1">
+                            <i class="bi bi-chevron-left me-1" style="font-size: 0.7rem"></i> Previous
+                        </a>
+                    </li>
+
+                    <!-- Page numbers -->
+                    @for (page of pageNumbers; track page) {
+                    <li class="page-item" [class.active]="currentPage === page"
+                        [attr.aria-current]="currentPage === page ? 'page' : null">
+                        <a class="page-link fw-medium" [class.shadow-sm]="currentPage === page"
+                            [class.border-0]="currentPage !== page" [class.bg-transparent]="currentPage !== page"
+                            [class.text-dark]="true" style="border-radius: 6px" href="#"
+                            (click)="$event.preventDefault(); goToPage(page)">{{ page }}</a>
+                    </li>
+                    }
+
+                    <!-- Next -->
+                    <li class="page-item" [class.disabled]="currentPage === totalPages">
+                        <a class="page-link border-0 text-dark bg-transparent fw-medium small" href="#"
+                            (click)="$event.preventDefault(); goToPage(currentPage + 1)"
+                            [attr.tabindex]="currentPage === totalPages ? -1 : null"
+                            [attr.aria-disabled]="currentPage === totalPages">
+                            Next <i class="bi bi-chevron-right ms-1" style="font-size: 0.7rem"></i>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
         </div>
     </div>
 </div>
