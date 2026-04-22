@@ -59,6 +59,13 @@ export const routes: Routes = [
             ],
           },
           {
+            path: 'sectores',
+            loadComponent: () =>
+              import('./features/admin/sectores-prueba/components/sectores-prueba').then(
+                (m) => m.SectoresPrueba,
+              ),
+          },
+          {
             path: 'config',
             loadComponent: () =>
               import('./features/admin/admin.component/admin.component').then(
