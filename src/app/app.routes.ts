@@ -61,10 +61,11 @@ export const routes: Routes = [
           {
             path: 'sectores',
             loadComponent: () =>
-              import('./features/admin/sectores-prueba/components/sectores-prueba').then(
+              import('./features/admin/sectores-prueba/components/sectores-prueba/sectores-prueba').then(
                 (m) => m.SectoresPrueba,
               ),
           },
+
           {
             path: 'config',
             loadComponent: () =>

@@ -1,0 +1,33 @@
+<div class="modal-header border-bottom-0 pb-0">
+    <h5 class="modal-title fw-bold">Agregar Nuevo Sector</h5>
+    <button type="button" class="btn-close shadow-none" (click)="onClose()" aria-label="Close"></button>
+</div>
+<form [formGroup]="sectorForm" (ngSubmit)="onSubmit()">
+    <div class="modal-body pt-4">
+        <p class="text-muted">Completa los datos del sector.</p>
+
+        <div class="mb-3">
+            <label for="comunidadId" class="form-label">ID Comunidad (pruebas)</label>
+            <input type="number" class="form-control" id="comunidadId" formControlName="comunidadId" />
+        </div>
+        <div class="mb-3">
+            <label for="codigo" class="form-label">Código del sector</label>
+            <input type="text" class="form-control" id="codigo" formControlName="codigo" />
+        </div>
+
+        <div class="mb-3">
+            <label for="nombre" class="form-label">Nombre del sector</label>
+            <input type="text" class="form-control" id="nombre" formControlName="nombre" />
+        </div>
+
+        <!-- Si tu modelo no tiene estado, puedes quitar esta parte -->
+        <!-- <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="estado" formControlName="estado" />
+            <label class="form-check-label" for="estado">Estado</label>
+        </div> -->
+    </div>
+    <div class="modal-footer border-top-0 pt-0">
+        <button type="button" class="btn btn-light" (click)="onClose()">Cancelar</button>
+        <button type="submit" class="btn btn-primary" [disabled]="sectorForm.invalid">Guardar</button>
+    </div>
+</form>

@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink } from '@angular/router';
-import { AuthService } from '../../../../core/services/auth.service';
-import { SectoresService } from '../services/sectores';
-import { Sectores } from '../models/sectores.type';
+import { SectoresFormComponent } from '../sectores-form.component/sectores-form.component';
+import { AuthService } from '../../../../../core/services/auth.service';
+import { SectoresService } from '../../services/sectores';
+import { Sectores } from '../../models/sectores.interface';
 
 @Component({
   selector: 'app-sectores-prueba',
-  imports: [CommonModule, RouterOutlet],
+  imports: [CommonModule, SectoresFormComponent],
   templateUrl: './sectores-prueba.html',
   styleUrl: './sectores-prueba.css',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -28,6 +28,19 @@ export class SectoresPrueba {
 
   /** Indica si ya se ha realizado al menos una búsqueda (sea exitosa o no). */
   hasFetched = false;
+
+  /** Estado del modal */
+  isModalOpen = false;
+
+  abrirModal() {
+    this.isModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  cerrarModal() {
+    this.isModalOpen = false;
+    this.cdr.markForCheck();
+  }
 
   get filteredSectores(): Sectores[] {
     return this.sectores;
@@ -100,4 +113,5 @@ export class SectoresPrueba {
       this.cdr.markForCheck();
     }
   }
+
 }
