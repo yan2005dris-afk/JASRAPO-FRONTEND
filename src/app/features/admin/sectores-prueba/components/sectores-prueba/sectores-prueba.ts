@@ -10,10 +10,9 @@ import { Sectores } from '../../models/sectores.interface';
   imports: [CommonModule, SectoresFormComponent],
   templateUrl: './sectores-prueba.html',
   styleUrl: './sectores-prueba.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SectoresPrueba {
-
   readonly authService = inject(AuthService);
 
   private readonly cdr = inject(ChangeDetectorRef);
@@ -83,7 +82,6 @@ export class SectoresPrueba {
     this.cdr.markForCheck();
 
     this.sectoresService.getAllSectores().subscribe({
-
       next: (data) => {
         console.log(data);
 
@@ -97,7 +95,7 @@ export class SectoresPrueba {
         console.error('Error al obtener sectores:', err);
         this.isLoading = false;
         this.cdr.markForCheck();
-      }
+      },
     });
   }
 
@@ -113,5 +111,4 @@ export class SectoresPrueba {
       this.cdr.markForCheck();
     }
   }
-
 }

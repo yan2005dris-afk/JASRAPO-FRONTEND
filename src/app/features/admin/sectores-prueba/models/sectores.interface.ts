@@ -1,5 +1,5 @@
 export interface Sectores {
-    comunidadId: number;
-    codigo: string;
-    nombre: string;
+  comunidadId: number;
+  codigo: string;
+  nombre: string;
 }

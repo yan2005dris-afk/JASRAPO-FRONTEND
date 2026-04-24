@@ -18,42 +18,34 @@ export class SectoresService {
   // ============================================================================
 
   // Obtener url de la api
-  private API_URL = environment.apiUrl;
+  private readonly API_URL = environment.apiUrl;
+  private readonly endpoint = this.API_URL + '/sector';
 
   // METODOS CRUD
   // ============================================================================
 
   // CREATE
   createSector(sector: Sectores): Observable<Sectores> {
-    let endpoint = this.API_URL + '/sector';
-
-    return this.http.post<Sectores>(endpoint, sector);
+    return this.http.post<Sectores>(this.endpoint, sector);
   }
-
 
   // READ ALL
   getAllSectores(): Observable<Sectores[]> {
-    let endpoint = this.API_URL + '/sector';
-    return this.http.get<Sectores[]>(endpoint);
+    return this.http.get<Sectores[]>(this.endpoint);
   }
 
   // READ ONE
   getSectorById(id: number): Observable<Sectores> {
-    let endpoint = this.API_URL + '/sector/' + id;
-    return this.http.get<Sectores>(endpoint);
+    return this.http.get<Sectores>(this.endpoint + '/' + id);
   }
 
   // UPDATE
   updateSector(id: number, sector: Sectores): Observable<Sectores> {
-    let endpoint = this.API_URL + '/sector/' + id;
-
-    return this.http.patch<Sectores>(endpoint, sector);
+    return this.http.patch<Sectores>(`${this.endpoint}/${id}`, sector);
   }
 
   // DELETE
   deleteSector(id: number): Observable<Sectores> {
-    let endpoint = this.API_URL + '/sector/' + id;
-
-    return this.http.delete<Sectores>(endpoint);
+    return this.http.delete<Sectores>(`${this.endpoint}/${id}`);
   }
 }

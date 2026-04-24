@@ -9,7 +9,7 @@ import { SectoresService } from '../../services/sectores';
   styleUrl: './sectores-form.component.css',
 })
 export class SectoresFormComponent {
-  @Output() close = new EventEmitter<void>();
+  @Output() formClosed = new EventEmitter<void>();
   private readonly sectorService = inject(SectoresService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly fb = inject(FormBuilder);
@@ -21,7 +21,7 @@ export class SectoresFormComponent {
   });
 
   onClose() {
-    this.close.emit();
+    this.formClosed.emit();
   }
 
   onSubmit() {
@@ -41,7 +41,7 @@ export class SectoresFormComponent {
       error: (err) => {
         console.error('Error creando el sector:', err);
         console.error(err.error.message[0]);
-      }
+      },
     });
   }
 }
