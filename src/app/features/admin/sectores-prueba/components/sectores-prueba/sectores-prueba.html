@@ -44,12 +44,12 @@
           {{ isLoading ? 'Buscando...' : 'Buscar' }}
         </button>
 
-        <!-- Bulk Actions Dropdown -->
-        <button
-          class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium bg-white text-muted"
-        >
-          Acciones Masivas <i class="bi bi-chevron-down ms-1" style="font-size: 0.75rem"></i>
-        </button>
+        <!-- Dropdown -->
+        <app-dropdown
+          label="Acciones Masivas"
+          [items]="dropdownItems"
+          (actionSelected)="handleAccionMasiva($event)"
+        ></app-dropdown>
       </div>
     </div>
 

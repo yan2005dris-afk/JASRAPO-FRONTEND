@@ -1,0 +1,45 @@
+<div class="dropdown position-relative">
+  <button type="button" [class]="buttonClass()" (click)="toggleDropdown()">
+    @if (icon()) {
+      <i [class]="icon()"></i>
+    }
+    {{ label() }}
+    <i
+      class="bi ms-1"
+      [class.bi-chevron-down]="!isOpen()"
+      [class.bi-chevron-up]="isOpen()"
+      style="font-size: 0.75rem"
+    ></i>
+  </button>
+
+  <ul
+    class="dropdown-menu dropdown-menu-end shadow-sm"
+    [class.show]="isOpen()"
+    style="min-width: 160px; margin-top: 2px"
+  >
+    @for (item of items(); track item.action) {
+      @if (item.isDivider) {
+        <li>
+          <hr class="dropdown-divider" />
+        </li>
+      } @else {
+        <li>
+          <a
+            class="dropdown-item"
+            href="#"
+            (click)="onItemClick($event, item)"
+            [class.text-danger]="item.isDanger"
+          >
+            @if (item.icon) {
+              <i [class]="item.icon + ' me-2'"></i>
+            }
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    }
+    @if (items().length === 0) {
+      <li><span class="dropdown-item text-muted">No hay opciones</span></li>
+    }
+  </ul>
+</div>

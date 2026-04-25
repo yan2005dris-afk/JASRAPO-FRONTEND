@@ -4,10 +4,14 @@ import { SectoresFormComponent } from '../sectores-form.component/sectores-form.
 import { AuthService } from '../../../../../core/services/auth.service';
 import { SectoresService } from '../../services/sectores';
 import { Sectores } from '../../models/sectores.interface';
+import {
+  DropdownComponent,
+  DropdownItem,
+} from '../../../../../shared/components/dropdown/dropdown.component';
 
 @Component({
   selector: 'app-sectores-prueba',
-  imports: [CommonModule, SectoresFormComponent],
+  imports: [CommonModule, SectoresFormComponent, DropdownComponent],
   templateUrl: './sectores-prueba.html',
   styleUrl: './sectores-prueba.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -27,6 +31,12 @@ export class SectoresPrueba {
 
   /** Indica si ya se ha realizado al menos una búsqueda (sea exitosa o no). */
   hasFetched = false;
+
+  /** Items para el dropdown de acciones masivas */
+  dropdownItems: DropdownItem[] = [
+    { label: 'Borrar todo', action: 'deleteAll', isDanger: true, icon: 'bi bi-trash' },
+    { label: 'Importar', action: 'import', icon: 'bi bi-download' },
+  ];
 
   /** Estado del modal */
   isModalOpen = false;
@@ -110,5 +120,10 @@ export class SectoresPrueba {
       this.currentPage = page;
       this.cdr.markForCheck();
     }
+  }
+
+  handleAccionMasiva(action: string) {
+    console.log('Acción masiva seleccionada:', action);
+    // TODO: Implementar lógica de la acción seleccionada
   }
 }
