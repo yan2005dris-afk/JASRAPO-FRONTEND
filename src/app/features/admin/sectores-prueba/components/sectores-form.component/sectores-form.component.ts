@@ -1,6 +1,8 @@
-import { ChangeDetectorRef, Component, EventEmitter, inject, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, inject, Input, Output, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { SectoresService } from '../../services/sectores';
+import { ActivatedRoute } from '@angular/router';
+import { Sectores } from '../../models/sectores.interface';
 
 @Component({
   selector: 'app-sectores-form',
@@ -8,11 +10,17 @@ import { SectoresService } from '../../services/sectores';
   templateUrl: './sectores-form.component.html',
   styleUrl: './sectores-form.component.css',
 })
-export class SectoresFormComponent {
+export class SectoresFormComponent implements OnInit {
   @Output() formClosed = new EventEmitter<void>();
+  @Output() formSubmitted = new EventEmitter<void>();
+
+  @Input() sectorAEditar: Sectores | null = null;
+
   private readonly sectorService = inject(SectoresService);
-  private readonly cdr = inject(ChangeDetectorRef);
   private readonly fb = inject(FormBuilder);
+
+  //Variables de estado
+  isEditMode = false; // se utiliza como bandera para indicar el estado de edicion del formulario UPDATE/CREATE
 
   sectorForm: FormGroup = this.fb.group({
     comunidadId: [0, Validators.required],
@@ -24,24 +32,55 @@ export class SectoresFormComponent {
     this.formClosed.emit();
   }
 
+  ngOnInit(): void {
+    this.prepararFormulario();
+  }
+
+  prepararFormulario() {
+    if (this.sectorAEditar) {
+      this.isEditMode = true;
+      this.sectorForm.patchValue({
+        comunidadId: this.sectorAEditar.comunidadId,
+        codigo: this.sectorAEditar.codigo,
+        nombre: this.sectorAEditar.nombre,
+      });
+    }
+  }
+
   onSubmit() {
     if (this.sectorForm.invalid) {
       this.sectorForm.markAllAsTouched();
       return;
     }
 
-    const payload = this.sectorForm.value;
-    payload.comunidadId = Number(payload.comunidadId);
-
-    this.sectorService.createSector(payload).subscribe({
-      next: (response) => {
-        console.log('Sector creado con éxito:', response);
-        this.onClose();
-      },
-      error: (err) => {
-        console.error('Error creando el sector:', err);
-        console.error(err.error.message[0]);
-      },
-    });
+    if (this.isEditMode && this.sectorAEditar !== null) {
+      // se actualiza el sector
+      this.sectorService
+        .updateSector(this.sectorAEditar.sectorId!, this.sectorForm.getRawValue())
+        .subscribe({
+          next: (response) => {
+            console.log('Sector actualizado con éxito:', response);
+            this.formSubmitted.emit();
+            this.onClose();
+          },
+          error: (err) => {
+            console.error('Error actualizando el sector:', err);
+            console.error(err.error.message[0]);
+          },
+        });
+    } else {
+      // si no se ha leído ningun id, significa que vamos a crear uno nuevo
+      this.sectorService.createSector(this.sectorForm.getRawValue()).subscribe({
+        next: (response) => {
+          console.log('Sector creado con éxito:', response);
+          this.formSubmitted.emit();
+          this.onClose();
+        },
+        error: (err) => {
+          console.error('Error creando el sector:', err);
+          console.error(err.error.message[0]);
+        },
+      });
+    }
   }
 }

@@ -101,9 +101,29 @@
                   <td class="text-muted small">{{ sector.codigo }}</td>
                   <td class="text-muted small">{{ sector.nombre }}</td>
                   <td class="text-center">
-                    <button class="btn btn-link text-muted p-0 shadow-none">
+                    <!-- <button class="btn btn-link text-muted p-0 shadow-none">
                       <i class="bi bi-three-dots-vertical"></i>
+                    </button> -->
+                    <!-- Botón con tres puntos verticales -->
+                    <button
+                      class="btn btn-link text-muted p-0 shadow-none"
+                      mat-icon-button
+                      [matMenuTriggerFor]="menu"
+                    >
+                      <mat-icon>more_vert</mat-icon>
                     </button>
+
+                    <!-- Menú desplegable -->
+                    <mat-menu class="" #menu="matMenu">
+                      <button mat-menu-item (click)="editarSector(sector)">
+                        <mat-icon>edit</mat-icon>
+                        <span>Editar</span>
+                      </button>
+                      <button mat-menu-item (click)="eliminarSector(sector)">
+                        <mat-icon>delete</mat-icon>
+                        <span>Eliminar</span>
+                      </button>
+                    </mat-menu>
                   </td>
                 </tr>
               }
@@ -206,7 +226,11 @@
   <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5)">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow">
-        <app-sectores-form (formClosed)="cerrarModal()"></app-sectores-form>
+        <app-sectores-form
+          [sectorAEditar]="objetoSectorAEditar"
+          (formSubmitted)="mostrarSectores()"
+          (formClosed)="cerrarModal()"
+        ></app-sectores-form>
       </div>
     </div>
   </div>

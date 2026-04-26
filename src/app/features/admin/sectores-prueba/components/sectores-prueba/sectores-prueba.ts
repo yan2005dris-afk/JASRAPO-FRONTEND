@@ -8,10 +8,20 @@ import {
   DropdownComponent,
   DropdownItem,
 } from '../../../../../shared/components/dropdown/dropdown.component';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 
 @Component({
   selector: 'app-sectores-prueba',
-  imports: [CommonModule, SectoresFormComponent, DropdownComponent],
+  imports: [
+    CommonModule,
+    SectoresFormComponent,
+    DropdownComponent,
+    MatMenuModule,
+    MatButtonModule,
+    MatIconModule,
+  ],
   templateUrl: './sectores-prueba.html',
   styleUrl: './sectores-prueba.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -26,6 +36,7 @@ export class SectoresPrueba {
   /** Lista de sectores que se muestra en la tabla. Empieza vacía. */
   sectores: Sectores[] = [];
 
+  objetoSectorAEditar: Sectores | null = null;
   /** Indica si se está realizando una petición a la API. */
   isLoading = false;
 
@@ -43,11 +54,13 @@ export class SectoresPrueba {
 
   abrirModal() {
     this.isModalOpen = true;
+    this.objetoSectorAEditar = null; // Limpiar para modo agregar
     this.cdr.markForCheck();
   }
 
   cerrarModal() {
     this.isModalOpen = false;
+    this.objetoSectorAEditar = null; // Limpiar al cerrar
     this.cdr.markForCheck();
   }
 
@@ -125,5 +138,18 @@ export class SectoresPrueba {
   handleAccionMasiva(action: string) {
     console.log('Acción masiva seleccionada:', action);
     // TODO: Implementar lógica de la acción seleccionada
+  }
+
+  editarSector(sector: Sectores) {
+    this.objetoSectorAEditar = sector;
+    this.isModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  eliminarSector(sector: Sectores) {
+    console.log('Eliminar sector:', sector);
+    if (confirm(`¿Eliminar sector ${sector.nombre}?`)) {
+      this.sectoresService.deleteSector(sector.sectorId!).subscribe(() => this.mostrarSectores());
+    }
   }
 }
