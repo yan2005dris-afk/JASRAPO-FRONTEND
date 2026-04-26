@@ -147,9 +147,13 @@ export class SectoresPrueba {
   }
 
   eliminarSector(sector: Sectores) {
-    console.log('Eliminar sector:', sector);
+    const { sectorId } = sector;
+    if (sectorId == null) {
+      console.error('No se puede eliminar un sector sin sectorId:', sector);
+      return;
+    }
     if (confirm(`¿Eliminar sector ${sector.nombre}?`)) {
-      this.sectoresService.deleteSector(sector.sectorId!).subscribe(() => this.mostrarSectores());
+      this.sectoresService.deleteSector(sectorId).subscribe(() => this.mostrarSectores());
     }
   }
 }
