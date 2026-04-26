@@ -60,18 +60,17 @@ export class SectoresFormComponent implements OnInit {
       }
 
       // se actualiza el sector
-      this.sectorService.updateSector(sectorId, this.sectorForm.getRawValue())
-        .subscribe({
-          next: (response) => {
-            console.log('Sector actualizado con éxito:', response);
-            this.formSubmitted.emit();
-            this.onClose();
-          },
-          error: (err) => {
-            console.error('Error actualizando el sector:', err);
-            console.error(err.error.message[0]);
-          },
-        });
+      this.sectorService.updateSector(sectorId, this.sectorForm.getRawValue()).subscribe({
+        next: (response) => {
+          console.log('Sector actualizado con éxito:', response);
+          this.formSubmitted.emit();
+          this.onClose();
+        },
+        error: (err) => {
+          console.error('Error actualizando el sector:', err);
+          console.error(err.error.message[0]);
+        },
+      });
     } else {
       // si no se ha leído ningun id, significa que vamos a crear uno nuevo
       this.sectorService.createSector(this.sectorForm.getRawValue()).subscribe({
