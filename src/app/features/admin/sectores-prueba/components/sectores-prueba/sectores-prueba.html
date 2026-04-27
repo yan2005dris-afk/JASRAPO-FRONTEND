@@ -1,0 +1,237 @@
+<div class="sectores-container">
+  <h3 class="fw-bold mb-4 text-dark fs-4">Gestión de Sectores</h3>
+
+  <div class="card border-0 shadow-sm rounded-3">
+    <!-- Card Header (Search & Actions) -->
+    <div
+      class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
+      <!-- Primary Action -->
+      <button
+        class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+        (click)="abrirModal()"
+      >
+        <i class="bi bi-plus-lg"></i> Agregar
+      </button>
+      <!-- <h5 class="fw-bold mb-0 fs-6">Lista de Clientes</h5> -->
+
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- Search -->
+        <div class="input-group search-group">
+          <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+            <i class="bi bi-search"></i>
+          </span>
+          <input
+            type="text"
+            class="form-control border-start-0 ps-0 shadow-none"
+            placeholder="Buscar sector..."
+          />
+        </div>
+
+        <!-- El evento (click) llama al método mostrarSectores() del componente -->
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="mostrarSectores()"
+          [disabled]="isLoading"
+        >
+          <!-- Si está cargando mostramos un spinner de Bootstrap, si no el ícono normal -->
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+          @if (!isLoading) {
+            <i class="bi bi-search"></i>
+          }
+          {{ isLoading ? 'Buscando...' : 'Buscar' }}
+        </button>
+
+        <!-- Dropdown -->
+        <app-dropdown
+          label="Acciones Masivas"
+          [items]="dropdownItems"
+          (actionSelected)="handleAccionMasiva($event)"
+        ></app-dropdown>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="px-4 pt-3">
+      <!-- Estado inicial: no se ha buscado nada todavía -->
+      @if (!hasFetched && !isLoading) {
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-search fs-1 d-block mb-2 opacity-25"></i>
+          <p class="mb-0">
+            Realiza una <strong>búsqueda</strong> para visualizar los sectores registrados.
+          </p>
+        </div>
+      }
+
+      <!-- Estado de carga -->
+      @if (isLoading) {
+        <div class="text-center py-5 text-muted">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <p class="mt-3 mb-0">Cargando sectores...</p>
+        </div>
+      }
+
+      @if (hasFetched) {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 custom-table">
+            <thead>
+              <tr>
+                <th scope="col" style="width: 40px">
+                  <input class="form-check-input table-checkbox" type="checkbox" />
+                </th>
+                <th scope="col" class="text-muted fw-semibold small">Comunidad ID</th>
+                <th scope="col" class="text-muted fw-semibold small">Código</th>
+                <th scope="col" class="text-muted fw-semibold small">Nombre</th>
+                <th scope="col" class="text-muted fw-semibold small">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (sector of pagedSectores; track sector) {
+                <tr>
+                  <td>
+                    <input class="form-check-input table-checkbox" type="checkbox" />
+                  </td>
+                  <td class="fw-medium text-dark" style="font-size: 0.95rem">
+                    {{ sector.comunidadId }}
+                  </td>
+                  <td class="text-muted small">{{ sector.codigo }}</td>
+                  <td class="text-muted small">{{ sector.nombre }}</td>
+                  <td class="text-center">
+                    <!-- <button class="btn btn-link text-muted p-0 shadow-none">
+                      <i class="bi bi-three-dots-vertical"></i>
+                    </button> -->
+                    <!-- Botón con tres puntos verticales -->
+                    <button
+                      class="btn btn-link text-muted p-0 shadow-none"
+                      mat-icon-button
+                      [matMenuTriggerFor]="menu"
+                    >
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+
+                    <!-- Menú desplegable -->
+                    <mat-menu class="" #menu="matMenu">
+                      <button mat-menu-item (click)="editarSector(sector)">
+                        <mat-icon>edit</mat-icon>
+                        <span>Editar</span>
+                      </button>
+                      <button mat-menu-item (click)="eliminarSector(sector)">
+                        <mat-icon>delete</mat-icon>
+                        <span>Eliminar</span>
+                      </button>
+                    </mat-menu>
+                  </td>
+                </tr>
+              }
+              <!-- Empty state -->
+              @if (pagedSectores.length === 0) {
+                <tr>
+                  <td colspan="6" class="text-center text-muted py-4">
+                    <i class="bi bi-people fs-3 d-block mb-2"></i>
+                    No se encontraron sectores
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <!-- Footer / Pagination -->
+    <div
+      class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
+      <!-- Left: total + page size selector -->
+      <div class="d-flex align-items-center gap-3">
+        <span class="text-muted small">
+          Total: <strong>{{ filteredSectores.length }}</strong> sector{{
+            filteredSectores.length !== 1 ? 'es' : ''
+          }}
+        </span>
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted small">Mostrar:</span>
+          <select
+            class="form-select form-select-sm page-size-select shadow-none"
+            [value]="pageSize"
+            (change)="setPageSize(+$any($event.target).value)"
+          >
+            @for (opt of pageSizeOptions; track opt) {
+              <option [value]="opt">{{ opt }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- Right: pagination controls -->
+      <nav>
+        <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
+          <!-- Previous -->
+          <li class="page-item" [class.disabled]="currentPage === 1">
+            <a
+              class="page-link border-0 text-dark bg-transparent fw-medium small"
+              href="#"
+              (click)="$event.preventDefault(); goToPage(currentPage - 1)"
+              [attr.tabindex]="currentPage === 1 ? -1 : null"
+              [attr.aria-disabled]="currentPage === 1"
+            >
+              <i class="bi bi-chevron-left me-1" style="font-size: 0.7rem"></i> Previous
+            </a>
+          </li>
+
+          <!-- Page numbers -->
+          @for (page of pageNumbers; track page) {
+            <li
+              class="page-item"
+              [class.active]="currentPage === page"
+              [attr.aria-current]="currentPage === page ? 'page' : null"
+            >
+              <a
+                class="page-link fw-medium"
+                [class.shadow-sm]="currentPage === page"
+                [class.border-0]="currentPage !== page"
+                [class.bg-transparent]="currentPage !== page"
+                [class.text-dark]="true"
+                style="border-radius: 6px"
+                href="#"
+                (click)="$event.preventDefault(); goToPage(page)"
+                >{{ page }}</a
+              >
+            </li>
+          }
+
+          <!-- Next -->
+          <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <a
+              class="page-link border-0 text-dark bg-transparent fw-medium small"
+              href="#"
+              (click)="$event.preventDefault(); goToPage(currentPage + 1)"
+              [attr.tabindex]="currentPage === totalPages ? -1 : null"
+              [attr.aria-disabled]="currentPage === totalPages"
+            >
+              Next <i class="bi bi-chevron-right ms-1" style="font-size: 0.7rem"></i>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
+</div>
+<!-- Modal Overlay -->
+@if (isModalOpen) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5)">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <app-sectores-form
+          [sectorAEditar]="objetoSectorAEditar"
+          (formSubmitted)="mostrarSectores()"
+          (formClosed)="cerrarModal()"
+        ></app-sectores-form>
+      </div>
+    </div>
+  </div>
+}

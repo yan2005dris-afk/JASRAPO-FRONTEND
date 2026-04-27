@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: 'http:localhost:3000/api/v1',
+  apiUrl: 'https://api.dihm-muertos.site/api/v1',
   apiTimeout: 30000,
 };
