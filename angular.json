@@ -12,7 +12,34 @@
   "projects": {
     "frontend": {
       "projectType": "application",
-      "schematics": {},
+      "schematics": {
+        "@schematics/angular:component": {
+          "type": "component",
+          "style": "scss",
+          "skipTests": false,
+          "changeDetection": "OnPush"
+        },
+        "@schematics/angular:service": {
+          "type": "service",
+          "skipTests": false
+        },
+        "@schematics/angular:directive": {
+          "type": "directive",
+          "skipTests": false
+        },
+        "@schematics/angular:pipe": {
+          "skipTests": false
+        },
+        "@schematics/angular:guard": {
+          "skipTests": false
+        },
+        "@schematics/angular:interceptor": {
+          "skipTests": false
+        },
+        "@schematics/angular:interface": {
+          "type": "interface"
+        }
+      },
       "root": "",
       "sourceRoot": "src",
       "prefix": "app",
