@@ -59,10 +59,10 @@
           "defaultConfiguration": "production"
         },
         "serve": {
-          "builder": "@angular/build:dev-server",
           "options": {
             "allowedHosts": ["app.dihm-muertos.site"]
           },
+          "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
               "buildTarget": "frontend:build:production"
