@@ -21,59 +21,7 @@ export const routes: Routes = [
       // Sección Administración (Solo Admin)
       {
         path: 'admin',
-        loadComponent: () =>
-          import('./features/admin/admin.component/admin.component').then((m) => m.AdminComponent),
-        children: [
-          {
-            path: 'users',
-            loadComponent: () =>
-              import('./features/users/user-management/user-management').then(
-                (m) => m.UserManagement,
-              ),
-          },
-          {
-            path: 'roles',
-            loadComponent: () => import('./features/admin/roles/roles').then((m) => m.Roles),
-            children: [
-              {
-                path: 'presidente',
-                loadComponent: () =>
-                  import('./features/presidente/presidente.component/presidente.component').then(
-                    (m) => m.PresidenteComponent,
-                  ),
-              },
-              {
-                path: 'secretario',
-                loadComponent: () =>
-                  import('./features/secretario/secretario.component/secretario.component').then(
-                    (m) => m.SecretarioComponent,
-                  ),
-              },
-              {
-                path: 'tesorero',
-                loadComponent: () =>
-                  import('./features/tesorero/tesorero.component/tesorero.component').then(
-                    (m) => m.TesoreroComponent,
-                  ),
-              },
-            ],
-          },
-          {
-            path: 'sectores',
-            loadComponent: () =>
-              import('./features/admin/sectores-prueba/components/sectores-prueba/sectores-prueba').then(
-                (m) => m.SectoresPrueba,
-              ),
-          },
-
-          {
-            path: 'config',
-            loadComponent: () =>
-              import('./features/admin/admin.component/admin.component').then(
-                (m) => m.AdminComponent,
-              ),
-          },
-        ],
+        loadChildren: () => import('./features/admin/admin.routes').then((m) => m.adminRoutes),
       },
       // Sección Presidencia (Admin y Presidente)
       {
