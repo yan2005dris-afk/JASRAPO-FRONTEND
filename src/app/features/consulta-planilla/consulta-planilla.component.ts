@@ -13,13 +13,13 @@ import { ConsultaPlanillaService } from './consulta-planilla.service';
   styleUrls: ['./consulta-planilla.component.css']
 })
 export class ConsultaPlanillaComponent {
-  terminoBusqueda: string = '';
-  searchType: string = 'medidor';
+  terminoBusqueda = '';
+  searchType = 'medidor';
   
-  loading: boolean = false;
-  searchClicked: boolean = false;
-  noResults: boolean = false;
-  results: any = null;
+  loading = false;
+  searchClicked = false;
+  noResults = false;
+  results: unknown = null;
 
   searchOptions = [
     { value: 'medidor', label: 'Número de medidor' },
@@ -29,7 +29,7 @@ export class ConsultaPlanillaComponent {
   private readonly spinnerService = inject(SpinnerService);
   private readonly consultaPlanillaService = inject(ConsultaPlanillaService);
 
-  constructor() {}
+
 
   get inputLabel(): string {
     return this.searchType === 'medidor' ? 'Número de medidor' : 'Guía de remisión';

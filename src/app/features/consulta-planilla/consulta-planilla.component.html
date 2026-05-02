@@ -9,7 +9,9 @@
             <h2 class="card-title font-weight-bold mb-4">CONSULTA DE PLANILLA</h2>
             <div class="form-group mb-3">
               <select class="form-control form-control-lg text-center" [(ngModel)]="searchType">
-                <option *ngFor="let option of searchOptions" [value]="option.value">{{ option.label }}</option>
+                @for (option of searchOptions; track option.value) {
+                  <option [value]="option.value">{{ option.label }}</option>
+                }
               </select>
             </div>
             <div class="form-group">
@@ -26,18 +28,25 @@
               class="btn btn-primary btn-lg btn-block mt-4" 
               [disabled]="terminoBusqueda.trim() === '' || loading"
               (click)="consultar()">
-              <span *ngIf="!loading">Consultar</span>
-              <span *ngIf="loading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-              <span *ngIf="loading"> Consultando...</span>
+              @if (!loading) {
+                <span>Consultar</span>
+              } @else {
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span> Consultando...</span>
+              }
             </button>
   
-            <div *ngIf="searchClicked && terminoBusqueda.trim() === ''" class="alert alert-danger mt-3">
-              El campo es obligatorio.
-            </div>
+            @if (searchClicked && terminoBusqueda.trim() === '') {
+              <div class="alert alert-danger mt-3">
+                El campo es obligatorio.
+              </div>
+            }
             
-            <div *ngIf="noResults" class="alert alert-warning mt-3">
-              No se encontraron resultados para la búsqueda.
-            </div>
+            @if (noResults) {
+              <div class="alert alert-warning mt-3">
+                No se encontraron resultados para la búsqueda.
+              </div>
+            }
             
             <div class="mt-4">
               <a routerLink="/login" class="text-secondary text-decoration-underline small hover-primary fw-medium">Ir a Login</a>

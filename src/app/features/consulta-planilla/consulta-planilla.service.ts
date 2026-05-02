@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { delay } from 'rxjs/operators';
@@ -8,9 +8,9 @@ import { delay } from 'rxjs/operators';
 })
 export class ConsultaPlanillaService {
 
-  constructor(private http: HttpClient) { }
+  private readonly http = inject(HttpClient);
 
-  consultar(termino: string, tipo: string): Observable<any> {
+  consultar(termino: string, tipo: string): Observable<unknown> {
     // For now, we simulate an API call with a delay
     // and return a mock response.
     // In the future, you can replace this with a real HTTP call:
