@@ -14,6 +14,7 @@ export const routes: Routes = [
       import('./features/consulta-planilla/consulta-planilla.component').then(
         (m) => m.ConsultaPlanillaComponent,
       ),
+    canActivate: [guestGuard],
   },
   {
     path: 'app',

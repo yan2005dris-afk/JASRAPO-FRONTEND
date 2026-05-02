@@ -4,18 +4,23 @@
         <div class="card shadow-sm">
           <div class="card-body text-center">
             <div class="mb-4">
-              <img src="assets/JAPO.png" alt="Logo JAPO" class="img-fluid" style="max-height: 80px;">
+              <img ngSrc="assets/JAPO.png" alt="Logo JAPO" width="160" height="80" priority class="img-fluid">
             </div>
-            <h2 class="card-title font-weight-bold mb-4">CONSULTA DE PLANILLA</h2>
-            <div class="form-group mb-3">
-              <select class="form-control form-control-lg text-center" [(ngModel)]="searchType">
+            <h2 class="card-title fw-bold mb-4">CONSULTA DE PLANILLA</h2>
+            
+            <div class="mb-3">
+              <label class="visually-hidden" for="searchType">Tipo de búsqueda</label>
+              <select id="searchType" class="form-select form-select-lg text-center" [(ngModel)]="searchType">
                 @for (option of searchOptions; track option.value) {
                   <option [value]="option.value">{{ option.label }}</option>
                 }
               </select>
             </div>
-            <div class="form-group">
+            
+            <div class="mb-3">
+              <label class="visually-hidden" for="terminoBusqueda">{{ inputLabel }}</label>
               <input 
+                id="terminoBusqueda"
                 type="text" 
                 class="form-control form-control-lg text-center"
                 [placeholder]="'Ingrese ' + inputLabel"
@@ -24,8 +29,9 @@
                 #terminoInput="ngModel"
                 required>
             </div>
+            
             <button 
-              class="btn btn-primary btn-lg btn-block mt-4" 
+              class="btn btn-primary btn-lg w-100 mt-4" 
               [disabled]="terminoBusqueda.trim() === '' || loading"
               (click)="consultar()">
               @if (!loading) {
@@ -45,6 +51,13 @@
             @if (noResults) {
               <div class="alert alert-warning mt-3">
                 No se encontraron resultados para la búsqueda.
+              </div>
+            }
+
+            @if (results) {
+              <div class="alert alert-success mt-3 text-start">
+                <h5 class="alert-heading">Resultado:</h5>
+                <p class="mb-0">{{ results.message }}</p>
               </div>
             }
             
