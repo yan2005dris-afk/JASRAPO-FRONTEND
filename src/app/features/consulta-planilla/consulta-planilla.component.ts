@@ -10,12 +10,12 @@ import { ConsultaPlanillaService, PlanillaMockResponse } from './consulta-planil
   imports: [CommonModule, FormsModule, RouterLink, NgOptimizedImage],
   templateUrl: './consulta-planilla.component.html',
   styleUrl: './consulta-planilla.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConsultaPlanillaComponent {
   terminoBusqueda = '';
   searchType = 'medidor';
-  
+
   loading = false;
   searchClicked = false;
   noResults = false;
@@ -23,7 +23,7 @@ export class ConsultaPlanillaComponent {
 
   searchOptions = [
     { value: 'medidor', label: 'Número de medidor' },
-    { value: 'guia', label: 'Guía de remisión' }
+    { value: 'guia', label: 'Guía de remisión' },
   ];
 
   private readonly consultaPlanillaService = inject(ConsultaPlanillaService);
@@ -57,7 +57,7 @@ export class ConsultaPlanillaComponent {
         this.loading = false;
         this.noResults = true;
         console.error('Error during consultation:', error);
-      }
+      },
     });
   }
 
