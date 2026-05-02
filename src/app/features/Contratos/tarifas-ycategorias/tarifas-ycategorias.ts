@@ -6,6 +6,4 @@ import { Component } from '@angular/core';
   templateUrl: './tarifas-ycategorias.html',
   styleUrl: './tarifas-ycategorias.css',
 })
-export class TarifasYCategorias {
-
-}
+export class TarifasYCategorias {}

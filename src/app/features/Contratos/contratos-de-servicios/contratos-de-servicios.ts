@@ -6,6 +6,4 @@ import { Component } from '@angular/core';
   templateUrl: './contratos-de-servicios.html',
   styleUrl: './contratos-de-servicios.css',
 })
-export class ContratosDeServicios {
-
-}
+export class ContratosDeServicios {}

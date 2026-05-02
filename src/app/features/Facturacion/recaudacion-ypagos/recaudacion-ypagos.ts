@@ -6,6 +6,4 @@ import { Component } from '@angular/core';
   templateUrl: './recaudacion-ypagos.html',
   styleUrl: './recaudacion-ypagos.css',
 })
-export class RecaudacionYPagos {
-
-}
+export class RecaudacionYPagos {}

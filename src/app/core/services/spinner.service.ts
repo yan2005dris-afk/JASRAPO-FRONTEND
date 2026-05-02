@@ -4,17 +4,26 @@ import { Injectable, signal, TemplateRef } from '@angular/core';
   providedIn: 'root',
 })
 export class SpinnerService {
-  private customLoading = signal<TemplateRef<any> | null>(null);
-  private loading = signal(false);
-  customSpinner = this.customLoading.asReadonly();
-  spinner = this.loading.asReadonly();
+  // Cambiamos 'any' por 'unknown' para que el linter esté feliz y el código sea más seguro
+  private readonly customLoading = signal<TemplateRef<unknown> | null>(null);
+  private readonly loading = signal(false);
 
-  loadingOn(customLoader?: TemplateRef<any>) {
+  // Exponemos como Readonly para seguir las buenas prácticas de Signals
+  readonly customSpinner = this.customLoading.asReadonly();
+  readonly spinner = this.loading.asReadonly();
+
+  /**
+   * Activa el spinner global o uno personalizado
+   */
+  loadingOn(customLoader?: TemplateRef<unknown>): void {
     this.customLoading.set(customLoader ?? null);
     this.loading.set(true);
   }
 
-  loadingOff() {
+  /**
+   * Desactiva el spinner y limpia el template personalizado
+   */
+  loadingOff(): void {
     this.customLoading.set(null);
     this.loading.set(false);
   }

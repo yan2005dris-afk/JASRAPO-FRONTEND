@@ -19,3 +19,13 @@
 .cursor-pointer {
     cursor: pointer;
 }
+
+/* Auth / Image Utils */
+.object-fit-cover {
+    object-fit: cover;
+}
+
+.text-secondary {
+    color: #475569 !important;
+    transition: color 0.15s ease-in-out;
+}

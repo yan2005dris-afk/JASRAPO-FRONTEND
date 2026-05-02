@@ -6,6 +6,4 @@ import { Component } from '@angular/core';
   templateUrl: './notas-de-credito-debito.html',
   styleUrl: './notas-de-credito-debito.css',
 })
-export class NotasDeCreditoDebito {
-
-}
+export class NotasDeCreditoDebito {}
