@@ -70,20 +70,10 @@ export class Medidores implements OnInit {
       .pipe(
         map((data) =>
           data.map((m) => {
-            let fechaCreacionValida = m.createdAt;
-
-            if (
-              typeof m.createdAt === 'object' &&
-              m.createdAt !== null &&
-              Object.keys(m.createdAt).length === 0
-            ) {
-              fechaCreacionValida = null;
-            }
-
+            // Eliminamos toda la lógica de fechaCreacionValida
             return {
               ...m,
               estado: m.estado?.toUpperCase() as EstadoMedidor,
-              createdAt: fechaCreacionValida,
             };
           }),
         ),
