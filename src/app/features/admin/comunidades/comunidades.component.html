@@ -1,0 +1,26 @@
+<button (click)="getAllComunidades()">Obtener todas las comunidades</button>
+<br>
+<br>
+<hr>
+
+<table>
+  <thead>
+    <tr>
+      <th>Comunidad ID</th>
+      <th>Nombre</th>
+      <th>Código</th>
+      <th>Porcentaje Tasa de Seguridad</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    @for (comunidad of comunidades(); track comunidad.comunidadId) {
+      <tr>
+        <td>{{ comunidad.comunidadId }}</td>
+        <td>{{ comunidad.nombre }}</td>
+        <td>{{ comunidad.codigo }}</td>
+        <td>{{ comunidad.porcentajeTasaSeguridad }}%</td>
+      </tr>
+    }
+  </tbody>
+</table>
