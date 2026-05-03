@@ -50,7 +50,7 @@ export class Medidores implements OnInit {
    * Obtiene la lista de medidores desde el servicio, normaliza los datos
    * y maneja la limpieza de fechas inválidas provenientes del backend.
    */
-  cargarMedidores(): void {
+cargarMedidores(): void {
     this.isLoading = true;
     this.cdr.detectChanges(); 
 
@@ -58,7 +58,6 @@ export class Medidores implements OnInit {
       map(data => data.map(m => {
         let fechaCreacionValida = m.createdAt;
         
-        // Validación para objetos de fecha vacíos {}
         if (typeof m.createdAt === 'object' && m.createdAt !== null && Object.keys(m.createdAt).length === 0) {
             fechaCreacionValida = null; 
         }
@@ -77,7 +76,7 @@ export class Medidores implements OnInit {
         this.currentPage = 1;
         this.cdr.detectChanges(); 
       },
-      error: (err) => {
+      error: () => {
         this.isLoading = false;
         this.hasFetched = true;
         this.errorMessage = 'Error al cargar los datos';
@@ -183,7 +182,7 @@ export class Medidores implements OnInit {
     this.cdr.markForCheck();
 
     const id = Number(payload.medidor.medidorId);
-    const changes: any = { estado: payload.estado };
+    const changes: Partial<IMedidor> = { estado: payload.estado };
 
     if (payload.motivo) {
       changes.motivo = payload.motivo;
@@ -237,17 +236,30 @@ export class Medidores implements OnInit {
    * Funciones de transformación de UI para visualización de estados
    */
   getEstadoNombre(estado: string): string {
-    const nombres: any = { 'BODEGA': 'Disponible', 'INSTALADO': 'Instalado', 'DANADO': 'Dañado', 'BAJA': 'Obsoleto' };
-    return nombres[estado?.toUpperCase()] || estado;
-  }
+      const nombres: Record<string, string> = { 
+          'BODEGA': 'Disponible', 
+          'INSTALADO': 'Instalado', 
+          'DANADO': 'Dañado', 
+          'BAJA': 'Obsoleto' 
+      };
+      return nombres[estado?.toUpperCase()] || estado;
+    }
 
-  getEstadoBadgeClass(estado: string): string {
-    const clases: any = { 'INSTALADO': 'badge-instalado', 'BODEGA': 'badge-disponible', 'DANADO': 'badge-danado', 'BAJA': 'badge-obsoleto' };
-    return clases[estado?.toUpperCase()] || 'badge-secondary';
-  }
+    getEstadoBadgeClass(estado: string): string {
+      const clases: Record<string, string> = { 
+          'INSTALADO': 'badge-instalado', 
+          'BODEGA': 'badge-disponible', 
+          'DANADO': 'badge-danado', 
+          'BAJA': 'badge-obsoleto' 
+      };
+      return clases[estado?.toUpperCase()] || 'badge-secondary';
+    }
 
-  getEstadoIcon(estado: string): string {
-    const iconos: any = { 'DANADO': 'bi-exclamation-triangle', 'BAJA': 'bi-x-lg' };
-    return iconos[estado?.toUpperCase()] || '';
+    getEstadoIcon(estado: string): string {
+      const iconos: Record<string, string> = { 
+          'DANADO': 'bi-exclamation-triangle', 
+          'BAJA': 'bi-x-lg' 
+      };
+      return iconos[estado?.toUpperCase()] || '';
+    }
   }
-}

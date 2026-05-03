@@ -23,6 +23,7 @@ export interface IMedidor {
   contratoId: string | null;     // Referencia al contrato si está INSTALADO
   latitud: number | null;        // Coordenadas geográficas de ubicación
   longitud: number | null;       // Coordenadas geográficas de ubicación
+  motivo?: string;       
 }
 
 /**
