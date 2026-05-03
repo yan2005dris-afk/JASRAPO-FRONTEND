@@ -4,7 +4,9 @@
 -->
 <div class="medidores-page p-4">
   <!-- Cabecera de la página -->
-  <header class="page-header d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+  <header
+    class="page-header d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3"
+  >
     <h2 class="mb-0 fw-bold">Inventario de Medidores</h2>
     <button class="btn btn-register btn-sm px-3 py-2 fw-medium" (click)="openRegistrar()">
       Registrar medidores
@@ -34,7 +36,6 @@
   <!-- Contenedor principal de la tabla -->
   <div class="card shadow-sm table-card">
     <div class="card-body p-0">
-      
       <!-- Estado de carga -->
       @if (isLoading) {
         <div class="loader-container">
@@ -65,7 +66,10 @@
                     {{ medidor.createdAt ? (medidor.createdAt | date: 'dd/MM/yyyy') : 'Sin fecha' }}
                   </td>
                   <td>
-                    <span class="badge status-badge" [ngClass]="getEstadoBadgeClass(medidor.estado)">
+                    <span
+                      class="badge status-badge"
+                      [ngClass]="getEstadoBadgeClass(medidor.estado)"
+                    >
                       @if (getEstadoIcon(medidor.estado)) {
                         <i class="bi" [ngClass]="getEstadoIcon(medidor.estado)"></i>
                       }
@@ -96,16 +100,20 @@
         </div>
 
         <!-- Paginación y Controles -->
-        <footer class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <footer
+          class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3"
+        >
           <div class="d-flex align-items-center gap-3">
             <span class="text-muted small">
               Total: <strong>{{ filteredMedidores.length }}</strong>
             </span>
             <div class="d-flex align-items-center gap-2">
               <span class="text-muted small">Mostrar:</span>
-              <select class="form-select form-select-sm page-size-select" 
-                      [value]="pageSize" 
-                      (change)="setPageSize(+$any($event.target).value)">
+              <select
+                class="form-select form-select-sm page-size-select"
+                [value]="pageSize"
+                (change)="setPageSize(+$any($event.target).value)"
+              >
                 @for (opt of pageSizeOptions; track opt) {
                   <option [value]="opt">{{ opt }}</option>
                 }
@@ -116,17 +124,30 @@
           <nav>
             <ul class="pagination pagination-sm mb-0 gap-1">
               <li class="page-item" [class.disabled]="currentPage === 1">
-                <a class="page-link nav-link-custom" href="#" (click)="$event.preventDefault(); goToPage(currentPage - 1)">
+                <a
+                  class="page-link nav-link-custom"
+                  href="#"
+                  (click)="$event.preventDefault(); goToPage(currentPage - 1)"
+                >
                   <i class="bi bi-chevron-left"></i> Previous
                 </a>
               </li>
               @for (page of pageNumbers; track page) {
                 <li class="page-item" [class.active]="currentPage === page">
-                  <a class="page-link fw-medium" href="#" (click)="$event.preventDefault(); goToPage(page)">{{ page }}</a>
+                  <a
+                    class="page-link fw-medium"
+                    href="#"
+                    (click)="$event.preventDefault(); goToPage(page)"
+                    >{{ page }}</a
+                  >
                 </li>
               }
               <li class="page-item" [class.disabled]="currentPage === totalPages">
-                <a class="page-link nav-link-custom" href="#" (click)="$event.preventDefault(); goToPage(currentPage + 1)">
+                <a
+                  class="page-link nav-link-custom"
+                  href="#"
+                  (click)="$event.preventDefault(); goToPage(currentPage + 1)"
+                >
                   Next <i class="bi bi-chevron-right"></i>
                 </a>
               </li>
@@ -143,10 +164,11 @@
   <div class="modal-overlay">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <app-registrar-medidor 
-          [isSaving]="isSaving" 
-          (guardar)="guardarMedidor($event)" 
-          (cancelar)="closeRegistrar()">
+        <app-registrar-medidor
+          [isSaving]="isSaving"
+          (guardar)="guardarMedidor($event)"
+          (cancelar)="closeRegistrar()"
+        >
         </app-registrar-medidor>
       </div>
     </div>
@@ -157,11 +179,12 @@
   <div class="modal-overlay">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <app-editar-medidor 
-          [medidor]="editingMedidor" 
+        <app-editar-medidor
+          [medidor]="editingMedidor"
           [isSaving]="isSaving"
-          (cancelar)="closeEditar()" 
-          (guardar)="actualizarMedidor($event)">
+          (cancelar)="closeEditar()"
+          (guardar)="actualizarMedidor($event)"
+        >
         </app-editar-medidor>
       </div>
     </div>

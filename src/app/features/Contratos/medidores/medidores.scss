@@ -43,9 +43,13 @@ $border-color: #e2e8f0;
   justify-content: center;
   transition: background 0.2s;
 
-  &:hover { background-color: #f1f5f9; }
-  
-  &.btn-link-blue { color: $primary-blue; }
+  &:hover {
+    background-color: #f1f5f9;
+  }
+
+  &.btn-link-blue {
+    color: $primary-blue;
+  }
 }
 
 /** 
@@ -56,7 +60,9 @@ $border-color: #e2e8f0;
   gap: 1.5rem;
   grid-template-columns: repeat(3, 1fr);
 
-  @media (max-width: 991px) { grid-template-columns: 1fr; }
+  @media (max-width: 991px) {
+    grid-template-columns: 1fr;
+  }
 }
 
 .metric-card {
@@ -65,9 +71,16 @@ $border-color: #e2e8f0;
   border: 1px solid rgba(0, 0, 0, 0.05);
   position: relative;
 
-  &.card-bodega { background-color: #f8fafc; }
-  &.card-instalados { background-color: #ffffff; }
-  &.card-danados { background-color: #fff7ed; border-color: #ffedd5; }
+  &.card-bodega {
+    background-color: #f8fafc;
+  }
+  &.card-instalados {
+    background-color: #ffffff;
+  }
+  &.card-danados {
+    background-color: #fff7ed;
+    border-color: #ffedd5;
+  }
 
   .metric-label {
     font-size: 0.75rem;
@@ -86,8 +99,10 @@ $border-color: #e2e8f0;
     right: 1.5rem;
     bottom: 1.5rem;
     font-size: 1.5rem;
-    
-    &.icon-blue { color: $primary-blue; }
+
+    &.icon-blue {
+      color: $primary-blue;
+    }
   }
 }
 
@@ -132,10 +147,22 @@ $border-color: #e2e8f0;
   min-width: 7rem;
   justify-content: center;
 
-  &.badge-instalado { background: #dbeafe; color: #3b82f6; }
-  &.badge-disponible { background: #dcfce7; color: #16a34a; }
-  &.badge-danado { background: #ffedd5; color: #ea580c; }
-  &.badge-obsoleto { background: #fee2e2; color: #dc2626; }
+  &.badge-instalado {
+    background: #dbeafe;
+    color: #3b82f6;
+  }
+  &.badge-disponible {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+  &.badge-danado {
+    background: #ffedd5;
+    color: #ea580c;
+  }
+  &.badge-obsoleto {
+    background: #fee2e2;
+    color: #dc2626;
+  }
 }
 
 /** 
@@ -149,7 +176,7 @@ $border-color: #e2e8f0;
 
 .modal-overlay {
   position: fixed;
-  top: 0; 
+  top: 0;
   left: 0;
   width: 100%;
   height: 100%;
@@ -159,16 +186,16 @@ $border-color: #e2e8f0;
 
   .modal-content {
     border: none;
-    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
   }
 }
 
 .page-size-select {
   width: auto;
   min-width: 10px;
-  padding-right: 2rem; 
+  padding-right: 2rem;
   box-shadow: none !important;
-  cursor: pointer; 
+  cursor: pointer;
 }
 
 .nav-link-custom {

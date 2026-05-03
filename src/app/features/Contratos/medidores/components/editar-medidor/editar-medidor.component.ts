@@ -1,7 +1,20 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChanges,
+  inject,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { EditarEstadoMedidorPayload, EstadoMedidor, IMedidor } from '../../interfaces/imedidor.interface';
+import {
+  EditarEstadoMedidorPayload,
+  EstadoMedidor,
+  IMedidor,
+} from '../../interfaces/imedidor.interface';
 
 /**
  * Componente de Edición de Estado de Medidores
@@ -33,7 +46,7 @@ export class EditarMedidorComponent implements OnChanges {
    */
   form = this.fb.group({
     estado: ['BODEGA' as EstadoMedidor, Validators.required],
-    observacion: [''] 
+    observacion: [''],
   });
 
   /**
@@ -44,7 +57,7 @@ export class EditarMedidorComponent implements OnChanges {
     if (changes['medidor'] && this.medidor) {
       this.form.patchValue({
         estado: this.normalizarEstado(this.medidor.estado),
-        observacion: '' 
+        observacion: '',
       });
     }
   }
@@ -60,7 +73,7 @@ export class EditarMedidorComponent implements OnChanges {
     this.guardar.emit({
       medidor: this.medidor,
       estado: rawValues.estado as EstadoMedidor,
-      motivo: rawValues.observacion || ''
+      motivo: rawValues.observacion || '',
     });
   }
 
@@ -87,10 +100,10 @@ export class EditarMedidorComponent implements OnChanges {
    */
   getEstadoNombre(estado: string): string {
     const nombres: Record<string, string> = {
-      'BODEGA': 'Disponible',
-      'INSTALADO': 'Instalado',
-      'DANADO': 'Dañado',
-      'BAJA': 'Obsoleto'
+      BODEGA: 'Disponible',
+      INSTALADO: 'Instalado',
+      DANADO: 'Dañado',
+      BAJA: 'Obsoleto',
     };
     return nombres[estado] || 'Seleccione un estado';
   }

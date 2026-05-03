@@ -3,76 +3,76 @@
    ===================== */
 
 .custom-table th {
-    background-color: transparent;
-    border-bottom-width: 1px;
-    padding: 1rem 1.25rem;
-    font-size: 0.85rem;
+  background-color: transparent;
+  border-bottom-width: 1px;
+  padding: 1rem 1.25rem;
+  font-size: 0.85rem;
 }
 
 .custom-table td {
-    padding: 1rem 1.25rem;
-    border-bottom: 1px solid var(--border-color);
-    vertical-align: middle;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
 }
 
 .custom-table tbody tr:last-child td {
-    border-bottom: none;
+  border-bottom: none;
 }
 
 /* Checkboxes */
 .table-checkbox {
-    width: 1.1em;
-    height: 1.1em;
-    border-radius: 4px;
-    border-color: #cbd5e1;
-    cursor: pointer;
+  width: 1.1em;
+  height: 1.1em;
+  border-radius: 4px;
+  border-color: #cbd5e1;
+  cursor: pointer;
 }
 
 .table-checkbox:checked {
-    background-color: var(--primary-color);
-    border-color: var(--primary-color);
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
 }
 
 /* Filter pills */
 .btn-filter {
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: var(--muted-text);
-    background-color: transparent;
-    border: 1px solid transparent;
-    transition: all 0.2s;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted-text);
+  background-color: transparent;
+  border: 1px solid transparent;
+  transition: all 0.2s;
 }
 
 .btn-filter:hover {
-    background-color: var(--light-bg);
-    color: var(--dark-text);
+  background-color: var(--light-bg);
+  color: var(--dark-text);
 }
 
 .btn-filter.active {
-    background-color: var(--light-bg);
-    border-color: #e2e8f0;
-    color: var(--dark-text);
+  background-color: var(--light-bg);
+  border-color: #e2e8f0;
+  color: var(--dark-text);
 }
 
 /* Search */
 .search-group {
-    width: 250px;
+  width: 250px;
 }
 
 .search-group .form-control {
-    font-size: 0.9rem;
+  font-size: 0.9rem;
 }
 
 .search-group .form-control:focus {
-    box-shadow: none;
-    border-color: var(--border-color);
+  box-shadow: none;
+  border-color: var(--border-color);
 }
 
 /* Page size selector */
 .page-size-select {
-    width: 70px;
-    font-size: 0.85rem;
-    border-color: #e2e8f0;
-    border-radius: 8px;
-    padding: 0.2rem 0.5rem;
+  width: 70px;
+  font-size: 0.85rem;
+  border-color: #e2e8f0;
+  border-radius: 8px;
+  padding: 0.2rem 0.5rem;
 }

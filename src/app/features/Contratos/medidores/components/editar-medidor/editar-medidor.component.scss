@@ -8,7 +8,7 @@ $input-bg: #e2e5e8;
 $input-focus-bg: #dee2e6;
 $border-color: #ced4da;
 $text-dark: #212529;
-$primary-blue: #0ea5e9; 
+$primary-blue: #0ea5e9;
 $btn-save-bg: #0095f6;
 $btn-save-hover: #0077c7;
 $btn-cancel-bg: #ff4d4d;
@@ -33,7 +33,7 @@ $btn-cancel-hover: #cc0000;
    */
   .modal-panel-edit {
     background: $panel-bg;
-    width: 100%; 
+    width: 100%;
     max-width: 480px;
     border-radius: 24px;
     margin: 0 1rem;
@@ -46,7 +46,7 @@ $btn-cancel-hover: #cc0000;
       display: flex;
       justify-content: center;
       padding-bottom: 0.5rem;
-      margin-top: 30px; 
+      margin-top: 30px;
       border-bottom: none;
 
       .modal-title-custom {
@@ -61,7 +61,9 @@ $btn-cancel-hover: #cc0000;
         /* Salto de línea solo en móviles */
         .mobile-break {
           display: block;
-          @media (min-width: 576px) { display: none; }
+          @media (min-width: 576px) {
+            display: none;
+          }
         }
 
         .highlight-text {
@@ -73,7 +75,9 @@ $btn-cancel-hover: #cc0000;
     /* Cuerpo y Fondo del Formulario */
     .modal-body-custom {
       padding: 0.5rem;
-      @media (min-width: 576px) { padding: 1rem; }
+      @media (min-width: 576px) {
+        padding: 1rem;
+      }
 
       .form-container {
         background-color: $form-bg;
@@ -85,9 +89,13 @@ $btn-cancel-hover: #cc0000;
         .input-wrapper {
           margin-bottom: 1rem;
           padding: 0 1rem;
-          @media (min-width: 576px) { padding: 0 1.5rem; }
+          @media (min-width: 576px) {
+            padding: 0 1.5rem;
+          }
 
-          &.top-spacing { margin-top: 0.5rem; }
+          &.top-spacing {
+            margin-top: 0.5rem;
+          }
 
           .form-label {
             font-weight: 500;
@@ -95,7 +103,8 @@ $btn-cancel-hover: #cc0000;
             display: inline-block;
           }
 
-          .custom-select, .custom-textarea {
+          .custom-select,
+          .custom-textarea {
             width: 100%;
             box-shadow: none;
             border-radius: 12px;
@@ -115,8 +124,10 @@ $btn-cancel-hover: #cc0000;
             background-color: $input-bg;
             padding: 12px;
             resize: none;
-            
-            &:focus { background-color: $input-focus-bg; }
+
+            &:focus {
+              background-color: $input-focus-bg;
+            }
           }
         }
 
@@ -126,23 +137,30 @@ $btn-cancel-hover: #cc0000;
           justify-content: flex-end;
           gap: 0.5rem;
           padding: 0 1rem 1rem;
-          @media (min-width: 576px) { padding: 0 1.5rem 1rem; }
+          @media (min-width: 576px) {
+            padding: 0 1.5rem 1rem;
+          }
 
-          .btn-save, .btn-cancel {
+          .btn-save,
+          .btn-cancel {
             border-radius: 12px;
             padding: 10px 25px;
             font-weight: 600;
             font-size: 0.9rem;
             border: none;
             color: white;
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.2s;
+            transition:
+              transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275),
+              background-color 0.2s;
 
             &:hover:not(:disabled) {
-              transform: scale(1.1); 
+              transform: scale(1.1);
               cursor: pointer;
             }
 
-            &:active:not(:disabled) { transform: scale(0.95); }
+            &:active:not(:disabled) {
+              transform: scale(0.95);
+            }
 
             &:disabled {
               opacity: 0.6;
@@ -153,12 +171,16 @@ $btn-cancel-hover: #cc0000;
 
           .btn-save {
             background-color: $btn-save-bg;
-            &:hover:not(:disabled) { background-color: $btn-save-hover; }
+            &:hover:not(:disabled) {
+              background-color: $btn-save-hover;
+            }
           }
 
           .btn-cancel {
             background-color: $btn-cancel-bg;
-            &:hover:not(:disabled) { background-color: $btn-cancel-hover; }
+            &:hover:not(:disabled) {
+              background-color: $btn-cancel-hover;
+            }
           }
         }
       }
@@ -170,8 +192,14 @@ $btn-cancel-hover: #cc0000;
  * Animación de entrada
  */
 @keyframes modalIn {
-  from { opacity: 0; transform: scale(0.95) translateY(10px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 /**
@@ -180,10 +208,10 @@ $btn-cancel-hover: #cc0000;
 @media (max-width: 400px) {
   .modal-backdrop-custom .modal-panel-edit {
     border-radius: 18px;
-    
-    .form-container { 
-      margin: 0; 
-      border-radius: 15px; 
+
+    .form-container {
+      margin: 0;
+      border-radius: 15px;
     }
   }
 }

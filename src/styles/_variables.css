@@ -38,7 +38,7 @@
   --danger: #ef4444;
 
   /* Typography */
-  --font-family-base: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-family-base: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
   /* Bootstrap Native Overrides */
   --bs-primary: var(--primary-color);

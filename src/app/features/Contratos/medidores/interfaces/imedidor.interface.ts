@@ -17,13 +17,13 @@ export interface IMedidor {
   modelo: string;
   serie: string;
   estado: EstadoMedidor;
-  createdAt: string | null;      // Fecha de registro en el sistema
+  createdAt: string | null; // Fecha de registro en el sistema
   fechaInstalacion: string | null; // Fecha en la que se vinculó a un predio
-  updatedAt: string | null;      // Última modificación de datos o estado
-  contratoId: string | null;     // Referencia al contrato si está INSTALADO
-  latitud: number | null;        // Coordenadas geográficas de ubicación
-  longitud: number | null;       // Coordenadas geográficas de ubicación
-  motivo?: string;       
+  updatedAt: string | null; // Última modificación de datos o estado
+  contratoId: string | null; // Referencia al contrato si está INSTALADO
+  latitud: number | null; // Coordenadas geográficas de ubicación
+  longitud: number | null; // Coordenadas geográficas de ubicación
+  motivo?: string;
 }
 
 /**
@@ -43,5 +43,5 @@ export interface CrearMedidorPayload {
 export interface EditarEstadoMedidorPayload {
   medidor: IMedidor;
   estado: EstadoMedidor;
-  motivo?: string; 
+  motivo?: string;
 }

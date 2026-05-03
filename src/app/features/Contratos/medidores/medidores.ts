@@ -1,8 +1,19 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+  inject,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { EditarMedidorComponent } from './components/editar-medidor/editar-medidor.component';
 import { RegistrarMedidorComponent } from './components/registrar-medidor/registrar-medidor.component';
-import { IMedidor, CrearMedidorPayload, EditarEstadoMedidorPayload, EstadoMedidor } from './interfaces/imedidor.interface';
+import {
+  IMedidor,
+  CrearMedidorPayload,
+  EditarEstadoMedidorPayload,
+  EstadoMedidor,
+} from './interfaces/imedidor.interface';
 import { MedidoresService } from './services/medidores.service';
 import { map } from 'rxjs/operators';
 
@@ -26,7 +37,7 @@ export class Medidores implements OnInit {
   // Estado de los datos
   medidores: IMedidor[] = [];
   editingMedidor: IMedidor | null = null;
-  
+
   // Flags de control de flujo y UI
   isLoading = false;
   hasFetched = false;
@@ -50,43 +61,52 @@ export class Medidores implements OnInit {
    * Obtiene la lista de medidores desde el servicio, normaliza los datos
    * y maneja la limpieza de fechas inválidas provenientes del backend.
    */
-cargarMedidores(): void {
+  cargarMedidores(): void {
     this.isLoading = true;
-    this.cdr.detectChanges(); 
+    this.cdr.detectChanges();
 
-    this.medidoresService.getMedidores().pipe(
-      map(data => data.map(m => {
-        let fechaCreacionValida = m.createdAt;
-        
-        if (typeof m.createdAt === 'object' && m.createdAt !== null && Object.keys(m.createdAt).length === 0) {
-            fechaCreacionValida = null; 
-        }
+    this.medidoresService
+      .getMedidores()
+      .pipe(
+        map((data) =>
+          data.map((m) => {
+            let fechaCreacionValida = m.createdAt;
 
-        return {
-          ...m,
-          estado: m.estado?.toUpperCase() as EstadoMedidor,
-          createdAt: fechaCreacionValida 
-        };
-      }))
-    ).subscribe({
-      next: (data) => {
-        this.medidores = data;
-        this.hasFetched = true;
-        this.isLoading = false;
-        this.currentPage = 1;
-        this.cdr.detectChanges(); 
-      },
-      error: () => {
-        this.isLoading = false;
-        this.hasFetched = true;
-        this.errorMessage = 'Error al cargar los datos';
-        this.cdr.detectChanges(); 
-      }
-    });
+            if (
+              typeof m.createdAt === 'object' &&
+              m.createdAt !== null &&
+              Object.keys(m.createdAt).length === 0
+            ) {
+              fechaCreacionValida = null;
+            }
+
+            return {
+              ...m,
+              estado: m.estado?.toUpperCase() as EstadoMedidor,
+              createdAt: fechaCreacionValida,
+            };
+          }),
+        ),
+      )
+      .subscribe({
+        next: (data) => {
+          this.medidores = data;
+          this.hasFetched = true;
+          this.isLoading = false;
+          this.currentPage = 1;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.isLoading = false;
+          this.hasFetched = true;
+          this.errorMessage = 'Error al cargar los datos';
+          this.cdr.detectChanges();
+        },
+      });
   }
 
-  /** 
-   * Getters para el filtrado y cálculo de paginación 
+  /**
+   * Getters para el filtrado y cálculo de paginación
    */
   get filteredMedidores(): IMedidor[] {
     return this.medidores;
@@ -117,7 +137,7 @@ cargarMedidores(): void {
   goToPage(page: number) {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage = page;
-      this.cdr.detectChanges(); 
+      this.cdr.detectChanges();
     }
   }
 
@@ -198,7 +218,7 @@ cargarMedidores(): void {
         this.isSaving = false;
         this.errorMessage = 'Error al actualizar el estado';
         this.cdr.markForCheck();
-      }
+      },
     });
   }
 
@@ -207,20 +227,20 @@ cargarMedidores(): void {
    */
   eliminarMedidor(medidor: IMedidor): void {
     const id = Number(medidor.medidorId);
-    
+
     if (confirm(`¿Estás seguro de eliminar el medidor ${medidor.serie}?`)) {
       this.isLoading = true;
       this.cdr.markForCheck();
 
       this.medidoresService.deleteMedidor(id).subscribe({
         next: () => {
-          this.cargarMedidores(); 
+          this.cargarMedidores();
         },
         error: () => {
           this.isLoading = false;
           this.errorMessage = 'Error al eliminar el medidor';
           this.cdr.markForCheck();
-        }
+        },
       });
     }
   }
@@ -228,38 +248,44 @@ cargarMedidores(): void {
   /**
    * Getters para el cálculo de indicadores (KPIs) de cabecera
    */
-  get medidoresEnBodega(): number { return this.medidores.filter(m => m.estado === 'BODEGA').length; }
-  get medidoresInstalados(): number { return this.medidores.filter(m => m.estado === 'INSTALADO').length; }
-  get medidoresDanados(): number { return this.medidores.filter(m => m.estado === 'DANADO').length; }
+  get medidoresEnBodega(): number {
+    return this.medidores.filter((m) => m.estado === 'BODEGA').length;
+  }
+  get medidoresInstalados(): number {
+    return this.medidores.filter((m) => m.estado === 'INSTALADO').length;
+  }
+  get medidoresDanados(): number {
+    return this.medidores.filter((m) => m.estado === 'DANADO').length;
+  }
 
   /**
    * Funciones de transformación de UI para visualización de estados
    */
   getEstadoNombre(estado: string): string {
-      const nombres: Record<string, string> = { 
-          'BODEGA': 'Disponible', 
-          'INSTALADO': 'Instalado', 
-          'DANADO': 'Dañado', 
-          'BAJA': 'Obsoleto' 
-      };
-      return nombres[estado?.toUpperCase()] || estado;
-    }
-
-    getEstadoBadgeClass(estado: string): string {
-      const clases: Record<string, string> = { 
-          'INSTALADO': 'badge-instalado', 
-          'BODEGA': 'badge-disponible', 
-          'DANADO': 'badge-danado', 
-          'BAJA': 'badge-obsoleto' 
-      };
-      return clases[estado?.toUpperCase()] || 'badge-secondary';
-    }
-
-    getEstadoIcon(estado: string): string {
-      const iconos: Record<string, string> = { 
-          'DANADO': 'bi-exclamation-triangle', 
-          'BAJA': 'bi-x-lg' 
-      };
-      return iconos[estado?.toUpperCase()] || '';
-    }
+    const nombres: Record<string, string> = {
+      BODEGA: 'Disponible',
+      INSTALADO: 'Instalado',
+      DANADO: 'Dañado',
+      BAJA: 'Obsoleto',
+    };
+    return nombres[estado?.toUpperCase()] || estado;
   }
+
+  getEstadoBadgeClass(estado: string): string {
+    const clases: Record<string, string> = {
+      INSTALADO: 'badge-instalado',
+      BODEGA: 'badge-disponible',
+      DANADO: 'badge-danado',
+      BAJA: 'badge-obsoleto',
+    };
+    return clases[estado?.toUpperCase()] || 'badge-secondary';
+  }
+
+  getEstadoIcon(estado: string): string {
+    const iconos: Record<string, string> = {
+      DANADO: 'bi-exclamation-triangle',
+      BAJA: 'bi-x-lg',
+    };
+    return iconos[estado?.toUpperCase()] || '';
+  }
+}

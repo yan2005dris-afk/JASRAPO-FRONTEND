@@ -8,11 +8,7 @@ describe('MedidoresService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        MedidoresService,
-        provideHttpClient(),
-        provideHttpClientTesting()
-      ],
+      providers: [MedidoresService, provideHttpClient(), provideHttpClientTesting()],
     });
     service = TestBed.inject(MedidoresService);
   });

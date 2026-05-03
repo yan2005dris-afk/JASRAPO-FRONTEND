@@ -4,7 +4,6 @@
 -->
 <div class="modal-backdrop-custom">
   <div class="modal-panel card shadow-sm">
-    
     <!-- Cabecera del modal -->
     <header class="modal-header">
       <h5 class="modal-title mb-0">Registrar medidor</h5>
@@ -20,7 +19,6 @@
     <!-- Cuerpo y Formulario -->
     <div class="modal-body">
       <form [formGroup]="form" (ngSubmit)="submit()">
-        
         <div class="form-group">
           <label for="serie" class="form-label">N° Serie</label>
           <input id="serie" class="form-control" formControlName="serie" placeholder="SN-001" />

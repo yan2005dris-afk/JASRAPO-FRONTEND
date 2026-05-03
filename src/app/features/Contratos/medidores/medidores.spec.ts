@@ -10,7 +10,7 @@ describe('Medidores Component', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [Medidores], // Los standalone van en imports
-      providers: [provideHttpClient(), provideHttpClientTesting()]
+      providers: [provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     // Creamos el componente en el entorno de pruebas
