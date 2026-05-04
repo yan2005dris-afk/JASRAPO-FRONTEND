@@ -6,47 +6,55 @@ Mientras no esté conectado el backend, puedes usar estas credenciales para inic
 
 ### 👨‍💼 Usuarios Demo
 
-| Usuario | Email | Contraseña | roleId | roleName |
-|---------|-------|------------|--------|----------|
-| Administrador | admin@japo.com | 123456 | **1** | Admin |
-| Presidente | presidente@japo.com | 123456 | **2** | Presidente |
-| Secretario | secretario@japo.com | 123456 | **3** | Secretario |
-| Tesorero | tesorero@japo.com | 123456 | **4** | Tesorero |
+| Usuario       | Email               | Contraseña | roleId | roleName   |
+| ------------- | ------------------- | ---------- | ------ | ---------- |
+| Administrador | admin@japo.com      | 123456     | **1**  | Admin      |
+| Presidente    | presidente@japo.com | 123456     | **2**  | Presidente |
+| Secretario    | secretario@japo.com | 123456     | **3**  | Secretario |
+| Tesorero      | tesorero@japo.com   | 123456     | **4**  | Tesorero   |
 
 #### 1. Administrador (Acceso Total)
+
 ```
 Email:      admin@japo.com
 Contraseña: 123456
 roleId:     1
 roleName:   Admin
 ```
+
 **Permisos:** Acceso a todas las secciones del sistema
 
 #### 2. Presidente
+
 ```
 Email:      presidente@japo.com
 Contraseña: 123456
 roleId:     2
 roleName:   Presidente
 ```
+
 **Permisos:** Dashboard, Presidencia (Aprobaciones, Reportes Ejecutivos, Actas), Reportes
 
 #### 3. Secretario
+
 ```
 Email:      secretario@japo.com
 Contraseña: 123456
 roleId:     3
 roleName:   Secretario
 ```
+
 **Permisos:** Dashboard, Secretaría (Documentos, Correspondencia, Archivo), Fuentes de Agua
 
 #### 4. Tesorero
+
 ```
 Email:      tesorero@japo.com
 Contraseña: 123456
 roleId:     4
 roleName:   Tesorero
 ```
+
 **Permisos:** Dashboard, Tesorería (Ingresos, Egresos, Balance), Facturación, Reportes
 
 ---
@@ -78,6 +86,7 @@ Cada item del menú tiene esta estructura desde la base de datos:
 El sistema carga el menú de navegación desde `GET /api/menu` y muestra solo lo que el backend envía:
 
 ### Admin
+
 - ✅ Dashboard
 - ✅ Administración (Usuarios, Roles, Configuración)
 - ✅ Presidencia (Aprobaciones, Reportes, Actas)
@@ -88,16 +97,19 @@ El sistema carga el menú de navegación desde `GET /api/menu` y muestra solo lo
 - ✅ Reportes
 
 ### Presidente
+
 - ✅ Dashboard
 - ✅ Presidencia (Aprobaciones, Reportes, Actas)
 - ✅ Reportes
 
 ### Secretario
+
 - ✅ Dashboard
 - ✅ Secretaría (Documentos, Correspondencia, Archivo)
 - ✅ Fuentes de Agua
 
 ### Tesorero
+
 - ✅ Dashboard
 - ✅ Tesorería (Ingresos, Egresos, Balance)
 - ✅ Facturación
@@ -123,6 +135,7 @@ El sistema carga el menú de navegación desde `GET /api/menu` y muestra solo lo
 ### Responsabilidades
 
 **Backend:**
+
 - Validar JWT y extraer `roleId`
 - Consultar tabla `menus` y `role_menus`
 - Filtrar solo menús permitidos para ese `roleId`
@@ -131,6 +144,7 @@ El sistema carga el menú de navegación desde `GET /api/menu` y muestra solo lo
 - Retornar solo items con `is_active: true`
 
 **Frontend:**
+
 - Llamar `GET /api/menu` con header `Authorization`
 - Recibir y mostrar menú sin modificaciones
 - Manejar expansión/colapso de menús con hijos
@@ -145,6 +159,7 @@ Cuando el backend esté listo:
 ### 1. Actualizar AuthService
 
 Abre `src/app/core/services/auth.service.ts` y:
+
 - Comenta el bloque de **SIMULACIÓN DE BACKEND**
 - Descomenta el bloque de **CÓDIGO REAL PARA BACKEND**
 
@@ -154,13 +169,14 @@ Abre `src/app/core/services/auth.service.ts` y:
 
 // Descomentar esto:
 return this.http.post<LoginResponse>(`${this.API_URL}/login`, credentials, {
-    withCredentials: true  // IMPORTANTE: para recibir cookie del refresh token
-})
+  withCredentials: true, // IMPORTANTE: para recibir cookie del refresh token
+});
 ```
 
 ### 2. Actualizar MenuService
 
 Abre `src/app/core/services/menu.service.ts` y:
+
 - Comenta el bloque de **SIMULACIÓN - SOLO PARA DESARROLLO**
 - Descomenta el bloque de **CÓDIGO REAL PARA BACKEND**
 
@@ -169,12 +185,9 @@ Abre `src/app/core/services/menu.service.ts` y:
 // const menusByRole: Record<number, MenuItem[]> = { ... }
 
 // Descomentar esto:
-return this.http.get<MenuItem[]>(
-    `${this.API_URL}`,
-    { withCredentials: true }
-).pipe(
-    tap(menu => this.menuItemsSignal.set(menu))
-);
+return this.http
+  .get<MenuItem[]>(`${this.API_URL}`, { withCredentials: true })
+  .pipe(tap((menu) => this.menuItemsSignal.set(menu)));
 ```
 
 ### 3. Implementar Endpoints en Backend
@@ -182,21 +195,25 @@ return this.http.get<MenuItem[]>(
 El backend debe implementar:
 
 #### POST /api/auth/login
+
 - Valida credenciales
 - Genera access token (JWT) con `roleId` en payload
 - Genera refresh token y lo envía como cookie HttpOnly
 - Retorna: `{ token, createdAt, expiresAt, user: { id, email, name, roleId, roleName } }`
 
-#### POST /api/auth/refresh  
+#### POST /api/auth/refresh
+
 - Lee refresh token de la cookie
 - Genera nuevo access token
 - Retorna: `{ token, createdAt, expiresAt }`
 
 #### POST /api/auth/logout
+
 - Limpia cookie del refresh token
 - Retorna: `{ message: "Sesión cerrada" }`
 
 #### GET /api/menu
+
 - Extrae `roleId` del JWT
 - Consulta menús permitidos para ese rol
 - Construye jerarquía (items con children)

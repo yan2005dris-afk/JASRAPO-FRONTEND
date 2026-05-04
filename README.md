@@ -25,7 +25,7 @@ src/
         ├── tesorero/       # Vistas y componentes para el rol de tesorero
         ├── users/          # Gestión de usuarios del sistema (operadores, clientes)
         └── water-sources/  # Gestión de fuentes de agua (pozos, ríos, embalses)
-        
+
 ```
 
 ### Descripción de Directorios
@@ -43,20 +43,22 @@ Para iniciar el servidor de desarrollo local, ejecuta:
 ```bash
 ng serve
 ```
+
 Navega a `http://localhost:4200/`. La aplicación se recargará automáticamente al modificar los archivos fuente.
 
 ## 🔑 Credenciales de Prueba
 
 El sistema está configurado con 4 usuarios de prueba para desarrollo (**sin backend**):
 
-| Usuario | Email | Contraseña | roleId | roleName |
-|---------|-------|------------|--------|----------|
-| Administrador | admin@japo.com | 123456 | **1** | Admin |
-| Presidente | presidente@japo.com | 123456 | **2** | Presidente |
-| Secretario | secretario@japo.com | 123456 | **3** | Secretario |
-| Tesorero | tesorero@japo.com | 123456 | **4** | Tesorero |
+| Usuario       | Email               | Contraseña | roleId | roleName   |
+| ------------- | ------------------- | ---------- | ------ | ---------- |
+| Administrador | admin@japo.com      | 123456     | **1**  | Admin      |
+| Presidente    | presidente@japo.com | 123456     | **2**  | Presidente |
+| Secretario    | secretario@japo.com | 123456     | **3**  | Secretario |
+| Tesorero      | tesorero@japo.com   | 123456     | **4**  | Tesorero   |
 
-**Funcionalidad clave:** 
+**Funcionalidad clave:**
+
 - El sistema usa `roleId` numérico (1-4) como identificador principal del rol
 - El menú de navegación viene **pre-filtrado desde el backend** según el `roleId`
 - El frontend NO filtra el menú, solo muestra lo que el backend envía
@@ -65,11 +67,13 @@ El sistema está configurado con 4 usuarios de prueba para desarrollo (**sin bac
 > **Nota:** Estas credenciales están hardcodeadas en el frontend para permitir el desarrollo de la UI sin depender del backend. Cuando el backend esté disponible, se debe modificar el método `login()` en `src/app/core/services/auth.service.ts`.
 
 Para más información, consulta [CREDENCIALES_DEMO.md](CREDENCIALES_DEMO.md).
+
 ## 🔐 Sistema de Autenticación
 
 El proyecto implementa un **sistema híbrido de autenticación** con dos tipos de tokens:
 
 ### Access Token (Header)
+
 - Enviado en header `Authorization: Bearer {token}`
 - Incluye fechas de creación y expiración
 - Duración corta (15 minutos)
@@ -77,6 +81,7 @@ El proyecto implementa un **sistema híbrido de autenticación** con dos tipos d
 - Auto-refresh automático 2 minutos antes de expirar
 
 ### Refresh Token (Cookie HttpOnly)
+
 - Enviado como cookie HttpOnly (no accesible desde JavaScript)
 - Duración larga (7 días)
 - Protección contra XSS
@@ -85,6 +90,7 @@ El proyecto implementa un **sistema híbrido de autenticación** con dos tipos d
 **Documentación completa**: [API_AUTH_HYBRID_DOCUMENTATION.md](API_AUTH_HYBRID_DOCUMENTATION.md)
 
 **Características implementadas**:
+
 - ✅ Login con credenciales
 - ✅ Auto-refresh de tokens (sin intervención del usuario)
 - ✅ Guards de rutas (`authGuard`, `guestGuard`)
@@ -94,6 +100,7 @@ El proyecto implementa un **sistema híbrido de autenticación** con dos tipos d
 - ✅ Manejo de errores y redirección automática
 
 **Archivos principales**:
+
 - `src/app/core/models/auth.model.ts` - Interfaces TypeScript (User con roleId/roleName)
 - `src/app/core/models/menu.model.ts` - Interface MenuItem con estructura del backend
 - `src/app/core/services/auth.service.ts` - Lógica de autenticación
@@ -104,33 +111,36 @@ El proyecto implementa un **sistema híbrido de autenticación** con dos tipos d
 ### Sistema de Roles y Menú
 
 **Modelo de Usuario:**
+
 ```typescript
 interface User {
-    id: string;
-    email: string;
-    name: string;
-    roleId: number;        // 1=Admin, 2=Presidente, 3=Secretario, 4=Tesorero
-    roleName?: string;     // Nombre del rol para UI (opcional)
-    avatar?: string;
+  id: string;
+  email: string;
+  name: string;
+  roleId: number; // 1=Admin, 2=Presidente, 3=Secretario, 4=Tesorero
+  roleName?: string; // Nombre del rol para UI (opcional)
+  avatar?: string;
 }
 ```
 
 **Modelo de Menú (desde Backend):**
+
 ```typescript
 interface MenuItem {
-    id: number;                // ID numérico de la BD
-    name: string;              // Nombre a mostrar
-    route?: string;            // Ruta de navegación
-    icon?: string;             // Icono Bootstrap
-    parent_menu_id?: number;   // ID del menú padre
-    menu_order: number;        // Orden de visualización
-    is_active: boolean;        // Estado activo
-    created_at?: string;       // Timestamp
-    children?: MenuItem[];     // Submenús anidados
+  id: number; // ID numérico de la BD
+  name: string; // Nombre a mostrar
+  route?: string; // Ruta de navegación
+  icon?: string; // Icono Bootstrap
+  parent_menu_id?: number; // ID del menú padre
+  menu_order: number; // Orden de visualización
+  is_active: boolean; // Estado activo
+  created_at?: string; // Timestamp
+  children?: MenuItem[]; // Submenús anidados
 }
 ```
 
 **Flujo del Menú:**
+
 1. Usuario inicia sesión → Backend retorna `user.roleId`
 2. `MainLayout` llama `GET /api/menu` con JWT en header
 3. Backend filtra menús según `roleId` del token
@@ -138,6 +148,7 @@ interface MenuItem {
 5. Frontend muestra menú sin modificaciones (NO filtra)
 
 **Responsabilidad del filtrado:** 100% en el backend
+
 ## 🛠️ Generación de Código
 
 Usa el Angular CLI para generar nuevos elementos. Por ejemplo, para crear un nuevo componente dentro de un feature:
@@ -159,6 +170,7 @@ Para compilar el proyecto para producción:
 ```bash
 ng build
 ```
+
 Los archivos de la compilación se guardarán en el directorio `dist/`. La compilación de producción optimiza la aplicación para rendimiento y velocidad.
 
 ## 🧪 Pruebas (Testing)
@@ -168,6 +180,7 @@ Ejecuta las pruebas unitarias usando:
 ```bash
 ng test
 ```
+
 Este proyecto utiliza [Vitest](https://vitest.dev/) para las pruebas unitarias.
 
 ## 📚 Recursos Adicionales
