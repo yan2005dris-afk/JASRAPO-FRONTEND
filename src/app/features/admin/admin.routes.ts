@@ -3,8 +3,7 @@ import { Routes } from '@angular/router';
 export const adminRoutes: Routes = [
   {
     path: '',
-    loadComponent: () =>
-      import('./admin.component/admin.component').then((m) => m.AdminComponent),
+    loadComponent: () => import('./admin.component/admin.component').then((m) => m.AdminComponent),
     children: [
       {
         path: 'users',
@@ -41,9 +40,7 @@ export const adminRoutes: Routes = [
       {
         path: 'comunidades',
         loadComponent: () =>
-          import('./comunidades/comunidades.component').then(
-            (m) => m.ComunidadesComponent,
-          ),
+          import('./comunidades/comunidades.component').then((m) => m.ComunidadesComponent),
       },
       {
         path: 'sectores',

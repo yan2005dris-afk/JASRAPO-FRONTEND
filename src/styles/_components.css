@@ -6,14 +6,16 @@
 
 /* Example: Global Card adjustments */
 .card-shadow {
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    border: 1px solid var(--border-color);
-    border-radius: 0.75rem;
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
 }
 
 /* Example: Interactive Row */
 .table-row-hover:hover {
-    background-color: rgba(14, 165, 233, 0.05);
-    /* Subtle primary tint */
-    cursor: pointer;
+  background-color: rgba(14, 165, 233, 0.05);
+  /* Subtle primary tint */
+  cursor: pointer;
 }
