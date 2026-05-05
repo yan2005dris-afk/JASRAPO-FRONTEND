@@ -18,11 +18,13 @@
         <div class="form-container">
           <!-- Selección de Estado -->
           <div class="input-wrapper top-spacing">
-            <select id="estadoEditar" class="custom-select" formControlName="estado">
-              <option value="" disabled>ESTADO</option>
-              @for (estado of estados; track estado) {
-                <option [value]="estado">
-                  {{ getEstadoNombre(estado) | uppercase }}
+            <!-- Se cambia el control a 'estadoId' para manejar la relación de BD -->
+            <select id="estadoEditar" class="custom-select" formControlName="estadoId">
+              <option [ngValue]="null" disabled>ESTADO</option>
+              <!-- Iteración sobre los objetos IEstadoMedidor que vienen de la BD -->
+              @for (estado of estados; track estado.estadoId) {
+                <option [value]="estado.estadoId">
+                  {{ estado.nombre | uppercase }}
                 </option>
               }
             </select>

@@ -12,10 +12,9 @@ import {
   IMedidor,
   CrearMedidorPayload,
   EditarEstadoMedidorPayload,
-  EstadoMedidor,
+  IEstadoMedidor,
 } from './interfaces/imedidor.interface';
 import { MedidoresService } from './services/medidores.service';
-import { map } from 'rxjs/operators';
 
 /**
  * Componente Principal de Gestión de Medidores
@@ -36,6 +35,7 @@ export class Medidores implements OnInit {
 
   // Estado de los datos
   medidores: IMedidor[] = [];
+  estadosCatalogo: IEstadoMedidor[] = [];
   editingMedidor: IMedidor | null = null;
 
   // Flags de control de flujo y UI
@@ -65,34 +65,41 @@ export class Medidores implements OnInit {
     this.isLoading = true;
     this.cdr.detectChanges();
 
-    this.medidoresService
-      .getMedidores()
-      .pipe(
-        map((data) =>
-          data.map((m) => {
-            // Eliminamos toda la lógica de fechaCreacionValida
-            return {
-              ...m,
-              estado: m.estado?.toUpperCase() as EstadoMedidor,
-            };
-          }),
-        ),
-      )
-      .subscribe({
-        next: (data) => {
-          this.medidores = data;
-          this.hasFetched = true;
-          this.isLoading = false;
-          this.currentPage = 1;
-          this.cdr.detectChanges();
-        },
-        error: () => {
-          this.isLoading = false;
-          this.hasFetched = true;
-          this.errorMessage = 'Error al cargar los datos';
-          this.cdr.detectChanges();
-        },
-      });
+    this.medidoresService.getEstadosMedidor().subscribe({
+      next: (estados) => {
+        this.estadosCatalogo = estados;
+
+        this.medidoresService.getMedidores().subscribe({
+          next: (data) => {
+            this.medidores = data.map((medidor) => {
+              // Buscamos el objeto en el catálogo comparando el valor recibido
+              const estadoEncontrado = this.estadosCatalogo.find(
+                (e) => e.codigo === (medidor.estado as unknown as string),
+              );
+
+              return {
+                ...medidor,
+                estado: estadoEncontrado || this.estadosCatalogo[0],
+              };
+            });
+
+            this.hasFetched = true;
+            this.isLoading = false;
+            this.cdr.detectChanges();
+          },
+          error: () => {
+            this.isLoading = false;
+            this.errorMessage = 'Error al cargar medidores';
+            this.cdr.detectChanges();
+          },
+        });
+      },
+      error: () => {
+        this.errorMessage = 'Error al cargar catálogo de estados';
+        this.isLoading = false;
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   /**
@@ -189,16 +196,19 @@ export class Medidores implements OnInit {
    */
   actualizarMedidor(payload: EditarEstadoMedidorPayload): void {
     this.isSaving = true;
-    this.cdr.markForCheck();
+    this.cdr.detectChanges();
 
-    const id = Number(payload.medidor.medidorId);
-    const changes: Partial<IMedidor> = { estado: payload.estado };
+    const id = Number(payload.medidorId);
 
-    if (payload.motivo) {
-      changes.motivo = payload.motivo;
-    }
+    const body = {
+      estadoId: payload.estadoId,
+      motivo: payload.motivo || '',
+      marca: this.editingMedidor?.marca,
+      modelo: this.editingMedidor?.modelo,
+      serie: this.editingMedidor?.serie,
+    };
 
-    this.medidoresService.updateMedidor(id, changes).subscribe({
+    this.medidoresService.updateMedidor(id, body).subscribe({
       next: () => {
         this.isSaving = false;
         this.closeEditar();
@@ -206,8 +216,8 @@ export class Medidores implements OnInit {
       },
       error: () => {
         this.isSaving = false;
-        this.errorMessage = 'Error al actualizar el estado';
-        this.cdr.markForCheck();
+        this.errorMessage = 'Error al actualizar: Verifique los datos enviados';
+        this.cdr.detectChanges();
       },
     });
   }
@@ -239,43 +249,42 @@ export class Medidores implements OnInit {
    * Getters para el cálculo de indicadores (KPIs) de cabecera
    */
   get medidoresEnBodega(): number {
-    return this.medidores.filter((m) => m.estado === 'BODEGA').length;
+    return this.medidores.filter((m) => m.estado?.codigo === 'BODEGA').length;
   }
   get medidoresInstalados(): number {
-    return this.medidores.filter((m) => m.estado === 'INSTALADO').length;
+    return this.medidores.filter((m) => m.estado?.codigo === 'INSTALADO').length;
   }
   get medidoresDanados(): number {
-    return this.medidores.filter((m) => m.estado === 'DANADO').length;
+    return this.medidores.filter((m) => m.estado?.codigo === 'DANADO').length;
   }
 
   /**
    * Funciones de transformación de UI para visualización de estados
    */
-  getEstadoNombre(estado: string): string {
-    const nombres: Record<string, string> = {
-      BODEGA: 'Disponible',
-      INSTALADO: 'Instalado',
-      DANADO: 'Dañado',
-      BAJA: 'Obsoleto',
-    };
-    return nombres[estado?.toUpperCase()] || estado;
+  getEstadoNombre(medidor: IMedidor): string {
+    return medidor.estado?.nombre || 'Sin estado';
   }
 
-  getEstadoBadgeClass(estado: string): string {
+  getEstadoBadgeClass(codigo: string | undefined): string {
     const clases: Record<string, string> = {
-      INSTALADO: 'badge-instalado',
       BODEGA: 'badge-disponible',
+      INSTALADO: 'badge-instalado',
       DANADO: 'badge-danado',
+      PENDIENTE: 'badge-warning',
       BAJA: 'badge-obsoleto',
     };
-    return clases[estado?.toUpperCase()] || 'badge-secondary';
+    return clases[codigo || ''] || 'badge-secondary';
   }
 
-  getEstadoIcon(estado: string): string {
+  getEstadoIcon(codigo: string | undefined): string {
+    if (!codigo) return '';
     const iconos: Record<string, string> = {
       DANADO: 'bi-exclamation-triangle',
       BAJA: 'bi-x-lg',
+      INSTALADO: 'bi-check-lg',
+      BODEGA: 'bi-box-seam',
+      PENDIENTE: 'bi-hourglass-split',
     };
-    return iconos[estado?.toUpperCase()] || '';
+    return iconos[codigo] || '';
   }
 }

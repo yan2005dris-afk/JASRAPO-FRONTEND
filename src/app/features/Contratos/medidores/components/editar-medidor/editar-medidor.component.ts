@@ -12,7 +12,7 @@ import {
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   EditarEstadoMedidorPayload,
-  EstadoMedidor,
+  IEstadoMedidor,
   IMedidor,
 } from '../../interfaces/imedidor.interface';
 
@@ -32,6 +32,7 @@ export class EditarMedidorComponent implements OnChanges {
   // Entradas de datos y estado de carga
   @Input() medidor: IMedidor | null = null;
   @Input() isSaving = false;
+  @Input() estados: IEstadoMedidor[] = [];
 
   // Emisores de eventos para comunicación con el contenedor
   @Output() guardar = new EventEmitter<EditarEstadoMedidorPayload>();
@@ -39,13 +40,12 @@ export class EditarMedidorComponent implements OnChanges {
 
   // Inyección de dependencias y constantes de negocio
   private readonly fb = inject(FormBuilder);
-  readonly estados: EstadoMedidor[] = ['BODEGA', 'INSTALADO', 'DANADO', 'BAJA'];
 
   /**
    * Estructura reactiva del formulario de actualización
    */
   form = this.fb.group({
-    estado: ['BODEGA' as EstadoMedidor, Validators.required],
+    estadoId: [null as number | null, Validators.required],
     observacion: [''],
   });
 
@@ -56,7 +56,7 @@ export class EditarMedidorComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['medidor'] && this.medidor) {
       this.form.patchValue({
-        estado: this.normalizarEstado(this.medidor.estado),
+        estadoId: this.medidor.estado?.estadoId || null,
         observacion: '',
       });
     }
@@ -71,8 +71,8 @@ export class EditarMedidorComponent implements OnChanges {
 
     const rawValues = this.form.getRawValue();
     this.guardar.emit({
-      medidor: this.medidor,
-      estado: rawValues.estado as EstadoMedidor,
+      medidorId: this.medidor.medidorId,
+      estadoId: Number(rawValues.estadoId),
       motivo: rawValues.observacion || '',
     });
   }
@@ -86,11 +86,13 @@ export class EditarMedidorComponent implements OnChanges {
 
   /**
    * Garantiza que el estado recibido del medidor sea compatible con las opciones permitidas.
-   * @param estado String con el estado actual del equipo.
-   * @returns Un valor válido de tipo EstadoMedidor.
+   * @param estado Objeto de estado actual del equipo.
+   * @returns Un ID de estado válido.
    */
-  private normalizarEstado(estado: string): EstadoMedidor {
-    return this.estados.includes(estado as EstadoMedidor) ? (estado as EstadoMedidor) : 'BODEGA';
+  private normalizarEstado(estado: IEstadoMedidor | undefined): number | null {
+    return this.estados.find((e) => e.estadoId === estado?.estadoId)
+      ? estado?.estadoId || null
+      : null;
   }
 
   /**

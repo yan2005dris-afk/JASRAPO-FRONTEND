@@ -66,17 +66,17 @@
                   <td>
                     <span
                       class="badge status-badge"
-                      [ngClass]="getEstadoBadgeClass(medidor.estado)"
+                      [ngClass]="getEstadoBadgeClass(medidor.estado?.codigo)"
                     >
-                      @if (getEstadoIcon(medidor.estado)) {
-                        <i class="bi" [ngClass]="getEstadoIcon(medidor.estado)"></i>
+                      @if (getEstadoIcon(medidor.estado?.codigo)) {
+                        <i class="bi" [ngClass]="getEstadoIcon(medidor.estado?.codigo)"></i>
                       }
-                      {{ getEstadoNombre(medidor.estado) }}
+                      {{ getEstadoNombre(medidor) }}
                     </span>
                   </td>
                   <td>
                     <div class="action-buttons">
-                      @if (medidor.estado === 'INSTALADO') {
+                      @if (medidor.estado?.codigo === 'INSTALADO') {
                         <button class="btn btn-icon btn-link-blue" (click)="verContrato(medidor)">
                           <i class="bi bi-link-45deg fs-5"></i>
                         </button>
@@ -179,6 +179,7 @@
       <div class="modal-content">
         <app-editar-medidor
           [medidor]="editingMedidor"
+          [estados]="estadosCatalogo"
           [isSaving]="isSaving"
           (cancelar)="closeEditar()"
           (guardar)="actualizarMedidor($event)"

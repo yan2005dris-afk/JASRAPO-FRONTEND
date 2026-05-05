@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { IMedidor } from '../interfaces/imedidor.interface';
+import { IEstadoMedidor, IMedidor } from '../interfaces/imedidor.interface';
 import { environment } from '../../../../../environments/environment';
 
 /**
@@ -16,6 +16,10 @@ export class MedidoresService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl;
   private readonly endpoint = `${this.baseUrl}/meters`;
+
+  getEstadosMedidor(): Observable<IEstadoMedidor[]> {
+    return this.http.get<IEstadoMedidor[]>(`${this.endpoint}/status`);
+  }
 
   /**
    * Registra un nuevo medidor en la base de datos.

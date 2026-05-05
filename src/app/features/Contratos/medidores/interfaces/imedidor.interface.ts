@@ -1,12 +1,9 @@
-/**
- * Definición de los estados permitidos para un medidor dentro del flujo de inventario.
- * BODEGA: Disponible para instalación.
- * INSTALADO: Vinculado a un contrato activo.
- * DANADO: Reportado con fallas técnicas.
- * BAJA: Fuera de servicio de forma definitiva.
- */
-export type EstadoMedidor = 'BODEGA' | 'INSTALADO' | 'DANADO' | 'BAJA';
-
+export interface IEstadoMedidor {
+  estadoId: number;
+  codigo: string;
+  nombre: string;
+  orden: number;
+}
 /**
  * Entidad Principal de Medidor
  * Representa la estructura de datos completa de un equipo de medición en el sistema.
@@ -16,11 +13,11 @@ export interface IMedidor {
   marca: string;
   modelo: string;
   serie: string;
-  estado: EstadoMedidor;
-  fechaInstalacion: string | null; // Fecha en la que se vinculó a un predio
-  contratoId: string | null; // Referencia al contrato si está INSTALADO
-  latitud: number | null; // Coordenadas geográficas de ubicación
-  longitud: number | null; // Coordenadas geográficas de ubicación
+  estado?: IEstadoMedidor;
+  fechaInstalacion: string | null;
+  contratoId: string | null;
+  latitud: number | null;
+  longitud: number | null;
   motivo?: string;
 }
 
@@ -39,7 +36,7 @@ export interface CrearMedidorPayload {
  * Permite actualizar la situación del medidor e incluir un comentario.
  */
 export interface EditarEstadoMedidorPayload {
-  medidor: IMedidor;
-  estado: EstadoMedidor;
+  medidorId: string;
+  estadoId: number;
   motivo?: string;
 }
