@@ -7,6 +7,4 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   styleUrl: './comunidades.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ComunidadesComponent {
-
-}
+export class ComunidadesComponent {}

@@ -19,9 +19,7 @@
 
     <div class="row g-3">
       <div class="col-md-6">
-        <label for="tipoIdentificacionId" class="form-label">
-          Tipo de identificación
-        </label>
+        <label for="tipoIdentificacionId" class="form-label"> Tipo de identificación </label>
 
         <select
           id="tipoIdentificacionId"
@@ -43,9 +41,7 @@
       </div>
 
       <div class="col-md-6">
-        <label for="identificacion" class="form-label">
-          Identificación
-        </label>
+        <label for="identificacion" class="form-label"> Identificación </label>
 
         <input
           id="identificacion"
@@ -62,16 +58,9 @@
 
       @if (tipoIdentificacionId?.value !== '2' && tipoIdentificacionId?.value !== '4') {
         <div class="col-md-6">
-          <label for="nombres" class="form-label">
-            Nombres
-          </label>
+          <label for="nombres" class="form-label"> Nombres </label>
 
-          <input
-            id="nombres"
-            type="text"
-            class="form-control"
-            formControlName="nombres"
-          />
+          <input id="nombres" type="text" class="form-control" formControlName="nombres" />
 
           @if (campoInvalido('nombres')) {
             <small class="text-danger">Los nombres son obligatorios.</small>
@@ -79,16 +68,9 @@
         </div>
 
         <div class="col-md-6">
-          <label for="apellidos" class="form-label">
-            Apellidos
-          </label>
+          <label for="apellidos" class="form-label"> Apellidos </label>
 
-          <input
-            id="apellidos"
-            type="text"
-            class="form-control"
-            formControlName="apellidos"
-          />
+          <input id="apellidos" type="text" class="form-control" formControlName="apellidos" />
 
           @if (campoInvalido('apellidos')) {
             <small class="text-danger">Los apellidos son obligatorios.</small>
@@ -98,9 +80,7 @@
 
       @if (tipoIdentificacionId?.value === '2' || tipoIdentificacionId?.value === '4') {
         <div class="col-md-12">
-          <label for="razonSocial" class="form-label">
-            Razón social
-          </label>
+          <label for="razonSocial" class="form-label"> Razón social </label>
 
           <input
             id="razonSocial"
@@ -119,9 +99,7 @@
       }
 
       <div class="col-md-6">
-        <label for="email" class="form-label">
-          Correo electrónico
-        </label>
+        <label for="email" class="form-label"> Correo electrónico </label>
 
         <input
           id="email"
@@ -137,9 +115,7 @@
       </div>
 
       <div class="col-md-6">
-        <label for="telefono" class="form-label">
-          Teléfono
-        </label>
+        <label for="telefono" class="form-label"> Teléfono </label>
 
         <input
           id="telefono"
@@ -155,9 +131,7 @@
       </div>
 
       <div class="col-md-6">
-        <label for="telefonoSecundario" class="form-label">
-          Teléfono secundario
-        </label>
+        <label for="telefonoSecundario" class="form-label"> Teléfono secundario </label>
 
         <input
           id="telefonoSecundario"
@@ -169,9 +143,7 @@
       </div>
 
       <div class="col-md-6">
-        <p class="form-label d-block mb-2">
-          Condiciones especiales
-        </p>
+        <p class="form-label d-block mb-2">Condiciones especiales</p>
 
         <div class="d-flex flex-column gap-2 mt-2">
           <div class="form-check">
@@ -182,9 +154,7 @@
               formControlName="aplicaTerceraEdad"
             />
 
-            <label class="form-check-label" for="aplicaTerceraEdad">
-              Aplica tercera edad
-            </label>
+            <label class="form-check-label" for="aplicaTerceraEdad"> Aplica tercera edad </label>
           </div>
 
           <div class="form-check">
@@ -195,17 +165,13 @@
               formControlName="aplicaDiscapacidad"
             />
 
-            <label class="form-check-label" for="aplicaDiscapacidad">
-              Aplica discapacidad
-            </label>
+            <label class="form-check-label" for="aplicaDiscapacidad"> Aplica discapacidad </label>
           </div>
         </div>
       </div>
 
       <div class="col-md-12">
-        <label for="direccionDomicilio" class="form-label">
-          Dirección domiciliaria
-        </label>
+        <label for="direccionDomicilio" class="form-label"> Dirección domiciliaria </label>
 
         <textarea
           id="direccionDomicilio"
@@ -223,9 +189,7 @@
   </div>
 
   <div class="modal-footer border-top-0 pt-0">
-    <button type="button" class="btn btn-light" (click)="onClose()">
-      Cancelar
-    </button>
+    <button type="button" class="btn btn-light" (click)="onClose()">Cancelar</button>
 
     <button type="submit" class="btn btn-primary" [disabled]="clienteForm.invalid || isSaving">
       @if (isSaving) {
