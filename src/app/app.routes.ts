@@ -9,6 +9,14 @@ export const routes: Routes = [
     canActivate: [guestGuard],
   },
   {
+    path: 'consulta-planilla',
+    loadComponent: () =>
+      import('./features/consulta-planilla/consulta-planilla.component').then(
+        (m) => m.ConsultaPlanillaComponent,
+      ),
+    canActivate: [guestGuard],
+  },
+  {
     path: 'app',
     loadComponent: () => import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
     canActivate: [authGuard],
@@ -18,11 +26,71 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/dashboard/dashboard/dashboard').then((m) => m.Dashboard),
       },
+
       // Sección Administración (Solo Admin)
       {
         path: 'admin',
-        loadChildren: () => import('./features/admin/admin.routes').then((m) => m.adminRoutes),
+        loadComponent: () =>
+          import('./features/admin/admin.component/admin.component').then((m) => m.AdminComponent),
+        children: [
+          {
+            path: 'users',
+            loadComponent: () =>
+              import('./features/users/user-management/user-management').then(
+                (m) => m.UserManagement,
+              ),
+          },
+          {
+            path: 'roles',
+            loadComponent: () => import('./features/admin/roles/roles').then((m) => m.Roles),
+            children: [
+              {
+                path: 'presidente',
+                loadComponent: () =>
+                  import('./features/presidente/presidente.component/presidente.component').then(
+                    (m) => m.PresidenteComponent,
+                  ),
+              },
+              {
+                path: 'secretario',
+                loadComponent: () =>
+                  import('./features/secretario/secretario.component/secretario.component').then(
+                    (m) => m.SecretarioComponent,
+                  ),
+              },
+              {
+                path: 'tesorero',
+                loadComponent: () =>
+                  import('./features/tesorero/tesorero.component/tesorero.component').then(
+                    (m) => m.TesoreroComponent,
+                  ),
+              },
+            ],
+          },
+          {
+            path: 'sectores',
+            loadComponent: () =>
+              import('./features/admin/sectores-prueba/components/sectores-prueba/sectores-prueba').then(
+                (m) => m.SectoresPrueba,
+              ),
+          },
+          {
+            path: 'comunidades',
+            loadComponent: () =>
+              import('./features/admin/comunidades/comunidades.component').then(
+                (m) => m.ComunidadesComponent,
+              ),
+          },
+          {
+            path: 'config',
+            loadComponent: () =>
+              import('./features/admin/admin.component/admin.component').then(
+                (m) => m.AdminComponent,
+              ),
+          },
+        ],
       },
+
       // Sección Presidencia (Admin y Presidente)
       {
         path: 'presidente',
@@ -50,6 +118,7 @@ export const routes: Routes = [
           },
         ],
       },
+
       // Sección Secretaría (Admin y Secretario)
       {
         path: 'secretario',
@@ -77,6 +146,7 @@ export const routes: Routes = [
           },
         ],
       },
+
       // Sección Tesorería (Admin y Tesorero)
       {
         path: 'tesorero',
@@ -104,6 +174,7 @@ export const routes: Routes = [
           },
         ],
       },
+
       // Sección Contratos
       {
         path: 'Contratos',
@@ -148,6 +219,7 @@ export const routes: Routes = [
           },
         ],
       },
+
       // Sección Facturación
       {
         path: 'Facturacion',
@@ -189,6 +261,7 @@ export const routes: Routes = [
           },
         ],
       },
+
       // Sección Reportes
       {
         path: 'Reportes',
@@ -219,6 +292,7 @@ export const routes: Routes = [
           },
         ],
       },
+
       // Otras secciones comunes
       {
         path: 'water-sources',
@@ -244,7 +318,7 @@ export const routes: Routes = [
   },
   {
     path: '',
-    redirectTo: 'login',
+    redirectTo: 'consulta-planilla',
     pathMatch: 'full',
   },
 ];

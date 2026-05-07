@@ -4,6 +4,7 @@ import {
   Component,
   inject,
   computed,
+  effect,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -22,9 +23,12 @@ import { ComunidadFormComponent } from './comunidad-form/comunidad-form.componen
 export class ComunidadesComponent {
   private readonly comunidadesService = inject(ComunidadesService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly focusableSelectors =
+    'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
   readonly comunidades = signal<Comunidad[]>([]);
   isLoading = false;
+  isDetailLoading = false;
   currentPage = 1;
   pageSize = 5;
   readonly pageSizeOptions = [5, 10, 15];
@@ -35,8 +39,17 @@ export class ComunidadesComponent {
   readonly isEditMode = signal(false);
   readonly selectedCommunity = signal<Comunidad | null>(null);
   private editingCommunityId: number | null = null;
+  private previouslyFocusedElement: HTMLElement | null = null;
   readonly hasFetched = signal(false);
   formErrors: Record<string, string> = {};
+
+  constructor() {
+    effect(() => {
+      this.searchTerm();
+      this.currentPage = 1;
+      this.cdr.markForCheck();
+    });
+  }
 
   readonly filteredComunidades = computed(() => {
     const term = this.searchTerm().toLowerCase();
@@ -100,34 +113,40 @@ export class ComunidadesComponent {
   }
 
   openCreateModal(): void {
+    this.saveFocusedElement();
     this.isEditMode.set(false);
     this.editingCommunityId = null;
     this.selectedCommunity.set(null);
     this.formErrors = {};
     this.showFormModal.set(true);
+    this.focusModalBySelector('[data-modal="community-form"]');
   }
 
   openEditModal(comunidad: Comunidad): void {
+    this.saveFocusedElement();
     this.isEditMode.set(true);
     this.editingCommunityId = comunidad.id;
     this.selectedCommunity.set(comunidad);
     this.formErrors = {};
     this.showFormModal.set(true);
+    this.focusModalBySelector('[data-modal="community-form"]');
   }
 
   openDetailModal(comunidad: Comunidad): void {
-    this.isLoading = true;
+    this.saveFocusedElement();
+    this.isDetailLoading = true;
 
     this.comunidadesService.getComunidadById(comunidad.id).subscribe({
       next: (detalle) => {
         this.selectedCommunity.set(detalle);
         this.showDetailModal.set(true);
-        this.isLoading = false;
+        this.isDetailLoading = false;
+        this.focusModalBySelector('[data-modal="community-detail"]');
         this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('Error obteniendo detalle de comunidad:', err);
-        this.isLoading = false;
+        this.isDetailLoading = false;
         this.cdr.markForCheck();
       },
     });
@@ -138,11 +157,13 @@ export class ComunidadesComponent {
     this.editingCommunityId = null;
     this.selectedCommunity.set(null);
     this.formErrors = {};
+    this.restoreFocus();
   }
 
   closeDetailModal(): void {
     this.showDetailModal.set(false);
     this.selectedCommunity.set(null);
+    this.restoreFocus();
   }
 
   setPageSize(size: number): void {
@@ -166,6 +187,34 @@ export class ComunidadesComponent {
 
     this.currentPage = page;
     this.cdr.markForCheck();
+  }
+
+  trapModalFocus(event: KeyboardEvent, modal: HTMLElement): void {
+    if (event.key !== 'Tab') {
+      return;
+    }
+
+    const focusableElements = this.getFocusableElements(modal);
+
+    if (focusableElements.length === 0) {
+      event.preventDefault();
+      modal.focus();
+      return;
+    }
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (event.shiftKey && document.activeElement === firstElement) {
+      event.preventDefault();
+      lastElement.focus();
+      return;
+    }
+
+    if (!event.shiftKey && document.activeElement === lastElement) {
+      event.preventDefault();
+      firstElement.focus();
+    }
   }
 
   handleFormSubmit(payload: Omit<Comunidad, 'id'>): void {
@@ -235,7 +284,6 @@ export class ComunidadesComponent {
         this.hasFetched.set(true);
         this.isLoading = false;
         this.cdr.markForCheck();
-        this.cdr.detectChanges();
       },
       error: (err) => {
         console.error('Error recargando comunidades después de guardar:', err);
@@ -254,5 +302,46 @@ export class ComunidadesComponent {
 
       return sameCode && differentId;
     });
+  }
+
+  private saveFocusedElement(): void {
+    this.previouslyFocusedElement =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  }
+
+  private focusModalBySelector(selector: string): void {
+    setTimeout(() => {
+      const modal = document.querySelector<HTMLElement>(selector);
+
+      if (!modal) {
+        return;
+      }
+
+      const firstFocusableElement = this.getFocusableElements(modal)[0];
+
+      if (firstFocusableElement) {
+        firstFocusableElement.focus();
+        return;
+      }
+
+      modal.focus();
+    });
+  }
+
+  private restoreFocus(): void {
+    setTimeout(() => {
+      this.previouslyFocusedElement?.focus();
+      this.previouslyFocusedElement = null;
+    });
+  }
+
+  private getFocusableElements(container: HTMLElement): HTMLElement[] {
+    return Array.from(container.querySelectorAll<HTMLElement>(this.focusableSelectors)).filter(
+      (element) => !element.hasAttribute('disabled') && this.isVisible(element),
+    );
+  }
+
+  private isVisible(element: HTMLElement): boolean {
+    return !!(element.offsetWidth || element.offsetHeight || element.getClientRects().length);
   }
 }
