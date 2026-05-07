@@ -22,11 +22,12 @@
           </span>
 
           <input
+            #searchInput
             type="text"
             class="form-control border-start-0 ps-0 shadow-none"
             placeholder="Buscar comunidad..."
             [value]="searchTerm()"
-            (input)="searchTerm.set($any($event.target).value)"
+            (input)="searchTerm.set(searchInput.value)"
             aria-label="Buscar comunidad"
           />
         </div>
@@ -51,9 +52,12 @@
         <button
           class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
           type="button"
+          disabled
+          aria-disabled="true"
+          title="Acciones masivas no disponibles todavía"
         >
           Acciones Masivas
-          <i class="bi bi-chevron-down"></i>
+          <i class="bi bi-chevron-down" aria-hidden="true"></i>
         </button>
       </div>
     </div>
@@ -105,7 +109,7 @@
               </tr>
             }
 
-            @for (comunidad of pagedComunidades; track comunidad.codigo) {
+            @for (comunidad of pagedComunidades; track comunidad.id) {
               <tr>
                 <td class="fw-medium text-dark" style="font-size: 0.95rem">
                   {{ comunidad.codigo }}
@@ -174,16 +178,15 @@
         <nav>
           <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
             <li class="page-item" [class.disabled]="currentPage === 1">
-              <a
+              <button
                 class="page-link border-0 text-dark bg-transparent fw-medium small"
-                href="#"
-                (click)="$event.preventDefault(); goToPage(currentPage - 1)"
-                [attr.tabindex]="currentPage === 1 ? -1 : null"
-                [attr.aria-disabled]="currentPage === 1"
+                type="button"
+                (click)="goToPage(currentPage - 1)"
+                [disabled]="currentPage === 1"
               >
                 <i class="bi bi-chevron-left me-1" style="font-size: 0.7rem"></i>
-                Previous
-              </a>
+                Anterior
+              </button>
             </li>
 
             @for (page of pageNumbers; track page) {
@@ -192,32 +195,31 @@
                 [class.active]="currentPage === page"
                 [attr.aria-current]="currentPage === page ? 'page' : null"
               >
-                <a
+                <button
                   class="page-link fw-medium"
+                  type="button"
                   [class.shadow-sm]="currentPage === page"
                   [class.border-0]="currentPage !== page"
                   [class.bg-transparent]="currentPage !== page"
                   [class.text-dark]="true"
                   style="border-radius: 6px"
-                  href="#"
-                  (click)="$event.preventDefault(); goToPage(page)"
+                  (click)="goToPage(page)"
                 >
                   {{ page }}
-                </a>
+                </button>
               </li>
             }
 
             <li class="page-item" [class.disabled]="currentPage === totalPages">
-              <a
+              <button
                 class="page-link border-0 text-dark bg-transparent fw-medium small"
-                href="#"
-                (click)="$event.preventDefault(); goToPage(currentPage + 1)"
-                [attr.tabindex]="currentPage === totalPages ? -1 : null"
-                [attr.aria-disabled]="currentPage === totalPages"
+                type="button"
+                (click)="goToPage(currentPage + 1)"
+                [disabled]="currentPage === totalPages"
               >
-                Next
+                Siguiente
                 <i class="bi bi-chevron-right ms-1" style="font-size: 0.7rem"></i>
-              </a>
+              </button>
             </li>
           </ul>
         </nav>
@@ -228,13 +230,19 @@
 
 @if (showFormModal()) {
   <div
+    #formModal
     class="modal fade show d-block bg-dark bg-opacity-25"
     tabindex="-1"
     role="dialog"
     aria-modal="true"
+    aria-labelledby="formulario-comunidad-title"
+    data-modal="community-form"
+    (keydown)="trapModalFocus($event, formModal)"
   >
     <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
       <div class="modal-content border-0 shadow">
+        <h2 id="formulario-comunidad-title" class="visually-hidden">Formulario de comunidad</h2>
+
         <app-comunidad-form
           [comunidadAEditar]="selectedCommunity()"
           [customErrors]="formErrors"
@@ -248,16 +256,20 @@
 
 @if (showDetailModal() && selectedCommunity()) {
   <div
+    #detailModal
     class="modal fade show d-block bg-dark bg-opacity-25"
     tabindex="-1"
     role="dialog"
     aria-modal="true"
+    aria-labelledby="detalle-comunidad-title"
+    data-modal="community-detail"
+    (keydown)="trapModalFocus($event, detailModal)"
   >
     <div class="modal-dialog modal-dialog-centered modal-md" role="document">
       <div class="modal-content border-0 shadow">
         <div class="modal-header border-bottom-0 px-4 pt-4">
           <div>
-            <h5 class="modal-title fw-bold">Detalle de comunidad</h5>
+            <h5 id="detalle-comunidad-title" class="modal-title fw-bold">Detalle de comunidad</h5>
             <p class="text-muted mb-0">Consulta la información completa de la comunidad.</p>
           </div>
 
