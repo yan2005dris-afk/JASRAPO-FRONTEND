@@ -44,3 +44,11 @@ export interface EditarEstadoMedidorPayload {
 export interface IMedidorDto extends Omit<IMedidor, 'estado'> {
   estado?: string | IEstadoMedidor;
 }
+export interface ActualizarEstadoMedidorBody {
+  estadoId: number;
+  motivo?: string;
+}
+
+export interface EditarEstadoMedidorPayload extends ActualizarEstadoMedidorBody {
+  medidorId: number;
+}

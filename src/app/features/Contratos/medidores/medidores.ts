@@ -14,6 +14,7 @@ import {
   EditarEstadoMedidorPayload,
   IEstadoMedidor,
   IMedidorDto,
+  ActualizarEstadoMedidorBody,
 } from './interfaces/imedidor.interface';
 import { MedidoresService } from './services/medidores.service';
 import { forkJoin, finalize } from 'rxjs';
@@ -202,7 +203,13 @@ export class Medidores implements OnInit {
     this.isSaving = true;
     this.cdr.detectChanges();
     const id = payload.medidorId;
-    this.medidoresService.updateMedidor(id, payload).subscribe({
+    const body: ActualizarEstadoMedidorBody = {
+      estadoId: payload.estadoId,
+      motivo: payload.motivo,
+    };
+
+    // 3. Llamamos al servicio con los parámetros separados
+    this.medidoresService.updateMedidor(id, body).subscribe({
       next: () => {
         this.isSaving = false;
         this.closeEditar();

@@ -5,7 +5,7 @@ import {
   IEstadoMedidor,
   IMedidor,
   CrearMedidorPayload,
-  EditarEstadoMedidorPayload,
+  ActualizarEstadoMedidorBody,
 } from '../interfaces/imedidor.interface';
 import { environment } from '../../../../../environments/environment';
 
@@ -54,14 +54,14 @@ export class MedidoresService {
 
   /**
    * Realiza una actualización parcial de los datos de un medidor.
-   * @param id Identificador del registro a modificar.
-   * @param changes Objeto con las propiedades a actualizar (limpia el medidorId internamente).
-   * @returns Observable con la entidad del medidor actualizada.
+   * @param id Identificador del registro a modificar (va en la URL).
+   * @param body Objeto con las propiedades a actualizar (va en el JSON).
    */
-  updateMedidor(id: number, changes: EditarEstadoMedidorPayload): Observable<IMedidor> {
-    const { medidorId: _, ...payloadLimpio } = changes;
-    return this.http.patch<IMedidor>(`${this.endpoint}/${id}`, payloadLimpio);
+  updateMedidor(id: number, body: ActualizarEstadoMedidorBody): Observable<IMedidor> {
+    // Ya no hay desestructuración, no hay variables sin usar, no hay 'any'
+    return this.http.patch<IMedidor>(`${this.endpoint}/${id}`, body);
   }
+
   /**
    * Remueve de forma definitiva un medidor del sistema.
    * @param id Identificador del registro a eliminar.
