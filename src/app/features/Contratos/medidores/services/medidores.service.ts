@@ -59,7 +59,7 @@ export class MedidoresService {
    * @returns Observable con la entidad del medidor actualizada.
    */
   updateMedidor(id: number, changes: EditarEstadoMedidorPayload): Observable<IMedidor> {
-    const { medidorId, ...payloadLimpio } = changes;
+    const { medidorId: _, ...payloadLimpio } = changes;
     return this.http.patch<IMedidor>(`${this.endpoint}/${id}`, payloadLimpio);
   }
   /**
