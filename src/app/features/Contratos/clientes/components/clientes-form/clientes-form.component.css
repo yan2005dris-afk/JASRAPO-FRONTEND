@@ -51,3 +51,23 @@ textarea {
 .btn {
   border-radius: 8px;
 }
+
+.form-message {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.form-message-success {
+  color: #146c43;
+  background-color: #d1e7dd;
+  border: 1px solid #badbcc;
+}
+
+.form-message-error {
+  color: #b02a37;
+  background-color: #f8d7da;
+  border: 1px solid #f5c2c7;
+}

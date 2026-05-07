@@ -24,6 +24,8 @@ import {
   IIdentificacion,
 } from '../../interfaces/iclientes.interface';
 
+type TipoMensajeFormulario = 'success' | 'error' | null;
+
 @Component({
   selector: 'app-clientes-form',
   imports: [CommonModule, ReactiveFormsModule],
@@ -43,6 +45,9 @@ export class ClientesFormComponent implements OnInit {
 
   isEditMode = false;
   isSaving = false;
+
+  mensajeFormulario = '';
+  tipoMensajeFormulario: TipoMensajeFormulario = null;
 
   tiposIdentificacion: IIdentificacion[] = [];
 
@@ -89,9 +94,8 @@ export class ClientesFormComponent implements OnInit {
         this.actualizarValidacionesPersona();
         this.cdr.markForCheck();
       },
-      error: (err) => {
-        console.error('Error cargando tipos de identificación:', err);
-        this.cdr.markForCheck();
+      error: () => {
+        this.mostrarMensaje('No se pudieron cargar los tipos de identificación.', 'error');
       },
     });
   }
@@ -207,8 +211,11 @@ export class ClientesFormComponent implements OnInit {
   }
 
   onSubmit(): void {
+    this.limpiarMensaje();
+
     if (this.clienteForm.invalid) {
       this.clienteForm.markAllAsTouched();
+      this.mostrarMensaje('Revise los campos obligatorios antes de guardar.', 'error');
       return;
     }
 
@@ -229,14 +236,14 @@ export class ClientesFormComponent implements OnInit {
     this.clientesService.createCliente(cliente).subscribe({
       next: () => {
         this.isSaving = false;
+        this.mostrarMensaje('Cliente creado correctamente.', 'success');
         this.formSubmitted.emit();
         this.onClose();
         this.cdr.markForCheck();
       },
-      error: (err) => {
-        console.error('Error creando cliente:', err);
-        alert('Ocurrió un error al crear el cliente.');
+      error: () => {
         this.isSaving = false;
+        this.mostrarMensaje('No se pudo crear el cliente. Revise los datos ingresados.', 'error');
         this.cdr.markForCheck();
       },
     });
@@ -247,6 +254,7 @@ export class ClientesFormComponent implements OnInit {
 
     if (!clienteActual) {
       this.isSaving = false;
+      this.mostrarMensaje('No se encontró información del cliente a actualizar.', 'error');
       this.cdr.markForCheck();
       return;
     }
@@ -254,9 +262,11 @@ export class ClientesFormComponent implements OnInit {
     const clienteId = this.obtenerIdCliente(clienteActual);
 
     if (clienteId === null) {
-      console.error('No se puede actualizar porque el cliente no tiene id.');
-      alert('No se puede actualizar este cliente porque no tiene un ID válido.');
       this.isSaving = false;
+      this.mostrarMensaje(
+        'No se puede actualizar este cliente porque no tiene un ID válido.',
+        'error',
+      );
       this.cdr.markForCheck();
       return;
     }
@@ -264,14 +274,17 @@ export class ClientesFormComponent implements OnInit {
     this.clientesService.updateCliente(clienteId, cliente).subscribe({
       next: () => {
         this.isSaving = false;
+        this.mostrarMensaje('Cliente actualizado correctamente.', 'success');
         this.formSubmitted.emit();
         this.onClose();
         this.cdr.markForCheck();
       },
-      error: (err) => {
-        console.error('Error actualizando cliente:', err);
-        alert('Ocurrió un error al actualizar el cliente.');
+      error: () => {
         this.isSaving = false;
+        this.mostrarMensaje(
+          'No se pudo actualizar el cliente. Revise los datos ingresados.',
+          'error',
+        );
         this.cdr.markForCheck();
       },
     });
@@ -317,6 +330,17 @@ export class ClientesFormComponent implements OnInit {
     const control = this.clienteForm.get(campo);
 
     return !!control && control.invalid && (control.dirty || control.touched);
+  }
+
+  mostrarMensaje(mensaje: string, tipo: TipoMensajeFormulario): void {
+    this.mensajeFormulario = mensaje;
+    this.tipoMensajeFormulario = tipo;
+    this.cdr.markForCheck();
+  }
+
+  limpiarMensaje(): void {
+    this.mensajeFormulario = '';
+    this.tipoMensajeFormulario = null;
   }
 
   get tipoIdentificacionId(): AbstractControl | null {

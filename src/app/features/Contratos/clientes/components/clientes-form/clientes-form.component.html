@@ -1,209 +1,181 @@
-<div class="modal-header border-bottom-0 pb-0">
-  <h5 class="modal-title fw-bold">
-    {{ isEditMode ? 'Editar Cliente' : 'Agregar Nuevo Cliente' }}
-  </h5>
-
-  <button
-    type="button"
-    class="btn-close shadow-none"
-    aria-label="Cerrar"
-    [disabled]="isSaving"
-    (click)="onClose()"
-  ></button>
-</div>
-
-<form [formGroup]="clienteForm" (ngSubmit)="onSubmit()">
-  <div class="modal-body pt-4">
-    <p class="text-muted mb-4">
-      Complete los campos para registrar o actualizar la información del cliente.
-    </p>
-
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label for="tipoIdentificacionId" class="form-label">Tipo de identificación</label>
-
-        <select
-          id="tipoIdentificacionId"
-          class="form-select"
-          formControlName="tipoIdentificacionId"
-        >
-          <option value="" disabled>Seleccione un tipo de identificación</option>
-
-          @for (tipo of tiposIdentificacion; track tipo.identificacionId) {
-            <option [value]="tipo.identificacionId">
-              {{ tipo.nombre }}
-            </option>
-          }
-        </select>
-
-        @if (campoInvalido('tipoIdentificacionId')) {
-          <div class="text-danger mt-1">El tipo de identificación es obligatorio.</div>
-        }
+<div class="modal-backdrop">
+  <div class="modal-container">
+    <div class="modal-header">
+      <div>
+        <h2>{{ isEditMode ? 'Editar Cliente' : 'Agregar Nuevo Cliente' }}</h2>
+        <p>Complete los campos para registrar o actualizar la información del cliente.</p>
       </div>
 
-      <div class="col-md-6">
-        <label for="identificacion" class="form-label">Identificación</label>
-
-        <input
-          id="identificacion"
-          type="text"
-          class="form-control"
-          formControlName="identificacion"
-          placeholder="Ingrese la identificación"
-        />
-
-        @if (campoInvalido('identificacion')) {
-          <div class="text-danger mt-1">La identificación es obligatoria.</div>
-        }
-      </div>
-
-      @if (!esPersonaJuridica()) {
-        <div class="col-md-6">
-          <label for="nombres" class="form-label">Nombres</label>
-
-          <input
-            id="nombres"
-            type="text"
-            class="form-control"
-            formControlName="nombres"
-            placeholder="Ingrese los nombres"
-          />
-
-          @if (campoInvalido('nombres')) {
-            <div class="text-danger mt-1">Los nombres son obligatorios.</div>
-          }
-        </div>
-
-        <div class="col-md-6">
-          <label for="apellidos" class="form-label">Apellidos</label>
-
-          <input
-            id="apellidos"
-            type="text"
-            class="form-control"
-            formControlName="apellidos"
-            placeholder="Ingrese los apellidos"
-          />
-
-          @if (campoInvalido('apellidos')) {
-            <div class="text-danger mt-1">Los apellidos son obligatorios.</div>
-          }
-        </div>
-      }
-
-      @if (esPersonaJuridica()) {
-        <div class="col-md-12">
-          <label for="razonSocial" class="form-label">Razón social</label>
-
-          <input
-            id="razonSocial"
-            type="text"
-            class="form-control"
-            formControlName="razonSocial"
-            placeholder="Ingrese la razón social"
-          />
-
-          @if (campoInvalido('razonSocial')) {
-            <div class="text-danger mt-1">La razón social es obligatoria.</div>
-          }
-        </div>
-      }
-
-      <div class="col-md-6">
-        <label for="email" class="form-label">Correo electrónico</label>
-
-        <input
-          id="email"
-          type="email"
-          class="form-control"
-          formControlName="email"
-          placeholder="usuario@correo.com"
-        />
-
-        @if (campoInvalido('email')) {
-          <div class="text-danger mt-1">Ingrese un correo electrónico válido.</div>
-        }
-      </div>
-
-      <div class="col-md-6">
-        <label for="telefono" class="form-label">Teléfono</label>
-
-        <input
-          id="telefono"
-          type="text"
-          class="form-control"
-          formControlName="telefono"
-          placeholder="Ingrese el teléfono"
-        />
-
-        @if (campoInvalido('telefono')) {
-          <div class="text-danger mt-1">El teléfono es obligatorio.</div>
-        }
-      </div>
-
-      <div class="col-md-6">
-        <label for="telefonoSecundario" class="form-label">Teléfono secundario</label>
-
-        <input
-          id="telefonoSecundario"
-          type="text"
-          class="form-control"
-          formControlName="telefonoSecundario"
-          placeholder="Opcional"
-        />
-      </div>
-
-      <div class="col-md-6">
-        <p class="form-label d-block mb-2">Condiciones especiales</p>
-
-        <div class="form-check mb-2">
-          <input
-            id="aplicaTerceraEdad"
-            type="checkbox"
-            class="form-check-input"
-            formControlName="aplicaTerceraEdad"
-          />
-
-          <label for="aplicaTerceraEdad" class="form-check-label"> Aplica tercera edad </label>
-        </div>
-
-        <div class="form-check">
-          <input
-            id="aplicaDiscapacidad"
-            type="checkbox"
-            class="form-check-input"
-            formControlName="aplicaDiscapacidad"
-          />
-
-          <label for="aplicaDiscapacidad" class="form-check-label"> Aplica discapacidad </label>
-        </div>
-      </div>
-
-      <div class="col-md-12">
-        <label for="direccionDomicilio" class="form-label">Dirección domiciliaria</label>
-
-        <textarea
-          id="direccionDomicilio"
-          class="form-control"
-          rows="3"
-          formControlName="direccionDomicilio"
-          placeholder="Ingrese la dirección del cliente"
-        ></textarea>
-
-        @if (campoInvalido('direccionDomicilio')) {
-          <div class="text-danger mt-1">La dirección es obligatoria.</div>
-        }
-      </div>
+      <button type="button" class="btn-close" (click)="onClose()">×</button>
     </div>
-  </div>
 
-  <div class="modal-footer border-top-0 pt-0">
-    <button type="button" class="btn btn-light" [disabled]="isSaving" (click)="onClose()">
-      Cancelar
-    </button>
+    @if (mensajeFormulario) {
+      <div
+        class="form-message"
+        [ngClass]="{
+          'form-message-success': tipoMensajeFormulario === 'success',
+          'form-message-error': tipoMensajeFormulario === 'error',
+        }"
+      >
+        {{ mensajeFormulario }}
+      </div>
+    }
 
-    <button type="submit" class="btn btn-primary" [disabled]="clienteForm.invalid || isSaving">
-      {{ isSaving ? 'Guardando...' : 'Guardar' }}
-    </button>
+    <form [formGroup]="clienteForm" (ngSubmit)="onSubmit()">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="tipoIdentificacionId" class="form-label">Tipo de identificación</label>
+          <select
+            id="tipoIdentificacionId"
+            class="form-control"
+            formControlName="tipoIdentificacionId"
+          >
+            <option value="">Seleccione un tipo de identificación</option>
+
+            @for (tipo of tiposIdentificacion; track tipo.identificacionId) {
+              <option [value]="tipo.identificacionId">
+                {{ tipo.nombre }}
+              </option>
+            }
+          </select>
+
+          @if (campoInvalido('tipoIdentificacionId')) {
+            <small class="error-message">El tipo de identificación es obligatorio.</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="identificacion" class="form-label">Identificación</label>
+          <input
+            id="identificacion"
+            type="text"
+            class="form-control"
+            formControlName="identificacion"
+            placeholder="Ej. 0923456789"
+          />
+
+          @if (campoInvalido('identificacion')) {
+            <small class="error-message">La identificación es obligatoria.</small>
+          }
+        </div>
+
+        @if (!esPersonaJuridica()) {
+          <div class="form-group">
+            <label for="nombres" class="form-label">Nombres</label>
+            <input id="nombres" type="text" class="form-control" formControlName="nombres" />
+
+            @if (campoInvalido('nombres')) {
+              <small class="error-message">Los nombres son obligatorios.</small>
+            }
+          </div>
+
+          <div class="form-group">
+            <label for="apellidos" class="form-label">Apellidos</label>
+            <input id="apellidos" type="text" class="form-control" formControlName="apellidos" />
+
+            @if (campoInvalido('apellidos')) {
+              <small class="error-message">Los apellidos son obligatorios.</small>
+            }
+          </div>
+        }
+
+        @if (esPersonaJuridica()) {
+          <div class="form-group full-width">
+            <label for="razonSocial" class="form-label">Razón social</label>
+            <input
+              id="razonSocial"
+              type="text"
+              class="form-control"
+              formControlName="razonSocial"
+              placeholder="Ingrese la razón social"
+            />
+
+            @if (campoInvalido('razonSocial')) {
+              <small class="error-message">La razón social es obligatoria.</small>
+            }
+          </div>
+        }
+
+        <div class="form-group">
+          <label for="email" class="form-label">Correo electrónico</label>
+          <input
+            id="email"
+            type="email"
+            class="form-control"
+            formControlName="email"
+            placeholder="usuario@correo.com"
+          />
+
+          @if (campoInvalido('email')) {
+            <small class="error-message">Ingrese un correo electrónico válido.</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="telefono" class="form-label">Teléfono</label>
+          <input
+            id="telefono"
+            type="text"
+            class="form-control"
+            formControlName="telefono"
+            placeholder="Ej. 0987654321"
+          />
+
+          @if (campoInvalido('telefono')) {
+            <small class="error-message">El teléfono es obligatorio.</small>
+          }
+        </div>
+
+        <div class="form-group">
+          <label for="telefonoSecundario" class="form-label">Teléfono secundario</label>
+          <input
+            id="telefonoSecundario"
+            type="text"
+            class="form-control"
+            formControlName="telefonoSecundario"
+            placeholder="Opcional"
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Condiciones especiales</label>
+
+          <div class="checkbox-group">
+            <label for="aplicaTerceraEdad" class="checkbox-label">
+              <input id="aplicaTerceraEdad" type="checkbox" formControlName="aplicaTerceraEdad" />
+              Aplica tercera edad
+            </label>
+
+            <label for="aplicaDiscapacidad" class="checkbox-label">
+              <input id="aplicaDiscapacidad" type="checkbox" formControlName="aplicaDiscapacidad" />
+              Aplica discapacidad
+            </label>
+          </div>
+        </div>
+
+        <div class="form-group full-width">
+          <label for="direccionDomicilio" class="form-label">Dirección domiciliaria</label>
+          <textarea
+            id="direccionDomicilio"
+            class="form-control"
+            formControlName="direccionDomicilio"
+            placeholder="Ingrese la dirección del cliente"
+            rows="3"
+          ></textarea>
+
+          @if (campoInvalido('direccionDomicilio')) {
+            <small class="error-message">La dirección domiciliaria es obligatoria.</small>
+          }
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-cancel" (click)="onClose()">Cancelar</button>
+
+        <button type="submit" class="btn-save" [disabled]="isSaving">
+          {{ isSaving ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
   </div>
-</form>
+</div>
