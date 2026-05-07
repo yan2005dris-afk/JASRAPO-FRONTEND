@@ -26,6 +26,7 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/dashboard/dashboard/dashboard').then((m) => m.Dashboard),
       },
+
       // Sección Administración (Solo Admin)
       {
         path: 'admin',
@@ -73,7 +74,13 @@ export const routes: Routes = [
                 (m) => m.SectoresPrueba,
               ),
           },
-
+          {
+            path: 'comunidades',
+            loadComponent: () =>
+              import('./features/admin/comunidades/comunidades.component').then(
+                (m) => m.ComunidadesComponent,
+              ),
+          },
           {
             path: 'config',
             loadComponent: () =>
@@ -83,6 +90,7 @@ export const routes: Routes = [
           },
         ],
       },
+
       // Sección Presidencia (Admin y Presidente)
       {
         path: 'presidente',
@@ -110,6 +118,7 @@ export const routes: Routes = [
           },
         ],
       },
+
       // Sección Secretaría (Admin y Secretario)
       {
         path: 'secretario',
@@ -137,6 +146,7 @@ export const routes: Routes = [
           },
         ],
       },
+
       // Sección Tesorería (Admin y Tesorero)
       {
         path: 'tesorero',
@@ -164,6 +174,7 @@ export const routes: Routes = [
           },
         ],
       },
+
       // Sección Contratos
       {
         path: 'Contratos',
@@ -208,6 +219,7 @@ export const routes: Routes = [
           },
         ],
       },
+
       // Sección Facturación
       {
         path: 'Facturacion',
@@ -249,6 +261,7 @@ export const routes: Routes = [
           },
         ],
       },
+
       // Sección Reportes
       {
         path: 'Reportes',
@@ -279,6 +292,7 @@ export const routes: Routes = [
           },
         ],
       },
+
       // Otras secciones comunes
       {
         path: 'water-sources',
