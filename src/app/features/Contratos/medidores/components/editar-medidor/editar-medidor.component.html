@@ -1,0 +1,57 @@
+<!-- 
+  Modal de Edición de Estado
+  Permite actualizar el estado de un medidor y añadir observaciones.
+-->
+<div class="modal-backdrop-custom">
+  <div class="modal-panel-edit">
+    <!-- Cabecera del modal -->
+    <header class="modal-header-custom">
+      <h6 class="modal-title-custom">
+        Editar estado del medidor <br class="mobile-break" />
+        <span class="highlight-text">[{{ medidor?.serie || 'S/N' }}]</span>
+      </h6>
+    </header>
+
+    <!-- Formulario -->
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <div class="modal-body-custom">
+        <div class="form-container">
+          <!-- Selección de Estado -->
+          <div class="input-wrapper top-spacing">
+            <!-- Se cambia el control a 'estadoId' para manejar la relación de BD -->
+            <select id="estadoEditar" class="custom-select" formControlName="estadoId">
+              <option [ngValue]="null" disabled>ESTADO</option>
+              <!-- Iteración sobre los objetos IEstadoMedidor que vienen de la BD -->
+              @for (estado of estados; track estado.estadoId) {
+                <option [value]="estado.estadoId">
+                  {{ estado.nombre | uppercase }}
+                </option>
+              }
+            </select>
+          </div>
+
+          <!-- Área de Observaciones -->
+          <div class="input-wrapper">
+            <label for="observacion" class="form-label">Observación:</label>
+            <textarea
+              id="observacion"
+              class="custom-textarea"
+              rows="5"
+              formControlName="observacion"
+            ></textarea>
+          </div>
+
+          <!-- Acciones del formulario -->
+          <footer class="form-actions">
+            <button type="button" class="btn-cancel" (click)="close()" [disabled]="isSaving">
+              Cancelar
+            </button>
+            <button type="submit" class="btn-save" [disabled]="form.invalid || isSaving">
+              {{ isSaving ? '...' : 'Guardar' }}
+            </button>
+          </footer>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
