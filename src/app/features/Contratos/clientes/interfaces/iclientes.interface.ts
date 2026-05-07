@@ -17,7 +17,7 @@ export interface IClientes {
   _id?: string | number;
 
   tipoIdentificacionId?: string | number;
-  tipoIdentificacion?: string;
+  tipoIdentificacion?: IIdentificacion | string | null;
 
   identificacion: string;
 

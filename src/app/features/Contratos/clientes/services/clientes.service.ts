@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 import {
   ActualizarClienteRequest,
@@ -12,6 +12,16 @@ import {
 
 import { environment } from '../../../../../environments/environment';
 
+type ClientesApiResponse =
+  | IClientes[]
+  | {
+      data?: IClientes[];
+      clientes?: IClientes[];
+      items?: IClientes[];
+      results?: IClientes[];
+      content?: IClientes[];
+    };
+
 @Injectable({
   providedIn: 'root',
 })
@@ -21,11 +31,13 @@ export class ClientesService {
   private readonly baseUrl = environment.apiUrl;
   private readonly endpoint = `${this.baseUrl}/clients`;
 
-  getAllClientes(): Observable<unknown> {
-    return this.http.get<unknown>(this.endpoint);
+  getAllClientes(): Observable<IClientes[]> {
+    return this.http
+      .get<ClientesApiResponse>(this.endpoint)
+      .pipe(map((response) => this.normalizarRespuestaClientes(response)));
   }
 
-  buscarClientes(params: BuscarClientesParams): Observable<unknown> {
+  buscarClientes(params: BuscarClientesParams): Observable<IClientes[]> {
     let httpParams = new HttpParams();
 
     if (params.nombreCompleto) {
@@ -48,9 +60,11 @@ export class ClientesService {
       httpParams = httpParams.set('activo', String(params.activo));
     }
 
-    return this.http.get<unknown>(this.endpoint, {
-      params: httpParams,
-    });
+    return this.http
+      .get<ClientesApiResponse>(this.endpoint, {
+        params: httpParams,
+      })
+      .pipe(map((response) => this.normalizarRespuestaClientes(response)));
   }
 
   getClienteById(id: string | number): Observable<IClientes> {
@@ -71,5 +85,20 @@ export class ClientesService {
 
   getTiposIdentificacion(): Observable<IIdentificacion[]> {
     return this.http.get<IIdentificacion[]>(`${this.endpoint}/identification-types`);
+  }
+
+  private normalizarRespuestaClientes(response: ClientesApiResponse): IClientes[] {
+    if (Array.isArray(response)) {
+      return response;
+    }
+
+    return (
+      response.data ??
+      response.clientes ??
+      response.items ??
+      response.results ??
+      response.content ??
+      []
+    );
   }
 }

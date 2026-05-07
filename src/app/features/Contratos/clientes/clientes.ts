@@ -7,6 +7,7 @@ import { ClientesService } from './services/clientes.service';
 import {
   EstadoBusquedaCliente,
   IClientes,
+  IIdentificacion,
   TipoBusquedaCliente,
 } from './interfaces/iclientes.interface';
 import { ClientesFormComponent } from './components/clientes-form/clientes-form.component';
@@ -374,6 +375,20 @@ export class Clientes {
     const nombreCompleto = `${cliente.nombres ?? ''} ${cliente.apellidos ?? ''}`.trim();
 
     return cliente.razonSocial || nombreCompleto || 'Sin nombre';
+  }
+
+  obtenerTipoIdentificacionCliente(cliente: IClientes | null): string {
+    if (!cliente?.tipoIdentificacion) {
+      return 'No registrado';
+    }
+
+    if (typeof cliente.tipoIdentificacion === 'string') {
+      return cliente.tipoIdentificacion;
+    }
+
+    const tipoIdentificacion = cliente.tipoIdentificacion as IIdentificacion;
+
+    return tipoIdentificacion.nombre || tipoIdentificacion.codigo || 'No registrado';
   }
 
   setPageSize(size: number): void {

@@ -142,7 +142,12 @@
                   </td>
 
                   <td class="text-muted small">
-                    {{ client.tipoIdentificacion || 'Sin tipo' }}
+                    {{
+                      $any(client.tipoIdentificacion)?.nombre ||
+                        $any(client.tipoIdentificacion)?.codigo ||
+                        client.tipoIdentificacionId ||
+                        'Sin tipo'
+                    }}
                   </td>
 
                   <td class="fw-medium text-dark" style="font-size: 0.95rem">
@@ -354,9 +359,14 @@
             <div class="col-md-6">
               <div class="detalle-card">
                 <span class="detalle-label">Tipo de identificación</span>
-                <strong>{{
-                  clienteDetalleSeleccionado.tipoIdentificacion || 'No registrado'
-                }}</strong>
+                <strong>
+                  {{
+                    $any(clienteDetalleSeleccionado.tipoIdentificacion)?.nombre ||
+                      $any(clienteDetalleSeleccionado.tipoIdentificacion)?.codigo ||
+                      clienteDetalleSeleccionado.tipoIdentificacionId ||
+                      'No registrado'
+                  }}
+                </strong>
               </div>
             </div>
 

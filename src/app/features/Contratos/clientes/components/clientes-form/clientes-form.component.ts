@@ -1,5 +1,13 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, inject, Input, OnInit, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+  inject,
+  input,
+  output,
+} from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -10,6 +18,7 @@ import {
 
 import { ClientesService } from '../../services/clientes.service';
 import {
+  ActualizarClienteRequest,
   CrearClienteRequest,
   IClientes,
   IIdentificacion,
@@ -20,15 +29,17 @@ import {
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './clientes-form.component.html',
   styleUrl: './clientes-form.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ClientesFormComponent implements OnInit {
-  @Output() formClosed = new EventEmitter<void>();
-  @Output() formSubmitted = new EventEmitter<void>();
+  readonly formClosed = output<void>();
+  readonly formSubmitted = output<void>();
 
-  @Input() clienteAEditar: IClientes | null = null;
+  readonly clienteAEditar = input<IClientes | null>(null);
 
   private readonly clientesService = inject(ClientesService);
   private readonly fb = inject(FormBuilder);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   isEditMode = false;
   isSaving = false;
@@ -54,91 +65,92 @@ export class ClientesFormComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.isEditMode = this.clienteAEditar !== null;
+    this.isEditMode = this.clienteAEditar() !== null;
 
     this.cargarTiposIdentificacion();
-    this.prepararFormulario();
     this.aplicarValidacionesPorTipo();
   }
 
   cargarTiposIdentificacion(): void {
     this.clientesService.getTiposIdentificacion().subscribe({
-      next: (data) => {
-        this.tiposIdentificacion = data
+      next: (tipos) => {
+        this.tiposIdentificacion = tipos
           .filter((tipo) => tipo.activo)
           .sort((a, b) => Number(a.orden) - Number(b.orden));
 
-        if (this.isEditMode && this.clienteAEditar) {
-          this.asignarTipoIdentificacionEnEdicion();
-          return;
-        }
+        this.prepararFormulario();
 
         if (!this.isEditMode && this.tiposIdentificacion.length > 0) {
           this.clienteForm.patchValue({
-            tipoIdentificacionId: this.tiposIdentificacion[0].identificacionId,
+            tipoIdentificacionId: String(this.tiposIdentificacion[0].identificacionId),
           });
-
-          this.actualizarValidacionesPersona();
         }
+
+        this.actualizarValidacionesPersona();
+        this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('Error cargando tipos de identificación:', err);
+        this.cdr.markForCheck();
       },
     });
   }
 
   prepararFormulario(): void {
-    if (!this.clienteAEditar) {
+    const cliente = this.clienteAEditar();
+
+    if (!cliente) {
       return;
     }
 
+    this.isEditMode = true;
+
     this.clienteForm.patchValue({
-      tipoIdentificacionId: this.clienteAEditar.tipoIdentificacionId ?? '',
+      tipoIdentificacionId: this.obtenerTipoIdentificacionIdParaFormulario(cliente),
+      identificacion: cliente.identificacion ?? '',
 
-      identificacion: this.clienteAEditar.identificacion ?? '',
+      nombres: cliente.nombres ?? '',
+      apellidos: cliente.apellidos ?? '',
+      razonSocial: cliente.razonSocial ?? '',
 
-      nombres: this.clienteAEditar.nombres ?? '',
-      apellidos: this.clienteAEditar.apellidos ?? '',
-      razonSocial: this.clienteAEditar.razonSocial ?? '',
+      email: cliente.email ?? '',
+      telefono: cliente.telefono ?? '',
+      telefonoSecundario: cliente.telefonoSecundario ?? '',
 
-      email: this.clienteAEditar.email ?? '',
-      telefono: this.clienteAEditar.telefono ?? '',
-      telefonoSecundario: this.clienteAEditar.telefonoSecundario ?? '',
+      aplicaTerceraEdad: cliente.aplicaTerceraEdad ?? false,
+      aplicaDiscapacidad: cliente.aplicaDiscapacidad ?? false,
 
-      aplicaTerceraEdad: this.clienteAEditar.aplicaTerceraEdad ?? false,
-      aplicaDiscapacidad: this.clienteAEditar.aplicaDiscapacidad ?? false,
-
-      direccionDomicilio: this.clienteAEditar.direccionDomicilio ?? '',
+      direccionDomicilio: cliente.direccionDomicilio ?? '',
     });
   }
 
-  asignarTipoIdentificacionEnEdicion(): void {
-    if (!this.clienteAEditar) {
-      return;
+  obtenerTipoIdentificacionIdParaFormulario(cliente: IClientes): string {
+    if (cliente.tipoIdentificacionId !== undefined && cliente.tipoIdentificacionId !== null) {
+      return String(cliente.tipoIdentificacionId);
     }
 
-    if (this.clienteAEditar.tipoIdentificacionId) {
-      this.clienteForm.patchValue({
-        tipoIdentificacionId: String(this.clienteAEditar.tipoIdentificacionId),
+    if (
+      cliente.tipoIdentificacion &&
+      typeof cliente.tipoIdentificacion === 'object' &&
+      cliente.tipoIdentificacion.identificacionId
+    ) {
+      return String(cliente.tipoIdentificacion.identificacionId);
+    }
+
+    if (cliente.tipoIdentificacion && typeof cliente.tipoIdentificacion === 'string') {
+      const tipoTexto = cliente.tipoIdentificacion.toUpperCase().trim();
+
+      const tipoEncontrado = this.tiposIdentificacion.find((tipo) => {
+        const codigo = tipo.codigo.toUpperCase().trim();
+        const nombre = tipo.nombre.toUpperCase().trim();
+
+        return codigo === tipoTexto || nombre === tipoTexto;
       });
 
-      this.actualizarValidacionesPersona();
-      return;
+      return tipoEncontrado ? String(tipoEncontrado.identificacionId) : '';
     }
 
-    if (this.clienteAEditar.tipoIdentificacion) {
-      const tipoEncontrado = this.tiposIdentificacion.find(
-        (tipo) => tipo.codigo === this.clienteAEditar?.tipoIdentificacion,
-      );
-
-      if (tipoEncontrado) {
-        this.clienteForm.patchValue({
-          tipoIdentificacionId: tipoEncontrado.identificacionId,
-        });
-      }
-    }
-
-    this.actualizarValidacionesPersona();
+    return '';
   }
 
   aplicarValidacionesPorTipo(): void {
@@ -146,6 +158,7 @@ export class ClientesFormComponent implements OnInit {
 
     this.tipoIdentificacionId?.valueChanges.subscribe(() => {
       this.actualizarValidacionesPersona();
+      this.cdr.markForCheck();
     });
   }
 
@@ -176,19 +189,17 @@ export class ClientesFormComponent implements OnInit {
   }
 
   esPersonaJuridica(): boolean {
-    const tipoSeleccionado = this.obtenerTipoSeleccionado();
+    const tipoSeleccionado = this.obtenerTipoIdentificacionSeleccionado();
 
-    if (!tipoSeleccionado) {
-      return false;
-    }
-
-    return tipoSeleccionado.codigo === 'RUC' || tipoSeleccionado.codigo === 'CONSUMIDOR_FINAL';
+    return tipoSeleccionado?.codigo === 'RUC' || tipoSeleccionado?.codigo === 'CONSUMIDOR_FINAL';
   }
 
-  obtenerTipoSeleccionado(): IIdentificacion | undefined {
-    const tipoId = String(this.tipoIdentificacionId?.value ?? '');
+  obtenerTipoIdentificacionSeleccionado(): IIdentificacion | undefined {
+    const idSeleccionado = String(this.tipoIdentificacionId?.value ?? '');
 
-    return this.tiposIdentificacion.find((tipo) => String(tipo.identificacionId) === tipoId);
+    return this.tiposIdentificacion.find(
+      (tipo) => String(tipo.identificacionId) === idSeleccionado,
+    );
   }
 
   onClose(): void {
@@ -202,55 +213,66 @@ export class ClientesFormComponent implements OnInit {
     }
 
     this.isSaving = true;
+    this.cdr.markForCheck();
 
     const cliente = this.prepararClienteParaEnviar();
 
-    console.log('Cliente enviado al backend:', cliente);
-
-    if (this.isEditMode && this.clienteAEditar) {
-      const clienteId = this.obtenerIdCliente(this.clienteAEditar);
-
-      if (clienteId === null) {
-        console.error('No se puede actualizar porque el cliente no tiene id.');
-        alert('No se puede actualizar este cliente porque no tiene un ID válido.');
-        this.isSaving = false;
-        return;
-      }
-
-      this.clientesService.updateCliente(clienteId, cliente).subscribe({
-        next: (response) => {
-          console.log('Cliente actualizado correctamente:', response);
-          this.isSaving = false;
-          this.formSubmitted.emit();
-          this.onClose();
-        },
-        error: (err) => {
-          console.error('Error actualizando cliente completo:', err);
-          console.error('Respuesta del backend:', err.error);
-
-          alert('Error al actualizar cliente:\n\n' + JSON.stringify(err.error, null, 2));
-
-          this.isSaving = false;
-        },
-      });
-
+    if (this.isEditMode && this.clienteAEditar()) {
+      this.actualizarCliente(cliente);
       return;
     }
 
+    this.crearCliente(cliente);
+  }
+
+  crearCliente(cliente: CrearClienteRequest): void {
     this.clientesService.createCliente(cliente).subscribe({
-      next: (response) => {
-        console.log('Cliente creado correctamente:', response);
+      next: () => {
         this.isSaving = false;
         this.formSubmitted.emit();
         this.onClose();
+        this.cdr.markForCheck();
       },
       error: (err) => {
-        console.error('Error creando cliente completo:', err);
-        console.error('Respuesta del backend:', err.error);
-
-        alert('Error al crear cliente:\n\n' + JSON.stringify(err.error, null, 2));
-
+        console.error('Error creando cliente:', err);
+        alert('Ocurrió un error al crear el cliente.');
         this.isSaving = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  actualizarCliente(cliente: ActualizarClienteRequest): void {
+    const clienteActual = this.clienteAEditar();
+
+    if (!clienteActual) {
+      this.isSaving = false;
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const clienteId = this.obtenerIdCliente(clienteActual);
+
+    if (clienteId === null) {
+      console.error('No se puede actualizar porque el cliente no tiene id.');
+      alert('No se puede actualizar este cliente porque no tiene un ID válido.');
+      this.isSaving = false;
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.clientesService.updateCliente(clienteId, cliente).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.formSubmitted.emit();
+        this.onClose();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error actualizando cliente:', err);
+        alert('Ocurrió un error al actualizar el cliente.');
+        this.isSaving = false;
+        this.cdr.markForCheck();
       },
     });
   }
@@ -263,8 +285,8 @@ export class ClientesFormComponent implements OnInit {
 
       identificacion: String(formValue.identificacion).trim(),
 
-      nombres: String(formValue.nombres ?? '').trim(),
-      apellidos: String(formValue.apellidos ?? '').trim(),
+      nombres: String(formValue.nombres ?? '').trim() || undefined,
+      apellidos: String(formValue.apellidos ?? '').trim() || undefined,
       razonSocial: String(formValue.razonSocial ?? '').trim() || null,
 
       email: String(formValue.email).trim(),
@@ -293,6 +315,7 @@ export class ClientesFormComponent implements OnInit {
 
   campoInvalido(campo: string): boolean {
     const control = this.clienteForm.get(campo);
+
     return !!control && control.invalid && (control.dirty || control.touched);
   }
 
