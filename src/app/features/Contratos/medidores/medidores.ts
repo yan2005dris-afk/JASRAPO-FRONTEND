@@ -58,7 +58,7 @@ export class Medidores implements OnInit {
     this.cargarMedidores();
   }
 
-/**
+  /**
    * Obtiene la lista de medidores y estados desde el servicio en paralelo usando RxJS,
    * normaliza los datos y maneja la limpieza de fechas inválidas.
    */
@@ -69,39 +69,39 @@ export class Medidores implements OnInit {
 
     forkJoin({
       estados: this.medidoresService.getEstadosMedidor(),
-      medidores: this.medidoresService.getMedidores()
+      medidores: this.medidoresService.getMedidores(),
     })
-    .pipe(
-      finalize(() => {
-        this.isLoading = false;
-        this.cdr.detectChanges();
-      })
-    )
-    .subscribe({
-      next: ({ estados, medidores }) => {
-        this.estadosCatalogo = estados;
+      .pipe(
+        finalize(() => {
+          this.isLoading = false;
+          this.cdr.detectChanges();
+        }),
+      )
+      .subscribe({
+        next: ({ estados, medidores }) => {
+          this.estadosCatalogo = estados;
 
-        this.medidores = medidores.map((medidor) => {
-          const estadoEncontrado = this.estadosCatalogo.find((e) => {
-            if (typeof medidor.estado === 'string') {
-              return e.codigo === medidor.estado;
-            }
-            return e.codigo === medidor.estado?.codigo;
+          this.medidores = medidores.map((medidor) => {
+            const estadoEncontrado = this.estadosCatalogo.find((e) => {
+              if (typeof medidor.estado === 'string') {
+                return e.codigo === medidor.estado;
+              }
+              return e.codigo === medidor.estado?.codigo;
+            });
+
+            return {
+              ...medidor,
+              estado: estadoEncontrado || this.estadosCatalogo[0],
+            };
           });
 
-          return {
-            ...medidor,
-            estado: estadoEncontrado || this.estadosCatalogo[0],
-          };
-        });
-
-        this.hasFetched = true;
-      },
-      error: (err) => {
-        console.error('Error en la carga de datos:', err);
-        this.errorMessage = 'Error al cargar la información de medidores o estados';
-      }
-    });
+          this.hasFetched = true;
+        },
+        error: (err) => {
+          console.error('Error en la carga de datos:', err);
+          this.errorMessage = 'Error al cargar la información de medidores o estados';
+        },
+      });
   }
 
   /**
@@ -193,7 +193,7 @@ export class Medidores implements OnInit {
     });
   }
 
-/**
+  /**
    * Procesa la actualización de estado u observaciones de un medidor existente
    */
   actualizarMedidor(payload: EditarEstadoMedidorPayload): void {

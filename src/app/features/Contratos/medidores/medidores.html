@@ -36,7 +36,7 @@
   <!-- Contenedor principal de la tabla -->
   <div class="card shadow-sm table-card">
     <div class="card-body p-0">
-<!-- Estado de carga -->
+      <!-- Estado de carga -->
       @if (isLoading) {
         <div class="loader-container text-center p-5">
           <div class="spinner-border text-primary" role="status"></div>
@@ -46,7 +46,10 @@
 
       <!-- Estado de error -->
       @if (errorMessage && !isLoading) {
-        <div class="m-4 alert alert-danger d-flex justify-content-between align-items-center shadow-sm" role="alert">
+        <div
+          class="m-4 alert alert-danger d-flex justify-content-between align-items-center shadow-sm"
+          role="alert"
+        >
           <div class="d-flex align-items-center gap-3">
             <i class="bi bi-exclamation-triangle-fill fs-4"></i>
             <div>
