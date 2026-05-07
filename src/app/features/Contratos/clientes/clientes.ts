@@ -1,19 +1,37 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-
 import { AuthService } from '../../../core/services/auth.service';
-import { ClientesService } from './services/clientes.service';
-import {
-  EstadoBusquedaCliente,
-  IClientes,
-  TipoBusquedaCliente,
-} from './interfaces/iclientes.interface';
-import { ClientesFormComponent } from './components/clientes-form/clientes-form.component';
+
+interface Client {
+  id: number;
+  nombre: string;
+  sector: string;
+  consumo: number;
+  estado: 'Activo' | 'Sin lectura' | 'Moroso';
+}
+
+// ---------------------------------------------------------------------------
+// Datos estáticos que simulan la respuesta de una API real.
+// En el futuro, esto se reemplazará por un servicio que haga un fetch real.
+// ---------------------------------------------------------------------------
+const MOCK_CLIENTS: Client[] = [
+  { id: 1, nombre: 'Ana María Torres', sector: 'Centro', consumo: 125, estado: 'Activo' },
+  { id: 2, nombre: 'Juan Carlos Mena', sector: 'Norte', consumo: 0, estado: 'Sin lectura' },
+  { id: 3, nombre: 'Sofía Ledesma', sector: 'Sur', consumo: 80, estado: 'Moroso' },
+  { id: 4, nombre: 'Pedro Ramírez', sector: 'Centro', consumo: 95, estado: 'Activo' },
+  { id: 5, nombre: 'Elena Villacís', sector: 'Norte', consumo: 150, estado: 'Activo' },
+  { id: 6, nombre: 'Carlos Ruiz', sector: 'Sur', consumo: 110, estado: 'Moroso' },
+  { id: 7, nombre: 'Marta Gómez', sector: 'Centro', consumo: 10, estado: 'Sin lectura' },
+  { id: 8, nombre: 'Luis Navas', sector: 'Norte', consumo: 210, estado: 'Activo' },
+  { id: 9, nombre: 'Fernanda Ortiz', sector: 'Sur', consumo: 50, estado: 'Activo' },
+  { id: 10, nombre: 'José Viteri', sector: 'Centro', consumo: 130, estado: 'Moroso' },
+  { id: 11, nombre: 'Lucía Castro', sector: 'Norte', consumo: 5, estado: 'Sin lectura' },
+  { id: 12, nombre: 'Miguel Poveda', sector: 'Sur', consumo: 90, estado: 'Activo' },
+];
 
 @Component({
   selector: 'app-clientes',
-  imports: [CommonModule, FormsModule, ClientesFormComponent],
+  imports: [CommonModule],
   templateUrl: './clientes.html',
   styleUrl: './clientes.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -22,29 +40,33 @@ export class Clientes {
   readonly authService = inject(AuthService);
 
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly clientesService = inject(ClientesService);
+  // -------------------------------------------------------------------------
+  // Estado del componente
+  // -------------------------------------------------------------------------
 
-  clients: IClientes[] = [];
+  /** Lista de clientes que se muestra en la tabla. Empieza vacía. */
+  clients: Client[] = [];
 
+  /** Indica si se está realizando una petición a la API. */
   isLoading = false;
+
+  /** Indica si ya se ha realizado al menos una búsqueda (sea exitosa o no). */
   hasFetched = false;
 
-  searchTerm = '';
-  searchType: TipoBusquedaCliente = 'nombreCompleto';
-  estadoBusqueda: EstadoBusquedaCliente = 'todos';
+  activeFilter = 'Todos';
 
-  isModalOpen = false;
-  objetoClienteAEditar: IClientes | null = null;
-
-  isDetalleModalOpen = false;
-  clienteDetalleSeleccionado: IClientes | null = null;
-
+  // Pagination
   pageSizeOptions = [5, 10, 15];
   pageSize = 5;
   currentPage = 1;
 
-  get filteredClients(): IClientes[] {
-    return this.clients;
+  get filteredClients(): Client[] {
+    return this.clients.filter((c) => {
+      if (this.activeFilter === 'Todos') return true;
+      if (this.activeFilter === 'Morosos' && c.estado === 'Moroso') return true;
+      if (this.activeFilter === 'Sin lectura' && c.estado === 'Sin lectura') return true;
+      return false;
+    });
   }
 
   get totalPages(): number {
@@ -55,338 +77,55 @@ export class Clientes {
     return Array.from({ length: this.totalPages }, (_, i) => i + 1);
   }
 
-  get pagedClients(): IClientes[] {
+  get pagedClients(): Client[] {
     const start = (this.currentPage - 1) * this.pageSize;
     return this.filteredClients.slice(start, start + this.pageSize);
   }
 
+  // -------------------------------------------------------------------------
+  // Métodos
+  // -------------------------------------------------------------------------
+  /**
+   * Simula un fetch a una API usando un array estático.
+   * Se llama únicamente desde el botón "Buscar" en el template.
+   *
+   * Patrón a seguir en otros módulos:
+   *   1. Marcar isLoading = true.
+   *   2. Llamar al servicio (o simular con setTimeout).
+   *   3. Asignar el resultado a la propiedad del componente.
+   *   4. Marcar hasFetched = true para que la tabla sea visible.
+   *   5. Marcar isLoading = false.
+   */
   buscarClientes(): void {
+    // Evitar una segunda llamada si ya se cargaron los datos
+    if (this.hasFetched) return;
     this.isLoading = true;
-    this.hasFetched = true;
-    this.cdr.markForCheck();
-
-    const valor = this.searchTerm.trim();
-
-    const filtros: {
-      nombreCompleto?: string;
-      identificacion?: string;
-      activo?: boolean;
-    } = {};
-
-    if (valor) {
-      if (this.searchType === 'nombreCompleto') {
-        filtros.nombreCompleto = valor;
-      }
-
-      if (this.searchType === 'identificacion') {
-        filtros.identificacion = valor;
-      }
-    }
-
-    if (this.estadoBusqueda === 'activos') {
-      filtros.activo = true;
-    }
-
-    if (this.estadoBusqueda === 'inactivos') {
-      filtros.activo = false;
-    }
-
-    this.clientesService.buscarClientes(filtros).subscribe({
-      next: (response) => {
-        const clientes = this.normalizarRespuestaClientes(response);
-
-        if (this.searchType === 'nombreCompleto' && valor && clientes.length === 0) {
-          this.buscarNombreCompletoPorNombresYApellidos(valor);
-          return;
-        }
-
-        this.clients = clientes;
-        this.isLoading = false;
-        this.currentPage = 1;
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        console.error('Error buscando clientes desde GET /clients:', err);
-
-        if (this.estadoBusqueda === 'activos' || this.estadoBusqueda === 'inactivos') {
-          this.filtrarEstadoLocalmente();
-          return;
-        }
-
-        this.clients = [];
-        this.isLoading = false;
-        this.currentPage = 1;
-        this.cdr.markForCheck();
-      },
-    });
+    // simulamos la latencia de red con un timeout de 800 ms
+    setTimeout(() => {
+      this.clients = MOCK_CLIENTS; // ← aquí irá: this.clienteService.getAll()
+      this.hasFetched = true;
+      this.isLoading = false;
+      this.currentPage = 1;
+      // Con OnPush, Angular no detecta cambios dentro de callbacks asíncronos
+      // a menos que le avisemos explícitamente.
+      this.cdr.markForCheck();
+    }, 800);
   }
 
-  buscarNombreCompletoPorNombresYApellidos(valor: string): void {
-    const partes = valor.replace(/\s+/g, ' ').trim().split(' ');
-
-    let nombres = valor;
-    let apellidos = '';
-
-    if (partes.length >= 4) {
-      const mitad = Math.ceil(partes.length / 2);
-
-      nombres = partes.slice(0, mitad).join(' ');
-      apellidos = partes.slice(mitad).join(' ');
-    } else if (partes.length === 3) {
-      nombres = partes.slice(0, 1).join(' ');
-      apellidos = partes.slice(1).join(' ');
-    } else if (partes.length === 2) {
-      nombres = partes.slice(0, 1).join(' ');
-      apellidos = partes.slice(1).join(' ');
-    }
-
-    const filtros: {
-      nombres?: string;
-      apellidos?: string;
-      activo?: boolean;
-    } = {
-      nombres,
-    };
-
-    if (apellidos) {
-      filtros.apellidos = apellidos;
-    }
-
-    if (this.estadoBusqueda === 'activos') {
-      filtros.activo = true;
-    }
-
-    if (this.estadoBusqueda === 'inactivos') {
-      filtros.activo = false;
-    }
-
-    this.clientesService.buscarClientes(filtros).subscribe({
-      next: (response) => {
-        this.clients = this.normalizarRespuestaClientes(response);
-        this.isLoading = false;
-        this.currentPage = 1;
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        console.error('Error buscando por nombres y apellidos:', err);
-
-        this.clients = [];
-        this.isLoading = false;
-        this.currentPage = 1;
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  cargarTodosLosClientes(): void {
-    this.isLoading = true;
-    this.hasFetched = true;
-    this.cdr.markForCheck();
-
-    this.clientesService.getAllClientes().subscribe({
-      next: (response) => {
-        this.clients = this.normalizarRespuestaClientes(response);
-        this.isLoading = false;
-        this.currentPage = 1;
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        console.error('Error cargando clientes:', err);
-        this.clients = [];
-        this.isLoading = false;
-        this.currentPage = 1;
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  limpiarBusqueda(): void {
-    this.searchTerm = '';
-    this.searchType = 'nombreCompleto';
-    this.estadoBusqueda = 'todos';
-    this.cargarTodosLosClientes();
-  }
-
-  filtrarEstadoLocalmente(): void {
-    this.clientesService.getAllClientes().subscribe({
-      next: (response) => {
-        const clientes = this.normalizarRespuestaClientes(response);
-
-        if (this.estadoBusqueda === 'activos') {
-          this.clients = clientes.filter((cliente) => cliente.activo !== false);
-        } else if (this.estadoBusqueda === 'inactivos') {
-          this.clients = clientes.filter((cliente) => cliente.activo === false);
-        } else {
-          this.clients = clientes;
-        }
-
-        this.isLoading = false;
-        this.currentPage = 1;
-        this.cdr.markForCheck();
-      },
-      error: (errorGetAll) => {
-        console.error('Error cargando clientes para filtrar estado localmente:', errorGetAll);
-
-        this.clients = [];
-        this.isLoading = false;
-        this.currentPage = 1;
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  normalizarRespuestaClientes(response: unknown): IClientes[] {
-    if (Array.isArray(response)) {
-      return response as IClientes[];
-    }
-
-    if (!response || typeof response !== 'object') {
-      return [];
-    }
-
-    const respuesta = response as Record<string, unknown>;
-
-    if (Array.isArray(respuesta['data'])) {
-      return respuesta['data'] as IClientes[];
-    }
-
-    const data = respuesta['data'];
-
-    if (data && typeof data === 'object') {
-      const dataObject = data as Record<string, unknown>;
-
-      if (Array.isArray(dataObject['items'])) {
-        return dataObject['items'] as IClientes[];
-      }
-
-      if (Array.isArray(dataObject['results'])) {
-        return dataObject['results'] as IClientes[];
-      }
-    }
-
-    if (Array.isArray(respuesta['items'])) {
-      return respuesta['items'] as IClientes[];
-    }
-
-    if (Array.isArray(respuesta['results'])) {
-      return respuesta['results'] as IClientes[];
-    }
-
-    if (Array.isArray(respuesta['clientes'])) {
-      return respuesta['clientes'] as IClientes[];
-    }
-
-    if (Array.isArray(respuesta['clients'])) {
-      return respuesta['clients'] as IClientes[];
-    }
-
-    return [];
-  }
-
-  abrirModal(): void {
-    this.objetoClienteAEditar = null;
-    this.isModalOpen = true;
+  setFilter(filter: string) {
+    this.activeFilter = filter;
+    this.currentPage = 1;
     this.cdr.markForCheck();
   }
 
-  cerrarModal(): void {
-    this.objetoClienteAEditar = null;
-    this.isModalOpen = false;
-    this.cdr.markForCheck();
-  }
-
-  editarCliente(cliente: IClientes): void {
-    this.objetoClienteAEditar = cliente;
-    this.isModalOpen = true;
-    this.cdr.markForCheck();
-  }
-
-  verDetalleCliente(cliente: IClientes): void {
-    const clienteId = this.obtenerIdCliente(cliente);
-
-    if (clienteId === null) {
-      alert('No se puede consultar el detalle porque el cliente no tiene ID válido.');
-      return;
-    }
-
-    this.clientesService.getClienteById(clienteId).subscribe({
-      next: (clienteDetalle) => {
-        this.clienteDetalleSeleccionado = clienteDetalle;
-        this.isDetalleModalOpen = true;
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        console.error('Error obteniendo detalle del cliente:', err);
-        alert('No se pudo obtener el detalle del cliente.');
-      },
-    });
-  }
-
-  cerrarDetalleModal(): void {
-    this.clienteDetalleSeleccionado = null;
-    this.isDetalleModalOpen = false;
-    this.cdr.markForCheck();
-  }
-
-  abrirEdicionDesdeDetalle(): void {
-    if (!this.clienteDetalleSeleccionado) {
-      return;
-    }
-
-    const cliente = this.clienteDetalleSeleccionado;
-
-    this.cerrarDetalleModal();
-    this.editarCliente(cliente);
-  }
-
-  eliminarCliente(cliente: IClientes): void {
-    const clienteId = this.obtenerIdCliente(cliente);
-
-    if (clienteId === null) {
-      console.error('No se puede eliminar el cliente porque no tiene id:', cliente);
-      alert('No se puede eliminar este cliente porque no tiene un ID válido.');
-      return;
-    }
-
-    const nombreCliente = this.obtenerNombreCliente(cliente);
-
-    if (!confirm(`¿Seguro que deseas eliminar al cliente ${nombreCliente}?`)) {
-      return;
-    }
-
-    this.clientesService.deleteCliente(clienteId).subscribe({
-      next: () => {
-        console.log('Cliente eliminado correctamente');
-        this.buscarClientes();
-      },
-      error: (err) => {
-        console.error('Error eliminando cliente:', err);
-        alert('Ocurrió un error al eliminar el cliente.');
-      },
-    });
-  }
-
-  obtenerIdCliente(cliente: IClientes): string | number | null {
-    return cliente.id ?? cliente.clienteId ?? cliente.clientId ?? cliente._id ?? null;
-  }
-
-  obtenerNombreCliente(cliente: IClientes): string {
-    const nombreCompleto = `${cliente.nombres ?? ''} ${cliente.apellidos ?? ''}`.trim();
-
-    return cliente.razonSocial || nombreCompleto || 'Sin nombre';
-  }
-
-  setPageSize(size: number): void {
+  setPageSize(size: number) {
     this.pageSize = size;
     this.currentPage = 1;
     this.cdr.markForCheck();
   }
 
-  goToPage(page: number): void {
-    if (page < 1 || page > this.totalPages) {
-      return;
-    }
-
+  goToPage(page: number) {
+    if (page < 1 || page > this.totalPages) return;
     this.currentPage = page;
     this.cdr.markForCheck();
   }
