@@ -8,6 +8,7 @@ import {
   input,
   output,
 } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import {
   AbstractControl,
   FormBuilder,
@@ -25,6 +26,12 @@ import {
 } from '../../interfaces/iclientes.interface';
 
 type TipoMensajeFormulario = 'success' | 'error' | null;
+
+interface BackendErrorResponse {
+  message?: string;
+  error?: string;
+  errors?: string[] | Record<string, string[]>;
+}
 
 @Component({
   selector: 'app-clientes-form',
@@ -241,9 +248,15 @@ export class ClientesFormComponent implements OnInit {
         this.onClose();
         this.cdr.markForCheck();
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.isSaving = false;
-        this.mostrarMensaje('No se pudo crear el cliente. Revise los datos ingresados.', 'error');
+
+        const mensajeError = this.obtenerMensajeErrorBackend(
+          err,
+          'No se pudo crear el cliente. Revise los datos ingresados.',
+        );
+
+        this.mostrarMensaje(mensajeError, 'error');
         this.cdr.markForCheck();
       },
     });
@@ -279,12 +292,15 @@ export class ClientesFormComponent implements OnInit {
         this.onClose();
         this.cdr.markForCheck();
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.isSaving = false;
-        this.mostrarMensaje(
+
+        const mensajeError = this.obtenerMensajeErrorBackend(
+          err,
           'No se pudo actualizar el cliente. Revise los datos ingresados.',
-          'error',
         );
+
+        this.mostrarMensaje(mensajeError, 'error');
         this.cdr.markForCheck();
       },
     });
@@ -341,6 +357,40 @@ export class ClientesFormComponent implements OnInit {
   limpiarMensaje(): void {
     this.mensajeFormulario = '';
     this.tipoMensajeFormulario = null;
+  }
+
+  private obtenerMensajeErrorBackend(err: HttpErrorResponse, mensajePorDefecto: string): string {
+    const errorBackend = err.error as BackendErrorResponse | string | null;
+
+    if (typeof errorBackend === 'string' && errorBackend.trim()) {
+      return errorBackend;
+    }
+
+    if (!errorBackend || typeof errorBackend !== 'object') {
+      return mensajePorDefecto;
+    }
+
+    if (errorBackend.message) {
+      return errorBackend.message;
+    }
+
+    if (errorBackend.error) {
+      return errorBackend.error;
+    }
+
+    if (Array.isArray(errorBackend.errors) && errorBackend.errors.length > 0) {
+      return errorBackend.errors.join(' ');
+    }
+
+    if (errorBackend.errors && typeof errorBackend.errors === 'object') {
+      const mensajes = Object.values(errorBackend.errors).flat();
+
+      if (mensajes.length > 0) {
+        return mensajes.join(' ');
+      }
+    }
+
+    return mensajePorDefecto;
   }
 
   get tipoIdentificacionId(): AbstractControl | null {
