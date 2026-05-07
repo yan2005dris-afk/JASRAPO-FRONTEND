@@ -13,6 +13,7 @@ import {
   CrearMedidorPayload,
   EditarEstadoMedidorPayload,
   IEstadoMedidor,
+  IMedidorDto,
 } from './interfaces/imedidor.interface';
 import { MedidoresService } from './services/medidores.service';
 import { forkJoin, finalize } from 'rxjs';
@@ -80,19 +81,18 @@ export class Medidores implements OnInit {
       .subscribe({
         next: ({ estados, medidores }) => {
           this.estadosCatalogo = estados;
-
-          this.medidores = medidores.map((medidor) => {
+          const medidoresCrudos = medidores as unknown as IMedidorDto[];
+          this.medidores = medidoresCrudos.map((medidorDto) => {
             const estadoEncontrado = this.estadosCatalogo.find((e) => {
-              if (typeof medidor.estado === 'string') {
-                return e.codigo === medidor.estado;
+              if (typeof medidorDto.estado === 'string') {
+                return e.codigo === medidorDto.estado;
               }
-              return e.codigo === medidor.estado?.codigo;
+              return e.codigo === medidorDto.estado?.codigo;
             });
-
             return {
-              ...medidor,
+              ...medidorDto,
               estado: estadoEncontrado || this.estadosCatalogo[0],
-            };
+            } as IMedidor;
           });
 
           this.hasFetched = true;
@@ -167,13 +167,15 @@ export class Medidores implements OnInit {
   }
 
   /**
-   * Redirección o visualización de detalles del contrato asociado
+   * TODO: Implementar navegación con Router a detalles del contrato cuando el módulo exista.
    */
+  /*
   verContrato(medidor: IMedidor): void {
     if (medidor.contratoId) {
       console.log('Redirigiendo al contrato:', medidor.contratoId);
     }
   }
+  */
 
   /**
    * Procesa el registro de un nuevo medidor y refresca la lista
@@ -200,14 +202,7 @@ export class Medidores implements OnInit {
     this.isSaving = true;
     this.cdr.detectChanges();
     const id = payload.medidorId;
-    const body = {
-      estadoId: payload.estadoId,
-      motivo: payload.motivo || '',
-      marca: this.editingMedidor?.marca,
-      modelo: this.editingMedidor?.modelo,
-      serie: this.editingMedidor?.serie,
-    };
-    this.medidoresService.updateMedidor(id, body).subscribe({
+    this.medidoresService.updateMedidor(id, payload).subscribe({
       next: () => {
         this.isSaving = false;
         this.closeEditar();

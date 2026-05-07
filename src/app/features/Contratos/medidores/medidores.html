@@ -57,7 +57,6 @@
               <p class="mb-0 small">{{ errorMessage }}</p>
             </div>
           </div>
-          <!-- Nota: Asegúrate de cambiar 'cargarDatos()' por el nombre real de tu método de carga en el TypeScript -->
           <button class="btn btn-outline-danger btn-sm px-3" (click)="cargarMedidores()">
             <i class="bi bi-arrow-clockwise me-1"></i> Reintentar
           </button>
@@ -84,23 +83,21 @@
                   <td class="text-muted">{{ medidor.marca }}</td>
                   <td class="text-muted">{{ medidor.fechaInstalacion ?? 'Sin fecha' }}</td>
                   <td>
-                    <span
-                      class="badge status-badge"
-                      [ngClass]="getEstadoBadgeClass(medidor.estado?.codigo)"
-                    >
-                      @if (getEstadoIcon(medidor.estado?.codigo)) {
-                        <i class="bi" [ngClass]="getEstadoIcon(medidor.estado?.codigo)"></i>
-                      }
-                      {{ getEstadoNombre(medidor) }}
+                    <span>
+                      <span
+                        [class]="
+                          'badge status-badge ' + getEstadoBadgeClass(medidor.estado?.codigo)
+                        "
+                      >
+                        @if (getEstadoIcon(medidor.estado?.codigo)) {
+                          <i [class]="'bi ' + getEstadoIcon(medidor.estado?.codigo)"></i>
+                        }
+                        {{ getEstadoNombre(medidor) }}
+                      </span>
                     </span>
                   </td>
                   <td>
                     <div class="action-buttons">
-                      @if (medidor.estado?.codigo === 'INSTALADO') {
-                        <button class="btn btn-icon btn-link-blue" (click)="verContrato(medidor)">
-                          <i class="bi bi-link-45deg fs-5"></i>
-                        </button>
-                      }
                       <button class="btn btn-icon text-dark" (click)="openEditar(medidor)">
                         <i class="bi bi-pencil"></i>
                       </button>
@@ -142,32 +139,33 @@
           <nav>
             <ul class="pagination pagination-sm mb-0 gap-1">
               <li class="page-item" [class.disabled]="currentPage === 1">
-                <a
+                <button
+                  type="button"
                   class="page-link nav-link-custom"
-                  href="#"
-                  (click)="$event.preventDefault(); goToPage(currentPage - 1)"
+                  (click)="goToPage(currentPage - 1)"
+                  [disabled]="currentPage === 1"
                 >
                   <i class="bi bi-chevron-left"></i> Previous
-                </a>
+                </button>
               </li>
+
               @for (page of pageNumbers; track page) {
                 <li class="page-item" [class.active]="currentPage === page">
-                  <a
-                    class="page-link fw-medium"
-                    href="#"
-                    (click)="$event.preventDefault(); goToPage(page)"
-                    >{{ page }}</a
-                  >
+                  <button type="button" class="page-link fw-medium" (click)="goToPage(page)">
+                    {{ page }}
+                  </button>
                 </li>
               }
+
               <li class="page-item" [class.disabled]="currentPage === totalPages">
-                <a
+                <button
+                  type="button"
                   class="page-link nav-link-custom"
-                  href="#"
-                  (click)="$event.preventDefault(); goToPage(currentPage + 1)"
+                  (click)="goToPage(currentPage + 1)"
+                  [disabled]="currentPage === totalPages"
                 >
                   Next <i class="bi bi-chevron-right"></i>
-                </a>
+                </button>
               </li>
             </ul>
           </nav>

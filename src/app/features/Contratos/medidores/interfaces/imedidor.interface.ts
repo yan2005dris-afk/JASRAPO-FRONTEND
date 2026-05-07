@@ -40,3 +40,7 @@ export interface EditarEstadoMedidorPayload {
   estadoId: number;
   motivo?: string;
 }
+
+export interface IMedidorDto extends Omit<IMedidor, 'estado'> {
+  estado?: string | IEstadoMedidor;
+}

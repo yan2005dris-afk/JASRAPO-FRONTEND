@@ -1,7 +1,12 @@
 import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { IEstadoMedidor, IMedidor } from '../interfaces/imedidor.interface';
+import {
+  IEstadoMedidor,
+  IMedidor,
+  CrearMedidorPayload,
+  EditarEstadoMedidorPayload,
+} from '../interfaces/imedidor.interface';
 import { environment } from '../../../../../environments/environment';
 
 /**
@@ -23,11 +28,11 @@ export class MedidoresService {
 
   /**
    * Registra un nuevo medidor en la base de datos.
-   * @param medidor Datos del nuevo registro (basados en la interfaz IMedidor).
+   * @param medidor Datos del nuevo registro (basados en la interfaz CrearMedidorPayload).
    * @returns Observable con el objeto del medidor persistido.
    */
-  createMedidor(medidor: Partial<IMedidor>): Observable<IMedidor> {
-    return this.http.post<IMedidor>(this.endpoint, medidor);
+  createMedidor(payload: CrearMedidorPayload): Observable<IMedidor> {
+    return this.http.post<IMedidor>(this.endpoint, payload);
   }
 
   /**
@@ -49,15 +54,14 @@ export class MedidoresService {
 
   /**
    * Realiza una actualización parcial de los datos de un medidor.
-   * Se utiliza principalmente para transiciones de estado y edición de metadatos.
    * @param id Identificador del registro a modificar.
-   * @param changes Objeto que contiene exclusivamente las propiedades a actualizar.
-   * @returns Observable con el estado actualizado del medidor.
+   * @param changes Objeto con las propiedades a actualizar (limpia el medidorId internamente).
+   * @returns Observable con la entidad del medidor actualizada.
    */
-  updateMedidor(id: number, changes: Partial<IMedidor>): Observable<IMedidor> {
-    return this.http.patch<IMedidor>(`${this.endpoint}/${id}`, changes);
+  updateMedidor(id: number, changes: EditarEstadoMedidorPayload): Observable<IMedidor> {
+    const { medidorId, ...payloadLimpio } = changes;
+    return this.http.patch<IMedidor>(`${this.endpoint}/${id}`, payloadLimpio);
   }
-
   /**
    * Remueve de forma definitiva un medidor del sistema.
    * @param id Identificador del registro a eliminar.
