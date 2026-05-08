@@ -20,16 +20,16 @@ import { Comunidad } from '../models/comunidad.interface';
 })
 export class ComunidadFormComponent implements OnChanges {
   @Input() comunidadAEditar: Comunidad | null = null;
-  @Input() customErrors: Record<string, string> | null = null;
+
   @Output() formClosed = new EventEmitter<void>();
   @Output() formSubmitted = new EventEmitter<Omit<Comunidad, 'id'>>();
 
   private readonly fb = inject(FormBuilder);
 
   readonly comunidadForm = this.fb.group({
-    codigo: ['', Validators.required],
-    nombre: ['', Validators.required],
-    porcentajeTasaSeguridad: [0, [Validators.required, Validators.min(0)]],
+    codigo: [''],
+    nombre: [''],
+    porcentajeTasaSeguridad: [0, [Validators.required, Validators.min(0), Validators.max(100)]],
   });
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -46,7 +46,11 @@ export class ComunidadFormComponent implements OnChanges {
         porcentajeTasaSeguridad: this.comunidadAEditar.porcentajeTasaSeguridad,
       });
     } else {
-      this.comunidadForm.reset({ codigo: '', nombre: '', porcentajeTasaSeguridad: 0 });
+      this.comunidadForm.reset({
+        codigo: '',
+        nombre: '',
+        porcentajeTasaSeguridad: 0,
+      });
     }
   }
 
@@ -55,8 +59,10 @@ export class ComunidadFormComponent implements OnChanges {
   }
 
   onSubmit(): void {
-    if (this.comunidadForm.invalid) {
-      this.comunidadForm.markAllAsTouched();
+    const porcentajeControl = this.comunidadForm.controls.porcentajeTasaSeguridad;
+
+    if (porcentajeControl.invalid) {
+      porcentajeControl.markAsTouched();
       return;
     }
 

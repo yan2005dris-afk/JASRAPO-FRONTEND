@@ -8,9 +8,16 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComunidadesService } from './services/comunidades.service';
 import { Comunidad } from './models/comunidad.interface';
 import { ComunidadFormComponent } from './comunidad-form/comunidad-form.component';
+
+interface BackendErrorResponse {
+  message?: string;
+  error?: string;
+  errors?: string[] | Record<string, string[]>;
+}
 
 @Component({
   selector: 'app-comunidades',
@@ -29,6 +36,7 @@ export class ComunidadesComponent {
   readonly comunidades = signal<Comunidad[]>([]);
   isLoading = false;
   isDetailLoading = false;
+  isSaving = false;
   currentPage = 1;
   pageSize = 5;
   readonly pageSizeOptions = [5, 10, 15];
@@ -41,7 +49,8 @@ export class ComunidadesComponent {
   private editingCommunityId: number | null = null;
   private previouslyFocusedElement: HTMLElement | null = null;
   readonly hasFetched = signal(false);
-  formErrors: Record<string, string> = {};
+  readonly mensajeNotificacion = signal<string | null>(null);
+  readonly tipoNotificacion = signal<'success' | 'error'>('success');
 
   constructor() {
     effect(() => {
@@ -117,7 +126,7 @@ export class ComunidadesComponent {
     this.isEditMode.set(false);
     this.editingCommunityId = null;
     this.selectedCommunity.set(null);
-    this.formErrors = {};
+    this.limpiarMensaje();
     this.showFormModal.set(true);
     this.focusModalBySelector('[data-modal="community-form"]');
   }
@@ -127,7 +136,7 @@ export class ComunidadesComponent {
     this.isEditMode.set(true);
     this.editingCommunityId = comunidad.id;
     this.selectedCommunity.set(comunidad);
-    this.formErrors = {};
+    this.limpiarMensaje();
     this.showFormModal.set(true);
     this.focusModalBySelector('[data-modal="community-form"]');
   }
@@ -156,7 +165,7 @@ export class ComunidadesComponent {
     this.showFormModal.set(false);
     this.editingCommunityId = null;
     this.selectedCommunity.set(null);
-    this.formErrors = {};
+    this.limpiarMensaje();
     this.restoreFocus();
   }
 
@@ -218,17 +227,14 @@ export class ComunidadesComponent {
   }
 
   handleFormSubmit(payload: Omit<Comunidad, 'id'>): void {
-    this.formErrors = {};
-
-    if (this.isCodeDuplicate(payload.codigo, this.editingCommunityId)) {
-      this.formErrors = { codigo: 'El código debe ser único.' };
-      return;
-    }
+    this.limpiarMensaje();
+    this.isSaving = true;
 
     if (this.isEditMode()) {
       const id = this.editingCommunityId;
 
       if (id == null) {
+        this.isSaving = false;
         return;
       }
 
@@ -242,19 +248,21 @@ export class ComunidadesComponent {
             ),
           );
 
-          this.cdr.markForCheck();
+          this.isSaving = false;
           this.refreshComunidadesAfterSave();
           this.closeFormModal();
+          this.cdr.markForCheck();
         },
-        error: (err) => {
-          console.error('Error actualizando comunidad:', err);
+        error: (err: HttpErrorResponse) => {
+          this.isSaving = false;
 
-          if (err.status === 403) {
-            alert('No tiene permiso para editar comunidades.');
-            return;
-          }
+          const mensajeError = this.obtenerMensajeErrorBackend(
+            err,
+            'No se pudo actualizar la comunidad. Revise los datos ingresados.',
+          );
 
-          alert('Ocurrió un error al actualizar la comunidad.');
+          this.mostrarMensaje(mensajeError, 'error');
+          this.cdr.markForCheck();
         },
       });
 
@@ -264,14 +272,66 @@ export class ComunidadesComponent {
     this.comunidadesService.createComunidad(payload).subscribe({
       next: (created) => {
         this.comunidades.set(this.sortComunidades([...this.comunidades(), created]));
-        this.cdr.markForCheck();
+        this.isSaving = false;
         this.refreshComunidadesAfterSave();
         this.closeFormModal();
+        this.cdr.markForCheck();
       },
-      error: (err) => {
-        console.error('Error creando comunidad:', err);
+      error: (err: HttpErrorResponse) => {
+        this.isSaving = false;
+
+        const mensajeError = this.obtenerMensajeErrorBackend(
+          err,
+          'No se pudo crear la comunidad. Revise los datos ingresados.',
+        );
+
+        this.mostrarMensaje(mensajeError, 'error');
+        this.cdr.markForCheck();
       },
     });
+  }
+
+  private obtenerMensajeErrorBackend(err: HttpErrorResponse, mensajePorDefecto: string): string {
+    const errorBackend = err.error as BackendErrorResponse | string | null;
+
+    if (typeof errorBackend === 'string' && errorBackend.trim()) {
+      return errorBackend;
+    }
+
+    if (!errorBackend || typeof errorBackend !== 'object') {
+      return mensajePorDefecto;
+    }
+
+    if (errorBackend.message) {
+      return errorBackend.message;
+    }
+
+    if (errorBackend.error) {
+      return errorBackend.error;
+    }
+
+    if (Array.isArray(errorBackend.errors) && errorBackend.errors.length > 0) {
+      return errorBackend.errors.join(' ');
+    }
+
+    if (errorBackend.errors && typeof errorBackend.errors === 'object') {
+      const mensajes = Object.values(errorBackend.errors).flat();
+
+      if (mensajes.length > 0) {
+        return mensajes.join(' ');
+      }
+    }
+
+    return mensajePorDefecto;
+  }
+
+  private mostrarMensaje(mensaje: string, tipo: 'error'): void {
+    this.mensajeNotificacion.set(mensaje);
+    this.tipoNotificacion.set(tipo);
+  }
+
+  private limpiarMensaje(): void {
+    this.mensajeNotificacion.set(null);
   }
 
   private refreshComunidadesAfterSave(): void {
@@ -290,17 +350,6 @@ export class ComunidadesComponent {
         this.isLoading = false;
         this.cdr.markForCheck();
       },
-    });
-  }
-
-  private isCodeDuplicate(codigo: string, editingId: number | null): boolean {
-    const normalized = codigo.trim().toLowerCase();
-
-    return this.comunidades().some((comunidad) => {
-      const sameCode = comunidad.codigo.trim().toLowerCase() === normalized;
-      const differentId = editingId == null || comunidad.id !== editingId;
-
-      return sameCode && differentId;
     });
   }
 
