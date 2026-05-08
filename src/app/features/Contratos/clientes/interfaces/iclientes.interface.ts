@@ -1,0 +1,88 @@
+export interface IIdentificacion {
+  identificacionId: string;
+  codigo: string;
+  nombre: string;
+  activo: boolean;
+  orden: number;
+}
+
+export type TipoBusquedaCliente = 'nombreCompleto' | 'identificacion';
+
+export type EstadoBusquedaCliente = 'todos' | 'activos' | 'inactivos';
+
+export interface IClientes {
+  id?: string | number;
+  clienteId?: string | number;
+  clientId?: string | number;
+  _id?: string | number;
+
+  tipoIdentificacionId?: string | number;
+  tipoIdentificacion?: IIdentificacion | string | null;
+
+  identificacion: string;
+
+  nombres?: string;
+  apellidos?: string;
+  razonSocial?: string | null;
+
+  email: string;
+  telefono: string;
+  telefonoSecundario?: string | null;
+
+  aplicaTerceraEdad: boolean;
+  aplicaDiscapacidad: boolean;
+
+  direccionDomicilio: string;
+
+  activo?: boolean;
+}
+
+export interface CrearClienteRequest {
+  tipoIdentificacionId: number;
+
+  identificacion: string;
+
+  nombres?: string;
+  apellidos?: string;
+  razonSocial?: string | null;
+
+  email: string;
+  telefono: string;
+  telefonoSecundario?: string | null;
+
+  aplicaTerceraEdad: boolean;
+  aplicaDiscapacidad: boolean;
+
+  direccionDomicilio: string;
+}
+
+export interface ActualizarClienteRequest {
+  tipoIdentificacionId?: number;
+
+  identificacion?: string;
+
+  nombres?: string;
+  apellidos?: string;
+  razonSocial?: string | null;
+
+  email?: string;
+  telefono?: string;
+  telefonoSecundario?: string | null;
+
+  aplicaTerceraEdad?: boolean;
+  aplicaDiscapacidad?: boolean;
+
+  direccionDomicilio?: string;
+
+  activo?: boolean;
+}
+
+export interface BuscarClientesParams {
+  nombreCompleto?: string;
+  identificacion?: string;
+
+  nombres?: string;
+  apellidos?: string;
+
+  activo?: boolean;
+}
