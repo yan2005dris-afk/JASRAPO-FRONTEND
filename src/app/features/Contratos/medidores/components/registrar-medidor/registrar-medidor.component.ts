@@ -63,5 +63,4 @@ export class RegistrarMedidorComponent {
 
     this.guardar.emit(this.form.getRawValue());
   }
-
 }

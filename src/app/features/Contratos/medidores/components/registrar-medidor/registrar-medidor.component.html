@@ -7,16 +7,22 @@
     <!-- Cabecera del modal -->
     <header class="modal-header">
       <h5 class="modal-title mb-0">Registrar medidor</h5>
-      <button type="button" class="btn-close" aria-label="Cerrar" [disabled]="isSaving" (click)="close()"></button>
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="Cerrar"
+        [disabled]="isSaving"
+        (click)="close()"
+      ></button>
     </header>
 
     <!-- Cuerpo y Formulario -->
     <div class="modal-body">
       @if (errorMessage) {
-      <div class="alert alert-danger py-2 px-3 mb-3 small d-flex align-items-center gap-2">
-        <i class="bi bi-exclamation-circle-fill"></i>
-        <span>{{ errorMessage }}</span>
-      </div>
+        <div class="alert alert-danger py-2 px-3 mb-3 small d-flex align-items-center gap-2">
+          <i class="bi bi-exclamation-circle-fill"></i>
+          <span>{{ errorMessage }}</span>
+        </div>
       }
       <form [formGroup]="form" (ngSubmit)="submit()">
         <div class="form-group">
@@ -36,7 +42,12 @@
 
         <!-- Acciones del formulario -->
         <footer class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-sm" [disabled]="isSaving" (click)="close()">
+          <button
+            type="button"
+            class="btn btn-secondary btn-sm"
+            [disabled]="isSaving"
+            (click)="close()"
+          >
             Cancelar
           </button>
           <button type="submit" class="btn btn-primary btn-sm" [disabled]="isSaving">

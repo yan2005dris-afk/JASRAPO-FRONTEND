@@ -122,7 +122,7 @@ export class Medidores implements OnInit {
           console.error('Error en la carga de datos:', err);
           const mensajeError = this.obtenerMensajeErrorBackend(
             err,
-            'Error al cargar la información de medidores o estados'
+            'Error al cargar la información de medidores o estados',
           );
           this.mostrarMensaje(mensajeError, 'tabla');
         },
@@ -221,7 +221,7 @@ export class Medidores implements OnInit {
         this.isSaving = false;
         const mensajeError = this.obtenerMensajeErrorBackend(
           err,
-          'Error al guardar el medidor. Revise los datos ingresados.'
+          'Error al guardar el medidor. Revise los datos ingresados.',
         );
         this.mostrarMensaje(mensajeError, 'modal');
         this.cdr.detectChanges();
@@ -252,7 +252,7 @@ export class Medidores implements OnInit {
         this.isSaving = false;
         const mensajeError = this.obtenerMensajeErrorBackend(
           err,
-          'Error al actualizar: Verifique los datos enviados.'
+          'Error al actualizar: Verifique los datos enviados.',
         );
         this.mostrarMensaje(mensajeError, 'modal');
         this.cdr.detectChanges();
@@ -276,7 +276,7 @@ export class Medidores implements OnInit {
           this.isLoading = false;
           const mensajeError = this.obtenerMensajeErrorBackend(
             err,
-            'Error al eliminar el medidor.'
+            'Error al eliminar el medidor.',
           );
           this.mostrarMensaje(mensajeError, 'tabla');
           this.cdr.detectChanges();
