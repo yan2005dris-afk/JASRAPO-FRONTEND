@@ -1,0 +1,73 @@
+.form-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #212529;
+}
+
+.form-control,
+.form-select {
+  border-radius: 8px;
+  min-height: 42px;
+  border-color: #dee2e6;
+}
+
+.form-control:focus,
+.form-select:focus {
+  box-shadow: none;
+  border-color: #0d6efd;
+}
+
+textarea {
+  resize: none;
+}
+
+.modal-title {
+  color: #212529;
+}
+
+.modal-body {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.text-danger {
+  font-size: 0.78rem;
+}
+
+.form-check {
+  margin-bottom: 0;
+}
+
+.form-check-input {
+  cursor: pointer;
+}
+
+.form-check-label {
+  font-size: 0.9rem;
+  color: #495057;
+  cursor: pointer;
+}
+
+.btn {
+  border-radius: 8px;
+}
+
+.form-message {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.form-message-success {
+  color: #146c43;
+  background-color: #d1e7dd;
+  border: 1px solid #badbcc;
+}
+
+.form-message-error {
+  color: #b02a37;
+  background-color: #f8d7da;
+  border: 1px solid #f5c2c7;
+}
