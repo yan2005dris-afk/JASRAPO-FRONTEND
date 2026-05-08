@@ -15,6 +15,12 @@
     <!-- Formulario -->
     <form [formGroup]="form" (ngSubmit)="submit()">
       <div class="modal-body-custom">
+        @if (errorMessage) {
+          <div class="alert alert-danger py-2 px-3 mb-0 mt-3 mx-4 small d-flex align-items-center gap-2">
+            <i class="bi bi-exclamation-circle-fill"></i>
+            <span>{{ errorMessage }}</span>
+          </div>
+        }
         <div class="form-container">
           <!-- Selección de Estado -->
           <div class="input-wrapper top-spacing">
@@ -46,7 +52,7 @@
             <button type="button" class="btn-cancel" (click)="close()" [disabled]="isSaving">
               Cancelar
             </button>
-            <button type="submit" class="btn-save" [disabled]="form.invalid || isSaving">
+            <button type="submit" class="btn-save" [disabled]="isSaving">
               {{ isSaving ? '...' : 'Guardar' }}
             </button>
           </footer>

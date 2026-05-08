@@ -6,6 +6,7 @@ import {
   inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { EditarMedidorComponent } from './components/editar-medidor/editar-medidor.component';
 import { RegistrarMedidorComponent } from './components/registrar-medidor/registrar-medidor.component';
 import {
@@ -46,10 +47,29 @@ export class Medidores implements OnInit {
   hasFetched = false;
   isSaving = false;
   errorMessage = '';
+  modalErrorMessage = '';
 
   // Control de modales
   showRegistrarModal = false;
   showEditarModal = false;
+
+  /**
+   * Extrae el mensaje dinámico del backend o usa un fallback.
+   */
+  obtenerMensajeErrorBackend(err: HttpErrorResponse, mensajePorDefecto: string): string {
+    return err.error?.message || mensajePorDefecto;
+  }
+
+  /**
+   * Asigna el mensaje de error para mostrarlo en la interfaz.
+   */
+  mostrarMensaje(mensaje: string, contexto: 'tabla' | 'modal' = 'tabla'): void {
+    if (contexto === 'modal') {
+      this.modalErrorMessage = mensaje;
+    } else {
+      this.errorMessage = mensaje;
+    }
+  }
 
   // Configuración de paginación
   pageSizeOptions = [5, 10, 15];
@@ -98,9 +118,13 @@ export class Medidores implements OnInit {
 
           this.hasFetched = true;
         },
-        error: (err) => {
+        error: (err: HttpErrorResponse) => {
           console.error('Error en la carga de datos:', err);
-          this.errorMessage = 'Error al cargar la información de medidores o estados';
+          const mensajeError = this.obtenerMensajeErrorBackend(
+            err,
+            'Error al cargar la información de medidores o estados'
+          );
+          this.mostrarMensaje(mensajeError, 'tabla');
         },
       });
   }
@@ -147,24 +171,28 @@ export class Medidores implements OnInit {
   openRegistrar(): void {
     this.showRegistrarModal = true;
     this.editingMedidor = null;
-    this.cdr.markForCheck();
+    this.modalErrorMessage = '';
+    this.cdr.detectChanges();
   }
 
   closeRegistrar(): void {
     this.showRegistrarModal = false;
-    this.cdr.markForCheck();
+    this.modalErrorMessage = '';
+    this.cdr.detectChanges();
   }
 
   openEditar(medidor: IMedidor): void {
     this.editingMedidor = medidor;
     this.showEditarModal = true;
-    this.cdr.markForCheck();
+    this.modalErrorMessage = '';
+    this.cdr.detectChanges();
   }
 
   closeEditar(): void {
     this.showEditarModal = false;
     this.editingMedidor = null;
-    this.cdr.markForCheck();
+    this.modalErrorMessage = '';
+    this.cdr.detectChanges();
   }
 
   /**
@@ -189,9 +217,14 @@ export class Medidores implements OnInit {
         this.closeRegistrar();
         this.cargarMedidores();
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.isSaving = false;
-        this.cdr.markForCheck();
+        const mensajeError = this.obtenerMensajeErrorBackend(
+          err,
+          'Error al guardar el medidor. Revise los datos ingresados.'
+        );
+        this.mostrarMensaje(mensajeError, 'modal');
+        this.cdr.detectChanges();
       },
     });
   }
@@ -215,9 +248,13 @@ export class Medidores implements OnInit {
         this.closeEditar();
         this.cargarMedidores();
       },
-      error: () => {
+      error: (err: HttpErrorResponse) => {
         this.isSaving = false;
-        this.errorMessage = 'Error al actualizar: Verifique los datos enviados';
+        const mensajeError = this.obtenerMensajeErrorBackend(
+          err,
+          'Error al actualizar: Verifique los datos enviados.'
+        );
+        this.mostrarMensaje(mensajeError, 'modal');
         this.cdr.detectChanges();
       },
     });
@@ -235,10 +272,14 @@ export class Medidores implements OnInit {
         next: () => {
           this.cargarMedidores();
         },
-        error: () => {
+        error: (err: HttpErrorResponse) => {
           this.isLoading = false;
-          this.errorMessage = 'Error al eliminar el medidor';
-          this.cdr.markForCheck();
+          const mensajeError = this.obtenerMensajeErrorBackend(
+            err,
+            'Error al eliminar el medidor.'
+          );
+          this.mostrarMensaje(mensajeError, 'tabla');
+          this.cdr.detectChanges();
         },
       });
     }

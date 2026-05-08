@@ -9,7 +9,7 @@ import {
   SimpleChanges,
   inject,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import {
   EditarEstadoMedidorPayload,
   IEstadoMedidor,
@@ -32,6 +32,7 @@ export class EditarMedidorComponent implements OnChanges {
   // Entradas de datos y estado de carga
   @Input() medidor: IMedidor | null = null;
   @Input() isSaving = false;
+  @Input() errorMessage = '';
   @Input() estados: IEstadoMedidor[] = [];
 
   // Emisores de eventos para comunicación con el contenedor
@@ -45,7 +46,7 @@ export class EditarMedidorComponent implements OnChanges {
    * Estructura reactiva del formulario de actualización
    */
   form = this.fb.group({
-    estadoId: [null as number | null, Validators.required],
+    estadoId: [null as number | null],
     observacion: [''],
   });
 
@@ -67,11 +68,11 @@ export class EditarMedidorComponent implements OnChanges {
    * validando que exista un medidor seleccionado y no haya operaciones en curso.
    */
   submit(): void {
-    if (this.form.invalid || !this.medidor || this.isSaving) return;
+    if (!this.medidor || this.isSaving) return;
 
     const rawValues = this.form.getRawValue();
     this.guardar.emit({
-      medidorId: this.medidor.medidorId, // Como ya actualizaste la interfaz, esto ya es un number
+      medidorId: this.medidor.medidorId,
       estadoId: Number(rawValues.estadoId),
       motivo: rawValues.observacion || '',
     });
