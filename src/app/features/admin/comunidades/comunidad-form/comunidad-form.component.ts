@@ -27,8 +27,8 @@ export class ComunidadFormComponent implements OnChanges {
   private readonly fb = inject(FormBuilder);
 
   readonly comunidadForm = this.fb.group({
-    codigo: [''],
-    nombre: [''],
+    codigo: ['', [Validators.required]],
+    nombre: ['', [Validators.required]],
     porcentajeTasaSeguridad: [0, [Validators.required, Validators.min(0), Validators.max(100)]],
   });
 
@@ -45,13 +45,15 @@ export class ComunidadFormComponent implements OnChanges {
         nombre: this.comunidadAEditar.nombre,
         porcentajeTasaSeguridad: this.comunidadAEditar.porcentajeTasaSeguridad,
       });
-    } else {
-      this.comunidadForm.reset({
-        codigo: '',
-        nombre: '',
-        porcentajeTasaSeguridad: 0,
-      });
+
+      return;
     }
+
+    this.comunidadForm.reset({
+      codigo: '',
+      nombre: '',
+      porcentajeTasaSeguridad: 0,
+    });
   }
 
   onClose(): void {
@@ -59,10 +61,8 @@ export class ComunidadFormComponent implements OnChanges {
   }
 
   onSubmit(): void {
-    const porcentajeControl = this.comunidadForm.controls.porcentajeTasaSeguridad;
-
-    if (porcentajeControl.invalid) {
-      porcentajeControl.markAsTouched();
+    if (this.comunidadForm.invalid) {
+      this.comunidadForm.markAllAsTouched();
       return;
     }
 
