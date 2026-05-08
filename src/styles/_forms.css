@@ -4,37 +4,37 @@
 
 /* Minimal Form Controls */
 .form-control-simple {
-    padding: 0.6rem 0.8rem;
-    font-size: 0.9rem;
-    border: 1px solid #e1e5eb;
-    border-radius: 6px;
-    background-color: #ffffff;
-    transition: all 0.2s ease;
-    color: var(--dark-text);
+  padding: 0.6rem 0.8rem;
+  font-size: 0.9rem;
+  border: 1px solid #e1e5eb;
+  border-radius: 6px;
+  background-color: #ffffff;
+  transition: all 0.2s ease;
+  color: var(--dark-text);
 }
 
 .form-control-simple::placeholder {
-    color: #cbd5e1;
-    font-weight: 400;
+  color: #cbd5e1;
+  font-weight: 400;
 }
 
 .form-control-simple:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px var(--input-focus-ring);
-    background-color: #ffffff;
-    outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--input-focus-ring);
+  background-color: #ffffff;
+  outline: none;
 }
 
 /* Primary Button customized to Corporate Theme */
 .btn-brand-primary {
-    background-color: var(--primary-color);
-    border: none;
-    font-size: 0.95rem;
-    transition: all 0.2s ease-in-out;
+  background-color: var(--primary-color);
+  border: none;
+  font-size: 0.95rem;
+  transition: all 0.2s ease-in-out;
 }
 
 .btn-brand-primary:hover {
-    background-color: var(--secondary-color);
-    box-shadow: 0 4px 10px -2px var(--input-focus-ring);
-    transform: translateY(-1px);
+  background-color: var(--secondary-color);
+  box-shadow: 0 4px 10px -2px var(--input-focus-ring);
+  transform: translateY(-1px);
 }

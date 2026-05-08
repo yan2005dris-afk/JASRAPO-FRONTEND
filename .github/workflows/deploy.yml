@@ -3,12 +3,12 @@ name: Deploy Angular Frontend
 on:
   push:
     branches:
-      - develop  # Cambia a 'main' si es tu rama de producción
+      - develop # Cambia a 'main' si es tu rama de producción
 
 jobs:
   deploy-frontend:
     runs-on: self-hosted
-    
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
