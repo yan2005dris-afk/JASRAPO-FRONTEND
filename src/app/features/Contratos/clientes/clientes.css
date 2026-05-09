@@ -1,5 +1,61 @@
 /* Container */
 .cliente-container {
-    max-width: 1200px;
-    margin: 0 auto;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.search-group {
+  width: 250px;
+}
+
+.table-checkbox {
+  cursor: pointer;
+}
+
+.custom-table th,
+.custom-table td {
+  padding: 1rem;
+  vertical-align: middle;
+}
+
+.detalle-cliente-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background-color: #f8f9fa;
+}
+
+.detalle-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background-color: #e7f1ff;
+  color: #0d6efd;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+
+.detalle-card {
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 1rem;
+  background-color: #ffffff;
+  min-height: 78px;
+}
+
+.detalle-label {
+  display: block;
+  font-size: 0.78rem;
+  color: #6c757d;
+  margin-bottom: 0.35rem;
+}
+
+.detalle-card strong {
+  color: #212529;
+  font-size: 0.95rem;
+  word-break: break-word;
 }

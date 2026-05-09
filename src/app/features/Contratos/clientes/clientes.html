@@ -2,94 +2,98 @@
   <h3 class="fw-bold mb-4 text-dark fs-4">Gestión de Clientes</h3>
 
   <div class="card border-0 shadow-sm rounded-3">
-    <!-- Card Header (Search & Actions) -->
+    <!-- Header: Buscar y acciones -->
     <div
       class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3"
     >
-      <!-- Primary Action -->
-      <button class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3">
-        <i class="bi bi-plus-lg"></i> Agregar
+      <!-- Botón Agregar -->
+      <button
+        class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+        (click)="abrirModal()"
+      >
+        <i class="bi bi-plus-lg"></i>
+        Agregar
       </button>
-      <!-- <h5 class="fw-bold mb-0 fs-6">Lista de Clientes</h5> -->
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
-        <!-- Search -->
+        <!-- Input de búsqueda -->
         <div class="input-group search-group">
           <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
             <i class="bi bi-search"></i>
           </span>
+
           <input
             type="text"
             class="form-control border-start-0 ps-0 shadow-none"
             placeholder="Buscar cliente..."
+            [(ngModel)]="searchTerm"
+            (keyup.enter)="buscarClientes()"
           />
         </div>
 
-        <!-- El evento (click) llama al método buscarClientes() del componente -->
+        <!-- Tipo de búsqueda -->
+        <select class="form-select shadow-none" style="width: 190px" [(ngModel)]="searchType">
+          <option value="nombreCompleto">Nombres</option>
+          <option value="identificacion">Identificación</option>
+        </select>
+
+        <!-- Estado -->
+        <select class="form-select shadow-none" style="width: 150px" [(ngModel)]="estadoBusqueda">
+          <option value="todos">Todos</option>
+          <option value="activos">Activos</option>
+          <option value="inactivos">Inactivos</option>
+        </select>
+
+        <!-- Botón Buscar -->
         <button
           class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="buscarClientes()"
           [disabled]="isLoading"
         >
-          <!-- Si está cargando mostramos un spinner de Bootstrap, si no el ícono normal -->
           @if (isLoading) {
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
           }
+
           @if (!isLoading) {
             <i class="bi bi-search"></i>
           }
+
           {{ isLoading ? 'Buscando...' : 'Buscar' }}
         </button>
 
-        <!-- Bulk Actions Dropdown -->
+        <!-- Botón Limpiar -->
         <button
-          class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium bg-white text-muted"
+          class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="limpiarBusqueda()"
+          [disabled]="isLoading"
         >
-          Acciones Masivas <i class="bi bi-chevron-down ms-1" style="font-size: 0.75rem"></i>
+          <i class="bi bi-x-circle"></i>
+          Limpiar
         </button>
       </div>
     </div>
 
-    <!-- Sub-Header (Filters) -->
+    <!-- Filtros informativos -->
     <div class="px-4 pb-3 d-flex align-items-center border-bottom flex-wrap gap-2">
       <span class="text-muted small me-2 d-flex align-items-center gap-1">
-        <i class="bi bi-funnel"></i> Filtros rápidos:
+        <i class="bi bi-funnel"></i>
+        Filtros disponibles:
       </span>
 
-      <!-- Pill Filters -->
-      <button
-        class="btn btn-filter rounded-pill px-3 py-1"
-        [class.active]="activeFilter === 'Todos'"
-        (click)="setFilter('Todos')"
-      >
-        Todos
-      </button>
-      <button
-        class="btn btn-filter rounded-pill px-3 py-1"
-        [class.active]="activeFilter === 'Morosos'"
-        (click)="setFilter('Morosos')"
-      >
-        Morosos
-      </button>
-      <button
-        class="btn btn-filter rounded-pill px-3 py-1"
-        [class.active]="activeFilter === 'Sin lectura'"
-        (click)="setFilter('Sin lectura')"
-      >
-        Sin Lectura
-      </button>
+      <span class="badge rounded-pill text-bg-light border text-muted px-3 py-2">
+        Nombre completo
+      </span>
 
-      <!-- Regular Dropdown -->
-      <button
-        class="btn btn-outline-secondary btn-sm ms-2 d-flex align-items-center gap-2 bg-white text-muted px-3 py-1 rounded-3"
-      >
-        Option 1 <i class="bi bi-chevron-down ms-1" style="font-size: 0.7rem"></i>
-      </button>
+      <span class="badge rounded-pill text-bg-light border text-muted px-3 py-2">
+        Identificación
+      </span>
+
+      <span class="badge rounded-pill text-bg-light border text-muted px-3 py-2"> Estado </span>
     </div>
 
-    <!-- Data Table -->
+    <!-- Tabla -->
     <div class="px-4 pt-3">
-      <!-- Estado inicial: no se ha buscado nada todavía -->
+      <!-- Estado inicial -->
       @if (!hasFetched && !isLoading) {
         <div class="text-center py-5 text-muted">
           <i class="bi bi-search fs-1 d-block mb-2 opacity-25"></i>
@@ -99,7 +103,7 @@
         </div>
       }
 
-      <!-- Estado de carga -->
+      <!-- Cargando -->
       @if (isLoading) {
         <div class="text-center py-5 text-muted">
           <div class="spinner-border text-primary" role="status">
@@ -109,8 +113,8 @@
         </div>
       }
 
-      <!-- Tabla: solo visible después de la primera búsqueda exitosa -->
-      @if (hasFetched) {
+      <!-- Tabla de clientes -->
+      @if (hasFetched && !isLoading) {
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 custom-table">
             <thead>
@@ -118,47 +122,93 @@
                 <th scope="col" style="width: 40px">
                   <input class="form-check-input table-checkbox" type="checkbox" />
                 </th>
-                <th scope="col" class="text-muted fw-semibold small">Nombre</th>
-                <th scope="col" class="text-muted fw-semibold small">Sector</th>
-                <th scope="col" class="text-muted fw-semibold small">Último Consumo (m³)</th>
+
+                <th scope="col" class="text-muted fw-semibold small">Tipo</th>
+                <th scope="col" class="text-muted fw-semibold small">Identificación</th>
+                <th scope="col" class="text-muted fw-semibold small">Cliente</th>
+                <th scope="col" class="text-muted fw-semibold small">Correo</th>
+                <th scope="col" class="text-muted fw-semibold small">Teléfono</th>
+                <th scope="col" class="text-muted fw-semibold small">Dirección</th>
                 <th scope="col" class="text-muted fw-semibold small">Estado</th>
                 <th scope="col" class="text-muted fw-semibold small text-center">Acciones</th>
               </tr>
             </thead>
+
             <tbody>
-              @for (client of pagedClients; track client) {
+              @for (client of pagedClients; track obtenerIdCliente(client) ?? $index) {
                 <tr>
                   <td>
                     <input class="form-check-input table-checkbox" type="checkbox" />
                   </td>
+
+                  <td class="text-muted small">
+                    {{
+                      $any(client.tipoIdentificacion)?.nombre ||
+                        $any(client.tipoIdentificacion)?.codigo ||
+                        client.tipoIdentificacionId ||
+                        'Sin tipo'
+                    }}
+                  </td>
+
                   <td class="fw-medium text-dark" style="font-size: 0.95rem">
-                    {{ client.nombre }}
+                    {{ client.identificacion || 'Sin identificación' }}
                   </td>
-                  <td class="text-muted small">{{ client.sector }}</td>
-                  <td class="text-dark small">{{ client.consumo }}</td>
-                  <td>
-                    <span
-                      class="badge rounded-pill fw-medium"
-                      [ngClass]="{
-                        'badge-soft-success': client.estado === 'Activo',
-                        'badge-soft-warning': client.estado === 'Sin lectura',
-                        'badge-soft-danger': client.estado === 'Moroso',
-                      }"
-                    >
-                      {{ client.estado }}
-                    </span>
+
+                  <td class="text-dark small">
+                    {{ obtenerNombreCliente(client) }}
                   </td>
+
+                  <td class="text-muted small">
+                    {{ client.email || 'Sin correo' }}
+                  </td>
+
+                  <td class="text-muted small">
+                    {{ client.telefono || 'Sin teléfono' }}
+                  </td>
+
+                  <td class="text-muted small">
+                    {{ client.direccionDomicilio || 'Sin dirección' }}
+                  </td>
+
+                  <td class="small">
+                    @if (client.activo === false) {
+                      <span class="badge rounded-pill text-bg-danger">Inactivo</span>
+                    } @else {
+                      <span class="badge rounded-pill text-bg-success">Activo</span>
+                    }
+                  </td>
+
                   <td class="text-center">
-                    <button class="btn btn-link text-muted p-0 shadow-none">
-                      <i class="bi bi-three-dots-vertical"></i>
+                    <button
+                      class="btn btn-link text-muted p-0 shadow-none me-2"
+                      title="Ver detalle"
+                      (click)="verDetalleCliente(client)"
+                    >
+                      <i class="bi bi-eye"></i>
+                    </button>
+
+                    <button
+                      class="btn btn-link text-primary p-0 shadow-none me-2"
+                      title="Editar"
+                      (click)="editarCliente(client)"
+                    >
+                      <i class="bi bi-pencil-square"></i>
+                    </button>
+
+                    <button
+                      class="btn btn-link text-danger p-0 shadow-none"
+                      title="Eliminar"
+                      (click)="eliminarCliente(client)"
+                    >
+                      <i class="bi bi-trash"></i>
                     </button>
                   </td>
                 </tr>
               }
-              <!-- Empty state -->
+
               @if (pagedClients.length === 0) {
                 <tr>
-                  <td colspan="6" class="text-center text-muted py-4">
+                  <td colspan="9" class="text-center text-muted py-4">
                     <i class="bi bi-people fs-3 d-block mb-2"></i>
                     No se encontraron clientes
                   </td>
@@ -170,19 +220,20 @@
       }
     </div>
 
-    <!-- Footer / Pagination -->
+    <!-- Footer / Paginación -->
     <div
       class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3"
     >
-      <!-- Left: total + page size selector -->
       <div class="d-flex align-items-center gap-3">
         <span class="text-muted small">
           Total: <strong>{{ filteredClients.length }}</strong> cliente{{
             filteredClients.length !== 1 ? 's' : ''
           }}
         </span>
+
         <div class="d-flex align-items-center gap-2">
           <span class="text-muted small">Mostrar:</span>
+
           <select
             class="form-select form-select-sm page-size-select shadow-none"
             [value]="pageSize"
@@ -195,10 +246,8 @@
         </div>
       </div>
 
-      <!-- Right: pagination controls -->
       <nav>
         <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
-          <!-- Previous -->
           <li class="page-item" [class.disabled]="currentPage === 1">
             <a
               class="page-link border-0 text-dark bg-transparent fw-medium small"
@@ -207,11 +256,11 @@
               [attr.tabindex]="currentPage === 1 ? -1 : null"
               [attr.aria-disabled]="currentPage === 1"
             >
-              <i class="bi bi-chevron-left me-1" style="font-size: 0.7rem"></i> Previous
+              <i class="bi bi-chevron-left me-1" style="font-size: 0.7rem"></i>
+              Previous
             </a>
           </li>
 
-          <!-- Page numbers -->
           @for (page of pageNumbers; track page) {
             <li
               class="page-item"
@@ -227,12 +276,12 @@
                 style="border-radius: 6px"
                 href="#"
                 (click)="$event.preventDefault(); goToPage(page)"
-                >{{ page }}</a
               >
+                {{ page }}
+              </a>
             </li>
           }
 
-          <!-- Next -->
           <li class="page-item" [class.disabled]="currentPage === totalPages">
             <a
               class="page-link border-0 text-dark bg-transparent fw-medium small"
@@ -241,7 +290,8 @@
               [attr.tabindex]="currentPage === totalPages ? -1 : null"
               [attr.aria-disabled]="currentPage === totalPages"
             >
-              Next <i class="bi bi-chevron-right ms-1" style="font-size: 0.7rem"></i>
+              Next
+              <i class="bi bi-chevron-right ms-1" style="font-size: 0.7rem"></i>
             </a>
           </li>
         </ul>
@@ -249,3 +299,149 @@
     </div>
   </div>
 </div>
+
+<!-- Modal Crear / Editar Cliente -->
+@if (isModalOpen) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5)">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow">
+        <app-clientes-form
+          [clienteAEditar]="objetoClienteAEditar"
+          (formSubmitted)="buscarClientes()"
+          (formClosed)="cerrarModal()"
+        ></app-clientes-form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Ver Detalle Cliente -->
+@if (isDetalleModalOpen && clienteDetalleSeleccionado) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5)">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow rounded-4">
+        <div class="modal-header border-bottom-0 pb-0">
+          <div>
+            <h5 class="modal-title fw-bold">Detalle del Cliente</h5>
+            <p class="text-muted mb-0 small">Información completa registrada en el sistema.</p>
+          </div>
+
+          <button
+            type="button"
+            class="btn-close shadow-none"
+            aria-label="Cerrar"
+            (click)="cerrarDetalleModal()"
+          ></button>
+        </div>
+
+        <div class="modal-body pt-4">
+          <div class="detalle-cliente-header mb-4">
+            <div class="detalle-avatar">
+              <i class="bi bi-person"></i>
+            </div>
+
+            <div>
+              <h5 class="fw-bold mb-1">
+                {{ obtenerNombreCliente(clienteDetalleSeleccionado) }}
+              </h5>
+
+              <div>
+                @if (clienteDetalleSeleccionado.activo === false) {
+                  <span class="badge rounded-pill text-bg-danger">Inactivo</span>
+                } @else {
+                  <span class="badge rounded-pill text-bg-success">Activo</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="detalle-card">
+                <span class="detalle-label">Tipo de identificación</span>
+                <strong>
+                  {{
+                    $any(clienteDetalleSeleccionado.tipoIdentificacion)?.nombre ||
+                      $any(clienteDetalleSeleccionado.tipoIdentificacion)?.codigo ||
+                      clienteDetalleSeleccionado.tipoIdentificacionId ||
+                      'No registrado'
+                  }}
+                </strong>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="detalle-card">
+                <span class="detalle-label">Identificación</span>
+                <strong>{{ clienteDetalleSeleccionado.identificacion || 'No registrada' }}</strong>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="detalle-card">
+                <span class="detalle-label">Correo electrónico</span>
+                <strong>{{ clienteDetalleSeleccionado.email || 'No registrado' }}</strong>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="detalle-card">
+                <span class="detalle-label">Teléfono</span>
+                <strong>{{ clienteDetalleSeleccionado.telefono || 'No registrado' }}</strong>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="detalle-card">
+                <span class="detalle-label">Teléfono secundario</span>
+                <strong>{{
+                  clienteDetalleSeleccionado.telefonoSecundario || 'No registrado'
+                }}</strong>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="detalle-card">
+                <span class="detalle-label">Condiciones especiales</span>
+
+                <div class="d-flex gap-2 flex-wrap mt-1">
+                  @if (clienteDetalleSeleccionado.aplicaTerceraEdad) {
+                    <span class="badge rounded-pill text-bg-info">Tercera edad</span>
+                  }
+
+                  @if (clienteDetalleSeleccionado.aplicaDiscapacidad) {
+                    <span class="badge rounded-pill text-bg-warning">Discapacidad</span>
+                  }
+
+                  @if (
+                    !clienteDetalleSeleccionado.aplicaTerceraEdad &&
+                    !clienteDetalleSeleccionado.aplicaDiscapacidad
+                  ) {
+                    <span class="text-muted small">No aplica</span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="detalle-card">
+                <span class="detalle-label">Dirección domiciliaria</span>
+                <strong>{{
+                  clienteDetalleSeleccionado.direccionDomicilio || 'No registrada'
+                }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-top-0">
+          <button type="button" class="btn btn-light" (click)="cerrarDetalleModal()">Cerrar</button>
+
+          <button type="button" class="btn btn-primary" (click)="abrirEdicionDesdeDetalle()">
+            Editar cliente
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

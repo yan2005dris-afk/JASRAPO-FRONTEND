@@ -5,27 +5,27 @@
 */
 
 .transition-colors {
-    transition: color 0.2s;
+  transition: color 0.2s;
 }
 
 .hover-primary:hover {
-    color: var(--primary-color) !important;
+  color: var(--primary-color) !important;
 }
 
 .text-glow {
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
 }
 
 .cursor-pointer {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 /* Auth / Image Utils */
 .object-fit-cover {
-    object-fit: cover;
+  object-fit: cover;
 }
 
 .text-secondary {
-    color: #475569 !important;
-    transition: color 0.15s ease-in-out;
+  color: #475569 !important;
+  transition: color 0.15s ease-in-out;
 }
