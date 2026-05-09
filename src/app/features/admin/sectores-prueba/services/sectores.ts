@@ -19,7 +19,7 @@ export class SectoresService {
 
   // Obtener url de la api
   private readonly API_URL = environment.apiUrl;
-  private readonly endpoint = this.API_URL + '/sector';
+  private readonly endpoint = this.API_URL + '/sectors';
 
   // METODOS CRUD
   // ============================================================================

@@ -106,7 +106,7 @@ export class SectoresPrueba {
 
     this.sectoresService.getAllSectores().subscribe({
       next: (data) => {
-        console.log(data);
+        // console.log(data);
 
         this.sectores = data;
         this.hasFetched = true;

@@ -1,19 +1,18 @@
 <div class="modal-header border-bottom-0 pb-0">
   <h5 class="modal-title fw-bold">Agregar Nuevo Sector</h5>
-  <button
-    type="button"
-    class="btn-close shadow-none"
-    (click)="onClose()"
-    aria-label="Close"
-  ></button>
+  <button type="button" class="btn-close shadow-none" (click)="onClose()" aria-label="Close"></button>
 </div>
 <form [formGroup]="sectorForm" (ngSubmit)="onSubmit()">
   <div class="modal-body pt-4">
     <p class="text-muted">Completa los datos del sector.</p>
 
     <div class="mb-3">
-      <label for="comunidadId" class="form-label">ID Comunidad (pruebas)</label>
-      <input type="number" class="form-control" id="comunidadId" formControlName="comunidadId" />
+      <select name="comunidad" id="comunityItems" class="form-select" formControlName="comunidadId">
+        <option [ngValue]="null" disabled>-- Seleccionar --</option>
+        @for (item of (comunitiesItems | async); track item.id) {
+        <option [ngValue]="item.id">{{ item.nombre }}</option>
+        }
+      </select>
     </div>
     <div class="mb-3">
       <label for="codigo" class="form-label">Código del sector</label>
