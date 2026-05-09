@@ -11,6 +11,8 @@ import {
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { Comunidad } from '../../../comunidades/models/comunidad.interface';
+import { ComunidadesService } from '../../../comunidades/services/comunidades.service';
 
 @Component({
   selector: 'app-sectores-prueba',
@@ -32,11 +34,15 @@ export class SectoresPrueba {
   private readonly cdr = inject(ChangeDetectorRef);
 
   private sectoresService = inject(SectoresService);
+  private comunidadesService = inject(ComunidadesService);
 
   /** Lista de sectores que se muestra en la tabla. Empieza vacía. */
   sectores: Sectores[] = [];
 
   objetoSectorAEditar: Sectores | null = null;
+
+  comunitySelectedToView: Comunidad | null = null;
+
   /** Indica si se está realizando una petición a la API. */
   isLoading = false;
 
@@ -50,18 +56,44 @@ export class SectoresPrueba {
   ];
 
   /** Estado del modal */
-  isModalOpen = false;
+  modalMode: 'create' | 'edit' | 'view' | 'none' = 'none';
 
   abrirModal() {
-    this.isModalOpen = true;
+    this.modalMode = 'create';
     this.objetoSectorAEditar = null; // Limpiar para modo agregar
     this.cdr.markForCheck();
   }
 
   cerrarModal() {
-    this.isModalOpen = false;
+    this.modalMode = 'none';
     this.objetoSectorAEditar = null; // Limpiar al cerrar
     this.cdr.markForCheck();
+  }
+
+  editarSector(sector: Sectores) {
+    this.objetoSectorAEditar = sector;
+    this.modalMode = 'edit';
+    this.cdr.markForCheck();
+  }
+
+  verDetalleSector(sector: Sectores) {
+    this.objetoSectorAEditar = sector;
+    this.comunitySelectedToView = null; // Limpiar datos anteriores
+    this.modalMode = 'view';
+    this.cdr.markForCheck();
+
+    // Obtener la comunidad completa por su ID
+    if (sector.comunidadId) {
+      this.comunidadesService.getComunidadById(sector.comunidadId).subscribe({
+        next: (comunidad) => {
+          this.comunitySelectedToView = comunidad;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Error al obtener la comunidad:', err);
+        }
+      });
+    }
   }
 
   get filteredSectores(): Sectores[] {
@@ -138,12 +170,6 @@ export class SectoresPrueba {
   handleAccionMasiva(action: string) {
     console.log('Acción masiva seleccionada:', action);
     // TODO: Implementar lógica de la acción seleccionada
-  }
-
-  editarSector(sector: Sectores) {
-    this.objetoSectorAEditar = sector;
-    this.isModalOpen = true;
-    this.cdr.markForCheck();
   }
 
   eliminarSector(sector: Sectores) {
