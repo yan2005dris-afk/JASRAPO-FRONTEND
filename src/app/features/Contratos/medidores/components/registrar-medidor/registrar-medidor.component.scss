@@ -1,0 +1,67 @@
+/**
+ * Variables del Modal
+ */
+$backdrop-bg: rgba(15, 23, 42, 0.45);
+$panel-bg: #ffffff;
+$danger-text: #dc3545;
+
+/**
+ * Contenedor principal (Overlay oscuro)
+ */
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background: $backdrop-bg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  padding: 1rem;
+
+  /**
+   * Tarjeta principal del modal
+   */
+  .modal-panel {
+    width: min(580px, 100%);
+    border-radius: 1rem;
+    padding: 1.25rem;
+    background: $panel-bg;
+    border: none;
+
+    /* Cabecera */
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.5rem;
+      border-bottom: none;
+    }
+
+    /* Contenido central */
+    .modal-body {
+      padding-top: 1rem;
+    }
+
+    /* Agrupación de inputs */
+    .form-group {
+      margin-bottom: 1rem;
+
+      .error-text {
+        color: $danger-text;
+        font-size: 0.875em;
+        margin-top: 0.25rem;
+        display: block;
+      }
+    }
+
+    /* Pie del modal y botones */
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+      padding: 0;
+      border-top: none;
+    }
+  }
+}
