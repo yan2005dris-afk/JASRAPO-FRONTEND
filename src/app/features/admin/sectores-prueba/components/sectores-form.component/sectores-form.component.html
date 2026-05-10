@@ -15,8 +15,20 @@
       </select>
     </div>
     <div class="mb-3">
-      <label for="codigo" class="form-label">Código del sector</label>
-      <input type="text" class="form-control" id="codigo" formControlName="codigo" />
+      <label for="codigo" class="form-label">Código del sector (*)</label>
+      <input type="text" class="form-control" id="codigo" formControlName="codigo" (keydown)="preventSpaces($event)"
+        [class.is-invalid]="sectorForm.get('codigo')?.invalid && sectorForm.get('codigo')?.touched" />
+
+      @if (sectorForm.get('codigo')?.hasError('pattern') && sectorForm.get('codigo')?.touched) {
+      <div class="invalid-feedback">
+        El código no puede contener espacios en blanco.
+      </div>
+      }
+      @if (sectorForm.get('codigo')?.hasError('required') && sectorForm.get('codigo')?.touched) {
+      <div class="invalid-feedback">
+        El código es requerido.
+      </div>
+      }
     </div>
 
     <div class="mb-3">

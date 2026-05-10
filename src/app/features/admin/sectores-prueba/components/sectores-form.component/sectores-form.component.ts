@@ -48,7 +48,7 @@ export class SectoresFormComponent implements OnInit {
 
   sectorForm: FormGroup = this.fb.group({
     comunidadId: [null, Validators.required],
-    codigo: ['', Validators.required],
+    codigo: ['', [Validators.required, Validators.pattern(/^\S+$/)]],
     nombre: ['', Validators.required],
   });
 
@@ -57,6 +57,16 @@ export class SectoresFormComponent implements OnInit {
 
   onClose() {
     this.formClosed.emit();
+  }
+
+  /*
+    El método preventSpaces impide el ingreso de espacios en blanco
+    en el campo código. Se activa con el evento keydown.
+  */
+  preventSpaces(event: KeyboardEvent) {
+    if (event.key === ' ') {
+      event.preventDefault();
+    }
   }
 
   ngOnInit(): void {
