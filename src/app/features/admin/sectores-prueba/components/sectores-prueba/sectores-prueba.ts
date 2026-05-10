@@ -52,7 +52,7 @@ export class SectoresPrueba implements OnInit {
 
   objetoSectorAEditar: Sectores | null = null;
 
-  comunitySelectedToView: Comunidad | null = null;
+  communitySelectedToView: Comunidad | null = null;
 
   /** Indica si se está realizando una petición a la API. */
   isLoading = false;
@@ -89,7 +89,7 @@ export class SectoresPrueba implements OnInit {
 
   verDetalleSector(sector: Sectores) {
     this.objetoSectorAEditar = sector;
-    this.comunitySelectedToView = null; // Limpiar datos anteriores
+    this.communitySelectedToView = null; // Limpiar datos anteriores
     this.modalMode = 'view';
     this.cdr.markForCheck();
 
@@ -97,7 +97,7 @@ export class SectoresPrueba implements OnInit {
     if (sector.comunidadId) {
       this.comunidadesService.getComunidadById(sector.comunidadId).subscribe({
         next: (comunidad) => {
-          this.comunitySelectedToView = comunidad;
+          this.communitySelectedToView = comunidad;
           this.cdr.markForCheck();
         },
         error: (err) => {

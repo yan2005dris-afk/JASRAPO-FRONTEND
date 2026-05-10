@@ -1,40 +1,29 @@
 <div class="modal-header border-bottom-0 pb-0">
   <h5 class="modal-title fw-bold">Agregar Nuevo Sector</h5>
-  <button
-    type="button"
-    class="btn-close shadow-none"
-    (click)="onClose()"
-    aria-label="Close"
-  ></button>
+  <button type="button" class="btn-close shadow-none" (click)="onClose()" aria-label="Close"></button>
 </div>
 <form [formGroup]="sectorForm" (ngSubmit)="onSubmit()">
   <div class="modal-body pt-4">
     <p class="text-muted">Completa los datos del sector.</p>
 
     <div class="mb-3">
-      <select name="comunidad" id="comunityItems" class="form-select" formControlName="comunidadId">
-        <option [ngValue]="null" disabled>{{ comunitySelectedLabel }}</option>
-        @for (item of comunitiesItems | async; track item.id) {
-          <option [ngValue]="item.id">{{ item.nombre }}</option>
+      <select name="comunidad" id="communityItems" class="form-select" formControlName="comunidadId">
+        <option [ngValue]="null" disabled>{{ communitySelectedLabel }}</option>
+        @for (item of communitiesItems | async; track item.id) {
+        <option [ngValue]="item.id">{{ item.nombre }}</option>
         }
       </select>
     </div>
     <div class="mb-3">
       <label for="codigo" class="form-label">Código del sector (*)</label>
-      <input
-        type="text"
-        class="form-control"
-        id="codigo"
-        formControlName="codigo"
-        (keydown)="preventSpaces($event)"
-        [class.is-invalid]="sectorForm.get('codigo')?.invalid && sectorForm.get('codigo')?.touched"
-      />
+      <input type="text" class="form-control" id="codigo" formControlName="codigo" (keydown)="preventSpaces($event)"
+        [class.is-invalid]="sectorForm.get('codigo')?.invalid && sectorForm.get('codigo')?.touched" />
 
       @if (sectorForm.get('codigo')?.hasError('pattern') && sectorForm.get('codigo')?.touched) {
-        <div class="invalid-feedback">El código no puede contener espacios en blanco.</div>
+      <div class="invalid-feedback">El código no puede contener espacios en blanco.</div>
       }
       @if (sectorForm.get('codigo')?.hasError('required') && sectorForm.get('codigo')?.touched) {
-        <div class="invalid-feedback">El código es requerido.</div>
+      <div class="invalid-feedback">El código es requerido.</div>
       }
     </div>
 

@@ -28,7 +28,7 @@ export class SectoresFormComponent implements OnInit {
   private readonly comunidadesService = inject(ComunidadesService);
 
   // se cargan directamente los datos dentro de la variable.
-  comunitiesItems: Observable<Comunidad[]> = this.comunidadesService.getAllComunidades();
+  communitiesItems: Observable<Comunidad[]> = this.comunidadesService.getAllComunidades();
 
   /*
   
@@ -53,7 +53,7 @@ export class SectoresFormComponent implements OnInit {
   });
 
   //Propiedad para manejar el label del componente dropdown
-  comunitySelectedLabel = 'Seleccione una comunidad';
+  communitySelectedLabel = 'Seleccione una comunidad';
 
   onClose() {
     this.formClosed.emit();
