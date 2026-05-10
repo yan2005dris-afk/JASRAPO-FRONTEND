@@ -8,7 +8,7 @@
 
     <div class="mb-3">
       <select name="comunidad" id="comunityItems" class="form-select" formControlName="comunidadId">
-        <option [ngValue]="null" disabled>-- Seleccionar --</option>
+        <option [ngValue]="null" disabled>{{ comunitySelectedLabel }}</option>
         @for (item of (comunitiesItems | async); track item.id) {
         <option [ngValue]="item.id">{{ item.nombre }}</option>
         }
@@ -23,12 +23,6 @@
       <label for="nombre" class="form-label">Nombre del sector</label>
       <input type="text" class="form-control" id="nombre" formControlName="nombre" />
     </div>
-
-    <!-- Si tu modelo no tiene estado, puedes quitar esta parte -->
-    <!-- <div class="mb-3 form-check">
-            <input type="checkbox" class="form-check-input" id="estado" formControlName="estado" />
-            <label class="form-check-label" for="estado">Estado</label>
-        </div> -->
   </div>
   <div class="modal-footer border-top-0 pt-0">
     <button type="button" class="btn btn-light" (click)="onClose()">Cancelar</button>

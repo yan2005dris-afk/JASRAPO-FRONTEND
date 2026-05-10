@@ -82,7 +82,7 @@
                 <input class="form-check-input table-checkbox" type="checkbox" />
               </td>
               <td class="fw-medium text-dark" style="font-size: 0.95rem">
-                {{ sector.comunidadId }}
+                {{ comunidadDelSectorMapeada[sector.comunidadId] || 'Buscando...' }}
               </td>
               <td class="text-muted small">{{ sector.codigo }}</td>
               <td class="text-muted small">{{ sector.nombre }}</td>
@@ -198,10 +198,10 @@
           <dt class="col-sm-5 text-secondary">Comunidad</dt>
           <dd class="col-sm-7">
             @if (comunitySelectedToView) {
-              {{ comunitySelectedToView.nombre }}
+            {{ comunitySelectedToView.nombre }}
             } @else {
-              <span class="spinner-border spinner-border-sm text-primary me-2" role="status" aria-hidden="true"></span>
-              <span class="text-muted small">Cargando...</span>
+            <span class="spinner-border spinner-border-sm text-primary me-2" role="status" aria-hidden="true"></span>
+            <span class="text-muted small">Cargando...</span>
             }
           </dd>
 

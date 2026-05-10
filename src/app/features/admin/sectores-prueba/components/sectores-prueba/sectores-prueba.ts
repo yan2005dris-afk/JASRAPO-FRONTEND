@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SectoresFormComponent } from '../sectores-form.component/sectores-form.component';
 import { AuthService } from '../../../../../core/services/auth.service';
@@ -13,6 +13,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Comunidad } from '../../../comunidades/models/comunidad.interface';
 import { ComunidadesService } from '../../../comunidades/services/comunidades.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-sectores-prueba',
@@ -28,7 +29,7 @@ import { ComunidadesService } from '../../../comunidades/services/comunidades.se
   styleUrl: './sectores-prueba.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SectoresPrueba {
+export class SectoresPrueba implements OnInit {
   readonly authService = inject(AuthService);
 
   private readonly cdr = inject(ChangeDetectorRef);
@@ -38,6 +39,11 @@ export class SectoresPrueba {
 
   /** Lista de sectores que se muestra en la tabla. Empieza vacía. */
   sectores: Sectores[] = [];
+  comunidadDelSectorMapeada: { [key: number]: string } = {};
+
+  ngOnInit() {
+    this.mapearComunidadConSector();
+  }
 
   objetoSectorAEditar: Sectores | null = null;
 
@@ -94,6 +100,21 @@ export class SectoresPrueba {
         }
       });
     }
+  }
+
+  /**
+   * Obtiene la lista de todas las comunidades y las transforma en un diccionario (Mapa).
+   * Esto permite buscar el nombre de la comunidad a partir de su ID de forma instantánea
+   * en la tabla HTML, evitando iterar arreglos (O(1) vs O(N)) por cada fila renderizada.
+   */
+  mapearComunidadConSector() {
+    this.comunidadesService.getAllComunidades().subscribe((comunidades) => {
+      this.comunidadDelSectorMapeada = comunidades.reduce((acc, obj) => {
+        acc[obj.id] = obj.nombre;
+        return acc;
+      }, {} as { [key: number]: string });
+      this.cdr.markForCheck(); // Notificamos a Angular que el mapeo está listo
+    });
   }
 
   get filteredSectores(): Sectores[] {
