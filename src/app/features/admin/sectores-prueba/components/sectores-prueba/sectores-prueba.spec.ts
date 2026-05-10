@@ -77,7 +77,7 @@ describe('SectoresPrueba', () => {
     expect(component.modalMode).toBe('view');
     expect(component.objetoSectorAEditar).toEqual(sector);
     expect(mockComunidadesService.getComunidadById).toHaveBeenCalledWith(1);
-    expect(component.comunitySelectedToView?.nombre).toBe('Comunidad A');
+    expect(component.communitySelectedToView?.nombre).toBe('Comunidad A');
   });
 
   it('should call deleteSector when eliminarSector is confirmed', () => {
