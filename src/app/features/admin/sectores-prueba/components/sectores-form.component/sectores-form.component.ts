@@ -14,7 +14,7 @@ import { Observable } from 'rxjs';
   imports: [ReactiveFormsModule, AsyncPipe],
   templateUrl: './sectores-form.component.html',
   styleUrl: './sectores-form.component.css',
-  changeDetection: ChangeDetectionStrategy.OnPush
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SectoresFormComponent implements OnInit {
   formClosed = output<void>();
