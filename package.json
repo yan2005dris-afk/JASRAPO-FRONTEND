@@ -37,6 +37,8 @@
     "@angular/platform-browser": "^21.1.0",
     "@angular/router": "^21.1.0",
     "bootstrap": "^5.3.8",
+    "ngx-extended-pdf-viewer": "^27.0.0",
+    "pdfmake": "^0.3.8",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -46,6 +48,7 @@
     "@angular/compiler-cli": "^21.1.0",
     "@eslint/js": "^10.0.1",
     "@tailwindcss/postcss": "^4.1.12",
+    "@types/pdfmake": "^0.3.2",
     "angular-eslint": "21.3.1",
     "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.8",

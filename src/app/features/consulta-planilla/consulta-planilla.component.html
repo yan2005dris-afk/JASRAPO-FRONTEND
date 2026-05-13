@@ -72,7 +72,14 @@
           @if (results) {
             <div class="alert alert-success mt-3 text-start">
               <h5 class="alert-heading">Resultado:</h5>
-              <p class="mb-0">{{ results.message }}</p>
+              <p class="mb-3">{{ results.message }}</p>
+              <button
+                class="btn btn-outline-success btn-sm w-100 d-flex align-items-center justify-content-center gap-2"
+                routerLink="/consulta-planilla/preview"
+              >
+                <i class="bi bi-file-earmark-pdf"></i>
+                Ver Planilla Digital
+              </button>
             </div>
           }
 

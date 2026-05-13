@@ -10,11 +10,23 @@ export const routes: Routes = [
   },
   {
     path: 'consulta-planilla',
-    loadComponent: () =>
-      import('./features/consulta-planilla/consulta-planilla.component').then(
-        (m) => m.ConsultaPlanillaComponent,
-      ),
     canActivate: [guestGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/consulta-planilla/consulta-planilla.component').then(
+            (m) => m.ConsultaPlanillaComponent,
+          ),
+      },
+      {
+        path: 'preview',
+        loadComponent: () =>
+          import('./features/consulta-planilla/preview-planilla/preview-planilla.component').then(
+            (m) => m.PreviewPlanillaComponent,
+          ),
+      },
+    ],
   },
   {
     path: 'app',
