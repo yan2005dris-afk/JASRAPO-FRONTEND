@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  inject,
+  OnInit,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SectoresFormComponent } from '../sectores-form.component/sectores-form.component';
 import { AuthService } from '../../../../../core/services/auth.service';
@@ -11,6 +17,8 @@ import {
 import { MatMenuModule } from '@angular/material/menu';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { Comunidad } from '../../../comunidades/models/comunidad.interface';
+import { ComunidadesService } from '../../../comunidades/services/comunidades.service';
 
 @Component({
   selector: 'app-sectores-prueba',
@@ -26,17 +34,26 @@ import { MatIconModule } from '@angular/material/icon';
   styleUrl: './sectores-prueba.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SectoresPrueba {
+export class SectoresPrueba implements OnInit {
   readonly authService = inject(AuthService);
 
   private readonly cdr = inject(ChangeDetectorRef);
 
   private sectoresService = inject(SectoresService);
+  private comunidadesService = inject(ComunidadesService);
 
   /** Lista de sectores que se muestra en la tabla. Empieza vacía. */
   sectores: Sectores[] = [];
+  comunidadDelSectorMapeada: Record<number, string> = {};
+
+  ngOnInit() {
+    this.mapearComunidadConSector();
+  }
 
   objetoSectorAEditar: Sectores | null = null;
+
+  communitySelectedToView: Comunidad | null = null;
+
   /** Indica si se está realizando una petición a la API. */
   isLoading = false;
 
@@ -50,18 +67,62 @@ export class SectoresPrueba {
   ];
 
   /** Estado del modal */
-  isModalOpen = false;
+  modalMode: 'create' | 'edit' | 'view' | 'none' = 'none';
 
   abrirModal() {
-    this.isModalOpen = true;
+    this.modalMode = 'create';
     this.objetoSectorAEditar = null; // Limpiar para modo agregar
     this.cdr.markForCheck();
   }
 
   cerrarModal() {
-    this.isModalOpen = false;
+    this.modalMode = 'none';
     this.objetoSectorAEditar = null; // Limpiar al cerrar
     this.cdr.markForCheck();
+  }
+
+  editarSector(sector: Sectores) {
+    this.objetoSectorAEditar = sector;
+    this.modalMode = 'edit';
+    this.cdr.markForCheck();
+  }
+
+  verDetalleSector(sector: Sectores) {
+    this.objetoSectorAEditar = sector;
+    this.communitySelectedToView = null; // Limpiar datos anteriores
+    this.modalMode = 'view';
+    this.cdr.markForCheck();
+
+    // Obtener la comunidad completa por su ID
+    if (sector.comunidadId) {
+      this.comunidadesService.getComunidadById(sector.comunidadId).subscribe({
+        next: (comunidad) => {
+          this.communitySelectedToView = comunidad;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          console.error('Error al obtener la comunidad:', err);
+        },
+      });
+    }
+  }
+
+  /**
+   * Obtiene la lista de todas las comunidades y las transforma en un diccionario (Mapa).
+   * Esto permite buscar el nombre de la comunidad a partir de su ID de forma instantánea
+   * en la tabla HTML, evitando iterar arreglos (O(1) vs O(N)) por cada fila renderizada.
+   */
+  mapearComunidadConSector() {
+    this.comunidadesService.getAllComunidades().subscribe((comunidades) => {
+      this.comunidadDelSectorMapeada = comunidades.reduce(
+        (acc, obj) => {
+          acc[obj.id] = obj.nombre;
+          return acc;
+        },
+        {} as Record<number, string>,
+      );
+      this.cdr.markForCheck(); // Notificamos a Angular que el mapeo está listo
+    });
   }
 
   get filteredSectores(): Sectores[] {
@@ -106,7 +167,7 @@ export class SectoresPrueba {
 
     this.sectoresService.getAllSectores().subscribe({
       next: (data) => {
-        console.log(data);
+        // console.log(data);
 
         this.sectores = data;
         this.hasFetched = true;
@@ -138,12 +199,6 @@ export class SectoresPrueba {
   handleAccionMasiva(action: string) {
     console.log('Acción masiva seleccionada:', action);
     // TODO: Implementar lógica de la acción seleccionada
-  }
-
-  editarSector(sector: Sectores) {
-    this.objetoSectorAEditar = sector;
-    this.isModalOpen = true;
-    this.cdr.markForCheck();
   }
 
   eliminarSector(sector: Sectores) {
