@@ -5,48 +5,58 @@
 ### Archivos Creados
 
 #### 1. **Modelos** (`src/app/core/models/auth.model.ts`)
+
 Define las interfaces TypeScript para las peticiones y respuestas de autenticación:
 
 ```typescript
-LoginRequest    // Credenciales de login
-LoginResponse   // Respuesta del servidor con token y usuario
-User            // Información del usuario
-AuthState       // Estado de autenticación
+LoginRequest; // Credenciales de login
+LoginResponse; // Respuesta del servidor con token y usuario
+User; // Información del usuario
+AuthState; // Estado de autenticación
 ```
 
 #### 2. **Servicio de Autenticación** (`src/app/core/services/auth.service.ts`)
+
 Servicio principal que maneja toda la lógica de autenticación:
 
 **Métodos públicos:**
+
 - `login(credentials: LoginRequest)` - Inicia sesión
 - `logout()` - Cierra sesión
 - `refreshToken()` - Refresca el token
 
 **Signals públicos:**
+
 - `isAuthenticated()` - Estado de autenticación
 - `currentUser()` - Usuario actual
 - `token()` - Token actual
 
 **Características:**
+
 - Almacena token y usuario en localStorage
 - Manejo de errores centralizado
 - Soporte para refresh token
 - Signals para estado reactivo
 
 #### 3. **Guards** (`src/app/core/guards/auth.guard.ts`)
+
 Protege las rutas de la aplicación:
 
 - `authGuard` - Requiere autenticación (rutas protegidas)
 - `guestGuard` - Solo para no autenticados (ej: login)
 
 #### 4. **Interceptor** (`src/app/core/interceptors/auth.interceptor.ts`)
+
 Agrega automáticamente el token a todas las peticiones HTTP:
+
 ```
 Authorization: Bearer {token}
 ```
 
 #### 5. **Environment** (`src/environments/`)
+
 Configuración de URLs del API:
+
 - `environment.development.ts` - Desarrollo (localhost:3000)
 - `environment.ts` - Producción
 
@@ -60,9 +70,9 @@ Edita `src/environments/environment.development.ts`:
 
 ```typescript
 export const environment = {
-    production: false,
-    apiUrl: 'http://tu-servidor:puerto/api', // ← Cambia esto
-    apiTimeout: 30000,
+  production: false,
+  apiUrl: 'http://tu-servidor:puerto/api', // ← Cambia esto
+  apiTimeout: 30000,
 };
 ```
 
@@ -71,45 +81,52 @@ export const environment = {
 El backend debe implementar estos endpoints:
 
 #### **POST /api/auth/login**
+
 **Request:**
+
 ```json
 {
-    "email": "usuario@ejemplo.com",
-    "password": "contraseña123"
+  "email": "usuario@ejemplo.com",
+  "password": "contraseña123"
 }
 ```
 
 **Response (200 OK):**
+
 ```json
 {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "refreshToken": "optional-refresh-token",
-    "user": {
-        "id": "123",
-        "email": "usuario@ejemplo.com",
-        "name": "Juan Pérez",
-        "role": "Administrador",
-        "avatar": "https://..."
-    }
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "optional-refresh-token",
+  "user": {
+    "id": "123",
+    "email": "usuario@ejemplo.com",
+    "name": "Juan Pérez",
+    "role": "Administrador",
+    "avatar": "https://..."
+  }
 }
 ```
 
 **Response (401 Unauthorized):**
+
 ```json
 {
-    "message": "Credenciales inválidas"
+  "message": "Credenciales inválidas"
 }
 ```
 
 #### **POST /api/auth/refresh** (Opcional)
+
 **Request:**
+
 ```json
 {
-    "refreshToken": "refresh-token-aqui"
+  "refreshToken": "refresh-token-aqui"
 }
 ```
 
 **Response:**
+
 ```json
 {
     "token": "nuevo-token",
@@ -118,7 +135,9 @@ El backend debe implementar estos endpoints:
 ```
 
 #### **POST /api/auth/logout** (Opcional)
+
 Puedes descomentar la línea en `auth.service.ts`:
+
 ```typescript
 this.http.post(`${this.API_URL}/logout`, {}).subscribe();
 ```
@@ -128,34 +147,39 @@ this.http.post(`${this.API_URL}/logout`, {}).subscribe();
 ## Uso del Servicio en Componentes
 
 ### Inyectar el servicio:
+
 ```typescript
 import { inject } from '@angular/core';
 import { AuthService } from '@core/services/auth.service';
 
 export class MiComponente {
-    private readonly authService = inject(AuthService);
+  private readonly authService = inject(AuthService);
 }
 ```
 
 ### Verificar autenticación:
+
 ```typescript
 if (this.authService.isAuthenticated()) {
-    // Usuario autenticado
+  // Usuario autenticado
 }
 ```
 
 ### Obtener usuario actual:
+
 ```typescript
 const user = this.authService.currentUser();
 console.log(user?.name, user?.role);
 ```
 
 ### Obtener token:
+
 ```typescript
 const token = this.authService.token();
 ```
 
 ### Cerrar sesión:
+
 ```typescript
 this.authService.logout();
 ```
@@ -181,7 +205,7 @@ login(credentials: LoginRequest): Observable<LoginResponse> {
         delay(1000), // Simula latencia
         tap(response => this.handleLoginSuccess(response))
     );
-    
+
     // CÓDIGO REAL - Descomentar cuando esté el backend
     // return this.http.post<LoginResponse>(`${this.API_URL}/login`, credentials)
     //     .pipe(
@@ -192,6 +216,7 @@ login(credentials: LoginRequest): Observable<LoginResponse> {
 ```
 
 No olvides importar:
+
 ```typescript
 import { of, delay } from 'rxjs';
 ```
@@ -205,7 +230,7 @@ Los errores del backend se manejan automáticamente en `auth.service.ts`:
 ```typescript
 private handleError(error: any): Observable<never> {
     let errorMessage = 'Ocurrió un error en el servidor';
-    
+
     if (error.error?.message) {
         errorMessage = error.error.message;
     } else if (error.status === 401) {
@@ -213,7 +238,7 @@ private handleError(error: any): Observable<never> {
     } else if (error.status === 0) {
         errorMessage = 'No se pudo conectar con el servidor';
     }
-    
+
     return throwError(() => new Error(errorMessage));
 }
 ```
@@ -231,8 +256,8 @@ El componente de login maneja 3 estados:
 3. **Error** - Alerta roja con mensaje
 
 ```typescript
-loading = signal(false);     // Estado de carga
-errorMessage = signal<string | null>(null);  // Mensaje de error
+loading = signal(false); // Estado de carga
+errorMessage = signal<string | null>(null); // Mensaje de error
 ```
 
 ---
@@ -284,6 +309,7 @@ Las rutas están protegidas en `app.routes.ts`:
 ## Seguridad
 
 ⚠️ **Importante:**
+
 - Los tokens se almacenan en `localStorage` (vulnerable a XSS)
 - En producción, considera usar cookies HttpOnly
 - Implementa CSRF protection si usas cookies
@@ -295,18 +321,22 @@ Las rutas están protegidas en `app.routes.ts`:
 ## Troubleshooting
 
 ### Error: "No se pudo conectar con el servidor"
+
 - Verifica que el backend esté corriendo
 - Revisa la URL en `environment.development.ts`
 - Verifica CORS en el backend
 
 ### Error: "Credenciales inválidas"
+
 - El backend rechazó el login
 - Verifica usuario/contraseña
 
 ### El token no se envía en las peticiones
+
 - Verifica que `authInterceptor` esté en `app.config.ts`
 - Verifica que `provideHttpClient()` esté configurado
 
 ### El usuario sigue autenticado después de cerrar sesión
+
 - Verifica que `logout()` limpie localStorage
 - Verifica que los signals se actualicen correctamente

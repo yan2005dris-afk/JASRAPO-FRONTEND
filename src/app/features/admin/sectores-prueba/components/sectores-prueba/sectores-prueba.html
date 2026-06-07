@@ -83,7 +83,7 @@
                 <th scope="col" style="width: 40px">
                   <input class="form-check-input table-checkbox" type="checkbox" />
                 </th>
-                <th scope="col" class="text-muted fw-semibold small">Comunidad ID</th>
+                <th scope="col" class="text-muted fw-semibold small">Comunidad</th>
                 <th scope="col" class="text-muted fw-semibold small">Código</th>
                 <th scope="col" class="text-muted fw-semibold small">Nombre</th>
                 <th scope="col" class="text-muted fw-semibold small">Acciones</th>
@@ -96,34 +96,29 @@
                     <input class="form-check-input table-checkbox" type="checkbox" />
                   </td>
                   <td class="fw-medium text-dark" style="font-size: 0.95rem">
-                    {{ sector.comunidadId }}
+                    {{ comunidadDelSectorMapeada[sector.comunidadId] || 'Buscando...' }}
                   </td>
                   <td class="text-muted small">{{ sector.codigo }}</td>
                   <td class="text-muted small">{{ sector.nombre }}</td>
+
                   <td class="text-center">
-                    <!-- <button class="btn btn-link text-muted p-0 shadow-none">
-                      <i class="bi bi-three-dots-vertical"></i>
-                    </button> -->
-                    <!-- Botón con tres puntos verticales -->
                     <button
-                      class="btn btn-link text-muted p-0 shadow-none"
-                      mat-icon-button
-                      [matMenuTriggerFor]="menu"
+                      class="btn btn-link text-muted p-0 shadow-none me-3"
+                      type="button"
+                      (click)="verDetalleSector(sector)"
+                      aria-label="Ver detalle del sector"
                     >
-                      <mat-icon>more_vert</mat-icon>
+                      <i class="bi bi-eye action-icon view"></i>
                     </button>
 
-                    <!-- Menú desplegable -->
-                    <mat-menu class="" #menu="matMenu">
-                      <button mat-menu-item (click)="editarSector(sector)">
-                        <mat-icon>edit</mat-icon>
-                        <span>Editar</span>
-                      </button>
-                      <button mat-menu-item (click)="eliminarSector(sector)">
-                        <mat-icon>delete</mat-icon>
-                        <span>Eliminar</span>
-                      </button>
-                    </mat-menu>
+                    <button
+                      class="btn btn-link text-muted p-0 shadow-none"
+                      type="button"
+                      (click)="editarSector(sector)"
+                      aria-label="Editar sector"
+                    >
+                      <i class="bi bi-pencil action-icon edit"></i>
+                    </button>
                   </td>
                 </tr>
               }
@@ -222,15 +217,65 @@
   </div>
 </div>
 <!-- Modal Overlay -->
-@if (isModalOpen) {
+@if (modalMode !== 'none') {
   <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5)">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow">
-        <app-sectores-form
-          [sectorAEditar]="objetoSectorAEditar"
-          (formSubmitted)="mostrarSectores()"
-          (formClosed)="cerrarModal()"
-        ></app-sectores-form>
+        @if (modalMode === 'create' || modalMode === 'edit') {
+          <app-sectores-form
+            [sectorAEditar]="objetoSectorAEditar"
+            (formSubmitted)="mostrarSectores()"
+            (formClosed)="cerrarModal()"
+          ></app-sectores-form>
+        }
+
+        @if (modalMode === 'view') {
+          <div class="modal-header border-bottom-0 px-4 pt-4">
+            <div>
+              <h5 class="modal-title fw-bold">Sector: {{ objetoSectorAEditar?.nombre }}</h5>
+              <p class="text-muted mb-0">Consulta la información completa del sector.</p>
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-close"
+              aria-label="Cerrar"
+              (click)="cerrarModal()"
+            ></button>
+          </div>
+
+          <div class="modal-body px-4 pb-4">
+            <dl class="row mb-0">
+              <dt class="col-sm-5 text-secondary">Comunidad</dt>
+              <dd class="col-sm-7">
+                @if (communitySelectedToView) {
+                  {{ communitySelectedToView.nombre }}
+                } @else {
+                  <span
+                    class="spinner-border spinner-border-sm text-primary me-2"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                  <span class="text-muted small">Cargando...</span>
+                }
+              </dd>
+
+              <dt class="col-sm-5 text-secondary">Código del sector</dt>
+              <dd class="col-sm-7">
+                {{ objetoSectorAEditar?.codigo }}
+              </dd>
+
+              <dt class="col-sm-5 text-secondary">Nombre del sector</dt>
+              <dd class="col-sm-7">
+                {{ objetoSectorAEditar?.nombre }}
+              </dd>
+            </dl>
+          </div>
+
+          <div class="modal-footer border-top-0 px-4 pb-4 pt-3">
+            <button class="btn btn-secondary" type="button" (click)="cerrarModal()">Cerrar</button>
+          </div>
+        }
       </div>
     </div>
   </div>

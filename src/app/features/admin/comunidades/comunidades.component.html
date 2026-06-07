@@ -1,0 +1,332 @@
+<div class="container-fluid p-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0 text-dark fs-4">Gestión Comunidades</h3>
+  </div>
+
+  @if (mensajeNotificacion() && !showFormModal()) {
+    <div
+      class="alert mb-4"
+      [class.alert-success]="tipoNotificacion() === 'success'"
+      [class.alert-danger]="tipoNotificacion() === 'error'"
+      role="alert"
+    >
+      {{ mensajeNotificacion() }}
+    </div>
+  }
+
+  <div class="card border-0 shadow-sm rounded-3">
+    <div
+      class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
+      <button
+        class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+        type="button"
+        (click)="openCreateModal()"
+      >
+        <i class="bi bi-plus-lg"></i> Agregar
+      </button>
+
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <div class="input-group search-group">
+          <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+            <i class="bi bi-search"></i>
+          </span>
+
+          <input
+            #searchInput
+            type="text"
+            class="form-control border-start-0 ps-0 shadow-none"
+            placeholder="Buscar comunidad..."
+            [value]="searchTerm()"
+            (input)="searchTerm.set(searchInput.value)"
+            aria-label="Buscar comunidad"
+          />
+        </div>
+
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          type="button"
+          (click)="buscarComunidades()"
+          [disabled]="isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+
+          @if (!isLoading) {
+            <i class="bi bi-search"></i>
+          }
+
+          {{ isLoading ? 'Buscando...' : 'Buscar' }}
+        </button>
+
+        <button
+          class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
+          type="button"
+          disabled
+          aria-disabled="true"
+          title="Acciones masivas no disponibles todavía"
+        >
+          Acciones Masivas
+          <i class="bi bi-chevron-down" aria-hidden="true"></i>
+        </button>
+      </div>
+    </div>
+
+    @if (!hasFetched() && !isLoading) {
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-search fs-1 d-block mb-2 opacity-25"></i>
+        <p class="mb-0">
+          Realiza una <strong>búsqueda</strong> para visualizar las comunidades registradas.
+        </p>
+      </div>
+    }
+
+    @if (isLoading) {
+      <div class="text-center py-5 text-muted">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Cargando...</span>
+        </div>
+        <p class="mt-3 mb-0">Cargando comunidades...</p>
+      </div>
+    }
+
+    @if (hasFetched()) {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 custom-table">
+          <colgroup>
+            <col class="col-codigo" />
+            <col class="col-nombre" />
+            <col class="col-porcentaje" />
+            <col class="col-acciones" />
+          </colgroup>
+
+          <thead>
+            <tr>
+              <th class="text-muted fw-semibold small">Código</th>
+              <th class="text-muted fw-semibold small">Nombre</th>
+              <th class="text-muted fw-semibold small text-center">Porcentaje tasa de seguridad</th>
+              <th class="text-muted fw-semibold small text-center">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @if (pagedComunidades.length === 0) {
+              <tr>
+                <td colspan="4" class="text-center text-muted py-4">
+                  <i class="bi bi-people fs-3 d-block mb-2"></i>
+                  No se encontraron comunidades.
+                </td>
+              </tr>
+            }
+
+            @for (comunidad of pagedComunidades; track comunidad.id) {
+              <tr>
+                <td class="fw-medium text-dark" style="font-size: 0.95rem">
+                  {{ comunidad.codigo }}
+                </td>
+
+                <td class="text-muted small">
+                  {{ comunidad.nombre }}
+                </td>
+
+                <td class="text-muted small text-center">
+                  {{ comunidad.porcentajeTasaSeguridad | number: '1.2-2' }}%
+                </td>
+
+                <td class="text-center">
+                  <button
+                    class="btn btn-link text-muted p-0 shadow-none me-3"
+                    type="button"
+                    (click)="openDetailModal(comunidad)"
+                    aria-label="Ver detalle"
+                  >
+                    <i class="bi bi-eye action-icon view"></i>
+                  </button>
+
+                  <button
+                    class="btn btn-link text-muted p-0 shadow-none"
+                    type="button"
+                    (click)="openEditModal(comunidad)"
+                    aria-label="Editar"
+                  >
+                    <i class="bi bi-pencil action-icon edit"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    @if (hasFetched()) {
+      <div
+        class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3"
+      >
+        <div class="d-flex align-items-center gap-3">
+          <span class="text-muted small">
+            Total:
+            <strong>{{ filteredComunidades().length }}</strong>
+            comunidad{{ filteredComunidades().length !== 1 ? 'es' : '' }}
+          </span>
+
+          <div class="d-flex align-items-center gap-2">
+            <span class="text-muted small">Mostrar:</span>
+
+            <select
+              class="form-select form-select-sm page-size-select shadow-none"
+              [value]="pageSize"
+              (change)="onPageSizeChange($event)"
+            >
+              @for (size of pageSizeOptions; track size) {
+                <option [value]="size">{{ size }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <nav>
+          <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
+            <li class="page-item" [class.disabled]="currentPage === 1">
+              <button
+                class="page-link border-0 text-dark bg-transparent fw-medium small"
+                type="button"
+                (click)="goToPage(currentPage - 1)"
+                [disabled]="currentPage === 1"
+              >
+                <i class="bi bi-chevron-left me-1" style="font-size: 0.7rem"></i>
+                Anterior
+              </button>
+            </li>
+
+            @for (page of pageNumbers; track page) {
+              <li
+                class="page-item"
+                [class.active]="currentPage === page"
+                [attr.aria-current]="currentPage === page ? 'page' : null"
+              >
+                <button
+                  class="page-link fw-medium"
+                  type="button"
+                  [class.shadow-sm]="currentPage === page"
+                  [class.border-0]="currentPage !== page"
+                  [class.bg-transparent]="currentPage !== page"
+                  [class.text-dark]="true"
+                  style="border-radius: 6px"
+                  (click)="goToPage(page)"
+                >
+                  {{ page }}
+                </button>
+              </li>
+            }
+
+            <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <button
+                class="page-link border-0 text-dark bg-transparent fw-medium small"
+                type="button"
+                (click)="goToPage(currentPage + 1)"
+                [disabled]="currentPage === totalPages"
+              >
+                Siguiente
+                <i class="bi bi-chevron-right ms-1" style="font-size: 0.7rem"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    }
+  </div>
+</div>
+
+@if (showFormModal()) {
+  <div
+    #formModal
+    class="modal fade show d-block bg-dark bg-opacity-25"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="formulario-comunidad-title"
+    data-modal="community-form"
+    (keydown)="trapModalFocus($event, formModal)"
+  >
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+      <div class="modal-content border-0 shadow">
+        <h2 id="formulario-comunidad-title" class="visually-hidden">Formulario de comunidad</h2>
+
+        @if (mensajeNotificacion()) {
+          <div
+            class="alert mx-4 mt-4 mb-0"
+            [class.alert-success]="tipoNotificacion() === 'success'"
+            [class.alert-danger]="tipoNotificacion() === 'error'"
+            role="alert"
+          >
+            {{ mensajeNotificacion() }}
+          </div>
+        }
+
+        <app-comunidad-form
+          [comunidadAEditar]="selectedCommunity()"
+          (formClosed)="closeFormModal()"
+          (formSubmitted)="handleFormSubmit($event)"
+        ></app-comunidad-form>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showDetailModal() && selectedCommunity()) {
+  <div
+    #detailModal
+    class="modal fade show d-block bg-dark bg-opacity-25"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="detalle-comunidad-title"
+    data-modal="community-detail"
+    (keydown)="trapModalFocus($event, detailModal)"
+  >
+    <div class="modal-dialog modal-dialog-centered modal-md" role="document">
+      <div class="modal-content border-0 shadow">
+        <div class="modal-header border-bottom-0 px-4 pt-4">
+          <div>
+            <h5 id="detalle-comunidad-title" class="modal-title fw-bold">Detalle de comunidad</h5>
+            <p class="text-muted mb-0">Consulta la información completa de la comunidad.</p>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-close"
+            aria-label="Cerrar"
+            (click)="closeDetailModal()"
+          ></button>
+        </div>
+
+        <div class="modal-body px-4 pb-4">
+          <dl class="row mb-0">
+            <dt class="col-sm-5 text-secondary">Código</dt>
+            <dd class="col-sm-7">
+              {{ selectedCommunity()?.codigo }}
+            </dd>
+
+            <dt class="col-sm-5 text-secondary">Nombre</dt>
+            <dd class="col-sm-7">
+              {{ selectedCommunity()?.nombre }}
+            </dd>
+
+            <dt class="col-sm-5 text-secondary">Porcentaje tasa de seguridad</dt>
+            <dd class="col-sm-7">
+              {{ selectedCommunity()?.porcentajeTasaSeguridad | number: '1.2-2' }}%
+            </dd>
+          </dl>
+        </div>
+
+        <div class="modal-footer border-top-0 px-4 pb-4 pt-3">
+          <button class="btn btn-secondary" type="button" (click)="closeDetailModal()">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
