@@ -7,7 +7,7 @@ import { RouterOutlet } from '@angular/router';
   selector: 'app-secretario.component',
   imports: [RouterOutlet],
   templateUrl: './secretario.component.html',
-  styleUrl: './secretario.component.css',
+  styleUrl: './secretario.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SecretarioComponent {}

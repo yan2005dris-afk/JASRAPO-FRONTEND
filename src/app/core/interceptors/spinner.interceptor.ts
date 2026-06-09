@@ -16,9 +16,7 @@ export const spinnerInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     finalize(() => {
-      setTimeout(() => {
-        spinnerService.loadingOff();
-      }, 1000);
+      spinnerService.loadingOff();
     }),
   );
 };

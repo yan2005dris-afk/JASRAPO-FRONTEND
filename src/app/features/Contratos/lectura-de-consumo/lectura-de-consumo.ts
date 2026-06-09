@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-lectura-de-consumo',
   imports: [],
   templateUrl: './lectura-de-consumo.html',
-  styleUrl: './lectura-de-consumo.css',
+  styleUrl: './lectura-de-consumo.scss',
 })
 export class LecturaDeConsumo {}

@@ -11,10 +11,9 @@ import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-login',
-  standalone: true, // Asegúrate de tenerlo si usas Angular 19+
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login.component.html',
-  styleUrl: './login.component.css',
+  styleUrl: './login.component.scss',
   animations: [fadeAnimation, slideUpAnimation, staggerFormElements],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

@@ -21,10 +21,9 @@ interface BackendErrorResponse {
 
 @Component({
   selector: 'app-comunidades',
-  standalone: true,
   imports: [CommonModule, ComunidadFormComponent],
   templateUrl: './comunidades.component.html',
-  styleUrl: './comunidades.component.css',
+  styleUrl: './comunidades.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ComunidadesComponent {

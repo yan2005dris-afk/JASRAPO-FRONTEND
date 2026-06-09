@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-recaudacion-ypagos',
   imports: [],
   templateUrl: './recaudacion-ypagos.html',
-  styleUrl: './recaudacion-ypagos.css',
+  styleUrl: './recaudacion-ypagos.scss',
 })
 export class RecaudacionYPagos {}

@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { Observable, tap, catchError, throwError, switchMap, timer, Subscription } from 'rxjs';
 import { LoginRequest, LoginResponse, RefreshTokenResponse, User } from '../models/auth.model';
 import { environment } from '../../../environments/environment';
+import { MenuService } from './menu.service';
 
 @Injectable({
   providedIn: 'root',
@@ -11,6 +12,7 @@ import { environment } from '../../../environments/environment';
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly menuService = inject(MenuService);
 
   private readonly API_URL = `${environment.apiUrl}/auth`;
 
@@ -49,6 +51,7 @@ export class AuthService {
 
   private executeLocalLogout(): void {
     this.clearAuthData();
+    this.menuService.clearMenu();
     this.router.navigate(['/login']);
   }
 
@@ -59,7 +62,8 @@ export class AuthService {
         tap((response) => this.handleRefreshSuccess(response)),
         catchError((error) => {
           console.error('Error al refrescar token:', error);
-          this.logout();
+          // Eliminamos this.logout() para no expulsar al usuario abruptamente
+          // Si el token realmente caduca, el interceptor 401 se encargará de cerrarlo al interactuar.
           return throwError(() => error);
         }),
       );
@@ -70,23 +74,44 @@ export class AuthService {
     if (!expiresAt) return 0;
     const expirationTime = new Date(expiresAt).getTime();
     const now = Date.now();
-    const twoMinutes = 2 * 60 * 1000;
-    const refreshTime = expirationTime - twoMinutes;
+    const createdAt = this.tokenCreatedAtSignal();
+    const createdTime = createdAt ? new Date(createdAt).getTime() : now;
+    
+    const lifetime = expirationTime - createdTime;
+    
+    // Si el token vive menos de 3 minutos, refrescamos cuando haya pasado el 80% de su vida
+    let refreshTime;
+    if (lifetime <= 3 * 60 * 1000) {
+      refreshTime = createdTime + (lifetime * 0.8);
+    } else {
+      refreshTime = expirationTime - (2 * 60 * 1000);
+    }
+    
     const delayMs = refreshTime - now;
     return delayMs > 0 ? delayMs : 0;
   }
 
+  constructor() {
+    if (this.isAuthenticated()) {
+      this.startRefreshTimer();
+    }
+  }
+
   private startRefreshTimer(): void {
     this.cancelRefreshTimer();
-    const delayMs = this.calculateRefreshDelay();
-    if (delayMs > 0) {
-      this.refreshTimerSubscription = timer(delayMs)
-        .pipe(switchMap(() => this.refreshToken()))
-        .subscribe({
-          next: () => console.log('Token refrescado automaticamente'),
-          error: (error) => console.error('Error en auto-refresh:', error),
-        });
+    
+    if (!this.isAuthenticated() || !this.tokenExpiresAtSignal()) {
+      return;
     }
+
+    const delayMs = this.calculateRefreshDelay();
+    
+    this.refreshTimerSubscription = timer(delayMs)
+      .pipe(switchMap(() => this.refreshToken()))
+      .subscribe({
+        next: () => console.log('Token refrescado automaticamente'),
+        error: (error) => console.error('Error en auto-refresh:', error),
+      });
   }
 
   private cancelRefreshTimer(): void {
@@ -99,14 +124,16 @@ export class AuthService {
   // Cambiado 'any' por 'LoginResponse'
   private handleLoginSuccess(response: LoginResponse): void {
     // Usamos desestructuración para que el código sea más limpio
-    const { sub, accessToken, sid, email, name, roleId, roleName, avatar, iat, exp } = response;
+    const { sub, accessToken, sid, email, name, roleId, roleName, avatar, iat, exp, createdAt: resCreatedAt, expiresAt: resExpiresAt } = response;
 
     let createdAt: string;
     let expiresAt: string;
 
-    if (typeof exp === 'number') {
-      createdAt =
-        typeof iat === 'number' ? new Date(iat * 1000).toISOString() : new Date().toISOString();
+    if (resCreatedAt && resExpiresAt) {
+      createdAt = resCreatedAt;
+      expiresAt = resExpiresAt;
+    } else if (typeof exp === 'number') {
+      createdAt = typeof iat === 'number' ? new Date(iat * 1000).toISOString() : new Date().toISOString();
       expiresAt = new Date(exp * 1000).toISOString();
     } else if (typeof exp === 'string') {
       createdAt = typeof iat === 'string' ? iat : new Date().toISOString();
@@ -131,8 +158,9 @@ export class AuthService {
 
   private handleRefreshSuccess(response: RefreshTokenResponse): void {
     const newAccessToken = response.accessToken;
-    const createdAt = new Date().toISOString();
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    // Usar las fechas reales del backend si existen, sino hacer fallback
+    const createdAt = response.createdAt || new Date().toISOString();
+    const expiresAt = response.expiresAt || new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
     this.tokenSignal.set(newAccessToken);
     this.tokenCreatedAtSignal.set(createdAt);

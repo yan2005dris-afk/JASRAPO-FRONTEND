@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { SpinnerService } from '../../../core/services/spinner.service';
 import {
@@ -14,7 +14,8 @@ import { Subscription } from 'rxjs';
   selector: 'app-spinner',
   imports: [NgTemplateOutlet],
   templateUrl: './spinner.component.html',
-  styleUrl: './spinner.component.css',
+  styleUrl: './spinner.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Spinner implements OnInit, OnDestroy {
   private spinnerService = inject(SpinnerService);

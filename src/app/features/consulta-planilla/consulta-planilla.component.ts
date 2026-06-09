@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -6,56 +6,56 @@ import { ConsultaPlanillaService, PlanillaMockResponse } from './consulta-planil
 
 @Component({
   selector: 'app-consulta-planilla',
-  standalone: true,
   imports: [CommonModule, FormsModule, RouterLink, NgOptimizedImage],
   templateUrl: './consulta-planilla.component.html',
-  styleUrl: './consulta-planilla.component.css',
+  styleUrl: './consulta-planilla.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConsultaPlanillaComponent {
-  terminoBusqueda = '';
-  searchType = 'medidor';
+  readonly terminoBusqueda = signal('');
+  readonly searchType = signal('medidor');
 
-  loading = false;
-  searchClicked = false;
-  noResults = false;
-  results: PlanillaMockResponse | null = null;
+  readonly loading = signal(false);
+  readonly searchClicked = signal(false);
+  readonly noResults = signal(false);
+  readonly results = signal<PlanillaMockResponse | null>(null);
 
-  searchOptions = [
+  readonly searchOptions = [
     { value: 'medidor', label: 'Número de medidor' },
     { value: 'guia', label: 'Guía de remisión' },
   ];
 
   private readonly consultaPlanillaService = inject(ConsultaPlanillaService);
 
-  get inputLabel(): string {
-    return this.searchType === 'medidor' ? 'Número de medidor' : 'Guía de remisión';
-  }
+  readonly inputLabel = computed(() => {
+    return this.searchType() === 'medidor' ? 'Número de medidor' : 'Guía de remisión';
+  });
 
   consultar(): void {
-    this.searchClicked = true;
-    if (this.terminoBusqueda.trim() === '') {
-      this.noResults = false;
-      this.results = null;
+    this.searchClicked.set(true);
+    const term = this.terminoBusqueda().trim();
+    if (term === '') {
+      this.noResults.set(false);
+      this.results.set(null);
       return;
     }
 
-    this.loading = true;
-    this.noResults = false;
-    this.results = null;
+    this.loading.set(true);
+    this.noResults.set(false);
+    this.results.set(null);
 
-    this.consultaPlanillaService.consultar(this.terminoBusqueda, this.searchType).subscribe({
+    this.consultaPlanillaService.consultar(term, this.searchType()).subscribe({
       next: (data) => {
-        this.loading = false;
+        this.loading.set(false);
         if (data) {
-          this.results = data;
+          this.results.set(data);
         } else {
-          this.noResults = true;
+          this.noResults.set(true);
         }
       },
       error: (error) => {
-        this.loading = false;
-        this.noResults = true;
+        this.loading.set(false);
+        this.noResults.set(true);
         console.error('Error during consultation:', error);
       },
     });

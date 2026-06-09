@@ -2,14 +2,12 @@ import { CommonModule } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
-  Input,
-  OnChanges,
-  Output,
-  SimpleChanges,
   inject,
+  input,
+  output,
+  effect,
 } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   EditarEstadoMedidorPayload,
   IEstadoMedidor,
@@ -22,22 +20,21 @@ import {
  */
 @Component({
   selector: 'app-editar-medidor',
-  standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './editar-medidor.component.html',
   styleUrl: './editar-medidor.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class EditarMedidorComponent implements OnChanges {
+export class EditarMedidorComponent {
   // Entradas de datos y estado de carga
-  @Input() medidor: IMedidor | null = null;
-  @Input() isSaving = false;
-  @Input() errorMessage = '';
-  @Input() estados: IEstadoMedidor[] = [];
+  medidor = input<IMedidor | null>(null);
+  isSaving = input<boolean>(false);
+  errorMessage = input<string>('');
+  estados = input<IEstadoMedidor[]>([]);
 
   // Emisores de eventos para comunicación con el contenedor
-  @Output() guardar = new EventEmitter<EditarEstadoMedidorPayload>();
-  @Output() cancelar = new EventEmitter<void>();
+  guardar = output<EditarEstadoMedidorPayload>();
+  cancelar = output<void>();
 
   // Inyección de dependencias y constantes de negocio
   private readonly fb = inject(FormBuilder);
@@ -46,21 +43,20 @@ export class EditarMedidorComponent implements OnChanges {
    * Estructura reactiva del formulario de actualización
    */
   form = this.fb.group({
-    estadoId: [null as number | null],
-    observacion: [''],
+    estadoId: [null as number | null, Validators.required],
+    observacion: ['', Validators.maxLength(255)],
   });
 
-  /**
-   * Hook de ciclo de vida para sincronizar los datos del medidor seleccionado
-   * con los controles del formulario al abrir el modal.
-   */
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['medidor'] && this.medidor) {
-      this.form.patchValue({
-        estadoId: this.medidor.estado?.estadoId || null,
-        observacion: '',
-      });
-    }
+  constructor() {
+    effect(() => {
+      const med = this.medidor();
+      if (med) {
+        this.form.patchValue({
+          estadoId: med.estado?.estadoId || null,
+          observacion: '',
+        });
+      }
+    });
   }
 
   /**
@@ -68,11 +64,12 @@ export class EditarMedidorComponent implements OnChanges {
    * validando que exista un medidor seleccionado y no haya operaciones en curso.
    */
   submit(): void {
-    if (!this.medidor || this.isSaving) return;
+    const med = this.medidor();
+    if (!med || this.isSaving()) return;
 
     const rawValues = this.form.getRawValue();
     this.guardar.emit({
-      medidorId: this.medidor.medidorId,
+      medidorId: med.medidorId,
       estadoId: Number(rawValues.estadoId),
       motivo: rawValues.observacion || '',
     });
@@ -82,6 +79,6 @@ export class EditarMedidorComponent implements OnChanges {
    * Notifica la cancelación de la edición, bloqueando el cierre si se está guardando.
    */
   close(): void {
-    if (!this.isSaving) this.cancelar.emit();
+    if (!this.isSaving()) this.cancelar.emit();
   }
 }

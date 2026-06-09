@@ -1,7 +1,9 @@
 export interface IIdentificacion {
-  identificacionId: string;
+  id?: string | number;
+  identificacionId?: string | number;
   codigo: string;
-  nombre: string;
+  nombre?: string;
+  descripcion?: string;
   activo: boolean;
   orden: number;
 }

@@ -6,7 +6,7 @@ import { Spinner } from './shared/components/spinner/spinner.component';
   selector: 'app-root',
   imports: [RouterOutlet, Spinner],
   templateUrl: './app.html',
-  styleUrl: './app.css',
+  styleUrl: './app.scss',
 })
 export class App {
   protected readonly title = signal('frontend');

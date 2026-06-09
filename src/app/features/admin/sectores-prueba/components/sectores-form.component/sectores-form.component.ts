@@ -13,7 +13,7 @@ import { Observable } from 'rxjs';
   selector: 'app-sectores-form',
   imports: [ReactiveFormsModule, AsyncPipe],
   templateUrl: './sectores-form.component.html',
-  styleUrl: './sectores-form.component.css',
+  styleUrl: './sectores-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SectoresFormComponent implements OnInit {

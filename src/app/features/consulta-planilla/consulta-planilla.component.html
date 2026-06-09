@@ -20,7 +20,8 @@
             <select
               id="searchType"
               class="form-select form-select-lg text-center"
-              [(ngModel)]="searchType"
+              [ngModel]="searchType()"
+              (ngModelChange)="searchType.set($event)"
             >
               @for (option of searchOptions; track option.value) {
                 <option [value]="option.value">{{ option.label }}</option>
@@ -29,13 +30,14 @@
           </div>
 
           <div class="mb-3">
-            <label class="visually-hidden" for="terminoBusqueda">{{ inputLabel }}</label>
+            <label class="visually-hidden" for="terminoBusqueda">{{ inputLabel() }}</label>
             <input
               id="terminoBusqueda"
               type="text"
               class="form-control form-control-lg text-center"
-              [placeholder]="'Ingrese ' + inputLabel"
-              [(ngModel)]="terminoBusqueda"
+              [placeholder]="'Ingrese ' + inputLabel()"
+              [ngModel]="terminoBusqueda()"
+              (ngModelChange)="terminoBusqueda.set($event)"
               (keyup.enter)="onEnter()"
               #terminoInput="ngModel"
               required
@@ -44,10 +46,10 @@
 
           <button
             class="btn btn-primary btn-lg w-100 mt-4"
-            [disabled]="terminoBusqueda.trim() === '' || loading"
+            [disabled]="terminoBusqueda().trim() === '' || loading()"
             (click)="consultar()"
           >
-            @if (!loading) {
+            @if (!loading()) {
               <span>Consultar</span>
             } @else {
               <span
@@ -59,20 +61,20 @@
             }
           </button>
 
-          @if (searchClicked && terminoBusqueda.trim() === '') {
+          @if (searchClicked() && terminoBusqueda().trim() === '') {
             <div class="alert alert-danger mt-3">El campo es obligatorio.</div>
           }
 
-          @if (noResults) {
+          @if (noResults()) {
             <div class="alert alert-warning mt-3">
               No se encontraron resultados para la búsqueda.
             </div>
           }
 
-          @if (results) {
+          @if (results()) {
             <div class="alert alert-success mt-3 text-start">
               <h5 class="alert-heading">Resultado:</h5>
-              <p class="mb-0">{{ results.message }}</p>
+              <p class="mb-0">{{ results()?.message }}</p>
             </div>
           }
 

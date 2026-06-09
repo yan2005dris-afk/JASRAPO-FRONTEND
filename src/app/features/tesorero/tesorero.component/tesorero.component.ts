@@ -6,7 +6,7 @@ import { RouterOutlet } from '@angular/router';
   selector: 'app-tesorero.component',
   imports: [RouterOutlet],
   templateUrl: './tesorero.component.html',
-  styleUrl: './tesorero.component.css',
+  styleUrl: './tesorero.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TesoreroComponent {}

@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, HostListener } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 
 import { AuthService } from '../../core/services/auth.service';
 import { LayoutService } from '../../core/services/layout.service';
@@ -7,8 +7,11 @@ import { LayoutService } from '../../core/services/layout.service';
   selector: 'app-header',
   imports: [],
   templateUrl: './header.html',
-  styleUrl: './header.css',
+  styleUrl: './header.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:click)': 'onDocumentClick($event)',
+  },
 })
 export class Header {
   readonly authService = inject(AuthService);
@@ -32,7 +35,6 @@ export class Header {
     this.authService.logout();
   }
 
-  @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
     const target = event.target as HTMLElement;
     const dropdown = target.closest('.dropdown');

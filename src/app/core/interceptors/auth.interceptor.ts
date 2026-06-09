@@ -1,11 +1,13 @@
-import { HttpInterceptorFn, HttpRequest } from '@angular/common/http';
+import { HttpInterceptorFn, HttpRequest, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 /**
  * Interceptor híbrido para autenticación:
  * - Agrega access token en header Authorization (Bearer)
  * - Habilita withCredentials para envío/recepción de cookies (refresh token)
+ * - Maneja errores 401 cerrando la sesión
  */
 export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next) => {
   const authService = inject(AuthService);
@@ -25,5 +27,14 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
     });
   }
 
-  return next(authReq);
+  return next(authReq).pipe(
+    catchError((error: HttpErrorResponse) => {
+      // Si recibimos un 401 y no estamos en la ruta de login
+      if (error.status === 401 && !req.url.includes('/auth/login')) {
+        authService.logout();
+      }
+      return throwError(() => error);
+    })
+  );
 };
+

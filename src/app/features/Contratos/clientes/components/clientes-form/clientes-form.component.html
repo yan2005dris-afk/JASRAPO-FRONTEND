@@ -32,7 +32,7 @@
 
     <div class="row g-3">
       <div class="col-md-6">
-        <label for="tipoIdentificacionId" class="form-label">Tipo de identificación</label>
+        <label for="tipoIdentificacionId" class="form-label">Tipo de identificación <span class="text-danger">*</span></label>
 
         <select
           id="tipoIdentificacionId"
@@ -41,9 +41,9 @@
         >
           <option value="">Seleccione un tipo de identificación</option>
 
-          @for (tipo of tiposIdentificacion; track tipo.identificacionId) {
-            <option [value]="tipo.identificacionId">
-              {{ tipo.nombre }}
+          @for (tipo of tiposIdentificacion; track tipo.identificacionId || tipo.id) {
+            <option [value]="tipo.identificacionId || tipo.id">
+              {{ tipo.nombre || tipo.descripcion }}
             </option>
           }
         </select>
@@ -54,7 +54,7 @@
       </div>
 
       <div class="col-md-6">
-        <label for="identificacion" class="form-label">Identificación</label>
+        <label for="identificacion" class="form-label">Identificación <span class="text-danger">*</span></label>
 
         <input
           id="identificacion"
@@ -71,7 +71,7 @@
 
       @if (!esPersonaJuridica()) {
         <div class="col-md-6">
-          <label for="nombres" class="form-label">Nombres</label>
+          <label for="nombres" class="form-label">Nombres <span class="text-danger">*</span></label>
 
           <input id="nombres" type="text" class="form-control" formControlName="nombres" />
 
@@ -81,7 +81,7 @@
         </div>
 
         <div class="col-md-6">
-          <label for="apellidos" class="form-label">Apellidos</label>
+          <label for="apellidos" class="form-label">Apellidos <span class="text-danger">*</span></label>
 
           <input id="apellidos" type="text" class="form-control" formControlName="apellidos" />
 
@@ -93,7 +93,7 @@
 
       @if (esPersonaJuridica()) {
         <div class="col-12">
-          <label for="razonSocial" class="form-label">Razón social</label>
+          <label for="razonSocial" class="form-label">Razón social <span class="text-danger">*</span></label>
 
           <input
             id="razonSocial"
@@ -110,7 +110,7 @@
       }
 
       <div class="col-md-6">
-        <label for="email" class="form-label">Correo electrónico</label>
+        <label for="email" class="form-label">Correo electrónico <span class="text-danger">*</span></label>
 
         <input
           id="email"
@@ -126,7 +126,7 @@
       </div>
 
       <div class="col-md-6">
-        <label for="telefono" class="form-label">Teléfono</label>
+        <label for="telefono" class="form-label">Teléfono <span class="text-danger">*</span></label>
 
         <input
           id="telefono"
@@ -180,7 +180,7 @@
       </div>
 
       <div class="col-12">
-        <label for="direccionDomicilio" class="form-label">Dirección domiciliaria</label>
+        <label for="direccionDomicilio" class="form-label">Dirección domiciliaria <span class="text-danger">*</span></label>
 
         <textarea
           id="direccionDomicilio"

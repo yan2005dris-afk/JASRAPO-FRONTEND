@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, inject, input, output, signal } from '@angular/core';
+import { Component, ElementRef, inject, input, output, signal, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 export interface DropdownItem {
@@ -11,9 +11,12 @@ export interface DropdownItem {
 
 @Component({
   selector: 'app-dropdown',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './dropdown.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:click)': 'clickout($event)',
+  },
 })
 export class DropdownComponent {
   label = input<string>('Opciones');
@@ -33,7 +36,6 @@ export class DropdownComponent {
     this.isOpen.update((v) => !v);
   }
 
-  @HostListener('document:click', ['$event'])
   clickout(event: Event) {
     if (!this.elementRef.nativeElement.contains(event.target)) {
       this.isOpen.set(false);

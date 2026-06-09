@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-recaudacion-morosida',
   imports: [],
   templateUrl: './recaudacion-morosida.html',
-  styleUrl: './recaudacion-morosida.css',
+  styleUrl: './recaudacion-morosida.scss',
 })
 export class RecaudacionMorosida {}

@@ -31,7 +31,7 @@ import { ComunidadesService } from '../../../comunidades/services/comunidades.se
     MatIconModule,
   ],
   templateUrl: './sectores-prueba.html',
-  styleUrl: './sectores-prueba.css',
+  styleUrl: './sectores-prueba.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SectoresPrueba implements OnInit {

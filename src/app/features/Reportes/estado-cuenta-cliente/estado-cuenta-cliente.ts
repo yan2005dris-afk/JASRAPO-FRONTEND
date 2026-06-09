@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-estado-cuenta-cliente',
   imports: [],
   templateUrl: './estado-cuenta-cliente.html',
-  styleUrl: './estado-cuenta-cliente.css',
+  styleUrl: './estado-cuenta-cliente.scss',
 })
 export class EstadoCuentaCliente {}

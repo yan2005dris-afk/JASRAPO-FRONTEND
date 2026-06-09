@@ -6,7 +6,7 @@ import { RouterOutlet } from '@angular/router';
   selector: 'app-presidente.component',
   imports: [RouterOutlet],
   templateUrl: './presidente.component.html',
-  styleUrl: './presidente.component.css',
+  styleUrl: './presidente.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PresidenteComponent {}

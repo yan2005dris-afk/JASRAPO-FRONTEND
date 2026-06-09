@@ -5,7 +5,7 @@ import { RouterOutlet, RouterLink } from '@angular/router';
   selector: 'app-roles',
   imports: [RouterOutlet, RouterLink],
   templateUrl: './roles.html',
-  styleUrl: './roles.css',
+  styleUrl: './roles.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Roles {}

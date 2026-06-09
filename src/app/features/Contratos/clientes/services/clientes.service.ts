@@ -84,20 +84,25 @@ export class ClientesService {
   }
 
   getTiposIdentificacion(): Observable<IIdentificacion[]> {
-    return this.http.get<IIdentificacion[]>(`${this.endpoint}/identification-types`);
+    return this.http
+      .get<any>(`${this.endpoint}/identification-types`)
+      .pipe(map((response) => this.normalizarRespuestaGenerica<IIdentificacion>(response)));
   }
 
   private normalizarRespuestaClientes(response: ClientesApiResponse): IClientes[] {
+    return this.normalizarRespuestaGenerica<IClientes>(response);
+  }
+
+  private normalizarRespuestaGenerica<T>(response: any): T[] {
     if (Array.isArray(response)) {
       return response;
     }
-
     return (
-      response.data ??
-      response.clientes ??
-      response.items ??
-      response.results ??
-      response.content ??
+      response?.data ??
+      response?.clientes ??
+      response?.items ??
+      response?.results ??
+      response?.content ??
       []
     );
   }
