@@ -1,11 +1,4 @@
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-  HostListener,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
@@ -22,11 +15,13 @@ type UserForm = Omit<User, 'id'> & { password?: string };
 
 @Component({
   selector: 'app-user-management',
-  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './user-management.html',
-  styleUrl: './user-management.css',
+  styleUrl: './user-management.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:click)': 'closeDropdowns()',
+  },
 })
 export class UserManagement {
   readonly authService = inject(AuthService);
@@ -34,7 +29,6 @@ export class UserManagement {
   // ---------- Dropdown ----------
   readonly openDropdownId = signal<number | null>(null);
 
-  @HostListener('document:click')
   closeDropdowns(): void {
     this.openDropdownId.set(null);
   }

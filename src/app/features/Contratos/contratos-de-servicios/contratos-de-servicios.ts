@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-contratos-de-servicios',
   imports: [],
   templateUrl: './contratos-de-servicios.html',
-  styleUrl: './contratos-de-servicios.css',
+  styleUrl: './contratos-de-servicios.scss',
 })
 export class ContratosDeServicios {}

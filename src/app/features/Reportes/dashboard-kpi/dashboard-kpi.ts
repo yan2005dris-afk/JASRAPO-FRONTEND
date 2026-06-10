@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-dashboard-kpi',
   imports: [],
   templateUrl: './dashboard-kpi.html',
-  styleUrl: './dashboard-kpi.css',
+  styleUrl: './dashboard-kpi.scss',
 })
 export class DashboardKpi {}

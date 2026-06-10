@@ -1,13 +1,6 @@
 import { CommonModule } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  Component,
-  EventEmitter,
-  Input,
-  Output,
-  inject,
-} from '@angular/core';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { CrearMedidorPayload } from '../../interfaces/imedidor.interface';
 
 /**
@@ -16,7 +9,6 @@ import { CrearMedidorPayload } from '../../interfaces/imedidor.interface';
  */
 @Component({
   selector: 'app-registrar-medidor',
-  standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './registrar-medidor.component.html',
   styleUrl: './registrar-medidor.component.scss',
@@ -24,10 +16,10 @@ import { CrearMedidorPayload } from '../../interfaces/imedidor.interface';
 })
 export class RegistrarMedidorComponent {
   // Comunicación con el componente padre
-  @Input() isSaving = false;
-  @Input() errorMessage = '';
-  @Output() guardar = new EventEmitter<CrearMedidorPayload>();
-  @Output() cancelar = new EventEmitter<void>();
+  isSaving = input<boolean>(false);
+  errorMessage = input<string>('');
+  guardar = output<CrearMedidorPayload>();
+  cancelar = output<void>();
 
   // Inyección de dependencias para formularios reactivos
   private readonly fb = inject(FormBuilder);
@@ -36,9 +28,9 @@ export class RegistrarMedidorComponent {
    * Configuración del formulario reactivo con validaciones obligatorias
    */
   form = this.fb.nonNullable.group({
-    serie: [''],
-    marca: [''],
-    modelo: [''],
+    serie: ['', [Validators.required, Validators.maxLength(50)]],
+    marca: ['', [Validators.required, Validators.maxLength(50)]],
+    modelo: ['', [Validators.required, Validators.maxLength(50)]],
   });
 
   /**
@@ -46,7 +38,7 @@ export class RegistrarMedidorComponent {
    * Bloquea la acción si existe una operación de guardado en curso.
    */
   close(): void {
-    if (this.isSaving) {
+    if (this.isSaving()) {
       return;
     }
     this.cancelar.emit();
@@ -57,7 +49,7 @@ export class RegistrarMedidorComponent {
    * Emite el payload con los datos capturados si el formulario es válido.
    */
   submit(): void {
-    if (this.isSaving) {
+    if (this.isSaving()) {
       return;
     }
 

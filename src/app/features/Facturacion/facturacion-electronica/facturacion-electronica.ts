@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-facturacion-electronica',
   imports: [],
   templateUrl: './facturacion-electronica.html',
-  styleUrl: './facturacion-electronica.css',
+  styleUrl: './facturacion-electronica.scss',
 })
 export class FacturacionElectronica {}

@@ -26,7 +26,6 @@ import { forkJoin, finalize } from 'rxjs';
  */
 @Component({
   selector: 'app-medidores',
-  standalone: true,
   imports: [CommonModule, RegistrarMedidorComponent, EditarMedidorComponent],
   templateUrl: './medidores.html',
   styleUrl: './medidores.scss',

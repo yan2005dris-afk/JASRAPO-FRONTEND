@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-consumo-zonas',
   imports: [],
   templateUrl: './consumo-zonas.html',
-  styleUrl: './consumo-zonas.css',
+  styleUrl: './consumo-zonas.scss',
 })
 export class ConsumoZonas {}

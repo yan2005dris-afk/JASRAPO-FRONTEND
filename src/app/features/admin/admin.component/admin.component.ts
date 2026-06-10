@@ -5,7 +5,7 @@ import { RouterLink, RouterOutlet } from '@angular/router';
   selector: 'app-admin.component',
   imports: [RouterOutlet, RouterLink],
   templateUrl: './admin.component.html',
-  styleUrl: './admin.component.css',
+  styleUrl: './admin.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AdminComponent {}

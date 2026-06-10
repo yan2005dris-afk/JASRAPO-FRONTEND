@@ -16,7 +16,7 @@ import { ClientesFormComponent } from './components/clientes-form/clientes-form.
   selector: 'app-clientes',
   imports: [CommonModule, FormsModule, ClientesFormComponent],
   templateUrl: './clientes.html',
-  styleUrl: './clientes.css',
+  styleUrl: './clientes.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Clientes {

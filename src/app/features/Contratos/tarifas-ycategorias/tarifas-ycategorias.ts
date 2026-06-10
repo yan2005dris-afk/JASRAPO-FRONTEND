@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-tarifas-ycategorias',
   imports: [],
   templateUrl: './tarifas-ycategorias.html',
-  styleUrl: './tarifas-ycategorias.css',
+  styleUrl: './tarifas-ycategorias.scss',
 })
 export class TarifasYCategorias {}

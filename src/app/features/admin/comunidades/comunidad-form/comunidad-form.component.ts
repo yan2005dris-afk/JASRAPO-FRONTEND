@@ -1,28 +1,20 @@
-import {
-  Component,
-  EventEmitter,
-  Input,
-  OnChanges,
-  Output,
-  SimpleChanges,
-  inject,
-} from '@angular/core';
+import { Component, inject, input, output, effect, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Comunidad } from '../models/comunidad.interface';
 
 @Component({
   selector: 'app-comunidad-form',
-  standalone: true,
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './comunidad-form.component.html',
-  styleUrl: './comunidad-form.component.css',
+  styleUrl: './comunidad-form.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ComunidadFormComponent implements OnChanges {
-  @Input() comunidadAEditar: Comunidad | null = null;
+export class ComunidadFormComponent {
+  comunidadAEditar = input<Comunidad | null>(null);
 
-  @Output() formClosed = new EventEmitter<void>();
-  @Output() formSubmitted = new EventEmitter<Omit<Comunidad, 'id'>>();
+  formClosed = output<void>();
+  formSubmitted = output<Omit<Comunidad, 'id'>>();
 
   private readonly fb = inject(FormBuilder);
 
@@ -32,20 +24,20 @@ export class ComunidadFormComponent implements OnChanges {
     porcentajeTasaSeguridad: [0, [Validators.required, Validators.min(0), Validators.max(100)]],
   });
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['comunidadAEditar']) {
-      this.prepararFormulario();
-    }
+  constructor() {
+    effect(() => {
+      const editItem = this.comunidadAEditar();
+      this.prepararFormulario(editItem);
+    });
   }
 
-  prepararFormulario(): void {
-    if (this.comunidadAEditar) {
+  prepararFormulario(comunidad: Comunidad | null): void {
+    if (comunidad) {
       this.comunidadForm.setValue({
-        codigo: this.comunidadAEditar.codigo,
-        nombre: this.comunidadAEditar.nombre,
-        porcentajeTasaSeguridad: this.comunidadAEditar.porcentajeTasaSeguridad,
+        codigo: comunidad.codigo,
+        nombre: comunidad.nombre,
+        porcentajeTasaSeguridad: comunidad.porcentajeTasaSeguridad,
       });
-
       return;
     }
 

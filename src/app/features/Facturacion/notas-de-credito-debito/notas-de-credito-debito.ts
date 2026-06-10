@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-notas-de-credito-debito',
   imports: [],
   templateUrl: './notas-de-credito-debito.html',
-  styleUrl: './notas-de-credito-debito.css',
+  styleUrl: './notas-de-credito-debito.scss',
 })
 export class NotasDeCreditoDebito {}

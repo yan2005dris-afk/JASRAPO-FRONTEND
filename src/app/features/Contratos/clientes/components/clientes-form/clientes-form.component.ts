@@ -37,7 +37,7 @@ interface BackendErrorResponse {
   selector: 'app-clientes-form',
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './clientes-form.component.html',
-  styleUrl: './clientes-form.component.css',
+  styleUrl: './clientes-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ClientesFormComponent implements OnInit {
@@ -87,14 +87,16 @@ export class ClientesFormComponent implements OnInit {
     this.clientesService.getTiposIdentificacion().subscribe({
       next: (tipos) => {
         this.tiposIdentificacion = tipos
-          .filter((tipo) => tipo.activo)
-          .sort((a, b) => Number(a.orden) - Number(b.orden));
+          .filter((tipo) => tipo.activo !== false)
+          .sort((a, b) => Number(a.orden || 0) - Number(b.orden || 0));
 
         this.prepararFormulario();
 
         if (!this.isEditMode && this.tiposIdentificacion.length > 0) {
           this.clienteForm.patchValue({
-            tipoIdentificacionId: String(this.tiposIdentificacion[0].identificacionId),
+            tipoIdentificacionId: String(
+              this.tiposIdentificacion[0].identificacionId ?? this.tiposIdentificacion[0].id,
+            ),
           });
         }
 
@@ -143,9 +145,9 @@ export class ClientesFormComponent implements OnInit {
     if (
       cliente.tipoIdentificacion &&
       typeof cliente.tipoIdentificacion === 'object' &&
-      cliente.tipoIdentificacion.identificacionId
+      (cliente.tipoIdentificacion.identificacionId || cliente.tipoIdentificacion.id)
     ) {
-      return String(cliente.tipoIdentificacion.identificacionId);
+      return String(cliente.tipoIdentificacion.identificacionId ?? cliente.tipoIdentificacion.id);
     }
 
     if (cliente.tipoIdentificacion && typeof cliente.tipoIdentificacion === 'string') {
@@ -153,12 +155,12 @@ export class ClientesFormComponent implements OnInit {
 
       const tipoEncontrado = this.tiposIdentificacion.find((tipo) => {
         const codigo = tipo.codigo.toUpperCase().trim();
-        const nombre = tipo.nombre.toUpperCase().trim();
+        const nombre = (tipo.nombre || tipo.descripcion || '').toUpperCase().trim();
 
         return codigo === tipoTexto || nombre === tipoTexto;
       });
 
-      return tipoEncontrado ? String(tipoEncontrado.identificacionId) : '';
+      return tipoEncontrado ? String(tipoEncontrado.identificacionId ?? tipoEncontrado.id) : '';
     }
 
     return '';
@@ -209,7 +211,7 @@ export class ClientesFormComponent implements OnInit {
     const idSeleccionado = String(this.tipoIdentificacionId?.value ?? '');
 
     return this.tiposIdentificacion.find(
-      (tipo) => String(tipo.identificacionId) === idSeleccionado,
+      (tipo) => String(tipo.identificacionId ?? tipo.id) === idSeleccionado,
     );
   }
 
