@@ -34,7 +34,6 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
         authService.logout();
       }
       return throwError(() => error);
-    })
+    }),
   );
 };
-

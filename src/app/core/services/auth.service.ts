@@ -76,17 +76,17 @@ export class AuthService {
     const now = Date.now();
     const createdAt = this.tokenCreatedAtSignal();
     const createdTime = createdAt ? new Date(createdAt).getTime() : now;
-    
+
     const lifetime = expirationTime - createdTime;
-    
+
     // Si el token vive menos de 3 minutos, refrescamos cuando haya pasado el 80% de su vida
     let refreshTime;
     if (lifetime <= 3 * 60 * 1000) {
-      refreshTime = createdTime + (lifetime * 0.8);
+      refreshTime = createdTime + lifetime * 0.8;
     } else {
-      refreshTime = expirationTime - (2 * 60 * 1000);
+      refreshTime = expirationTime - 2 * 60 * 1000;
     }
-    
+
     const delayMs = refreshTime - now;
     return delayMs > 0 ? delayMs : 0;
   }
@@ -99,13 +99,13 @@ export class AuthService {
 
   private startRefreshTimer(): void {
     this.cancelRefreshTimer();
-    
+
     if (!this.isAuthenticated() || !this.tokenExpiresAtSignal()) {
       return;
     }
 
     const delayMs = this.calculateRefreshDelay();
-    
+
     this.refreshTimerSubscription = timer(delayMs)
       .pipe(switchMap(() => this.refreshToken()))
       .subscribe({
@@ -124,7 +124,20 @@ export class AuthService {
   // Cambiado 'any' por 'LoginResponse'
   private handleLoginSuccess(response: LoginResponse): void {
     // Usamos desestructuración para que el código sea más limpio
-    const { sub, accessToken, sid, email, name, roleId, roleName, avatar, iat, exp, createdAt: resCreatedAt, expiresAt: resExpiresAt } = response;
+    const {
+      sub,
+      accessToken,
+      sid,
+      email,
+      name,
+      roleId,
+      roleName,
+      avatar,
+      iat,
+      exp,
+      createdAt: resCreatedAt,
+      expiresAt: resExpiresAt,
+    } = response;
 
     let createdAt: string;
     let expiresAt: string;
@@ -133,7 +146,8 @@ export class AuthService {
       createdAt = resCreatedAt;
       expiresAt = resExpiresAt;
     } else if (typeof exp === 'number') {
-      createdAt = typeof iat === 'number' ? new Date(iat * 1000).toISOString() : new Date().toISOString();
+      createdAt =
+        typeof iat === 'number' ? new Date(iat * 1000).toISOString() : new Date().toISOString();
       expiresAt = new Date(exp * 1000).toISOString();
     } else if (typeof exp === 'string') {
       createdAt = typeof iat === 'string' ? iat : new Date().toISOString();

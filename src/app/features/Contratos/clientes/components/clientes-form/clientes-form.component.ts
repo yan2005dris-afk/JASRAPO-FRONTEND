@@ -94,7 +94,9 @@ export class ClientesFormComponent implements OnInit {
 
         if (!this.isEditMode && this.tiposIdentificacion.length > 0) {
           this.clienteForm.patchValue({
-            tipoIdentificacionId: String(this.tiposIdentificacion[0].identificacionId ?? this.tiposIdentificacion[0].id),
+            tipoIdentificacionId: String(
+              this.tiposIdentificacion[0].identificacionId ?? this.tiposIdentificacion[0].id,
+            ),
           });
         }
 

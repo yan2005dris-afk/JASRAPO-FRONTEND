@@ -1,11 +1,4 @@
-import {
-  Component,
-  inject,
-  input,
-  output,
-  effect,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, inject, input, output, effect, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Comunidad } from '../models/comunidad.interface';

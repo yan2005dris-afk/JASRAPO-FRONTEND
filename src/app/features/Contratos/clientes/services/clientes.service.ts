@@ -12,15 +12,17 @@ import {
 
 import { environment } from '../../../../../environments/environment';
 
-type ClientesApiResponse =
-  | IClientes[]
+type ApiResponse<T> =
+  | T[]
   | {
-      data?: IClientes[];
-      clientes?: IClientes[];
-      items?: IClientes[];
-      results?: IClientes[];
-      content?: IClientes[];
+      data?: T[];
+      clientes?: T[];
+      items?: T[];
+      results?: T[];
+      content?: T[];
     };
+
+type ClientesApiResponse = ApiResponse<IClientes>;
 
 @Injectable({
   providedIn: 'root',
@@ -85,7 +87,7 @@ export class ClientesService {
 
   getTiposIdentificacion(): Observable<IIdentificacion[]> {
     return this.http
-      .get<any>(`${this.endpoint}/identification-types`)
+      .get<ApiResponse<IIdentificacion>>(`${this.endpoint}/identification-types`)
       .pipe(map((response) => this.normalizarRespuestaGenerica<IIdentificacion>(response)));
   }
 
@@ -93,7 +95,7 @@ export class ClientesService {
     return this.normalizarRespuestaGenerica<IClientes>(response);
   }
 
-  private normalizarRespuestaGenerica<T>(response: any): T[] {
+  private normalizarRespuestaGenerica<T>(response: ApiResponse<T>): T[] {
     if (Array.isArray(response)) {
       return response;
     }
