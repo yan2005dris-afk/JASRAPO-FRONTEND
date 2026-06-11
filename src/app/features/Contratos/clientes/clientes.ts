@@ -12,6 +12,8 @@ import {
   TipoBusquedaCliente,
 } from './interfaces/iclientes.interface';
 import { ClientesFormComponent } from './components/clientes-form/clientes-form.component';
+import { ToastService } from '../../../shared/components/toast/toast.service';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-clientes',
@@ -28,6 +30,8 @@ export class Clientes {
 
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly clientesService = inject(ClientesService);
+  private readonly toastService = inject(ToastService);
+  private readonly dialogService = inject(ConfirmDialogService);
 
   clients: IClientes[] = [];
   totalItems = 0;
@@ -249,25 +253,41 @@ export class Clientes {
     const clienteId = this.obtenerIdCliente(cliente);
 
     if (clienteId === null) {
-      alert('No se puede eliminar este cliente porque no tiene un ID válido.');
+      this.toastService.error(
+        'No se puede eliminar este cliente porque no tiene un ID válido.',
+        'Error',
+      );
       return;
     }
 
     const nombreCliente = this.obtenerNombreCliente(cliente);
 
-    if (!confirm(`¿Seguro que deseas eliminar al cliente ${nombreCliente}?`)) {
-      return;
-    }
-
-    this.clientesService.deleteCliente(clienteId).subscribe({
-      next: () => {
-        this.buscarClientes();
-      },
-      error: (err) => {
-        console.error('Error eliminando cliente:', err);
-        alert('Ocurrió un error al eliminar el cliente.');
-      },
-    });
+    this.dialogService
+      .confirm({
+        title: 'Confirmar eliminación',
+        message: `¿Estás seguro de que deseas eliminar al cliente ${nombreCliente}? Esta acción no se puede deshacer.`,
+        isDanger: true,
+        confirmText: 'Eliminar',
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.isLoading = true;
+          this.cdr.markForCheck();
+          this.clientesService.deleteCliente(clienteId).subscribe({
+            next: () => {
+              this.toastService.success('Cliente eliminado correctamente', 'Éxito');
+              this.buscarClientes();
+            },
+            error: (err) => {
+              console.error('Error eliminando cliente:', err);
+              const msg = err.error?.message || 'Ocurrió un error al eliminar el cliente.';
+              this.toastService.error(msg, 'Error');
+              this.isLoading = false;
+              this.cdr.markForCheck();
+            },
+          });
+        }
+      });
   }
 
   obtenerIdCliente(cliente: IClientes): string | number | null {

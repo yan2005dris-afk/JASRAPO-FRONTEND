@@ -12,6 +12,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComunidadesService } from './services/comunidades.service';
 import { Comunidad } from './models/comunidad.interface';
 import { ComunidadFormComponent } from './comunidad-form/comunidad-form.component';
+import { ToastService } from '../../../shared/components/toast/toast.service';
 
 interface BackendErrorResponse {
   message?: string;
@@ -32,6 +33,7 @@ interface BackendErrorResponse {
 export class ComunidadesComponent {
   private readonly comunidadesService = inject(ComunidadesService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly toastService = inject(ToastService);
   private readonly focusableSelectors =
     'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
@@ -67,8 +69,6 @@ export class ComunidadesComponent {
   private editingCommunityId: number | null = null;
   private previouslyFocusedElement: HTMLElement | null = null;
   readonly hasFetched = signal(false);
-  readonly mensajeNotificacion = signal<string | null>(null);
-  readonly tipoNotificacion = signal<'success' | 'error'>('success');
 
   constructor() {
     effect(() => {
@@ -144,7 +144,6 @@ export class ComunidadesComponent {
     this.isEditMode.set(false);
     this.editingCommunityId = null;
     this.selectedCommunity.set(null);
-    this.limpiarMensaje();
     this.showFormModal.set(true);
     this.focusModalBySelector('[data-modal="community-form"]');
   }
@@ -154,7 +153,6 @@ export class ComunidadesComponent {
     this.isEditMode.set(true);
     this.editingCommunityId = comunidad.id;
     this.selectedCommunity.set(comunidad);
-    this.limpiarMensaje();
     this.showFormModal.set(true);
     this.focusModalBySelector('[data-modal="community-form"]');
   }
@@ -183,7 +181,6 @@ export class ComunidadesComponent {
     this.showFormModal.set(false);
     this.editingCommunityId = null;
     this.selectedCommunity.set(null);
-    this.limpiarMensaje();
     this.restoreFocus();
   }
 
@@ -245,7 +242,6 @@ export class ComunidadesComponent {
   }
 
   handleFormSubmit(payload: Omit<Comunidad, 'id'>): void {
-    this.limpiarMensaje();
     this.isSaving = true;
 
     if (this.isEditMode()) {
@@ -269,6 +265,7 @@ export class ComunidadesComponent {
           this.isSaving = false;
           this.refreshComunidadesAfterSave();
           this.closeFormModal();
+          this.toastService.success('Comunidad actualizada correctamente', 'Éxito');
           this.cdr.markForCheck();
         },
         error: (err: HttpErrorResponse) => {
@@ -279,7 +276,7 @@ export class ComunidadesComponent {
             'No se pudo actualizar la comunidad. Revise los datos ingresados.',
           );
 
-          this.mostrarMensaje(mensajeError, 'error');
+          this.toastService.error(mensajeError, 'Error');
           this.cdr.markForCheck();
         },
       });
@@ -293,6 +290,7 @@ export class ComunidadesComponent {
         this.isSaving = false;
         this.refreshComunidadesAfterSave();
         this.closeFormModal();
+        this.toastService.success('Comunidad creada correctamente', 'Éxito');
         this.cdr.markForCheck();
       },
       error: (err: HttpErrorResponse) => {
@@ -303,7 +301,7 @@ export class ComunidadesComponent {
           'No se pudo crear la comunidad. Revise los datos ingresados.',
         );
 
-        this.mostrarMensaje(mensajeError, 'error');
+        this.toastService.error(mensajeError, 'Error');
         this.cdr.markForCheck();
       },
     });
@@ -341,15 +339,6 @@ export class ComunidadesComponent {
     }
 
     return mensajePorDefecto;
-  }
-
-  private mostrarMensaje(mensaje: string, tipo: 'error'): void {
-    this.mensajeNotificacion.set(mensaje);
-    this.tipoNotificacion.set(tipo);
-  }
-
-  private limpiarMensaje(): void {
-    this.mensajeNotificacion.set(null);
   }
 
   private refreshComunidadesAfterSave(): void {

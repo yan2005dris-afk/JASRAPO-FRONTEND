@@ -19,6 +19,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { Comunidad } from '../../../comunidades/models/comunidad.interface';
 import { ComunidadesService } from '../../../comunidades/services/comunidades.service';
+import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-sectores-prueba',
@@ -44,6 +46,8 @@ export class SectoresPrueba implements OnInit {
 
   private sectoresService = inject(SectoresService);
   private comunidadesService = inject(ComunidadesService);
+  private readonly toastService = inject(ToastService);
+  private readonly dialogService = inject(ConfirmDialogService);
 
   /** Control del menú desplegable de acciones por fila */
   openDropdownId: number | null = null;
@@ -223,11 +227,35 @@ export class SectoresPrueba implements OnInit {
   eliminarSector(sector: Sectores) {
     const { sectorId } = sector;
     if (sectorId == null) {
-      console.error('No se puede eliminar un sector sin sectorId:', sector);
+      this.toastService.error('No se puede eliminar un sector sin sectorId.', 'Error');
       return;
     }
-    if (confirm(`¿Eliminar sector ${sector.nombre}?`)) {
-      this.sectoresService.deleteSector(sectorId).subscribe(() => this.mostrarSectores());
-    }
+
+    this.dialogService
+      .confirm({
+        title: 'Confirmar eliminación',
+        message: `¿Estás seguro de que deseas eliminar el sector "${sector.nombre}"? Esta acción no se puede deshacer.`,
+        isDanger: true,
+        confirmText: 'Eliminar',
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.isLoading = true;
+          this.cdr.markForCheck();
+          this.sectoresService.deleteSector(sectorId).subscribe({
+            next: () => {
+              this.toastService.success('Sector eliminado correctamente', 'Éxito');
+              this.mostrarSectores();
+            },
+            error: (err) => {
+              console.error('Error eliminando sector:', err);
+              const msg = err.error?.message || 'Ocurrió un error al eliminar el sector.';
+              this.toastService.error(msg, 'Error');
+              this.isLoading = false;
+              this.cdr.markForCheck();
+            },
+          });
+        }
+      });
   }
 }

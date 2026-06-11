@@ -1,5 +1,5 @@
 <div class="modal-header border-bottom-0 pb-0">
-  <h5 class="modal-title fw-bold">Agregar Nuevo Sector</h5>
+  <h5 class="modal-title fw-bold">{{ isEditMode ? 'Editar Sector' : 'Agregar Nuevo Sector' }}</h5>
   <button
     type="button"
     class="btn-close shadow-none"
@@ -56,7 +56,9 @@
     </div>
   </div>
   <div class="modal-footer border-top-0 pt-0">
-    <button type="button" class="btn btn-light" (click)="onClose()">Cancelar</button>
+    <button type="button" class="btn btn-outline-secondary fw-medium px-4" (click)="onClose()">
+      Cancelar
+    </button>
     <button type="submit" class="btn btn-primary" [disabled]="sectorForm.invalid">Guardar</button>
   </div>
 </form>

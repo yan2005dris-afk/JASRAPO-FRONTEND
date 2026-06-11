@@ -19,6 +19,8 @@ import {
 } from './interfaces/imedidor.interface';
 import { MedidoresService } from './services/medidores.service';
 import { forkJoin, finalize } from 'rxjs';
+import { ToastService } from '../../../shared/components/toast/toast.service';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 
 /**
  * Componente Principal de Gestión de Medidores
@@ -38,6 +40,8 @@ export class Medidores implements OnInit {
   // Inyección de servicios y utilidades
   private readonly medidoresService = inject(MedidoresService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly toastService = inject(ToastService);
+  private readonly dialogService = inject(ConfirmDialogService);
 
   // Estado de los datos
   medidores: IMedidor[] = [];
@@ -233,6 +237,7 @@ export class Medidores implements OnInit {
       next: () => {
         this.isSaving = false;
         this.closeRegistrar();
+        this.toastService.success('Medidor registrado correctamente', 'Éxito');
         this.cargarMedidores();
       },
       error: (err: HttpErrorResponse) => {
@@ -241,7 +246,7 @@ export class Medidores implements OnInit {
           err,
           'Error al guardar el medidor. Revise los datos ingresados.',
         );
-        this.mostrarMensaje(mensajeError, 'modal');
+        this.toastService.error(mensajeError, 'Error');
         this.cdr.detectChanges();
       },
     });
@@ -264,6 +269,7 @@ export class Medidores implements OnInit {
       next: () => {
         this.isSaving = false;
         this.closeEditar();
+        this.toastService.success('Estado del medidor actualizado correctamente', 'Éxito');
         this.cargarMedidores();
       },
       error: (err: HttpErrorResponse) => {
@@ -272,7 +278,7 @@ export class Medidores implements OnInit {
           err,
           'Error al actualizar: Verifique los datos enviados.',
         );
-        this.mostrarMensaje(mensajeError, 'modal');
+        this.toastService.error(mensajeError, 'Error');
         this.cdr.detectChanges();
       },
     });
@@ -283,24 +289,34 @@ export class Medidores implements OnInit {
    */
   eliminarMedidor(medidor: IMedidor): void {
     const id = medidor.medidorId;
-    if (confirm(`¿Estás seguro de eliminar el medidor ${medidor.serie}?`)) {
-      this.isLoading = true;
-      this.cdr.markForCheck();
-      this.medidoresService.deleteMedidor(id).subscribe({
-        next: () => {
-          this.cargarMedidores();
-        },
-        error: (err: HttpErrorResponse) => {
-          this.isLoading = false;
-          const mensajeError = this.obtenerMensajeErrorBackend(
-            err,
-            'Error al eliminar el medidor.',
-          );
-          this.mostrarMensaje(mensajeError, 'tabla');
-          this.cdr.detectChanges();
-        },
+    this.dialogService
+      .confirm({
+        title: 'Confirmar eliminación',
+        message: `¿Estás seguro de que deseas eliminar el medidor "${medidor.serie}"? Esta acción no se puede deshacer.`,
+        isDanger: true,
+        confirmText: 'Eliminar',
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.isLoading = true;
+          this.cdr.markForCheck();
+          this.medidoresService.deleteMedidor(id).subscribe({
+            next: () => {
+              this.toastService.success('Medidor eliminado correctamente', 'Éxito');
+              this.cargarMedidores();
+            },
+            error: (err: HttpErrorResponse) => {
+              this.isLoading = false;
+              const mensajeError = this.obtenerMensajeErrorBackend(
+                err,
+                'Error al eliminar el medidor.',
+              );
+              this.toastService.error(mensajeError, 'Error');
+              this.cdr.detectChanges();
+            },
+          });
+        }
       });
-    }
   }
 
   /**

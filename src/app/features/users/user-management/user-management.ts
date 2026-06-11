@@ -7,23 +7,23 @@ import {
   OnInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import {
+  FormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+} from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { UsersService } from '../services/users.service';
 import { User, Role, CreateUserPayload, UpdateUserPayload } from '../models/user.interface';
-
-interface UserForm {
-  nombres: string;
-  apellidos: string;
-  email: string;
-  telefono: string;
-  rolId: number;
-}
+import { ToastService } from '../../../shared/components/toast/toast.service';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './user-management.html',
   styleUrl: './user-management.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -34,6 +34,8 @@ interface UserForm {
 export class UserManagement implements OnInit {
   private readonly usersService = inject(UsersService);
   readonly authService = inject(AuthService);
+  private readonly toastService = inject(ToastService);
+  private readonly dialogService = inject(ConfirmDialogService);
 
   // ---------- Lists & State ----------
   readonly users = signal<User[]>([]);
@@ -117,16 +119,20 @@ export class UserManagement implements OnInit {
   readonly isEditing = signal(false);
   readonly editingId = signal<number | null>(null);
 
-  readonly showDeleteModal = signal(false);
-  readonly deletingUser = signal<User | null>(null);
+  private readonly fb = inject(FormBuilder);
 
-  readonly formData = signal<UserForm>({
-    nombres: '',
-    apellidos: '',
-    email: '',
-    telefono: '',
-    rolId: 0,
+  userForm: FormGroup = this.fb.group({
+    nombres: ['', Validators.required],
+    apellidos: ['', Validators.required],
+    email: ['', [Validators.required, Validators.email]],
+    telefono: ['', [Validators.required, Validators.minLength(7)]],
+    rolId: [0, Validators.required],
   });
+
+  campoInvalido(campo: string): boolean {
+    const control = this.userForm.get(campo);
+    return !!control && control.invalid && (control.dirty || control.touched);
+  }
 
   // ---------- Pagination ----------
   readonly pageSizeOptions = [5, 10, 15];
@@ -169,8 +175,8 @@ export class UserManagement implements OnInit {
     this.usersService.getRoles().subscribe({
       next: (rolesList) => {
         this.roles.set(rolesList);
-        if (rolesList.length > 0 && this.formData().rolId === 0) {
-          this.updateField('rolId', rolesList[0].rolId);
+        if (rolesList.length > 0 && !this.userForm.value.rolId) {
+          this.userForm.patchValue({ rolId: rolesList[0].rolId });
         }
       },
       error: (err) => {
@@ -203,7 +209,7 @@ export class UserManagement implements OnInit {
     this.errorMessage.set(null);
 
     const defaultRolId = this.roles().length > 0 ? this.roles()[0].rolId : 0;
-    this.formData.set({
+    this.userForm.reset({
       nombres: '',
       apellidos: '',
       email: '',
@@ -217,7 +223,7 @@ export class UserManagement implements OnInit {
     this.isEditing.set(true);
     this.editingId.set(user.usuarioId);
     this.errorMessage.set(null);
-    this.formData.set({
+    this.userForm.patchValue({
       nombres: user.nombres,
       apellidos: user.apellidos,
       email: user.email,
@@ -233,13 +239,8 @@ export class UserManagement implements OnInit {
   }
 
   saveUser(): void {
-    const form = this.formData();
-    if (
-      !form.nombres.trim() ||
-      !form.apellidos.trim() ||
-      !form.email.trim() ||
-      !form.telefono.trim()
-    ) {
+    if (this.userForm.invalid) {
+      this.userForm.markAllAsTouched();
       this.errorMessage.set('Por favor, complete todos los campos obligatorios.');
       return;
     }
@@ -247,23 +248,27 @@ export class UserManagement implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
+    const form = this.userForm.value;
+
     if (this.isEditing() && this.editingId() !== null) {
       const payload: UpdateUserPayload = {
         nombres: form.nombres,
         apellidos: form.apellidos,
         email: form.email,
         telefono: form.telefono,
-        rolId: form.rolId,
+        rolId: Number(form.rolId),
       };
 
       this.usersService.updateUser(this.editingId()!, payload).subscribe({
         next: () => {
           this.loadUsers();
           this.closeModal();
+          this.toastService.success('Usuario actualizado correctamente', 'Éxito');
         },
         error: (err) => {
           console.error('Error al actualizar usuario:', err);
-          this.errorMessage.set(err.error?.message || 'Error al actualizar el usuario.');
+          const msg = err.error?.message || 'Error al actualizar el usuario.';
+          this.toastService.error(msg, 'Error');
           this.isLoading.set(false);
         },
       });
@@ -273,56 +278,50 @@ export class UserManagement implements OnInit {
         apellidos: form.apellidos,
         email: form.email,
         telefono: form.telefono,
-        rolId: form.rolId,
+        rolId: Number(form.rolId),
       };
 
       this.usersService.createUser(payload).subscribe({
         next: () => {
           this.loadUsers();
           this.closeModal();
+          this.toastService.success('Usuario creado correctamente', 'Éxito');
         },
         error: (err) => {
           console.error('Error al crear usuario:', err);
-          this.errorMessage.set(err.error?.message || 'Error al crear el usuario.');
+          const msg = err.error?.message || 'Error al crear el usuario.';
+          this.toastService.error(msg, 'Error');
           this.isLoading.set(false);
         },
       });
     }
   }
 
-  confirmDelete(user: User): void {
-    this.deletingUser.set(user);
-    this.showDeleteModal.set(true);
-    this.errorMessage.set(null);
-  }
-
-  cancelDelete(): void {
-    this.showDeleteModal.set(false);
-    this.deletingUser.set(null);
-    this.errorMessage.set(null);
-  }
-
-  deleteUser(): void {
-    const target = this.deletingUser();
-    if (!target) return;
-
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
-    this.usersService.deleteUser(target.usuarioId).subscribe({
-      next: () => {
-        this.loadUsers();
-        this.cancelDelete();
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Error al eliminar usuario:', err);
-        this.errorMessage.set(err.error?.message || 'Error al eliminar el usuario.');
-        this.isLoading.set(false);
-      },
-    });
-  }
-
-  updateField<K extends keyof UserForm>(field: K, value: UserForm[K]): void {
-    this.formData.update((f) => ({ ...f, [field]: value }));
+  eliminarUsuario(user: User): void {
+    this.dialogService
+      .confirm({
+        title: 'Confirmar eliminación',
+        message: `¿Estás seguro de que deseas eliminar al usuario ${user.nombres} ${user.apellidos}? Esta acción no se puede deshacer.`,
+        isDanger: true,
+        confirmText: 'Eliminar',
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.isLoading.set(true);
+          this.usersService.deleteUser(user.usuarioId).subscribe({
+            next: () => {
+              this.loadUsers();
+              this.isLoading.set(false);
+              this.toastService.success('Usuario eliminado correctamente', 'Éxito');
+            },
+            error: (err) => {
+              console.error('Error al eliminar usuario:', err);
+              const msg = err.error?.message || 'Error al eliminar el usuario.';
+              this.toastService.error(msg, 'Error');
+              this.isLoading.set(false);
+            },
+          });
+        }
+      });
   }
 }

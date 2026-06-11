@@ -160,7 +160,7 @@
                     <li>
                       <button
                         class="dropdown-item d-flex align-items-center gap-2 text-danger"
-                        (click)="confirmDelete(user)"
+                        (click)="eliminarUsuario(user)"
                       >
                         <i class="bi bi-trash-fill" style="font-size: 0.8rem"></i>
                         Eliminar
@@ -273,14 +273,25 @@
     aria-label="Cerrar modal"
   ></button>
 
-  <div class="modal-custom" role="dialog" aria-modal="true">
+  <form
+    [formGroup]="userForm"
+    (ngSubmit)="saveUser()"
+    class="modal-custom"
+    role="dialog"
+    aria-modal="true"
+  >
     <div class="modal-card">
       <div class="modal-card-header d-flex justify-content-between align-items-center">
         <h5 class="fw-bold mb-0">
           <i class="bi bi-person-fill me-2 text-primary"></i>
           {{ isEditing() ? 'Editar Usuario' : 'Nuevo Usuario' }}
         </h5>
-        <button class="btn-close-modal" (click)="closeModal()" aria-label="Cerrar modal">
+        <button
+          type="button"
+          class="btn-close-modal"
+          (click)="closeModal()"
+          aria-label="Cerrar modal"
+        >
           <i class="bi bi-x-lg"></i>
         </button>
       </div>
@@ -296,9 +307,11 @@
             type="text"
             class="form-control shadow-none"
             placeholder="Ej. Juan"
-            [value]="formData().nombres"
-            (input)="updateField('nombres', $any($event.target).value)"
+            formControlName="nombres"
           />
+          @if (campoInvalido('nombres')) {
+            <small class="text-danger">Los nombres son obligatorios.</small>
+          }
         </div>
 
         <!-- Apellidos -->
@@ -311,9 +324,11 @@
             type="text"
             class="form-control shadow-none"
             placeholder="Ej. Pérez"
-            [value]="formData().apellidos"
-            (input)="updateField('apellidos', $any($event.target).value)"
+            formControlName="apellidos"
           />
+          @if (campoInvalido('apellidos')) {
+            <small class="text-danger">Los apellidos son obligatorios.</small>
+          }
         </div>
 
         <!-- Email -->
@@ -326,9 +341,15 @@
             type="email"
             class="form-control shadow-none"
             placeholder="usuario@jasrapo.com"
-            [value]="formData().email"
-            (input)="updateField('email', $any($event.target).value)"
+            formControlName="email"
           />
+          @if (campoInvalido('email')) {
+            @if (userForm.get('email')?.errors?.['email']) {
+              <small class="text-danger">Ingrese un correo electrónico válido.</small>
+            } @else {
+              <small class="text-danger">El correo electrónico es obligatorio.</small>
+            }
+          }
         </div>
 
         <!-- Teléfono -->
@@ -341,9 +362,15 @@
             type="text"
             class="form-control shadow-none"
             placeholder="Ej. +593991234567"
-            [value]="formData().telefono"
-            (input)="updateField('telefono', $any($event.target).value)"
+            formControlName="telefono"
           />
+          @if (campoInvalido('telefono')) {
+            @if (userForm.get('telefono')?.errors?.['minlength']) {
+              <small class="text-danger">El teléfono debe tener al menos 7 dígitos.</small>
+            } @else {
+              <small class="text-danger">El teléfono es obligatorio.</small>
+            }
+          }
         </div>
 
         <!-- Password Help Text (no input because password is auto-generated on backend) -->
@@ -363,91 +390,27 @@
           <label for="form-user-rolId" class="form-label fw-semibold small text-muted"
             >Rol <span class="text-dark fw-bold ms-1">*</span></label
           >
-          <select
-            id="form-user-rolId"
-            class="form-select shadow-none"
-            [value]="formData().rolId"
-            (change)="updateField('rolId', +$any($event.target).value)"
-          >
+          <select id="form-user-rolId" class="form-select shadow-none" formControlName="rolId">
             @for (rol of roles(); track rol.rolId) {
               <option [value]="rol.rolId">{{ rol.nombre }}</option>
             }
           </select>
+          @if (campoInvalido('rolId')) {
+            <small class="text-danger">El rol es obligatorio.</small>
+          }
         </div>
       </div>
 
       <div class="modal-card-footer d-flex justify-content-end gap-2">
         <button
+          type="button"
           class="btn btn-outline-secondary fw-medium px-4"
           [disabled]="isLoading()"
           (click)="closeModal()"
         >
           Cancelar
         </button>
-        <button
-          class="btn btn-primary fw-medium px-4"
-          [disabled]="isLoading()"
-          (click)="saveUser()"
-        >
-          @if (isLoading()) {
-            <span
-              class="spinner-border spinner-border-sm me-2"
-              role="status"
-              aria-hidden="true"
-            ></span>
-          }
-          {{ isEditing() ? 'Guardar cambios' : 'Guardar' }}
-        </button>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- ===================== MODAL: Confirmar Eliminación ===================== -->
-@if (showDeleteModal()) {
-  <button
-    type="button"
-    class="modal-backdrop-custom border-0"
-    (click)="cancelDelete()"
-    aria-label="Cerrar modal de eliminación"
-  ></button>
-
-  <div class="modal-custom" role="dialog" aria-modal="true">
-    <div class="modal-card modal-card-sm">
-      <div class="modal-card-header d-flex justify-content-between align-items-center">
-        <h5 class="fw-bold mb-0 text-danger">
-          <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar eliminación
-        </h5>
-        <button
-          class="btn-close-modal"
-          (click)="cancelDelete()"
-          aria-label="Cerrar modal de confirmación"
-        >
-          <i class="bi bi-x-lg"></i>
-        </button>
-      </div>
-
-      <div class="modal-card-body text-center">
-        <p class="mb-1">¿Estás seguro de que deseas eliminar al usuario:</p>
-        <p class="fw-bold text-dark fs-5">
-          {{ deletingUser()?.nombres }} {{ deletingUser()?.apellidos }}
-        </p>
-        <p class="text-muted small mb-0">Esta acción no se puede deshacer.</p>
-      </div>
-
-      <div class="modal-card-footer d-flex justify-content-end gap-2">
-        <button
-          class="btn btn-outline-secondary fw-medium px-4"
-          [disabled]="isLoading()"
-          (click)="cancelDelete()"
-        >
-          Cancelar
-        </button>
-        <button
-          class="btn btn-danger fw-medium px-4"
-          [disabled]="isLoading()"
-          (click)="deleteUser()"
-        >
+        <button type="submit" class="btn btn-primary fw-medium px-4" [disabled]="isLoading()">
           @if (isLoading()) {
             <span
               class="spinner-border spinner-border-sm me-2"
@@ -455,11 +418,11 @@
               aria-hidden="true"
             ></span>
           } @else {
-            <i class="bi bi-trash-fill me-1"></i>
+            <i class="bi bi-check-lg me-1"></i>
           }
-          Eliminar
+          {{ isEditing() ? 'Guardar cambios' : 'Guardar' }}
         </button>
       </div>
     </div>
-  </div>
+  </form>
 }

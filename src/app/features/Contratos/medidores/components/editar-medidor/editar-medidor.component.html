@@ -62,7 +62,12 @@
 
   <!-- Acciones del formulario -->
   <div class="modal-footer pt-0 border-top-0">
-    <button type="button" class="btn btn-secondary" (click)="close()" [disabled]="isSaving()">
+    <button
+      type="button"
+      class="btn btn-outline-secondary btn-sm fw-medium px-3"
+      (click)="close()"
+      [disabled]="isSaving()"
+    >
       Cancelar
     </button>
     <button type="submit" class="btn btn-primary" [disabled]="isSaving() || form.invalid">

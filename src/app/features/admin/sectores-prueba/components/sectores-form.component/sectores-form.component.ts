@@ -8,6 +8,7 @@ import { ComunidadesService } from '../../../comunidades/services/comunidades.se
 
 import { Sectores } from '../../models/sectores.interface';
 import { Observable } from 'rxjs';
+import { ToastService } from '../../../../../shared/components/toast/toast.service';
 
 @Component({
   selector: 'app-sectores-form',
@@ -26,6 +27,7 @@ export class SectoresFormComponent implements OnInit {
   private readonly sectorService = inject(SectoresService);
   private readonly fb = inject(FormBuilder);
   private readonly comunidadesService = inject(ComunidadesService);
+  private readonly toastService = inject(ToastService);
 
   // se cargan directamente los datos dentro de la variable.
   communitiesItems: Observable<Comunidad[]> = this.comunidadesService.getAllComunidades();
@@ -103,12 +105,14 @@ export class SectoresFormComponent implements OnInit {
       this.sectorService.updateSector(sectorId, this.sectorForm.getRawValue()).subscribe({
         next: (response) => {
           console.log('Sector actualizado con éxito:', response);
+          this.toastService.success('Sector actualizado correctamente', 'Éxito');
           this.formSubmitted.emit();
           this.onClose();
         },
         error: (err) => {
           console.error('Error actualizando el sector:', err);
-          console.error(err.error.message);
+          const msg = err.error?.message || 'No se pudo actualizar el sector.';
+          this.toastService.error(msg, 'Error');
         },
       });
     } else {
@@ -116,12 +120,14 @@ export class SectoresFormComponent implements OnInit {
       this.sectorService.createSector(this.sectorForm.getRawValue()).subscribe({
         next: (response) => {
           console.log('Sector creado con éxito:', response);
+          this.toastService.success('Sector creado correctamente', 'Éxito');
           this.formSubmitted.emit();
           this.onClose();
         },
         error: (err) => {
           console.error('Error creando el sector:', err);
-          console.error(err.error.message);
+          const msg = err.error?.message || 'No se pudo crear el sector.';
+          this.toastService.error(msg, 'Error');
         },
       });
     }
