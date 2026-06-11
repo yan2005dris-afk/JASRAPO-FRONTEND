@@ -82,9 +82,25 @@ export interface ActualizarClienteRequest {
 export interface BuscarClientesParams {
   nombreCompleto?: string;
   identificacion?: string;
-
   nombres?: string;
   apellidos?: string;
-
   activo?: boolean;
+  page?: number;
+  limit?: number;
+}
+
+export interface IPaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  ultimaPagina: number;
+  paginaActual: number;
+  porPagina: number;
+  anterior: number | null;
+  siguiente: number | null;
+}
+
+export interface IPaginatedResult<T> {
+  data: T[];
+  meta: IPaginationMeta;
 }

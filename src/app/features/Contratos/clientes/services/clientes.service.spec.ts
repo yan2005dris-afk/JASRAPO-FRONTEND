@@ -8,6 +8,7 @@ import {
   CrearClienteRequest,
   IClientes,
   IIdentificacion,
+  IPaginatedResult,
 } from '../interfaces/iclientes.interface';
 import { environment } from '../../../../../environments/environment';
 
@@ -38,6 +39,20 @@ describe('ClientesService', () => {
     aplicaDiscapacidad: false,
     direccionDomicilio: 'Playas',
     activo: true,
+  };
+
+  const paginatedMock: IPaginatedResult<IClientes> = {
+    data: [clienteMock],
+    meta: {
+      total: 1,
+      page: 1,
+      limit: 5,
+      ultimaPagina: 1,
+      paginaActual: 1,
+      porPagina: 5,
+      anterior: null,
+      siguiente: null,
+    },
   };
 
   const tiposIdentificacionMock: IIdentificacion[] = [
@@ -74,16 +89,19 @@ describe('ClientesService', () => {
     expect(service).toBeTruthy();
   });
 
-  it('should get all clientes', () => {
-    service.getAllClientes().subscribe((clientes) => {
-      expect(clientes).toEqual([clienteMock]);
+  it('should search clientes without filters (all clients)', () => {
+    service.buscarClientes({ page: 1, limit: 5 }).subscribe((result) => {
+      expect(result.data).toEqual([clienteMock]);
+      expect(result.meta.total).toBe(1);
     });
 
-    const req = httpMock.expectOne(endpoint);
+    const req = httpMock.expectOne((request) => request.url === endpoint);
 
     expect(req.request.method).toBe('GET');
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('limit')).toBe('5');
 
-    req.flush([clienteMock]);
+    req.flush(paginatedMock);
   });
 
   it('should search clientes with filters', () => {
@@ -92,9 +110,11 @@ describe('ClientesService', () => {
         nombreCompleto: 'Luis Anchundia',
         identificacion: '0944288513',
         activo: true,
+        page: 1,
+        limit: 10,
       })
-      .subscribe((clientes) => {
-        expect(clientes).toEqual([clienteMock]);
+      .subscribe((result) => {
+        expect(result.data).toEqual([clienteMock]);
       });
 
     const req = httpMock.expectOne((request) => request.url === endpoint);
@@ -103,8 +123,10 @@ describe('ClientesService', () => {
     expect(req.request.params.get('nombreCompleto')).toBe('Luis Anchundia');
     expect(req.request.params.get('identificacion')).toBe('0944288513');
     expect(req.request.params.get('activo')).toBe('true');
+    expect(req.request.params.get('page')).toBe('1');
+    expect(req.request.params.get('limit')).toBe('10');
 
-    req.flush([clienteMock]);
+    req.flush(paginatedMock);
   });
 
   it('should get cliente by id', () => {
@@ -194,19 +216,5 @@ describe('ClientesService', () => {
     expect(req.request.method).toBe('GET');
 
     req.flush(tiposIdentificacionMock);
-  });
-
-  it('should normalize clientes response when backend returns data property', () => {
-    service.getAllClientes().subscribe((clientes) => {
-      expect(clientes).toEqual([clienteMock]);
-    });
-
-    const req = httpMock.expectOne(endpoint);
-
-    expect(req.request.method).toBe('GET');
-
-    req.flush({
-      data: [clienteMock],
-    });
   });
 });
