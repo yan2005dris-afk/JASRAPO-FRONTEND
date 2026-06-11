@@ -84,7 +84,9 @@
   align-items: center;
   justify-content: center;
   font-size: 0.88rem;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
   cursor: pointer;
   padding: 0;
 
