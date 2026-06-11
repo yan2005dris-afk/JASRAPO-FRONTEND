@@ -112,12 +112,21 @@
               <td class="text-muted small">{{ user.telefono || 'Sin teléfono' }}</td>
               <td>
                 <span
-                  class="badge rounded-pill fw-medium"
+                  class="badge rounded-pill fw-medium badge-rol-default"
                   [ngClass]="{
-                    'badge-rol-admin': user.rol?.nombre?.toLowerCase() === 'admin',
-                    'badge-rol-presidente': user.rol?.nombre?.toLowerCase() === 'presidente',
-                    'badge-rol-secretario': user.rol?.nombre?.toLowerCase() === 'secretario',
-                    'badge-rol-tesorero': user.rol?.nombre?.toLowerCase() === 'tesorero',
+                    'badge-rol-admin':
+                      user.rol?.nombre?.toLowerCase() === 'admin' ||
+                      user.rol?.nombre?.toLowerCase() === 'superadmin',
+                    'badge-rol-presidente':
+                      user.rol?.nombre?.toLowerCase() === 'presidente' ||
+                      user.rol?.nombre?.toLowerCase() === 'presidencia',
+                    'badge-rol-secretario':
+                      user.rol?.nombre?.toLowerCase() === 'secretario' ||
+                      user.rol?.nombre?.toLowerCase() === 'secretaria',
+                    'badge-rol-tesorero':
+                      user.rol?.nombre?.toLowerCase() === 'tesorero' ||
+                      user.rol?.nombre?.toLowerCase() === 'recaudacion' ||
+                      user.rol?.nombre?.toLowerCase() === 'contabilidad',
                   }"
                   >{{ user.rol?.nombre || 'Usuario' }}</span
                 >
@@ -386,10 +395,8 @@
               role="status"
               aria-hidden="true"
             ></span>
-          } @else {
-            <i class="bi bi-check-lg me-1"></i>
           }
-          {{ isEditing() ? 'Guardar cambios' : 'Crear usuario' }}
+          {{ isEditing() ? 'Guardar cambios' : 'Guardar' }}
         </button>
       </div>
     </div>
