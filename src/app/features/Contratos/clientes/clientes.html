@@ -1,5 +1,14 @@
 <div class="cliente-container">
-  <h3 class="fw-bold mb-4 text-dark fs-4">Gestión de Clientes</h3>
+  <!-- Page header -->
+  <div class="page-header mb-4">
+    <div class="page-header-icon">
+      <i class="bi bi-people-fill"></i>
+    </div>
+    <div>
+      <h3 class="fw-bold mb-0 text-dark fs-4">Gestión de Clientes</h3>
+      <p class="text-muted small mb-0">Registrá, editá y consultá la información de clientes.</p>
+    </div>
+  </div>
 
   <div class="card border-0 shadow-sm rounded-3">
     <!-- Header: Buscar y acciones -->
@@ -73,32 +82,17 @@
       </div>
     </div>
 
-    <!-- Filtros informativos -->
-    <div class="px-4 pb-3 d-flex align-items-center border-bottom flex-wrap gap-2">
-      <span class="text-muted small me-2 d-flex align-items-center gap-1">
-        <i class="bi bi-funnel"></i>
-        Filtros disponibles:
-      </span>
-
-      <span class="badge rounded-pill text-bg-light border text-muted px-3 py-2">
-        Nombre completo
-      </span>
-
-      <span class="badge rounded-pill text-bg-light border text-muted px-3 py-2">
-        Identificación
-      </span>
-
-      <span class="badge rounded-pill text-bg-light border text-muted px-3 py-2"> Estado </span>
-    </div>
-
     <!-- Tabla -->
     <div class="px-4 pt-3">
       <!-- Estado inicial -->
       @if (!hasFetched && !isLoading) {
-        <div class="text-center py-5 text-muted">
-          <i class="bi bi-search fs-1 d-block mb-2 opacity-25"></i>
-          <p class="mb-0">
-            Realiza una <strong>búsqueda</strong> para visualizar los clientes registrados.
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="bi bi-search"></i>
+          </div>
+          <p class="fw-semibold mb-1 text-dark">Sin resultados para mostrar</p>
+          <p class="text-muted small mb-0">
+            Realizá una <strong>búsqueda</strong> para visualizar los clientes registrados.
           </p>
         </div>
       }
@@ -141,33 +135,44 @@
                     <input class="form-check-input table-checkbox" type="checkbox" />
                   </td>
 
-                  <td class="text-muted small">
-                    {{
-                      $any(client.tipoIdentificacion)?.nombre ||
+                  <td>
+                    <span class="tipo-badge">
+                      {{
                         $any(client.tipoIdentificacion)?.codigo ||
-                        client.tipoIdentificacionId ||
-                        'Sin tipo'
-                    }}
+                          $any(client.tipoIdentificacion)?.nombre ||
+                          client.tipoIdentificacionId ||
+                          'N/A'
+                      }}
+                    </span>
                   </td>
 
                   <td class="fw-medium text-dark" style="font-size: 0.95rem">
-                    {{ client.identificacion || 'Sin identificación' }}
+                    {{ client.identificacion || '—' }}
                   </td>
 
-                  <td class="text-dark small">
-                    {{ obtenerNombreCliente(client) }}
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="client-avatar">
+                        {{ (obtenerNombreCliente(client) || '?').charAt(0).toUpperCase() }}
+                      </div>
+                      <span class="text-dark small fw-medium">
+                        {{ obtenerNombreCliente(client) }}
+                      </span>
+                    </div>
                   </td>
 
                   <td class="text-muted small">
-                    {{ client.email || 'Sin correo' }}
+                    {{ client.email || '—' }}
                   </td>
 
                   <td class="text-muted small">
-                    {{ client.telefono || 'Sin teléfono' }}
+                    {{ client.telefono || '—' }}
                   </td>
 
-                  <td class="text-muted small">
-                    {{ client.direccionDomicilio || 'Sin dirección' }}
+                  <td class="text-muted small address-cell">
+                    <span class="text-truncate d-block" [title]="client.direccionDomicilio || ''">
+                      {{ client.direccionDomicilio || '—' }}
+                    </span>
                   </td>
 
                   <td class="small">
@@ -179,38 +184,42 @@
                   </td>
 
                   <td class="text-center">
-                    <button
-                      class="btn btn-link text-muted p-0 shadow-none me-2"
-                      title="Ver detalle"
-                      (click)="verDetalleCliente(client)"
-                    >
-                      <i class="bi bi-eye"></i>
-                    </button>
+                    <div class="d-flex align-items-center justify-content-center gap-1">
+                      <button
+                        class="action-btn action-btn-view"
+                        title="Ver detalle"
+                        (click)="verDetalleCliente(client)"
+                      >
+                        <i class="bi bi-eye"></i>
+                      </button>
 
-                    <button
-                      class="btn btn-link text-primary p-0 shadow-none me-2"
-                      title="Editar"
-                      (click)="editarCliente(client)"
-                    >
-                      <i class="bi bi-pencil-square"></i>
-                    </button>
+                      <button
+                        class="action-btn action-btn-edit"
+                        title="Editar"
+                        (click)="editarCliente(client)"
+                      >
+                        <i class="bi bi-pencil"></i>
+                      </button>
 
-                    <button
-                      class="btn btn-link text-danger p-0 shadow-none"
-                      title="Eliminar"
-                      (click)="eliminarCliente(client)"
-                    >
-                      <i class="bi bi-trash"></i>
-                    </button>
+                      <button
+                        class="action-btn action-btn-delete"
+                        title="Eliminar"
+                        (click)="eliminarCliente(client)"
+                      >
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               }
 
               @if (pagedClients.length === 0) {
                 <tr>
-                  <td colspan="9" class="text-center text-muted py-4">
-                    <i class="bi bi-people fs-3 d-block mb-2"></i>
-                    No se encontraron clientes
+                  <td colspan="9" class="text-center py-5">
+                    <i class="bi bi-person-x fs-2 d-block mb-2 text-muted opacity-50"></i>
+                    <span class="text-muted small"
+                      >No se encontraron clientes con esos criterios.</span
+                    >
                   </td>
                 </tr>
               }
@@ -226,9 +235,7 @@
     >
       <div class="d-flex align-items-center gap-3">
         <span class="text-muted small">
-          Total: <strong>{{ filteredClients.length }}</strong> cliente{{
-            filteredClients.length !== 1 ? 's' : ''
-          }}
+          Total: <strong>{{ totalItems }}</strong> cliente{{ totalItems !== 1 ? 's' : '' }}
         </span>
 
         <div class="d-flex align-items-center gap-2">
@@ -257,7 +264,7 @@
               [attr.aria-disabled]="currentPage === 1"
             >
               <i class="bi bi-chevron-left me-1" style="font-size: 0.7rem"></i>
-              Previous
+              Anterior
             </a>
           </li>
 
@@ -290,7 +297,7 @@
               [attr.tabindex]="currentPage === totalPages ? -1 : null"
               [attr.aria-disabled]="currentPage === totalPages"
             >
-              Next
+              Siguiente
               <i class="bi bi-chevron-right ms-1" style="font-size: 0.7rem"></i>
             </a>
           </li>
@@ -337,7 +344,7 @@
         <div class="modal-body pt-4">
           <div class="detalle-cliente-header mb-4">
             <div class="detalle-avatar">
-              <i class="bi bi-person"></i>
+              <i class="bi bi-person-fill"></i>
             </div>
 
             <div>
@@ -358,7 +365,10 @@
           <div class="row g-3">
             <div class="col-md-6">
               <div class="detalle-card">
-                <span class="detalle-label">Tipo de identificación</span>
+                <span class="detalle-label">
+                  <i class="bi bi-card-text"></i>
+                  Tipo de identificación
+                </span>
                 <strong>
                   {{
                     $any(clienteDetalleSeleccionado.tipoIdentificacion)?.nombre ||
@@ -372,28 +382,40 @@
 
             <div class="col-md-6">
               <div class="detalle-card">
-                <span class="detalle-label">Identificación</span>
+                <span class="detalle-label">
+                  <i class="bi bi-fingerprint"></i>
+                  Identificación
+                </span>
                 <strong>{{ clienteDetalleSeleccionado.identificacion || 'No registrada' }}</strong>
               </div>
             </div>
 
             <div class="col-md-6">
               <div class="detalle-card">
-                <span class="detalle-label">Correo electrónico</span>
+                <span class="detalle-label">
+                  <i class="bi bi-envelope"></i>
+                  Correo electrónico
+                </span>
                 <strong>{{ clienteDetalleSeleccionado.email || 'No registrado' }}</strong>
               </div>
             </div>
 
             <div class="col-md-6">
               <div class="detalle-card">
-                <span class="detalle-label">Teléfono</span>
+                <span class="detalle-label">
+                  <i class="bi bi-telephone"></i>
+                  Teléfono
+                </span>
                 <strong>{{ clienteDetalleSeleccionado.telefono || 'No registrado' }}</strong>
               </div>
             </div>
 
             <div class="col-md-6">
               <div class="detalle-card">
-                <span class="detalle-label">Teléfono secundario</span>
+                <span class="detalle-label">
+                  <i class="bi bi-telephone-plus"></i>
+                  Teléfono secundario
+                </span>
                 <strong>{{
                   clienteDetalleSeleccionado.telefonoSecundario || 'No registrado'
                 }}</strong>
@@ -402,7 +424,10 @@
 
             <div class="col-md-6">
               <div class="detalle-card">
-                <span class="detalle-label">Condiciones especiales</span>
+                <span class="detalle-label">
+                  <i class="bi bi-shield-check"></i>
+                  Condiciones especiales
+                </span>
 
                 <div class="d-flex gap-2 flex-wrap mt-1">
                   @if (clienteDetalleSeleccionado.aplicaTerceraEdad) {
@@ -425,7 +450,10 @@
 
             <div class="col-12">
               <div class="detalle-card">
-                <span class="detalle-label">Dirección domiciliaria</span>
+                <span class="detalle-label">
+                  <i class="bi bi-geo-alt"></i>
+                  Dirección domiciliaria
+                </span>
                 <strong>{{
                   clienteDetalleSeleccionado.direccionDomicilio || 'No registrada'
                 }}</strong>
@@ -438,6 +466,7 @@
           <button type="button" class="btn btn-light" (click)="cerrarDetalleModal()">Cerrar</button>
 
           <button type="button" class="btn btn-primary" (click)="abrirEdicionDesdeDetalle()">
+            <i class="bi bi-pencil me-2"></i>
             Editar cliente
           </button>
         </div>

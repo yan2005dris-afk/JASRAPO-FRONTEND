@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
-import { map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 
 import {
   ActualizarClienteRequest,
@@ -8,21 +8,10 @@ import {
   CrearClienteRequest,
   IClientes,
   IIdentificacion,
+  IPaginatedResult,
 } from '../interfaces/iclientes.interface';
 
 import { environment } from '../../../../../environments/environment';
-
-type ApiResponse<T> =
-  | T[]
-  | {
-      data?: T[];
-      clientes?: T[];
-      items?: T[];
-      results?: T[];
-      content?: T[];
-    };
-
-type ClientesApiResponse = ApiResponse<IClientes>;
 
 @Injectable({
   providedIn: 'root',
@@ -33,13 +22,7 @@ export class ClientesService {
   private readonly baseUrl = environment.apiUrl;
   private readonly endpoint = `${this.baseUrl}/clients`;
 
-  getAllClientes(): Observable<IClientes[]> {
-    return this.http
-      .get<ClientesApiResponse>(this.endpoint)
-      .pipe(map((response) => this.normalizarRespuestaClientes(response)));
-  }
-
-  buscarClientes(params: BuscarClientesParams): Observable<IClientes[]> {
+  buscarClientes(params: BuscarClientesParams): Observable<IPaginatedResult<IClientes>> {
     let httpParams = new HttpParams();
 
     if (params.nombreCompleto) {
@@ -62,11 +45,17 @@ export class ClientesService {
       httpParams = httpParams.set('activo', String(params.activo));
     }
 
-    return this.http
-      .get<ClientesApiResponse>(this.endpoint, {
-        params: httpParams,
-      })
-      .pipe(map((response) => this.normalizarRespuestaClientes(response)));
+    if (params.page !== undefined) {
+      httpParams = httpParams.set('page', String(params.page));
+    }
+
+    if (params.limit !== undefined) {
+      httpParams = httpParams.set('limit', String(params.limit));
+    }
+
+    return this.http.get<IPaginatedResult<IClientes>>(this.endpoint, {
+      params: httpParams,
+    });
   }
 
   getClienteById(id: string | number): Observable<IClientes> {
@@ -86,26 +75,6 @@ export class ClientesService {
   }
 
   getTiposIdentificacion(): Observable<IIdentificacion[]> {
-    return this.http
-      .get<ApiResponse<IIdentificacion>>(`${this.endpoint}/identification-types`)
-      .pipe(map((response) => this.normalizarRespuestaGenerica<IIdentificacion>(response)));
-  }
-
-  private normalizarRespuestaClientes(response: ClientesApiResponse): IClientes[] {
-    return this.normalizarRespuestaGenerica<IClientes>(response);
-  }
-
-  private normalizarRespuestaGenerica<T>(response: ApiResponse<T>): T[] {
-    if (Array.isArray(response)) {
-      return response;
-    }
-    return (
-      response?.data ??
-      response?.clientes ??
-      response?.items ??
-      response?.results ??
-      response?.content ??
-      []
-    );
+    return this.http.get<IIdentificacion[]>(`${this.endpoint}/identification-types`);
   }
 }

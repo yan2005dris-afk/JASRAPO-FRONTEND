@@ -13,53 +13,38 @@ export class SpinnerService {
   readonly customSpinner = this.customLoading.asReadonly();
   readonly spinner = this.loading.asReadonly();
 
-  private loadingStartTime = 0;
-  private readonly minDurationMs = 800;
-  private timeoutId: ReturnType<typeof setTimeout> | null = null;
+  private showTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private readonly showDelayMs = 300;
 
-  /**
-   * Activa el spinner global o uno personalizado
-   */
   loadingOn(customLoader?: TemplateRef<unknown>): void {
-    if (this.timeoutId) {
-      clearTimeout(this.timeoutId);
-      this.timeoutId = null;
-    }
-
     if (customLoader) {
       this.customLoading.set(customLoader);
     }
 
-    this.activeRequests.update((count) => {
-      if (count === 0) {
-        this.loadingStartTime = Date.now();
-        this.loading.set(true);
-      }
-      return count + 1;
-    });
+    const current = this.activeRequests();
+    this.activeRequests.set(current + 1);
+
+    if (current === 0 && !this.showTimeoutId) {
+      this.showTimeoutId = setTimeout(() => {
+        this.showTimeoutId = null;
+        if (this.activeRequests() > 0) {
+          this.loading.set(true);
+        }
+      }, this.showDelayMs);
+    }
   }
 
-  /**
-   * Desactiva el spinner y limpia el template personalizado
-   */
   loadingOff(): void {
-    this.activeRequests.update((count) => {
-      const newCount = Math.max(0, count - 1);
-      if (newCount === 0) {
-        const elapsed = Date.now() - this.loadingStartTime;
-        const remaining = this.minDurationMs - elapsed;
+    const newCount = Math.max(0, this.activeRequests() - 1);
+    this.activeRequests.set(newCount);
 
-        if (remaining > 0) {
-          this.timeoutId = setTimeout(() => {
-            this.loading.set(false);
-            this.customLoading.set(null);
-          }, remaining);
-        } else {
-          this.loading.set(false);
-          this.customLoading.set(null);
-        }
+    if (newCount === 0) {
+      if (this.showTimeoutId) {
+        clearTimeout(this.showTimeoutId);
+        this.showTimeoutId = null;
       }
-      return newCount;
-    });
+      this.loading.set(false);
+      this.customLoading.set(null);
+    }
   }
 }
