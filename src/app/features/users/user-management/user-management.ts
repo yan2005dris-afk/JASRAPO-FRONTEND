@@ -1,20 +1,28 @@
-import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  OnInit,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
+import { UsersService } from '../services/users.service';
+import { User, Role, CreateUserPayload, UpdateUserPayload } from '../models/user.interface';
 
-export interface User {
-  id: number;
-  nombre: string;
+interface UserForm {
+  nombres: string;
+  apellidos: string;
   email: string;
-  rol: 'Admin' | 'Presidente' | 'Secretario' | 'Tesorero';
-  estado: 'Activo' | 'Inactivo';
+  telefono: string;
+  rolId: number;
 }
-
-type UserForm = Omit<User, 'id'> & { password?: string };
 
 @Component({
   selector: 'app-user-management',
+  standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './user-management.html',
   styleUrl: './user-management.scss',
@@ -23,8 +31,15 @@ type UserForm = Omit<User, 'id'> & { password?: string };
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class UserManagement {
+export class UserManagement implements OnInit {
+  private readonly usersService = inject(UsersService);
   readonly authService = inject(AuthService);
+
+  // ---------- Lists & State ----------
+  readonly users = signal<User[]>([]);
+  readonly roles = signal<Role[]>([]);
+  readonly isLoading = signal(false);
+  readonly errorMessage = signal<string | null>(null);
 
   // ---------- Dropdown ----------
   readonly openDropdownId = signal<number | null>(null);
@@ -42,13 +57,13 @@ export class UserManagement {
   readonly selectedIds = signal<Set<number>>(new Set());
 
   readonly isAllSelected = computed(() => {
-    const visible = this.pagedUsers(); // Solo los visibles en la página actual
-    return visible.length > 0 && visible.every((u) => this.selectedIds().has(u.id));
+    const visible = this.pagedUsers();
+    return visible.length > 0 && visible.every((u) => this.selectedIds().has(u.usuarioId));
   });
 
   readonly isIndeterminate = computed(() => {
     const visible = this.pagedUsers();
-    const selected = visible.filter((u) => this.selectedIds().has(u.id));
+    const selected = visible.filter((u) => this.selectedIds().has(u.usuarioId));
     return selected.length > 0 && selected.length < visible.length;
   });
 
@@ -57,13 +72,13 @@ export class UserManagement {
     if (this.isAllSelected()) {
       this.selectedIds.update((s) => {
         const n = new Set(s);
-        visible.forEach((u) => n.delete(u.id));
+        visible.forEach((u) => n.delete(u.usuarioId));
         return n;
       });
     } else {
       this.selectedIds.update((s) => {
         const n = new Set(s);
-        visible.forEach((u) => n.add(u.id));
+        visible.forEach((u) => n.add(u.usuarioId));
         return n;
       });
     }
@@ -81,62 +96,19 @@ export class UserManagement {
     });
   }
 
-  // ---------- Data ----------
-  private readonly nextId = signal(6);
-
-  readonly users = signal<User[]>([
-    {
-      id: 1,
-      nombre: 'Administrador JAPO',
-      email: 'admin@japo.com',
-      rol: 'Admin',
-      estado: 'Activo',
-    },
-    {
-      id: 2,
-      nombre: 'Carlos Mendoza',
-      email: 'presidente@japo.com',
-      rol: 'Presidente',
-      estado: 'Activo',
-    },
-    {
-      id: 3,
-      nombre: 'María González',
-      email: 'secretario@japo.com',
-      rol: 'Secretario',
-      estado: 'Activo',
-    },
-    {
-      id: 4,
-      nombre: 'Roberto Silva',
-      email: 'tesorero@japo.com',
-      rol: 'Tesorero',
-      estado: 'Activo',
-    },
-    {
-      id: 5,
-      nombre: 'Invitado Demo',
-      email: 'demo@japo.com',
-      rol: 'Secretario',
-      estado: 'Inactivo',
-    },
-  ]);
-
   // ---------- Filtering & Search ----------
   readonly searchTerm = signal('');
-  readonly activeFilter = signal<'Todos' | 'Activo' | 'Inactivo'>('Todos');
 
   readonly filteredUsers = computed(() => {
     const term = this.searchTerm().toLowerCase();
-    const filter = this.activeFilter();
     return this.users().filter((u) => {
-      const matchSearch =
+      const fullName = `${u.nombres} ${u.apellidos}`.toLowerCase();
+      return (
         !term ||
-        u.nombre.toLowerCase().includes(term) ||
+        fullName.includes(term) ||
         u.email.toLowerCase().includes(term) ||
-        u.rol.toLowerCase().includes(term);
-      const matchFilter = filter === 'Todos' || u.estado === filter;
-      return matchSearch && matchFilter;
+        (u.rol?.nombre || '').toLowerCase().includes(term)
+      );
     });
   });
 
@@ -149,14 +121,12 @@ export class UserManagement {
   readonly deletingUser = signal<User | null>(null);
 
   readonly formData = signal<UserForm>({
-    nombre: '',
+    nombres: '',
+    apellidos: '',
     email: '',
-    password: '',
-    rol: 'Secretario',
-    estado: 'Activo',
+    telefono: '',
+    rolId: 0,
   });
-
-  readonly roles: User['rol'][] = ['Admin', 'Presidente', 'Secretario', 'Tesorero'];
 
   // ---------- Pagination ----------
   readonly pageSizeOptions = [5, 10, 15];
@@ -174,6 +144,41 @@ export class UserManagement {
     return this.filteredUsers().slice(start, start + this.pageSize());
   });
 
+  ngOnInit(): void {
+    this.loadRoles();
+    this.loadUsers();
+  }
+
+  loadUsers(): void {
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+    this.usersService.getUsers(1, 100).subscribe({
+      next: (response) => {
+        this.users.set(response.data);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error al cargar usuarios:', err);
+        this.errorMessage.set('No se pudieron cargar los usuarios.');
+        this.isLoading.set(false);
+      },
+    });
+  }
+
+  loadRoles(): void {
+    this.usersService.getRoles().subscribe({
+      next: (rolesList) => {
+        this.roles.set(rolesList);
+        if (rolesList.length > 0 && this.formData().rolId === 0) {
+          this.updateField('rolId', rolesList[0].rolId);
+        }
+      },
+      error: (err) => {
+        console.error('Error al cargar roles:', err);
+      },
+    });
+  }
+
   setPageSize(size: number): void {
     this.pageSize.set(size);
     this.currentPage.set(1);
@@ -186,11 +191,6 @@ export class UserManagement {
     this.selectedIds.set(new Set());
   }
 
-  setFilter(filter: 'Todos' | 'Activo' | 'Inactivo'): void {
-    this.activeFilter.set(filter);
-    this.currentPage.set(1);
-  }
-
   onSearch(term: string): void {
     this.searchTerm.set(term);
     this.currentPage.set(1);
@@ -200,71 +200,126 @@ export class UserManagement {
   openCreateModal(): void {
     this.isEditing.set(false);
     this.editingId.set(null);
-    this.formData.set({ nombre: '', email: '', password: '', rol: 'Secretario', estado: 'Activo' });
+    this.errorMessage.set(null);
+
+    const defaultRolId = this.roles().length > 0 ? this.roles()[0].rolId : 0;
+    this.formData.set({
+      nombres: '',
+      apellidos: '',
+      email: '',
+      telefono: '',
+      rolId: defaultRolId,
+    });
     this.showModal.set(true);
   }
 
   openEditModal(user: User): void {
     this.isEditing.set(true);
-    this.editingId.set(user.id);
+    this.editingId.set(user.usuarioId);
+    this.errorMessage.set(null);
     this.formData.set({
-      nombre: user.nombre,
+      nombres: user.nombres,
+      apellidos: user.apellidos,
       email: user.email,
-      password: '',
-      rol: user.rol,
-      estado: user.estado,
+      telefono: user.telefono || '',
+      rolId: user.rol?.rolId || (this.roles().length > 0 ? this.roles()[0].rolId : 0),
     });
     this.showModal.set(true);
   }
 
   closeModal(): void {
     this.showModal.set(false);
+    this.errorMessage.set(null);
   }
 
   saveUser(): void {
     const form = this.formData();
-    if (!form.nombre.trim() || !form.email.trim()) return;
+    if (
+      !form.nombres.trim() ||
+      !form.apellidos.trim() ||
+      !form.email.trim() ||
+      !form.telefono.trim()
+    ) {
+      this.errorMessage.set('Por favor, complete todos los campos obligatorios.');
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
 
     if (this.isEditing() && this.editingId() !== null) {
-      this.users.update((list) =>
-        list.map((u) =>
-          u.id === this.editingId()
-            ? { ...u, nombre: form.nombre, email: form.email, rol: form.rol, estado: form.estado }
-            : u,
-        ),
-      );
-    } else {
-      const id = this.nextId();
-      this.nextId.update((n) => n + 1);
-      this.users.update((list) => [
-        ...list,
-        {
-          id,
-          nombre: form.nombre,
-          email: form.email,
-          rol: form.rol,
-          estado: form.estado,
+      const payload: UpdateUserPayload = {
+        nombres: form.nombres,
+        apellidos: form.apellidos,
+        email: form.email,
+        telefono: form.telefono,
+        rolId: form.rolId,
+      };
+
+      this.usersService.updateUser(this.editingId()!, payload).subscribe({
+        next: () => {
+          this.loadUsers();
+          this.closeModal();
         },
-      ]);
+        error: (err) => {
+          console.error('Error al actualizar usuario:', err);
+          this.errorMessage.set(err.error?.message || 'Error al actualizar el usuario.');
+          this.isLoading.set(false);
+        },
+      });
+    } else {
+      const payload: CreateUserPayload = {
+        nombres: form.nombres,
+        apellidos: form.apellidos,
+        email: form.email,
+        telefono: form.telefono,
+        rolId: form.rolId,
+      };
+
+      this.usersService.createUser(payload).subscribe({
+        next: () => {
+          this.loadUsers();
+          this.closeModal();
+        },
+        error: (err) => {
+          console.error('Error al crear usuario:', err);
+          this.errorMessage.set(err.error?.message || 'Error al crear el usuario.');
+          this.isLoading.set(false);
+        },
+      });
     }
-    this.closeModal();
   }
 
   confirmDelete(user: User): void {
     this.deletingUser.set(user);
     this.showDeleteModal.set(true);
+    this.errorMessage.set(null);
   }
 
   cancelDelete(): void {
     this.showDeleteModal.set(false);
     this.deletingUser.set(null);
+    this.errorMessage.set(null);
   }
 
   deleteUser(): void {
     const target = this.deletingUser();
     if (!target) return;
-    this.users.update((list) => list.filter((u) => u.id !== target.id));
-    this.cancelDelete();
+
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+    this.usersService.deleteUser(target.usuarioId).subscribe({
+      next: () => {
+        this.loadUsers();
+        this.cancelDelete();
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error al eliminar usuario:', err);
+        this.errorMessage.set(err.error?.message || 'Error al eliminar el usuario.');
+        this.isLoading.set(false);
+      },
+    });
   }
 
   updateField<K extends keyof UserForm>(field: K, value: UserForm[K]): void {

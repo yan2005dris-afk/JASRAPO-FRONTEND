@@ -135,23 +135,39 @@
                 </td>
 
                 <td class="text-center">
-                  <button
-                    class="btn btn-link text-muted p-0 shadow-none me-3"
-                    type="button"
-                    (click)="openDetailModal(comunidad)"
-                    aria-label="Ver detalle"
-                  >
-                    <i class="bi bi-eye action-icon view"></i>
-                  </button>
-
-                  <button
-                    class="btn btn-link text-muted p-0 shadow-none"
-                    type="button"
-                    (click)="openEditModal(comunidad)"
-                    aria-label="Editar"
-                  >
-                    <i class="bi bi-pencil action-icon edit"></i>
-                  </button>
+                  <div class="dropdown">
+                    <button
+                      class="btn btn-link text-muted p-0 shadow-none"
+                      (click)="toggleDropdown(comunidad.id, $event)"
+                      aria-label="Menú de acciones"
+                    >
+                      <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <ul
+                      class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                      [class.show]="openDropdownId === comunidad.id"
+                      style="min-width: 130px"
+                    >
+                      <li>
+                        <button
+                          class="dropdown-item d-flex align-items-center gap-2"
+                          (click)="openDetailModal(comunidad)"
+                        >
+                          <i class="bi bi-eye text-secondary" style="font-size: 0.8rem"></i>
+                          Ver detalle
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          class="dropdown-item d-flex align-items-center gap-2"
+                          (click)="openEditModal(comunidad)"
+                        >
+                          <i class="bi bi-pencil-fill text-primary" style="font-size: 0.8rem"></i>
+                          Editar
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
                 </td>
               </tr>
             }

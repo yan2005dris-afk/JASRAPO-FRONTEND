@@ -33,7 +33,7 @@
     <div class="row g-3">
       <div class="col-md-6">
         <label for="tipoIdentificacionId" class="form-label"
-          >Tipo de identificación <span class="text-danger">*</span></label
+          >Tipo de identificación <span class="text-dark fw-bold ms-1">*</span></label
         >
 
         <select
@@ -57,7 +57,7 @@
 
       <div class="col-md-6">
         <label for="identificacion" class="form-label"
-          >Identificación <span class="text-danger">*</span></label
+          >Identificación <span class="text-dark fw-bold ms-1">*</span></label
         >
 
         <input
@@ -75,7 +75,9 @@
 
       @if (!esPersonaJuridica()) {
         <div class="col-md-6">
-          <label for="nombres" class="form-label">Nombres <span class="text-danger">*</span></label>
+          <label for="nombres" class="form-label"
+            >Nombres <span class="text-dark fw-bold ms-1">*</span></label
+          >
 
           <input id="nombres" type="text" class="form-control" formControlName="nombres" />
 
@@ -86,7 +88,7 @@
 
         <div class="col-md-6">
           <label for="apellidos" class="form-label"
-            >Apellidos <span class="text-danger">*</span></label
+            >Apellidos <span class="text-dark fw-bold ms-1">*</span></label
           >
 
           <input id="apellidos" type="text" class="form-control" formControlName="apellidos" />
@@ -100,7 +102,7 @@
       @if (esPersonaJuridica()) {
         <div class="col-12">
           <label for="razonSocial" class="form-label"
-            >Razón social <span class="text-danger">*</span></label
+            >Razón social <span class="text-dark fw-bold ms-1">*</span></label
           >
 
           <input
@@ -119,7 +121,7 @@
 
       <div class="col-md-6">
         <label for="email" class="form-label"
-          >Correo electrónico <span class="text-danger">*</span></label
+          >Correo electrónico <span class="text-dark fw-bold ms-1">*</span></label
         >
 
         <input
@@ -136,7 +138,9 @@
       </div>
 
       <div class="col-md-6">
-        <label for="telefono" class="form-label">Teléfono <span class="text-danger">*</span></label>
+        <label for="telefono" class="form-label"
+          >Teléfono <span class="text-dark fw-bold ms-1">*</span></label
+        >
 
         <input
           id="telefono"
@@ -191,7 +195,7 @@
 
       <div class="col-12">
         <label for="direccionDomicilio" class="form-label"
-          >Dirección domiciliaria <span class="text-danger">*</span></label
+          >Dirección domiciliaria <span class="text-dark fw-bold ms-1">*</span></label
         >
 
         <textarea

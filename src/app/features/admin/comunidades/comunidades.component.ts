@@ -25,12 +25,31 @@ interface BackendErrorResponse {
   templateUrl: './comunidades.component.html',
   styleUrl: './comunidades.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:click)': 'closeDropdowns()',
+  },
 })
 export class ComunidadesComponent {
   private readonly comunidadesService = inject(ComunidadesService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly focusableSelectors =
     'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+  // Control del menú desplegable de acciones por fila
+  openDropdownId: number | null = null;
+
+  toggleDropdown(comunidadId: number, event: MouseEvent): void {
+    event.stopPropagation();
+    this.openDropdownId = this.openDropdownId === comunidadId ? null : comunidadId;
+    this.cdr.markForCheck();
+  }
+
+  closeDropdowns(): void {
+    if (this.openDropdownId !== null) {
+      this.openDropdownId = null;
+      this.cdr.markForCheck();
+    }
+  }
 
   readonly comunidades = signal<Comunidad[]>([]);
   isLoading = false;

@@ -33,6 +33,9 @@ import { ComunidadesService } from '../../../comunidades/services/comunidades.se
   templateUrl: './sectores-prueba.html',
   styleUrl: './sectores-prueba.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:click)': 'closeDropdowns()',
+  },
 })
 export class SectoresPrueba implements OnInit {
   readonly authService = inject(AuthService);
@@ -41,6 +44,22 @@ export class SectoresPrueba implements OnInit {
 
   private sectoresService = inject(SectoresService);
   private comunidadesService = inject(ComunidadesService);
+
+  /** Control del menú desplegable de acciones por fila */
+  openDropdownId: number | null = null;
+
+  toggleDropdown(sectorId: number, event: MouseEvent): void {
+    event.stopPropagation();
+    this.openDropdownId = this.openDropdownId === sectorId ? null : sectorId;
+    this.cdr.markForCheck();
+  }
+
+  closeDropdowns(): void {
+    if (this.openDropdownId !== null) {
+      this.openDropdownId = null;
+      this.cdr.markForCheck();
+    }
+  }
 
   /** Lista de sectores que se muestra en la tabla. Empieza vacía. */
   sectores: Sectores[] = [];
