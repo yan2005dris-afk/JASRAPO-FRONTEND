@@ -76,3 +76,10 @@
   border-radius: 8px;
   padding: 0.2rem 0.5rem;
 }
+
+/* Evitar que el dropdown de acciones se corte en las tablas con pocos registros en tabletas y desktops */
+@media (min-width: 768px) {
+  .table-responsive {
+    overflow: visible !important;
+  }
+}

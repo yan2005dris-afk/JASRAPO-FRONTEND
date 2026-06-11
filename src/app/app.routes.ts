@@ -43,33 +43,6 @@ export const routes: Routes = [
               ),
           },
           {
-            path: 'roles',
-            loadComponent: () => import('./features/admin/roles/roles').then((m) => m.Roles),
-            children: [
-              {
-                path: 'presidente',
-                loadComponent: () =>
-                  import('./features/presidente/presidente.component/presidente.component').then(
-                    (m) => m.PresidenteComponent,
-                  ),
-              },
-              {
-                path: 'secretario',
-                loadComponent: () =>
-                  import('./features/secretario/secretario.component/secretario.component').then(
-                    (m) => m.SecretarioComponent,
-                  ),
-              },
-              {
-                path: 'tesorero',
-                loadComponent: () =>
-                  import('./features/tesorero/tesorero.component/tesorero.component').then(
-                    (m) => m.TesoreroComponent,
-                  ),
-              },
-            ],
-          },
-          {
             path: 'sectores',
             loadComponent: () =>
               import('./features/admin/sectores-prueba/components/sectores-prueba/sectores-prueba').then(
