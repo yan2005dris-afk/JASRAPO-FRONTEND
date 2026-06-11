@@ -5,6 +5,8 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { SectoresService } from '../../services/sectores';
 import { ComunidadesService } from '../../../comunidades/services/comunidades.service';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { vi } from 'vitest';
 
 describe('SectoresPrueba', () => {
@@ -25,6 +27,15 @@ describe('SectoresPrueba', () => {
 
   const mockAuthService = {};
 
+  const mockConfirmDialogService = {
+    confirm: vi.fn().mockReturnValue(of(true)),
+  };
+
+  const mockToastService = {
+    success: vi.fn(),
+    error: vi.fn(),
+  };
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [SectoresPrueba, NoopAnimationsModule],
@@ -32,6 +43,8 @@ describe('SectoresPrueba', () => {
         { provide: SectoresService, useValue: mockSectoresService },
         { provide: ComunidadesService, useValue: mockComunidadesService },
         { provide: AuthService, useValue: mockAuthService },
+        { provide: ConfirmDialogService, useValue: mockConfirmDialogService },
+        { provide: ToastService, useValue: mockToastService },
       ],
     }).compileComponents();
 
@@ -81,12 +94,12 @@ describe('SectoresPrueba', () => {
   });
 
   it('should call deleteSector when eliminarSector is confirmed', () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     const sector = { sectorId: 1, comunidadId: 1, codigo: 'S1', nombre: 'Sector 1' };
+    mockConfirmDialogService.confirm.mockReturnValue(of(true));
 
     component.eliminarSector(sector);
 
-    expect(window.confirm).toHaveBeenCalled();
+    expect(mockConfirmDialogService.confirm).toHaveBeenCalled();
     expect(mockSectoresService.deleteSector).toHaveBeenCalledWith(1);
     // After delete, it should fetch again
     expect(mockSectoresService.getAllSectores).toHaveBeenCalled();
