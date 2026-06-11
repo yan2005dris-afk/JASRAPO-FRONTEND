@@ -1,9 +1,6 @@
 <div class="cliente-container">
   <!-- Page header -->
   <div class="page-header mb-4">
-    <div class="page-header-icon">
-      <i class="bi bi-people-fill"></i>
-    </div>
     <div>
       <h3 class="fw-bold mb-0 text-dark fs-4">Gestión de Clientes</h3>
       <p class="text-muted small mb-0">Registrá, editá y consultá la información de clientes.</p>
@@ -184,30 +181,50 @@
                   </td>
 
                   <td class="text-center">
-                    <div class="d-flex align-items-center justify-content-center gap-1">
+                    <div class="dropdown">
                       <button
-                        class="action-btn action-btn-view"
-                        title="Ver detalle"
-                        (click)="verDetalleCliente(client)"
+                        class="btn btn-link text-muted p-0 shadow-none"
+                        (click)="toggleDropdown(obtenerIdCliente(client)!, $event)"
+                        aria-label="Menú de acciones"
                       >
-                        <i class="bi bi-eye"></i>
+                        <i class="bi bi-three-dots-vertical"></i>
                       </button>
-
-                      <button
-                        class="action-btn action-btn-edit"
-                        title="Editar"
-                        (click)="editarCliente(client)"
+                      <ul
+                        class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                        [class.show]="openDropdownId === obtenerIdCliente(client)"
+                        style="min-width: 130px"
                       >
-                        <i class="bi bi-pencil"></i>
-                      </button>
-
-                      <button
-                        class="action-btn action-btn-delete"
-                        title="Eliminar"
-                        (click)="eliminarCliente(client)"
-                      >
-                        <i class="bi bi-trash"></i>
-                      </button>
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            (click)="verDetalleCliente(client)"
+                          >
+                            <i class="bi bi-eye text-secondary" style="font-size: 0.8rem"></i>
+                            Ver detalle
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            (click)="editarCliente(client)"
+                          >
+                            <i class="bi bi-pencil-fill text-primary" style="font-size: 0.8rem"></i>
+                            Editar
+                          </button>
+                        </li>
+                        <li>
+                          <hr class="dropdown-divider" />
+                        </li>
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                            (click)="eliminarCliente(client)"
+                          >
+                            <i class="bi bi-trash-fill" style="font-size: 0.8rem"></i>
+                            Eliminar
+                          </button>
+                        </li>
+                      </ul>
                     </div>
                   </td>
                 </tr>

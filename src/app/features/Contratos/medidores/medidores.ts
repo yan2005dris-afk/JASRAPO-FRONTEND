@@ -30,6 +30,9 @@ import { forkJoin, finalize } from 'rxjs';
   templateUrl: './medidores.html',
   styleUrl: './medidores.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:click)': 'closeDropdowns()',
+  },
 })
 export class Medidores implements OnInit {
   // Inyección de servicios y utilidades
@@ -51,6 +54,22 @@ export class Medidores implements OnInit {
   // Control de modales
   showRegistrarModal = false;
   showEditarModal = false;
+
+  // Control de dropdown de fila
+  openDropdownId: number | null = null;
+
+  toggleDropdown(medidorId: number, event: MouseEvent): void {
+    event.stopPropagation();
+    this.openDropdownId = this.openDropdownId === medidorId ? null : medidorId;
+    this.cdr.markForCheck();
+  }
+
+  closeDropdowns(): void {
+    if (this.openDropdownId !== null) {
+      this.openDropdownId = null;
+      this.cdr.markForCheck();
+    }
+  }
 
   /**
    * Extrae el mensaje dinámico del backend o usa un fallback.

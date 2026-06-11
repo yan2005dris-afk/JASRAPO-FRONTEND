@@ -1,16 +1,12 @@
+@use './styles/variables';
+@use './styles/base';
+@use './styles/components';
+@use './styles/utilities';
+@use './styles/layout';
+@use './styles/tables';
+@use './styles/badges';
+@use './styles/modals';
+@use './styles/forms';
+
 /* You can add global styles to this file, and also import other style files */
 @import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css');
-
-/* 
-  Global Architecture 
-  Imports from the src/styles directory 
-*/
-@import './styles/_variables.scss';
-@import './styles/_base.scss';
-@import './styles/_components.scss';
-@import './styles/_utilities.scss';
-@import './styles/_layout.scss';
-@import './styles/_tables.scss';
-@import './styles/_badges.scss';
-@import './styles/_modals.scss';
-@import './styles/_forms.scss';

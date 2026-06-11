@@ -17,20 +17,24 @@
 <form [formGroup]="comunidadForm" (ngSubmit)="onSubmit()">
   <div class="modal-body pt-4">
     <div class="mb-3">
-      <label for="codigo" class="form-label">Código</label>
+      <label for="codigo" class="form-label"
+        >Código <span class="text-dark fw-bold ms-1">*</span></label
+      >
 
       <input id="codigo" type="text" class="form-control" formControlName="codigo" />
     </div>
 
     <div class="mb-3">
-      <label for="nombre" class="form-label">Nombre de la comunidad</label>
+      <label for="nombre" class="form-label"
+        >Nombre de la comunidad <span class="text-dark fw-bold ms-1">*</span></label
+      >
 
       <input id="nombre" type="text" class="form-control" formControlName="nombre" />
     </div>
 
     <div class="mb-3">
       <label for="porcentajeTasaSeguridad" class="form-label">
-        Porcentaje de tasa de seguridad
+        Porcentaje de tasa de seguridad <span class="text-dark fw-bold ms-1">*</span>
       </label>
 
       <input

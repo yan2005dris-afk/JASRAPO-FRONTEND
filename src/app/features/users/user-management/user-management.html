@@ -1,35 +1,458 @@
-<div class="px-4 pb-3 d-flex align-items-center border-bottom flex-wrap gap-2">
-  <span class="text-muted small me-2 d-flex align-items-center gap-1">
-    <i class="bi bi-funnel"></i> Filtros rápidos:
-  </span>
+<div class="user-management-container">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0 text-dark fs-4">Gestión de Usuarios</h3>
+  </div>
 
-  <button
-    type="button"
-    class="btn btn-filter rounded-pill px-3 py-1"
-    [class.active]="activeFilter() === 'Todos'"
-    [attr.aria-pressed]="activeFilter() === 'Todos'"
-    (click)="setFilter('Todos')"
-  >
-    Todos
-  </button>
+  <!-- Error message if any -->
+  @if (errorMessage(); as msg) {
+    <div
+      class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4"
+      role="alert"
+    >
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      {{ msg }}
+      <button
+        type="button"
+        class="btn-close"
+        (click)="errorMessage.set(null)"
+        aria-label="Cerrar"
+      ></button>
+    </div>
+  }
 
-  <button
-    type="button"
-    class="btn btn-filter rounded-pill px-3 py-1"
-    [class.active]="activeFilter() === 'Activo'"
-    [attr.aria-pressed]="activeFilter() === 'Activo'"
-    (click)="setFilter('Activo')"
-  >
-    Activos
-  </button>
+  <div class="card border-0 shadow-sm rounded-3">
+    <!-- Card Header (Search & Actions) -->
+    <div
+      class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
+      <h5 class="fw-bold mb-0 fs-6">Lista de Usuarios</h5>
 
-  <button
-    type="button"
-    class="btn btn-filter rounded-pill px-3 py-1"
-    [class.active]="activeFilter() === 'Inactivo'"
-    [attr.aria-pressed]="activeFilter() === 'Inactivo'"
-    (click)="setFilter('Inactivo')"
-  >
-    Inactivos
-  </button>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- Search -->
+        <div class="input-group search-group" style="width: 280px">
+          <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+            <i class="bi bi-search"></i>
+          </span>
+          <input
+            type="text"
+            class="form-control border-start-0 ps-0 shadow-none"
+            placeholder="Buscar usuario..."
+            [value]="searchTerm()"
+            (input)="onSearch($any($event.target).value)"
+            aria-label="Buscar usuario"
+          />
+        </div>
+
+        <!-- Primary Action -->
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="openCreateModal()"
+        >
+          <i class="bi bi-plus-lg"></i> Agregar Usuario
+        </button>
+
+        <!-- Bulk Actions Dropdown -->
+        <button
+          class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium bg-white text-muted"
+        >
+          Acciones Masivas <i class="bi bi-chevron-down ms-1" style="font-size: 0.75rem"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-responsive px-4 pt-3">
+      <table class="table table-hover align-middle mb-0 custom-table">
+        <thead>
+          <tr>
+            <th scope="col" style="width: 40px">
+              <input
+                class="form-check-input table-checkbox"
+                type="checkbox"
+                [checked]="isAllSelected()"
+                [indeterminate]="isIndeterminate()"
+                (change)="toggleAll()"
+                aria-label="Seleccionar todos los usuarios"
+              />
+            </th>
+            <th scope="col" class="text-muted fw-semibold small">Nombre</th>
+            <th scope="col" class="text-muted fw-semibold small">Email</th>
+            <th scope="col" class="text-muted fw-semibold small">Teléfono</th>
+            <th scope="col" class="text-muted fw-semibold small">Rol</th>
+            <th scope="col" class="text-muted fw-semibold small text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of pagedUsers(); track user.usuarioId) {
+            <tr>
+              <td>
+                <input
+                  class="form-check-input table-checkbox"
+                  type="checkbox"
+                  [checked]="selectedIds().has(user.usuarioId)"
+                  (change)="toggleUser(user.usuarioId)"
+                  [attr.aria-label]="'Seleccionar usuario ' + user.nombres"
+                />
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div
+                    class="user-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                    style="width: 32px; height: 32px; font-size: 0.85rem; font-weight: 600"
+                  >
+                    {{ user.nombres.charAt(0).toUpperCase() }}
+                  </div>
+                  <span class="fw-medium text-dark" style="font-size: 0.95rem">
+                    {{ user.nombres }} {{ user.apellidos }}
+                  </span>
+                </div>
+              </td>
+              <td class="text-muted small">{{ user.email }}</td>
+              <td class="text-muted small">{{ user.telefono || 'Sin teléfono' }}</td>
+              <td>
+                <span
+                  class="badge rounded-pill fw-medium"
+                  [ngClass]="{
+                    'badge-rol-admin': user.rol?.nombre?.toLowerCase() === 'admin',
+                    'badge-rol-presidente': user.rol?.nombre?.toLowerCase() === 'presidente',
+                    'badge-rol-secretario': user.rol?.nombre?.toLowerCase() === 'secretario',
+                    'badge-rol-tesorero': user.rol?.nombre?.toLowerCase() === 'tesorero',
+                  }"
+                  >{{ user.rol?.nombre || 'Usuario' }}</span
+                >
+              </td>
+              <td class="text-center">
+                <div class="dropdown">
+                  <button
+                    class="btn btn-link text-muted p-0 shadow-none"
+                    (click)="toggleDropdown(user.usuarioId, $event)"
+                    aria-label="Menú de acciones"
+                  >
+                    <i class="bi bi-three-dots-vertical"></i>
+                  </button>
+                  <ul
+                    class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                    [class.show]="openDropdownId() === user.usuarioId"
+                    style="min-width: 130px"
+                  >
+                    <li>
+                      <button
+                        class="dropdown-item d-flex align-items-center gap-2"
+                        (click)="openEditModal(user)"
+                      >
+                        <i class="bi bi-pencil-fill text-primary" style="font-size: 0.8rem"></i>
+                        Editar
+                      </button>
+                    </li>
+                    <li>
+                      <hr class="dropdown-divider" />
+                    </li>
+                    <li>
+                      <button
+                        class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                        (click)="confirmDelete(user)"
+                      >
+                        <i class="bi bi-trash-fill" style="font-size: 0.8rem"></i>
+                        Eliminar
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">
+                <i class="bi bi-people fs-3 d-block mb-2"></i>
+                No se encontraron usuarios
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer and Pagination -->
+    <div
+      class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
+      <!-- Left: total + page size selector -->
+      <div class="d-flex align-items-center gap-3">
+        <span class="text-muted small">
+          Total: <strong>{{ filteredUsers().length }}</strong> usuario{{
+            filteredUsers().length !== 1 ? 's' : ''
+          }}
+        </span>
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted small">Mostrar:</span>
+          <select
+            class="form-select form-select-sm page-size-select shadow-none"
+            [value]="pageSize()"
+            (change)="setPageSize(+$any($event.target).value)"
+            style="width: 70px"
+            aria-label="Cantidad de usuarios por página"
+          >
+            @for (opt of pageSizeOptions; track opt) {
+              <option [value]="opt">{{ opt }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <!-- Right: pagination controls -->
+      <nav aria-label="Navegación de páginas">
+        <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
+          <!-- Previous -->
+          <li class="page-item" [class.disabled]="currentPage() === 1">
+            <a
+              class="page-link border-0 text-dark bg-transparent fw-medium small"
+              href="#"
+              (click)="$event.preventDefault(); goToPage(currentPage() - 1)"
+              [attr.tabindex]="currentPage() === 1 ? -1 : null"
+              [attr.aria-disabled]="currentPage() === 1"
+            >
+              <i class="bi bi-chevron-left me-1" style="font-size: 0.7rem"></i> Anterior
+            </a>
+          </li>
+
+          <!-- Page numbers -->
+          @for (page of pageNumbers(); track page) {
+            <li
+              class="page-item"
+              [class.active]="currentPage() === page"
+              [attr.aria-current]="currentPage() === page ? 'page' : null"
+            >
+              <a
+                class="page-link fw-medium"
+                [class.shadow-sm]="currentPage() === page"
+                [class.border-0]="currentPage() !== page"
+                [class.bg-transparent]="currentPage() !== page"
+                [class.text-dark]="true"
+                style="border-radius: 6px"
+                href="#"
+                (click)="$event.preventDefault(); goToPage(page)"
+                >{{ page }}</a
+              >
+            </li>
+          }
+
+          <!-- Next -->
+          <li class="page-item" [class.disabled]="currentPage() === totalPages()">
+            <a
+              class="page-link border-0 text-dark bg-transparent fw-medium small"
+              href="#"
+              (click)="$event.preventDefault(); goToPage(currentPage() + 1)"
+              [attr.tabindex]="currentPage() === totalPages() ? -1 : null"
+              [attr.aria-disabled]="currentPage() === totalPages()"
+            >
+              Siguiente <i class="bi bi-chevron-right ms-1" style="font-size: 0.7rem"></i>
+            </a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </div>
 </div>
+
+<!-- ===================== MODAL: Crear / Editar Usuario ===================== -->
+@if (showModal()) {
+  <button
+    type="button"
+    class="modal-backdrop-custom border-0"
+    (click)="closeModal()"
+    aria-label="Cerrar modal"
+  ></button>
+
+  <div class="modal-custom" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <div class="modal-card-header d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0">
+          <i class="bi bi-person-fill me-2 text-primary"></i>
+          {{ isEditing() ? 'Editar Usuario' : 'Nuevo Usuario' }}
+        </h5>
+        <button class="btn-close-modal" (click)="closeModal()" aria-label="Cerrar modal">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <div class="modal-card-body">
+        <!-- Nombres -->
+        <div class="mb-3">
+          <label for="form-user-nombres" class="form-label fw-semibold small text-muted"
+            >Nombres <span class="text-dark fw-bold ms-1">*</span></label
+          >
+          <input
+            id="form-user-nombres"
+            type="text"
+            class="form-control shadow-none"
+            placeholder="Ej. Juan"
+            [value]="formData().nombres"
+            (input)="updateField('nombres', $any($event.target).value)"
+          />
+        </div>
+
+        <!-- Apellidos -->
+        <div class="mb-3">
+          <label for="form-user-apellidos" class="form-label fw-semibold small text-muted"
+            >Apellidos <span class="text-dark fw-bold ms-1">*</span></label
+          >
+          <input
+            id="form-user-apellidos"
+            type="text"
+            class="form-control shadow-none"
+            placeholder="Ej. Pérez"
+            [value]="formData().apellidos"
+            (input)="updateField('apellidos', $any($event.target).value)"
+          />
+        </div>
+
+        <!-- Email -->
+        <div class="mb-3">
+          <label for="form-user-email" class="form-label fw-semibold small text-muted"
+            >Correo electrónico <span class="text-dark fw-bold ms-1">*</span></label
+          >
+          <input
+            id="form-user-email"
+            type="email"
+            class="form-control shadow-none"
+            placeholder="usuario@jasrapo.com"
+            [value]="formData().email"
+            (input)="updateField('email', $any($event.target).value)"
+          />
+        </div>
+
+        <!-- Teléfono -->
+        <div class="mb-3">
+          <label for="form-user-telefono" class="form-label fw-semibold small text-muted"
+            >Teléfono <span class="text-dark fw-bold ms-1">*</span></label
+          >
+          <input
+            id="form-user-telefono"
+            type="text"
+            class="form-control shadow-none"
+            placeholder="Ej. +593991234567"
+            [value]="formData().telefono"
+            (input)="updateField('telefono', $any($event.target).value)"
+          />
+        </div>
+
+        <!-- Password Help Text (no input because password is auto-generated on backend) -->
+        @if (!isEditing()) {
+          <div
+            class="alert alert-info py-2 px-3 small border-0 mb-3"
+            style="background-color: var(--soft-blue-bg); color: var(--primary-color)"
+          >
+            <i class="bi bi-info-circle-fill me-2"></i>
+            La contraseña temporal será generada automáticamente por el sistema y se le asignará al
+            nuevo usuario.
+          </div>
+        }
+
+        <!-- Rol -->
+        <div class="mb-3">
+          <label for="form-user-rolId" class="form-label fw-semibold small text-muted"
+            >Rol <span class="text-dark fw-bold ms-1">*</span></label
+          >
+          <select
+            id="form-user-rolId"
+            class="form-select shadow-none"
+            [value]="formData().rolId"
+            (change)="updateField('rolId', +$any($event.target).value)"
+          >
+            @for (rol of roles(); track rol.rolId) {
+              <option [value]="rol.rolId">{{ rol.nombre }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-card-footer d-flex justify-content-end gap-2">
+        <button
+          class="btn btn-outline-secondary fw-medium px-4"
+          [disabled]="isLoading()"
+          (click)="closeModal()"
+        >
+          Cancelar
+        </button>
+        <button
+          class="btn btn-primary fw-medium px-4"
+          [disabled]="isLoading()"
+          (click)="saveUser()"
+        >
+          @if (isLoading()) {
+            <span
+              class="spinner-border spinner-border-sm me-2"
+              role="status"
+              aria-hidden="true"
+            ></span>
+          } @else {
+            <i class="bi bi-check-lg me-1"></i>
+          }
+          {{ isEditing() ? 'Guardar cambios' : 'Crear usuario' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ===================== MODAL: Confirmar Eliminación ===================== -->
+@if (showDeleteModal()) {
+  <button
+    type="button"
+    class="modal-backdrop-custom border-0"
+    (click)="cancelDelete()"
+    aria-label="Cerrar modal de eliminación"
+  ></button>
+
+  <div class="modal-custom" role="dialog" aria-modal="true">
+    <div class="modal-card modal-card-sm">
+      <div class="modal-card-header d-flex justify-content-between align-items-center">
+        <h5 class="fw-bold mb-0 text-danger">
+          <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirmar eliminación
+        </h5>
+        <button
+          class="btn-close-modal"
+          (click)="cancelDelete()"
+          aria-label="Cerrar modal de confirmación"
+        >
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <div class="modal-card-body text-center">
+        <p class="mb-1">¿Estás seguro de que deseas eliminar al usuario:</p>
+        <p class="fw-bold text-dark fs-5">
+          {{ deletingUser()?.nombres }} {{ deletingUser()?.apellidos }}
+        </p>
+        <p class="text-muted small mb-0">Esta acción no se puede deshacer.</p>
+      </div>
+
+      <div class="modal-card-footer d-flex justify-content-end gap-2">
+        <button
+          class="btn btn-outline-secondary fw-medium px-4"
+          [disabled]="isLoading()"
+          (click)="cancelDelete()"
+        >
+          Cancelar
+        </button>
+        <button
+          class="btn btn-danger fw-medium px-4"
+          [disabled]="isLoading()"
+          (click)="deleteUser()"
+        >
+          @if (isLoading()) {
+            <span
+              class="spinner-border spinner-border-sm me-2"
+              role="status"
+              aria-hidden="true"
+            ></span>
+          } @else {
+            <i class="bi bi-trash-fill me-1"></i>
+          }
+          Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { Sectores } from '../models/sectores.interface';
 
 @Injectable({
@@ -31,7 +31,20 @@ export class SectoresService {
 
   // READ ALL
   getAllSectores(): Observable<Sectores[]> {
-    return this.http.get<Sectores[]>(this.endpoint);
+    return this.http.get<unknown>(this.endpoint).pipe(
+      map((response) => {
+        if (response && typeof response === 'object') {
+          const res = response as Record<string, unknown>;
+          if ('data' in res && Array.isArray(res['data'])) {
+            return res['data'] as Sectores[];
+          }
+        }
+        if (Array.isArray(response)) {
+          return response as Sectores[];
+        }
+        return [];
+      }),
+    );
   }
 
   // READ ONE

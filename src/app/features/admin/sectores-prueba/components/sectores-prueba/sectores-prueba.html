@@ -102,23 +102,51 @@
                   <td class="text-muted small">{{ sector.nombre }}</td>
 
                   <td class="text-center">
-                    <button
-                      class="btn btn-link text-muted p-0 shadow-none me-3"
-                      type="button"
-                      (click)="verDetalleSector(sector)"
-                      aria-label="Ver detalle del sector"
-                    >
-                      <i class="bi bi-eye action-icon view"></i>
-                    </button>
-
-                    <button
-                      class="btn btn-link text-muted p-0 shadow-none"
-                      type="button"
-                      (click)="editarSector(sector)"
-                      aria-label="Editar sector"
-                    >
-                      <i class="bi bi-pencil action-icon edit"></i>
-                    </button>
+                    <div class="dropdown">
+                      <button
+                        class="btn btn-link text-muted p-0 shadow-none"
+                        (click)="toggleDropdown(sector.sectorId!, $event)"
+                        aria-label="Menú de acciones"
+                      >
+                        <i class="bi bi-three-dots-vertical"></i>
+                      </button>
+                      <ul
+                        class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                        [class.show]="openDropdownId === sector.sectorId"
+                        style="min-width: 130px"
+                      >
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            (click)="verDetalleSector(sector)"
+                          >
+                            <i class="bi bi-eye text-secondary" style="font-size: 0.8rem"></i>
+                            Ver detalle
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            (click)="editarSector(sector)"
+                          >
+                            <i class="bi bi-pencil-fill text-primary" style="font-size: 0.8rem"></i>
+                            Editar
+                          </button>
+                        </li>
+                        <li>
+                          <hr class="dropdown-divider" />
+                        </li>
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                            (click)="eliminarSector(sector)"
+                          >
+                            <i class="bi bi-trash-fill" style="font-size: 0.8rem"></i>
+                            Eliminar
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
                   </td>
                 </tr>
               }

@@ -19,6 +19,9 @@ import { ClientesFormComponent } from './components/clientes-form/clientes-form.
   templateUrl: './clientes.html',
   styleUrl: './clientes.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:click)': 'closeDropdowns()',
+  },
 })
 export class Clientes {
   readonly authService = inject(AuthService);
@@ -41,6 +44,21 @@ export class Clientes {
 
   isDetalleModalOpen = false;
   clienteDetalleSeleccionado: IClientes | null = null;
+
+  openDropdownId: string | number | null = null;
+
+  toggleDropdown(id: string | number, event: MouseEvent): void {
+    event.stopPropagation();
+    this.openDropdownId = this.openDropdownId === id ? null : id;
+    this.cdr.markForCheck();
+  }
+
+  closeDropdowns(): void {
+    if (this.openDropdownId !== null) {
+      this.openDropdownId = null;
+      this.cdr.markForCheck();
+    }
+  }
 
   pageSizeOptions = [5, 10, 15];
   pageSize = 5;
