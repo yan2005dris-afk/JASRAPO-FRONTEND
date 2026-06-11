@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
 import { ClientesService } from './services/clientes.service';
 import {
+  BuscarClientesParams,
   EstadoBusquedaCliente,
   IClientes,
   IIdentificacion,
@@ -26,6 +27,7 @@ export class Clientes {
   private readonly clientesService = inject(ClientesService);
 
   clients: IClientes[] = [];
+  totalItems = 0;
 
   isLoading = false;
   hasFetched = false;
@@ -44,85 +46,84 @@ export class Clientes {
   pageSize = 5;
   currentPage = 1;
 
-  get filteredClients(): IClientes[] {
-    return this.clients;
-  }
-
   get totalPages(): number {
-    return Math.max(1, Math.ceil(this.filteredClients.length / this.pageSize));
+    return Math.max(1, Math.ceil(this.totalItems / this.pageSize));
   }
 
   get pageNumbers(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+    const range = 2;
+    const start = Math.max(1, this.currentPage - range);
+    const end = Math.min(this.totalPages, this.currentPage + range);
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   }
 
   get pagedClients(): IClientes[] {
-    const start = (this.currentPage - 1) * this.pageSize;
-    return this.filteredClients.slice(start, start + this.pageSize);
+    return this.clients;
   }
 
   buscarClientes(): void {
-    this.isLoading = true;
+    this.currentPage = 1;
     this.hasFetched = true;
-    this.cdr.markForCheck();
+    this.fetchClientes();
+  }
 
+  private buildParams(): BuscarClientesParams {
     const valor = this.searchTerm.trim();
-
-    const filtros: {
-      nombreCompleto?: string;
-      identificacion?: string;
-      activo?: boolean;
-    } = {};
+    const params: BuscarClientesParams = {};
 
     if (valor) {
       if (this.searchType === 'nombreCompleto') {
-        filtros.nombreCompleto = valor;
-      }
-
-      if (this.searchType === 'identificacion') {
-        filtros.identificacion = valor;
+        params.nombreCompleto = valor;
+      } else if (this.searchType === 'identificacion') {
+        params.identificacion = valor;
       }
     }
 
-    if (this.estadoBusqueda === 'activos') {
-      filtros.activo = true;
-    }
+    if (this.estadoBusqueda === 'activos') params.activo = true;
+    if (this.estadoBusqueda === 'inactivos') params.activo = false;
 
-    if (this.estadoBusqueda === 'inactivos') {
-      filtros.activo = false;
-    }
+    return params;
+  }
 
-    this.clientesService.buscarClientes(filtros).subscribe({
-      next: (response) => {
-        const clientes = this.normalizarRespuestaClientes(response);
+  private fetchClientes(): void {
+    this.isLoading = true;
+    this.cdr.markForCheck();
 
-        if (this.searchType === 'nombreCompleto' && valor && clientes.length === 0) {
-          this.buscarNombreCompletoPorNombresYApellidos(valor);
+    const valor = this.searchTerm.trim();
+    const params: BuscarClientesParams = {
+      ...this.buildParams(),
+      page: this.currentPage,
+      limit: this.pageSize,
+    };
+
+    this.clientesService.buscarClientes(params).subscribe({
+      next: (result) => {
+        if (
+          this.searchType === 'nombreCompleto' &&
+          valor &&
+          result.data.length === 0 &&
+          this.currentPage === 1
+        ) {
+          this.fetchPorNombresYApellidos(valor);
           return;
         }
 
-        this.clients = clientes;
+        this.clients = result.data;
+        this.totalItems = result.meta.total;
         this.isLoading = false;
-        this.currentPage = 1;
         this.cdr.markForCheck();
       },
       error: (err) => {
-        console.error('Error buscando clientes desde GET /clients:', err);
-
-        if (this.estadoBusqueda === 'activos' || this.estadoBusqueda === 'inactivos') {
-          this.filtrarEstadoLocalmente();
-          return;
-        }
-
+        console.error('Error buscando clientes:', err);
         this.clients = [];
+        this.totalItems = 0;
         this.isLoading = false;
-        this.currentPage = 1;
         this.cdr.markForCheck();
       },
     });
   }
 
-  buscarNombreCompletoPorNombresYApellidos(valor: string): void {
+  private fetchPorNombresYApellidos(valor: string): void {
     const partes = valor.replace(/\s+/g, ' ').trim().split(' ');
 
     let nombres = valor;
@@ -130,72 +131,35 @@ export class Clientes {
 
     if (partes.length >= 4) {
       const mitad = Math.ceil(partes.length / 2);
-
       nombres = partes.slice(0, mitad).join(' ');
       apellidos = partes.slice(mitad).join(' ');
-    } else if (partes.length === 3) {
-      nombres = partes.slice(0, 1).join(' ');
-      apellidos = partes.slice(1).join(' ');
-    } else if (partes.length === 2) {
-      nombres = partes.slice(0, 1).join(' ');
+    } else if (partes.length >= 2) {
+      nombres = partes[0];
       apellidos = partes.slice(1).join(' ');
     }
 
-    const filtros: {
-      nombres?: string;
-      apellidos?: string;
-      activo?: boolean;
-    } = {
+    const params: BuscarClientesParams = {
       nombres,
+      page: this.currentPage,
+      limit: this.pageSize,
     };
 
-    if (apellidos) {
-      filtros.apellidos = apellidos;
-    }
+    if (apellidos) params.apellidos = apellidos;
+    if (this.estadoBusqueda === 'activos') params.activo = true;
+    if (this.estadoBusqueda === 'inactivos') params.activo = false;
 
-    if (this.estadoBusqueda === 'activos') {
-      filtros.activo = true;
-    }
-
-    if (this.estadoBusqueda === 'inactivos') {
-      filtros.activo = false;
-    }
-
-    this.clientesService.buscarClientes(filtros).subscribe({
-      next: (response) => {
-        this.clients = this.normalizarRespuestaClientes(response);
+    this.clientesService.buscarClientes(params).subscribe({
+      next: (result) => {
+        this.clients = result.data;
+        this.totalItems = result.meta.total;
         this.isLoading = false;
-        this.currentPage = 1;
         this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('Error buscando por nombres y apellidos:', err);
-
         this.clients = [];
+        this.totalItems = 0;
         this.isLoading = false;
-        this.currentPage = 1;
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  cargarTodosLosClientes(): void {
-    this.isLoading = true;
-    this.hasFetched = true;
-    this.cdr.markForCheck();
-
-    this.clientesService.getAllClientes().subscribe({
-      next: (response) => {
-        this.clients = this.normalizarRespuestaClientes(response);
-        this.isLoading = false;
-        this.currentPage = 1;
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        console.error('Error cargando clientes:', err);
-        this.clients = [];
-        this.isLoading = false;
-        this.currentPage = 1;
         this.cdr.markForCheck();
       },
     });
@@ -205,83 +169,9 @@ export class Clientes {
     this.searchTerm = '';
     this.searchType = 'nombreCompleto';
     this.estadoBusqueda = 'todos';
-    this.cargarTodosLosClientes();
-  }
-
-  filtrarEstadoLocalmente(): void {
-    this.clientesService.getAllClientes().subscribe({
-      next: (response) => {
-        const clientes = this.normalizarRespuestaClientes(response);
-
-        if (this.estadoBusqueda === 'activos') {
-          this.clients = clientes.filter((cliente) => cliente.activo !== false);
-        } else if (this.estadoBusqueda === 'inactivos') {
-          this.clients = clientes.filter((cliente) => cliente.activo === false);
-        } else {
-          this.clients = clientes;
-        }
-
-        this.isLoading = false;
-        this.currentPage = 1;
-        this.cdr.markForCheck();
-      },
-      error: (errorGetAll) => {
-        console.error('Error cargando clientes para filtrar estado localmente:', errorGetAll);
-
-        this.clients = [];
-        this.isLoading = false;
-        this.currentPage = 1;
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  normalizarRespuestaClientes(response: unknown): IClientes[] {
-    if (Array.isArray(response)) {
-      return response as IClientes[];
-    }
-
-    if (!response || typeof response !== 'object') {
-      return [];
-    }
-
-    const respuesta = response as Record<string, unknown>;
-
-    if (Array.isArray(respuesta['data'])) {
-      return respuesta['data'] as IClientes[];
-    }
-
-    const data = respuesta['data'];
-
-    if (data && typeof data === 'object') {
-      const dataObject = data as Record<string, unknown>;
-
-      if (Array.isArray(dataObject['items'])) {
-        return dataObject['items'] as IClientes[];
-      }
-
-      if (Array.isArray(dataObject['results'])) {
-        return dataObject['results'] as IClientes[];
-      }
-    }
-
-    if (Array.isArray(respuesta['items'])) {
-      return respuesta['items'] as IClientes[];
-    }
-
-    if (Array.isArray(respuesta['results'])) {
-      return respuesta['results'] as IClientes[];
-    }
-
-    if (Array.isArray(respuesta['clientes'])) {
-      return respuesta['clientes'] as IClientes[];
-    }
-
-    if (Array.isArray(respuesta['clients'])) {
-      return respuesta['clients'] as IClientes[];
-    }
-
-    return [];
+    this.currentPage = 1;
+    this.hasFetched = true;
+    this.fetchClientes();
   }
 
   abrirModal(): void {
@@ -330,12 +220,9 @@ export class Clientes {
   }
 
   abrirEdicionDesdeDetalle(): void {
-    if (!this.clienteDetalleSeleccionado) {
-      return;
-    }
+    if (!this.clienteDetalleSeleccionado) return;
 
     const cliente = this.clienteDetalleSeleccionado;
-
     this.cerrarDetalleModal();
     this.editarCliente(cliente);
   }
@@ -344,7 +231,6 @@ export class Clientes {
     const clienteId = this.obtenerIdCliente(cliente);
 
     if (clienteId === null) {
-      console.error('No se puede eliminar el cliente porque no tiene id:', cliente);
       alert('No se puede eliminar este cliente porque no tiene un ID válido.');
       return;
     }
@@ -357,7 +243,6 @@ export class Clientes {
 
     this.clientesService.deleteCliente(clienteId).subscribe({
       next: () => {
-        console.log('Cliente eliminado correctamente');
         this.buscarClientes();
       },
       error: (err) => {
@@ -373,36 +258,31 @@ export class Clientes {
 
   obtenerNombreCliente(cliente: IClientes): string {
     const nombreCompleto = `${cliente.nombres ?? ''} ${cliente.apellidos ?? ''}`.trim();
-
     return cliente.razonSocial || nombreCompleto || 'Sin nombre';
   }
 
   obtenerTipoIdentificacionCliente(cliente: IClientes | null): string {
-    if (!cliente?.tipoIdentificacion) {
-      return 'No registrado';
-    }
+    if (!cliente?.tipoIdentificacion) return 'No registrado';
 
     if (typeof cliente.tipoIdentificacion === 'string') {
       return cliente.tipoIdentificacion;
     }
 
-    const tipoIdentificacion = cliente.tipoIdentificacion as IIdentificacion;
-
-    return tipoIdentificacion.nombre || tipoIdentificacion.codigo || 'No registrado';
+    const tipo = cliente.tipoIdentificacion as IIdentificacion;
+    return tipo.nombre || tipo.codigo || 'No registrado';
   }
 
   setPageSize(size: number): void {
     this.pageSize = size;
     this.currentPage = 1;
-    this.cdr.markForCheck();
+    if (this.hasFetched) {
+      this.fetchClientes();
+    }
   }
 
   goToPage(page: number): void {
-    if (page < 1 || page > this.totalPages) {
-      return;
-    }
-
+    if (page < 1 || page > this.totalPages) return;
     this.currentPage = page;
-    this.cdr.markForCheck();
+    this.fetchClientes();
   }
 }
