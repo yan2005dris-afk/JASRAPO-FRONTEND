@@ -54,12 +54,13 @@ export class ComunidadesService {
   private readonly apiUrl = `${environment.apiUrl}/communities`;
 
   getAllComunidades(page = 1, limit = 10): Observable<PaginatedComunidadesResponse> {
-    const params = new HttpParams()
-      .set('page', page.toString())
-      .set('limit', limit.toString());
+    const params = new HttpParams().set('page', page.toString()).set('limit', limit.toString());
 
     return this.http
-      .get<{ data: RawComunidad[]; meta: PaginatedComunidadesResponse['meta'] }>(this.apiUrl, { params })
+      .get<{
+        data: RawComunidad[];
+        meta: PaginatedComunidadesResponse['meta'];
+      }>(this.apiUrl, { params })
       .pipe(
         map((response) => ({
           data: response.data.map(normalizeComunidad),

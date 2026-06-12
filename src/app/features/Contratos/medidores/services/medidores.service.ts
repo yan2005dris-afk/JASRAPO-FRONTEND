@@ -27,9 +27,7 @@ export class MedidoresService {
   }
 
   getMedidores(page = 1, limit = 10, estado?: string): Observable<PaginatedMetersResponse> {
-    let params = new HttpParams()
-      .set('page', page.toString())
-      .set('limit', limit.toString());
+    let params = new HttpParams().set('page', page.toString()).set('limit', limit.toString());
 
     if (estado) {
       params = params.set('estado', estado);

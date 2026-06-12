@@ -18,9 +18,7 @@ export class SectoresService {
   }
 
   getAllSectores(page = 1, limit = 10): Observable<PaginatedSectoresResponse> {
-    const params = new HttpParams()
-      .set('page', page.toString())
-      .set('limit', limit.toString());
+    const params = new HttpParams().set('page', page.toString()).set('limit', limit.toString());
 
     return this.http.get<PaginatedSectoresResponse>(this.endpoint, { params });
   }
