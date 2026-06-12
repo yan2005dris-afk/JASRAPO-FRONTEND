@@ -21,7 +21,7 @@ export class UsersService {
   /**
    * Obtiene la lista paginada de usuarios activos.
    */
-  getUsers(page = 1, limit = 100): Observable<PaginatedUsersResponse> {
+  getUsers(page = 1, limit = 10): Observable<PaginatedUsersResponse> {
     const params = new HttpParams().set('page', page.toString()).set('limit', limit.toString());
 
     return this.http.get<PaginatedUsersResponse>(this.usersUrl, { params, withCredentials: true });

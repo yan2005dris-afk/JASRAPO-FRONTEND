@@ -4,6 +4,7 @@ import {
   Component,
   OnInit,
   inject,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -16,16 +17,13 @@ import {
   IEstadoMedidor,
   IMedidorDto,
   ActualizarEstadoMedidorBody,
+  MeterKpis,
 } from './interfaces/imedidor.interface';
 import { MedidoresService } from './services/medidores.service';
 import { forkJoin, finalize } from 'rxjs';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 
-/**
- * Componente Principal de Gestión de Medidores
- * Controla la lógica de negocio, integración con servicios y el estado de la UI para el inventario.
- */
 @Component({
   selector: 'app-medidores',
   imports: [CommonModule, RegistrarMedidorComponent, EditarMedidorComponent],
@@ -37,7 +35,6 @@ import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/
   },
 })
 export class Medidores implements OnInit {
-  // Inyección de servicios y utilidades
   private readonly medidoresService = inject(MedidoresService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly toastService = inject(ToastService);
@@ -75,16 +72,10 @@ export class Medidores implements OnInit {
     }
   }
 
-  /**
-   * Extrae el mensaje dinámico del backend o usa un fallback.
-   */
   obtenerMensajeErrorBackend(err: HttpErrorResponse, mensajePorDefecto: string): string {
     return err.error?.message || mensajePorDefecto;
   }
 
-  /**
-   * Asigna el mensaje de error para mostrarlo en la interfaz.
-   */
   mostrarMensaje(mensaje: string, contexto: 'tabla' | 'modal' = 'tabla'): void {
     if (contexto === 'modal') {
       this.modalErrorMessage = mensaje;
@@ -93,19 +84,30 @@ export class Medidores implements OnInit {
     }
   }
 
-  // Configuración de paginación
-  pageSizeOptions = [5, 10, 15];
-  pageSize = 5;
-  currentPage = 1;
+  // Paginación server-side
+  readonly pageSizeOptions = [5, 10, 15];
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(5);
+  readonly totalItems = signal(0);
+  readonly totalPagesServer = signal(1);
+  readonly kpis = signal<MeterKpis>({ enBodega: 0, instalados: 0, danados: 0, total: 0 });
+
+  get totalPages(): number {
+    return this.totalPagesServer();
+  }
+
+  get pageNumbers(): number[] {
+    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+  }
+
+  get pagedMedidores(): IMedidor[] {
+    return this.medidores;
+  }
 
   ngOnInit(): void {
     this.cargarMedidores();
   }
 
-  /**
-   * Obtiene la lista de medidores y estados desde el servicio en paralelo usando RxJS,
-   * normaliza los datos y maneja la limpieza de fechas inválidas.
-   */
   cargarMedidores(): void {
     this.isLoading = true;
     this.errorMessage = '';
@@ -113,7 +115,7 @@ export class Medidores implements OnInit {
 
     forkJoin({
       estados: this.medidoresService.getEstadosMedidor(),
-      medidores: this.medidoresService.getMedidores(),
+      response: this.medidoresService.getMedidores(this.currentPage(), this.pageSize()),
     })
       .pipe(
         finalize(() => {
@@ -122,9 +124,9 @@ export class Medidores implements OnInit {
         }),
       )
       .subscribe({
-        next: ({ estados, medidores }) => {
+        next: ({ estados, response }) => {
           this.estadosCatalogo = estados;
-          const medidoresCrudos = medidores as unknown as IMedidorDto[];
+          const medidoresCrudos = response.data as IMedidorDto[];
           this.medidores = medidoresCrudos.map((medidorDto) => {
             const estadoEncontrado = this.estadosCatalogo.find((e) => {
               if (typeof medidorDto.estado === 'string') {
@@ -138,6 +140,10 @@ export class Medidores implements OnInit {
             } as IMedidor;
           });
 
+          const meta = response.meta;
+          this.totalItems.set(meta.total);
+          this.totalPagesServer.set(meta.ultimaPagina);
+          this.kpis.set(response.kpis);
           this.hasFetched = true;
         },
         error: (err: HttpErrorResponse) => {
@@ -151,45 +157,21 @@ export class Medidores implements OnInit {
       });
   }
 
-  /**
-   * Getters para el filtrado y cálculo de paginación
-   */
-  get filteredMedidores(): IMedidor[] {
-    return this.medidores;
-  }
-
-  get totalPages(): number {
-    return Math.max(1, Math.ceil(this.filteredMedidores.length / this.pageSize));
-  }
-
-  get pageNumbers(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
-  }
-
-  get pagedMedidores(): IMedidor[] {
-    const start = (this.currentPage - 1) * this.pageSize;
-    return this.filteredMedidores.slice(start, start + this.pageSize);
-  }
-
-  /**
-   * Métodos de control de navegación de la tabla
-   */
+  // Métodos de navegación de página
   setPageSize(size: number) {
-    this.pageSize = size;
-    this.currentPage = 1;
-    this.cdr.detectChanges();
+    this.pageSize.set(size);
+    this.currentPage.set(1);
+    this.cargarMedidores();
   }
 
   goToPage(page: number) {
     if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-      this.cdr.detectChanges();
+      this.currentPage.set(page);
+      this.cargarMedidores();
     }
   }
 
-  /**
-   * Gestión de apertura y cierre de modales
-   */
+  // Gestión de modales
   openRegistrar(): void {
     this.showRegistrarModal = true;
     this.editingMedidor = null;
@@ -217,20 +199,6 @@ export class Medidores implements OnInit {
     this.cdr.detectChanges();
   }
 
-  /**
-   * TODO: Implementar navegación con Router a detalles del contrato cuando el módulo exista.
-   */
-  /*
-  verContrato(medidor: IMedidor): void {
-    if (medidor.contratoId) {
-      console.log('Redirigiendo al contrato:', medidor.contratoId);
-    }
-  }
-  */
-
-  /**
-   * Procesa el registro de un nuevo medidor y refresca la lista
-   */
   guardarMedidor(nuevoMedidor: CrearMedidorPayload): void {
     this.isSaving = true;
     this.medidoresService.createMedidor(nuevoMedidor).subscribe({
@@ -252,9 +220,6 @@ export class Medidores implements OnInit {
     });
   }
 
-  /**
-   * Procesa la actualización de estado u observaciones de un medidor existente
-   */
   actualizarMedidor(payload: EditarEstadoMedidorPayload): void {
     this.isSaving = true;
     this.cdr.detectChanges();
@@ -264,7 +229,6 @@ export class Medidores implements OnInit {
       motivo: payload.motivo,
     };
 
-    // 3. Llamamos al servicio con los parámetros separados
     this.medidoresService.updateMedidor(id, body).subscribe({
       next: () => {
         this.isSaving = false;
@@ -284,9 +248,6 @@ export class Medidores implements OnInit {
     });
   }
 
-  /**
-   * Ejecuta la eliminación de un registro tras confirmación del usuario
-   */
   eliminarMedidor(medidor: IMedidor): void {
     const id = medidor.medidorId;
     this.dialogService
@@ -319,22 +280,18 @@ export class Medidores implements OnInit {
       });
   }
 
-  /**
-   * Getters para el cálculo de indicadores (KPIs) de cabecera
-   */
+  // KPIs desde el backend
   get medidoresEnBodega(): number {
-    return this.medidores.filter((m) => m.estado?.codigo === 'BODEGA').length;
+    return this.kpis().enBodega;
   }
   get medidoresInstalados(): number {
-    return this.medidores.filter((m) => m.estado?.codigo === 'INSTALADO').length;
+    return this.kpis().instalados;
   }
   get medidoresDanados(): number {
-    return this.medidores.filter((m) => m.estado?.codigo === 'DANADO').length;
+    return this.kpis().danados;
   }
 
-  /**
-   * Funciones de transformación de UI para visualización de estados
-   */
+  // Funciones de UI
   getEstadoNombre(medidor: IMedidor): string {
     return medidor.estado?.nombre || 'Sin estado';
   }

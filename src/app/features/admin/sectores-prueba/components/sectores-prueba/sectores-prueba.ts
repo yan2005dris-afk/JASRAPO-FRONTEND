@@ -4,6 +4,7 @@ import {
   Component,
   inject,
   OnInit,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SectoresFormComponent } from '../sectores-form.component/sectores-form.component';
@@ -136,29 +137,32 @@ export class SectoresPrueba implements OnInit {
    * en la tabla HTML, evitando iterar arreglos (O(1) vs O(N)) por cada fila renderizada.
    */
   mapearComunidadConSector() {
-    this.comunidadesService.getAllComunidades().subscribe((comunidades) => {
-      this.comunidadDelSectorMapeada = comunidades.reduce(
-        (acc, obj) => {
-          acc[obj.id] = obj.nombre;
-          return acc;
-        },
-        {} as Record<number, string>,
-      );
-      this.cdr.markForCheck(); // Notificamos a Angular que el mapeo está listo
+    this.comunidadesService.getAllComunidades(1, 100).subscribe({
+      next: (response) => {
+        this.comunidadDelSectorMapeada = response.data.reduce(
+          (acc, obj) => {
+            acc[obj.id] = obj.nombre;
+            return acc;
+          },
+          {} as Record<number, string>,
+        );
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error al cargar comunidades para el mapeo:', err);
+      },
     });
   }
 
-  get filteredSectores(): Sectores[] {
-    return this.sectores;
-  }
-
   // Pagination
-  pageSizeOptions = [5, 10, 15];
-  pageSize = 5;
-  currentPage = 1;
+  readonly pageSizeOptions = [5, 10, 15];
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(5);
+  readonly totalItems = signal(0);
+  readonly totalPagesServer = signal(1);
 
   get totalPages(): number {
-    return Math.max(1, Math.ceil(this.filteredSectores.length / this.pageSize));
+    return this.totalPagesServer();
   }
 
   get pageNumbers(): number[] {
@@ -166,36 +170,23 @@ export class SectoresPrueba implements OnInit {
   }
 
   get pagedSectores(): Sectores[] {
-    const start = (this.currentPage - 1) * this.pageSize;
-    return this.filteredSectores.slice(start, start + this.pageSize);
+    return this.sectores;
   }
 
   // -------------------------------------------------------------------------
   // Métodos
   // -------------------------------------------------------------------------
-  /**
-   * Simula un fetch a una API usando un array estático.
-   * Se llama únicamente desde el botón "Buscar" en el template.
-   *
-   * Patrón a seguir en otros módulos:
-   *   1. Marcar isLoading = true.
-   *   2. Llamar al servicio (o simular con setTimeout).
-   *   3. Asignar el resultado a la propiedad del componente.
-   *   4. Marcar hasFetched = true para que la tabla sea visible.
-   *   5. Marcar isLoading = false.
-   */
   mostrarSectores(): void {
     this.isLoading = true;
     this.cdr.markForCheck();
 
-    this.sectoresService.getAllSectores().subscribe({
-      next: (data) => {
-        // console.log(data);
-
-        this.sectores = data;
+    this.sectoresService.getAllSectores(this.currentPage(), this.pageSize()).subscribe({
+      next: (response) => {
+        this.sectores = response.data;
+        this.totalItems.set(response.meta.total);
+        this.totalPagesServer.set(response.meta.ultimaPagina);
         this.hasFetched = true;
         this.isLoading = false;
-        this.currentPage = 1;
         this.cdr.markForCheck();
       },
       error: (err) => {
@@ -207,15 +198,15 @@ export class SectoresPrueba implements OnInit {
   }
 
   setPageSize(size: number) {
-    this.pageSize = size;
-    this.currentPage = 1;
-    this.cdr.markForCheck();
+    this.pageSize.set(size);
+    this.currentPage.set(1);
+    this.mostrarSectores();
   }
 
   goToPage(page: number) {
-    if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
-      this.cdr.markForCheck();
+    if (page >= 1 && page <= this.totalPagesServer()) {
+      this.currentPage.set(page);
+      this.mostrarSectores();
     }
   }
 

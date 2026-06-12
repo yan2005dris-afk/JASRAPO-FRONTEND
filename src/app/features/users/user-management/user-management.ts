@@ -43,6 +43,9 @@ export class UserManagement implements OnInit {
   readonly isLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
+  // ---------- Server Pagination ----------
+  readonly totalPagesFromServer = signal(0);
+
   // ---------- Dropdown ----------
   readonly openDropdownId = signal<number | null>(null);
 
@@ -101,19 +104,6 @@ export class UserManagement implements OnInit {
   // ---------- Filtering & Search ----------
   readonly searchTerm = signal('');
 
-  readonly filteredUsers = computed(() => {
-    const term = this.searchTerm().toLowerCase();
-    return this.users().filter((u) => {
-      const fullName = `${u.nombres} ${u.apellidos}`.toLowerCase();
-      return (
-        !term ||
-        fullName.includes(term) ||
-        u.email.toLowerCase().includes(term) ||
-        (u.rol?.nombre || '').toLowerCase().includes(term)
-      );
-    });
-  });
-
   // ---------- Modal state ----------
   readonly showModal = signal(false);
   readonly isEditing = signal(false);
@@ -138,16 +128,24 @@ export class UserManagement implements OnInit {
   readonly pageSizeOptions = [5, 10, 15];
   readonly pageSize = signal(5);
   readonly currentPage = signal(1);
-
-  readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.filteredUsers().length / this.pageSize())),
-  );
+  readonly totalItems = signal(0);
+  readonly totalPages = signal(1);
 
   readonly pageNumbers = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
 
   readonly pagedUsers = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize();
-    return this.filteredUsers().slice(start, start + this.pageSize());
+    const term = this.searchTerm().toLowerCase().trim();
+    if (!term) {
+      return this.users();
+    }
+    return this.users().filter((u) => {
+      const fullName = `${u.nombres} ${u.apellidos}`.toLowerCase();
+      return (
+        fullName.includes(term) ||
+        u.email.toLowerCase().includes(term) ||
+        (u.rol?.nombre || '').toLowerCase().includes(term)
+      );
+    });
   });
 
   ngOnInit(): void {
@@ -158,9 +156,11 @@ export class UserManagement implements OnInit {
   loadUsers(): void {
     this.isLoading.set(true);
     this.errorMessage.set(null);
-    this.usersService.getUsers(1, 100).subscribe({
+    this.usersService.getUsers(this.currentPage(), this.pageSize()).subscribe({
       next: (response) => {
         this.users.set(response.data);
+        this.totalItems.set(response.meta.total);
+        this.totalPages.set(response.meta.ultimaPagina);
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -189,17 +189,20 @@ export class UserManagement implements OnInit {
     this.pageSize.set(size);
     this.currentPage.set(1);
     this.selectedIds.set(new Set());
+    this.loadUsers();
   }
 
   goToPage(page: number): void {
     if (page < 1 || page > this.totalPages()) return;
     this.currentPage.set(page);
     this.selectedIds.set(new Set());
+    this.loadUsers();
   }
 
   onSearch(term: string): void {
     this.searchTerm.set(term);
     this.currentPage.set(1);
+    this.loadUsers();
   }
 
   // ---------- Modal Logic ----------

@@ -100,7 +100,7 @@
           </thead>
 
           <tbody>
-            @if (pagedComunidades.length === 0) {
+            @if (pagedComunidades().length === 0) {
               <tr>
                 <td colspan="4" class="text-center text-muted py-4">
                   <i class="bi bi-people fs-3 d-block mb-2"></i>
@@ -109,7 +109,7 @@
               </tr>
             }
 
-            @for (comunidad of pagedComunidades; track comunidad.id) {
+            @for (comunidad of pagedComunidades(); track comunidad.id) {
               <tr>
                 <td class="fw-medium text-dark" style="font-size: 0.95rem">
                   {{ comunidad.codigo }}
@@ -172,8 +172,8 @@
         <div class="d-flex align-items-center gap-3">
           <span class="text-muted small">
             Total:
-            <strong>{{ filteredComunidades().length }}</strong>
-            comunidad{{ filteredComunidades().length !== 1 ? 'es' : '' }}
+            <strong>{{ totalItems() }}</strong>
+            comunidad{{ totalItems() !== 1 ? 'es' : '' }}
           </span>
 
           <div class="d-flex align-items-center gap-2">
@@ -181,7 +181,7 @@
 
             <select
               class="form-select form-select-sm page-size-select shadow-none"
-              [value]="pageSize"
+              [value]="pageSize()"
               (change)="onPageSizeChange($event)"
             >
               @for (size of pageSizeOptions; track size) {
@@ -193,12 +193,12 @@
 
         <nav>
           <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
-            <li class="page-item" [class.disabled]="currentPage === 1">
+            <li class="page-item" [class.disabled]="currentPage() === 1">
               <button
                 class="page-link border-0 text-dark bg-transparent fw-medium small"
                 type="button"
-                (click)="goToPage(currentPage - 1)"
-                [disabled]="currentPage === 1"
+                (click)="goToPage(currentPage() - 1)"
+                [disabled]="currentPage() === 1"
               >
                 <i class="bi bi-chevron-left me-1" style="font-size: 0.7rem"></i>
                 Anterior
@@ -208,15 +208,15 @@
             @for (page of pageNumbers; track page) {
               <li
                 class="page-item"
-                [class.active]="currentPage === page"
-                [attr.aria-current]="currentPage === page ? 'page' : null"
+                [class.active]="currentPage() === page"
+                [attr.aria-current]="currentPage() === page ? 'page' : null"
               >
                 <button
                   class="page-link fw-medium"
                   type="button"
-                  [class.shadow-sm]="currentPage === page"
-                  [class.border-0]="currentPage !== page"
-                  [class.bg-transparent]="currentPage !== page"
+                  [class.shadow-sm]="currentPage() === page"
+                  [class.border-0]="currentPage() !== page"
+                  [class.bg-transparent]="currentPage() !== page"
                   [class.text-dark]="true"
                   style="border-radius: 6px"
                   (click)="goToPage(page)"
@@ -226,12 +226,12 @@
               </li>
             }
 
-            <li class="page-item" [class.disabled]="currentPage === totalPages">
+            <li class="page-item" [class.disabled]="currentPage() === totalPages">
               <button
                 class="page-link border-0 text-dark bg-transparent fw-medium small"
                 type="button"
-                (click)="goToPage(currentPage + 1)"
-                [disabled]="currentPage === totalPages"
+                (click)="goToPage(currentPage() + 1)"
+                [disabled]="currentPage() === totalPages"
               >
                 Siguiente
                 <i class="bi bi-chevron-right ms-1" style="font-size: 0.7rem"></i>

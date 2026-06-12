@@ -1,3 +1,5 @@
+import { PaginatedMeta, PaginatedResponse } from '../../../shared/models/paginated-response';
+
 export interface Role {
   rolId: number;
   nombre: string;
@@ -13,16 +15,8 @@ export interface User {
   rol: Role | null;
 }
 
-export interface PaginatedUsersResponse {
-  data: User[];
-  meta: {
-    totalItems: number;
-    itemCount: number;
-    itemsPerPage: number;
-    totalPages: number;
-    currentPage: number;
-  };
-}
+export type PaginatedUsersMeta = PaginatedMeta;
+export type PaginatedUsersResponse = PaginatedResponse<User>;
 
 export interface CreateUserPayload {
   email: string;
