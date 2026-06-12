@@ -151,13 +151,13 @@
         >
           <div class="d-flex align-items-center gap-3">
             <span class="text-muted small">
-              Total: <strong>{{ filteredMedidores.length }}</strong>
+              Total: <strong>{{ totalItems() }}</strong>
             </span>
             <div class="d-flex align-items-center gap-2">
               <span class="text-muted small">Mostrar:</span>
               <select
                 class="form-select form-select-sm page-size-select"
-                [value]="pageSize"
+                [value]="pageSize()"
                 (change)="setPageSize(+$any($event.target).value)"
               >
                 @for (opt of pageSizeOptions; track opt) {
@@ -169,31 +169,31 @@
 
           <nav>
             <ul class="pagination pagination-sm mb-0 gap-1">
-              <li class="page-item" [class.disabled]="currentPage === 1">
+              <li class="page-item" [class.disabled]="currentPage() === 1">
                 <button
                   type="button"
                   class="page-link nav-link-custom"
-                  (click)="goToPage(currentPage - 1)"
-                  [disabled]="currentPage === 1"
+                  (click)="goToPage(currentPage() - 1)"
+                  [disabled]="currentPage() === 1"
                 >
                   <i class="bi bi-chevron-left"></i> Previous
                 </button>
               </li>
 
               @for (page of pageNumbers; track page) {
-                <li class="page-item" [class.active]="currentPage === page">
+                <li class="page-item" [class.active]="currentPage() === page">
                   <button type="button" class="page-link fw-medium" (click)="goToPage(page)">
                     {{ page }}
                   </button>
                 </li>
               }
 
-              <li class="page-item" [class.disabled]="currentPage === totalPages">
+              <li class="page-item" [class.disabled]="currentPage() === totalPages">
                 <button
                   type="button"
                   class="page-link nav-link-custom"
-                  (click)="goToPage(currentPage + 1)"
-                  [disabled]="currentPage === totalPages"
+                  (click)="goToPage(currentPage() + 1)"
+                  [disabled]="currentPage() === totalPages"
                 >
                   Next <i class="bi bi-chevron-right"></i>
                 </button>

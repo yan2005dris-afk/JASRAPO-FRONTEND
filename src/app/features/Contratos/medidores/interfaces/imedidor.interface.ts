@@ -52,3 +52,27 @@ export interface ActualizarEstadoMedidorBody {
 export interface EditarEstadoMedidorPayload extends ActualizarEstadoMedidorBody {
   medidorId: number;
 }
+
+export interface MeterKpis {
+  enBodega: number;
+  instalados: number;
+  danados: number;
+  total: number;
+}
+
+export interface PaginatedMetersMeta {
+  total: number;
+  page: number;
+  limit: number;
+  ultimaPagina: number;
+  paginaActual: number;
+  porPagina: number;
+  anterior: number | null;
+  siguiente: number | null;
+}
+
+export interface PaginatedMetersResponse {
+  data: IMedidorDto[];
+  meta: PaginatedMetersMeta;
+  kpis: MeterKpis;
+}

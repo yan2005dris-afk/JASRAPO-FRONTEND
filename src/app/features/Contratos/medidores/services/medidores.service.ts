@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
@@ -6,18 +6,14 @@ import {
   IMedidor,
   CrearMedidorPayload,
   ActualizarEstadoMedidorBody,
+  PaginatedMetersResponse,
 } from '../interfaces/imedidor.interface';
 import { environment } from '../../../../../environments/environment';
 
-/**
- * Servicio de Comunicación de Inventario de Medidores
- * Gestiona todas las operaciones HTTP (CRUD) contra el endpoint de medidores.
- */
 @Injectable({
   providedIn: 'root',
 })
 export class MedidoresService {
-  // Inyección de dependencias y configuración de rutas
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl;
   private readonly endpoint = `${this.baseUrl}/meters`;
@@ -26,47 +22,28 @@ export class MedidoresService {
     return this.http.get<IEstadoMedidor[]>(`${this.endpoint}/status`);
   }
 
-  /**
-   * Registra un nuevo medidor en la base de datos.
-   * @param medidor Datos del nuevo registro (basados en la interfaz CrearMedidorPayload).
-   * @returns Observable con el objeto del medidor persistido.
-   */
   createMedidor(payload: CrearMedidorPayload): Observable<IMedidor> {
     return this.http.post<IMedidor>(this.endpoint, payload);
   }
 
-  /**
-   * Recupera la colección completa de medidores registrados.
-   * @returns Observable con el arreglo de medidores para la tabla de inventario.
-   */
-  getMedidores(): Observable<IMedidor[]> {
-    return this.http.get<IMedidor[]>(this.endpoint);
+  getMedidores(page = 1, limit = 10, estado?: string): Observable<PaginatedMetersResponse> {
+    let params = new HttpParams().set('page', page.toString()).set('limit', limit.toString());
+
+    if (estado) {
+      params = params.set('estado', estado);
+    }
+
+    return this.http.get<PaginatedMetersResponse>(this.endpoint, { params });
   }
 
-  /**
-   * Consulta la información detallada de un solo registro.
-   * @param id Identificador único numérico del medidor.
-   * @returns Observable con la entidad del medidor solicitada.
-   */
   getMedidorById(id: number): Observable<IMedidor> {
     return this.http.get<IMedidor>(`${this.endpoint}/${id}`);
   }
 
-  /**
-   * Realiza una actualización parcial de los datos de un medidor.
-   * @param id Identificador del registro a modificar (va en la URL).
-   * @param body Objeto con las propiedades a actualizar (va en el JSON).
-   */
   updateMedidor(id: number, body: ActualizarEstadoMedidorBody): Observable<IMedidor> {
-    // Ya no hay desestructuración, no hay variables sin usar, no hay 'any'
     return this.http.patch<IMedidor>(`${this.endpoint}/${id}`, body);
   }
 
-  /**
-   * Remueve de forma definitiva un medidor del sistema.
-   * @param id Identificador del registro a eliminar.
-   * @returns Observable de finalización de la tarea.
-   */
   deleteMedidor(id: number): Observable<void> {
     return this.http.delete<void>(`${this.endpoint}/${id}`);
   }

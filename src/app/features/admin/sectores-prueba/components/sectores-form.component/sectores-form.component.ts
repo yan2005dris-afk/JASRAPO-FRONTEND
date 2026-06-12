@@ -7,7 +7,7 @@ import { Comunidad } from '../../../comunidades/models/comunidad.interface';
 import { ComunidadesService } from '../../../comunidades/services/comunidades.service';
 
 import { Sectores } from '../../models/sectores.interface';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 
 @Component({
@@ -30,7 +30,9 @@ export class SectoresFormComponent implements OnInit {
   private readonly toastService = inject(ToastService);
 
   // se cargan directamente los datos dentro de la variable.
-  communitiesItems: Observable<Comunidad[]> = this.comunidadesService.getAllComunidades();
+  communitiesItems: Observable<Comunidad[]> = this.comunidadesService
+    .getAllComunidades(1, 100)
+    .pipe(map((response) => response.data));
 
   /*
   

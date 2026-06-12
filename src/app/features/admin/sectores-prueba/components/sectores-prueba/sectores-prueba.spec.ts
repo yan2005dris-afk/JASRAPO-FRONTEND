@@ -13,15 +13,22 @@ describe('SectoresPrueba', () => {
   let component: SectoresPrueba;
   let fixture: ComponentFixture<SectoresPrueba>;
 
+  const mockSectoresResponse = {
+    data: [{ sectorId: 1, comunidadId: 1, codigo: 'S1', nombre: 'Sector 1' }],
+    meta: { total: 1, ultimaPagina: 1 },
+  };
+
   const mockSectoresService = {
-    getAllSectores: vi
-      .fn()
-      .mockReturnValue(of([{ sectorId: 1, comunidadId: 1, codigo: 'S1', nombre: 'Sector 1' }])),
+    getAllSectores: vi.fn().mockReturnValue(of(mockSectoresResponse)),
     deleteSector: vi.fn().mockReturnValue(of({})),
   };
 
+  const mockComunidadesResponse = {
+    data: [{ id: 1, nombre: 'Comunidad A' }],
+  };
+
   const mockComunidadesService = {
-    getAllComunidades: vi.fn().mockReturnValue(of([{ id: 1, nombre: 'Comunidad A' }])),
+    getAllComunidades: vi.fn().mockReturnValue(of(mockComunidadesResponse)),
     getComunidadById: vi.fn().mockReturnValue(of({ id: 1, nombre: 'Comunidad A' })),
   };
 

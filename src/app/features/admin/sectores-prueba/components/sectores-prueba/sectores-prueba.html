@@ -172,15 +172,13 @@
       <!-- Left: total + page size selector -->
       <div class="d-flex align-items-center gap-3">
         <span class="text-muted small">
-          Total: <strong>{{ filteredSectores.length }}</strong> sector{{
-            filteredSectores.length !== 1 ? 'es' : ''
-          }}
+          Total: <strong>{{ totalItems() }}</strong> sector{{ totalItems() !== 1 ? 'es' : '' }}
         </span>
         <div class="d-flex align-items-center gap-2">
           <span class="text-muted small">Mostrar:</span>
           <select
             class="form-select form-select-sm page-size-select shadow-none"
-            [value]="pageSize"
+            [value]="pageSize()"
             (change)="setPageSize(+$any($event.target).value)"
           >
             @for (opt of pageSizeOptions; track opt) {
@@ -194,13 +192,13 @@
       <nav>
         <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
           <!-- Previous -->
-          <li class="page-item" [class.disabled]="currentPage === 1">
+          <li class="page-item" [class.disabled]="currentPage() === 1">
             <a
               class="page-link border-0 text-dark bg-transparent fw-medium small"
               href="#"
-              (click)="$event.preventDefault(); goToPage(currentPage - 1)"
-              [attr.tabindex]="currentPage === 1 ? -1 : null"
-              [attr.aria-disabled]="currentPage === 1"
+              (click)="$event.preventDefault(); goToPage(currentPage() - 1)"
+              [attr.tabindex]="currentPage() === 1 ? -1 : null"
+              [attr.aria-disabled]="currentPage() === 1"
             >
               <i class="bi bi-chevron-left me-1" style="font-size: 0.7rem"></i> Previous
             </a>
@@ -210,14 +208,14 @@
           @for (page of pageNumbers; track page) {
             <li
               class="page-item"
-              [class.active]="currentPage === page"
-              [attr.aria-current]="currentPage === page ? 'page' : null"
+              [class.active]="currentPage() === page"
+              [attr.aria-current]="currentPage() === page ? 'page' : null"
             >
               <a
                 class="page-link fw-medium"
-                [class.shadow-sm]="currentPage === page"
-                [class.border-0]="currentPage !== page"
-                [class.bg-transparent]="currentPage !== page"
+                [class.shadow-sm]="currentPage() === page"
+                [class.border-0]="currentPage() !== page"
+                [class.bg-transparent]="currentPage() !== page"
                 [class.text-dark]="true"
                 style="border-radius: 6px"
                 href="#"
@@ -228,13 +226,13 @@
           }
 
           <!-- Next -->
-          <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <li class="page-item" [class.disabled]="currentPage() === totalPages">
             <a
               class="page-link border-0 text-dark bg-transparent fw-medium small"
               href="#"
-              (click)="$event.preventDefault(); goToPage(currentPage + 1)"
-              [attr.tabindex]="currentPage === totalPages ? -1 : null"
-              [attr.aria-disabled]="currentPage === totalPages"
+              (click)="$event.preventDefault(); goToPage(currentPage() + 1)"
+              [attr.tabindex]="currentPage() === totalPages ? -1 : null"
+              [attr.aria-disabled]="currentPage() === totalPages"
             >
               Next <i class="bi bi-chevron-right ms-1" style="font-size: 0.7rem"></i>
             </a>
