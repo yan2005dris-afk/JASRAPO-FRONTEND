@@ -23,6 +23,17 @@ export const adminRoutes: Routes = [
           ),
       },
       {
+        path: 'roles',
+        loadComponent: () => import('./roles/roles').then((m) => m.Roles),
+        children: [
+          {
+            path: ':rolId',
+            loadComponent: () =>
+              import('./roles/role-editor/role-editor').then((m) => m.RoleEditor),
+          },
+        ],
+      },
+      {
         path: 'config',
         redirectTo: '',
         pathMatch: 'full',
