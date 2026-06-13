@@ -58,8 +58,7 @@ export const routes: Routes = [
           },
           {
             path: 'roles',
-            loadComponent: () =>
-              import('./features/admin/roles/roles').then((m) => m.Roles),
+            loadComponent: () => import('./features/admin/roles/roles').then((m) => m.Roles),
             children: [
               {
                 path: ':rolId',

@@ -26,7 +26,6 @@
     </button>
   </div>
 
-
   @if (isLoading()) {
     <div class="d-flex justify-content-center align-items-center py-5">
       <div class="spinner-border text-primary" role="status">
@@ -42,16 +41,15 @@
     <div class="d-flex flex-column gap-2">
       @for (group of groupedPermissions(); track group.recurso) {
         <div class="card border shadow-sm">
-
           <div
             class="card-header d-flex align-items-center gap-3 py-3 user-select-none"
-            style="cursor: pointer;"
+            style="cursor: pointer"
             (click)="toggleExpansion(group.recurso)"
           >
             <input
               type="checkbox"
               class="form-check-input flex-shrink-0 mt-0"
-              style="width: 1.1em; height: 1.1em;"
+              style="width: 1.1em; height: 1.1em"
               [checked]="group.allSelected"
               [indeterminate]="group.indeterminate"
               (click)="$event.stopPropagation(); toggleGroup(group)"
@@ -77,7 +75,7 @@
                   <div class="col-md-6 col-lg-4">
                     <div
                       class="border rounded p-3 h-100 d-flex gap-3 align-items-start"
-                      style="cursor: pointer; transition: background 0.15s;"
+                      style="cursor: pointer; transition: background 0.15s"
                       [class.border-primary]="perm.assigned"
                       [class.bg-primary-subtle]="perm.assigned"
                       (click)="togglePermission(perm.permisoId)"
@@ -105,7 +103,6 @@
               </div>
             </div>
           }
-
         </div>
       }
     </div>

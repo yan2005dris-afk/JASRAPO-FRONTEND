@@ -24,7 +24,7 @@ export class Roles implements OnInit {
   ngOnInit(): void {
     this.rolesService.getRoles().subscribe({
       next: (res) => {
-        const list = Array.isArray(res) ? res : (res as { data: RoleListItem[] }).data ?? [];
+        const list = Array.isArray(res) ? res : ((res as { data: RoleListItem[] }).data ?? []);
         this.roles.set(list);
         this.isLoading.set(false);
       },
