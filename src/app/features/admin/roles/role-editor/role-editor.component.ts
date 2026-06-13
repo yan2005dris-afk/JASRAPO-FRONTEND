@@ -24,7 +24,7 @@ import {
   selector: 'app-role-editor',
   standalone: true,
   imports: [CommonModule],
-  templateUrl: './role-editor.html',
+  templateUrl: './role-editor.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RoleEditor implements OnInit {

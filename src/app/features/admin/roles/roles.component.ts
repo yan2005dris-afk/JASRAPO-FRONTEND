@@ -9,8 +9,8 @@ import { RoleListItem } from './models/role-permission.interface';
   selector: 'app-roles',
   standalone: true,
   imports: [RouterOutlet, RouterLink, CommonModule],
-  templateUrl: './roles.html',
-  styleUrl: './roles.scss',
+  templateUrl: './roles.component.html',
+  styleUrl: './roles.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Roles implements OnInit {

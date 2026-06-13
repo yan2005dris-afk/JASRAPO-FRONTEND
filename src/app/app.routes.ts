@@ -58,12 +58,13 @@ export const routes: Routes = [
           },
           {
             path: 'roles',
-            loadComponent: () => import('./features/admin/roles/roles').then((m) => m.Roles),
+            loadComponent: () =>
+              import('./features/admin/roles/roles.component').then((m) => m.Roles),
             children: [
               {
                 path: ':rolId',
                 loadComponent: () =>
-                  import('./features/admin/roles/role-editor/role-editor').then(
+                  import('./features/admin/roles/role-editor/role-editor.component').then(
                     (m) => m.RoleEditor,
                   ),
               },
