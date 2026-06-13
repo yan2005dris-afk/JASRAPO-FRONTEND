@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { KpiDashboardComponent } from './dashboard-kpi';
+import { KpiDashboardComponent } from './kpi-dashboard';
 
 describe('KpiDashboardComponent', () => {
   let component: KpiDashboardComponent;

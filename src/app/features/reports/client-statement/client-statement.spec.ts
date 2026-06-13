@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ClientStatementComponent } from './estado-cuenta-cliente';
+import { ClientStatementComponent } from './client-statement';
 
 describe('ClientStatementComponent', () => {
   let component: ClientStatementComponent;

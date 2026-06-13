@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { ZoneConsumptionComponent } from './consumo-zonas';
+import { ZoneConsumptionComponent } from './zone-consumption';
 
 describe('ZoneConsumptionComponent', () => {
   let component: ZoneConsumptionComponent;

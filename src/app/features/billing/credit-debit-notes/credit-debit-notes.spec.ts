@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CreditDebitNotesComponent } from './notas-de-credito-debito';
+import { CreditDebitNotesComponent } from './credit-debit-notes';
 
 describe('CreditDebitNotesComponent', () => {
   let component: CreditDebitNotesComponent;

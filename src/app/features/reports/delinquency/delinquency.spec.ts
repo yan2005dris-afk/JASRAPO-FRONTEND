@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { DelinquencyComponent } from './recaudacion-morosida';
+import { DelinquencyComponent } from './delinquency';
 
 describe('DelinquencyComponent', () => {
   let component: DelinquencyComponent;

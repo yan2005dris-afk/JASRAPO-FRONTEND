@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { BillingSubmissionComponent } from './envio-de-facturacion';
+import { BillingSubmissionComponent } from './billing-submission';
 
 describe('BillingSubmissionComponent', () => {
   let component: BillingSubmissionComponent;

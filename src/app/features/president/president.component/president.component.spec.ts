@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { PresidentComponent } from './presidente.component';
+import { PresidentComponent } from './president.component';
 
 describe('PresidentComponent', () => {
   let component: PresidentComponent;

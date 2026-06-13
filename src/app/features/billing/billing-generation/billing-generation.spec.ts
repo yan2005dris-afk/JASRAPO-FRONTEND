@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { BillingGenerationComponent } from './generacion-planilla';
+import { BillingGenerationComponent } from './billing-generation';
 
 describe('BillingGenerationComponent', () => {
   let component: BillingGenerationComponent;
