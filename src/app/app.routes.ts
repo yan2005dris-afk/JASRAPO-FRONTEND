@@ -12,9 +12,7 @@ export const routes: Routes = [
   {
     path: 'consulta-planilla',
     loadComponent: () =>
-      import('./features/bill-inquiry/bill-inquiry.component').then(
-        (m) => m.BillInquiryComponent,
-      ),
+      import('./features/bill-inquiry/bill-inquiry.component').then((m) => m.BillInquiryComponent),
     canActivate: [guestGuard],
   },
   {
@@ -59,9 +57,7 @@ export const routes: Routes = [
           {
             path: 'config',
             loadComponent: () =>
-              import('./features/admin/component/admin.component').then(
-                (m) => m.AdminComponent,
-              ),
+              import('./features/admin/component/admin.component').then((m) => m.AdminComponent),
           },
         ],
       },
@@ -176,9 +172,7 @@ export const routes: Routes = [
           {
             path: 'LecturaDeConsumo',
             loadComponent: () =>
-              import('./features/contracts/readings/readings').then(
-                (m) => m.ReadingsComponent,
-              ),
+              import('./features/contracts/readings/readings').then((m) => m.ReadingsComponent),
           },
           {
             path: 'Medidores',
@@ -188,9 +182,7 @@ export const routes: Routes = [
           {
             path: 'TarifasYCategorias',
             loadComponent: () =>
-              import('./features/contracts/tariffs/tariffs').then(
-                (m) => m.TariffsComponent,
-              ),
+              import('./features/contracts/tariffs/tariffs').then((m) => m.TariffsComponent),
           },
         ],
       },
@@ -230,9 +222,7 @@ export const routes: Routes = [
           {
             path: 'RecaudacionYPagos',
             loadComponent: () =>
-              import('./features/billing/payments/payments').then(
-                (m) => m.PaymentsComponent,
-              ),
+              import('./features/billing/payments/payments').then((m) => m.PaymentsComponent),
           },
         ],
       },
@@ -244,12 +234,16 @@ export const routes: Routes = [
           {
             path: 'ConsumoZonas',
             loadComponent: () =>
-              import('./features/reports/zone-consumption/zone-consumption').then((m) => m.ZoneConsumptionComponent),
+              import('./features/reports/zone-consumption/zone-consumption').then(
+                (m) => m.ZoneConsumptionComponent,
+              ),
           },
           {
             path: 'DashboardKpi',
             loadComponent: () =>
-              import('./features/reports/kpi-dashboard/kpi-dashboard').then((m) => m.KpiDashboardComponent),
+              import('./features/reports/kpi-dashboard/kpi-dashboard').then(
+                (m) => m.KpiDashboardComponent,
+              ),
           },
           {
             path: 'EstadoCuentaCliente',
