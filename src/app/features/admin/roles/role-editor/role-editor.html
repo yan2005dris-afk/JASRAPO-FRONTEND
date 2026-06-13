@@ -44,7 +44,10 @@
           <div
             class="card-header d-flex align-items-center gap-3 py-3 user-select-none"
             style="cursor: pointer"
+            tabindex="0"
             (click)="toggleExpansion(group.recurso)"
+            (keydown.enter)="toggleExpansion(group.recurso)"
+            (keydown.space)="toggleExpansion(group.recurso)"
           >
             <input
               type="checkbox"
@@ -76,9 +79,12 @@
                     <div
                       class="border rounded p-3 h-100 d-flex gap-3 align-items-start"
                       style="cursor: pointer; transition: background 0.15s"
+                      tabindex="0"
                       [class.border-primary]="perm.assigned"
                       [class.bg-primary-subtle]="perm.assigned"
                       (click)="togglePermission(perm.permisoId)"
+                      (keydown.enter)="togglePermission(perm.permisoId)"
+                      (keydown.space)="togglePermission(perm.permisoId)"
                     >
                       <input
                         type="checkbox"
