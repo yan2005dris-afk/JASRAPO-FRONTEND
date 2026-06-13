@@ -17,18 +17,18 @@
   <section class="metrics-grid mb-4">
     <div class="card metric-card card-bodega shadow-sm">
       <span class="metric-label">[EN BODEGA]</span>
-      <h3 class="metric-value fw-bold mt-2">{{ metersEnBodega }}</h3>
+      <h3 class="metric-value fw-bold mt-2">{{ warehouseMeters }}</h3>
     </div>
 
     <div class="card metric-card card-instalados shadow-sm">
       <span class="metric-label">[INSTALADOS]</span>
-      <h3 class="metric-value fw-bold mt-2">{{ metersInstalados }}</h3>
+      <h3 class="metric-value fw-bold mt-2">{{ installedMeters }}</h3>
       <i class="bi bi-link-45deg metric-icon icon-blue"></i>
     </div>
 
     <div class="card metric-card card-danados shadow-sm">
       <span class="metric-label">[DAÑADOS]</span>
-      <h3 class="metric-value fw-bold mt-2">{{ metersDanados }}</h3>
+      <h3 class="metric-value fw-bold mt-2">{{ damagedMeters }}</h3>
       <i class="bi bi-exclamation-triangle metric-icon text-danger"></i>
     </div>
   </section>
@@ -57,7 +57,7 @@
               <p class="mb-0 small">{{ errorMessage }}</p>
             </div>
           </div>
-          <button class="btn btn-outline-danger btn-sm px-3" (click)="cargarMetersComponent()">
+          <button class="btn btn-outline-danger btn-sm px-3" (click)="loadMeters()">
             <i class="bi bi-x me-1"></i> Cerrar
           </button>
         </div>

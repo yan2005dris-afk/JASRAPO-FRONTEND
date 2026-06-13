@@ -105,17 +105,17 @@ export class MetersComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.cargarMetersComponent();
+    this.loadMeters();
   }
 
-  cargarMetersComponent(): void {
+  loadMeters(): void {
     this.isLoading = true;
     this.errorMessage = '';
     this.cdr.detectChanges();
 
     forkJoin({
-      estados: this.metersService.getEstadosMedidor(),
-      response: this.metersService.getMetersComponent(this.currentPage(), this.pageSize()),
+      estados: this.metersService.getMeterStatuses(),
+      response: this.metersService.getMeters(this.currentPage(), this.pageSize()),
     })
       .pipe(
         finalize(() => {
@@ -126,8 +126,8 @@ export class MetersComponent implements OnInit {
       .subscribe({
         next: ({ estados, response }) => {
           this.estadosCatalogo = estados;
-          const metersCrudos = response.data as IMeterDto[];
-          this.meters = metersCrudos.map((medidorDto) => {
+          const rawMeters = response.data as IMeterDto[];
+          this.meters = rawMeters.map((medidorDto) => {
             const estadoEncontrado = this.estadosCatalogo.find((e) => {
               if (typeof medidorDto.estado === 'string') {
                 return e.codigo === medidorDto.estado;
@@ -161,13 +161,13 @@ export class MetersComponent implements OnInit {
   setPageSize(size: number) {
     this.pageSize.set(size);
     this.currentPage.set(1);
-    this.cargarMetersComponent();
+    this.loadMeters();
   }
 
   goToPage(page: number) {
     if (page >= 1 && page <= this.totalPages) {
       this.currentPage.set(page);
-      this.cargarMetersComponent();
+      this.loadMeters();
     }
   }
 
@@ -201,12 +201,12 @@ export class MetersComponent implements OnInit {
 
   guardarMedidor(nuevoMedidor: CrearMedidorPayload): void {
     this.isSaving = true;
-    this.metersService.createMedidor(nuevoMedidor).subscribe({
+    this.metersService.createMeter(nuevoMedidor).subscribe({
       next: () => {
         this.isSaving = false;
         this.closeRegistrar();
         this.toastService.success('Medidor registrado correctamente', 'Éxito');
-        this.cargarMetersComponent();
+        this.loadMeters();
       },
       error: (err: HttpErrorResponse) => {
         this.isSaving = false;
@@ -229,12 +229,12 @@ export class MetersComponent implements OnInit {
       motivo: payload.motivo,
     };
 
-    this.metersService.updateMedidor(id, body).subscribe({
+    this.metersService.updateMeter(id, body).subscribe({
       next: () => {
         this.isSaving = false;
         this.closeEditar();
         this.toastService.success('Estado del medidor actualizado correctamente', 'Éxito');
-        this.cargarMetersComponent();
+        this.loadMeters();
       },
       error: (err: HttpErrorResponse) => {
         this.isSaving = false;
@@ -261,10 +261,10 @@ export class MetersComponent implements OnInit {
         if (confirmed) {
           this.isLoading = true;
           this.cdr.markForCheck();
-          this.metersService.deleteMedidor(id).subscribe({
+          this.metersService.deleteMeter(id).subscribe({
             next: () => {
               this.toastService.success('Medidor eliminado correctamente', 'Éxito');
-              this.cargarMetersComponent();
+              this.loadMeters();
             },
             error: (err: HttpErrorResponse) => {
               this.isLoading = false;
@@ -281,13 +281,13 @@ export class MetersComponent implements OnInit {
   }
 
   // KPIs desde el backend
-  get metersEnBodega(): number {
+  get warehouseMeters(): number {
     return this.kpis().enBodega;
   }
-  get metersInstalados(): number {
+  get installedMeters(): number {
     return this.kpis().instalados;
   }
-  get metersDanados(): number {
+  get damagedMeters(): number {
     return this.kpis().danados;
   }
 

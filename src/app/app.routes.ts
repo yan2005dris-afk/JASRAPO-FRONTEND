@@ -255,8 +255,8 @@ export const routes: Routes = [
           {
             path: 'RecaudacionMorosida',
             loadComponent: () =>
-              import('./features/reports/delinquency/delinquency').then(
-                (m) => m.DelinquencyComponent,
+              import('./features/reports/delinquency-submission/delinquency-submission').then(
+                (m) => m.DelinquencySubmissionComponent,
               ),
           },
         ],
