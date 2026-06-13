@@ -1,0 +1,250 @@
+<!-- 
+  Componente de Inventario de Medidores 
+  Maneja la visualización de métricas, listado paginado y gestión de estados.
+-->
+<div class="meters-page p-4">
+  <!-- Cabecera de la página -->
+  <header
+    class="page-header d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3"
+  >
+    <h2 class="mb-0 fw-bold">Inventario de Medidores</h2>
+    <button class="btn btn-register btn-sm px-3 py-2 fw-medium" (click)="openRegistrar()">
+      Registrar medidor
+    </button>
+  </header>
+
+  <!-- Rejilla de indicadores principales -->
+  <section class="metrics-grid mb-4">
+    <div class="card metric-card card-bodega shadow-sm">
+      <span class="metric-label">[EN BODEGA]</span>
+      <h3 class="metric-value fw-bold mt-2">{{ metersEnBodega }}</h3>
+    </div>
+
+    <div class="card metric-card card-instalados shadow-sm">
+      <span class="metric-label">[INSTALADOS]</span>
+      <h3 class="metric-value fw-bold mt-2">{{ metersInstalados }}</h3>
+      <i class="bi bi-link-45deg metric-icon icon-blue"></i>
+    </div>
+
+    <div class="card metric-card card-danados shadow-sm">
+      <span class="metric-label">[DAÑADOS]</span>
+      <h3 class="metric-value fw-bold mt-2">{{ metersDanados }}</h3>
+      <i class="bi bi-exclamation-triangle metric-icon text-danger"></i>
+    </div>
+  </section>
+
+  <!-- Contenedor principal de la tabla -->
+  <div class="card shadow-sm table-card">
+    <div class="card-body p-0">
+      <!-- Estado de carga -->
+      @if (isLoading) {
+        <div class="loader-container text-center p-5">
+          <div class="spinner-border text-primary" role="status"></div>
+          <p class="mt-3 mb-0">Cargando medidores...</p>
+        </div>
+      }
+
+      <!-- Estado de error -->
+      @if (errorMessage && !isLoading) {
+        <div
+          class="m-4 alert alert-danger d-flex justify-content-between align-items-center shadow-sm"
+          role="alert"
+        >
+          <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+            <div>
+              <h6 class="alert-heading mb-1 fw-bold">Error al cargar la información</h6>
+              <p class="mb-0 small">{{ errorMessage }}</p>
+            </div>
+          </div>
+          <button class="btn btn-outline-danger btn-sm px-3" (click)="cargarMetersComponent()">
+            <i class="bi bi-x me-1"></i> Cerrar
+          </button>
+        </div>
+      }
+
+      <!-- Contenido de datos -->
+      @if (hasFetched && !isLoading) {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th scope="col" class="ps-4">N° Serie</th>
+                <th scope="col">Marca</th>
+                <th scope="col">Fecha Ingreso</th>
+                <th scope="col">Estado</th>
+                <th scope="col">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (medidor of pagedMetersComponent; track medidor.serie) {
+                <tr>
+                  <td class="ps-4 fw-medium text-dark">{{ medidor.serie }}</td>
+                  <td class="text-muted">{{ medidor.marca }}</td>
+                  <td class="text-muted">{{ medidor.fechaInstalacion ?? 'Sin fecha' }}</td>
+                  <td>
+                    <span>
+                      <span
+                        [class]="
+                          'badge status-badge ' + getEstadoBadgeClass(medidor.estado?.codigo)
+                        "
+                      >
+                        @if (getEstadoIcon(medidor.estado?.codigo)) {
+                          <i [class]="'bi ' + getEstadoIcon(medidor.estado?.codigo)"></i>
+                        }
+                        {{ getEstadoNombre(medidor) }}
+                      </span>
+                    </span>
+                  </td>
+                  <td>
+                    <div class="dropdown">
+                      <button
+                        class="btn btn-link text-muted p-0 shadow-none"
+                        (click)="toggleDropdown(medidor.medidorId!, $event)"
+                        aria-label="Menú de acciones"
+                      >
+                        <i class="bi bi-three-dots-vertical"></i>
+                      </button>
+                      <ul
+                        class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                        [class.show]="openDropdownId === medidor.medidorId"
+                        style="min-width: 130px"
+                      >
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            (click)="openEditar(medidor)"
+                          >
+                            <i class="bi bi-pencil-fill text-primary" style="font-size: 0.8rem"></i>
+                            Editar
+                          </button>
+                        </li>
+                        <li>
+                          <hr class="dropdown-divider" />
+                        </li>
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                            (click)="eliminarMedidor(medidor)"
+                          >
+                            <i class="bi bi-trash-fill" style="font-size: 0.8rem"></i>
+                            Eliminar
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  </td>
+                </tr>
+              }
+              @if (pagedMetersComponent.length === 0) {
+                <tr>
+                  <td colspan="5" class="empty-row">No se encontraron meters.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paginación y Controles -->
+        <footer
+          class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3"
+        >
+          <div class="d-flex align-items-center gap-3">
+            <span class="text-muted small">
+              Total: <strong>{{ totalItems() }}</strong>
+            </span>
+            <div class="d-flex align-items-center gap-2">
+              <span class="text-muted small">Mostrar:</span>
+              <select
+                class="form-select form-select-sm page-size-select"
+                [value]="pageSize()"
+                (change)="setPageSize(+$any($event.target).value)"
+              >
+                @for (opt of pageSizeOptions; track opt) {
+                  <option [value]="opt">{{ opt }}</option>
+                }
+              </select>
+            </div>
+          </div>
+
+          <nav>
+            <ul class="pagination pagination-sm mb-0 gap-1">
+              <li class="page-item" [class.disabled]="currentPage() === 1">
+                <button
+                  type="button"
+                  class="page-link nav-link-custom"
+                  (click)="goToPage(currentPage() - 1)"
+                  [disabled]="currentPage() === 1"
+                >
+                  <i class="bi bi-chevron-left"></i> Previous
+                </button>
+              </li>
+
+              @for (page of pageNumbers; track page) {
+                <li class="page-item" [class.active]="currentPage() === page">
+                  <button type="button" class="page-link fw-medium" (click)="goToPage(page)">
+                    {{ page }}
+                  </button>
+                </li>
+              }
+
+              <li class="page-item" [class.disabled]="currentPage() === totalPages">
+                <button
+                  type="button"
+                  class="page-link nav-link-custom"
+                  (click)="goToPage(currentPage() + 1)"
+                  [disabled]="currentPage() === totalPages"
+                >
+                  Next <i class="bi bi-chevron-right"></i>
+                </button>
+              </li>
+            </ul>
+          </nav>
+        </footer>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Modales de Gestión -->
+@if (showRegistrarModal) {
+  <div
+    class="modal fade show d-block"
+    tabindex="-1"
+    style="background-color: rgba(15, 23, 42, 0.45)"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <app-register-meter
+          [isSaving]="isSaving"
+          [errorMessage]="modalErrorMessage"
+          (guardar)="guardarMedidor($event)"
+          (cancelar)="closeRegistrar()"
+        >
+        </app-register-meter>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showEditarModal && editingMedidor) {
+  <div
+    class="modal fade show d-block"
+    tabindex="-1"
+    style="background-color: rgba(15, 23, 42, 0.45)"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <app-edit-meter
+          [medidor]="editingMedidor"
+          [estados]="estadosCatalogo"
+          [isSaving]="isSaving"
+          [errorMessage]="modalErrorMessage"
+          (cancelar)="closeEditar()"
+          (guardar)="actualizarMedidor($event)"
+        >
+        </app-edit-meter>
+      </div>
+    </div>
+  </div>
+}
