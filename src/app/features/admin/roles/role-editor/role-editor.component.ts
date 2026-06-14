@@ -27,7 +27,7 @@ import {
   templateUrl: './role-editor.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RoleEditor implements OnInit {
+export class RoleEditorComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly rolesService = inject(RolesService);

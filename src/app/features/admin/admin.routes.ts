@@ -24,12 +24,14 @@ export const adminRoutes: Routes = [
       },
       {
         path: 'roles',
-        loadComponent: () => import('./roles/roles.component').then((m) => m.Roles),
+        loadComponent: () => import('./roles/roles.component').then((m) => m.RolesComponent),
         children: [
           {
             path: ':rolId',
             loadComponent: () =>
-              import('./roles/role-editor/role-editor.component').then((m) => m.RoleEditor),
+              import('./roles/role-editor/role-editor.component').then(
+                (m) => m.RoleEditorComponent,
+              ),
           },
         ],
       },

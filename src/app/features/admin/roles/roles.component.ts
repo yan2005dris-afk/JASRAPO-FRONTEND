@@ -13,7 +13,7 @@ import { RoleListItem } from './models/role-permission.interface';
   styleUrl: './roles.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Roles implements OnInit {
+export class RolesComponent implements OnInit {
   private readonly rolesService = inject(RolesService);
   private readonly toast = inject(ToastService);
 
