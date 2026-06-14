@@ -1,7 +1,7 @@
 <nav class="h-100 d-flex flex-column bg-white">
-  <div class="sidebar-brand text-center py-4 border-bottom">
-    <img src="https://i.imgur.com/oHyMUhU.png" alt="AquaSync Olón Logo" class="brand-logo mb-2" />
-    <h5 class="fw-bold mb-0 text-dark" style="font-size: 1.1rem; letter-spacing: -0.5px">
+  <div class="sidebar-brand d-flex align-items-center gap-2 px-4 py-3 border-bottom">
+    <img src="https://i.imgur.com/oHyMUhU.png" alt="AquaSync Olón Logo" class="brand-logo" />
+    <h5 class="fw-bold mb-0 text-dark link-text" style="font-size: 1.05rem; letter-spacing: -0.5px">
       AquaSync Olón
     </h5>
   </div>
@@ -16,12 +16,14 @@
               class="nav-link nav-link-custom d-flex justify-content-between align-items-center w-100 border-0 bg-transparent"
               (click)="toggleItem(item.id)"
               [attr.aria-expanded]="expandedItems()[item.id]"
+              [matTooltip]="!layoutService.sidebarOpen() ? item.name : ''"
+              matTooltipPosition="right"
             >
               <span class="text-dark d-flex align-items-center">
                 @if (item.icon) {
                   <i [class]="'bi ' + item.icon + ' me-2'"></i>
                 }
-                {{ item.name }}
+                <span class="link-text">{{ item.name }}</span>
               </span>
               <i
                 class="bi bi-chevron-down align-middle fw-bold"
@@ -53,11 +55,13 @@
               [routerLink]="item.route"
               routerLinkActive="active"
               class="nav-link nav-link-custom d-flex align-items-center text-dark"
+              [matTooltip]="!layoutService.sidebarOpen() ? item.name : ''"
+              matTooltipPosition="right"
             >
               @if (item.icon) {
                 <i [class]="'bi ' + item.icon + ' me-2'"></i>
               }
-              <span [class.ps-4]="!item.icon">{{ item.name }}</span>
+              <span class="link-text" [class.ps-4]="!item.icon">{{ item.name }}</span>
             </a>
           }
         </li>
