@@ -1,12 +1,12 @@
 /**
  * Variables de color para estados y marca
  */
-$primary-blue: #0ea5e9;
-$hover-blue: #0284c7;
-$bg-light: #fafbfc;
-$text-main: #0f172a;
-$text-muted: #64748b;
-$border-color: #e2e8f0;
+$primary-blue: var(--primary-color);
+$hover-blue: var(--secondary-color);
+$bg-light: var(--light-bg);
+$text-main: var(--dark-text);
+$text-muted: var(--muted-text);
+$border-color: var(--border-color);
 
 .meters-page {
   min-height: 100vh;
@@ -44,7 +44,7 @@ $border-color: #e2e8f0;
   transition: background 0.2s;
 
   &:hover {
-    background-color: #f1f5f9;
+    background-color: var(--soft-blue-bg);
   }
 
   &.btn-link-blue {
@@ -72,7 +72,7 @@ $border-color: #e2e8f0;
   position: relative;
 
   &.card-bodega {
-    background-color: #f8fafc;
+    background-color: var(--soft-blue-bg);
   }
   &.card-instalados {
     background-color: #ffffff;
@@ -148,8 +148,8 @@ $border-color: #e2e8f0;
   justify-content: center;
 
   &.badge-instalado {
-    background: #dbeafe;
-    color: #3b82f6;
+    background: var(--soft-blue-bg);
+    color: var(--primary-color);
   }
   &.badge-disponible {
     background: #dcfce7;

@@ -2,17 +2,39 @@
    Global Table Styles
    ===================== */
 
+.custom-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
 .custom-table th {
-  background-color: transparent;
-  border-bottom-width: 1px;
-  padding: 1rem 1.25rem;
-  font-size: 0.85rem;
+  background-color: var(--light-bg) !important;
+  color: var(--dark-text) !important;
+  border-bottom: 2px solid var(--border-color) !important;
+  padding: 0.875rem 1.25rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  vertical-align: middle;
 }
 
 .custom-table td {
-  padding: 1rem 1.25rem;
+  padding: 0.875rem 1.25rem;
   border-bottom: 1px solid var(--border-color);
   vertical-align: middle;
+  color: var(--dark-text);
+  font-size: 0.9rem;
+  background-color: var(--white);
+}
+
+.custom-table tbody tr {
+  transition: background-color 0.15s ease-in-out;
+}
+
+.custom-table.table-hover tbody tr:hover td {
+  background-color: rgba(12, 158, 161, 0.04) !important;
 }
 
 .custom-table tbody tr:last-child td {

@@ -2,16 +2,19 @@ import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MenuService } from '../../core/services/menu.service';
+import { LayoutService } from '../../core/services/layout.service';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, MatTooltipModule],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Sidebar {
   readonly menuService = inject(MenuService);
+  readonly layoutService = inject(LayoutService);
 
   /**
    * Estado reactivo para controlar qué elementos del menú están expandidos.
@@ -24,10 +27,18 @@ export class Sidebar {
    * @param itemId ID único del elemento del menú.
    */
   toggleItem(itemId: number): void {
-    this.expandedItems.update((state) => ({
-      ...state,
-      [itemId]: !state[itemId],
-    }));
+    if (!this.layoutService.sidebarOpen()) {
+      this.layoutService.openSidebar();
+      this.expandedItems.update((state) => ({
+        ...state,
+        [itemId]: true,
+      }));
+    } else {
+      this.expandedItems.update((state) => ({
+        ...state,
+        [itemId]: !state[itemId],
+      }));
+    }
   }
 
   /**
