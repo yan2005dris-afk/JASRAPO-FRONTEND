@@ -155,7 +155,8 @@
       justify-content: center !important;
       border-left: none !important;
 
-      i {
+      i,
+      .material-symbols-outlined {
         margin-right: 0 !important;
         font-size: 1.25rem !important;
       }
@@ -298,9 +299,10 @@
   color: var(--primary-color) !important;
 }
 
-.nav-link-custom i {
+.nav-link-custom i,
+.nav-link-custom .material-symbols-outlined {
   display: inline-block;
-  font-size: 1.05rem;
+  font-size: 1.25rem; /* Material Symbols look better at 1.25rem (20px) */
   transition: transform 0.2s ease-in-out;
 }
 

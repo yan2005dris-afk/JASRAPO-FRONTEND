@@ -21,7 +21,7 @@
             >
               <span class="text-dark d-flex align-items-center">
                 @if (item.icon) {
-                  <i [class]="'bi ' + item.icon + ' me-2'"></i>
+                  <span class="material-symbols-outlined me-2 align-middle">{{ item.icon }}</span>
                 }
                 <span class="link-text">{{ item.name }}</span>
               </span>
@@ -59,7 +59,7 @@
               matTooltipPosition="right"
             >
               @if (item.icon) {
-                <i [class]="'bi ' + item.icon + ' me-2'"></i>
+                <span class="material-symbols-outlined me-2 align-middle">{{ item.icon }}</span>
               }
               <span class="link-text" [class.ps-4]="!item.icon">{{ item.name }}</span>
             </a>
