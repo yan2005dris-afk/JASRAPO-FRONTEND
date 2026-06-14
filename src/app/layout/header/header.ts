@@ -1,11 +1,11 @@
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
-
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { LayoutService } from '../../core/services/layout.service';
 
 @Component({
   selector: 'app-header',
-  imports: [],
+  imports: [RouterModule],
   templateUrl: './header.html',
   styleUrl: './header.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -16,6 +16,7 @@ import { LayoutService } from '../../core/services/layout.service';
 export class Header {
   readonly authService = inject(AuthService);
   readonly layoutService = inject(LayoutService);
+  readonly router = inject(Router);
   readonly userDropdownOpen = signal(false);
 
   toggleSidebar(): void {

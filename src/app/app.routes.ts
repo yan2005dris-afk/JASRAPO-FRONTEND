@@ -37,10 +37,48 @@ export const routes: Routes = [
         children: [
           {
             path: 'users',
-            loadComponent: () =>
-              import('./features/users/user-management/user-management').then(
-                (m) => m.UserManagement,
-              ),
+            children: [
+              {
+                path: '',
+                pathMatch: 'full',
+                loadComponent: () =>
+                  import('./features/users/user-management/user-management').then(
+                    (m) => m.UserManagement,
+                  ),
+              },
+              {
+                path: 'new',
+                loadComponent: () =>
+                  import('./features/users/user-form/user-form.component').then(
+                    (m) => m.UserFormComponent,
+                  ),
+              },
+              {
+                path: ':id/edit',
+                loadComponent: () =>
+                  import('./features/users/user-form/user-form.component').then(
+                    (m) => m.UserFormComponent,
+                  ),
+              },
+            ],
+          },
+          {
+            path: 'roles',
+            children: [
+              {
+                path: '',
+                pathMatch: 'full',
+                loadComponent: () =>
+                  import('./features/admin/roles/roles').then((m) => m.Roles),
+              },
+              {
+                path: ':rolId',
+                loadComponent: () =>
+                  import('./features/admin/roles/role-editor/role-editor').then(
+                    (m) => m.RoleEditor,
+                  ),
+              },
+            ],
           },
           {
             path: 'sectores',
@@ -266,6 +304,12 @@ export const routes: Routes = [
               ),
           },
         ],
+      },
+
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/profile/profile.component').then((m) => m.ProfileComponent),
       },
 
       // Otras secciones comunes

@@ -1,0 +1,166 @@
+<div class="user-form-container p-4">
+  <!-- Page Header -->
+  <div class="mb-4">
+    <h3 class="fw-bold mb-1 text-dark fs-4">Mi Perfil</h3>
+    <p class="text-muted small mb-0">Actualizá tu información personal y foto de perfil</p>
+  </div>
+
+  @if (isLoading()) {
+    <div class="d-flex justify-content-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+  } @else {
+    <form [formGroup]="profileForm" (ngSubmit)="onSubmit()">
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body p-4">
+          <div class="row g-4">
+            <!-- Left: Avatar -->
+            <div class="col-md-4">
+              <h6 class="fw-semibold text-muted mb-3 small text-uppercase">
+                Foto de Perfil
+              </h6>
+              <div class="d-flex flex-column align-items-center gap-3">
+                <div
+                  class="avatar-box"
+                  [class.opacity-50]="isUploadingAvatar()"
+                  (click)="!isUploadingAvatar() && avatarInput.click()"
+                  role="button"
+                  [attr.tabindex]="isUploadingAvatar() ? -1 : 0"
+                  (keydown.enter)="!isUploadingAvatar() && avatarInput.click()"
+                  [attr.aria-label]="isUploadingAvatar() ? 'Procesando imagen...' : 'Seleccionar foto de perfil'"
+                >
+                  @if (isUploadingAvatar()) {
+                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                      <span class="visually-hidden">Procesando...</span>
+                    </div>
+                  } @else if (avatarPreview()) {
+                    <img [src]="avatarPreview()!" alt="Foto de perfil" />
+                  } @else {
+                    <i class="bi bi-person avatar-placeholder"></i>
+                  }
+                </div>
+                <small class="text-muted">
+                  {{ isUploadingAvatar() ? 'Procesando imagen...' : 'Click para cambiar foto' }}
+                </small>
+                <input
+                  #avatarInput
+                  type="file"
+                  accept="image/*"
+                  class="d-none"
+                  (change)="onAvatarSelect($event)"
+                  aria-label="Seleccionar archivo de imagen"
+                />
+                @if (roleName()) {
+                  <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2">
+                    <i class="bi bi-shield-check me-1"></i>{{ roleName() }}
+                  </span>
+                }
+              </div>
+            </div>
+
+            <!-- Right: Fields -->
+            <div class="col-md-8">
+              <h6 class="fw-semibold text-muted mb-3 small text-uppercase">
+                Información Personal
+              </h6>
+
+              <div class="row g-3">
+                <!-- Nombres -->
+                <div class="col-md-6">
+                  <label for="prof-nombres" class="form-label fw-semibold small text-muted">
+                    Nombres <span class="text-danger">*</span>
+                  </label>
+                  <input
+                    id="prof-nombres"
+                    type="text"
+                    class="form-control shadow-none"
+                    [class.is-invalid]="campoInvalido('nombres')"
+                    placeholder="Ej. Juan"
+                    formControlName="nombres"
+                  />
+                  @if (campoInvalido('nombres')) {
+                    <small class="text-danger">Los nombres son obligatorios.</small>
+                  }
+                </div>
+
+                <!-- Apellidos -->
+                <div class="col-md-6">
+                  <label for="prof-apellidos" class="form-label fw-semibold small text-muted">
+                    Apellidos <span class="text-danger">*</span>
+                  </label>
+                  <input
+                    id="prof-apellidos"
+                    type="text"
+                    class="form-control shadow-none"
+                    [class.is-invalid]="campoInvalido('apellidos')"
+                    placeholder="Ej. Pérez"
+                    formControlName="apellidos"
+                  />
+                  @if (campoInvalido('apellidos')) {
+                    <small class="text-danger">Los apellidos son obligatorios.</small>
+                  }
+                </div>
+
+                <!-- Email -->
+                <div class="col-md-6">
+                  <label for="prof-email" class="form-label fw-semibold small text-muted">
+                    Correo electrónico <span class="text-danger">*</span>
+                  </label>
+                  <input
+                    id="prof-email"
+                    type="email"
+                    class="form-control shadow-none"
+                    [class.is-invalid]="campoInvalido('email')"
+                    placeholder="usuario@jasrapo.com"
+                    formControlName="email"
+                  />
+                  @if (campoInvalido('email')) {
+                    @if (profileForm.get('email')?.errors?.['email']) {
+                      <small class="text-danger">Ingrese un correo electrónico válido.</small>
+                    } @else {
+                      <small class="text-danger">El correo electrónico es obligatorio.</small>
+                    }
+                  }
+                </div>
+
+                <!-- Teléfono -->
+                <div class="col-md-6">
+                  <label for="prof-telefono" class="form-label fw-semibold small text-muted">
+                    Teléfono <span class="text-danger">*</span>
+                  </label>
+                  <input
+                    id="prof-telefono"
+                    type="text"
+                    class="form-control shadow-none"
+                    [class.is-invalid]="campoInvalido('telefono')"
+                    placeholder="Ej. +593991234567"
+                    formControlName="telefono"
+                  />
+                  @if (campoInvalido('telefono')) {
+                    @if (profileForm.get('telefono')?.errors?.['minlength']) {
+                      <small class="text-danger">El teléfono debe tener al menos 7 dígitos.</small>
+                    } @else {
+                      <small class="text-danger">El teléfono es obligatorio.</small>
+                    }
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="d-flex justify-content-end">
+        <button type="submit" class="btn btn-primary fw-medium px-4" [disabled]="isSaving()">
+          @if (isSaving()) {
+            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          }
+          Guardar cambios
+        </button>
+      </div>
+    </form>
+  }
+</div>

@@ -7,23 +7,18 @@ import {
   OnInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import {
-  FormsModule,
-  FormBuilder,
-  FormGroup,
-  Validators,
-  ReactiveFormsModule,
-} from '@angular/forms';
+import { FormsModule } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { UsersService } from '../services/users.service';
-import { User, Role, CreateUserPayload, UpdateUserPayload } from '../models/user.interface';
+import { User } from '../models/user.interface';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './user-management.html',
   styleUrl: './user-management.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,17 +31,15 @@ export class UserManagement implements OnInit {
   readonly authService = inject(AuthService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
 
-  // ---------- Lists & State ----------
   readonly users = signal<User[]>([]);
-  readonly roles = signal<Role[]>([]);
   readonly isLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
-  // ---------- Server Pagination ----------
   readonly totalPagesFromServer = signal(0);
 
-  // ---------- Dropdown ----------
   readonly openDropdownId = signal<number | null>(null);
 
   closeDropdowns(): void {
@@ -58,7 +51,6 @@ export class UserManagement implements OnInit {
     this.openDropdownId.update((id) => (id === userId ? null : userId));
   }
 
-  // ---------- Selection ----------
   readonly selectedIds = signal<Set<number>>(new Set());
 
   readonly isAllSelected = computed(() => {
@@ -101,30 +93,8 @@ export class UserManagement implements OnInit {
     });
   }
 
-  // ---------- Filtering & Search ----------
   readonly searchTerm = signal('');
 
-  // ---------- Modal state ----------
-  readonly showModal = signal(false);
-  readonly isEditing = signal(false);
-  readonly editingId = signal<number | null>(null);
-
-  private readonly fb = inject(FormBuilder);
-
-  userForm: FormGroup = this.fb.group({
-    nombres: ['', Validators.required],
-    apellidos: ['', Validators.required],
-    email: ['', [Validators.required, Validators.email]],
-    telefono: ['', [Validators.required, Validators.minLength(7)]],
-    rolId: [0, Validators.required],
-  });
-
-  campoInvalido(campo: string): boolean {
-    const control = this.userForm.get(campo);
-    return !!control && control.invalid && (control.dirty || control.touched);
-  }
-
-  // ---------- Pagination ----------
   readonly pageSizeOptions = [5, 10, 15];
   readonly pageSize = signal(5);
   readonly currentPage = signal(1);
@@ -149,7 +119,6 @@ export class UserManagement implements OnInit {
   });
 
   ngOnInit(): void {
-    this.loadRoles();
     this.loadUsers();
   }
 
@@ -167,20 +136,6 @@ export class UserManagement implements OnInit {
         console.error('Error al cargar usuarios:', err);
         this.errorMessage.set('No se pudieron cargar los usuarios.');
         this.isLoading.set(false);
-      },
-    });
-  }
-
-  loadRoles(): void {
-    this.usersService.getRoles().subscribe({
-      next: (rolesList) => {
-        this.roles.set(rolesList);
-        if (rolesList.length > 0 && !this.userForm.value.rolId) {
-          this.userForm.patchValue({ rolId: rolesList[0].rolId });
-        }
-      },
-      error: (err) => {
-        console.error('Error al cargar roles:', err);
       },
     });
   }
@@ -205,99 +160,12 @@ export class UserManagement implements OnInit {
     this.loadUsers();
   }
 
-  // ---------- Modal Logic ----------
-  openCreateModal(): void {
-    this.isEditing.set(false);
-    this.editingId.set(null);
-    this.errorMessage.set(null);
-
-    const defaultRolId = this.roles().length > 0 ? this.roles()[0].rolId : 0;
-    this.userForm.reset({
-      nombres: '',
-      apellidos: '',
-      email: '',
-      telefono: '',
-      rolId: defaultRolId,
-    });
-    this.showModal.set(true);
+  navigateToCreate(): void {
+    this.router.navigate(['new'], { relativeTo: this.route });
   }
 
-  openEditModal(user: User): void {
-    this.isEditing.set(true);
-    this.editingId.set(user.usuarioId);
-    this.errorMessage.set(null);
-    this.userForm.patchValue({
-      nombres: user.nombres,
-      apellidos: user.apellidos,
-      email: user.email,
-      telefono: user.telefono || '',
-      rolId: user.rol?.rolId || (this.roles().length > 0 ? this.roles()[0].rolId : 0),
-    });
-    this.showModal.set(true);
-  }
-
-  closeModal(): void {
-    this.showModal.set(false);
-    this.errorMessage.set(null);
-  }
-
-  saveUser(): void {
-    if (this.userForm.invalid) {
-      this.userForm.markAllAsTouched();
-      this.errorMessage.set('Por favor, complete todos los campos obligatorios.');
-      return;
-    }
-
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
-
-    const form = this.userForm.value;
-
-    if (this.isEditing() && this.editingId() !== null) {
-      const payload: UpdateUserPayload = {
-        nombres: form.nombres,
-        apellidos: form.apellidos,
-        email: form.email,
-        telefono: form.telefono,
-        rolId: Number(form.rolId),
-      };
-
-      this.usersService.updateUser(this.editingId()!, payload).subscribe({
-        next: () => {
-          this.loadUsers();
-          this.closeModal();
-          this.toastService.success('Usuario actualizado correctamente', 'Éxito');
-        },
-        error: (err) => {
-          console.error('Error al actualizar usuario:', err);
-          const msg = err.error?.message || 'Error al actualizar el usuario.';
-          this.toastService.error(msg, 'Error');
-          this.isLoading.set(false);
-        },
-      });
-    } else {
-      const payload: CreateUserPayload = {
-        nombres: form.nombres,
-        apellidos: form.apellidos,
-        email: form.email,
-        telefono: form.telefono,
-        rolId: Number(form.rolId),
-      };
-
-      this.usersService.createUser(payload).subscribe({
-        next: () => {
-          this.loadUsers();
-          this.closeModal();
-          this.toastService.success('Usuario creado correctamente', 'Éxito');
-        },
-        error: (err) => {
-          console.error('Error al crear usuario:', err);
-          const msg = err.error?.message || 'Error al crear el usuario.';
-          this.toastService.error(msg, 'Error');
-          this.isLoading.set(false);
-        },
-      });
-    }
+  navigateToEdit(user: User): void {
+    this.router.navigate([user.usuarioId, 'edit'], { relativeTo: this.route });
   }
 
   eliminarUsuario(user: User): void {

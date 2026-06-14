@@ -1,0 +1,130 @@
+<div class="container-fluid p-4">
+  <!-- Header -->
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <div class="d-flex align-items-center gap-3">
+      <a routerLink=".." class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i>
+      </a>
+      <div>
+        <h2 class="mb-0 fw-bold fs-4">
+          @if (isLoading()) {
+            <span class="placeholder col-6"></span>
+          } @else {
+            {{ role()?.nombre ?? '...' }}
+          }
+        </h2>
+        <p class="text-muted small mb-0">Gestión de permisos del rol</p>
+      </div>
+    </div>
+
+    <button
+      class="btn btn-primary px-4"
+      [disabled]="!hasChanges() || isSaving()"
+      (click)="save()"
+    >
+      @if (isSaving()) {
+        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+      }
+      Guardar cambios
+    </button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="d-flex justify-content-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+  } @else {
+    <div class="row g-3">
+      @for (group of groupedPermissions(); track group.recurso) {
+        <div class="col-12">
+          <div class="card border-0 shadow-sm rounded-3">
+            <!-- Group header -->
+            <div
+              class="card-header bg-white border-bottom d-flex align-items-center gap-3 py-3 px-4"
+              style="cursor: pointer"
+              tabindex="0"
+              role="button"
+              [attr.aria-expanded]="isExpanded(group.recurso)"
+              (click)="toggleGroup(group.recurso)"
+              (keydown.enter)="toggleGroup(group.recurso)"
+              (keydown.space)="$event.preventDefault(); toggleGroup(group.recurso)"
+            >
+              <input
+                type="checkbox"
+                class="form-check-input flex-shrink-0 mt-0"
+                [checked]="group.allSelected"
+                [indeterminate]="group.indeterminate"
+                (click)="$event.stopPropagation(); toggleGroupAll(group)"
+                (keydown.enter)="$event.stopPropagation(); toggleGroupAll(group)"
+                [attr.aria-label]="'Seleccionar todos los permisos de ' + group.recurso"
+              />
+              <span class="fw-semibold text-capitalize flex-grow-1">{{ group.recurso }}</span>
+              <span class="badge bg-primary-subtle text-primary rounded-pill me-2">
+                {{ group.assignedCount }}/{{ group.items.length }}
+              </span>
+              <i
+                class="bi"
+                [class.bi-chevron-down]="!isExpanded(group.recurso)"
+                [class.bi-chevron-up]="isExpanded(group.recurso)"
+              ></i>
+            </div>
+
+            <!-- Permissions list -->
+            @if (isExpanded(group.recurso)) {
+              <div class="card-body p-3">
+                <div class="row g-2">
+                  @for (perm of group.items; track perm.permisoId) {
+                    <div class="col-md-6 col-lg-4">
+                      <div
+                        class="p-3 rounded-3 border d-flex align-items-start gap-3"
+                        [class.border-primary]="perm.assigned"
+                        [class.bg-primary-subtle]="perm.assigned"
+                        style="cursor: pointer"
+                        tabindex="0"
+                        role="checkbox"
+                        [attr.aria-checked]="perm.assigned"
+                        (click)="togglePermission(perm.permisoId)"
+                        (keydown.enter)="togglePermission(perm.permisoId)"
+                        (keydown.space)="$event.preventDefault(); togglePermission(perm.permisoId)"
+                      >
+                        <input
+                          type="checkbox"
+                          class="form-check-input flex-shrink-0 mt-1"
+                          [checked]="perm.assigned"
+                          (click)="$event.stopPropagation()"
+                          [attr.aria-label]="perm.nombre"
+                          tabindex="-1"
+                        />
+                        <div class="flex-grow-1 min-width-0">
+                          <div class="d-flex align-items-center gap-2 flex-wrap">
+                            <span class="fw-semibold small">{{ perm.nombre }}</span>
+                            <span
+                              class="badge bg-secondary-subtle text-secondary rounded-pill"
+                              style="font-size: 0.65rem"
+                            >
+                              {{ perm.accion }}
+                            </span>
+                          </div>
+                          @if (perm.descripcion) {
+                            <p class="text-muted small mb-0 mt-1">{{ perm.descripcion }}</p>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      } @empty {
+        <div class="col-12 text-center py-5">
+          <i class="bi bi-shield-slash text-muted" style="font-size: 3rem"></i>
+          <p class="text-muted mt-3">No hay permisos disponibles.</p>
+        </div>
+      }
+    </div>
+  }
+</div>
