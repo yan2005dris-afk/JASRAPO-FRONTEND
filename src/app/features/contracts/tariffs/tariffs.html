@@ -1,6 +1,6 @@
 <div class="container-fluid p-4">
   <div class="page-header mb-4">
-    <h2 class="fw-bold mb-0">Tabla de Tarifas</h2>
+    <h3 class="fw-bold mb-0 text-dark fs-4">Tabla de Tarifas</h3>
     <p class="text-muted mb-0 small">Categorías de tarifas registradas en el sistema</p>
   </div>
 
@@ -82,62 +82,18 @@
       }
     </div>
     @if (!isLoading && tariffs.length > 0) {
-      <div
-        class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3"
-      >
-        <div class="d-flex align-items-center gap-3">
-          <span class="text-muted small">
-            Total: <strong>{{ tariffs.length }}</strong> tarifa{{ tariffs.length !== 1 ? 's' : '' }}
-          </span>
-          <div class="d-flex align-items-center gap-2">
-            <span class="text-muted small">Mostrar:</span>
-            <select
-              class="form-select form-select-sm page-size-select shadow-none"
-              [value]="pageSize"
-              (change)="setPageSize(+$any($event.target).value)"
-            >
-              @for (opt of pageSizeOptions; track opt) {
-                <option [value]="opt">{{ opt }}</option>
-              }
-            </select>
-          </div>
-        </div>
-
-        <nav>
-          <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
-            <li class="page-item" [class.disabled]="currentPage === 1">
-              <a
-                class="page-link border-0 text-dark bg-transparent fw-medium small"
-                href="#"
-                (click)="$event.preventDefault(); goToPage(currentPage - 1)"
-              >
-                <i class="bi bi-chevron-left me-1" style="font-size: 0.7rem"></i> Anterior
-              </a>
-            </li>
-            @for (page of pageNumbers; track page) {
-              <li class="page-item" [class.active]="currentPage === page">
-                <a
-                  class="page-link fw-medium text-dark"
-                  style="border-radius: 6px"
-                  href="#"
-                  (click)="$event.preventDefault(); goToPage(page)"
-                >
-                  {{ page }}
-                </a>
-              </li>
-            }
-            <li class="page-item" [class.disabled]="currentPage === totalPages">
-              <a
-                class="page-link border-0 text-dark bg-transparent fw-medium small"
-                href="#"
-                (click)="$event.preventDefault(); goToPage(currentPage + 1)"
-              >
-                Siguiente <i class="bi bi-chevron-right ms-1" style="font-size: 0.7rem"></i>
-              </a>
-            </li>
-          </ul>
-        </nav>
-      </div>
+      <footer class="card-footer bg-white border-top px-4 py-3">
+        <app-pagination
+          [totalItems]="tariffs.length"
+          [currentPage]="currentPage"
+          [pageSize]="pageSize"
+          [pageSizeOptions]="pageSizeOptions"
+          itemNameSingular="tarifa"
+          itemNamePlural="tarifas"
+          (pageChange)="goToPage($event)"
+          (pageSizeChange)="setPageSize($event)"
+        />
+      </footer>
     }
   </div>
 </div>

@@ -13,10 +13,11 @@ import { ITariffCategory } from './interfaces/itariff.interface';
 import { TariffsFormComponent } from './components/tariffs-form/tariffs-form.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-tariffs',
-  imports: [CommonModule, TariffsFormComponent],
+  imports: [CommonModule, TariffsFormComponent, PaginationComponent],
   templateUrl: './tariffs.html',
   styleUrl: './tariffs.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,10 +50,6 @@ export class TariffsComponent implements OnInit {
   get pagedTariffs(): ITariffCategory[] {
     const start = (this.currentPage - 1) * this.pageSize;
     return this.tariffs.slice(start, start + this.pageSize);
-  }
-
-  get pageNumbers(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
   }
 
   setPageSize(size: number): void {
