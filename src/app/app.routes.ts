@@ -12,9 +12,7 @@ export const routes: Routes = [
   {
     path: 'consulta-planilla',
     loadComponent: () =>
-      import('./features/consulta-planilla/consulta-planilla.component').then(
-        (m) => m.ConsultaPlanillaComponent,
-      ),
+      import('./features/bill-inquiry/bill-inquiry.component').then((m) => m.BillInquiryComponent),
     canActivate: [guestGuard],
   },
   {
@@ -33,7 +31,7 @@ export const routes: Routes = [
       {
         path: 'admin',
         loadComponent: () =>
-          import('./features/admin/admin.component/admin.component').then((m) => m.AdminComponent),
+          import('./features/admin/component/admin.component').then((m) => m.AdminComponent),
         children: [
           {
             path: 'users',
@@ -59,9 +57,7 @@ export const routes: Routes = [
           {
             path: 'config',
             loadComponent: () =>
-              import('./features/admin/admin.component/admin.component').then(
-                (m) => m.AdminComponent,
-              ),
+              import('./features/admin/component/admin.component').then((m) => m.AdminComponent),
           },
         ],
       },
@@ -73,22 +69,22 @@ export const routes: Routes = [
           {
             path: 'aprobaciones',
             loadComponent: () =>
-              import('./features/presidente/presidente.component/presidente.component').then(
-                (m) => m.PresidenteComponent,
+              import('./features/president/president.component/president.component').then(
+                (m) => m.PresidentComponent,
               ),
           },
           {
             path: 'reportes',
             loadComponent: () =>
-              import('./features/presidente/presidente.component/presidente.component').then(
-                (m) => m.PresidenteComponent,
+              import('./features/president/president.component/president.component').then(
+                (m) => m.PresidentComponent,
               ),
           },
           {
             path: 'actas',
             loadComponent: () =>
-              import('./features/presidente/presidente.component/presidente.component').then(
-                (m) => m.PresidenteComponent,
+              import('./features/president/president.component/president.component').then(
+                (m) => m.PresidentComponent,
               ),
           },
         ],
@@ -101,22 +97,22 @@ export const routes: Routes = [
           {
             path: 'documentos',
             loadComponent: () =>
-              import('./features/secretario/secretario.component/secretario.component').then(
-                (m) => m.SecretarioComponent,
+              import('./features/secretary/secretary.component/secretary.component').then(
+                (m) => m.SecretaryComponent,
               ),
           },
           {
             path: 'correspondencia',
             loadComponent: () =>
-              import('./features/secretario/secretario.component/secretario.component').then(
-                (m) => m.SecretarioComponent,
+              import('./features/secretary/secretary.component/secretary.component').then(
+                (m) => m.SecretaryComponent,
               ),
           },
           {
             path: 'archivo',
             loadComponent: () =>
-              import('./features/secretario/secretario.component/secretario.component').then(
-                (m) => m.SecretarioComponent,
+              import('./features/secretary/secretary.component/secretary.component').then(
+                (m) => m.SecretaryComponent,
               ),
           },
         ],
@@ -129,22 +125,22 @@ export const routes: Routes = [
           {
             path: 'ingresos',
             loadComponent: () =>
-              import('./features/tesorero/tesorero.component/tesorero.component').then(
-                (m) => m.TesoreroComponent,
+              import('./features/treasurer/treasurer.component/treasurer.component').then(
+                (m) => m.TreasurerComponent,
               ),
           },
           {
             path: 'egresos',
             loadComponent: () =>
-              import('./features/tesorero/tesorero.component/tesorero.component').then(
-                (m) => m.TesoreroComponent,
+              import('./features/treasurer/treasurer.component/treasurer.component').then(
+                (m) => m.TreasurerComponent,
               ),
           },
           {
             path: 'balance',
             loadComponent: () =>
-              import('./features/tesorero/tesorero.component/tesorero.component').then(
-                (m) => m.TesoreroComponent,
+              import('./features/treasurer/treasurer.component/treasurer.component').then(
+                (m) => m.TreasurerComponent,
               ),
           },
         ],
@@ -157,40 +153,36 @@ export const routes: Routes = [
           {
             path: 'Cliente',
             loadComponent: () =>
-              import('./features/Contratos/clientes/clientes').then((m) => m.Clientes),
+              import('./features/contracts/clients/clients').then((m) => m.ClientsComponent),
           },
           {
             path: 'ContratosDeServicios',
             loadComponent: () =>
-              import('./features/Contratos/contratos-de-servicios/contratos-de-servicios').then(
-                (m) => m.ContratosDeServicios,
+              import('./features/contracts/service-contracts/service-contracts').then(
+                (m) => m.ServiceContractsComponent,
               ),
           },
           {
             path: 'ConveniosDePago',
             loadComponent: () =>
-              import('./features/Contratos/convenios-de-pago/convenios-de-pago').then(
-                (m) => m.ConveniosDePago,
+              import('./features/contracts/payment-agreements/payment-agreements').then(
+                (m) => m.PaymentAgreementsComponent,
               ),
           },
           {
             path: 'LecturaDeConsumo',
             loadComponent: () =>
-              import('./features/Contratos/lectura-de-consumo/lectura-de-consumo').then(
-                (m) => m.LecturaDeConsumo,
-              ),
+              import('./features/contracts/readings/readings').then((m) => m.ReadingsComponent),
           },
           {
             path: 'Medidores',
             loadComponent: () =>
-              import('./features/Contratos/medidores/medidores').then((m) => m.Medidores),
+              import('./features/contracts/meters/meters').then((m) => m.MetersComponent),
           },
           {
             path: 'TarifasYCategorias',
             loadComponent: () =>
-              import('./features/Contratos/tarifas-ycategorias/tarifas-ycategorias').then(
-                (m) => m.TarifasYCategorias,
-              ),
+              import('./features/contracts/tariffs/tariffs').then((m) => m.TariffsComponent),
           },
         ],
       },
@@ -202,37 +194,35 @@ export const routes: Routes = [
           {
             path: 'EnvioDeFacturacion',
             loadComponent: () =>
-              import('./features/Facturacion/envio-de-facturacion/envio-de-facturacion').then(
-                (m) => m.EnvioDeFacturacion,
+              import('./features/billing/billing-submission/billing-submission').then(
+                (m) => m.BillingSubmissionComponent,
               ),
           },
           {
             path: 'FacturacionElectronica',
             loadComponent: () =>
-              import('./features/Facturacion/facturacion-electronica/facturacion-electronica').then(
-                (m) => m.FacturacionElectronica,
+              import('./features/billing/electronic-billing/electronic-billing').then(
+                (m) => m.ElectronicBillingComponent,
               ),
           },
           {
             path: 'GeneracionPlanilla',
             loadComponent: () =>
-              import('./features/Facturacion/generacion-planilla/generacion-planilla').then(
-                (m) => m.GeneracionPlanilla,
+              import('./features/billing/billing-generation/billing-generation').then(
+                (m) => m.BillingGenerationComponent,
               ),
           },
           {
             path: 'NotasDeCreditoDebito',
             loadComponent: () =>
-              import('./features/Facturacion/notas-de-credito-debito/notas-de-credito-debito').then(
-                (m) => m.NotasDeCreditoDebito,
+              import('./features/billing/credit-debit-notes/credit-debit-notes').then(
+                (m) => m.CreditDebitNotesComponent,
               ),
           },
           {
             path: 'RecaudacionYPagos',
             loadComponent: () =>
-              import('./features/Facturacion/recaudacion-ypagos/recaudacion-ypagos').then(
-                (m) => m.RecaudacionYPagos,
-              ),
+              import('./features/billing/payments/payments').then((m) => m.PaymentsComponent),
           },
         ],
       },
@@ -244,25 +234,29 @@ export const routes: Routes = [
           {
             path: 'ConsumoZonas',
             loadComponent: () =>
-              import('./features/Reportes/consumo-zonas/consumo-zonas').then((m) => m.ConsumoZonas),
+              import('./features/reports/zone-consumption/zone-consumption').then(
+                (m) => m.ZoneConsumptionComponent,
+              ),
           },
           {
             path: 'DashboardKpi',
             loadComponent: () =>
-              import('./features/Reportes/dashboard-kpi/dashboard-kpi').then((m) => m.DashboardKpi),
+              import('./features/reports/kpi-dashboard/kpi-dashboard').then(
+                (m) => m.KpiDashboardComponent,
+              ),
           },
           {
             path: 'EstadoCuentaCliente',
             loadComponent: () =>
-              import('./features/Reportes/estado-cuenta-cliente/estado-cuenta-cliente').then(
-                (m) => m.EstadoCuentaCliente,
+              import('./features/reports/client-statement/client-statement').then(
+                (m) => m.ClientStatementComponent,
               ),
           },
           {
             path: 'RecaudacionMorosida',
             loadComponent: () =>
-              import('./features/Reportes/recaudacion-morosida/recaudacion-morosida').then(
-                (m) => m.RecaudacionMorosida,
+              import('./features/reports/overdue-accounts/overdue-accounts').then(
+                (m) => m.OverdueAccountsComponent,
               ),
           },
         ],
@@ -275,12 +269,12 @@ export const routes: Routes = [
           import('./features/dashboard/dashboard/dashboard').then((m) => m.Dashboard),
       },
       {
-        path: 'billing',
+        path: 'Facturacion',
         loadComponent: () =>
           import('./features/dashboard/dashboard/dashboard').then((m) => m.Dashboard),
       },
       {
-        path: 'reports',
+        path: 'Reportes',
         loadComponent: () =>
           import('./features/dashboard/dashboard/dashboard').then((m) => m.Dashboard),
       },
