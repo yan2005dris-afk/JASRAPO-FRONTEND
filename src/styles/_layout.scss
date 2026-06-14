@@ -130,7 +130,8 @@
 
     /* Center and shrink brand section */
     .sidebar-brand {
-      padding: 1.25rem 0 !important;
+      height: 64px !important;
+      padding: 0 !important;
       justify-content: center !important;
 
       h5 {
@@ -261,10 +262,13 @@
    3. SIDEBAR STYLING
 --------------------------------------------------- */
 .sidebar-brand {
+  height: 64px;
+  padding: 0 1.5rem 0 2rem; /* Matches the 64px header height and aligns logo with menu icons */
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar-nav {
+  padding-top: 0.75rem !important; /* 12px padding top + 4px menu item margin = 16px spacing below divider */
   overflow-y: auto !important;
   overflow-x: hidden !important;
 }

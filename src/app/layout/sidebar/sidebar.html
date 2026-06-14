@@ -1,12 +1,12 @@
 <nav class="h-100 d-flex flex-column bg-white">
-  <div class="sidebar-brand d-flex align-items-center gap-2 px-4 py-3 border-bottom">
+  <div class="sidebar-brand d-flex align-items-center gap-2 border-bottom">
     <img src="https://i.imgur.com/oHyMUhU.png" alt="AquaSync Olón Logo" class="brand-logo" />
     <h5 class="fw-bold mb-0 text-dark link-text" style="font-size: 1.05rem; letter-spacing: -0.5px">
       AquaSync Olón
     </h5>
   </div>
 
-  <div class="sidebar-nav pt-3 grow overflow-auto">
+  <div class="sidebar-nav grow overflow-auto">
     <ul class="nav flex-column mb-auto">
       @for (item of menuService.menuItems(); track item.id) {
         <li class="nav-item">
