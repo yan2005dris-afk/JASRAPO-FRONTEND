@@ -18,7 +18,7 @@
       <div class="col-12">
         <label for="nombre" class="form-label">Nombre <span class="text-danger">*</span></label>
         <input id="nombre" type="text" class="form-control" formControlName="nombre" />
-        @if (campoInvalido('nombre')) {
+        @if (isFieldInvalid('nombre')) {
           <small class="text-danger">El nombre es obligatorio.</small>
         }
       </div>
@@ -28,7 +28,7 @@
           >Descripción <span class="text-danger">*</span></label
         >
         <input id="descripcion" type="text" class="form-control" formControlName="descripcion" />
-        @if (campoInvalido('descripcion')) {
+        @if (isFieldInvalid('descripcion')) {
           <small class="text-danger">La descripción es obligatoria.</small>
         }
       </div>
@@ -38,7 +38,7 @@
           >Valor Base ($) <span class="text-danger">*</span></label
         >
         <input id="valorBase" type="number" class="form-control" formControlName="valorBase" />
-        @if (campoInvalido('valorBase')) {
+        @if (isFieldInvalid('valorBase')) {
           <small class="text-danger">Debe ser un número mayor o igual a 0.</small>
         }
       </div>
@@ -53,7 +53,7 @@
           class="form-control"
           formControlName="consumoMinimoMensual"
         />
-        @if (campoInvalido('consumoMinimoMensual')) {
+        @if (isFieldInvalid('consumoMinimoMensual')) {
           <small class="text-danger">Debe ser un número mayor o igual a 0.</small>
         }
       </div>
@@ -68,7 +68,7 @@
           class="form-control"
           formControlName="valorExcedenteM3"
         />
-        @if (campoInvalido('valorExcedenteM3')) {
+        @if (isFieldInvalid('valorExcedenteM3')) {
           <small class="text-danger">Debe ser un número mayor o igual a 0.</small>
         }
       </div>

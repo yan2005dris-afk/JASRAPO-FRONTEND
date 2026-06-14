@@ -101,8 +101,8 @@ export class TariffsFormComponent implements OnInit {
     });
   }
 
-  campoInvalido(campo: string): boolean {
-    const control = this.tariffForm.get(campo);
+  isFieldInvalid(field: string): boolean {
+    const control = this.tariffForm.get(field);
     return !!control && control.invalid && (control.dirty || control.touched);
   }
 }
