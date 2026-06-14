@@ -22,6 +22,7 @@ import { Comunidad } from '../../../comunidades/models/comunidad.interface';
 import { ComunidadesService } from '../../../comunidades/services/comunidades.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-sectores-prueba',
@@ -32,6 +33,7 @@ import { ConfirmDialogService } from '../../../../../shared/components/confirm-d
     MatMenuModule,
     MatButtonModule,
     MatIconModule,
+    PaginationComponent,
   ],
   templateUrl: './sectores-prueba.html',
   styleUrl: './sectores-prueba.scss',

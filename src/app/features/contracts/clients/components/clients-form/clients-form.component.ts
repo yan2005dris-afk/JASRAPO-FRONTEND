@@ -46,7 +46,7 @@ export class ClientsFormComponent implements OnInit {
 
   readonly clienteAEditar = input<IClient | null>(null);
 
-  private readonly clientesService = inject(ClientsService);
+  private readonly clientsService = inject(ClientsService);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -84,7 +84,7 @@ export class ClientsFormComponent implements OnInit {
   }
 
   cargarTiposIdentificacion(): void {
-    this.clientesService.getTiposIdentificacion().subscribe({
+    this.clientsService.getIdentificationTypes().subscribe({
       next: (tipos) => {
         this.tiposIdentificacion = tipos
           .filter((tipo) => tipo.activo !== false)
@@ -242,7 +242,7 @@ export class ClientsFormComponent implements OnInit {
   }
 
   crearCliente(cliente: CreateClientRequest): void {
-    this.clientesService.createCliente(cliente).subscribe({
+    this.clientsService.createClient(cliente).subscribe({
       next: () => {
         this.isSaving = false;
         this.mostrarMensaje('Cliente creado correctamente.', 'success');
@@ -286,7 +286,7 @@ export class ClientsFormComponent implements OnInit {
       return;
     }
 
-    this.clientesService.updateCliente(clienteId, cliente).subscribe({
+    this.clientsService.updateClient(clienteId, cliente).subscribe({
       next: () => {
         this.isSaving = false;
         this.mostrarMensaje('Cliente actualizado correctamente.', 'success');

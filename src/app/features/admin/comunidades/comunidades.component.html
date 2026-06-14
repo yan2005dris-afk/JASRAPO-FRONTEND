@@ -166,79 +166,17 @@
     }
 
     @if (hasFetched()) {
-      <div
-        class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3"
-      >
-        <div class="d-flex align-items-center gap-3">
-          <span class="text-muted small">
-            Total:
-            <strong>{{ totalItems() }}</strong>
-            comunidad{{ totalItems() !== 1 ? 'es' : '' }}
-          </span>
-
-          <div class="d-flex align-items-center gap-2">
-            <span class="text-muted small">Mostrar:</span>
-
-            <select
-              class="form-select form-select-sm page-size-select shadow-none"
-              [value]="pageSize()"
-              (change)="onPageSizeChange($event)"
-            >
-              @for (size of pageSizeOptions; track size) {
-                <option [value]="size">{{ size }}</option>
-              }
-            </select>
-          </div>
-        </div>
-
-        <nav>
-          <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
-            <li class="page-item" [class.disabled]="currentPage() === 1">
-              <button
-                class="page-link border-0 text-dark bg-transparent fw-medium small"
-                type="button"
-                (click)="goToPage(currentPage() - 1)"
-                [disabled]="currentPage() === 1"
-              >
-                <i class="bi bi-chevron-left me-1" style="font-size: 0.7rem"></i>
-                Anterior
-              </button>
-            </li>
-
-            @for (page of pageNumbers; track page) {
-              <li
-                class="page-item"
-                [class.active]="currentPage() === page"
-                [attr.aria-current]="currentPage() === page ? 'page' : null"
-              >
-                <button
-                  class="page-link fw-medium"
-                  type="button"
-                  [class.shadow-sm]="currentPage() === page"
-                  [class.border-0]="currentPage() !== page"
-                  [class.bg-transparent]="currentPage() !== page"
-                  [class.text-dark]="true"
-                  style="border-radius: 6px"
-                  (click)="goToPage(page)"
-                >
-                  {{ page }}
-                </button>
-              </li>
-            }
-
-            <li class="page-item" [class.disabled]="currentPage() === totalPages">
-              <button
-                class="page-link border-0 text-dark bg-transparent fw-medium small"
-                type="button"
-                (click)="goToPage(currentPage() + 1)"
-                [disabled]="currentPage() === totalPages"
-              >
-                Siguiente
-                <i class="bi bi-chevron-right ms-1" style="font-size: 0.7rem"></i>
-              </button>
-            </li>
-          </ul>
-        </nav>
+      <div class="card-footer bg-white border-top px-4 py-3">
+        <app-pagination
+          [totalItems]="totalItems()"
+          [currentPage]="currentPage()"
+          [pageSize]="pageSize()"
+          [pageSizeOptions]="pageSizeOptions"
+          itemNameSingular="comunidad"
+          itemNamePlural="comunidades"
+          (pageChange)="goToPage($event)"
+          (pageSizeChange)="setPageSize($event)"
+        />
       </div>
     }
   </div>

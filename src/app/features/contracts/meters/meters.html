@@ -146,60 +146,17 @@
         </div>
 
         <!-- Paginación y Controles -->
-        <footer
-          class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3"
-        >
-          <div class="d-flex align-items-center gap-3">
-            <span class="text-muted small">
-              Total: <strong>{{ totalItems() }}</strong>
-            </span>
-            <div class="d-flex align-items-center gap-2">
-              <span class="text-muted small">Mostrar:</span>
-              <select
-                class="form-select form-select-sm page-size-select"
-                [value]="pageSize()"
-                (change)="setPageSize(+$any($event.target).value)"
-              >
-                @for (opt of pageSizeOptions; track opt) {
-                  <option [value]="opt">{{ opt }}</option>
-                }
-              </select>
-            </div>
-          </div>
-
-          <nav>
-            <ul class="pagination pagination-sm mb-0 gap-1">
-              <li class="page-item" [class.disabled]="currentPage() === 1">
-                <button
-                  type="button"
-                  class="page-link nav-link-custom"
-                  (click)="goToPage(currentPage() - 1)"
-                  [disabled]="currentPage() === 1"
-                >
-                  <i class="bi bi-chevron-left"></i> Previous
-                </button>
-              </li>
-
-              @for (page of pageNumbers; track page) {
-                <li class="page-item" [class.active]="currentPage() === page">
-                  <button type="button" class="page-link fw-medium" (click)="goToPage(page)">
-                    {{ page }}
-                  </button>
-                </li>
-              }
-
-              <li class="page-item" [class.disabled]="currentPage() === totalPages">
-                <button
-                  type="button"
-                  class="page-link nav-link-custom"
-                  (click)="goToPage(currentPage() + 1)"
-                  [disabled]="currentPage() === totalPages"
-                >
-                  Next <i class="bi bi-chevron-right"></i>
-                </button>
-              </li>
-            </ul>
-          </nav>
+        <footer class="card-footer bg-white border-top px-4 py-3">
+          <app-pagination
+            [totalItems]="totalItems()"
+            [currentPage]="currentPage()"
+            [pageSize]="pageSize()"
+            [pageSizeOptions]="pageSizeOptions"
+            itemNameSingular="medidor"
+            itemNamePlural="medidores"
+            (pageChange)="goToPage($event)"
+            (pageSizeChange)="setPageSize($event)"
+          />
         </footer>
       }
     </div>

@@ -17,16 +17,16 @@
               (click)="toggleItem(item.id)"
               [attr.aria-expanded]="expandedItems()[item.id]"
             >
-              <span class="text-dark">
-                <i
-                  class="bi bi-chevron-down align-middle me-2 fw-bold"
-                  [ngClass]="{ 'rotate-icon': expandedItems()[item.id] }"
-                ></i>
+              <span class="text-dark d-flex align-items-center">
                 @if (item.icon) {
                   <i [class]="'bi ' + item.icon + ' me-2'"></i>
                 }
                 {{ item.name }}
               </span>
+              <i
+                class="bi bi-chevron-down align-middle fw-bold"
+                [ngClass]="{ 'rotate-icon': expandedItems()[item.id] }"
+              ></i>
             </button>
 
             @if (expandedItems()[item.id]) {
