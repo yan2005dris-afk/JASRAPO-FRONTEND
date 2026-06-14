@@ -12,11 +12,7 @@ import { forkJoin } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RolesService } from '../services/roles.service';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
-import {
-  AllPermission,
-  PermissionGroup,
-  RoleDetail,
-} from '../models/role-permission.interface';
+import { AllPermission, PermissionGroup, RoleDetail } from '../models/role-permission.interface';
 
 @Component({
   selector: 'app-role-editor',
@@ -154,23 +150,21 @@ export class RoleEditor {
     const permisosRevocar = [...original].filter((id) => !current.has(id));
 
     this.isSaving.set(true);
-    this.rolesService
-      .updateRole(role.rolId, { permisosAsignar, permisosRevocar })
-      .subscribe({
-        next: (updated) => {
-          this.role.set(updated);
-          const ids = new Set<number>(updated.permisos.map((p) => p.permisoId));
-          this.assignedIds.set(ids);
-          this.originalIds = new Set(ids);
-          this.toastService.success('Permisos actualizados correctamente.', 'Éxito');
-          this.isSaving.set(false);
-        },
-        error: (err) => {
-          console.error('Error saving role:', err);
-          const msg = err.error?.message || 'Error al guardar los permisos.';
-          this.toastService.error(msg, 'Error');
-          this.isSaving.set(false);
-        },
-      });
+    this.rolesService.updateRole(role.rolId, { permisosAsignar, permisosRevocar }).subscribe({
+      next: (updated) => {
+        this.role.set(updated);
+        const ids = new Set<number>(updated.permisos.map((p) => p.permisoId));
+        this.assignedIds.set(ids);
+        this.originalIds = new Set(ids);
+        this.toastService.success('Permisos actualizados correctamente.', 'Éxito');
+        this.isSaving.set(false);
+      },
+      error: (err) => {
+        console.error('Error saving role:', err);
+        const msg = err.error?.message || 'Error al guardar los permisos.';
+        this.toastService.error(msg, 'Error');
+        this.isSaving.set(false);
+      },
+    });
   }
 }

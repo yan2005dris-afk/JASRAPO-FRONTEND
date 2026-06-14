@@ -101,7 +101,11 @@
                     style="width: 32px; height: 32px; font-size: 0.85rem; font-weight: 600"
                   >
                     @if (user.avatar?.url) {
-                      <img [src]="user.avatar!.url" [alt]="user.nombres" class="w-100 h-100 object-fit-cover" />
+                      <img
+                        [src]="user.avatar!.url"
+                        [alt]="user.nombres"
+                        class="w-100 h-100 object-fit-cover"
+                      />
                     } @else {
                       {{ user.nombres.charAt(0).toUpperCase() }}
                     }

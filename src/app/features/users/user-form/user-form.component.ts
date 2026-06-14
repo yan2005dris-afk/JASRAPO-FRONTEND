@@ -105,9 +105,9 @@ export class UserFormComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.isLoading.set(true);
 
-    const permissionsReq = this.usersService.getPermissions().pipe(
-      map((res) => (Array.isArray(res) ? res : res.data)),
-    );
+    const permissionsReq = this.usersService
+      .getPermissions()
+      .pipe(map((res) => (Array.isArray(res) ? res : res.data)));
 
     const userReq = this.isEditing()
       ? this.usersService.getUserById(this.userId)
@@ -124,7 +124,9 @@ export class UserFormComponent implements OnInit, OnDestroy {
           }
 
           const directIds = new Set<number>(
-            user.permisosDirectos.filter((p: DirectPermission) => p.permitido).map((p: DirectPermission) => p.permisoId),
+            user.permisosDirectos
+              .filter((p: DirectPermission) => p.permitido)
+              .map((p: DirectPermission) => p.permisoId),
           );
           this.directPermissionIds.set(directIds);
           this.originalDirectIds = new Set(directIds);
@@ -154,13 +156,15 @@ export class UserFormComponent implements OnInit, OnDestroy {
       },
     });
 
-    const rolIdChange = this.userForm.get('rolId')!.valueChanges.subscribe((rolId: number | null) => {
-      if (rolId) {
-        this.loadRolePermissions(rolId);
-      } else {
-        this.rolePermissions.set([]);
-      }
-    });
+    const rolIdChange = this.userForm
+      .get('rolId')!
+      .valueChanges.subscribe((rolId: number | null) => {
+        if (rolId) {
+          this.loadRolePermissions(rolId);
+        } else {
+          this.rolePermissions.set([]);
+        }
+      });
 
     this.subscriptions.add(rolIdChange);
   }
@@ -248,26 +252,28 @@ export class UserFormComponent implements OnInit, OnDestroy {
         ...(directPermissions.length > 0 ? { directPermissions } : {}),
       };
 
-      const editSub = this.usersService.updateUser(this.userId, payload, this.pendingAvatarFile ?? undefined).subscribe({
-        next: (updatedUser) => {
-          if (currentUserId === this.userId) {
-            this.authService.updateCurrentUser({
-              name: `${form.nombres} ${form.apellidos}`,
-              email: form.email,
-              avatar: updatedUser.avatar ?? null,
-            });
-          }
-          this.toastService.success('Usuario actualizado correctamente.', 'Éxito');
-          this.isSaving.set(false);
-          this.goBack();
-        },
-        error: (err) => {
-          console.error('Error updating user:', err.error ?? err);
-          const msg = err.error?.message || 'Error al actualizar el usuario.';
-          this.toastService.error(msg, 'Error');
-          this.isSaving.set(false);
-        },
-      });
+      const editSub = this.usersService
+        .updateUser(this.userId, payload, this.pendingAvatarFile ?? undefined)
+        .subscribe({
+          next: (updatedUser) => {
+            if (currentUserId === this.userId) {
+              this.authService.updateCurrentUser({
+                name: `${form.nombres} ${form.apellidos}`,
+                email: form.email,
+                avatar: updatedUser.avatar ?? null,
+              });
+            }
+            this.toastService.success('Usuario actualizado correctamente.', 'Éxito');
+            this.isSaving.set(false);
+            this.goBack();
+          },
+          error: (err) => {
+            console.error('Error updating user:', err.error ?? err);
+            const msg = err.error?.message || 'Error al actualizar el usuario.';
+            this.toastService.error(msg, 'Error');
+            this.isSaving.set(false);
+          },
+        });
       this.subscriptions.add(editSub);
     } else {
       const payload = {
@@ -278,19 +284,21 @@ export class UserFormComponent implements OnInit, OnDestroy {
         rolId: Number(form.rolId),
       };
 
-      const createSub = this.usersService.createUser(payload, this.pendingAvatarFile ?? undefined).subscribe({
-        next: () => {
-          this.toastService.success('Usuario creado correctamente.', 'Éxito');
-          this.isSaving.set(false);
-          this.goBack();
-        },
-        error: (err) => {
-          console.error('Error creating user:', err.error ?? err);
-          const msg = err.error?.message || 'Error al crear el usuario.';
-          this.toastService.error(msg, 'Error');
-          this.isSaving.set(false);
-        },
-      });
+      const createSub = this.usersService
+        .createUser(payload, this.pendingAvatarFile ?? undefined)
+        .subscribe({
+          next: () => {
+            this.toastService.success('Usuario creado correctamente.', 'Éxito');
+            this.isSaving.set(false);
+            this.goBack();
+          },
+          error: (err) => {
+            console.error('Error creating user:', err.error ?? err);
+            const msg = err.error?.message || 'Error al crear el usuario.';
+            this.toastService.error(msg, 'Error');
+            this.isSaving.set(false);
+          },
+        });
       this.subscriptions.add(createSub);
     }
   }

@@ -18,9 +18,7 @@
           <div class="row g-4">
             <!-- Left: Avatar -->
             <div class="col-md-4">
-              <h6 class="fw-semibold text-muted mb-3 small text-uppercase">
-                Foto de Perfil
-              </h6>
+              <h6 class="fw-semibold text-muted mb-3 small text-uppercase">Foto de Perfil</h6>
               <div class="d-flex flex-column align-items-center gap-3">
                 <div
                   class="avatar-box"
@@ -29,7 +27,9 @@
                   role="button"
                   [attr.tabindex]="isUploadingAvatar() ? -1 : 0"
                   (keydown.enter)="!isUploadingAvatar() && avatarInput.click()"
-                  [attr.aria-label]="isUploadingAvatar() ? 'Procesando imagen...' : 'Seleccionar foto de perfil'"
+                  [attr.aria-label]="
+                    isUploadingAvatar() ? 'Procesando imagen...' : 'Seleccionar foto de perfil'
+                  "
                 >
                   @if (isUploadingAvatar()) {
                     <div class="spinner-border spinner-border-sm text-primary" role="status">
@@ -62,9 +62,7 @@
 
             <!-- Right: Fields -->
             <div class="col-md-8">
-              <h6 class="fw-semibold text-muted mb-3 small text-uppercase">
-                Información Personal
-              </h6>
+              <h6 class="fw-semibold text-muted mb-3 small text-uppercase">Información Personal</h6>
 
               <div class="row g-3">
                 <!-- Nombres -->
@@ -156,7 +154,11 @@
       <div class="d-flex justify-content-end">
         <button type="submit" class="btn btn-primary fw-medium px-4" [disabled]="isSaving()">
           @if (isSaving()) {
-            <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            <span
+              class="spinner-border spinner-border-sm me-2"
+              role="status"
+              aria-hidden="true"
+            ></span>
           }
           Guardar cambios
         </button>

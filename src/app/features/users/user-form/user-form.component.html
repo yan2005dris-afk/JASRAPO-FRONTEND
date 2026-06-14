@@ -5,7 +5,11 @@
       {{ isEditing() ? 'Editar Usuario' : 'Crear Usuario' }}
     </h3>
     <p class="text-muted small mb-0">
-      {{ isEditing() ? 'Modifique los datos del usuario seleccionado' : 'Complete los campos para registrar un nuevo usuario' }}
+      {{
+        isEditing()
+          ? 'Modifique los datos del usuario seleccionado'
+          : 'Complete los campos para registrar un nuevo usuario'
+      }}
     </p>
   </div>
 
@@ -34,7 +38,9 @@
                   role="button"
                   [attr.tabindex]="isUploadingAvatar() ? -1 : 0"
                   (keydown.enter)="!isUploadingAvatar() && avatarInput.click()"
-                  [attr.aria-label]="isUploadingAvatar() ? 'Subiendo foto...' : 'Seleccionar foto de perfil'"
+                  [attr.aria-label]="
+                    isUploadingAvatar() ? 'Subiendo foto...' : 'Seleccionar foto de perfil'
+                  "
                 >
                   @if (isUploadingAvatar()) {
                     <div class="spinner-border spinner-border-sm text-primary" role="status">
@@ -62,9 +68,7 @@
 
             <!-- Right: User Details -->
             <div class="col-md-8">
-              <h6 class="fw-semibold text-muted mb-3 small text-uppercase">
-                Detalles del Usuario
-              </h6>
+              <h6 class="fw-semibold text-muted mb-3 small text-uppercase">Detalles del Usuario</h6>
               <p class="text-muted small mb-3">Complete los campos requeridos para continuar.</p>
 
               <div class="row g-3">
@@ -204,7 +208,9 @@
                         </p>
                       } @else {
                         @for (perm of filteredRolePerms(); track perm.permisoId) {
-                          <div class="form-check d-flex align-items-center gap-2 py-1 border-bottom border-light-subtle">
+                          <div
+                            class="form-check d-flex align-items-center gap-2 py-1 border-bottom border-light-subtle"
+                          >
                             <input
                               class="form-check-input flex-shrink-0"
                               type="checkbox"
@@ -217,7 +223,10 @@
                               [for]="'role-perm-' + perm.permisoId"
                             >
                               <span>{{ perm.nombre }}</span>
-                              <span class="badge bg-secondary-subtle text-secondary rounded-pill" style="font-size: 0.65rem">
+                              <span
+                                class="badge bg-secondary-subtle text-secondary rounded-pill"
+                                style="font-size: 0.65rem"
+                              >
                                 {{ perm.accion }}
                               </span>
                             </label>
@@ -250,7 +259,9 @@
                     />
                     <div style="max-height: 250px; overflow-y: auto">
                       @for (perm of filteredAllPerms(); track perm.permisoId) {
-                        <div class="form-check d-flex align-items-center gap-2 py-1 border-bottom border-light-subtle">
+                        <div
+                          class="form-check d-flex align-items-center gap-2 py-1 border-bottom border-light-subtle"
+                        >
                           <input
                             class="form-check-input flex-shrink-0"
                             type="checkbox"
@@ -263,7 +274,10 @@
                             [for]="'user-perm-' + perm.permisoId"
                           >
                             <span>{{ perm.nombre }}</span>
-                            <span class="badge bg-primary-subtle text-primary rounded-pill" style="font-size: 0.65rem">
+                            <span
+                              class="badge bg-primary-subtle text-primary rounded-pill"
+                              style="font-size: 0.65rem"
+                            >
                               {{ perm.accion }}
                             </span>
                           </label>

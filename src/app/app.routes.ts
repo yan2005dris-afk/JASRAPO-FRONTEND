@@ -68,8 +68,7 @@ export const routes: Routes = [
               {
                 path: '',
                 pathMatch: 'full',
-                loadComponent: () =>
-                  import('./features/admin/roles/roles').then((m) => m.Roles),
+                loadComponent: () => import('./features/admin/roles/roles').then((m) => m.Roles),
               },
               {
                 path: ':rolId',

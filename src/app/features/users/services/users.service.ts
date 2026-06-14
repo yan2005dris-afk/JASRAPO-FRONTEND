@@ -37,7 +37,7 @@ export class UsersService {
    */
   updateMe(payload: UpdateUserPayload, file?: File): Observable<UserDetail> {
     const formData = new FormData();
-    Object.keys(payload).forEach(key => {
+    Object.keys(payload).forEach((key) => {
       const value = (payload as any)[key];
       if (value !== undefined && value !== null) {
         if (typeof value === 'object') {
@@ -57,7 +57,7 @@ export class UsersService {
 
   createUser(payload: CreateUserPayload, file?: File): Observable<User> {
     const formData = new FormData();
-    Object.keys(payload).forEach(key => {
+    Object.keys(payload).forEach((key) => {
       const value = (payload as any)[key];
       if (value !== undefined && value !== null) {
         if (typeof value === 'object') {
@@ -77,7 +77,7 @@ export class UsersService {
 
   updateUser(id: number, payload: UpdateUserPayload, file?: File): Observable<User> {
     const formData = new FormData();
-    Object.keys(payload).forEach(key => {
+    Object.keys(payload).forEach((key) => {
       const value = (payload as any)[key];
       if (value !== undefined && value !== null) {
         if (typeof value === 'object') {

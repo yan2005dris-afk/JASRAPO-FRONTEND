@@ -118,20 +118,12 @@ export class AuthService {
   }
 
   private handleLoginSuccess(response: LoginResponse): void {
-    const {
-      sub,
-      accessToken,
-      sid,
-      email,
-      nombre,
-      rolId,
-      nombreRol,
-      avatar,
-      accessTokenInfo,
-    } = response;
+    const { sub, accessToken, sid, email, nombre, rolId, nombreRol, avatar, accessTokenInfo } =
+      response;
 
     const createdAt = accessTokenInfo?.iatDate || new Date().toISOString();
-    const expiresAt = accessTokenInfo?.expDate || new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    const expiresAt =
+      accessTokenInfo?.expDate || new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
     const user: User = {
       id: String(sub),
