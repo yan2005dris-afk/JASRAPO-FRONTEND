@@ -1,9 +1,11 @@
 <div class="user-form-container p-4">
   <!-- Page Header -->
   <div class="mb-4">
-    <h3 class="fw-bold mb-1 text-dark fs-4">Gestión de Usuarios</h3>
+    <h3 class="fw-bold mb-1 text-dark fs-4">
+      {{ isEditing() ? 'Editar Usuario' : 'Crear Usuario' }}
+    </h3>
     <p class="text-muted small mb-0">
-      {{ isEditing() ? 'Editar un usuario existente' : 'Crear un nuevo usuario' }}
+      {{ isEditing() ? 'Modifique los datos del usuario seleccionado' : 'Complete los campos para registrar un nuevo usuario' }}
     </p>
   </div>
 
