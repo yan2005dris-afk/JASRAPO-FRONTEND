@@ -14,10 +14,11 @@ import {
 import { ClientsFormComponent } from './components/clients-form/clients-form.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-clients',
-  imports: [CommonModule, FormsModule, ClientsFormComponent],
+  imports: [CommonModule, FormsModule, ClientsFormComponent, PaginationComponent],
   templateUrl: './clients.html',
   styleUrl: './clients.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -29,7 +30,7 @@ export class ClientsComponent {
   readonly authService = inject(AuthService);
 
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly clientesService = inject(ClientsService);
+  private readonly clientsService = inject(ClientsService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
 
@@ -118,7 +119,7 @@ export class ClientsComponent {
       limit: this.pageSize,
     };
 
-    this.clientesService.searchClients(params).subscribe({
+    this.clientsService.searchClients(params).subscribe({
       next: (result) => {
         if (
           this.searchType === 'nombreCompleto' &&
@@ -170,7 +171,7 @@ export class ClientsComponent {
     if (this.estadoBusqueda === 'activos') params.activo = true;
     if (this.estadoBusqueda === 'inactivos') params.activo = false;
 
-    this.clientesService.searchClients(params).subscribe({
+    this.clientsService.searchClients(params).subscribe({
       next: (result) => {
         this.clients = result.data;
         this.totalItems = result.meta.total;
@@ -222,7 +223,7 @@ export class ClientsComponent {
       return;
     }
 
-    this.clientesService.getClienteById(clienteId).subscribe({
+    this.clientsService.getClientById(clienteId).subscribe({
       next: (clienteDetalle) => {
         this.clienteDetalleSeleccionado = clienteDetalle;
         this.isDetalleModalOpen = true;
@@ -273,7 +274,7 @@ export class ClientsComponent {
         if (confirmed) {
           this.isLoading = true;
           this.cdr.markForCheck();
-          this.clientesService.deleteCliente(clienteId).subscribe({
+          this.clientsService.deleteClient(clienteId).subscribe({
             next: () => {
               this.toastService.success('Cliente eliminado correctamente', 'Éxito');
               this.searchClients();

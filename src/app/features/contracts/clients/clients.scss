@@ -1,7 +1,6 @@
 /* Container */
 .cliente-container {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 /* Page header */
@@ -15,8 +14,8 @@
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background-color: #e7f1ff;
-  color: #0d6efd;
+  background-color: var(--soft-blue-bg);
+  color: var(--primary-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -29,19 +28,8 @@
   width: 250px;
 }
 
-/* Table */
 .table-checkbox {
   cursor: pointer;
-}
-
-.custom-table thead tr {
-  background-color: #f8f9fa;
-}
-
-.custom-table th,
-.custom-table td {
-  padding: 0.875rem 1rem;
-  vertical-align: middle;
 }
 
 /* Client initials avatar */
@@ -49,8 +37,8 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #e7f1ff, #cfe2ff);
-  color: #0d6efd;
+  background: var(--soft-blue-bg);
+  color: var(--primary-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -66,8 +54,8 @@
   align-items: center;
   padding: 0.2rem 0.6rem;
   border-radius: 6px;
-  background-color: #f0f4ff;
-  color: #3d5aed;
+  background-color: var(--soft-blue-bg);
+  color: var(--primary-color);
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.3px;
@@ -105,11 +93,11 @@
 }
 
 .action-btn-edit {
-  color: #0d6efd;
+  color: var(--primary-color);
 
   &:hover {
-    background-color: #e7f1ff;
-    color: #0a58ca;
+    background-color: var(--soft-blue-bg);
+    color: var(--secondary-color);
   }
 }
 
@@ -137,8 +125,8 @@
   width: 64px;
   height: 64px;
   border-radius: 16px;
-  background-color: #f0f4ff;
-  color: #0d6efd;
+  background-color: var(--soft-blue-bg);
+  color: var(--primary-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -154,15 +142,15 @@
   gap: 1rem;
   padding: 1.25rem;
   border-radius: 12px;
-  background: linear-gradient(135deg, #f0f4ff, #e7f1ff);
+  background: linear-gradient(135deg, var(--soft-blue-bg), var(--light-bg));
 }
 
 .detalle-avatar {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background-color: #cfe2ff;
-  color: #0d6efd;
+  background-color: var(--soft-blue-bg);
+  color: var(--primary-color);
   display: flex;
   align-items: center;
   justify-content: center;
