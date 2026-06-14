@@ -1,7 +1,6 @@
 /* Container */
 .cliente-container {
-  max-width: 1200px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 /* Page header */
@@ -29,19 +28,8 @@
   width: 250px;
 }
 
-/* Table */
 .table-checkbox {
   cursor: pointer;
-}
-
-.custom-table thead tr {
-  background-color: #f8f9fa;
-}
-
-.custom-table th,
-.custom-table td {
-  padding: 0.875rem 1rem;
-  vertical-align: middle;
 }
 
 /* Client initials avatar */

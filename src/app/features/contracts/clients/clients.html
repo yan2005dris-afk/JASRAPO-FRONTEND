@@ -80,7 +80,7 @@
     </div>
 
     <!-- Tabla -->
-    <div class="px-4 pt-3">
+    <div class="pt-3">
       <!-- Estado inicial -->
       @if (!hasFetched && !isLoading) {
         <div class="empty-state">
@@ -110,7 +110,7 @@
           <table class="table table-hover align-middle mb-0 custom-table">
             <thead>
               <tr>
-                <th scope="col" style="width: 40px">
+                <th scope="col" class="ps-4" style="width: 56px">
                   <input class="form-check-input table-checkbox" type="checkbox" />
                 </th>
 
@@ -121,14 +121,14 @@
                 <th scope="col" class="text-muted fw-semibold small">Teléfono</th>
                 <th scope="col" class="text-muted fw-semibold small">Dirección</th>
                 <th scope="col" class="text-muted fw-semibold small">Estado</th>
-                <th scope="col" class="text-muted fw-semibold small text-center">Acciones</th>
+                <th scope="col" class="text-muted fw-semibold small text-center pe-4">Acciones</th>
               </tr>
             </thead>
 
             <tbody>
               @for (client of pagedClients; track obtenerIdCliente(client) ?? $index) {
                 <tr>
-                  <td>
+                  <td class="ps-4">
                     <input class="form-check-input table-checkbox" type="checkbox" />
                   </td>
 
@@ -180,7 +180,7 @@
                     }
                   </td>
 
-                  <td class="text-center">
+                  <td class="text-center pe-4">
                     <div class="dropdown">
                       <button
                         class="btn btn-link text-muted p-0 shadow-none"
