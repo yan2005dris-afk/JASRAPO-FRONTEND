@@ -1,19 +1,23 @@
 <form [formGroup]="form" (ngSubmit)="submit()">
-  <!-- Cabecera del modal -->
   <div class="modal-header">
-    <h5 class="modal-title fw-bold">
-      Editar estado del medidor <span class="text-primary">[{{ medidor()?.serie || 'S/N' }}]</span>
-    </h5>
+    <div>
+      <h5 class="modal-title fw-bold">
+        Editar Estado del Medidor <span class="text-primary">[{{ medidor()?.serie || 'S/N' }}]</span>
+      </h5>
+      <p class="text-muted mb-0 small">
+        Actualice el estado del medidor y registre las observaciones correspondientes.
+      </p>
+    </div>
+
     <button
       type="button"
-      class="btn-close"
+      class="btn-close shadow-none"
       aria-label="Cerrar"
       [disabled]="isSaving()"
       (click)="close()"
     ></button>
   </div>
 
-  <!-- Formulario -->
   <div class="modal-body">
     @if (errorMessage()) {
       <div class="alert alert-danger py-2 px-3 mb-3 small d-flex align-items-center gap-2">
@@ -22,55 +26,55 @@
       </div>
     }
 
-    <!-- Selección de Estado -->
-    <div class="mb-3">
-      <label for="estadoEditar" class="form-label fw-medium"
-        >Estado <span class="text-dark fw-bold ms-1">*</span></label
-      >
-      <select
-        id="estadoEditar"
-        class="form-select"
-        formControlName="estadoId"
-        [class.is-invalid]="form.controls.estadoId.invalid && form.controls.estadoId.touched"
-      >
-        <option [ngValue]="null" disabled>ESTADO</option>
-        <!-- Iteración sobre los objetos IEstadoMedidor que vienen de la BD -->
-        @for (estado of estados(); track estado.estadoId) {
-          <option [value]="estado.estadoId">
-            {{ estado.nombre | uppercase }}
-          </option>
+    <div class="row g-3">
+      <!-- Selección de Estado -->
+      <div class="col-12">
+        <label for="estadoEditar" class="form-label fw-semibold"
+          >Estado <span class="text-danger fw-bold ms-1">*</span></label
+        >
+        <select
+          id="estadoEditar"
+          class="form-select"
+          formControlName="estadoId"
+          [class.is-invalid]="form.controls.estadoId.invalid && form.controls.estadoId.touched"
+        >
+          <option [ngValue]="null" disabled>Seleccione un estado</option>
+          @for (estado of estados(); track estado.estadoId) {
+            <option [value]="estado.estadoId">
+              {{ estado.nombre | uppercase }}
+            </option>
+          }
+        </select>
+        @if (form.controls.estadoId.invalid && form.controls.estadoId.touched) {
+          <div class="invalid-feedback">Debe seleccionar un estado.</div>
         }
-      </select>
-      @if (form.controls.estadoId.invalid && form.controls.estadoId.touched) {
-        <div class="invalid-feedback">Debe seleccionar un estado.</div>
-      }
-    </div>
+      </div>
 
-    <!-- Área de Observaciones -->
-    <div class="mb-3">
-      <label for="observacion" class="form-label fw-medium">Observación</label>
-      <textarea
-        id="observacion"
-        class="form-control"
-        rows="5"
-        formControlName="observacion"
-        placeholder="Ingrese el motivo o una observación técnica..."
-        style="resize: none"
-      ></textarea>
+      <!-- Área de Observaciones -->
+      <div class="col-12">
+        <label for="observacion" class="form-label fw-semibold">Observación</label>
+        <textarea
+          id="observacion"
+          class="form-control"
+          rows="4"
+          formControlName="observacion"
+          placeholder="Ingrese el motivo o una observación técnica..."
+          style="resize: none"
+        ></textarea>
+      </div>
     </div>
   </div>
 
-  <!-- Acciones del formulario -->
-  <div class="modal-footer pt-0 border-top-0">
+  <div class="modal-footer">
     <button
       type="button"
-      class="btn btn-outline-secondary btn-sm fw-medium px-3"
-      (click)="close()"
+      class="btn btn-outline-secondary fw-medium px-4"
       [disabled]="isSaving()"
+      (click)="close()"
     >
       Cancelar
     </button>
-    <button type="submit" class="btn btn-primary" [disabled]="isSaving() || form.invalid">
+    <button type="submit" class="btn btn-primary px-4" [disabled]="isSaving() || form.invalid">
       {{ isSaving() ? 'Guardando...' : 'Guardar' }}
     </button>
   </div>

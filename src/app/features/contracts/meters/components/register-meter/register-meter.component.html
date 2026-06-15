@@ -1,17 +1,21 @@
 <form [formGroup]="form" (ngSubmit)="submit()">
-  <!-- Cabecera del modal -->
   <div class="modal-header">
-    <h5 class="modal-title mb-0">Registrar medidor</h5>
+    <div>
+      <h5 class="modal-title fw-bold">Registrar Nuevo Medidor</h5>
+      <p class="text-muted mb-0 small">
+        Complete los campos para registrar la información física del nuevo medidor.
+      </p>
+    </div>
+
     <button
       type="button"
-      class="btn-close"
+      class="btn-close shadow-none"
       aria-label="Cerrar"
       [disabled]="isSaving()"
       (click)="close()"
     ></button>
   </div>
 
-  <!-- Cuerpo y Formulario -->
   <div class="modal-body">
     @if (errorMessage()) {
       <div class="alert alert-danger py-2 px-3 mb-3 small d-flex align-items-center gap-2">
@@ -20,66 +24,70 @@
       </div>
     }
 
-    <div class="form-group mb-3">
-      <label for="serie" class="form-label"
-        >N° Serie <span class="text-dark fw-bold ms-1">*</span></label
-      >
-      <input
-        id="serie"
-        class="form-control"
-        formControlName="serie"
-        placeholder="SN-001"
-        [class.is-invalid]="form.controls.serie.invalid && form.controls.serie.touched"
-      />
-      @if (form.controls.serie.invalid && form.controls.serie.touched) {
-        <div class="invalid-feedback">El número de serie es obligatorio.</div>
-      }
-    </div>
+    <div class="row g-3">
+      <div class="col-12">
+        <label for="serie" class="form-label fw-semibold"
+          >N° Serie <span class="text-danger fw-bold ms-1">*</span></label
+        >
+        <input
+          id="serie"
+          type="text"
+          class="form-control"
+          formControlName="serie"
+          placeholder="Ej. SN-001"
+          [class.is-invalid]="form.controls.serie.invalid && form.controls.serie.touched"
+        />
+        @if (form.controls.serie.invalid && form.controls.serie.touched) {
+          <div class="invalid-feedback">El número de serie es obligatorio.</div>
+        }
+      </div>
 
-    <div class="form-group mb-3">
-      <label for="marca" class="form-label"
-        >Marca <span class="text-dark fw-bold ms-1">*</span></label
-      >
-      <input
-        id="marca"
-        class="form-control"
-        formControlName="marca"
-        placeholder="Itron"
-        [class.is-invalid]="form.controls.marca.invalid && form.controls.marca.touched"
-      />
-      @if (form.controls.marca.invalid && form.controls.marca.touched) {
-        <div class="invalid-feedback">La marca es obligatoria.</div>
-      }
-    </div>
+      <div class="col-md-6">
+        <label for="marca" class="form-label fw-semibold"
+          >Marca <span class="text-danger fw-bold ms-1">*</span></label
+        >
+        <input
+          id="marca"
+          type="text"
+          class="form-control"
+          formControlName="marca"
+          placeholder="Ej. Itron"
+          [class.is-invalid]="form.controls.marca.invalid && form.controls.marca.touched"
+        />
+        @if (form.controls.marca.invalid && form.controls.marca.touched) {
+          <div class="invalid-feedback">La marca es obligatoria.</div>
+        }
+      </div>
 
-    <div class="form-group mb-3">
-      <label for="modelo" class="form-label"
-        >Modelo <span class="text-dark fw-bold ms-1">*</span></label
-      >
-      <input
-        id="modelo"
-        class="form-control"
-        formControlName="modelo"
-        placeholder="CX1000"
-        [class.is-invalid]="form.controls.modelo.invalid && form.controls.modelo.touched"
-      />
-      @if (form.controls.modelo.invalid && form.controls.modelo.touched) {
-        <div class="invalid-feedback">El modelo es obligatorio.</div>
-      }
+      <div class="col-md-6">
+        <label for="modelo" class="form-label fw-semibold"
+          >Modelo <span class="text-danger fw-bold ms-1">*</span></label
+        >
+        <input
+          id="modelo"
+          type="text"
+          class="form-control"
+          formControlName="modelo"
+          placeholder="Ej. CX1000"
+          [class.is-invalid]="form.controls.modelo.invalid && form.controls.modelo.touched"
+        />
+        @if (form.controls.modelo.invalid && form.controls.modelo.touched) {
+          <div class="invalid-feedback">El modelo es obligatorio.</div>
+        }
+      </div>
     </div>
   </div>
 
-  <!-- Acciones del formulario -->
-  <div class="modal-footer pt-0 border-top-0">
+  <div class="modal-footer">
     <button
       type="button"
-      class="btn btn-outline-secondary btn-sm fw-medium px-3"
+      class="btn btn-outline-secondary fw-medium px-4"
       [disabled]="isSaving()"
       (click)="close()"
     >
       Cancelar
     </button>
-    <button type="submit" class="btn btn-primary btn-sm" [disabled]="isSaving() || form.invalid">
+    <button type="submit" class="btn btn-primary px-4" [disabled]="isSaving() || form.invalid">
       {{ isSaving() ? 'Guardando...' : 'Guardar' }}
     </button>
   </div>

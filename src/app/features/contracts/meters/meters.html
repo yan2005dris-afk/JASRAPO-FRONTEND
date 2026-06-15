@@ -2,16 +2,14 @@
   Componente de Inventario de Medidores 
   Maneja la visualización de métricas, listado paginado y gestión de estados.
 -->
-<div class="meters-page p-4">
-  <!-- Cabecera de la página -->
-  <header
-    class="page-header d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3"
-  >
-    <h2 class="mb-0 fw-bold">Inventario de Medidores</h2>
-    <button class="btn btn-register btn-sm px-3 py-2 fw-medium" (click)="openRegistrar()">
-      Registrar medidor
-    </button>
-  </header>
+<div class="container-xl py-4">
+  <!-- Page header -->
+  <div class="page-header mb-4">
+    <div>
+      <h3 class="fw-bold mb-0 text-dark fs-4">Inventario de Medidores</h3>
+      <p class="text-muted small mb-0">Registrá, editá y consultá la información de medidores.</p>
+    </div>
+  </div>
 
   <!-- Rejilla de indicadores principales -->
   <section class="metrics-grid mb-4">
@@ -34,12 +32,44 @@
   </section>
 
   <!-- Contenedor principal de la tabla -->
-  <div class="card shadow-sm table-card">
-    <div class="card-body p-0">
+  <div class="card border-0 shadow-sm rounded-3">
+    <!-- Header: Buscar y acciones -->
+    <div
+      class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
+      <!-- Botón Agregar -->
+      <button
+        class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+        (click)="openRegistrar()"
+      >
+        <i class="bi bi-plus-lg"></i>
+        Agregar
+      </button>
+
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- Estado -->
+        <select
+          class="form-select shadow-none"
+          style="width: 190px"
+          [(ngModel)]="estadoFiltro"
+          (change)="filtrarPorEstado()"
+        >
+          <option value="todos">Todos los estados</option>
+          @for (estado of estadosCatalogo; track estado.estadoId) {
+            <option [value]="estado.codigo">{{ estado.nombre }}</option>
+          }
+        </select>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="px-4 pt-3">
       <!-- Estado de carga -->
       @if (isLoading) {
-        <div class="loader-container text-center p-5">
-          <div class="spinner-border text-primary" role="status"></div>
+        <div class="text-center py-5 text-muted">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
           <p class="mt-3 mb-0">Cargando medidores...</p>
         </div>
       }
@@ -47,7 +77,7 @@
       <!-- Estado de error -->
       @if (errorMessage && !isLoading) {
         <div
-          class="m-4 alert alert-danger d-flex justify-content-between align-items-center shadow-sm"
+          class="alert alert-danger d-flex justify-content-between align-items-center shadow-sm"
           role="alert"
         >
           <div class="d-flex align-items-center gap-3">
@@ -66,37 +96,43 @@
       <!-- Contenido de datos -->
       @if (hasFetched && !isLoading) {
         <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0">
-            <thead>
+          <table class="table table-hover align-middle mb-0 custom-table">
+            <thead class="table-light">
               <tr>
-                <th scope="col" class="ps-4">N° Serie</th>
-                <th scope="col">Marca</th>
-                <th scope="col">Fecha Ingreso</th>
-                <th scope="col">Estado</th>
-                <th scope="col">Acciones</th>
+                <th scope="col" style="width: 40px">
+                  <input class="form-check-input table-checkbox" type="checkbox" />
+                </th>
+                <th scope="col" class="text-muted fw-semibold small">N° Serie</th>
+                <th scope="col" class="text-muted fw-semibold small">Marca</th>
+                <th scope="col" class="text-muted fw-semibold small">Fecha Ingreso</th>
+                <th scope="col" class="text-muted fw-semibold small">Estado</th>
+                <th scope="col" class="text-muted fw-semibold small text-center">Acciones</th>
               </tr>
             </thead>
             <tbody>
               @for (medidor of pagedMetersComponent; track medidor.serie) {
                 <tr>
-                  <td class="ps-4 fw-medium text-dark">{{ medidor.serie }}</td>
-                  <td class="text-muted">{{ medidor.marca }}</td>
-                  <td class="text-muted">{{ medidor.fechaInstalacion ?? 'Sin fecha' }}</td>
                   <td>
-                    <span>
-                      <span
-                        [class]="
-                          'badge status-badge ' + getEstadoBadgeClass(medidor.estado?.codigo)
-                        "
-                      >
-                        @if (getEstadoIcon(medidor.estado?.codigo)) {
-                          <i [class]="'bi ' + getEstadoIcon(medidor.estado?.codigo)"></i>
-                        }
-                        {{ getEstadoNombre(medidor) }}
-                      </span>
+                    <input class="form-check-input table-checkbox" type="checkbox" />
+                  </td>
+                  <td class="fw-medium text-dark" style="font-size: 0.95rem">
+                    {{ medidor.serie }}
+                  </td>
+                  <td class="text-muted small">
+                    {{ medidor.marca }}
+                  </td>
+                  <td class="text-muted small">
+                    {{ medidor.fechaInstalacion ?? '—' }}
+                  </td>
+                  <td class="small">
+                    <span class="badge rounded-pill {{ getEstadoBadgeClass(medidor.estado?.codigo) }}">
+                      @if (getEstadoIcon(medidor.estado?.codigo)) {
+                        <i class="bi {{ getEstadoIcon(medidor.estado?.codigo) }} me-1"></i>
+                      }
+                      {{ getEstadoNombre(medidor) }}
                     </span>
                   </td>
-                  <td>
+                  <td class="text-center">
                     <div class="dropdown">
                       <button
                         class="btn btn-link text-muted p-0 shadow-none"
@@ -116,7 +152,7 @@
                             (click)="openEditar(medidor)"
                           >
                             <i class="bi bi-pencil-fill text-primary" style="font-size: 0.8rem"></i>
-                            Editar
+                            Editar estado
                           </button>
                         </li>
                         <li>
@@ -138,70 +174,93 @@
               }
               @if (pagedMetersComponent.length === 0) {
                 <tr>
-                  <td colspan="5" class="empty-row">No se encontraron meters.</td>
+                  <td colspan="6" class="text-center py-5">
+                    <i class="bi bi-box fs-2 d-block mb-2 text-muted opacity-50"></i>
+                    <span class="text-muted small">No se encontraron medidores con esos criterios.</span>
+                  </td>
                 </tr>
               }
             </tbody>
           </table>
         </div>
-
-        <!-- Paginación y Controles -->
-        <footer
-          class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3"
-        >
-          <div class="d-flex align-items-center gap-3">
-            <span class="text-muted small">
-              Total: <strong>{{ totalItems() }}</strong>
-            </span>
-            <div class="d-flex align-items-center gap-2">
-              <span class="text-muted small">Mostrar:</span>
-              <select
-                class="form-select form-select-sm page-size-select"
-                [value]="pageSize()"
-                (change)="setPageSize(+$any($event.target).value)"
-              >
-                @for (opt of pageSizeOptions; track opt) {
-                  <option [value]="opt">{{ opt }}</option>
-                }
-              </select>
-            </div>
-          </div>
-
-          <nav>
-            <ul class="pagination pagination-sm mb-0 gap-1">
-              <li class="page-item" [class.disabled]="currentPage() === 1">
-                <button
-                  type="button"
-                  class="page-link nav-link-custom"
-                  (click)="goToPage(currentPage() - 1)"
-                  [disabled]="currentPage() === 1"
-                >
-                  <i class="bi bi-chevron-left"></i> Previous
-                </button>
-              </li>
-
-              @for (page of pageNumbers; track page) {
-                <li class="page-item" [class.active]="currentPage() === page">
-                  <button type="button" class="page-link fw-medium" (click)="goToPage(page)">
-                    {{ page }}
-                  </button>
-                </li>
-              }
-
-              <li class="page-item" [class.disabled]="currentPage() === totalPages">
-                <button
-                  type="button"
-                  class="page-link nav-link-custom"
-                  (click)="goToPage(currentPage() + 1)"
-                  [disabled]="currentPage() === totalPages"
-                >
-                  Next <i class="bi bi-chevron-right"></i>
-                </button>
-              </li>
-            </ul>
-          </nav>
-        </footer>
       }
+    </div>
+
+    <!-- Footer / Paginación -->
+    <div
+      class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
+      <div class="d-flex align-items-center gap-3">
+        <span class="text-muted small">
+          Total: <strong>{{ totalItems() }}</strong> medidor{{ totalItems() !== 1 ? 'es' : '' }}
+        </span>
+
+        <div class="d-flex align-items-center gap-2">
+          <span class="text-muted small">Mostrar:</span>
+
+          <select
+            class="form-select form-select-sm page-size-select shadow-none"
+            style="width: auto;"
+            [value]="pageSize()"
+            (change)="setPageSize(+$any($event.target).value)"
+          >
+            @for (opt of pageSizeOptions; track opt) {
+              <option [value]="opt">{{ opt }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      <nav>
+        <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
+          <li class="page-item" [class.disabled]="currentPage() === 1">
+            <a
+              class="page-link border-0 text-dark bg-transparent fw-medium small"
+              href="#"
+              (click)="$event.preventDefault(); goToPage(currentPage() - 1)"
+              [attr.tabindex]="currentPage() === 1 ? -1 : null"
+              [attr.aria-disabled]="currentPage() === 1"
+            >
+              <i class="bi bi-chevron-left me-1" style="font-size: 0.7rem"></i>
+              Anterior
+            </a>
+          </li>
+
+          @for (page of pageNumbers; track page) {
+            <li
+              class="page-item"
+              [class.active]="currentPage() === page"
+              [attr.aria-current]="currentPage() === page ? 'page' : null"
+            >
+              <a
+                class="page-link fw-medium"
+                [class.shadow-sm]="currentPage() === page"
+                [class.border-0]="currentPage() !== page"
+                [class.bg-transparent]="currentPage() !== page"
+                [class.text-dark]="true"
+                style="border-radius: 6px"
+                href="#"
+                (click)="$event.preventDefault(); goToPage(page)"
+              >
+                {{ page }}
+              </a>
+            </li>
+          }
+
+          <li class="page-item" [class.disabled]="currentPage() === totalPages">
+            <a
+              class="page-link border-0 text-dark bg-transparent fw-medium small"
+              href="#"
+              (click)="$event.preventDefault(); goToPage(currentPage() + 1)"
+              [attr.tabindex]="currentPage() === totalPages ? -1 : null"
+              [attr.aria-disabled]="currentPage() === totalPages"
+            >
+              Siguiente
+              <i class="bi bi-chevron-right ms-1" style="font-size: 0.7rem"></i>
+            </a>
+          </li>
+        </ul>
+      </nav>
     </div>
   </div>
 </div>
@@ -211,7 +270,7 @@
   <div
     class="modal fade show d-block"
     tabindex="-1"
-    style="background-color: rgba(15, 23, 42, 0.45)"
+    style="background-color: rgba(0, 0, 0, 0.5)"
   >
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow">
@@ -231,7 +290,7 @@
   <div
     class="modal fade show d-block"
     tabindex="-1"
-    style="background-color: rgba(15, 23, 42, 0.45)"
+    style="background-color: rgba(0, 0, 0, 0.5)"
   >
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow">

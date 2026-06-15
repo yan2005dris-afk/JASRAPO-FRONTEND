@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
+import { FormsModule } from '@angular/forms';
 import { EditMeterComponent } from './components/edit-meter/edit-meter.component';
 import { RegisterMeterComponent } from './components/register-meter/register-meter.component';
 import {
@@ -26,7 +27,7 @@ import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/
 
 @Component({
   selector: 'app-meters',
-  imports: [CommonModule, RegisterMeterComponent, EditMeterComponent],
+  imports: [CommonModule, FormsModule, RegisterMeterComponent, EditMeterComponent],
   templateUrl: './meters.html',
   styleUrl: './meters.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,6 +45,7 @@ export class MetersComponent implements OnInit {
   meters: IMeter[] = [];
   estadosCatalogo: IEstadoMedidor[] = [];
   editingMedidor: IMeter | null = null;
+  estadoFiltro = 'todos';
 
   // Flags de control de flujo y UI
   isLoading = false;
@@ -108,6 +110,11 @@ export class MetersComponent implements OnInit {
     this.loadMeters();
   }
 
+  filtrarPorEstado(): void {
+    this.currentPage.set(1);
+    this.loadMeters();
+  }
+
   loadMeters(): void {
     this.isLoading = true;
     this.errorMessage = '';
@@ -115,7 +122,11 @@ export class MetersComponent implements OnInit {
 
     forkJoin({
       estados: this.metersService.getMeterStatuses(),
-      response: this.metersService.getMeters(this.currentPage(), this.pageSize()),
+      response: this.metersService.getMeters(
+        this.currentPage(),
+        this.pageSize(),
+        this.estadoFiltro === 'todos' ? undefined : this.estadoFiltro
+      ),
     })
       .pipe(
         finalize(() => {
@@ -298,13 +309,13 @@ export class MetersComponent implements OnInit {
 
   getEstadoBadgeClass(codigo: string | undefined): string {
     const clases: Record<string, string> = {
-      BODEGA: 'badge-disponible',
-      INSTALADO: 'badge-instalado',
-      DANADO: 'badge-danado',
-      PENDIENTE: 'badge-warning',
-      BAJA: 'badge-obsoleto',
+      BODEGA: 'text-bg-success',
+      INSTALADO: 'text-bg-primary',
+      DANADO: 'text-bg-danger',
+      PENDIENTE: 'text-bg-warning text-dark',
+      BAJA: 'text-bg-secondary',
     };
-    return clases[codigo || ''] || 'badge-secondary';
+    return clases[codigo || ''] || 'text-bg-secondary';
   }
 
   getEstadoIcon(codigo: string | undefined): string {
