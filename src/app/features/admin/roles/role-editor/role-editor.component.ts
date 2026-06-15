@@ -22,7 +22,6 @@ import {
 
 @Component({
   selector: 'app-role-editor',
-  standalone: true,
   imports: [CommonModule],
   templateUrl: './role-editor.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,

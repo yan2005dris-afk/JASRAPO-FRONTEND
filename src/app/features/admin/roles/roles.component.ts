@@ -7,7 +7,6 @@ import { RoleListItem } from './models/role-permission.interface';
 
 @Component({
   selector: 'app-roles',
-  standalone: true,
   imports: [RouterOutlet, RouterLink, CommonModule],
   templateUrl: './roles.component.html',
   styleUrl: './roles.component.scss',
