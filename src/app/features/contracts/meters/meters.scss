@@ -1,9 +1,56 @@
 /**
  * Variables de color para métricas
  */
-$primary-blue: #0ea5e9;
-$text-main: #0f172a;
-$text-muted: #64748b;
+$primary-blue: var(--primary-color);
+$hover-blue: var(--secondary-color);
+$bg-light: var(--light-bg);
+$text-main: var(--dark-text);
+$text-muted: var(--muted-text);
+$border-color: var(--border-color);
+
+.meters-page {
+  min-height: 100vh;
+  background-color: $bg-light;
+
+  .page-header h2 {
+    font-size: 1.5rem;
+    color: #1e293b;
+  }
+}
+
+/** 
+ * Botones y acciones
+ */
+.btn-register {
+  background-color: $primary-blue;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background-color: $hover-blue;
+    color: #ffffff;
+  }
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+
+  &:hover {
+    background-color: var(--soft-blue-bg);
+  }
+
+  &.btn-link-blue {
+    color: $primary-blue;
+  }
+}
 
 /** 
  * Tarjetas de Métricas
@@ -25,7 +72,7 @@ $text-muted: #64748b;
   position: relative;
 
   &.card-bodega {
-    background-color: #f8fafc;
+    background-color: var(--soft-blue-bg);
   }
   &.card-instalados {
     background-color: #ffffff;
@@ -62,7 +109,96 @@ $text-muted: #64748b;
 /**
  * Tabla Alineada con Gestión de Clientes
  */
-.table-checkbox {
+.table-card {
+  border-radius: 12px;
+  border: 1px solid $border-color;
+  overflow: hidden;
+
+  thead th {
+    background-color: #ffffff;
+    font-size: 0.875rem;
+    padding: 1rem;
+    color: $text-main;
+  }
+
+  tbody td {
+    padding: 1rem;
+    color: #475569;
+  }
+
+  .empty-row {
+    text-align: center;
+    color: $text-muted;
+    padding: 2rem;
+  }
+}
+
+/** 
+ * Badges de Estado
+ */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  min-width: 7rem;
+  justify-content: center;
+
+  &.badge-instalado {
+    background: var(--soft-blue-bg);
+    color: var(--primary-color);
+  }
+  &.badge-disponible {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+  &.badge-danado {
+    background: #ffedd5;
+    color: #ea580c;
+  }
+  &.badge-obsoleto {
+    background: #fee2e2;
+    color: #dc2626;
+  }
+  &.badge-warning {
+    background: #fef3c7;
+    color: #b45309;
+  }
+}
+
+/** 
+ * Utilidades de Interfaz (Modales, Cargas, Paginación)
+ */
+.loader-container {
+  padding: 3rem 0;
+  text-align: center;
+  color: $text-muted;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1050;
+  display: block;
+
+  .modal-content {
+    border: none;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.page-size-select {
+  width: auto;
+  min-width: 10px;
+  padding-right: 2rem;
+  box-shadow: none !important;
   cursor: pointer;
 }
 

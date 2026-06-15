@@ -58,23 +58,23 @@ export class ClientsService {
     });
   }
 
-  getClienteById(id: string | number): Observable<IClient> {
+  getClientById(id: string | number): Observable<IClient> {
     return this.http.get<IClient>(`${this.endpoint}/${id}`);
   }
 
-  createCliente(cliente: CreateClientRequest): Observable<IClient> {
+  createClient(cliente: CreateClientRequest): Observable<IClient> {
     return this.http.post<IClient>(this.endpoint, cliente);
   }
 
-  updateCliente(id: string | number, cliente: UpdateClientRequest): Observable<IClient> {
+  updateClient(id: string | number, cliente: UpdateClientRequest): Observable<IClient> {
     return this.http.patch<IClient>(`${this.endpoint}/${id}`, cliente);
   }
 
-  deleteCliente(id: string | number): Observable<void> {
+  deleteClient(id: string | number): Observable<void> {
     return this.http.delete<void>(`${this.endpoint}/${id}`);
   }
 
-  getTiposIdentificacion(): Observable<IIdentificacion[]> {
+  getIdentificationTypes(): Observable<IIdentificacion[]> {
     return this.http.get<IIdentificacion[]>(`${this.endpoint}/identification-types`);
   }
 }

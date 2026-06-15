@@ -12,6 +12,7 @@ import { ComunidadesService } from './services/comunidades.service';
 import { Comunidad } from './models/comunidad.interface';
 import { ComunidadFormComponent } from './comunidad-form/comunidad-form.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 interface BackendErrorResponse {
   message?: string;
@@ -21,7 +22,7 @@ interface BackendErrorResponse {
 
 @Component({
   selector: 'app-comunidades',
-  imports: [CommonModule, ComunidadFormComponent],
+  imports: [CommonModule, ComunidadFormComponent, PaginationComponent],
   templateUrl: './comunidades.component.html',
   styleUrl: './comunidades.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

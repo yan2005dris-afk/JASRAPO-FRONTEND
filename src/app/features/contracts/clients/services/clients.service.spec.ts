@@ -130,7 +130,7 @@ describe('ClientsService', () => {
   });
 
   it('should get cliente by id', () => {
-    service.getClienteById('1').subscribe((cliente) => {
+    service.getClientById('1').subscribe((cliente) => {
       expect(cliente).toEqual(clienteMock);
     });
 
@@ -156,7 +156,7 @@ describe('ClientsService', () => {
       direccionDomicilio: 'Playas',
     };
 
-    service.createCliente(nuevoCliente).subscribe((cliente) => {
+    service.createClient(nuevoCliente).subscribe((cliente) => {
       expect(cliente).toEqual(clienteMock);
     });
 
@@ -174,7 +174,7 @@ describe('ClientsService', () => {
       telefono: '0999999999',
     };
 
-    service.updateCliente('1', clienteActualizado).subscribe((cliente) => {
+    service.updateClient('1', clienteActualizado).subscribe((cliente) => {
       expect(cliente).toEqual({
         ...clienteMock,
         email: 'nuevo@example.com',
@@ -195,7 +195,7 @@ describe('ClientsService', () => {
   });
 
   it('should delete cliente', () => {
-    service.deleteCliente('1').subscribe((response) => {
+    service.deleteClient('1').subscribe((response) => {
       expect(response).toBeNull();
     });
 
@@ -207,7 +207,7 @@ describe('ClientsService', () => {
   });
 
   it('should get tipos de identificacion', () => {
-    service.getTiposIdentificacion().subscribe((tipos) => {
+    service.getIdentificationTypes().subscribe((tipos) => {
       expect(tipos).toEqual(tiposIdentificacionMock);
     });
 

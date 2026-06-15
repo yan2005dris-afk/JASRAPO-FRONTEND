@@ -1,0 +1,116 @@
+<div class="container-fluid p-4">
+  <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-3">
+    <div class="d-flex align-items-center gap-3">
+      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="goBack()">
+        <i class="bi bi-arrow-left"></i>
+      </button>
+      <div>
+        <h2 class="mb-0 fw-bold">{{ role()?.nombre ?? '...' }}</h2>
+        <small class="text-muted">Configurar permisos del rol</small>
+      </div>
+    </div>
+
+    <button
+      class="btn btn-primary d-flex align-items-center gap-2"
+      type="button"
+      [disabled]="isSaving() || !hasChanges() || isLoading()"
+      (click)="save()"
+    >
+      @if (isSaving()) {
+        <span class="spinner-border spinner-border-sm"></span>
+        <span>Guardando...</span>
+      } @else {
+        <i class="bi bi-floppy"></i>
+        <span>Guardar cambios</span>
+      }
+    </button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="d-flex justify-content-center align-items-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+  } @else if (groupedPermissions().length === 0) {
+    <div class="alert alert-info">
+      <i class="bi bi-info-circle me-2"></i>
+      No hay permisos disponibles en el sistema.
+    </div>
+  } @else {
+    <div class="d-flex flex-column gap-2">
+      @for (group of groupedPermissions(); track group.recurso) {
+        <div class="card border shadow-sm">
+          <div
+            class="card-header d-flex align-items-center gap-3 py-3 user-select-none"
+            style="cursor: pointer"
+            tabindex="0"
+            (click)="toggleExpansion(group.recurso)"
+            (keydown.enter)="toggleExpansion(group.recurso)"
+            (keydown.space)="toggleExpansion(group.recurso)"
+          >
+            <input
+              type="checkbox"
+              class="form-check-input flex-shrink-0 mt-0"
+              style="width: 1.1em; height: 1.1em"
+              [checked]="group.allSelected"
+              [indeterminate]="group.indeterminate"
+              (click)="$event.stopPropagation(); toggleGroup(group)"
+            />
+
+            <span class="fw-semibold text-capitalize fs-6">{{ group.recurso }}</span>
+
+            <span class="badge bg-secondary ms-1">
+              {{ group.assignedCount }} / {{ group.items.length }}
+            </span>
+
+            <i
+              class="bi ms-auto"
+              [class.bi-chevron-down]="expandedGroups().has(group.recurso)"
+              [class.bi-chevron-right]="!expandedGroups().has(group.recurso)"
+            ></i>
+          </div>
+
+          @if (expandedGroups().has(group.recurso)) {
+            <div class="card-body pt-3">
+              <div class="row g-2">
+                @for (perm of group.items; track perm.permisoId) {
+                  <div class="col-md-6 col-lg-4">
+                    <div
+                      class="border rounded p-3 h-100 d-flex gap-3 align-items-start"
+                      style="cursor: pointer; transition: background 0.15s"
+                      tabindex="0"
+                      [class.border-primary]="perm.assigned"
+                      [class.bg-primary-subtle]="perm.assigned"
+                      (click)="togglePermission(perm.permisoId)"
+                      (keydown.enter)="togglePermission(perm.permisoId)"
+                      (keydown.space)="togglePermission(perm.permisoId)"
+                    >
+                      <input
+                        type="checkbox"
+                        class="form-check-input flex-shrink-0 mt-1"
+                        [checked]="perm.assigned"
+                        (click)="$event.stopPropagation(); togglePermission(perm.permisoId)"
+                      />
+                      <div>
+                        <div class="fw-medium">{{ perm.nombre }}</div>
+                        @if (perm.descripcion) {
+                          <small class="text-muted">{{ perm.descripcion }}</small>
+                        }
+                        <div class="mt-1">
+                          <span class="badge bg-light text-dark border font-monospace small">
+                            {{ perm.accion }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
