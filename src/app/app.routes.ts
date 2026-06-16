@@ -24,7 +24,9 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         loadComponent: () =>
-          import('./features/dashboard/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+          import('./features/dashboard/dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent,
+          ),
       },
 
       // Sección Administración (Solo Admin)
@@ -307,17 +309,23 @@ export const routes: Routes = [
       {
         path: 'water-sources',
         loadComponent: () =>
-          import('./features/dashboard/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+          import('./features/dashboard/dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent,
+          ),
       },
       {
         path: 'Facturacion',
         loadComponent: () =>
-          import('./features/dashboard/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+          import('./features/dashboard/dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent,
+          ),
       },
       {
         path: 'Reportes',
         loadComponent: () =>
-          import('./features/dashboard/dashboard/dashboard.component').then((m) => m.DashboardComponent),
+          import('./features/dashboard/dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent,
+          ),
       },
       {
         path: '',
