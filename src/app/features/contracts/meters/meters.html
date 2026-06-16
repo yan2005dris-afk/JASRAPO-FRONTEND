@@ -47,6 +47,34 @@
       </button>
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- Search -->
+        <div class="input-group search-group" style="width: 280px">
+          <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+            <i class="bi bi-search"></i>
+          </span>
+          <input
+            type="text"
+            class="form-control border-start-0 ps-0 shadow-none"
+            placeholder="Buscar medidor..."
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="buscarMedidores()"
+          />
+        </div>
+
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="buscarMedidores()"
+          [disabled]="isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+          @if (!isLoading) {
+            <i class="bi bi-search"></i>
+          }
+          {{ isLoading ? 'Buscando...' : 'Buscar' }}
+        </button>
+
         <!-- Estado -->
         <select
           class="form-select shadow-none"
@@ -59,11 +87,28 @@
             <option [value]="estado.codigo">{{ estado.nombre }}</option>
           }
         </select>
+
+        <!-- Dropdown -->
+        <app-dropdown
+          label="Acciones Masivas"
+          [items]="dropdownItems"
+          (actionSelected)="handleAccionMasiva($event)"
+        ></app-dropdown>
       </div>
     </div>
 
     <!-- Tabla -->
     <div class="px-4 pt-3">
+      <!-- Estado inicial: no se ha buscado nada todavía -->
+      @if (!hasFetched && !isLoading) {
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-search fs-1 d-block mb-2 opacity-25"></i>
+          <p class="mb-0">
+            Realiza una <strong>búsqueda</strong> para visualizar los medidores registrados.
+          </p>
+        </div>
+      }
+
       <!-- Estado de carga -->
       @if (isLoading) {
         <div class="text-center py-5 text-muted">
@@ -186,21 +231,19 @@
       }
     </div>
 
-        <!-- Paginación y Controles -->
-        <footer class="card-footer bg-white border-top px-4 py-3">
-          <app-pagination
-            [totalItems]="totalItems()"
-            [currentPage]="currentPage()"
-            [pageSize]="pageSize()"
-            [pageSizeOptions]="pageSizeOptions"
-            itemNameSingular="medidor"
-            itemNamePlural="medidores"
-            (pageChange)="goToPage($event)"
-            (pageSizeChange)="setPageSize($event)"
-          />
-        </footer>
-      }
-    </div>
+    <!-- Paginación y Controles -->
+    <footer class="card-footer bg-white border-top px-4 py-3">
+      <app-pagination
+        [totalItems]="totalItems"
+        [currentPage]="currentPage"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        itemNameSingular="medidor"
+        itemNamePlural="medidores"
+        (pageChange)="goToPage($event)"
+        (pageSizeChange)="setPageSize($event)"
+      />
+    </footer>
   </div>
 </div>
 

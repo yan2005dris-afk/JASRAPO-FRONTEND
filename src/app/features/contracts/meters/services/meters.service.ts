@@ -7,6 +7,7 @@ import {
   CrearMedidorPayload,
   ActualizarEstadoMedidorBody,
   PaginatedMetersResponse,
+  SearchMetersParams,
 } from '../interfaces/imeter.interface';
 import { environment } from '../../../../../environments/environment';
 
@@ -26,14 +27,23 @@ export class MetersService {
     return this.http.post<IMeter>(this.endpoint, payload);
   }
 
-  getMeters(page = 1, limit = 10, estado?: string): Observable<PaginatedMetersResponse> {
-    let params = new HttpParams().set('page', page.toString()).set('limit', limit.toString());
+  getMeters(params: SearchMetersParams): Observable<PaginatedMetersResponse> {
+    let httpParams = new HttpParams();
 
-    if (estado) {
-      params = params.set('estado', estado);
+    if (params.page !== undefined) {
+      httpParams = httpParams.set('page', String(params.page));
+    }
+    if (params.limit !== undefined) {
+      httpParams = httpParams.set('limit', String(params.limit));
+    }
+    if (params.estadoId !== undefined) {
+      httpParams = httpParams.set('estadoId', String(params.estadoId));
+    }
+    if (params.search) {
+      httpParams = httpParams.set('search', params.search);
     }
 
-    return this.http.get<PaginatedMetersResponse>(this.endpoint, { params });
+    return this.http.get<PaginatedMetersResponse>(this.endpoint, { params: httpParams });
   }
 
   getMeterById(id: number): Observable<IMeter> {

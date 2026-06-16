@@ -4,10 +4,10 @@ export interface IEstadoMedidor {
   nombre: string;
   orden: number;
 }
-/**
- * Entidad Principal de Medidor
- * Representa la estructura de datos completa de un equipo de medición en el sistema.
- */
+
+export type EstadoMedidorCodigo = 'BODEGA' | 'INSTALADO' | 'DANADO' | 'PENDIENTE' | 'BAJA';
+export type EstadoMedidorFiltro = 'todos' | EstadoMedidorCodigo;
+
 export interface IMeter {
   medidorId: number;
   marca: string;
@@ -21,29 +21,16 @@ export interface IMeter {
   motivo?: string;
 }
 
-/**
- * Estructura de datos requerida para el registro inicial de un equipo.
- * Se centra en la identificación física del hardware.
- */
 export interface CrearMedidorPayload {
   marca: string;
   modelo: string;
   serie: string;
 }
 
-/**
- * Estructura de datos para la transición de estados.
- * Permite actualizar la situación del medidor e incluir un comentario.
- */
-export interface EditarEstadoMedidorPayload {
-  medidorId: number;
-  estadoId: number;
-  motivo?: string;
-}
-
 export interface IMeterDto extends Omit<IMeter, 'estado'> {
   estado?: string | IEstadoMedidor;
 }
+
 export interface ActualizarEstadoMedidorBody {
   estadoId: number;
   motivo?: string;
@@ -58,6 +45,13 @@ export interface MeterKpis {
   instalados: number;
   danados: number;
   total: number;
+}
+
+export interface SearchMetersParams {
+  page?: number;
+  limit?: number;
+  estadoId?: number;
+  search?: string;
 }
 
 export interface PaginatedMetersMeta {

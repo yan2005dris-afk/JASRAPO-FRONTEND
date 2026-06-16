@@ -19,16 +19,29 @@ import {
   IMeterDto,
   ActualizarEstadoMedidorBody,
   MeterKpis,
+  SearchMetersParams,
+  EstadoMedidorFiltro,
 } from './interfaces/imeter.interface';
 import { MetersService } from './services/meters.service';
 import { forkJoin, finalize } from 'rxjs';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import {
+  DropdownComponent,
+  DropdownItem,
+} from '../../../shared/components/dropdown/dropdown.component';
 
 @Component({
   selector: 'app-meters',
-  imports: [CommonModule, RegisterMeterComponent, EditMeterComponent, PaginationComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RegisterMeterComponent,
+    EditMeterComponent,
+    PaginationComponent,
+    DropdownComponent,
+  ],
   templateUrl: './meters.html',
   styleUrl: './meters.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -46,7 +59,8 @@ export class MetersComponent implements OnInit {
   meters: IMeter[] = [];
   estadosCatalogo: IEstadoMedidor[] = [];
   editingMedidor: IMeter | null = null;
-  estadoFiltro = 'todos';
+  estadoFiltro: EstadoMedidorFiltro = 'todos';
+  searchQuery = '';
 
   // Flags de control de flujo y UI
   isLoading = false;
@@ -61,6 +75,11 @@ export class MetersComponent implements OnInit {
 
   // Control de dropdown de fila
   openDropdownId: number | null = null;
+
+  dropdownItems: DropdownItem[] = [
+    { label: 'Borrar todo', action: 'deleteAll', isDanger: true, icon: 'bi bi-trash' },
+    { label: 'Importar', action: 'import', icon: 'bi bi-download' },
+  ];
 
   toggleDropdown(medidorId: number, event: MouseEvent): void {
     event.stopPropagation();
@@ -87,20 +106,22 @@ export class MetersComponent implements OnInit {
     }
   }
 
-  // Paginación server-side
-  readonly pageSizeOptions = [5, 10, 15];
-  readonly currentPage = signal(1);
-  readonly pageSize = signal(5);
-  readonly totalItems = signal(0);
-  readonly totalPagesServer = signal(1);
+  // Paginación server-side (Estilo clients.ts, no-signals)
+  pageSizeOptions = [5, 10, 15];
+  pageSize = 5;
+  currentPage = 1;
+  totalItems = 0;
   readonly kpis = signal<MeterKpis>({ enBodega: 0, instalados: 0, danados: 0, total: 0 });
 
   get totalPages(): number {
-    return this.totalPagesServer();
+    return Math.max(1, Math.ceil(this.totalItems / this.pageSize));
   }
 
   get pageNumbers(): number[] {
-    return Array.from({ length: this.totalPages }, (_, i) => i + 1);
+    const range = 2;
+    const start = Math.max(1, this.currentPage - range);
+    const end = Math.min(this.totalPages, this.currentPage + range);
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   }
 
   get pagedMetersComponent(): IMeter[] {
@@ -108,11 +129,23 @@ export class MetersComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.loadMeters();
+    this.cargarEstados();
+  }
+
+  cargarEstados(): void {
+    this.metersService.getMeterStatuses().subscribe({
+      next: (estados) => {
+        this.estadosCatalogo = estados;
+        this.cdr.markForCheck();
+      },
+      error: (err: HttpErrorResponse) => {
+        console.error('Error al cargar catálogo de estados:', err);
+      },
+    });
   }
 
   filtrarPorEstado(): void {
-    this.currentPage.set(1);
+    this.currentPage = 1;
     this.loadMeters();
   }
 
@@ -121,14 +154,19 @@ export class MetersComponent implements OnInit {
     this.errorMessage = '';
     this.cdr.detectChanges();
 
-    forkJoin({
-      estados: this.metersService.getMeterStatuses(),
-      response: this.metersService.getMeters(
-        this.currentPage(),
-        this.pageSize(),
-        this.estadoFiltro === 'todos' ? undefined : this.estadoFiltro
-      ),
-    })
+    // Buscar el ID numérico del estado correspondiente al código del filtro
+    const estadoSeleccionado = this.estadosCatalogo.find(
+      (e) => e.codigo === this.estadoFiltro
+    );
+    const estadoId = estadoSeleccionado?.estadoId;
+
+    this.metersService
+      .getMeters({
+        page: this.currentPage,
+        limit: this.pageSize,
+        estadoId: estadoId,
+        search: this.searchQuery.trim() || undefined,
+      })
       .pipe(
         finalize(() => {
           this.isLoading = false;
@@ -136,8 +174,7 @@ export class MetersComponent implements OnInit {
         }),
       )
       .subscribe({
-        next: ({ estados, response }) => {
-          this.estadosCatalogo = estados;
+        next: (response) => {
           const rawMeters = response.data as IMeterDto[];
           this.meters = rawMeters.map((medidorDto) => {
             const estadoEncontrado = this.estadosCatalogo.find((e) => {
@@ -153,16 +190,16 @@ export class MetersComponent implements OnInit {
           });
 
           const meta = response.meta;
-          this.totalItems.set(meta.total);
-          this.totalPagesServer.set(meta.ultimaPagina);
+          this.totalItems = meta.total;
           this.kpis.set(response.kpis);
           this.hasFetched = true;
+          this.cdr.markForCheck();
         },
         error: (err: HttpErrorResponse) => {
           console.error('Error en la carga de datos:', err);
           const mensajeError = this.obtenerMensajeErrorBackend(
             err,
-            'Error al cargar la información de meters o estados',
+            'Error al cargar la información de medidores',
           );
           this.mostrarMensaje(mensajeError, 'tabla');
         },
@@ -171,16 +208,26 @@ export class MetersComponent implements OnInit {
 
   // Métodos de navegación de página
   setPageSize(size: number) {
-    this.pageSize.set(size);
-    this.currentPage.set(1);
+    this.pageSize = size;
+    this.currentPage = 1;
     this.loadMeters();
   }
 
   goToPage(page: number) {
     if (page >= 1 && page <= this.totalPages) {
-      this.currentPage.set(page);
+      this.currentPage = page;
       this.loadMeters();
     }
+  }
+
+  buscarMedidores(): void {
+    this.currentPage = 1;
+    this.loadMeters();
+  }
+
+  handleAccionMasiva(action: string) {
+    console.log('Acción masiva seleccionada:', action);
+    // TODO: Implementar lógica de la acción seleccionada
   }
 
   // Gestión de modales
