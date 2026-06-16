@@ -226,10 +226,10 @@ export class MetersComponent implements OnInit {
     this.cdr.detectChanges();
     const id = payload.medidorId;
     const body: ActualizarEstadoMedidorBody = {
-      estadoId: payload.estadoId,
+      estado: payload.estado,
       motivo: payload.motivo,
     };
-
+    console.log(body);
     this.metersService.updateMeter(id, body).subscribe({
       next: () => {
         this.isSaving = false;
