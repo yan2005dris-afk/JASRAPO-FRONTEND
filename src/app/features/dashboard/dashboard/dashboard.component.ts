@@ -7,11 +7,11 @@ import { AuthService } from '../../../core/services/auth.service';
 @Component({
   selector: 'app-dashboard',
   imports: [],
-  templateUrl: './dashboard.html',
-  styleUrl: './dashboard.scss',
+  templateUrl: './dashboard.component.html',
+  styleUrl: './dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Dashboard {
+export class DashboardComponent {
   readonly authService = inject(AuthService);
 
   // Probar el spinner de forma manual ("estatica")

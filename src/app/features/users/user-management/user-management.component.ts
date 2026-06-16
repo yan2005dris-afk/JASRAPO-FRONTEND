@@ -20,14 +20,14 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
   selector: 'app-user-management',
   standalone: true,
   imports: [CommonModule, FormsModule, PaginationComponent],
-  templateUrl: './user-management.html',
-  styleUrl: './user-management.scss',
+  templateUrl: './user-management.component.html',
+  styleUrl: './user-management.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class UserManagement implements OnInit {
+export class UserManagementComponent implements OnInit {
   private readonly usersService = inject(UsersService);
   readonly authService = inject(AuthService);
   private readonly toastService = inject(ToastService);

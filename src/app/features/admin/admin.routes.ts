@@ -8,7 +8,7 @@ export const adminRoutes: Routes = [
       {
         path: 'users',
         loadComponent: () =>
-          import('../users/user-management/user-management').then((m) => m.UserManagement),
+          import('../users/user-management/user-management.component').then((m) => m.UserManagementComponent),
       },
       {
         path: 'comunidades',
