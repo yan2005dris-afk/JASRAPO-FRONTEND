@@ -118,8 +118,8 @@
                     formControlName="telefono"
                   />
                   @if (campoInvalido('telefono')) {
-                    @if (userForm.get('telefono')?.errors?.['minlength']) {
-                      <small class="text-danger">El teléfono debe tener al menos 7 dígitos.</small>
+                    @if (userForm.get('telefono')?.errors?.['minlength'] || userForm.get('telefono')?.errors?.['maxlength']) {
+                      <small class="text-danger">El teléfono debe tener entre 10 y 12 dígitos.</small>
                     } @else {
                       <small class="text-danger">El teléfono es obligatorio.</small>
                     }
@@ -313,10 +313,7 @@
       </div>
 
       <!-- Footer -->
-      <div class="d-flex justify-content-between align-items-center">
-        <small class="text-muted">
-          &copy; 2025 AquaSync Olón Oficina. Todos los derechos reservados.
-        </small>
+      <div class="d-flex justify-content-end align-items-center mt-3">
         <div class="d-flex gap-2">
           <button
             type="button"

@@ -98,7 +98,7 @@ export class UserFormComponent implements OnInit, OnDestroy {
     nombres: ['', Validators.required],
     apellidos: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
-    telefono: ['', [Validators.required, Validators.minLength(7)]],
+    telefono: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(12)]],
     rolId: [null as number | null, Validators.required],
   });
 
