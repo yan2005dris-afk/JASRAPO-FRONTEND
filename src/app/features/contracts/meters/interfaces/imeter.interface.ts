@@ -48,8 +48,6 @@ export interface ActualizarEstadoMedidorBody {
   motivo?: string;
 }
 
-
-
 export interface MeterKpis {
   enBodega: number;
   instalados: number;
