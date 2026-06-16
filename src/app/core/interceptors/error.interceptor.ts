@@ -15,11 +15,14 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
-      if (error.status === 401) {
-        if (!req.url.includes('/auth/login')) {
-          toastService.error('Su sesión ha expirado o no está autorizado. Inicie sesión de nuevo.');
-          authService.logout();
-        }
+      const isAuthEndpoint =
+        req.url.includes('/auth/login') ||
+        req.url.includes('/auth/logout') ||
+        req.url.includes('/auth/refresh');
+
+      if (error.status === 401 && !isAuthEndpoint) {
+        toastService.error('Su sesión ha expirado o no está autorizado. Inicie sesión de nuevo.');
+        authService.logout();
       } else if (error.status === 403) {
         const errorResponse = error.error as IErrorResponse;
         const message =
