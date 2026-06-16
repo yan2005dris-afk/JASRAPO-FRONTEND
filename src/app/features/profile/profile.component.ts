@@ -123,7 +123,7 @@ export class ProfileComponent implements OnInit {
     };
 
     this.usersService
-      .updateUser(this.userId, payload, this.pendingAvatarFile ?? undefined)
+      .updateMe(payload, this.pendingAvatarFile ?? undefined)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (updatedUser) => {
