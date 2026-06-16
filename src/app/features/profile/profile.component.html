@@ -37,8 +37,14 @@
                     </div>
                   } @else if (avatarPreview()) {
                     <img [src]="avatarPreview()!" alt="Foto de perfil" />
+                    <div class="avatar-overlay">
+                      <i class="bi bi-camera"></i>
+                    </div>
                   } @else {
                     <i class="bi bi-person avatar-placeholder"></i>
+                    <div class="avatar-overlay">
+                      <i class="bi bi-camera"></i>
+                    </div>
                   }
                 </div>
                 <small class="text-muted">

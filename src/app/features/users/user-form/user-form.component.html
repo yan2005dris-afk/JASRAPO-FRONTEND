@@ -48,8 +48,14 @@
                     </div>
                   } @else if (avatarPreview()) {
                     <img [src]="avatarPreview()" alt="Vista previa del avatar" />
+                    <div class="avatar-overlay">
+                      <i class="bi bi-camera"></i>
+                    </div>
                   } @else {
                     <i class="bi bi-person avatar-placeholder"></i>
+                    <div class="avatar-overlay">
+                      <i class="bi bi-camera"></i>
+                    </div>
                   }
                 </div>
                 <small class="text-muted">
@@ -68,8 +74,16 @@
 
             <!-- Right: User Details -->
             <div class="col-md-8">
-              <h6 class="fw-semibold text-muted mb-3 small text-uppercase">Detalles del Usuario</h6>
-              <p class="text-muted small mb-3">Complete los campos requeridos para continuar.</p>
+              <h6 class="fw-semibold text-muted mb-3 small text-uppercase">
+                {{ isEditing() ? 'Detalles del Usuario' : 'Nuevo Usuario' }}
+              </h6>
+              <p class="text-muted small mb-3">
+                {{
+                  isEditing()
+                    ? 'Modifique los datos del usuario seleccionado'
+                    : 'Complete los campos para registrar un nuevo usuario'
+                }}
+              </p>
 
               <div class="row g-3">
                 <!-- Nombres -->
@@ -318,7 +332,7 @@
                 aria-hidden="true"
               ></span>
             }
-            Guardar
+            {{ isEditing() ? 'Guardar Cambios' : 'Crear Usuario' }}
           </button>
         </div>
       </div>
