@@ -1,6 +1,5 @@
-import { HttpInterceptorFn, HttpRequest, HttpErrorResponse } from '@angular/common/http';
+import { HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
-import { catchError, throwError } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 /**
@@ -27,13 +26,5 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
     });
   }
 
-  return next(authReq).pipe(
-    catchError((error: HttpErrorResponse) => {
-      // Si recibimos un 401 y no estamos en la ruta de login
-      if (error.status === 401 && !req.url.includes('/auth/login')) {
-        authService.logout();
-      }
-      return throwError(() => error);
-    }),
-  );
+  return next(authReq);
 };
