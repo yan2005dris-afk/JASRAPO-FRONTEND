@@ -60,23 +60,7 @@ export const routes: Routes = [
               },
             ],
           },
-          {
-            path: 'roles',
-            children: [
-              {
-                path: '',
-                pathMatch: 'full',
-                loadComponent: () => import('./features/admin/roles/roles').then((m) => m.Roles),
-              },
-              {
-                path: ':rolId',
-                loadComponent: () =>
-                  import('./features/admin/roles/role-editor/role-editor').then(
-                    (m) => m.RoleEditor,
-                  ),
-              },
-            ],
-          },
+
           {
             path: 'sectores',
             loadComponent: () =>
