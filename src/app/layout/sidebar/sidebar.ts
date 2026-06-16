@@ -32,7 +32,6 @@ export class Sidebar {
   private readonly searchInputRef = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
   private normalize(text: string): string {
-     
     return text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   }
 
