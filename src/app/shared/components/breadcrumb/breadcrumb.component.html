@@ -1,0 +1,19 @@
+@if (breadcrumbService.breadcrumbs().length > 1) {
+  <nav aria-label="Navegación de migas de pan" class="pb-3">
+    <ol class="breadcrumb mb-0">
+      @for (crumb of breadcrumbService.breadcrumbs(); track crumb.url; let last = $last) {
+        <li
+          class="breadcrumb-item"
+          [class.active]="last"
+          [attr.aria-current]="last ? 'page' : null"
+        >
+          @if (!last) {
+            <a [routerLink]="crumb.url">{{ crumb.label }}</a>
+          } @else {
+            <span class="fw-semibold">{{ crumb.label }}</span>
+          }
+        </li>
+      }
+    </ol>
+  </nav>
+}
