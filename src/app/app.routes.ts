@@ -304,4 +304,10 @@ export const routes: Routes = [
     redirectTo: 'consulta-planilla',
     pathMatch: 'full',
   },
+  // Catch-all para 404
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./features/error/error-page/error-page.component').then((m) => m.ErrorPageComponent),
+  },
 ];
