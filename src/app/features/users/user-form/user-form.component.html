@@ -104,6 +104,24 @@
                   }
                 </div>
 
+                <!-- Apellidos -->
+                <div class="col-md-6">
+                  <label for="form-apellidos" class="form-label fw-semibold small text-muted">
+                    Apellidos <span class="text-danger">*</span>
+                  </label>
+                  <input
+                    id="form-apellidos"
+                    type="text"
+                    class="form-control shadow-none"
+                    [class.is-invalid]="campoInvalido('apellidos')"
+                    placeholder="Ej. Pérez"
+                    formControlName="apellidos"
+                  />
+                  @if (campoInvalido('apellidos')) {
+                    <small class="text-danger">Los apellidos son obligatorios.</small>
+                  }
+                </div>
+
                 <!-- Teléfono -->
                 <div class="col-md-6">
                   <label for="form-telefono" class="form-label fw-semibold small text-muted">
@@ -150,24 +168,6 @@
                     } @else {
                       <small class="text-danger">El correo electrónico es obligatorio.</small>
                     }
-                  }
-                </div>
-
-                <!-- Apellidos -->
-                <div class="col-md-6">
-                  <label for="form-apellidos" class="form-label fw-semibold small text-muted">
-                    Apellidos <span class="text-danger">*</span>
-                  </label>
-                  <input
-                    id="form-apellidos"
-                    type="text"
-                    class="form-control shadow-none"
-                    [class.is-invalid]="campoInvalido('apellidos')"
-                    placeholder="Ej. Pérez"
-                    formControlName="apellidos"
-                  />
-                  @if (campoInvalido('apellidos')) {
-                    <small class="text-danger">Los apellidos son obligatorios.</small>
                   }
                 </div>
 
