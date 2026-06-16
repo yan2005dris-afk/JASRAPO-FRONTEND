@@ -1,13 +1,23 @@
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+﻿import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  ElementRef,
+  viewChild,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { MenuService } from '../../core/services/menu.service';
 import { LayoutService } from '../../core/services/layout.service';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MenuItem } from '../../core/models/menu.model';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [CommonModule, RouterModule, MatTooltipModule],
+  imports: [CommonModule, RouterModule, MatTooltipModule, FormsModule],
   templateUrl: './sidebar.html',
   styleUrl: './sidebar.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -16,36 +26,77 @@ export class Sidebar {
   readonly menuService = inject(MenuService);
   readonly layoutService = inject(LayoutService);
 
-  /**
-   * Estado reactivo para controlar qué elementos del menú están expandidos.
-   * Usamos Record<number, boolean> para manejar múltiples submenús abiertos.
-   */
   readonly expandedItems = signal<Record<number, boolean>>({});
+  readonly searchQuery = signal('');
 
-  /**
-   * Alterna la visibilidad de un submenú.
-   * @param itemId ID único del elemento del menú.
-   */
+  private readonly searchInputRef = viewChild<ElementRef<HTMLInputElement>>('searchInput');
+
+  private normalize(text: string): string {
+     
+    return text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+  }
+
+  readonly filteredMenuItems = computed(() => {
+    const query = this.normalize(this.searchQuery());
+    const items = this.menuService.menuItems();
+
+    if (!query) return items;
+
+    return items.reduce<MenuItem[]>((acc, item) => {
+      const parentMatches = this.normalize(item.name).includes(query);
+
+      if (item.children && item.children.length > 0) {
+        const matchingChildren = item.children.filter((child) =>
+          this.normalize(child.name).includes(query),
+        );
+
+        if (parentMatches) {
+          acc.push(item);
+        } else if (matchingChildren.length > 0) {
+          acc.push({ ...item, children: matchingChildren });
+        }
+      } else if (parentMatches) {
+        acc.push(item);
+      }
+
+      return acc;
+    }, []);
+  });
+
+  readonly effectiveExpandedItems = computed(() => {
+    const query = this.searchQuery();
+    if (!query) return this.expandedItems();
+
+    const normalizedQuery = this.normalize(query);
+    const expanded: Record<number, boolean> = { ...this.expandedItems() };
+
+    for (const item of this.menuService.menuItems()) {
+      if (item.children && item.children.length > 0) {
+        const hasMatchingChild = item.children.some((child) =>
+          this.normalize(child.name).includes(normalizedQuery),
+        );
+        if (hasMatchingChild) expanded[item.id] = true;
+      }
+    }
+
+    return expanded;
+  });
+
   toggleItem(itemId: number): void {
     if (!this.layoutService.sidebarOpen()) {
       this.layoutService.openSidebar();
-      this.expandedItems.update((state) => ({
-        ...state,
-        [itemId]: true,
-      }));
+      this.expandedItems.update((state) => ({ ...state, [itemId]: true }));
     } else {
-      this.expandedItems.update((state) => ({
-        ...state,
-        [itemId]: !state[itemId],
-      }));
+      this.expandedItems.update((state) => ({ ...state, [itemId]: !state[itemId] }));
     }
   }
 
-  /**
-   * Verifica si un ítem específico está expandido.
-   * @param itemId ID único del elemento del menú.
-   */
-  isExpanded(itemId: number): boolean {
-    return !!this.expandedItems()[itemId];
+  openSearchAndFocus(): void {
+    this.layoutService.openSidebar();
+    setTimeout(() => this.searchInputRef()?.nativeElement.focus(), 320);
+  }
+
+  clearSearch(): void {
+    this.searchQuery.set('');
   }
 }
