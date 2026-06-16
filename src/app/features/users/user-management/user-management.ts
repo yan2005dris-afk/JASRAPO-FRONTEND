@@ -14,11 +14,12 @@ import { UsersService } from '../services/users.service';
 import { User } from '../models/user.interface';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginationComponent],
   templateUrl: './user-management.html',
   styleUrl: './user-management.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -4,9 +4,9 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../../../environments/environment';
 import {
-  AllPermission,
-  RoleDetail,
   RoleListItem,
+  PermissionItem,
+  RoleDetail,
   UpdateRolePayload,
 } from '../models/role-permission.interface';
 
@@ -17,23 +17,21 @@ export class RolesService {
   private readonly permissionsUrl = `${environment.apiUrl}/permissions`;
 
   getRoles(): Observable<RoleListItem[]> {
-    return this.http
-      .get<RoleListItem[] | { data: RoleListItem[] }>(this.rolesUrl, { withCredentials: true })
-      .pipe(map((res) => (Array.isArray(res) ? res : (res.data ?? []))));
+    return this.http.get<RoleListItem[]>(this.rolesUrl, { withCredentials: true });
   }
 
   getRoleById(id: number): Observable<RoleDetail> {
     return this.http.get<RoleDetail>(`${this.rolesUrl}/${id}`, { withCredentials: true });
   }
 
-  getAllPermissions(): Observable<AllPermission[]> {
-    const params = new HttpParams().set('limit', '200');
+  getAllPermissions(): Observable<PermissionItem[]> {
+    const params = new HttpParams().set('limit', '100');
     return this.http
-      .get<AllPermission[] | { data: AllPermission[] }>(this.permissionsUrl, {
+      .get<PermissionItem[] | { data: PermissionItem[] }>(this.permissionsUrl, {
         params,
         withCredentials: true,
       })
-      .pipe(map((res) => (Array.isArray(res) ? res : (res.data ?? []))));
+      .pipe(map((res) => (Array.isArray(res) ? res : res.data)));
   }
 
   updateRole(id: number, payload: UpdateRolePayload): Observable<RoleDetail> {

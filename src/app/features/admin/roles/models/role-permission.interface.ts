@@ -3,7 +3,15 @@ export interface RoleListItem {
   nombre: string;
 }
 
-export interface RolePermissionItem {
+export interface PermissionItem {
+  permisoId: number;
+  nombre: string;
+  descripcion: string;
+  recurso: string;
+  accion: string;
+}
+
+export interface RolePermission {
   rolPermisoId: number;
   permisoId: number;
   nombre: string;
@@ -15,15 +23,7 @@ export interface RolePermissionItem {
 export interface RoleDetail {
   rolId: number;
   nombre: string;
-  permisos: RolePermissionItem[];
-}
-
-export interface AllPermission {
-  permisoId: number;
-  nombre: string;
-  descripcion: string;
-  recurso: string;
-  accion: string;
+  permisos: RolePermission[];
 }
 
 export interface UpdateRolePayload {

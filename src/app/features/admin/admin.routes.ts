@@ -3,7 +3,7 @@ import { Routes } from '@angular/router';
 export const adminRoutes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./admin.component/admin.component').then((m) => m.AdminComponent),
+    loadComponent: () => import('./component/admin.component').then((m) => m.AdminComponent),
     children: [
       {
         path: 'users',
@@ -21,6 +21,19 @@ export const adminRoutes: Routes = [
           import('./sectores-prueba/components/sectores-prueba/sectores-prueba').then(
             (m) => m.SectoresPrueba,
           ),
+      },
+      {
+        path: 'roles',
+        loadComponent: () => import('./roles/roles.component').then((m) => m.RolesComponent),
+        children: [
+          {
+            path: ':rolId',
+            loadComponent: () =>
+              import('./roles/role-editor/role-editor.component').then(
+                (m) => m.RoleEditorComponent,
+              ),
+          },
+        ],
       },
       {
         path: 'config',

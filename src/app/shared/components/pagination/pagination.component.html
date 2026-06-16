@@ -1,0 +1,92 @@
+<div
+  class="pagination-container d-flex justify-content-between align-items-center flex-wrap gap-3 w-100"
+>
+  <!-- Left Side: Total and Range Info -->
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+    @if (showTotal() || showRange()) {
+      <span class="text-muted small text-nowrap">
+        @if (showRange()) {
+          Mostrando <strong>{{ startRange() }}-{{ endRange() }}</strong> de
+        }
+        <strong>{{ totalItems() }}</strong>
+        {{ totalItems() === 1 ? itemNameSingular() : itemNamePlural() }}
+      </span>
+    }
+
+    <!-- Page Size Select -->
+    @if (showPageSize()) {
+      <div class="d-flex align-items-center gap-2">
+        <span class="text-muted small text-nowrap">Mostrar:</span>
+        <select
+          class="form-select form-select-sm page-size-select shadow-none"
+          [value]="pageSize()"
+          (change)="onPageSizeChange($event)"
+        >
+          @for (opt of pageSizeOptions(); track opt) {
+            <option [value]="opt">{{ opt }}</option>
+          }
+        </select>
+      </div>
+    }
+  </div>
+
+  <!-- Right Side: Navigation buttons -->
+  <nav aria-label="Navegación de páginas">
+    <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
+      <!-- Previous Button -->
+      <li class="page-item" [class.disabled]="currentPage() === 1">
+        <a
+          class="page-link border-0 text-dark bg-transparent fw-medium small d-inline-flex align-items-center px-2 py-1.5"
+          href="#"
+          (click)="onPrevious($event)"
+          [attr.tabindex]="currentPage() === 1 ? -1 : null"
+          [attr.aria-disabled]="currentPage() === 1"
+        >
+          <i class="bi bi-chevron-left me-1" style="font-size: 0.75rem"></i>
+          Anterior
+        </a>
+      </li>
+
+      <!-- Page Numbers -->
+      @for (page of pages(); track $index) {
+        @if (page === '...') {
+          <li class="page-item disabled">
+            <span class="page-link border-0 bg-transparent text-muted px-2">...</span>
+          </li>
+        } @else {
+          <li
+            class="page-item"
+            [class.active]="currentPage() === page"
+            [attr.aria-current]="currentPage() === page ? 'page' : null"
+          >
+            <a
+              class="page-link fw-semibold d-inline-flex align-items-center justify-content-center"
+              [class.shadow-sm]="currentPage() === page"
+              [class.border-0]="currentPage() !== page"
+              [class.bg-transparent]="currentPage() !== page"
+              [class.text-dark]="currentPage() !== page"
+              href="#"
+              (click)="onPageClick(page, $event)"
+            >
+              {{ page }}
+            </a>
+          </li>
+        }
+      }
+
+      <!-- Next Button -->
+      <li class="page-item" [class.disabled]="currentPage() === totalPages()">
+        <a
+          class="page-link border-0 text-dark bg-transparent fw-medium small d-inline-flex align-items-center px-2 py-1.5"
+          href="#"
+          (click)="onNext($event)"
+          [attr.tabindex]="currentPage() === totalPages() ? -1 : null"
+          [attr.aria-disabled]="currentPage() === totalPages()"
+        >
+          Siguiente
+          <i class="bi bi-chevron-right ms-1" style="font-size: 0.75rem"></i>
+        </a>
+      </li>
+    </ul>
+  </nav>
+</div>

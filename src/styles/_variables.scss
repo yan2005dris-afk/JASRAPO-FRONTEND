@@ -5,32 +5,32 @@
 */
 
 :root {
-  /* Brand Colors - Professional Celeste Palette */
-  --primary-color: #0077b6;
-  /* Deep, corporate blue */
-  --secondary-color: #0096c7;
-  /* Vibrant celeste */
-  --accent-color: #48cae4;
-  /* Bright aesthetic celeste */
-  --info-color: #90e0ef;
-  /* Softest blue highlight */
+  /* Brand Colors - Premium Turquoise/Teal Water Palette based on #0fc3c6 */
+  --primary-color: #0c9ea1;
+  /* Deep corporate teal for excellent contrast and readability */
+  --secondary-color: #0fc3c6;
+  /* The exact vibrant turquoise requested */
+  --accent-color: #4ee6e9;
+  /* Bright glow turquoise for active states and highlights */
+  --info-color: #bff3f4;
+  /* Softest highlight color */
 
   /* Neutrals & Backgrounds */
   --white: #ffffff;
-  --light-bg: #f8fcfd;
-  /* Off-white with a tiny hint of blue */
-  --soft-blue-bg: #e0f2fe;
-  /* For light cards or highlighted areas */
+  --light-bg: #ffffff;
+  /* Off-white with a soft hint of teal */
+  --soft-blue-bg: #dbf7f8;
+  /* Soft background highlight for badges or cards */
 
   /* Text & Borders */
-  --dark-text: #1e293b;
-  /* Very dark slate blue instead of black */
-  --muted-text: #64748b;
-  /* Professional gray */
-  --border-color: #cbd5e1;
+  --dark-text: #0e2728;
+  /* Very dark slate teal instead of black/gray */
+  --muted-text: #597b7d;
+  /* Soft slate teal for secondary text */
+  --border-color: #cbdedf;
 
   /* Form & Interactive */
-  --input-focus-ring: rgba(0, 119, 182, 0.2);
+  --input-focus-ring: rgba(15, 195, 198, 0.2);
 
   /* State Colors */
   --success: #10b981;
@@ -45,5 +45,5 @@
   --bs-info: var(--info-color);
   --bs-body-bg: var(--light-bg);
   --bs-body-color: var(--dark-text);
-  --bs-primary-rgb: 0, 119, 182;
+  --bs-primary-rgb: 12, 158, 161;
 }

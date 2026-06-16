@@ -13,7 +13,7 @@
       >
         <i class="bi bi-plus-lg"></i> Agregar
       </button>
-      <!-- <h5 class="fw-bold mb-0 fs-6">Lista de Clientes</h5> -->
+      <!-- <h5 class="fw-bold mb-0 fs-6">Lista de ClientsComponent</h5> -->
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
         <!-- Search -->
@@ -54,7 +54,7 @@
     </div>
 
     <!-- Data Table -->
-    <div class="px-4 pt-3">
+    <div class="pt-3">
       <!-- Estado inicial: no se ha buscado nada todavía -->
       @if (!hasFetched && !isLoading) {
         <div class="text-center py-5 text-muted">
@@ -80,19 +80,19 @@
           <table class="table table-hover align-middle mb-0 custom-table">
             <thead>
               <tr>
-                <th scope="col" style="width: 40px">
+                <th scope="col" class="ps-4" style="width: 56px">
                   <input class="form-check-input table-checkbox" type="checkbox" />
                 </th>
                 <th scope="col" class="text-muted fw-semibold small">Comunidad</th>
                 <th scope="col" class="text-muted fw-semibold small">Código</th>
                 <th scope="col" class="text-muted fw-semibold small">Nombre</th>
-                <th scope="col" class="text-muted fw-semibold small">Acciones</th>
+                <th scope="col" class="text-muted fw-semibold small text-center pe-4">Acciones</th>
               </tr>
             </thead>
             <tbody>
               @for (sector of pagedSectores; track sector) {
                 <tr>
-                  <td>
+                  <td class="ps-4">
                     <input class="form-check-input table-checkbox" type="checkbox" />
                   </td>
                   <td class="fw-medium text-dark" style="font-size: 0.95rem">
@@ -101,7 +101,7 @@
                   <td class="text-muted small">{{ sector.codigo }}</td>
                   <td class="text-muted small">{{ sector.nombre }}</td>
 
-                  <td class="text-center">
+                  <td class="text-center pe-4">
                     <div class="dropdown">
                       <button
                         class="btn btn-link text-muted p-0 shadow-none"
@@ -165,80 +165,18 @@
       }
     </div>
 
-    <!-- Footer / Pagination -->
-    <div
-      class="card-footer bg-white border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3"
-    >
-      <!-- Left: total + page size selector -->
-      <div class="d-flex align-items-center gap-3">
-        <span class="text-muted small">
-          Total: <strong>{{ totalItems() }}</strong> sector{{ totalItems() !== 1 ? 'es' : '' }}
-        </span>
-        <div class="d-flex align-items-center gap-2">
-          <span class="text-muted small">Mostrar:</span>
-          <select
-            class="form-select form-select-sm page-size-select shadow-none"
-            [value]="pageSize()"
-            (change)="setPageSize(+$any($event.target).value)"
-          >
-            @for (opt of pageSizeOptions; track opt) {
-              <option [value]="opt">{{ opt }}</option>
-            }
-          </select>
-        </div>
-      </div>
-
-      <!-- Right: pagination controls -->
-      <nav>
-        <ul class="pagination pagination-sm mb-0 align-items-center gap-1">
-          <!-- Previous -->
-          <li class="page-item" [class.disabled]="currentPage() === 1">
-            <a
-              class="page-link border-0 text-dark bg-transparent fw-medium small"
-              href="#"
-              (click)="$event.preventDefault(); goToPage(currentPage() - 1)"
-              [attr.tabindex]="currentPage() === 1 ? -1 : null"
-              [attr.aria-disabled]="currentPage() === 1"
-            >
-              <i class="bi bi-chevron-left me-1" style="font-size: 0.7rem"></i> Previous
-            </a>
-          </li>
-
-          <!-- Page numbers -->
-          @for (page of pageNumbers; track page) {
-            <li
-              class="page-item"
-              [class.active]="currentPage() === page"
-              [attr.aria-current]="currentPage() === page ? 'page' : null"
-            >
-              <a
-                class="page-link fw-medium"
-                [class.shadow-sm]="currentPage() === page"
-                [class.border-0]="currentPage() !== page"
-                [class.bg-transparent]="currentPage() !== page"
-                [class.text-dark]="true"
-                style="border-radius: 6px"
-                href="#"
-                (click)="$event.preventDefault(); goToPage(page)"
-                >{{ page }}</a
-              >
-            </li>
-          }
-
-          <!-- Next -->
-          <li class="page-item" [class.disabled]="currentPage() === totalPages">
-            <a
-              class="page-link border-0 text-dark bg-transparent fw-medium small"
-              href="#"
-              (click)="$event.preventDefault(); goToPage(currentPage() + 1)"
-              [attr.tabindex]="currentPage() === totalPages ? -1 : null"
-              [attr.aria-disabled]="currentPage() === totalPages"
-            >
-              Next <i class="bi bi-chevron-right ms-1" style="font-size: 0.7rem"></i>
-            </a>
-          </li>
-        </ul>
-      </nav>
+    <!-- Footer / Paginación -->
+    <div class="card-footer bg-white border-top px-4 py-3">
+      <app-pagination
+        [totalItems]="totalItems()"
+        [currentPage]="currentPage()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="pageSizeOptions"
+        itemNameSingular="sector"
+        itemNamePlural="sectores"
+        (pageChange)="goToPage($event)"
+        (pageSizeChange)="setPageSize($event)"
+      />
     </div>
   </div>
 </div>

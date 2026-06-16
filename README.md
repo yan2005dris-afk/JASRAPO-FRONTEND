@@ -11,7 +11,7 @@ src/
 └── app/
     ├── core/               # Singleton Services, Guards, Interceptors, Initializers
     ├── shared/             # UI Components, Directives, Pipes (Reutilizables)
-    ├── data/               # Models, Types, Enums, API Mappers (DTOs)
+    ├── models/             # Models, Types, Enums, API Mappers (DTOs)
     ├── layout/             # Navbar, Sidebar, Footer (Estructura principal de navegación)
     └── features/           # Módulos de la aplicación orientados a dominio (Lazy Loaded)
         ├── admin/          # Panel y vistas para el rol de administrador

@@ -22,6 +22,7 @@
   border-right: 1px solid var(--border-color);
   z-index: 1000;
   transition:
+    width 0.3s ease-in-out,
     transform 0.3s ease-in-out,
     margin-left 0.3s ease-in-out;
 }
@@ -103,8 +104,73 @@
   }
 
   .layout-sidebar.sidebar-hidden {
-    transform: translateX(-100%);
-    margin-left: -260px;
+    transform: none !important;
+    margin-left: 0 !important;
+    width: 70px !important;
+
+    /* Center navigation items list */
+    .nav {
+      align-items: center !important;
+    }
+
+    /* Hide text labels */
+    .link-text {
+      display: none !important;
+    }
+
+    /* Hide dropdown chevron icons */
+    .bi-chevron-down {
+      display: none !important;
+    }
+
+    /* Hide submenus completely when collapsed */
+    .btn-toggle-nav {
+      display: none !important;
+    }
+
+    /* Center and shrink brand section */
+    .sidebar-brand {
+      height: 64px !important;
+      padding: 0 !important;
+      justify-content: center !important;
+
+      h5 {
+        display: none !important;
+      }
+    }
+
+    .brand-logo {
+      margin-bottom: 0 !important;
+      width: 32px !important;
+      height: 32px !important;
+    }
+
+    /* Transform menu buttons to centered circular buttons */
+    .nav-link-custom {
+      margin: 8px auto !important;
+      padding: 0 !important;
+      width: 44px !important;
+      height: 44px !important;
+      border-radius: 50% !important;
+      justify-content: center !important;
+      border-left: none !important;
+
+      i,
+      .material-symbols-outlined {
+        margin-right: 0 !important;
+        font-size: 1.25rem !important;
+      }
+
+      &.active {
+        background-color: rgba(12, 158, 161, 0.1) !important;
+        color: var(--primary-color) !important;
+        border-left: none !important;
+      }
+
+      &:hover {
+        transform: scale(1.05);
+      }
+    }
   }
 }
 
@@ -197,52 +263,83 @@
    3. SIDEBAR STYLING
 --------------------------------------------------- */
 .sidebar-brand {
-  padding-top: 2rem !important;
-  padding-bottom: 2rem !important;
+  height: 64px;
+  padding: 0 1.5rem 0 2rem; /* Matches the 64px header height and aligns logo with menu icons */
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-nav {
+  padding-top: 0.75rem !important; /* 12px padding top + 4px menu item margin = 16px spacing below divider */
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
 }
 
 .brand-logo {
-  width: 45px;
-  height: 45px;
+  width: 38px;
+  height: 38px;
   object-fit: contain;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .nav-link-custom {
-  padding: 0.75rem 1.5rem;
-  font-size: 0.95rem;
+  margin: 4px 14px;
+  padding: 0.7rem 1.1rem;
+  font-size: 0.925rem;
+  font-weight: 500;
   color: var(--dark-text);
-  transition: all 0.2s ease-in-out;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-left: 3px solid transparent;
 }
 
 .nav-link-custom:hover {
   background-color: var(--light-bg);
+  color: var(--primary-color) !important;
 }
 
-.nav-link-custom i {
-  font-size: 0.8rem;
+.nav-link-custom i,
+.nav-link-custom .material-symbols-outlined {
+  display: inline-block;
+  font-size: 1.25rem; /* Material Symbols look better at 1.25rem (20px) */
   transition: transform 0.2s ease-in-out;
+}
+
+.nav-link-custom .bi-chevron-down {
+  font-size: 0.8rem;
+  margin-right: 0.75rem; /* Separar el chevron del borde derecho */
 }
 
 .rotate-icon {
   transform: rotate(-180deg);
 }
 
+.nav-link-custom.active,
 .nav-link.active {
-  background-color: #e0f2fe;
-  /* Light blue */
+  background: linear-gradient(
+    135deg,
+    rgba(12, 158, 161, 0.08),
+    rgba(12, 158, 161, 0.02)
+  ) !important;
   color: var(--primary-color) !important;
-  font-weight: 500;
-}
+  font-weight: 600;
+  border-left: 3px solid var(--primary-color) !important;
 
-.nav-link.active .ps-4 {
-  color: var(--primary-color);
+  i {
+    color: var(--primary-color) !important;
+  }
 }
 
 .nav-link-sub {
   color: var(--muted-text);
   text-decoration: none;
-  padding: 0.6rem 1rem 0.6rem 1.5rem;
+  padding: 0.55rem 1rem 0.55rem 1.75rem;
+  margin: 2px 14px;
   display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 8px;
   transition: all 0.2s ease-in-out;
 }
 
@@ -252,7 +349,7 @@
 }
 
 .nav-link-sub.active {
-  background-color: #e0f2fe;
+  background-color: rgba(12, 158, 161, 0.06) !important;
   color: var(--primary-color) !important;
-  font-weight: 500;
+  font-weight: 600;
 }
