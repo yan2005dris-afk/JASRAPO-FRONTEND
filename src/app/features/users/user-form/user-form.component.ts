@@ -50,6 +50,11 @@ export class UserFormComponent implements OnInit, OnDestroy {
   readonly userId = Number(this.route.snapshot.paramMap.get('id') ?? 0);
   readonly isEditing = computed(() => this.userId > 0);
 
+  readonly isAdminOrSuperadmin = computed(() => {
+    const role = this.authService.currentUser()?.roleName?.toLowerCase();
+    return role === 'admin' || role === 'superadmin';
+  });
+
   readonly isLoading = signal(false);
   readonly isSaving = signal(false);
 
@@ -105,9 +110,9 @@ export class UserFormComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.isLoading.set(true);
 
-    const permissionsReq = this.usersService
-      .getPermissions()
-      .pipe(map((res) => (Array.isArray(res) ? res : res.data)));
+    const permissionsReq = this.isAdminOrSuperadmin()
+      ? this.usersService.getPermissions().pipe(map((res) => (Array.isArray(res) ? res : res.data)))
+      : of([] as PermissionItem[]);
 
     const userReq = this.isEditing()
       ? this.usersService.getUserById(this.userId)
@@ -139,12 +144,14 @@ export class UserFormComponent implements OnInit, OnDestroy {
             rolId: user.rol?.rolId ?? null,
           });
 
-          if (user.rol?.rolId) {
+          if (user.rol?.rolId && this.isAdminOrSuperadmin()) {
             this.loadRolePermissions(user.rol.rolId);
           }
         } else if (roles.length > 0) {
           this.userForm.patchValue({ rolId: roles[0].rolId });
-          this.loadRolePermissions(roles[0].rolId);
+          if (this.isAdminOrSuperadmin()) {
+            this.loadRolePermissions(roles[0].rolId);
+          }
         }
 
         this.isLoading.set(false);
@@ -160,7 +167,9 @@ export class UserFormComponent implements OnInit, OnDestroy {
       .get('rolId')!
       .valueChanges.subscribe((rolId: number | null) => {
         if (rolId) {
-          this.loadRolePermissions(rolId);
+          if (this.isAdminOrSuperadmin()) {
+            this.loadRolePermissions(rolId);
+          }
         } else {
           this.rolePermissions.set([]);
         }
