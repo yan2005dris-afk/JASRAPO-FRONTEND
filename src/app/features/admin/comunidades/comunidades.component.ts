@@ -4,7 +4,6 @@ import {
   Component,
   inject,
   computed,
-  effect,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -12,6 +11,8 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ComunidadesService } from './services/comunidades.service';
 import { Comunidad } from './models/comunidad.interface';
 import { ComunidadFormComponent } from './comunidad-form/comunidad-form.component';
+import { ToastService } from '../../../shared/components/toast/toast.service';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 interface BackendErrorResponse {
   message?: string;
@@ -21,24 +22,45 @@ interface BackendErrorResponse {
 
 @Component({
   selector: 'app-comunidades',
-  standalone: true,
-  imports: [CommonModule, ComunidadFormComponent],
+  imports: [CommonModule, ComunidadFormComponent, PaginationComponent],
   templateUrl: './comunidades.component.html',
-  styleUrl: './comunidades.component.css',
+  styleUrl: './comunidades.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:click)': 'closeDropdowns()',
+  },
 })
 export class ComunidadesComponent {
   private readonly comunidadesService = inject(ComunidadesService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly toastService = inject(ToastService);
   private readonly focusableSelectors =
     'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+  // Control del menú desplegable de acciones por fila
+  openDropdownId: number | null = null;
+
+  toggleDropdown(comunidadId: number, event: MouseEvent): void {
+    event.stopPropagation();
+    this.openDropdownId = this.openDropdownId === comunidadId ? null : comunidadId;
+    this.cdr.markForCheck();
+  }
+
+  closeDropdowns(): void {
+    if (this.openDropdownId !== null) {
+      this.openDropdownId = null;
+      this.cdr.markForCheck();
+    }
+  }
 
   readonly comunidades = signal<Comunidad[]>([]);
   isLoading = false;
   isDetailLoading = false;
   isSaving = false;
-  currentPage = 1;
-  pageSize = 5;
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(5);
+  readonly totalItems = signal(0);
+  readonly totalPagesServer = signal(1);
   readonly pageSizeOptions = [5, 10, 15];
 
   readonly searchTerm = signal('');
@@ -49,23 +71,14 @@ export class ComunidadesComponent {
   private editingCommunityId: number | null = null;
   private previouslyFocusedElement: HTMLElement | null = null;
   readonly hasFetched = signal(false);
-  readonly mensajeNotificacion = signal<string | null>(null);
-  readonly tipoNotificacion = signal<'success' | 'error'>('success');
 
-  constructor() {
-    effect(() => {
-      this.searchTerm();
-      this.currentPage = 1;
-      this.cdr.markForCheck();
-    });
-  }
-
-  readonly filteredComunidades = computed(() => {
-    const term = this.searchTerm().toLowerCase();
-
+  readonly pagedComunidades = computed(() => {
+    const term = this.searchTerm().toLowerCase().trim();
+    if (!term) {
+      return this.comunidades();
+    }
     return this.comunidades().filter((comunidad) => {
       return (
-        !term ||
         comunidad.codigo.toLowerCase().includes(term) ||
         comunidad.nombre.toLowerCase().includes(term)
       );
@@ -73,42 +86,22 @@ export class ComunidadesComponent {
   });
 
   get totalPages(): number {
-    return Math.max(1, Math.ceil(this.filteredComunidades().length / this.pageSize));
+    return this.totalPagesServer();
   }
 
   get pageNumbers(): number[] {
     return Array.from({ length: this.totalPages }, (_, index) => index + 1);
   }
 
-  get pagedComunidades(): Comunidad[] {
-    const start = (this.currentPage - 1) * this.pageSize;
-    return this.filteredComunidades().slice(start, start + this.pageSize);
-  }
-
-  private sortComunidades(items: Comunidad[]): Comunidad[] {
-    return [...items].sort((a, b) => {
-      const numericA = Number(a.codigo);
-      const numericB = Number(b.codigo);
-
-      if (!Number.isNaN(numericA) && !Number.isNaN(numericB)) {
-        return numericA - numericB;
-      }
-
-      return a.codigo.localeCompare(b.codigo, undefined, {
-        numeric: true,
-        sensitivity: 'base',
-      });
-    });
-  }
-
   buscarComunidades(): void {
     this.isLoading = true;
 
-    this.comunidadesService.getAllComunidades().subscribe({
-      next: (data) => {
-        this.comunidades.set(this.sortComunidades(data));
+    this.comunidadesService.getAllComunidades(this.currentPage(), this.pageSize()).subscribe({
+      next: (response) => {
+        this.comunidades.set(response.data);
+        this.totalItems.set(response.meta.total);
+        this.totalPagesServer.set(response.meta.ultimaPagina);
         this.hasFetched.set(true);
-        this.currentPage = 1;
         this.isLoading = false;
         this.cdr.markForCheck();
       },
@@ -126,7 +119,6 @@ export class ComunidadesComponent {
     this.isEditMode.set(false);
     this.editingCommunityId = null;
     this.selectedCommunity.set(null);
-    this.limpiarMensaje();
     this.showFormModal.set(true);
     this.focusModalBySelector('[data-modal="community-form"]');
   }
@@ -136,7 +128,6 @@ export class ComunidadesComponent {
     this.isEditMode.set(true);
     this.editingCommunityId = comunidad.id;
     this.selectedCommunity.set(comunidad);
-    this.limpiarMensaje();
     this.showFormModal.set(true);
     this.focusModalBySelector('[data-modal="community-form"]');
   }
@@ -165,7 +156,6 @@ export class ComunidadesComponent {
     this.showFormModal.set(false);
     this.editingCommunityId = null;
     this.selectedCommunity.set(null);
-    this.limpiarMensaje();
     this.restoreFocus();
   }
 
@@ -176,9 +166,9 @@ export class ComunidadesComponent {
   }
 
   setPageSize(size: number): void {
-    this.pageSize = size;
-    this.currentPage = 1;
-    this.cdr.markForCheck();
+    this.pageSize.set(size);
+    this.currentPage.set(1);
+    this.buscarComunidades();
   }
 
   onPageSizeChange(event: Event): void {
@@ -194,8 +184,8 @@ export class ComunidadesComponent {
       return;
     }
 
-    this.currentPage = page;
-    this.cdr.markForCheck();
+    this.currentPage.set(page);
+    this.buscarComunidades();
   }
 
   trapModalFocus(event: KeyboardEvent, modal: HTMLElement): void {
@@ -227,7 +217,6 @@ export class ComunidadesComponent {
   }
 
   handleFormSubmit(payload: Omit<Comunidad, 'id'>): void {
-    this.limpiarMensaje();
     this.isSaving = true;
 
     if (this.isEditMode()) {
@@ -239,18 +228,11 @@ export class ComunidadesComponent {
       }
 
       this.comunidadesService.updateComunidad(id, payload).subscribe({
-        next: (updated) => {
-          this.comunidades.set(
-            this.sortComunidades(
-              this.comunidades().map((comunidad) =>
-                comunidad.id === updated.id ? updated : comunidad,
-              ),
-            ),
-          );
-
+        next: () => {
           this.isSaving = false;
           this.refreshComunidadesAfterSave();
           this.closeFormModal();
+          this.toastService.success('Comunidad actualizada correctamente', 'Éxito');
           this.cdr.markForCheck();
         },
         error: (err: HttpErrorResponse) => {
@@ -261,7 +243,7 @@ export class ComunidadesComponent {
             'No se pudo actualizar la comunidad. Revise los datos ingresados.',
           );
 
-          this.mostrarMensaje(mensajeError, 'error');
+          this.toastService.error(mensajeError, 'Error');
           this.cdr.markForCheck();
         },
       });
@@ -270,11 +252,11 @@ export class ComunidadesComponent {
     }
 
     this.comunidadesService.createComunidad(payload).subscribe({
-      next: (created) => {
-        this.comunidades.set(this.sortComunidades([...this.comunidades(), created]));
+      next: () => {
         this.isSaving = false;
         this.refreshComunidadesAfterSave();
         this.closeFormModal();
+        this.toastService.success('Comunidad creada correctamente', 'Éxito');
         this.cdr.markForCheck();
       },
       error: (err: HttpErrorResponse) => {
@@ -285,7 +267,7 @@ export class ComunidadesComponent {
           'No se pudo crear la comunidad. Revise los datos ingresados.',
         );
 
-        this.mostrarMensaje(mensajeError, 'error');
+        this.toastService.error(mensajeError, 'Error');
         this.cdr.markForCheck();
       },
     });
@@ -325,22 +307,15 @@ export class ComunidadesComponent {
     return mensajePorDefecto;
   }
 
-  private mostrarMensaje(mensaje: string, tipo: 'error'): void {
-    this.mensajeNotificacion.set(mensaje);
-    this.tipoNotificacion.set(tipo);
-  }
-
-  private limpiarMensaje(): void {
-    this.mensajeNotificacion.set(null);
-  }
-
   private refreshComunidadesAfterSave(): void {
     this.isLoading = true;
+    this.currentPage.set(1);
 
-    this.comunidadesService.getAllComunidades().subscribe({
-      next: (items) => {
-        this.comunidades.set(this.sortComunidades(items));
-        this.currentPage = 1;
+    this.comunidadesService.getAllComunidades(1, this.pageSize()).subscribe({
+      next: (response) => {
+        this.comunidades.set(response.data);
+        this.totalItems.set(response.meta.total);
+        this.totalPagesServer.set(response.meta.ultimaPagina);
         this.hasFetched.set(true);
         this.isLoading = false;
         this.cdr.markForCheck();

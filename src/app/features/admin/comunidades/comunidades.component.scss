@@ -1,0 +1,124 @@
+.container-fluid {
+  width: 100%;
+}
+
+.table-responsive {
+  min-height: 220px;
+}
+
+.modal-dialog {
+  max-width: 760px;
+}
+
+.modal-content {
+  border-radius: 1rem;
+}
+
+.modal-title {
+  font-size: 1.1rem;
+}
+
+.btn-close {
+  border: none;
+}
+
+.table th,
+.table td {
+  vertical-align: middle;
+}
+
+.custom-table {
+  table-layout: fixed;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.custom-table th,
+.custom-table td {
+  font-size: 0.98rem;
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.custom-table th {
+  font-weight: 600;
+}
+
+/* Anchos de columnas ajustados */
+.col-codigo {
+  width: 140px;
+}
+
+.col-nombre {
+  width: 230px;
+}
+
+.col-porcentaje {
+  width: 300px;
+}
+
+.col-acciones {
+  width: 180px;
+}
+
+/* Columna de porcentaje en una sola línea */
+.custom-table th:nth-child(3),
+.custom-table td:nth-child(3) {
+  text-align: center !important;
+  white-space: nowrap;
+}
+
+/* Acciones más cerca del porcentaje */
+.custom-table th:nth-child(4),
+.custom-table td:nth-child(4) {
+  text-align: left !important;
+  padding-left: 1rem;
+  padding-right: 0;
+  white-space: nowrap;
+}
+
+.custom-table td:nth-child(4) .btn {
+  margin-right: 0.6rem;
+}
+
+.action-icon {
+  font-size: 1rem;
+}
+
+.action-icon.view {
+  color: #0d6efd;
+}
+
+.action-icon.edit {
+  color: #198754;
+}
+
+.action-icon:hover {
+  opacity: 0.85;
+}
+
+@media (max-width: 991.98px) {
+  .custom-table {
+    width: 100%;
+    min-width: 900px;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .d-flex .input-group {
+    width: 100% !important;
+  }
+
+  .custom-table {
+    table-layout: fixed;
+    width: 100%;
+    min-width: 900px;
+  }
+
+  .custom-table th,
+  .custom-table td {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    white-space: nowrap;
+  }
+}

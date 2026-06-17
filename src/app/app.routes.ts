@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/guards/auth.guard';
+import { menuResolver } from './core/guards/menu.resolver';
 
 export const routes: Routes = [
   {
@@ -15,9 +16,7 @@ export const routes: Routes = [
       {
         path: '',
         loadComponent: () =>
-          import('./features/consulta-planilla/consulta-planilla.component').then(
-            (m) => m.ConsultaPlanillaComponent,
-          ),
+          import('./features/bill-inquiry/bill-inquiry.component').then((m) => m.BillInquiryComponent),
       },
       {
         path: 'preview',
@@ -32,9 +31,11 @@ export const routes: Routes = [
     path: 'app',
     loadComponent: () => import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
     canActivate: [authGuard],
+    resolve: { menu: menuResolver },
     children: [
       {
         path: 'dashboard',
+        data: { breadcrumb: 'Dashboard' },
         loadComponent: () =>
           import('./features/dashboard/dashboard/dashboard').then((m) => m.Dashboard),
       },
@@ -42,45 +43,21 @@ export const routes: Routes = [
       // Sección Administración (Solo Admin)
       {
         path: 'admin',
+        data: { breadcrumb: 'Administración' },
         loadComponent: () =>
-          import('./features/admin/admin.component/admin.component').then((m) => m.AdminComponent),
+          import('./features/admin/component/admin.component').then((m) => m.AdminComponent),
         children: [
           {
             path: 'users',
+            data: { breadcrumb: 'Gestión de Usuarios' },
             loadComponent: () =>
               import('./features/users/user-management/user-management').then(
                 (m) => m.UserManagement,
               ),
           },
           {
-            path: 'roles',
-            loadComponent: () => import('./features/admin/roles/roles').then((m) => m.Roles),
-            children: [
-              {
-                path: 'presidente',
-                loadComponent: () =>
-                  import('./features/presidente/presidente.component/presidente.component').then(
-                    (m) => m.PresidenteComponent,
-                  ),
-              },
-              {
-                path: 'secretario',
-                loadComponent: () =>
-                  import('./features/secretario/secretario.component/secretario.component').then(
-                    (m) => m.SecretarioComponent,
-                  ),
-              },
-              {
-                path: 'tesorero',
-                loadComponent: () =>
-                  import('./features/tesorero/tesorero.component/tesorero.component').then(
-                    (m) => m.TesoreroComponent,
-                  ),
-              },
-            ],
-          },
-          {
             path: 'sectores',
+            data: { breadcrumb: 'Sectores' },
             loadComponent: () =>
               import('./features/admin/sectores-prueba/components/sectores-prueba/sectores-prueba').then(
                 (m) => m.SectoresPrueba,
@@ -88,17 +65,33 @@ export const routes: Routes = [
           },
           {
             path: 'comunidades',
+            data: { breadcrumb: 'Comunidades' },
             loadComponent: () =>
               import('./features/admin/comunidades/comunidades.component').then(
                 (m) => m.ComunidadesComponent,
               ),
           },
           {
-            path: 'config',
+            path: 'roles',
+            data: { breadcrumb: 'Roles' },
             loadComponent: () =>
-              import('./features/admin/admin.component/admin.component').then(
-                (m) => m.AdminComponent,
-              ),
+              import('./features/admin/roles/roles.component').then((m) => m.RolesComponent),
+            children: [
+              {
+                path: ':rolId',
+                data: { breadcrumb: 'Editor de Rol' },
+                loadComponent: () =>
+                  import('./features/admin/roles/role-editor/role-editor.component').then(
+                    (m) => m.RoleEditorComponent,
+                  ),
+              },
+            ],
+          },
+          {
+            path: 'config',
+            data: { breadcrumb: 'Configuración' },
+            loadComponent: () =>
+              import('./features/admin/component/admin.component').then((m) => m.AdminComponent),
           },
         ],
       },
@@ -106,26 +99,30 @@ export const routes: Routes = [
       // Sección Presidencia (Admin y Presidente)
       {
         path: 'presidente',
+        data: { breadcrumb: 'Presidencia' },
         children: [
           {
             path: 'aprobaciones',
+            data: { breadcrumb: 'Aprobaciones' },
             loadComponent: () =>
-              import('./features/presidente/presidente.component/presidente.component').then(
-                (m) => m.PresidenteComponent,
+              import('./features/president/president.component/president.component').then(
+                (m) => m.PresidentComponent,
               ),
           },
           {
             path: 'reportes',
+            data: { breadcrumb: 'Reportes' },
             loadComponent: () =>
-              import('./features/presidente/presidente.component/presidente.component').then(
-                (m) => m.PresidenteComponent,
+              import('./features/president/president.component/president.component').then(
+                (m) => m.PresidentComponent,
               ),
           },
           {
             path: 'actas',
+            data: { breadcrumb: 'Actas' },
             loadComponent: () =>
-              import('./features/presidente/presidente.component/presidente.component').then(
-                (m) => m.PresidenteComponent,
+              import('./features/president/president.component/president.component').then(
+                (m) => m.PresidentComponent,
               ),
           },
         ],
@@ -134,26 +131,30 @@ export const routes: Routes = [
       // Sección Secretaría (Admin y Secretario)
       {
         path: 'secretario',
+        data: { breadcrumb: 'Secretaría' },
         children: [
           {
             path: 'documentos',
+            data: { breadcrumb: 'Documentos' },
             loadComponent: () =>
-              import('./features/secretario/secretario.component/secretario.component').then(
-                (m) => m.SecretarioComponent,
+              import('./features/secretary/secretary.component/secretary.component').then(
+                (m) => m.SecretaryComponent,
               ),
           },
           {
             path: 'correspondencia',
+            data: { breadcrumb: 'Correspondencia' },
             loadComponent: () =>
-              import('./features/secretario/secretario.component/secretario.component').then(
-                (m) => m.SecretarioComponent,
+              import('./features/secretary/secretary.component/secretary.component').then(
+                (m) => m.SecretaryComponent,
               ),
           },
           {
             path: 'archivo',
+            data: { breadcrumb: 'Archivo' },
             loadComponent: () =>
-              import('./features/secretario/secretario.component/secretario.component').then(
-                (m) => m.SecretarioComponent,
+              import('./features/secretary/secretary.component/secretary.component').then(
+                (m) => m.SecretaryComponent,
               ),
           },
         ],
@@ -162,26 +163,30 @@ export const routes: Routes = [
       // Sección Tesorería (Admin y Tesorero)
       {
         path: 'tesorero',
+        data: { breadcrumb: 'Tesorería' },
         children: [
           {
             path: 'ingresos',
+            data: { breadcrumb: 'Ingresos' },
             loadComponent: () =>
-              import('./features/tesorero/tesorero.component/tesorero.component').then(
-                (m) => m.TesoreroComponent,
+              import('./features/treasurer/treasurer.component/treasurer.component').then(
+                (m) => m.TreasurerComponent,
               ),
           },
           {
             path: 'egresos',
+            data: { breadcrumb: 'Egresos' },
             loadComponent: () =>
-              import('./features/tesorero/tesorero.component/tesorero.component').then(
-                (m) => m.TesoreroComponent,
+              import('./features/treasurer/treasurer.component/treasurer.component').then(
+                (m) => m.TreasurerComponent,
               ),
           },
           {
             path: 'balance',
+            data: { breadcrumb: 'Balance' },
             loadComponent: () =>
-              import('./features/tesorero/tesorero.component/tesorero.component').then(
-                (m) => m.TesoreroComponent,
+              import('./features/treasurer/treasurer.component/treasurer.component').then(
+                (m) => m.TreasurerComponent,
               ),
           },
         ],
@@ -190,44 +195,47 @@ export const routes: Routes = [
       // Sección Contratos
       {
         path: 'Contratos',
+        data: { breadcrumb: 'Contratos' },
         children: [
           {
             path: 'Cliente',
+            data: { breadcrumb: 'Clientes' },
             loadComponent: () =>
-              import('./features/Contratos/clientes/clientes').then((m) => m.Clientes),
+              import('./features/contracts/clients/clients').then((m) => m.ClientsComponent),
           },
           {
             path: 'ContratosDeServicios',
+            data: { breadcrumb: 'Contratos de Servicios' },
             loadComponent: () =>
-              import('./features/Contratos/contratos-de-servicios/contratos-de-servicios').then(
-                (m) => m.ContratosDeServicios,
+              import('./features/contracts/service-contracts/service-contracts').then(
+                (m) => m.ServiceContractsComponent,
               ),
           },
           {
             path: 'ConveniosDePago',
+            data: { breadcrumb: 'Convenios de Pago' },
             loadComponent: () =>
-              import('./features/Contratos/convenios-de-pago/convenios-de-pago').then(
-                (m) => m.ConveniosDePago,
+              import('./features/contracts/payment-agreements/payment-agreements').then(
+                (m) => m.PaymentAgreementsComponent,
               ),
           },
           {
             path: 'LecturaDeConsumo',
+            data: { breadcrumb: 'Lectura de Consumo' },
             loadComponent: () =>
-              import('./features/Contratos/lectura-de-consumo/lectura-de-consumo').then(
-                (m) => m.LecturaDeConsumo,
-              ),
+              import('./features/contracts/readings/readings').then((m) => m.ReadingsComponent),
           },
           {
             path: 'Medidores',
+            data: { breadcrumb: 'Medidores' },
             loadComponent: () =>
-              import('./features/Contratos/medidores/medidores').then((m) => m.Medidores),
+              import('./features/contracts/meters/meters').then((m) => m.MetersComponent),
           },
           {
             path: 'TarifasYCategorias',
+            data: { breadcrumb: 'Tarifas y Categorías' },
             loadComponent: () =>
-              import('./features/Contratos/tarifas-ycategorias/tarifas-ycategorias').then(
-                (m) => m.TarifasYCategorias,
-              ),
+              import('./features/contracts/tariffs/tariffs').then((m) => m.TariffsComponent),
           },
         ],
       },
@@ -235,41 +243,45 @@ export const routes: Routes = [
       // Sección Facturación
       {
         path: 'Facturacion',
+        data: { breadcrumb: 'Facturación' },
         children: [
           {
             path: 'EnvioDeFacturacion',
+            data: { breadcrumb: 'Envío de Facturación' },
             loadComponent: () =>
-              import('./features/Facturacion/envio-de-facturacion/envio-de-facturacion').then(
-                (m) => m.EnvioDeFacturacion,
+              import('./features/billing/billing-submission/billing-submission').then(
+                (m) => m.BillingSubmissionComponent,
               ),
           },
           {
             path: 'FacturacionElectronica',
+            data: { breadcrumb: 'Facturación Electrónica' },
             loadComponent: () =>
-              import('./features/Facturacion/facturacion-electronica/facturacion-electronica').then(
-                (m) => m.FacturacionElectronica,
+              import('./features/billing/electronic-billing/electronic-billing').then(
+                (m) => m.ElectronicBillingComponent,
               ),
           },
           {
             path: 'GeneracionPlanilla',
+            data: { breadcrumb: 'Generación de Planilla' },
             loadComponent: () =>
-              import('./features/Facturacion/generacion-planilla/generacion-planilla').then(
-                (m) => m.GeneracionPlanilla,
+              import('./features/billing/billing-generation/billing-generation').then(
+                (m) => m.BillingGenerationComponent,
               ),
           },
           {
             path: 'NotasDeCreditoDebito',
+            data: { breadcrumb: 'Notas de Crédito/Débito' },
             loadComponent: () =>
-              import('./features/Facturacion/notas-de-credito-debito/notas-de-credito-debito').then(
-                (m) => m.NotasDeCreditoDebito,
+              import('./features/billing/credit-debit-notes/credit-debit-notes').then(
+                (m) => m.CreditDebitNotesComponent,
               ),
           },
           {
             path: 'RecaudacionYPagos',
+            data: { breadcrumb: 'Recaudación y Pagos' },
             loadComponent: () =>
-              import('./features/Facturacion/recaudacion-ypagos/recaudacion-ypagos').then(
-                (m) => m.RecaudacionYPagos,
-              ),
+              import('./features/billing/payments/payments').then((m) => m.PaymentsComponent),
           },
         ],
       },
@@ -277,29 +289,38 @@ export const routes: Routes = [
       // Sección Reportes
       {
         path: 'Reportes',
+        data: { breadcrumb: 'Reportes' },
         children: [
           {
             path: 'ConsumoZonas',
+            data: { breadcrumb: 'Consumo por Zonas' },
             loadComponent: () =>
-              import('./features/Reportes/consumo-zonas/consumo-zonas').then((m) => m.ConsumoZonas),
+              import('./features/reports/zone-consumption/zone-consumption').then(
+                (m) => m.ZoneConsumptionComponent,
+              ),
           },
           {
             path: 'DashboardKpi',
+            data: { breadcrumb: 'Dashboard KPI' },
             loadComponent: () =>
-              import('./features/Reportes/dashboard-kpi/dashboard-kpi').then((m) => m.DashboardKpi),
+              import('./features/reports/kpi-dashboard/kpi-dashboard').then(
+                (m) => m.KpiDashboardComponent,
+              ),
           },
           {
             path: 'EstadoCuentaCliente',
+            data: { breadcrumb: 'Estado de Cuenta' },
             loadComponent: () =>
-              import('./features/Reportes/estado-cuenta-cliente/estado-cuenta-cliente').then(
-                (m) => m.EstadoCuentaCliente,
+              import('./features/reports/client-statement/client-statement').then(
+                (m) => m.ClientStatementComponent,
               ),
           },
           {
             path: 'RecaudacionMorosida',
+            data: { breadcrumb: 'Recaudación y Morosidad' },
             loadComponent: () =>
-              import('./features/Reportes/recaudacion-morosida/recaudacion-morosida').then(
-                (m) => m.RecaudacionMorosida,
+              import('./features/reports/overdue-accounts/overdue-accounts').then(
+                (m) => m.OverdueAccountsComponent,
               ),
           },
         ],
@@ -308,16 +329,7 @@ export const routes: Routes = [
       // Otras secciones comunes
       {
         path: 'water-sources',
-        loadComponent: () =>
-          import('./features/dashboard/dashboard/dashboard').then((m) => m.Dashboard),
-      },
-      {
-        path: 'billing',
-        loadComponent: () =>
-          import('./features/dashboard/dashboard/dashboard').then((m) => m.Dashboard),
-      },
-      {
-        path: 'reports',
+        data: { breadcrumb: 'Fuentes de Agua' },
         loadComponent: () =>
           import('./features/dashboard/dashboard/dashboard').then((m) => m.Dashboard),
       },

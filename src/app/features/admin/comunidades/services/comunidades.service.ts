@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
-import { Comunidad } from '../models/comunidad.interface';
+import { Comunidad, PaginatedComunidadesResponse } from '../models/comunidad.interface';
 
 type RawDecimalValue = number | string | { s: number; e: number; d: number[] };
 
@@ -53,10 +53,20 @@ export class ComunidadesService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/communities`;
 
-  getAllComunidades(): Observable<Comunidad[]> {
+  getAllComunidades(page = 1, limit = 10): Observable<PaginatedComunidadesResponse> {
+    const params = new HttpParams().set('page', page.toString()).set('limit', limit.toString());
+
     return this.http
-      .get<RawComunidad[]>(this.apiUrl)
-      .pipe(map((items) => items.map(normalizeComunidad)));
+      .get<{
+        data: RawComunidad[];
+        meta: PaginatedComunidadesResponse['meta'];
+      }>(this.apiUrl, { params })
+      .pipe(
+        map((response) => ({
+          data: response.data.map(normalizeComunidad),
+          meta: response.meta,
+        })),
+      );
   }
 
   getComunidadById(id: number): Observable<Comunidad> {

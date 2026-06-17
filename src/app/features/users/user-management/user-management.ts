@@ -4,37 +4,52 @@ import {
   inject,
   signal,
   computed,
-  HostListener,
+  OnInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import {
+  FormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+} from '@angular/forms';
 import { AuthService } from '../../../core/services/auth.service';
-
-export interface User {
-  id: number;
-  nombre: string;
-  email: string;
-  rol: 'Admin' | 'Presidente' | 'Secretario' | 'Tesorero';
-  estado: 'Activo' | 'Inactivo';
-}
-
-type UserForm = Omit<User, 'id'> & { password?: string };
+import { UsersService } from '../services/users.service';
+import { User, Role, CreateUserPayload, UpdateUserPayload } from '../models/user.interface';
+import { ToastService } from '../../../shared/components/toast/toast.service';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-user-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, PaginationComponent],
   templateUrl: './user-management.html',
-  styleUrl: './user-management.css',
+  styleUrl: './user-management.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:click)': 'closeDropdowns()',
+  },
 })
-export class UserManagement {
+export class UserManagement implements OnInit {
+  private readonly usersService = inject(UsersService);
   readonly authService = inject(AuthService);
+  private readonly toastService = inject(ToastService);
+  private readonly dialogService = inject(ConfirmDialogService);
+
+  // ---------- Lists & State ----------
+  readonly users = signal<User[]>([]);
+  readonly roles = signal<Role[]>([]);
+  readonly isLoading = signal(false);
+  readonly errorMessage = signal<string | null>(null);
+
+  // ---------- Server Pagination ----------
+  readonly totalPagesFromServer = signal(0);
 
   // ---------- Dropdown ----------
   readonly openDropdownId = signal<number | null>(null);
 
-  @HostListener('document:click')
   closeDropdowns(): void {
     this.openDropdownId.set(null);
   }
@@ -48,13 +63,13 @@ export class UserManagement {
   readonly selectedIds = signal<Set<number>>(new Set());
 
   readonly isAllSelected = computed(() => {
-    const visible = this.pagedUsers(); // Solo los visibles en la página actual
-    return visible.length > 0 && visible.every((u) => this.selectedIds().has(u.id));
+    const visible = this.pagedUsers();
+    return visible.length > 0 && visible.every((u) => this.selectedIds().has(u.usuarioId));
   });
 
   readonly isIndeterminate = computed(() => {
     const visible = this.pagedUsers();
-    const selected = visible.filter((u) => this.selectedIds().has(u.id));
+    const selected = visible.filter((u) => this.selectedIds().has(u.usuarioId));
     return selected.length > 0 && selected.length < visible.length;
   });
 
@@ -63,13 +78,13 @@ export class UserManagement {
     if (this.isAllSelected()) {
       this.selectedIds.update((s) => {
         const n = new Set(s);
-        visible.forEach((u) => n.delete(u.id));
+        visible.forEach((u) => n.delete(u.usuarioId));
         return n;
       });
     } else {
       this.selectedIds.update((s) => {
         const n = new Set(s);
-        visible.forEach((u) => n.add(u.id));
+        visible.forEach((u) => n.add(u.usuarioId));
         return n;
       });
     }
@@ -87,193 +102,230 @@ export class UserManagement {
     });
   }
 
-  // ---------- Data ----------
-  private readonly nextId = signal(6);
-
-  readonly users = signal<User[]>([
-    {
-      id: 1,
-      nombre: 'Administrador JAPO',
-      email: 'admin@japo.com',
-      rol: 'Admin',
-      estado: 'Activo',
-    },
-    {
-      id: 2,
-      nombre: 'Carlos Mendoza',
-      email: 'presidente@japo.com',
-      rol: 'Presidente',
-      estado: 'Activo',
-    },
-    {
-      id: 3,
-      nombre: 'María González',
-      email: 'secretario@japo.com',
-      rol: 'Secretario',
-      estado: 'Activo',
-    },
-    {
-      id: 4,
-      nombre: 'Roberto Silva',
-      email: 'tesorero@japo.com',
-      rol: 'Tesorero',
-      estado: 'Activo',
-    },
-    {
-      id: 5,
-      nombre: 'Invitado Demo',
-      email: 'demo@japo.com',
-      rol: 'Secretario',
-      estado: 'Inactivo',
-    },
-  ]);
-
   // ---------- Filtering & Search ----------
   readonly searchTerm = signal('');
-  readonly activeFilter = signal<'Todos' | 'Activo' | 'Inactivo'>('Todos');
-
-  readonly filteredUsers = computed(() => {
-    const term = this.searchTerm().toLowerCase();
-    const filter = this.activeFilter();
-    return this.users().filter((u) => {
-      const matchSearch =
-        !term ||
-        u.nombre.toLowerCase().includes(term) ||
-        u.email.toLowerCase().includes(term) ||
-        u.rol.toLowerCase().includes(term);
-      const matchFilter = filter === 'Todos' || u.estado === filter;
-      return matchSearch && matchFilter;
-    });
-  });
 
   // ---------- Modal state ----------
   readonly showModal = signal(false);
   readonly isEditing = signal(false);
   readonly editingId = signal<number | null>(null);
 
-  readonly showDeleteModal = signal(false);
-  readonly deletingUser = signal<User | null>(null);
+  private readonly fb = inject(FormBuilder);
 
-  readonly formData = signal<UserForm>({
-    nombre: '',
-    email: '',
-    password: '',
-    rol: 'Secretario',
-    estado: 'Activo',
+  userForm: FormGroup = this.fb.group({
+    nombres: ['', Validators.required],
+    apellidos: ['', Validators.required],
+    email: ['', [Validators.required, Validators.email]],
+    telefono: ['', [Validators.required, Validators.minLength(7)]],
+    rolId: [0, Validators.required],
   });
 
-  readonly roles: User['rol'][] = ['Admin', 'Presidente', 'Secretario', 'Tesorero'];
+  campoInvalido(campo: string): boolean {
+    const control = this.userForm.get(campo);
+    return !!control && control.invalid && (control.dirty || control.touched);
+  }
 
   // ---------- Pagination ----------
   readonly pageSizeOptions = [5, 10, 15];
   readonly pageSize = signal(5);
   readonly currentPage = signal(1);
-
-  readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.filteredUsers().length / this.pageSize())),
-  );
+  readonly totalItems = signal(0);
+  readonly totalPages = signal(1);
 
   readonly pageNumbers = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
 
   readonly pagedUsers = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize();
-    return this.filteredUsers().slice(start, start + this.pageSize());
+    const term = this.searchTerm().toLowerCase().trim();
+    if (!term) {
+      return this.users();
+    }
+    return this.users().filter((u) => {
+      const fullName = `${u.nombres} ${u.apellidos}`.toLowerCase();
+      return (
+        fullName.includes(term) ||
+        u.email.toLowerCase().includes(term) ||
+        (u.rol?.nombre || '').toLowerCase().includes(term)
+      );
+    });
   });
+
+  ngOnInit(): void {
+    this.loadRoles();
+    this.loadUsers();
+  }
+
+  loadUsers(): void {
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+    this.usersService.getUsers(this.currentPage(), this.pageSize()).subscribe({
+      next: (response) => {
+        this.users.set(response.data);
+        this.totalItems.set(response.meta.total);
+        this.totalPages.set(response.meta.ultimaPagina);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error al cargar usuarios:', err);
+        this.errorMessage.set('No se pudieron cargar los usuarios.');
+        this.isLoading.set(false);
+      },
+    });
+  }
+
+  loadRoles(): void {
+    this.usersService.getRoles().subscribe({
+      next: (rolesList) => {
+        this.roles.set(rolesList);
+        if (rolesList.length > 0 && !this.userForm.value.rolId) {
+          this.userForm.patchValue({ rolId: rolesList[0].rolId });
+        }
+      },
+      error: (err) => {
+        console.error('Error al cargar roles:', err);
+      },
+    });
+  }
 
   setPageSize(size: number): void {
     this.pageSize.set(size);
     this.currentPage.set(1);
     this.selectedIds.set(new Set());
+    this.loadUsers();
   }
 
   goToPage(page: number): void {
     if (page < 1 || page > this.totalPages()) return;
     this.currentPage.set(page);
     this.selectedIds.set(new Set());
-  }
-
-  setFilter(filter: 'Todos' | 'Activo' | 'Inactivo'): void {
-    this.activeFilter.set(filter);
-    this.currentPage.set(1);
+    this.loadUsers();
   }
 
   onSearch(term: string): void {
     this.searchTerm.set(term);
     this.currentPage.set(1);
+    this.loadUsers();
   }
 
   // ---------- Modal Logic ----------
   openCreateModal(): void {
     this.isEditing.set(false);
     this.editingId.set(null);
-    this.formData.set({ nombre: '', email: '', password: '', rol: 'Secretario', estado: 'Activo' });
+    this.errorMessage.set(null);
+
+    const defaultRolId = this.roles().length > 0 ? this.roles()[0].rolId : 0;
+    this.userForm.reset({
+      nombres: '',
+      apellidos: '',
+      email: '',
+      telefono: '',
+      rolId: defaultRolId,
+    });
     this.showModal.set(true);
   }
 
   openEditModal(user: User): void {
     this.isEditing.set(true);
-    this.editingId.set(user.id);
-    this.formData.set({
-      nombre: user.nombre,
+    this.editingId.set(user.usuarioId);
+    this.errorMessage.set(null);
+    this.userForm.patchValue({
+      nombres: user.nombres,
+      apellidos: user.apellidos,
       email: user.email,
-      password: '',
-      rol: user.rol,
-      estado: user.estado,
+      telefono: user.telefono || '',
+      rolId: user.rol?.rolId || (this.roles().length > 0 ? this.roles()[0].rolId : 0),
     });
     this.showModal.set(true);
   }
 
   closeModal(): void {
     this.showModal.set(false);
+    this.errorMessage.set(null);
   }
 
   saveUser(): void {
-    const form = this.formData();
-    if (!form.nombre.trim() || !form.email.trim()) return;
+    if (this.userForm.invalid) {
+      this.userForm.markAllAsTouched();
+      this.errorMessage.set('Por favor, complete todos los campos obligatorios.');
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+
+    const form = this.userForm.value;
 
     if (this.isEditing() && this.editingId() !== null) {
-      this.users.update((list) =>
-        list.map((u) =>
-          u.id === this.editingId()
-            ? { ...u, nombre: form.nombre, email: form.email, rol: form.rol, estado: form.estado }
-            : u,
-        ),
-      );
-    } else {
-      const id = this.nextId();
-      this.nextId.update((n) => n + 1);
-      this.users.update((list) => [
-        ...list,
-        {
-          id,
-          nombre: form.nombre,
-          email: form.email,
-          rol: form.rol,
-          estado: form.estado,
+      const payload: UpdateUserPayload = {
+        nombres: form.nombres,
+        apellidos: form.apellidos,
+        email: form.email,
+        telefono: form.telefono,
+        rolId: Number(form.rolId),
+      };
+
+      this.usersService.updateUser(this.editingId()!, payload).subscribe({
+        next: () => {
+          this.loadUsers();
+          this.closeModal();
+          this.toastService.success('Usuario actualizado correctamente', 'Éxito');
         },
-      ]);
+        error: (err) => {
+          console.error('Error al actualizar usuario:', err);
+          const msg = err.error?.message || 'Error al actualizar el usuario.';
+          this.toastService.error(msg, 'Error');
+          this.isLoading.set(false);
+        },
+      });
+    } else {
+      const payload: CreateUserPayload = {
+        nombres: form.nombres,
+        apellidos: form.apellidos,
+        email: form.email,
+        telefono: form.telefono,
+        rolId: Number(form.rolId),
+      };
+
+      this.usersService.createUser(payload).subscribe({
+        next: () => {
+          this.loadUsers();
+          this.closeModal();
+          this.toastService.success('Usuario creado correctamente', 'Éxito');
+        },
+        error: (err) => {
+          console.error('Error al crear usuario:', err);
+          const msg = err.error?.message || 'Error al crear el usuario.';
+          this.toastService.error(msg, 'Error');
+          this.isLoading.set(false);
+        },
+      });
     }
-    this.closeModal();
   }
 
-  confirmDelete(user: User): void {
-    this.deletingUser.set(user);
-    this.showDeleteModal.set(true);
-  }
-
-  cancelDelete(): void {
-    this.showDeleteModal.set(false);
-    this.deletingUser.set(null);
-  }
-
-  deleteUser(): void {
-    const target = this.deletingUser();
-    if (!target) return;
-    this.users.update((list) => list.filter((u) => u.id !== target.id));
-    this.cancelDelete();
-  }
-
-  updateField<K extends keyof UserForm>(field: K, value: UserForm[K]): void {
-    this.formData.update((f) => ({ ...f, [field]: value }));
+  eliminarUsuario(user: User): void {
+    this.dialogService
+      .confirm({
+        title: 'Confirmar eliminación',
+        message: `¿Estás seguro de que deseas eliminar al usuario ${user.nombres} ${user.apellidos}? Esta acción no se puede deshacer.`,
+        isDanger: true,
+        confirmText: 'Eliminar',
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.isLoading.set(true);
+          this.usersService.deleteUser(user.usuarioId).subscribe({
+            next: () => {
+              this.loadUsers();
+              this.isLoading.set(false);
+              this.toastService.success('Usuario eliminado correctamente', 'Éxito');
+            },
+            error: (err) => {
+              console.error('Error al eliminar usuario:', err);
+              const msg = err.error?.message || 'Error al eliminar el usuario.';
+              this.toastService.error(msg, 'Error');
+              this.isLoading.set(false);
+            },
+          });
+        }
+      });
   }
 }

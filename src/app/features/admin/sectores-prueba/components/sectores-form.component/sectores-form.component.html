@@ -1,5 +1,5 @@
 <div class="modal-header border-bottom-0 pb-0">
-  <h5 class="modal-title fw-bold">Agregar Nuevo Sector</h5>
+  <h5 class="modal-title fw-bold">{{ isEditMode ? 'Editar Sector' : 'Agregar Nuevo Sector' }}</h5>
   <button
     type="button"
     class="btn-close shadow-none"
@@ -12,27 +12,53 @@
     <p class="text-muted">Completa los datos del sector.</p>
 
     <div class="mb-3">
-      <label for="comunidadId" class="form-label">ID Comunidad (pruebas)</label>
-      <input type="number" class="form-control" id="comunidadId" formControlName="comunidadId" />
+      <label for="communityItems" class="form-label"
+        >Comunidad <span class="text-dark fw-bold ms-1">*</span></label
+      >
+      <select
+        name="comunidad"
+        id="communityItems"
+        class="form-select"
+        formControlName="comunidadId"
+      >
+        <option [ngValue]="null" disabled>{{ communitySelectedLabel }}</option>
+        @for (item of communitiesItems | async; track item.id) {
+          <option [ngValue]="item.id">{{ item.nombre }}</option>
+        }
+      </select>
     </div>
     <div class="mb-3">
-      <label for="codigo" class="form-label">Código del sector</label>
-      <input type="text" class="form-control" id="codigo" formControlName="codigo" />
+      <label for="codigo" class="form-label"
+        >Código del sector <span class="text-dark fw-bold ms-1">*</span></label
+      >
+      <input
+        type="text"
+        class="form-control"
+        id="codigo"
+        formControlName="codigo"
+        (keydown)="preventSpaces($event)"
+        [class.is-invalid]="sectorForm.get('codigo')?.invalid && sectorForm.get('codigo')?.touched"
+      />
+
+      @if (sectorForm.get('codigo')?.hasError('pattern') && sectorForm.get('codigo')?.touched) {
+        <div class="invalid-feedback">El código no puede contener espacios en blanco.</div>
+      }
+      @if (sectorForm.get('codigo')?.hasError('required') && sectorForm.get('codigo')?.touched) {
+        <div class="invalid-feedback">El código es requerido.</div>
+      }
     </div>
 
     <div class="mb-3">
-      <label for="nombre" class="form-label">Nombre del sector</label>
+      <label for="nombre" class="form-label"
+        >Nombre del sector <span class="text-dark fw-bold ms-1">*</span></label
+      >
       <input type="text" class="form-control" id="nombre" formControlName="nombre" />
     </div>
-
-    <!-- Si tu modelo no tiene estado, puedes quitar esta parte -->
-    <!-- <div class="mb-3 form-check">
-            <input type="checkbox" class="form-check-input" id="estado" formControlName="estado" />
-            <label class="form-check-label" for="estado">Estado</label>
-        </div> -->
   </div>
   <div class="modal-footer border-top-0 pt-0">
-    <button type="button" class="btn btn-light" (click)="onClose()">Cancelar</button>
+    <button type="button" class="btn btn-outline-secondary fw-medium px-4" (click)="onClose()">
+      Cancelar
+    </button>
     <button type="submit" class="btn btn-primary" [disabled]="sectorForm.invalid">Guardar</button>
   </div>
 </form>
