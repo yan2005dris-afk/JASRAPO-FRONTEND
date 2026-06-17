@@ -229,7 +229,6 @@ export class MetersComponent implements OnInit {
       estado: payload.estado,
       motivo: payload.motivo,
     };
-    console.log(body);
     this.metersService.updateMeter(id, body).subscribe({
       next: () => {
         this.isSaving = false;
