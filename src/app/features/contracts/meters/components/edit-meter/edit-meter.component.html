@@ -30,18 +30,18 @@
       <select
         id="estadoEditar"
         class="form-select"
-        formControlName="estadoId"
-        [class.is-invalid]="form.controls.estadoId.invalid && form.controls.estadoId.touched"
+        formControlName="codigo"
+        [class.is-invalid]="form.controls.codigo.invalid && form.controls.codigo.touched"
       >
-        <option [ngValue]="null" disabled>ESTADO</option>
+        <option value="" disabled>ESTADO</option>
         <!-- Iteración sobre los objetos IEstadoMedidor que vienen de la BD -->
-        @for (estado of estados(); track estado.estadoId) {
-          <option [value]="estado.estadoId">
+        @for (estado of estados(); track estado.codigo) {
+          <option [value]="estado.codigo">
             {{ estado.nombre | uppercase }}
           </option>
         }
       </select>
-      @if (form.controls.estadoId.invalid && form.controls.estadoId.touched) {
+      @if (form.controls.codigo.invalid && form.controls.codigo.touched) {
         <div class="invalid-feedback">Debe seleccionar un estado.</div>
       }
     </div>

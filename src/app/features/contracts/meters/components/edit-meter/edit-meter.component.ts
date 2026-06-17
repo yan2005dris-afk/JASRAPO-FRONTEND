@@ -36,7 +36,7 @@ export class EditMeterComponent {
    * Estructura reactiva del formulario de actualización
    */
   form = this.fb.group({
-    estadoId: [null as number | null, Validators.required],
+    codigo: ['', Validators.required],
     observacion: ['', Validators.maxLength(255)],
   });
 
@@ -45,7 +45,7 @@ export class EditMeterComponent {
       const med = this.medidor();
       if (med) {
         this.form.patchValue({
-          estadoId: med.estado?.estadoId || null,
+          codigo: med.estado?.codigo || '',
           observacion: '',
         });
       }
@@ -59,13 +59,14 @@ export class EditMeterComponent {
   submit(): void {
     const med = this.medidor();
     if (!med || this.isSaving()) return;
-
     const rawValues = this.form.getRawValue();
-    this.guardar.emit({
-      medidorId: med.medidorId,
-      estadoId: Number(rawValues.estadoId),
-      motivo: rawValues.observacion || '',
-    });
+    if (rawValues.codigo) {
+      this.guardar.emit({
+        medidorId: med.medidorId,
+        estado: rawValues.codigo,
+        motivo: rawValues.observacion || '',
+      });
+    }
   }
 
   /**

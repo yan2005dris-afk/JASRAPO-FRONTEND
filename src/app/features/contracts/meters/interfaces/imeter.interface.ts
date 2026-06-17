@@ -1,5 +1,4 @@
 export interface IEstadoMedidor {
-  estadoId: number;
   codigo: string;
   nombre: string;
   orden: number;
@@ -37,7 +36,7 @@ export interface CrearMedidorPayload {
  */
 export interface EditarEstadoMedidorPayload {
   medidorId: number;
-  estadoId: number;
+  estado: string;
   motivo?: string;
 }
 
@@ -45,12 +44,8 @@ export interface IMeterDto extends Omit<IMeter, 'estado'> {
   estado?: string | IEstadoMedidor;
 }
 export interface ActualizarEstadoMedidorBody {
-  estadoId: number;
+  estado: string;
   motivo?: string;
-}
-
-export interface EditarEstadoMedidorPayload extends ActualizarEstadoMedidorBody {
-  medidorId: number;
 }
 
 export interface MeterKpis {
