@@ -1,10 +1,13 @@
 import { Injectable } from '@angular/core';
 import { TDocumentDefinitions } from 'pdfmake/interfaces';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const pdfMake: any = require('pdfmake/build/pdfmake');
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
-const pdfFonts: any = require('pdfmake/build/vfs_fonts');
+import * as pdfMakeLib from 'pdfmake/build/pdfmake';
+import * as pdfFontsLib from 'pdfmake/build/vfs_fonts';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const pdfMake: any = (pdfMakeLib as any).default || pdfMakeLib;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const pdfFonts: any = (pdfFontsLib as any).default || pdfFontsLib;
 
 pdfMake.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts.vfs || pdfFonts;
 
