@@ -1,6 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, AfterViewInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { PlanillaPdfService } from '../genera-planilla/planilla-pdf.service';
+import { ConsultaPlanillaService } from '../../bill-inquiry/bill-inquiry.service';
 import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/pdf-previewer.component';
 
 @Component({
@@ -22,7 +24,10 @@ import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/
           </div>
         </div>
         <div class="card-body p-0">
-          <app-pdf-previewer [src]="pdfBlob" height="80vh"></app-pdf-previewer>
+          <div *ngIf="pdfBase64" class="p-2 bg-light">
+            <small>Longitud del DataURL generado: {{ pdfBase64.length }}</small>
+          </div>
+          <app-pdf-previewer [src]="pdfBase64" height="80vh"></app-pdf-previewer>
         </div>
       </div>
     </div>
@@ -33,40 +38,48 @@ import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/
     }
   `]
 })
-export class PreviewPlanillaComponent implements OnInit {
+export class PreviewPlanillaComponent implements OnInit, AfterViewInit {
   private planillaPdfService = inject(PlanillaPdfService);
+  private consultaPlanillaService = inject(ConsultaPlanillaService);
+  private router = inject(Router);
+  private cdr = inject(ChangeDetectorRef);
   
-  pdfBlob?: Blob;
+  pdfBase64?: string;
   
-  // Guardamos la data para poder usarla en la descarga
-  planillaData: any = {
-    numeroPlanilla: '2026-000456',
-    clienteNombre: 'Juan Pérez',
-    clienteIdentificacion: '1723456789',
-    direccion: 'Calle Los Alamos y Av. Principal',
-    medidor: 'M-554433',
-    mes: 'Mayo',
-    anio: '2026',
-    fechaEmision: '12/05/2026',
-    fechaVencimiento: '25/05/2026',
-    lecturaAnterior: '1500',
-    lecturaActual: '1520',
-    consumo: '20',
-    subtotal: '15.00',
-    mantenimiento: '2.50',
-    total: '17.50'
-  };
+  planillaData: any;
 
   ngOnInit(): void {
-    this.generarPlanilla();
+    const data = this.consultaPlanillaService.currentPlanilla();
+    if (!data) {
+      this.router.navigate(['/consulta-planilla']);
+      return;
+    }
+    this.planillaData = data;
+  }
+
+  ngAfterViewInit(): void {
+    if (this.planillaData) {
+      setTimeout(() => {
+        this.generarPlanilla();
+      }, 300);
+    }
   }
 
   async generarPlanilla() {
-    this.pdfBlob = await this.planillaPdfService.generatePlanillaBlob(this.planillaData);
+    try {
+      console.log('Iniciando generación de PDF (Blob Promise)...');
+      const blob = await this.planillaPdfService.generatePlanillaBlob(this.planillaData);
+      console.log('PDF generado exitosamente (Blob size: ' + blob.size + ')');
+      this.pdfBase64 = URL.createObjectURL(blob);
+      this.cdr.detectChanges(); // Forzar actualización de la vista
+    } catch (e) {
+      console.error('Error al generar PDF:', e);
+      alert('Hubo un error al generar el PDF: ' + (e as Error).message);
+    }
   }
 
   regenerar() {
-    this.pdfBlob = undefined;
+    this.pdfBase64 = undefined;
     setTimeout(() => this.generarPlanilla(), 100);
   }
 

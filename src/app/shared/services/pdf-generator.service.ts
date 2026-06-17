@@ -1,14 +1,13 @@
 import { Injectable } from '@angular/core';
-import * as pdfMake from 'pdfmake/build/pdfmake';
-import * as pdfFonts from 'pdfmake/build/vfs_fonts';
 import { TDocumentDefinitions } from 'pdfmake/interfaces';
 
-// Configuración de fuentes para pdfMake
-const pdfMakeInstance: any = pdfMake;
-const pdfFontsInstance: any = pdfFonts;
-if (pdfMakeInstance) {
-  pdfMakeInstance.vfs = pdfFontsInstance.pdfMake ? pdfFontsInstance.pdfMake.vfs : pdfFontsInstance.vfs;
-}
+import * as pdfMakeLib from 'pdfmake/build/pdfmake';
+import * as pdfFontsLib from 'pdfmake/build/vfs_fonts';
+
+const pdfMake: any = (pdfMakeLib as any).default || pdfMakeLib;
+const pdfFonts: any = (pdfFontsLib as any).default || pdfFontsLib;
+
+pdfMake.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : (pdfFonts.vfs || pdfFonts);
 
 @Injectable({
   providedIn: 'root',
@@ -18,13 +17,19 @@ export class PdfGeneratorService {
    * Genera un PDF a partir de una definición y lo retorna como Blob.
    * @param documentDefinition Definición del documento de pdfMake
    */
-  generatePdfBlob(documentDefinition: TDocumentDefinitions): Promise<Blob> {
-    return new Promise((resolve) => {
-      const pdfDocGenerator = pdfMake.createPdf(documentDefinition);
-      (pdfDocGenerator as any).getBlob((blob: Blob) => {
-        resolve(blob);
-      });
-    });
+  async generatePdfBlob(documentDefinition: TDocumentDefinitions): Promise<Blob> {
+    const pdfDocGenerator = pdfMake.createPdf(documentDefinition);
+    return await (pdfDocGenerator as any).getBlob();
+  }
+
+  async generatePdfBase64(documentDefinition: TDocumentDefinitions): Promise<string> {
+    const pdfDocGenerator = pdfMake.createPdf(documentDefinition);
+    return await (pdfDocGenerator as any).getBase64();
+  }
+
+  async getPdfDataUrl(documentDefinition: TDocumentDefinitions): Promise<string> {
+    const pdfDocGenerator = pdfMake.createPdf(documentDefinition);
+    return await (pdfDocGenerator as any).getDataUrl();
   }
 
   /**

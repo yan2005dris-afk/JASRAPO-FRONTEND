@@ -11,7 +11,12 @@ export class PlanillaPdfService {
 
   async generatePlanillaBlob(data: any): Promise<Blob> {
     const definition = this.getPlanillaDefinition(data);
-    return this.pdfGenerator.generatePdfBlob(definition);
+    return await this.pdfGenerator.generatePdfBlob(definition);
+  }
+
+  async generatePlanillaDataUrl(data: any): Promise<string> {
+    const definition = this.getPlanillaDefinition(data);
+    return await this.pdfGenerator.getPdfDataUrl(definition);
   }
 
   downloadPlanilla(data: any, fileName: string = 'planilla.pdf'): void {
