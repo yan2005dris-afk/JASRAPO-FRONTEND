@@ -14,6 +14,9 @@ import {
   FormGroup,
   Validators,
   ReactiveFormsModule,
+  AbstractControl,
+  ValidationErrors,
+  ValidatorFn,
 } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { forkJoin, of, Subscription } from 'rxjs';
@@ -28,6 +31,28 @@ import {
 } from '../models/user.interface';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { AuthService } from '../../../core/services/auth.service';
+
+export function ecuadorPhoneValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value) return null;
+    const val = String(control.value).trim();
+
+    if (!val.startsWith('+593') && !val.startsWith('09')) {
+      return { invalidPrefix: true };
+    }
+
+    const lengthWithoutPlus = val.replace('+', '').length;
+    if (lengthWithoutPlus < 10 || lengthWithoutPlus > 12) {
+      return { invalidLength: true };
+    }
+
+    if (!/^\+?\d+$/.test(val)) {
+      return { invalidFormat: true };
+    }
+
+    return null;
+  };
+}
 
 @Component({
   selector: 'app-user-form',
@@ -98,7 +123,7 @@ export class UserFormComponent implements OnInit, OnDestroy {
     nombres: ['', Validators.required],
     apellidos: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
-    telefono: ['', [Validators.required, Validators.minLength(10), Validators.maxLength(12)]],
+    telefono: ['', [Validators.required, ecuadorPhoneValidator()]],
     rolId: [null as number | null, Validators.required],
   });
 

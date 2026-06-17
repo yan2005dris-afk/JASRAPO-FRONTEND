@@ -136,12 +136,15 @@
                     formControlName="telefono"
                   />
                   @if (campoInvalido('telefono')) {
-                    @if (
-                      userForm.get('telefono')?.errors?.['minlength'] ||
-                      userForm.get('telefono')?.errors?.['maxlength']
-                    ) {
+                    @if (userForm.get('telefono')?.errors?.['invalidPrefix']) {
+                      <small class="text-danger">El teléfono debe empezar con "+593" o "09".</small>
+                    } @else if (userForm.get('telefono')?.errors?.['invalidLength']) {
                       <small class="text-danger"
                         >El teléfono debe tener entre 10 y 12 dígitos.</small
+                      >
+                    } @else if (userForm.get('telefono')?.errors?.['invalidFormat']) {
+                      <small class="text-danger"
+                        >El teléfono solo puede contener números y el signo "+".</small
                       >
                     } @else {
                       <small class="text-danger">El teléfono es obligatorio.</small>

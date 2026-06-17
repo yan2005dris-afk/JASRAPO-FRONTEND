@@ -8,12 +8,42 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  Validators,
+  ReactiveFormsModule,
+  AbstractControl,
+  ValidationErrors,
+  ValidatorFn,
+} from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { UsersService } from '../users/services/users.service';
 import { ToastService } from '../../shared/components/toast/toast.service';
 import { UserDetail } from '../users/models/user.interface';
+
+export function ecuadorPhoneValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    if (!control.value) return null;
+    const val = String(control.value).trim();
+
+    if (!val.startsWith('+593') && !val.startsWith('09')) {
+      return { invalidPrefix: true };
+    }
+
+    const lengthWithoutPlus = val.replace('+', '').length;
+    if (lengthWithoutPlus < 10 || lengthWithoutPlus > 12) {
+      return { invalidLength: true };
+    }
+
+    if (!/^\+?\d+$/.test(val)) {
+      return { invalidFormat: true };
+    }
+
+    return null;
+  };
+}
 
 @Component({
   selector: 'app-profile',
@@ -44,7 +74,7 @@ export class ProfileComponent implements OnInit {
     nombres: ['', Validators.required],
     apellidos: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
-    telefono: ['', [Validators.required, Validators.minLength(7)]],
+    telefono: ['', [Validators.required, ecuadorPhoneValidator()]],
   });
 
   campoInvalido(campo: string): boolean {
