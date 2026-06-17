@@ -1,4 +1,4 @@
-﻿import {
+import {
   Component,
   ChangeDetectionStrategy,
   inject,
@@ -18,8 +18,8 @@ import { MenuItem } from '../../core/models/menu.model';
 @Component({
   selector: 'app-sidebar',
   imports: [CommonModule, RouterModule, MatTooltipModule, FormsModule],
-  templateUrl: './sidebar.html',
-  styleUrl: './sidebar.scss',
+  templateUrl: './sidebar.component.html',
+  styleUrl: './sidebar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class Sidebar {
