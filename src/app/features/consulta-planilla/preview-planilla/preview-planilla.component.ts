@@ -12,7 +12,9 @@ import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/
   template: `
     <div class="container-fluid py-4">
       <div class="card shadow-sm">
-        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <div
+          class="card-header bg-primary text-white d-flex justify-content-between align-items-center"
+        >
           <h5 class="mb-0">Previsualización de Planilla</h5>
           <div>
             <button class="btn btn-light btn-sm me-2" (click)="descargar()">
@@ -24,28 +26,33 @@ import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/
           </div>
         </div>
         <div class="card-body p-0">
-          <div *ngIf="pdfBase64" class="p-2 bg-light">
-            <small>Longitud del DataURL generado: {{ pdfBase64.length }}</small>
-          </div>
+          @if (pdfBase64) {
+            <div class="p-2 bg-light">
+              <small>Longitud del DataURL generado: {{ pdfBase64.length }}</small>
+            </div>
+          }
           <app-pdf-previewer [src]="pdfBase64" height="80vh"></app-pdf-previewer>
         </div>
       </div>
     </div>
   `,
-  styles: [`
-    :host {
-      display: block;
-    }
-  `]
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+    `,
+  ],
 })
 export class PreviewPlanillaComponent implements OnInit, AfterViewInit {
   private planillaPdfService = inject(PlanillaPdfService);
   private consultaPlanillaService = inject(ConsultaPlanillaService);
   private router = inject(Router);
   private cdr = inject(ChangeDetectorRef);
-  
+
   pdfBase64?: string;
-  
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   planillaData: any;
 
   ngOnInit(): void {
@@ -84,6 +91,9 @@ export class PreviewPlanillaComponent implements OnInit, AfterViewInit {
   }
 
   descargar() {
-    this.planillaPdfService.downloadPlanilla(this.planillaData, `planilla_${this.planillaData.numeroPlanilla}.pdf`);
+    this.planillaPdfService.downloadPlanilla(
+      this.planillaData,
+      `planilla_${this.planillaData.numeroPlanilla}.pdf`,
+    );
   }
 }

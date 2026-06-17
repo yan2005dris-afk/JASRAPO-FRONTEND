@@ -79,10 +79,18 @@
               <div class="card-body">
                 <h6 class="card-title fw-bold">{{ results()?.clienteNombre }}</h6>
                 <p class="card-text mb-1"><strong>Medidor:</strong> {{ results()?.medidor }}</p>
-                <p class="card-text mb-1"><strong>Mes Facturado:</strong> {{ results()?.mes }} {{ results()?.anio }}</p>
-                <p class="card-text mb-1"><strong>Vencimiento:</strong> <span class="text-danger fw-bold">{{ results()?.fechaVencimiento }}</span></p>
-                <p class="card-text mb-3"><strong>Total a Pagar:</strong> <span class="fs-5 fw-bold text-success">${{ results()?.total }}</span></p>
-                
+                <p class="card-text mb-1">
+                  <strong>Mes Facturado:</strong> {{ results()?.mes }} {{ results()?.anio }}
+                </p>
+                <p class="card-text mb-1">
+                  <strong>Vencimiento:</strong>
+                  <span class="text-danger fw-bold">{{ results()?.fechaVencimiento }}</span>
+                </p>
+                <p class="card-text mb-3">
+                  <strong>Total a Pagar:</strong>
+                  <span class="fs-5 fw-bold text-success">${{ results()?.total }}</span>
+                </p>
+
                 <button
                   class="btn btn-outline-success btn-sm w-100 d-flex align-items-center justify-content-center gap-2"
                   routerLink="/consulta-planilla/preview"

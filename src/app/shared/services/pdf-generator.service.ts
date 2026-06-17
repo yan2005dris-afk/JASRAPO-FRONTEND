@@ -1,13 +1,12 @@
 import { Injectable } from '@angular/core';
 import { TDocumentDefinitions } from 'pdfmake/interfaces';
 
-import * as pdfMakeLib from 'pdfmake/build/pdfmake';
-import * as pdfFontsLib from 'pdfmake/build/vfs_fonts';
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
+const pdfMake: any = require('pdfmake/build/pdfmake');
+// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-explicit-any
+const pdfFonts: any = require('pdfmake/build/vfs_fonts');
 
-const pdfMake: any = (pdfMakeLib as any).default || pdfMakeLib;
-const pdfFonts: any = (pdfFontsLib as any).default || pdfFontsLib;
-
-pdfMake.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : (pdfFonts.vfs || pdfFonts);
+pdfMake.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts.vfs || pdfFonts;
 
 @Injectable({
   providedIn: 'root',
@@ -19,16 +18,19 @@ export class PdfGeneratorService {
    */
   async generatePdfBlob(documentDefinition: TDocumentDefinitions): Promise<Blob> {
     const pdfDocGenerator = pdfMake.createPdf(documentDefinition);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return await (pdfDocGenerator as any).getBlob();
   }
 
   async generatePdfBase64(documentDefinition: TDocumentDefinitions): Promise<string> {
     const pdfDocGenerator = pdfMake.createPdf(documentDefinition);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return await (pdfDocGenerator as any).getBase64();
   }
 
   async getPdfDataUrl(documentDefinition: TDocumentDefinitions): Promise<string> {
     const pdfDocGenerator = pdfMake.createPdf(documentDefinition);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return await (pdfDocGenerator as any).getDataUrl();
   }
 

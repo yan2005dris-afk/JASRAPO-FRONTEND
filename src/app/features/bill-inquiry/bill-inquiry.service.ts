@@ -33,12 +33,12 @@ export interface PlanillaMockResponse {
   categoria: string;
   facturacion: string;
   mesesAtrasados: string;
-  
+
   subtotal0: string;
   subtotal12: string;
   iva12: string;
   total: string;
-  
+
   resumenConsumo: string;
   resumenAtrasados: string;
   resumenDescuentos: string;
@@ -75,9 +75,27 @@ const MOCK_DB: PlanillaMockResponse[] = [
     resumenAtrasados: '0.00',
     resumenDescuentos: '0.00',
     detalles: [
-      { codigo: 'AGU', cant: '1.0', desc: 'Consumo de Agua Potable', uni: '15.00', sub: '0.0', pre: '15.00', des: '0.00', tot: '15.00' },
-      { codigo: 'MAN', cant: '1.0', desc: 'Mantenimiento Redes', uni: '2.50', sub: '0.0', pre: '2.50', des: '0.00', tot: '2.50' }
-    ]
+      {
+        codigo: 'AGU',
+        cant: '1.0',
+        desc: 'Consumo de Agua Potable',
+        uni: '15.00',
+        sub: '0.0',
+        pre: '15.00',
+        des: '0.00',
+        tot: '15.00',
+      },
+      {
+        codigo: 'MAN',
+        cant: '1.0',
+        desc: 'Mantenimiento Redes',
+        uni: '2.50',
+        sub: '0.0',
+        pre: '2.50',
+        des: '0.00',
+        tot: '2.50',
+      },
+    ],
   },
   {
     guiaRemision: '001-002',
@@ -107,24 +125,41 @@ const MOCK_DB: PlanillaMockResponse[] = [
     resumenAtrasados: '12.00',
     resumenDescuentos: '0.00',
     detalles: [
-      { codigo: 'AGU', cant: '1.0', desc: 'Consumo Comercial', uni: '20.00', sub: '0.0', pre: '20.00', des: '0.00', tot: '20.00' },
-      { codigo: 'ALC', cant: '1.0', desc: 'Alcantarillado', uni: '5.00', sub: '0.0', pre: '5.00', des: '0.00', tot: '5.00' }
-    ]
-  }
+      {
+        codigo: 'AGU',
+        cant: '1.0',
+        desc: 'Consumo Comercial',
+        uni: '20.00',
+        sub: '0.0',
+        pre: '20.00',
+        des: '0.00',
+        tot: '20.00',
+      },
+      {
+        codigo: 'ALC',
+        cant: '1.0',
+        desc: 'Alcantarillado',
+        uni: '5.00',
+        sub: '0.0',
+        pre: '5.00',
+        des: '0.00',
+        tot: '5.00',
+      },
+    ],
+  },
 ];
 
 @Injectable({
   providedIn: 'root',
 })
 export class ConsultaPlanillaService {
-  
   // State para guardar la planilla seleccionada y usarla en la previsualización
   public currentPlanilla = signal<PlanillaMockResponse | null>(null);
 
   consultar(termino: string, tipo: string): Observable<PlanillaMockResponse | null> {
     const termUpper = termino.trim().toUpperCase();
-    
-    const found = MOCK_DB.find(p => {
+
+    const found = MOCK_DB.find((p) => {
       if (tipo === 'medidor') {
         return p.medidor.toUpperCase() === termUpper;
       } else {
