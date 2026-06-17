@@ -1,11 +1,9 @@
 const pdfMake = require('pdfmake/build/pdfmake.js');
 const pdfFonts = require('pdfmake/build/vfs_fonts.js');
-pdfMake.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : (pdfFonts.vfs || pdfFonts);
+pdfMake.vfs = pdfFonts.pdfMake ? pdfFonts.pdfMake.vfs : pdfFonts.vfs || pdfFonts;
 
 const definition = {
-  content: [
-    { text: 'Prueba', bold: true }
-  ]
+  content: [{ text: 'Prueba', bold: true }],
 };
 
 try {
@@ -13,7 +11,7 @@ try {
   pdfDocGenerator.getBuffer((buffer) => {
     console.log('Buffer generated! Size:', buffer.length);
   });
-  
+
   // Keep alive
   setTimeout(() => console.log('Timeout finished'), 3000);
 } catch (e) {

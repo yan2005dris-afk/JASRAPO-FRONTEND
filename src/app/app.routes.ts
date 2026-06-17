@@ -16,7 +16,9 @@ export const routes: Routes = [
       {
         path: '',
         loadComponent: () =>
-          import('./features/bill-inquiry/bill-inquiry.component').then((m) => m.BillInquiryComponent),
+          import('./features/bill-inquiry/bill-inquiry.component').then(
+            (m) => m.BillInquiryComponent,
+          ),
       },
       {
         path: 'preview',
