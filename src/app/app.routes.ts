@@ -17,7 +17,8 @@ export const routes: Routes = [
   },
   {
     path: 'app',
-    loadComponent: () => import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
+    loadComponent: () =>
+      import('./layout/main-layout/main-layout.component').then((m) => m.MainLayout),
     canActivate: [authGuard],
     resolve: { menu: menuResolver },
     children: [
