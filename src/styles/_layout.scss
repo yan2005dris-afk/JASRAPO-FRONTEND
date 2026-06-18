@@ -353,3 +353,53 @@
   color: var(--primary-color) !important;
   font-weight: 600;
 }
+
+/* ---------------------------------------------------
+   4. SIDEBAR SEARCH
+--------------------------------------------------- */
+.sidebar-search {
+  border-bottom: 1px solid var(--border-color);
+
+  .input-group-text,
+  .form-control {
+    border-color: var(--border-color);
+    background-color: transparent;
+    font-size: 0.875rem;
+  }
+
+  .form-control:focus {
+    border-color: var(--primary-color);
+  }
+
+  .sidebar-search-clear {
+    border-color: var(--border-color);
+    color: var(--muted-text);
+    font-size: 0.65rem;
+    text-decoration: none;
+  }
+}
+
+.sidebar-search-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  color: var(--muted-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+
+  &:hover {
+    background-color: var(--soft-blue-bg);
+    color: var(--primary-color) !important;
+  }
+}
+
+.sidebar-empty-state {
+  font-size: 0.85rem;
+
+  .bi-search {
+    font-size: 1.25rem;
+    opacity: 0.4;
+  }
+}

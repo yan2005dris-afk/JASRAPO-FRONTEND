@@ -6,16 +6,56 @@
     </h5>
   </div>
 
+  @if (layoutService.sidebarOpen()) {
+    <div class="sidebar-search px-3 pt-2 pb-2">
+      <div class="input-group input-group-sm">
+        <span class="input-group-text border-end-0">
+          <i class="bi bi-search text-muted"></i>
+        </span>
+        <input
+          #searchInput
+          type="text"
+          class="form-control border-start-0 shadow-none"
+          placeholder="Buscar..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          aria-label="Buscar en el menú"
+        />
+        @if (searchQuery()) {
+          <button
+            type="button"
+            class="btn btn-link border border-start-0 px-2 sidebar-search-clear"
+            (click)="clearSearch()"
+            aria-label="Limpiar búsqueda"
+          >
+            <i class="bi bi-x-lg"></i>
+          </button>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="d-flex justify-content-center pt-2 pb-2">
+      <button
+        type="button"
+        class="btn btn-link sidebar-search-icon"
+        (click)="openSearchAndFocus()"
+        aria-label="Buscar en el menú"
+      >
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  }
+
   <div class="sidebar-nav grow overflow-auto">
     <ul class="nav flex-column mb-auto">
-      @for (item of menuService.menuItems(); track item.id) {
+      @for (item of filteredMenuItems(); track item.id) {
         <li class="nav-item">
           @if (item.children && item.children.length > 0) {
             <button
               type="button"
               class="nav-link nav-link-custom d-flex justify-content-between align-items-center w-100 border-0 bg-transparent"
               (click)="toggleItem(item.id)"
-              [attr.aria-expanded]="expandedItems()[item.id]"
+              [attr.aria-expanded]="effectiveExpandedItems()[item.id]"
               [matTooltip]="!layoutService.sidebarOpen() ? item.name : ''"
               matTooltipPosition="right"
             >
@@ -27,11 +67,11 @@
               </span>
               <i
                 class="bi bi-chevron-down align-middle fw-bold"
-                [ngClass]="{ 'rotate-icon': expandedItems()[item.id] }"
+                [ngClass]="{ 'rotate-icon': effectiveExpandedItems()[item.id] }"
               ></i>
             </button>
 
-            @if (expandedItems()[item.id]) {
+            @if (effectiveExpandedItems()[item.id]) {
               <div>
                 <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small ps-4">
                   @for (child of item.children; track child.id) {
@@ -64,6 +104,13 @@
               <span class="link-text" [class.ps-4]="!item.icon">{{ item.name }}</span>
             </a>
           }
+        </li>
+      }
+
+      @if (filteredMenuItems().length === 0 && searchQuery()) {
+        <li class="px-3 py-4 text-center text-muted sidebar-empty-state">
+          <i class="bi bi-search d-block mb-2"></i>
+          Sin resultados
         </li>
       }
     </ul>
