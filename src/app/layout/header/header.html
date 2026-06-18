@@ -39,10 +39,18 @@
           >
             <div class="d-flex align-items-center gap-2">
               <div
-                class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center overflow-hidden"
                 style="width: 36px; height: 36px"
               >
-                {{ user.name?.charAt(0)?.toUpperCase() }}
+                @if (user.avatar?.url) {
+                  <img
+                    [src]="user.avatar!.url"
+                    [alt]="user.name"
+                    class="w-100 h-100 object-fit-cover"
+                  />
+                } @else {
+                  {{ user.name?.charAt(0)?.toUpperCase() }}
+                }
               </div>
               <div class="d-none d-md-block text-start">
                 <div class="fw-semibold text-dark" style="font-size: 0.875rem">{{ user.name }}</div>
@@ -64,7 +72,7 @@
             style="min-width: 200px"
           >
             <li>
-              <a class="dropdown-item" href="#" (click)="$event.preventDefault()">
+              <a class="dropdown-item" routerLink="/app/profile" (click)="closeUserDropdown()">
                 <i class="bi bi-person me-2"></i> Mi Perfil
               </a>
             </li>

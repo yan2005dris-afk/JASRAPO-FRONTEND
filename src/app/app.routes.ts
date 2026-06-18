@@ -39,7 +39,9 @@ export const routes: Routes = [
         path: 'dashboard',
         data: { breadcrumb: 'Dashboard' },
         loadComponent: () =>
-          import('./features/dashboard/dashboard/dashboard').then((m) => m.Dashboard),
+          import('./features/dashboard/dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent,
+          ),
       },
 
       // Sección Administración (Solo Admin)
@@ -51,12 +53,32 @@ export const routes: Routes = [
         children: [
           {
             path: 'users',
-            data: { breadcrumb: 'Gestión de Usuarios' },
-            loadComponent: () =>
-              import('./features/users/user-management/user-management').then(
-                (m) => m.UserManagement,
-              ),
+            children: [
+              {
+                path: '',
+                pathMatch: 'full',
+                loadComponent: () =>
+                  import('./features/users/user-management/user-management.component').then(
+                    (m) => m.UserManagementComponent,
+                  ),
+              },
+              {
+                path: 'new',
+                loadComponent: () =>
+                  import('./features/users/user-form/user-form.component').then(
+                    (m) => m.UserFormComponent,
+                  ),
+              },
+              {
+                path: ':id/edit',
+                loadComponent: () =>
+                  import('./features/users/user-form/user-form.component').then(
+                    (m) => m.UserFormComponent,
+                  ),
+              },
+            ],
           },
+
           {
             path: 'sectores',
             data: { breadcrumb: 'Sectores' },
@@ -328,12 +350,33 @@ export const routes: Routes = [
         ],
       },
 
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/profile/profile.component').then((m) => m.ProfileComponent),
+      },
+
       // Otras secciones comunes
       {
         path: 'water-sources',
-        data: { breadcrumb: 'Fuentes de Agua' },
         loadComponent: () =>
-          import('./features/dashboard/dashboard/dashboard').then((m) => m.Dashboard),
+          import('./features/dashboard/dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent,
+          ),
+      },
+      {
+        path: 'Facturacion',
+        loadComponent: () =>
+          import('./features/dashboard/dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent,
+          ),
+      },
+      {
+        path: 'Reportes',
+        loadComponent: () =>
+          import('./features/dashboard/dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent,
+          ),
       },
       {
         path: '',
