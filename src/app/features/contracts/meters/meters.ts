@@ -13,14 +13,14 @@ import { EditMeterComponent } from './components/edit-meter/edit-meter.component
 import { RegisterMeterComponent } from './components/register-meter/register-meter.component';
 import {
   IMeter,
-  CrearMedidorPayload,
-  EditarEstadoMedidorPayload,
-  IEstadoMedidor,
+  ICreateMeterPayload,
+  IEditMeterStatusPayload,
+  IMeterStatus,
   IMeterDto,
-  ActualizarEstadoMedidorBody,
-  MeterKpis,
-  SearchMetersParams,
-  EstadoMedidorFiltro,
+  IUpdateMeterStatusBody,
+  IMeterKpis,
+  ISearchMetersParams,
+  MeterStatusFilter,
 } from './interfaces/imeter.interface';
 import { MetersService } from './services/meters.service';
 import { forkJoin, finalize } from 'rxjs';
@@ -57,9 +57,9 @@ export class MetersComponent implements OnInit {
 
   // Estado de los datos
   meters: IMeter[] = [];
-  estadosCatalogo: IEstadoMedidor[] = [];
-  editingMedidor: IMeter | null = null;
-  estadoFiltro: EstadoMedidorFiltro = 'todos';
+  statusCatalog: IMeterStatus[] = [];
+  editingMeter: IMeter | null = null;
+  statusFilter: MeterStatusFilter = 'todos';
   searchQuery = '';
 
   // Flags de control de flujo y UI
@@ -70,8 +70,8 @@ export class MetersComponent implements OnInit {
   modalErrorMessage = '';
 
   // Control de modales
-  showRegistrarModal = false;
-  showEditarModal = false;
+  showRegisterModal = false;
+  showEditModal = false;
 
   // Control de dropdown de fila
   openDropdownId: number | null = null;
@@ -81,9 +81,9 @@ export class MetersComponent implements OnInit {
     { label: 'Importar', action: 'import', icon: 'bi bi-download' },
   ];
 
-  toggleDropdown(medidorId: number, event: MouseEvent): void {
+  toggleDropdown(meterId: number, event: MouseEvent): void {
     event.stopPropagation();
-    this.openDropdownId = this.openDropdownId === medidorId ? null : medidorId;
+    this.openDropdownId = this.openDropdownId === meterId ? null : meterId;
     this.cdr.markForCheck();
   }
 
@@ -94,11 +94,11 @@ export class MetersComponent implements OnInit {
     }
   }
 
-  obtenerMensajeErrorBackend(err: HttpErrorResponse, mensajePorDefecto: string): string {
-    return err.error?.message || mensajePorDefecto;
+  getBackendErrorMessage(err: HttpErrorResponse, defaultMessage: string): string {
+    return err.error?.message || defaultMessage;
   }
 
-  mostrarMensaje(mensaje: string, contexto: 'tabla' | 'modal' = 'tabla'): void {
+  showMessage(mensaje: string, contexto: 'tabla' | 'modal' = 'tabla'): void {
     if (contexto === 'modal') {
       this.modalErrorMessage = mensaje;
     } else {
@@ -111,7 +111,7 @@ export class MetersComponent implements OnInit {
   pageSize = 5;
   currentPage = 1;
   totalItems = 0;
-  readonly kpis = signal<MeterKpis>({ enBodega: 0, instalados: 0, danados: 0, total: 0 });
+  readonly kpis = signal<IMeterKpis>({ enBodega: 0, instalados: 0, danados: 0, total: 0 });
 
   get totalPages(): number {
     return Math.max(1, Math.ceil(this.totalItems / this.pageSize));
@@ -129,13 +129,13 @@ export class MetersComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.cargarEstados();
+    this.loadStatuses();
   }
 
-  cargarEstados(): void {
+  loadStatuses(): void {
     this.metersService.getMeterStatuses().subscribe({
       next: (estados) => {
-        this.estadosCatalogo = estados;
+        this.statusCatalog = estados;
         this.cdr.markForCheck();
       },
       error: (err: HttpErrorResponse) => {
@@ -144,7 +144,7 @@ export class MetersComponent implements OnInit {
     });
   }
 
-  filtrarPorEstado(): void {
+  filterByStatus(): void {
     this.currentPage = 1;
     this.loadMeters();
   }
@@ -155,16 +155,16 @@ export class MetersComponent implements OnInit {
     this.cdr.detectChanges();
 
     // Buscar el ID numérico del estado correspondiente al código del filtro
-    const estadoSeleccionado = this.estadosCatalogo.find(
-      (e) => e.codigo === this.estadoFiltro
+    const selectedStatus = this.statusCatalog.find(
+      (e) => e.codigo === this.statusFilter
     );
-    const estadoId = estadoSeleccionado?.codigo;
+    const statusId = selectedStatus?.codigo;
 
     this.metersService
       .getMeters({
         page: this.currentPage,
         limit: this.pageSize,
-        estado: estadoId,
+        estado: statusId,
         search: this.searchQuery.trim() || undefined,
       })
       .pipe(
@@ -176,16 +176,16 @@ export class MetersComponent implements OnInit {
       .subscribe({
         next: (response) => {
           const rawMeters = response.data as IMeterDto[];
-          this.meters = rawMeters.map((medidorDto) => {
-            const estadoEncontrado = this.estadosCatalogo.find((e) => {
-              if (typeof medidorDto.estado === 'string') {
-                return e.codigo === medidorDto.estado;
+          this.meters = rawMeters.map((meterDto) => {
+            const foundStatus = this.statusCatalog.find((e) => {
+              if (typeof meterDto.estado === 'string') {
+                return e.codigo === meterDto.estado;
               }
-              return e.codigo === medidorDto.estado?.codigo;
+              return e.codigo === meterDto.estado?.codigo;
             });
             return {
-              ...medidorDto,
-              estado: estadoEncontrado || this.estadosCatalogo[0],
+              ...meterDto,
+              estado: foundStatus || this.statusCatalog[0],
             } as IMeter;
           });
 
@@ -197,11 +197,11 @@ export class MetersComponent implements OnInit {
         },
         error: (err: HttpErrorResponse) => {
           console.error('Error en la carga de datos:', err);
-          const mensajeError = this.obtenerMensajeErrorBackend(
+          const errorMsg = this.getBackendErrorMessage(
             err,
             'Error al cargar la información de medidores',
           );
-          this.mostrarMensaje(mensajeError, 'tabla');
+          this.showMessage(errorMsg, 'tabla');
         },
       });
   }
@@ -220,98 +220,98 @@ export class MetersComponent implements OnInit {
     }
   }
 
-  buscarMedidores(): void {
+  searchMeters(): void {
     this.currentPage = 1;
     this.loadMeters();
   }
 
-  handleAccionMasiva(action: string) {
+  handleMassAction(action: string) {
     console.log('Acción masiva seleccionada:', action);
     // TODO: Implementar lógica de la acción seleccionada
   }
 
   // Gestión de modales
-  openRegistrar(): void {
-    this.showRegistrarModal = true;
-    this.editingMedidor = null;
+  openRegister(): void {
+    this.showRegisterModal = true;
+    this.editingMeter = null;
     this.modalErrorMessage = '';
     this.cdr.detectChanges();
   }
 
-  closeRegistrar(): void {
-    this.showRegistrarModal = false;
+  closeRegister(): void {
+    this.showRegisterModal = false;
     this.modalErrorMessage = '';
     this.cdr.detectChanges();
   }
 
-  openEditar(medidor: IMeter): void {
-    this.editingMedidor = medidor;
-    this.showEditarModal = true;
+  openEdit(meter: IMeter): void {
+    this.editingMeter = meter;
+    this.showEditModal = true;
     this.modalErrorMessage = '';
     this.cdr.detectChanges();
   }
 
-  closeEditar(): void {
-    this.showEditarModal = false;
-    this.editingMedidor = null;
+  closeEdit(): void {
+    this.showEditModal = false;
+    this.editingMeter = null;
     this.modalErrorMessage = '';
     this.cdr.detectChanges();
   }
 
-  guardarMedidor(nuevoMedidor: CrearMedidorPayload): void {
+  saveMeter(newMeter: ICreateMeterPayload): void {
     this.isSaving = true;
-    this.metersService.createMeter(nuevoMedidor).subscribe({
+    this.metersService.createMeter(newMeter).subscribe({
       next: () => {
         this.isSaving = false;
-        this.closeRegistrar();
+        this.closeRegister();
         this.toastService.success('Medidor registrado correctamente', 'Éxito');
         this.loadMeters();
       },
       error: (err: HttpErrorResponse) => {
         this.isSaving = false;
-        const mensajeError = this.obtenerMensajeErrorBackend(
+        const errorMsg = this.getBackendErrorMessage(
           err,
           'Error al guardar el medidor. Revise los datos ingresados.',
         );
-        this.toastService.error(mensajeError, 'Error');
+        this.toastService.error(errorMsg, 'Error');
         this.cdr.detectChanges();
       },
     });
   }
 
-  actualizarMedidor(payload: EditarEstadoMedidorPayload): void {
+  updateMeterStatus(payload: IEditMeterStatusPayload): void {
     this.isSaving = true;
     this.cdr.detectChanges();
     const id = payload.medidorId;
-    const body: ActualizarEstadoMedidorBody = {
+    const body: IUpdateMeterStatusBody = {
       estado: payload.estado,
       motivo: payload.motivo,
     };
     this.metersService.updateMeter(id, body).subscribe({
       next: () => {
         this.isSaving = false;
-        this.closeEditar();
+        this.closeEdit();
         this.toastService.success('Estado del medidor actualizado correctamente', 'Éxito');
         this.loadMeters();
       },
       error: (err: HttpErrorResponse) => {
         this.isSaving = false;
-        const mensajeError = this.obtenerMensajeErrorBackend(
+        const errorMsg = this.getBackendErrorMessage(
           err,
           'Error al actualizar: Verifique los datos enviados.',
         );
-        this.toastService.error(mensajeError, 'Error');
+        this.toastService.error(errorMsg, 'Error');
         this.cdr.detectChanges();
       },
     });
   }
 
-  eliminarMedidor(medidor: IMeter): void {
-    const id = medidor.medidorId;
+  deleteMeter(meter: IMeter): void {
+    const id = meter.medidorId;
     this.dialogService
       .confirm({
         title: 'Confirmar eliminación',
-        message: `¿Estás seguro de que deseas eliminar el medidor "${medidor.serie}"? Esta acción no se puede deshacer.`,
+        message: `¿Estás seguro de que deseas eliminar el medidor "${meter.serie}"? Esta acción no se puede deshacer.`,
         isDanger: true,
         confirmText: 'Eliminar',
       })
@@ -326,11 +326,11 @@ export class MetersComponent implements OnInit {
             },
             error: (err: HttpErrorResponse) => {
               this.isLoading = false;
-              const mensajeError = this.obtenerMensajeErrorBackend(
+              const errorMsg = this.getBackendErrorMessage(
                 err,
                 'Error al eliminar el medidor.',
               );
-              this.toastService.error(mensajeError, 'Error');
+              this.toastService.error(errorMsg, 'Error');
               this.cdr.detectChanges();
             },
           });
@@ -350,30 +350,30 @@ export class MetersComponent implements OnInit {
   }
 
   // Funciones de UI
-  getEstadoNombre(medidor: IMeter): string {
-    return medidor.estado?.nombre || 'Sin estado';
+  getStatusName(meter: IMeter): string {
+    return meter.estado?.nombre || 'Sin estado';
   }
 
-  getEstadoBadgeClass(codigo: string | undefined): string {
-    const clases: Record<string, string> = {
+  getStatusBadgeClass(codigo: string | undefined): string {
+    const badgeClasses: Record<string, string> = {
       BODEGA: 'text-bg-success',
       INSTALADO: 'text-bg-primary',
       DANADO: 'text-bg-danger',
       PENDIENTE: 'text-bg-warning text-dark',
       BAJA: 'text-bg-secondary',
     };
-    return clases[codigo || ''] || 'text-bg-secondary';
+    return badgeClasses[codigo || ''] || 'text-bg-secondary';
   }
 
-  getEstadoIcon(codigo: string | undefined): string {
+  getStatusIcon(codigo: string | undefined): string {
     if (!codigo) return '';
-    const iconos: Record<string, string> = {
+    const icons: Record<string, string> = {
       DANADO: 'bi-exclamation-triangle',
       BAJA: 'bi-x-lg',
       INSTALADO: 'bi-check-lg',
       BODEGA: 'bi-box-seam',
       PENDIENTE: 'bi-hourglass-split',
     };
-    return iconos[codigo] || '';
+    return icons[codigo] || '';
   }
 }

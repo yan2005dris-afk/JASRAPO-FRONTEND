@@ -2,7 +2,7 @@
   <div class="modal-header">
     <div>
       <h5 class="modal-title fw-bold">
-        Editar Estado del Medidor <span class="text-primary">[{{ medidor()?.serie || 'S/N' }}]</span>
+        Editar Estado del Medidor <span class="text-primary">[{{ meter()?.serie || 'S/N' }}]</span>
       </h5>
       <p class="text-muted mb-0 small">
         Actualice el estado del medidor y registre las observaciones correspondientes.
@@ -38,10 +38,10 @@
         [class.is-invalid]="form.controls.codigo.invalid && form.controls.codigo.touched"
       >
         <option value="" disabled>ESTADO</option>
-        <!-- Iteración sobre los objetos IEstadoMedidor que vienen de la BD -->
-        @for (estado of estados(); track estado.codigo) {
-          <option [value]="estado.codigo">
-            {{ estado.nombre | uppercase }}
+        <!-- Iteración sobre los objetos IMeterStatus que vienen de la BD -->
+        @for (status of statuses(); track status.codigo) {
+          <option [value]="status.codigo">
+            {{ status.nombre | uppercase }}
           </option>
         }
       </select>

@@ -40,7 +40,7 @@
       <!-- Botón Agregar -->
       <button
         class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
-        (click)="openRegistrar()"
+        (click)="openRegister()"
       >
         <i class="bi bi-plus-lg"></i>
         Agregar
@@ -57,13 +57,13 @@
             class="form-control border-start-0 ps-0 shadow-none"
             placeholder="Buscar medidor..."
             [(ngModel)]="searchQuery"
-            (keyup.enter)="buscarMedidores()"
+            (keyup.enter)="searchMeters()"
           />
         </div>
 
         <button
           class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
-          (click)="buscarMedidores()"
+          (click)="searchMeters()"
           [disabled]="isLoading"
         >
           @if (isLoading) {
@@ -79,11 +79,11 @@
         <select
           class="form-select shadow-none"
           style="width: 190px"
-          [(ngModel)]="estadoFiltro"
-          (change)="filtrarPorEstado()"
+          [(ngModel)]="statusFilter"
+          (change)="filterByStatus()"
         >
           <option value="todos">Todos los estados</option>
-          @for (estado of estadosCatalogo; track estado.codigo) {
+          @for (estado of statusCatalog; track estado.codigo) {
             <option [value]="estado.codigo">{{ estado.nombre }}</option>
           }
         </select>
@@ -92,7 +92,7 @@
         <app-dropdown
           label="Acciones Masivas"
           [items]="dropdownItems"
-          (actionSelected)="handleAccionMasiva($event)"
+          (actionSelected)="handleMassAction($event)"
         ></app-dropdown>
       </div>
     </div>
@@ -155,46 +155,46 @@
               </tr>
             </thead>
             <tbody>
-              @for (medidor of pagedMetersComponent; track medidor.serie) {
+              @for (meter of pagedMetersComponent; track meter.serie) {
                 <tr>
                   <td>
                     <input class="form-check-input table-checkbox" type="checkbox" />
                   </td>
                   <td class="fw-medium text-dark" style="font-size: 0.95rem">
-                    {{ medidor.serie }}
+                    {{ meter.serie }}
                   </td>
                   <td class="text-muted small">
-                    {{ medidor.marca }}
+                    {{ meter.marca }}
                   </td>
                   <td class="text-muted small">
-                    {{ medidor.fechaInstalacion ?? '—' }}
+                    {{ meter.fechaInstalacion ?? '—' }}
                   </td>
                   <td class="small">
-                    <span class="badge rounded-pill {{ getEstadoBadgeClass(medidor.estado?.codigo) }}">
-                      @if (getEstadoIcon(medidor.estado?.codigo)) {
-                        <i class="bi {{ getEstadoIcon(medidor.estado?.codigo) }} me-1"></i>
+                    <span class="badge rounded-pill {{ getStatusBadgeClass(meter.estado?.codigo) }}">
+                      @if (getStatusIcon(meter.estado?.codigo)) {
+                        <i class="bi {{ getStatusIcon(meter.estado?.codigo) }} me-1"></i>
                       }
-                      {{ getEstadoNombre(medidor) }}
+                      {{ getStatusName(meter) }}
                     </span>
                   </td>
                   <td class="text-center">
                     <div class="dropdown">
                       <button
                         class="btn btn-link text-muted p-0 shadow-none"
-                        (click)="toggleDropdown(medidor.medidorId!, $event)"
+                        (click)="toggleDropdown(meter.medidorId!, $event)"
                         aria-label="Menú de acciones"
                       >
                         <i class="bi bi-three-dots-vertical"></i>
                       </button>
                       <ul
                         class="dropdown-menu dropdown-menu-end shadow-sm border-0"
-                        [class.show]="openDropdownId === medidor.medidorId"
+                        [class.show]="openDropdownId === meter.medidorId"
                         style="min-width: 130px"
                       >
                         <li>
                           <button
                             class="dropdown-item d-flex align-items-center gap-2"
-                            (click)="openEditar(medidor)"
+                            (click)="openEdit(meter)"
                           >
                             <i class="bi bi-pencil-fill text-primary" style="font-size: 0.8rem"></i>
                             Editar estado
@@ -206,7 +206,7 @@
                         <li>
                           <button
                             class="dropdown-item d-flex align-items-center gap-2 text-danger"
-                            (click)="eliminarMedidor(medidor)"
+                            (click)="deleteMeter(meter)"
                           >
                             <i class="bi bi-trash-fill" style="font-size: 0.8rem"></i>
                             Eliminar
@@ -248,7 +248,7 @@
 </div>
 
 <!-- Modales de Gestión -->
-@if (showRegistrarModal) {
+@if (showRegisterModal) {
   <div
     class="modal fade show d-block"
     tabindex="-1"
@@ -259,8 +259,8 @@
         <app-register-meter
           [isSaving]="isSaving"
           [errorMessage]="modalErrorMessage"
-          (guardar)="guardarMedidor($event)"
-          (cancelar)="closeRegistrar()"
+          (save)="saveMeter($event)"
+          (cancel)="closeRegister()"
         >
         </app-register-meter>
       </div>
@@ -268,7 +268,7 @@
   </div>
 }
 
-@if (showEditarModal && editingMedidor) {
+@if (showEditModal && editingMeter) {
   <div
     class="modal fade show d-block"
     tabindex="-1"
@@ -277,12 +277,12 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow">
         <app-edit-meter
-          [medidor]="editingMedidor"
-          [estados]="estadosCatalogo"
+          [meter]="editingMeter"
+          [statuses]="statusCatalog"
           [isSaving]="isSaving"
           [errorMessage]="modalErrorMessage"
-          (cancelar)="closeEditar()"
-          (guardar)="actualizarMedidor($event)"
+          (cancel)="closeEdit()"
+          (save)="updateMeterStatus($event)"
         >
         </app-edit-meter>
       </div>

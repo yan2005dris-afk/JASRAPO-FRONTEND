@@ -2,12 +2,12 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import {
-  IEstadoMedidor,
+  IMeterStatus,
   IMeter,
-  CrearMedidorPayload,
-  ActualizarEstadoMedidorBody,
-  PaginatedMetersResponse,
-  SearchMetersParams,
+  ICreateMeterPayload,
+  IUpdateMeterStatusBody,
+  IPaginatedMetersResponse,
+  ISearchMetersParams,
 } from '../interfaces/imeter.interface';
 import { environment } from '../../../../../environments/environment';
 
@@ -19,15 +19,15 @@ export class MetersService {
   private readonly baseUrl = environment.apiUrl;
   private readonly endpoint = `${this.baseUrl}/meters`;
 
-  getMeterStatuses(): Observable<IEstadoMedidor[]> {
-    return this.http.get<IEstadoMedidor[]>(`${this.endpoint}/status`);
+  getMeterStatuses(): Observable<IMeterStatus[]> {
+    return this.http.get<IMeterStatus[]>(`${this.endpoint}/status`);
   }
 
-  createMeter(payload: CrearMedidorPayload): Observable<IMeter> {
+  createMeter(payload: ICreateMeterPayload): Observable<IMeter> {
     return this.http.post<IMeter>(this.endpoint, payload);
   }
 
-  getMeters(params: SearchMetersParams): Observable<PaginatedMetersResponse> {
+  getMeters(params: ISearchMetersParams): Observable<IPaginatedMetersResponse> {
     let httpParams = new HttpParams();
 
     if (params.page !== undefined) {
@@ -43,14 +43,14 @@ export class MetersService {
       httpParams = httpParams.set('search', params.search);
     }
 
-    return this.http.get<PaginatedMetersResponse>(this.endpoint, { params: httpParams });
+    return this.http.get<IPaginatedMetersResponse>(this.endpoint, { params: httpParams });
   }
 
   getMeterById(id: number): Observable<IMeter> {
     return this.http.get<IMeter>(`${this.endpoint}/${id}`);
   }
 
-  updateMeter(id: number, body: ActualizarEstadoMedidorBody): Observable<IMeter> {
+  updateMeter(id: number, body: IUpdateMeterStatusBody): Observable<IMeter> {
     return this.http.patch<IMeter>(`${this.endpoint}/${id}`, body);
   }
 

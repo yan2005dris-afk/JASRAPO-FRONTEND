@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { CrearMedidorPayload } from '../../interfaces/imeter.interface';
+import { ICreateMeterPayload } from '../../interfaces/imeter.interface';
 
 /**
  * Componente de Formulario para Registro de MetersComponent
@@ -18,8 +18,8 @@ export class RegisterMeterComponent {
   // Comunicación con el componente padre
   isSaving = input<boolean>(false);
   errorMessage = input<string>('');
-  guardar = output<CrearMedidorPayload>();
-  cancelar = output<void>();
+  save = output<ICreateMeterPayload>();
+  cancel = output<void>();
 
   // Inyección de dependencias para formularios reactivos
   private readonly fb = inject(FormBuilder);
@@ -41,7 +41,7 @@ export class RegisterMeterComponent {
     if (this.isSaving()) {
       return;
     }
-    this.cancelar.emit();
+    this.cancel.emit();
   }
 
   /**
@@ -53,6 +53,6 @@ export class RegisterMeterComponent {
       return;
     }
 
-    this.guardar.emit(this.form.getRawValue());
+    this.save.emit(this.form.getRawValue());
   }
 }

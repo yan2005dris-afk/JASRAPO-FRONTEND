@@ -2,8 +2,8 @@ import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, input, output, effect } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
-  EditarEstadoMedidorPayload,
-  IEstadoMedidor,
+  IEditMeterStatusPayload,
+  IMeterStatus,
   IMeter,
 } from '../../interfaces/imeter.interface';
 
@@ -20,14 +20,14 @@ import {
 })
 export class EditMeterComponent {
   // Entradas de datos y estado de carga
-  medidor = input<IMeter | null>(null);
+  meter = input<IMeter | null>(null);
   isSaving = input<boolean>(false);
   errorMessage = input<string>('');
-  estados = input<IEstadoMedidor[]>([]);
+  statuses = input<IMeterStatus[]>([]);
 
   // Emisores de eventos para comunicación con el contenedor
-  guardar = output<EditarEstadoMedidorPayload>();
-  cancelar = output<void>();
+  save = output<IEditMeterStatusPayload>();
+  cancel = output<void>();
 
   // Inyección de dependencias y constantes de negocio
   private readonly fb = inject(FormBuilder);
@@ -42,10 +42,10 @@ export class EditMeterComponent {
 
   constructor() {
     effect(() => {
-      const med = this.medidor();
-      if (med) {
+      const selectedMeter = this.meter();
+      if (selectedMeter) {
         this.form.patchValue({
-          codigo: med.estado?.codigo || '',
+          codigo: selectedMeter.estado?.codigo || '',
           observacion: '',
         });
       }
@@ -57,12 +57,12 @@ export class EditMeterComponent {
    * validando que exista un medidor seleccionado y no haya operaciones en curso.
    */
   submit(): void {
-    const med = this.medidor();
-    if (!med || this.isSaving()) return;
+    const selectedMeter = this.meter();
+    if (!selectedMeter || this.isSaving()) return;
     const rawValues = this.form.getRawValue();
     if (rawValues.codigo) {
-      this.guardar.emit({
-        medidorId: med.medidorId,
+      this.save.emit({
+        medidorId: selectedMeter.medidorId,
         estado: rawValues.codigo,
         motivo: rawValues.observacion || '',
       });
@@ -73,6 +73,6 @@ export class EditMeterComponent {
    * Notifica la cancelación de la edición, bloqueando el cierre si se está guardando.
    */
   close(): void {
-    if (!this.isSaving()) this.cancelar.emit();
+    if (!this.isSaving()) this.cancel.emit();
   }
 }
