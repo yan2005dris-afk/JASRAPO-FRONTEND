@@ -11,9 +11,23 @@ export const routes: Routes = [
   },
   {
     path: 'consulta-planilla',
-    loadComponent: () =>
-      import('./features/bill-inquiry/bill-inquiry.component').then((m) => m.BillInquiryComponent),
     canActivate: [guestGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/bill-inquiry/bill-inquiry.component').then(
+            (m) => m.BillInquiryComponent,
+          ),
+      },
+      {
+        path: 'preview',
+        loadComponent: () =>
+          import('./features/consulta-planilla/preview-planilla/preview-planilla.component').then(
+            (m) => m.PreviewPlanillaComponent,
+          ),
+      },
+    ],
   },
   {
     path: 'app',
