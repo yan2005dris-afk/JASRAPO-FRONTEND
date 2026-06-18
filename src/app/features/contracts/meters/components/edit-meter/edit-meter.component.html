@@ -26,29 +26,29 @@
       </div>
     }
 
-    <div class="row g-3">
-      <!-- Selección de Estado -->
-      <div class="col-12">
-        <label for="estadoEditar" class="form-label fw-semibold"
-          >Estado <span class="text-danger fw-bold ms-1">*</span></label
-        >
-        <select
-          id="estadoEditar"
-          class="form-select"
-          formControlName="estadoId"
-          [class.is-invalid]="form.controls.estadoId.invalid && form.controls.estadoId.touched"
-        >
-          <option [ngValue]="null" disabled>Seleccione un estado</option>
-          @for (estado of estados(); track estado.estadoId) {
-            <option [value]="estado.estadoId">
-              {{ estado.nombre | uppercase }}
-            </option>
-          }
-        </select>
-        @if (form.controls.estadoId.invalid && form.controls.estadoId.touched) {
-          <div class="invalid-feedback">Debe seleccionar un estado.</div>
+    <!-- Selección de Estado -->
+    <div class="mb-3">
+      <label for="estadoEditar" class="form-label fw-medium"
+        >Estado <span class="text-dark fw-bold ms-1">*</span></label
+      >
+      <select
+        id="estadoEditar"
+        class="form-select"
+        formControlName="codigo"
+        [class.is-invalid]="form.controls.codigo.invalid && form.controls.codigo.touched"
+      >
+        <option value="" disabled>ESTADO</option>
+        <!-- Iteración sobre los objetos IEstadoMedidor que vienen de la BD -->
+        @for (estado of estados(); track estado.codigo) {
+          <option [value]="estado.codigo">
+            {{ estado.nombre | uppercase }}
+          </option>
         }
-      </div>
+      </select>
+      @if (form.controls.codigo.invalid && form.controls.codigo.touched) {
+        <div class="invalid-feedback">Debe seleccionar un estado.</div>
+      }
+    </div>
 
       <!-- Área de Observaciones -->
       <div class="col-12">
@@ -62,7 +62,7 @@
           style="resize: none"
         ></textarea>
       </div>
-    </div>
+   
   </div>
 
   <div class="modal-footer">

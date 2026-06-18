@@ -1,5 +1,4 @@
 export interface IEstadoMedidor {
-  estadoId: number;
   codigo: string;
   nombre: string;
   orden: number;
@@ -27,17 +26,23 @@ export interface CrearMedidorPayload {
   serie: string;
 }
 
+/**
+ * Estructura de datos para la transición de estados.
+ * Permite actualizar la situación del medidor e incluir un comentario.
+ */
+export interface EditarEstadoMedidorPayload {
+  medidorId: number;
+  estado: string;
+  motivo?: string;
+}
+
 export interface IMeterDto extends Omit<IMeter, 'estado'> {
   estado?: string | IEstadoMedidor;
 }
 
 export interface ActualizarEstadoMedidorBody {
-  estadoId: number;
+  estado: string;
   motivo?: string;
-}
-
-export interface EditarEstadoMedidorPayload extends ActualizarEstadoMedidorBody {
-  medidorId: number;
 }
 
 export interface MeterKpis {
@@ -50,7 +55,7 @@ export interface MeterKpis {
 export interface SearchMetersParams {
   page?: number;
   limit?: number;
-  estadoId?: number;
+  estado?: string;
   search?: string;
 }
 
