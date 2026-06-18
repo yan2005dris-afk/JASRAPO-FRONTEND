@@ -83,7 +83,7 @@
           (change)="filtrarPorEstado()"
         >
           <option value="todos">Todos los estados</option>
-          @for (estado of estadosCatalogo; track estado.estadoId) {
+          @for (estado of estadosCatalogo; track estado.codigo) {
             <option [value]="estado.codigo">{{ estado.nombre }}</option>
           }
         </select>

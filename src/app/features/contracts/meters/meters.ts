@@ -158,13 +158,13 @@ export class MetersComponent implements OnInit {
     const estadoSeleccionado = this.estadosCatalogo.find(
       (e) => e.codigo === this.estadoFiltro
     );
-    const estadoId = estadoSeleccionado?.estadoId;
+    const estadoId = estadoSeleccionado?.codigo;
 
     this.metersService
       .getMeters({
         page: this.currentPage,
         limit: this.pageSize,
-        estadoId: estadoId,
+        estado: estadoId,
         search: this.searchQuery.trim() || undefined,
       })
       .pipe(

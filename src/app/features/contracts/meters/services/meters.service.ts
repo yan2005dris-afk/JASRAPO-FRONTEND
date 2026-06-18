@@ -36,8 +36,8 @@ export class MetersService {
     if (params.limit !== undefined) {
       httpParams = httpParams.set('limit', String(params.limit));
     }
-    if (params.estadoId !== undefined) {
-      httpParams = httpParams.set('estadoId', String(params.estadoId));
+    if (params.estado !== undefined) {
+      httpParams = httpParams.set('estado', String(params.estado));
     }
     if (params.search) {
       httpParams = httpParams.set('search', params.search);
