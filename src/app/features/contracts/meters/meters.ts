@@ -19,11 +19,10 @@ import {
   IMeterDto,
   IUpdateMeterStatusBody,
   IMeterKpis,
-  ISearchMetersParams,
   MeterStatusFilter,
 } from './interfaces/imeter.interface';
 import { MetersService } from './services/meters.service';
-import { forkJoin, finalize } from 'rxjs';
+import { finalize } from 'rxjs';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';

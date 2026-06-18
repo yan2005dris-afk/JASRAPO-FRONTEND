@@ -19,7 +19,7 @@ export class RegisterMeterComponent {
   isSaving = input<boolean>(false);
   errorMessage = input<string>('');
   save = output<ICreateMeterPayload>();
-  cancel = output<void>();
+  cancelRegister = output<void>();
 
   // Inyección de dependencias para formularios reactivos
   private readonly fb = inject(FormBuilder);
@@ -41,7 +41,7 @@ export class RegisterMeterComponent {
     if (this.isSaving()) {
       return;
     }
-    this.cancel.emit();
+    this.cancelRegister.emit();
   }
 
   /**

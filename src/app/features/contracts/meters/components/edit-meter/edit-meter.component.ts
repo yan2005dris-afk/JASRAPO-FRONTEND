@@ -23,7 +23,7 @@ export class EditMeterComponent {
 
   // Emisores de eventos para comunicación con el contenedor
   save = output<IEditMeterStatusPayload>();
-  cancel = output<void>();
+  cancelRegister = output<void>();
 
   // Inyección de dependencias y constantes de negocio
   private readonly fb = inject(FormBuilder);
