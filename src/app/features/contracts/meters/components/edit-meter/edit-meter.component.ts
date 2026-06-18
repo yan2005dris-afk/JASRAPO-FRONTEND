@@ -1,11 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject, input, output, effect } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import {
-  IEditMeterStatusPayload,
-  IMeterStatus,
-  IMeter,
-} from '../../interfaces/imeter.interface';
+import { IEditMeterStatusPayload, IMeterStatus, IMeter } from '../../interfaces/imeter.interface';
 
 /**
  * Componente de Edición de Estado de MetersComponent

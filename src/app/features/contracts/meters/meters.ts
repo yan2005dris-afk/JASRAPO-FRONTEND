@@ -155,9 +155,7 @@ export class MetersComponent implements OnInit {
     this.cdr.detectChanges();
 
     // Buscar el ID numérico del estado correspondiente al código del filtro
-    const selectedStatus = this.statusCatalog.find(
-      (e) => e.codigo === this.statusFilter
-    );
+    const selectedStatus = this.statusCatalog.find((e) => e.codigo === this.statusFilter);
     const statusId = selectedStatus?.codigo;
 
     this.metersService
@@ -326,10 +324,7 @@ export class MetersComponent implements OnInit {
             },
             error: (err: HttpErrorResponse) => {
               this.isLoading = false;
-              const errorMsg = this.getBackendErrorMessage(
-                err,
-                'Error al eliminar el medidor.',
-              );
+              const errorMsg = this.getBackendErrorMessage(err, 'Error al eliminar el medidor.');
               this.toastService.error(errorMsg, 'Error');
               this.cdr.detectChanges();
             },

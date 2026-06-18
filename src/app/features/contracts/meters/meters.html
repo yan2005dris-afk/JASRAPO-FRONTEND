@@ -170,7 +170,9 @@
                     {{ meter.fechaInstalacion ?? '—' }}
                   </td>
                   <td class="small">
-                    <span class="badge rounded-pill {{ getStatusBadgeClass(meter.estado?.codigo) }}">
+                    <span
+                      class="badge rounded-pill {{ getStatusBadgeClass(meter.estado?.codigo) }}"
+                    >
                       @if (getStatusIcon(meter.estado?.codigo)) {
                         <i class="bi {{ getStatusIcon(meter.estado?.codigo) }} me-1"></i>
                       }
@@ -221,7 +223,9 @@
                 <tr>
                   <td colspan="6" class="text-center py-5">
                     <i class="bi bi-box fs-2 d-block mb-2 text-muted opacity-50"></i>
-                    <span class="text-muted small">No se encontraron medidores con esos criterios.</span>
+                    <span class="text-muted small"
+                      >No se encontraron medidores con esos criterios.</span
+                    >
                   </td>
                 </tr>
               }
@@ -249,11 +253,7 @@
 
 <!-- Modales de Gestión -->
 @if (showRegisterModal) {
-  <div
-    class="modal fade show d-block"
-    tabindex="-1"
-    style="background-color: rgba(0, 0, 0, 0.5)"
-  >
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5)">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow">
         <app-register-meter
@@ -269,11 +269,7 @@
 }
 
 @if (showEditModal && editingMeter) {
-  <div
-    class="modal fade show d-block"
-    tabindex="-1"
-    style="background-color: rgba(0, 0, 0, 0.5)"
-  >
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5)">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow">
         <app-edit-meter
