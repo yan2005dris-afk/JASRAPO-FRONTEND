@@ -1,4 +1,4 @@
-name: Lint
+name: Lint y Build
 
 on:
   push:
@@ -28,6 +28,10 @@ jobs:
 
       - name: Ejecutar Linter (ESLint)
         run: npm run lint
+
+      # --- NUEVO PASO ---
+      - name: Construir Proyecto (Build)
+        run: npm run build
 
       - name: Ejecutar Pruebas Unitarias (Vitest)
         run: npm test
