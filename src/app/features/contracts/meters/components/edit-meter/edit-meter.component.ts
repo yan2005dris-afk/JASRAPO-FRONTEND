@@ -69,6 +69,6 @@ export class EditMeterComponent {
    * Notifica la cancelación de la edición, bloqueando el cierre si se está guardando.
    */
   close(): void {
-    if (!this.isSaving()) this.cancel.emit();
+    if (!this.isSaving()) this.cancelRegister.emit();
   }
 }
