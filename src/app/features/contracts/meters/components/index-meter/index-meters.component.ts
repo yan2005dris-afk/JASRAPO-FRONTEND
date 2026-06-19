@@ -41,14 +41,14 @@ import {
     PaginationComponent,
     DropdownComponent,
   ],
-  templateUrl: './meters.html',
-  styleUrl: './meters.scss',
+  templateUrl: './index-meters.component.html',
+  styleUrl: './index-meters.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class MetersComponent implements OnInit {
+export class IndexMetersComponent implements OnInit {
   private readonly metersService = inject(MetersService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly toastService = inject(ToastService);
