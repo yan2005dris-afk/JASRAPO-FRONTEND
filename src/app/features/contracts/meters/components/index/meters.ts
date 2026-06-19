@@ -9,8 +9,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { EditMeterComponent } from './components/edit-meter/edit-meter.component';
-import { RegisterMeterComponent } from './components/register-meter/register-meter.component';
+import { EditMeterComponent } from '../edit-meter/edit-meter.component';
+import { RegisterMeterComponent } from '../register-meter/register-meter.component';
 import {
   IMeter,
   ICreateMeterPayload,
@@ -20,16 +20,16 @@ import {
   IUpdateMeterStatusBody,
   IMeterKpis,
   MeterStatusFilter,
-} from './interfaces/imeter.interface';
-import { MetersService } from './services/meters.service';
+} from '../../interfaces/imeter.interface';
+import { MetersService } from '../../services/meters.service';
 import { finalize } from 'rxjs';
-import { ToastService } from '../../../shared/components/toast/toast.service';
-import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
-import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
 import {
   DropdownComponent,
   DropdownItem,
-} from '../../../shared/components/dropdown/dropdown.component';
+} from '../../../../../shared/components/dropdown/dropdown.component';
 
 @Component({
   selector: 'app-meters',
@@ -106,20 +106,20 @@ export class MetersComponent implements OnInit {
   }
 
   // Paginación server-side (Estilo clients.ts, no-signals)
-  pageSizeOptions = [5, 10, 15];
-  pageSize = 5;
-  currentPage = 1;
-  totalItems = 0;
+  pageSizeOptions = signal([5, 10, 15]);
+  pageSize = signal(5);
+  currentPage = signal(1);
+  totalItems = signal(0);
   readonly kpis = signal<IMeterKpis>({ enBodega: 0, instalados: 0, danados: 0, total: 0 });
 
   get totalPages(): number {
-    return Math.max(1, Math.ceil(this.totalItems / this.pageSize));
+    return Math.max(1, Math.ceil(this.totalItems() / this.pageSize()));
   }
 
   get pageNumbers(): number[] {
     const range = 2;
-    const start = Math.max(1, this.currentPage - range);
-    const end = Math.min(this.totalPages, this.currentPage + range);
+    const start = Math.max(1, this.currentPage() - range);
+    const end = Math.min(this.totalPages, this.currentPage() + range);
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   }
 
@@ -144,7 +144,7 @@ export class MetersComponent implements OnInit {
   }
 
   filterByStatus(): void {
-    this.currentPage = 1;
+    this.currentPage.set(1);
     this.loadMeters();
   }
 
@@ -159,8 +159,8 @@ export class MetersComponent implements OnInit {
 
     this.metersService
       .getMeters({
-        page: this.currentPage,
-        limit: this.pageSize,
+        page: this.currentPage(),
+        limit: this.pageSize(),
         estado: statusId,
         search: this.searchQuery.trim() || undefined,
       })
@@ -187,7 +187,7 @@ export class MetersComponent implements OnInit {
           });
 
           const meta = response.meta;
-          this.totalItems = meta.total;
+          this.totalItems.set(meta.total);
           this.kpis.set(response.kpis);
           this.hasFetched = true;
           this.cdr.markForCheck();
@@ -205,20 +205,20 @@ export class MetersComponent implements OnInit {
 
   // Métodos de navegación de página
   setPageSize(size: number) {
-    this.pageSize = size;
-    this.currentPage = 1;
+    this.pageSize.set(size);
+    this.currentPage.set(1);
     this.loadMeters();
   }
 
   goToPage(page: number) {
     if (page >= 1 && page <= this.totalPages) {
-      this.currentPage = page;
+      this.currentPage.set(page);
       this.loadMeters();
     }
   }
 
   searchMeters(): void {
-    this.currentPage = 1;
+    this.currentPage.set(1);
     this.loadMeters();
   }
 

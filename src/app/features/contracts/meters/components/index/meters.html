@@ -1,5 +1,5 @@
-<!-- 
-  Componente de Inventario de Medidores 
+<!--
+  Componente de Inventario de Medidores
   Maneja la visualización de métricas, listado paginado y gestión de estados.
 -->
 <div class="container-xl py-4">
@@ -238,10 +238,10 @@
     <!-- Paginación y Controles -->
     <footer class="card-footer bg-white border-top px-4 py-3">
       <app-pagination
-        [totalItems]="totalItems"
-        [currentPage]="currentPage"
-        [pageSize]="pageSize"
-        [pageSizeOptions]="pageSizeOptions"
+        [totalItems]="totalItems()"
+        [currentPage]="currentPage()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="pageSizeOptions()"
         itemNameSingular="medidor"
         itemNamePlural="medidores"
         (pageChange)="goToPage($event)"
