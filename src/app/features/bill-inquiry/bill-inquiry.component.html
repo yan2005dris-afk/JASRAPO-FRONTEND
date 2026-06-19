@@ -72,9 +72,33 @@
           }
 
           @if (results()) {
-            <div class="alert alert-success mt-3 text-start">
-              <h5 class="alert-heading">Resultado:</h5>
-              <p class="mb-0">{{ results()?.message }}</p>
+            <div class="card mt-4 text-start border-success">
+              <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="bi bi-person-check me-2"></i>Cliente Encontrado</h5>
+              </div>
+              <div class="card-body">
+                <h6 class="card-title fw-bold">{{ results()?.clienteNombre }}</h6>
+                <p class="card-text mb-1"><strong>Medidor:</strong> {{ results()?.medidor }}</p>
+                <p class="card-text mb-1">
+                  <strong>Mes Facturado:</strong> {{ results()?.mes }} {{ results()?.anio }}
+                </p>
+                <p class="card-text mb-1">
+                  <strong>Vencimiento:</strong>
+                  <span class="text-danger fw-bold">{{ results()?.fechaVencimiento }}</span>
+                </p>
+                <p class="card-text mb-3">
+                  <strong>Total a Pagar:</strong>
+                  <span class="fs-5 fw-bold text-success">${{ results()?.total }}</span>
+                </p>
+
+                <button
+                  class="btn btn-outline-success btn-sm w-100 d-flex align-items-center justify-content-center gap-2"
+                  routerLink="/consulta-planilla/preview"
+                >
+                  <i class="bi bi-file-earmark-pdf"></i>
+                  Ver Planilla Digital
+                </button>
+              </div>
             </div>
           }
 

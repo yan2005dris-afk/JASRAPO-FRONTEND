@@ -5,11 +5,11 @@ import { vi } from 'vitest';
 
 import { AuthService } from '../../../core/services/auth.service';
 
-import { Dashboard } from './dashboard';
+import { DashboardComponent } from './dashboard.component';
 
-describe('Dashboard', () => {
-  let component: Dashboard;
-  let fixture: ComponentFixture<Dashboard>;
+describe('DashboardComponent', () => {
+  let component: DashboardComponent;
+  let fixture: ComponentFixture<DashboardComponent>;
 
   beforeEach(async () => {
     const mockAuthService = {
@@ -23,11 +23,11 @@ describe('Dashboard', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [Dashboard],
+      imports: [DashboardComponent],
       providers: [provideRouter([]), { provide: AuthService, useValue: mockAuthService }],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Dashboard);
+    fixture = TestBed.createComponent(DashboardComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

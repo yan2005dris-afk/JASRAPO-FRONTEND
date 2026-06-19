@@ -29,14 +29,13 @@ export class AuthService {
   readonly tokenCreatedAt = computed(() => this.tokenCreatedAtSignal());
   readonly tokenExpiresAt = computed(() => this.tokenExpiresAtSignal());
 
-  // Tipado correcto para la suscripción del timer
   private refreshTimerSubscription: Subscription | null = null;
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http
       .post<LoginResponse>(`${this.API_URL}/login`, credentials, { withCredentials: true })
       .pipe(
-        tap((response) => this.handleLoginSuccess(response)),
+        tap((response: LoginResponse) => this.handleLoginSuccess(response)),
         catchError((error) => this.handleError(error)),
       );
   }
@@ -59,11 +58,9 @@ export class AuthService {
     return this.http
       .post<RefreshTokenResponse>(`${this.API_URL}/refresh`, {}, { withCredentials: true })
       .pipe(
-        tap((response) => this.handleRefreshSuccess(response)),
+        tap((response: RefreshTokenResponse) => this.handleRefreshSuccess(response)),
         catchError((error) => {
           console.error('Error al refrescar token:', error);
-          // Eliminamos this.logout() para no expulsar al usuario abruptamente
-          // Si el token realmente caduca, el interceptor 401 se encargará de cerrarlo al interactuar.
           return throwError(() => error);
         }),
       );
@@ -79,8 +76,7 @@ export class AuthService {
 
     const lifetime = expirationTime - createdTime;
 
-    // Si el token vive menos de 3 minutos, refrescamos cuando haya pasado el 80% de su vida
-    let refreshTime;
+    let refreshTime: number;
     if (lifetime <= 3 * 60 * 1000) {
       refreshTime = createdTime + lifetime * 0.8;
     } else {
@@ -121,48 +117,20 @@ export class AuthService {
     }
   }
 
-  // Cambiado 'any' por 'LoginResponse'
   private handleLoginSuccess(response: LoginResponse): void {
-    // Usamos desestructuración para que el código sea más limpio
-    const {
-      sub,
-      accessToken,
-      sid,
-      email,
-      name,
-      roleId,
-      roleName,
-      avatar,
-      iat,
-      exp,
-      createdAt: resCreatedAt,
-      expiresAt: resExpiresAt,
-    } = response;
+    const { sub, accessToken, sid, email, nombre, rolId, nombreRol, avatar, accessTokenInfo } =
+      response;
 
-    let createdAt: string;
-    let expiresAt: string;
-
-    if (resCreatedAt && resExpiresAt) {
-      createdAt = resCreatedAt;
-      expiresAt = resExpiresAt;
-    } else if (typeof exp === 'number') {
-      createdAt =
-        typeof iat === 'number' ? new Date(iat * 1000).toISOString() : new Date().toISOString();
-      expiresAt = new Date(exp * 1000).toISOString();
-    } else if (typeof exp === 'string') {
-      createdAt = typeof iat === 'string' ? iat : new Date().toISOString();
-      expiresAt = exp;
-    } else {
-      createdAt = new Date().toISOString();
-      expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString();
-    }
+    const createdAt = accessTokenInfo?.iatDate || new Date().toISOString();
+    const expiresAt =
+      accessTokenInfo?.expDate || new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
     const user: User = {
       id: String(sub),
       email: email || '',
-      name: name || 'Usuario',
-      roleId: roleId || 1,
-      roleName: roleName || 'Usuario',
+      name: nombre || 'Usuario',
+      roleId: rolId,
+      roleName: nombreRol || 'Usuario',
       avatar,
     };
 
@@ -172,7 +140,6 @@ export class AuthService {
 
   private handleRefreshSuccess(response: RefreshTokenResponse): void {
     const newAccessToken = response.accessToken;
-    // Usar las fechas reales del backend si existen, sino hacer fallback
     const createdAt = response.createdAt || new Date().toISOString();
     const expiresAt = response.expiresAt || new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
@@ -220,7 +187,6 @@ export class AuthService {
     this.cancelRefreshTimer();
   }
 
-  // Métodos de obtención de Storage
   private getStoredToken(): string | null {
     return localStorage.getItem('token');
   }
@@ -245,6 +211,14 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  updateCurrentUser(patch: Partial<User>): void {
+    const current = this.userSignal();
+    if (!current) return;
+    const updated: User = { ...current, ...patch };
+    this.userSignal.set(updated);
+    localStorage.setItem('user', JSON.stringify(updated));
   }
 
   private handleError(error: { error?: { message?: string }; status?: number }): Observable<never> {

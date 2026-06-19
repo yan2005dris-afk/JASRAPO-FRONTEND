@@ -4,7 +4,6 @@
     <h3 class="fw-bold mb-0 text-dark fs-4">Gestión de Usuarios</h3>
   </div>
 
-  <!-- Error message if any -->
   @if (errorMessage(); as msg) {
     <div
       class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4"
@@ -47,7 +46,7 @@
         <!-- Primary Action -->
         <button
           class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
-          (click)="openCreateModal()"
+          (click)="navigateToCreate()"
         >
           <i class="bi bi-plus-lg"></i> Agregar Usuario
         </button>
@@ -98,10 +97,18 @@
               <td>
                 <div class="d-flex align-items-center gap-2">
                   <div
-                    class="user-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                    class="user-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center overflow-hidden"
                     style="width: 32px; height: 32px; font-size: 0.85rem; font-weight: 600"
                   >
-                    {{ user.nombres.charAt(0).toUpperCase() }}
+                    @if (user.avatar?.url) {
+                      <img
+                        [src]="user.avatar!.url"
+                        [alt]="user.nombres"
+                        class="w-100 h-100 object-fit-cover"
+                      />
+                    } @else {
+                      {{ user.nombres.charAt(0).toUpperCase() }}
+                    }
                   </div>
                   <span class="fw-medium text-dark" style="font-size: 0.95rem">
                     {{ user.nombres }} {{ user.apellidos }}
@@ -148,7 +155,7 @@
                     <li>
                       <button
                         class="dropdown-item d-flex align-items-center gap-2"
-                        (click)="openEditModal(user)"
+                        (click)="navigateToEdit(user)"
                       >
                         <i class="bi bi-pencil-fill text-primary" style="font-size: 0.8rem"></i>
                         Editar
@@ -197,166 +204,3 @@
     </div>
   </div>
 </div>
-
-<!-- ===================== MODAL: Crear / Editar Usuario ===================== -->
-@if (showModal()) {
-  <button
-    type="button"
-    class="modal-backdrop-custom border-0"
-    (click)="closeModal()"
-    aria-label="Cerrar modal"
-  ></button>
-
-  <form
-    [formGroup]="userForm"
-    (ngSubmit)="saveUser()"
-    class="modal-custom"
-    role="dialog"
-    aria-modal="true"
-  >
-    <div class="modal-card">
-      <div class="modal-card-header d-flex justify-content-between align-items-center">
-        <h5 class="fw-bold mb-0">
-          <i class="bi bi-person-fill me-2 text-primary"></i>
-          {{ isEditing() ? 'Editar Usuario' : 'Nuevo Usuario' }}
-        </h5>
-        <button
-          type="button"
-          class="btn-close-modal"
-          (click)="closeModal()"
-          aria-label="Cerrar modal"
-        >
-          <i class="bi bi-x-lg"></i>
-        </button>
-      </div>
-
-      <div class="modal-card-body">
-        <!-- Nombres -->
-        <div class="mb-3">
-          <label for="form-user-nombres" class="form-label fw-semibold small text-muted"
-            >Nombres <span class="text-dark fw-bold ms-1">*</span></label
-          >
-          <input
-            id="form-user-nombres"
-            type="text"
-            class="form-control shadow-none"
-            placeholder="Ej. Juan"
-            formControlName="nombres"
-          />
-          @if (campoInvalido('nombres')) {
-            <small class="text-danger">Los nombres son obligatorios.</small>
-          }
-        </div>
-
-        <!-- Apellidos -->
-        <div class="mb-3">
-          <label for="form-user-apellidos" class="form-label fw-semibold small text-muted"
-            >Apellidos <span class="text-dark fw-bold ms-1">*</span></label
-          >
-          <input
-            id="form-user-apellidos"
-            type="text"
-            class="form-control shadow-none"
-            placeholder="Ej. Pérez"
-            formControlName="apellidos"
-          />
-          @if (campoInvalido('apellidos')) {
-            <small class="text-danger">Los apellidos son obligatorios.</small>
-          }
-        </div>
-
-        <!-- Email -->
-        <div class="mb-3">
-          <label for="form-user-email" class="form-label fw-semibold small text-muted"
-            >Correo electrónico <span class="text-dark fw-bold ms-1">*</span></label
-          >
-          <input
-            id="form-user-email"
-            type="email"
-            class="form-control shadow-none"
-            placeholder="usuario@jasrapo.com"
-            formControlName="email"
-          />
-          @if (campoInvalido('email')) {
-            @if (userForm.get('email')?.errors?.['email']) {
-              <small class="text-danger">Ingrese un correo electrónico válido.</small>
-            } @else {
-              <small class="text-danger">El correo electrónico es obligatorio.</small>
-            }
-          }
-        </div>
-
-        <!-- Teléfono -->
-        <div class="mb-3">
-          <label for="form-user-telefono" class="form-label fw-semibold small text-muted"
-            >Teléfono <span class="text-dark fw-bold ms-1">*</span></label
-          >
-          <input
-            id="form-user-telefono"
-            type="text"
-            class="form-control shadow-none"
-            placeholder="Ej. +593991234567"
-            formControlName="telefono"
-          />
-          @if (campoInvalido('telefono')) {
-            @if (userForm.get('telefono')?.errors?.['minlength']) {
-              <small class="text-danger">El teléfono debe tener al menos 7 dígitos.</small>
-            } @else {
-              <small class="text-danger">El teléfono es obligatorio.</small>
-            }
-          }
-        </div>
-
-        <!-- Password Help Text (no input because password is auto-generated on backend) -->
-        @if (!isEditing()) {
-          <div
-            class="alert alert-info py-2 px-3 small border-0 mb-3"
-            style="background-color: var(--soft-blue-bg); color: var(--primary-color)"
-          >
-            <i class="bi bi-info-circle-fill me-2"></i>
-            La contraseña temporal será generada automáticamente por el sistema y se le asignará al
-            nuevo usuario.
-          </div>
-        }
-
-        <!-- Rol -->
-        <div class="mb-3">
-          <label for="form-user-rolId" class="form-label fw-semibold small text-muted"
-            >Rol <span class="text-dark fw-bold ms-1">*</span></label
-          >
-          <select id="form-user-rolId" class="form-select shadow-none" formControlName="rolId">
-            @for (rol of roles(); track rol.rolId) {
-              <option [value]="rol.rolId">{{ rol.nombre }}</option>
-            }
-          </select>
-          @if (campoInvalido('rolId')) {
-            <small class="text-danger">El rol es obligatorio.</small>
-          }
-        </div>
-      </div>
-
-      <div class="modal-card-footer d-flex justify-content-end gap-2">
-        <button
-          type="button"
-          class="btn btn-outline-secondary fw-medium px-4"
-          [disabled]="isLoading()"
-          (click)="closeModal()"
-        >
-          Cancelar
-        </button>
-        <button type="submit" class="btn btn-primary fw-medium px-4" [disabled]="isLoading()">
-          @if (isLoading()) {
-            <span
-              class="spinner-border spinner-border-sm me-2"
-              role="status"
-              aria-hidden="true"
-            ></span>
-          } @else {
-            <i class="bi bi-check-lg me-1"></i>
-          }
-          {{ isEditing() ? 'Guardar cambios' : 'Guardar' }}
-        </button>
-      </div>
-    </div>
-  </form>
-}
