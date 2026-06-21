@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable } from '@angular/core';
 
 export type SyncState = 'PENDIENTE_SYNC' | 'RECHAZADA';
@@ -324,7 +325,8 @@ export class IndexedDbService {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction('lecturas_sincronizadas', 'readwrite');
       const store = transaction.objectStore('lecturas_sincronizadas');
-      const { id, ...rest } = reading;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id: _id, ...rest } = reading;
       store.add({ ...rest, syncedAt: new Date().toISOString() });
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);

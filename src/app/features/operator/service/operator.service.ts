@@ -12,7 +12,9 @@ export class OperatorService {
   private readonly baseUrl = environment.apiUrl;
   private readonly endpoint = `${this.baseUrl}/operator`;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   syncAllMeters(): Observable<any[]> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return this.http.get<any[]>(`${this.endpoint}/sync`);
   }
 

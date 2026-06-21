@@ -157,9 +157,10 @@ export class NovedadesComponent implements OnInit {
 
   private async getLatestReadingId(contratoId: string): Promise<string> {
     const response = await firstValueFrom(
-      this.http.get<any>(`${environment.apiUrl}/readings?contratoId=${contratoId}`, {
-        withCredentials: true,
-      }),
+      this.http.get<{ data?: { lecturaId: string }[] }>(
+        `${environment.apiUrl}/readings?contratoId=${contratoId}`,
+        { withCredentials: true },
+      ),
     );
     if (response?.data && response.data.length > 0) {
       return response.data[0].lecturaId;
@@ -177,23 +178,23 @@ export class NovedadesComponent implements OnInit {
     const formValue = this.noveltyForm.value;
     const meter = this.selectedMeter()!;
 
-    let lecturaId: string | number = '';
+    let lecturaId: string | number = `TEMP_METER_${meter.medidorId}`;
 
     if (this.networkService.isOnline() && meter.contratoId) {
       try {
         lecturaId = await this.getLatestReadingId(meter.contratoId.toString());
-      } catch (err: any) {
-        this.toastService.error(
-          err.message || 'Error al obtener la lectura para asociar la novedad.',
-          'Error',
-        );
+      } catch (err: unknown) {
+        const msg =
+          err instanceof Error
+            ? err.message
+            : 'Error al obtener la lectura para asociar la novedad.';
+        this.toastService.error(msg, 'Error');
         this.isSaving.set(false);
         return;
       }
-    } else {
-      lecturaId = `TEMP_METER_${meter.medidorId}`;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const payload: any = {
       lecturaId,
       observacion: formValue.observacion,

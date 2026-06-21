@@ -1,4 +1,17 @@
 <div class="lecturas-mobile">
+
+  <!-- Route context banner (shown when navigated from a route) -->
+  @if (routeContext(); as ctx) {
+    <div class="route-context-banner">
+      <span class="route-ctx-badge badge-{{ ctx.tipo.toLowerCase() }}">
+        {{ ctx.tipo === 'TOMA_LECTURA' ? 'Lectura' :
+           ctx.tipo === 'RECONEXION' ? 'Reconexión' :
+           ctx.tipo === 'INSTALACION' ? 'Instalación' : 'Inspección' }}
+      </span>
+      <span class="route-ctx-name">{{ ctx.nombre }}</span>
+    </div>
+  }
+
   <!-- ============ STEP 1: SEARCH / LIST ============ -->
   @if (currentStep() === 'search') {
     <div class="step-view step-search">
@@ -238,8 +251,9 @@
       <form [formGroup]="readingForm" (ngSubmit)="onSubmit()" class="reading-form">
         <!-- Lectura Anterior -->
         <div class="form-field">
-          <label class="field-label">Lectura Anterior</label>
+          <label for="lectura-anterior" class="field-label">Lectura Anterior</label>
           <input
+            id="lectura-anterior"
             type="number"
             class="field-input readonly"
             formControlName="lecturaAnterior"
@@ -250,7 +264,7 @@
 
         <!-- Lectura Actual -->
         <div class="form-field">
-          <label class="field-label required">Lectura Actual</label>
+          <label for="input-lectura-actual" class="field-label required">Lectura Actual</label>
           <input
             type="number"
             class="field-input"
@@ -288,8 +302,9 @@
 
         <!-- Observaciones -->
         <div class="form-field">
-          <label class="field-label">Observaciones / Anomalías</label>
+          <label for="descripcion-anomalia" class="field-label">Observaciones / Anomalías</label>
           <textarea
+            id="descripcion-anomalia"
             class="field-input field-textarea"
             rows="3"
             placeholder="Describe alguna novedad (opcional)..."
@@ -299,7 +314,7 @@
 
         <!-- Foto -->
         <div class="form-field">
-          <label class="field-label">Fotografía del Medidor</label>
+          <span class="field-label">Fotografía del Medidor</span>
           <div class="photo-section">
             <label class="btn-photo" id="btn-capture-photo">
               <i class="bi bi-camera-fill"></i>

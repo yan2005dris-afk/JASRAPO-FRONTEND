@@ -276,10 +276,11 @@
                   >
                     <!-- Tipo de Anomalía -->
                     <div class="mb-3">
-                      <label class="form-label fw-bold small text-primary-dark"
+                      <label for="novedad-tipo" class="form-label fw-bold small text-primary-dark"
                         >Tipo de Anomalía / Novedad *</label
                       >
                       <select
+                        id="novedad-tipo"
                         class="form-select form-select-lg shadow-none"
                         formControlName="tipo"
                         [class.is-invalid]="
@@ -301,10 +302,11 @@
 
                     <!-- Observación / Descripción -->
                     <div class="mb-3">
-                      <label class="form-label fw-bold small text-primary-dark"
+                      <label for="novedad-observacion" class="form-label fw-bold small text-primary-dark"
                         >Descripción de la Novedad *</label
                       >
                       <textarea
+                        id="novedad-observacion"
                         class="form-control shadow-none"
                         rows="4"
                         placeholder="Detalla de forma clara el estado o problema encontrado..."
@@ -332,9 +334,7 @@
 
                     <!-- Captura de Foto (Cámara / Galería) -->
                     <div class="mb-4">
-                      <label class="form-label fw-bold small text-muted d-block"
-                        >Evidencia Fotográfica (Opcional)</label
-                      >
+                      <p class="form-label fw-bold small text-muted d-block mb-2">Evidencia Fotográfica (Opcional)</p>
 
                       <div class="d-flex flex-wrap gap-3 align-items-center">
                         <!-- Botón Cámara -->

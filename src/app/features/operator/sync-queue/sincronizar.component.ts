@@ -27,6 +27,7 @@ export class SincronizarComponent implements OnInit {
   readonly pendingAnomalies = signal<PendingRecord[]>([]);
   readonly rejectedReadings = signal<PendingRecord[]>([]);
   readonly rejectedAnomalies = signal<PendingRecord[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly syncedReadings = signal<any[]>([]);
 
   // Editing state
@@ -62,8 +63,10 @@ export class SincronizarComponent implements OnInit {
         this.dbService.getMetersCache(),
       ]);
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const metersMap = new Map<string, any>(meters.map((m: any) => [m.medidorId?.toString(), m]));
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const enrich = (record: any) => {
         const meter = metersMap.get(record.medidorId?.toString());
         return meter
@@ -129,6 +132,7 @@ export class SincronizarComponent implements OnInit {
       consumoCalculado: consumo,
       syncState: 'PENDIENTE_SYNC',
       errorMessage: null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     this.toastService.success(
@@ -149,6 +153,7 @@ export class SincronizarComponent implements OnInit {
       tipo: this.editTipo,
       syncState: 'PENDIENTE_SYNC',
       errorMessage: null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
 
     this.toastService.success(

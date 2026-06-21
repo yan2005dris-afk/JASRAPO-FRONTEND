@@ -1,7 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { NetworkService } from './network.service';
-import { IndexedDbService, PendingRecord } from './indexed-db.service';
+import { IndexedDbService } from './indexed-db.service';
 import { ToastService } from '../../shared/components/toast/toast.service';
 import { environment } from '../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
@@ -197,7 +198,8 @@ export class OperatorSyncService {
     // 1. Sincronizar primero las lecturas encoladas
     for (const pending of readings) {
       try {
-        const { id, syncState, errorMessage, _lecturaId, ...payload } = pending;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id, syncState: _syncState, errorMessage: _errorMessage, _lecturaId, ...payload } = pending;
         const request$ = _lecturaId
           ? this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, payload, {
               withCredentials: true,
@@ -230,7 +232,8 @@ export class OperatorSyncService {
     // 2. Sincronizar las anomalías
     for (const pending of anomalies) {
       try {
-        const { id, syncState, errorMessage, ...payload } = pending;
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { id, syncState: _syncState2, errorMessage: _errorMessage2, ...payload } = pending;
         await firstValueFrom(
           this.http.post<any>(this.ANOMALIES_API, payload, { withCredentials: true }),
         );
@@ -308,7 +311,7 @@ export class OperatorSyncService {
       ),
     );
     // Cachear para próxima vez
-    await this.dbService.saveEstadosCache(estados).catch(() => {});
+    await this.dbService.saveEstadosCache(estados).catch(() => undefined);
     return estados;
   }
 

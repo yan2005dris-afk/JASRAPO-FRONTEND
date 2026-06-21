@@ -17,7 +17,6 @@ const syncMock = {
 };
 
 describe('PwaHomeComponent', () => {
-  let component: PwaHomeComponent;
   let fixture: ComponentFixture<PwaHomeComponent>;
 
   beforeEach(async () => {
@@ -31,7 +30,6 @@ describe('PwaHomeComponent', () => {
     }).compileComponents();
 
     fixture = TestBed.createComponent(PwaHomeComponent);
-    component = fixture.componentInstance;
     await fixture.whenStable();
     fixture.detectChanges();
   });

@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { OperatorService } from '../service/operator.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
@@ -43,6 +43,7 @@ export class LecturasComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
+  private readonly activatedRoute = inject(ActivatedRoute);
   private readonly dbService = inject(IndexedDbService);
   readonly networkService = inject(NetworkService);
   readonly syncService = inject(OperatorSyncService);
@@ -59,7 +60,9 @@ export class LecturasComponent implements OnInit {
   readonly isSaving = signal<boolean>(false);
 
   // Lecturas registradas en el período activo (memoria local/caché)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly registeredReadings = signal<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly pendingReadings = signal<any[]>([]);
 
   // Conjunto de IDs de medidores que ya tienen lectura (sincronizada o pendiente)
@@ -94,7 +97,9 @@ export class LecturasComponent implements OnInit {
   readonly selectedEstadoFilter = signal<string>('todas');
 
   // Mapa medidorId → lectura existente (de registeredReadings + pendingReadings)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly existingReadingMap = computed<Map<string, any>>(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const map = new Map<string, any>();
     for (const r of this.registeredReadings()) {
       if (r.medidorId != null) map.set(r.medidorId.toString(), r);
@@ -158,14 +163,23 @@ export class LecturasComponent implements OnInit {
   // Previsualización de la foto capturada en Base64
   readonly photoPreview = signal<string | null>(null);
 
+  // When navigated from a route: restricts list to those series only
+  readonly allowedSeries = signal<Set<string> | null>(null);
+  readonly routeContext = signal<{ nombre: string; tipo: string } | null>(null);
+
   // Formulario
   readingForm!: FormGroup;
 
-  // Filtrado reactivo de medidores según el término de búsqueda
   readonly filteredMeters = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
-    const list = this.metersList();
-    if (!query) return list; // Show all meters when no search query
+    const allowed = this.allowedSeries();
+    let list = this.metersList();
+
+    if (allowed !== null) {
+      list = list.filter((m) => allowed.has(m.serie));
+    }
+
+    if (!query) return list;
     return list.filter(
       (m) =>
         m.serie.toLowerCase().includes(query) ||
@@ -226,9 +240,6 @@ export class LecturasComponent implements OnInit {
     }
   }
 
-  /**
-   * Carga los medidores y lecturas del caché IndexedDB
-   */
   private async loadCachedMeters(): Promise<void> {
     try {
       const cachedMeters = await this.dbService.getMetersCache();
@@ -236,8 +247,37 @@ export class LecturasComponent implements OnInit {
 
       const cachedReadings = await this.dbService.getRegisteredReadingsCache();
       this.registeredReadings.set(cachedReadings);
+
+      this.autoSelectFromQueryParam();
     } catch (e) {
       console.error('Error al cargar caché offline:', e);
+    }
+  }
+
+  private autoSelectFromQueryParam(): void {
+    const params = this.activatedRoute.snapshot.queryParamMap;
+    const rutaNombre = params.get('rutaNombre');
+    const rutaTipo = params.get('rutaTipo');
+    const seriesParam = params.get('series');
+    const singleSerie = params.get('serie');
+
+    if (rutaNombre && rutaTipo) {
+      this.routeContext.set({ nombre: rutaNombre, tipo: rutaTipo });
+    }
+
+    if (seriesParam) {
+      const set = new Set(
+        seriesParam
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean),
+      );
+      this.allowedSeries.set(set);
+    }
+
+    if (singleSerie) {
+      const meter = this.metersList().find((m) => m.serie === singleSerie);
+      if (meter) this.selectMeter(meter);
     }
   }
 
@@ -262,6 +302,7 @@ export class LecturasComponent implements OnInit {
         const estados = await this.syncService.getReadingEstados();
         // Mapear response a EstadoInfo (codigo, nombre, orden, icono)
         this.estadosCatalog.set(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           estados.map((e: any) => ({
             codigo: e.codigo ?? e.value ?? e.estado,
             nombre: e.nombre ?? e.label,
@@ -396,6 +437,7 @@ export class LecturasComponent implements OnInit {
     const meter = this.selectedMeter()!;
 
     // Generar el payload del DTO compatible con CrearLecturaDto del backend
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const payload: any = {
       fecha: new Date().toISOString(),
       lecturaAnterior: Number(formValue.lecturaAnterior),

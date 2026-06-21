@@ -4,6 +4,42 @@
   min-height: 100%;
 }
 
+/* ---- Route context banner ---- */
+.route-context-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  background: var(--info-color);
+  border-radius: 10px;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--accent-color);
+}
+
+.route-ctx-name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--dark-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.route-ctx-badge {
+  padding: 0.15rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+
+  &.badge-toma_lectura  { background: var(--primary-color); color: var(--white); }
+  &.badge-reconexion    { background: #856404; color: #fff; }
+  &.badge-instalacion   { background: #0a3622; color: #fff; }
+  &.badge-inspeccion    { background: #5a008a; color: #fff; }
+}
+
 /* --- Step Views --- */
 .step-view {
   animation: fadeIn 0.25s ease-out;
