@@ -54,10 +54,24 @@ export const routes: Routes = [
       {
         path: 'novedades',
         data: { breadcrumb: 'Novedades' },
-        loadComponent: () =>
-          import('./features/operator/novelties/novedades.component').then(
-            (m) => m.NovedadesComponent,
-          ),
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            loadComponent: () =>
+              import('./features/operator/novelties/novedades.component').then(
+                (m) => m.NovedadesComponent,
+              ),
+          },
+          {
+            path: 'new',
+            data: { breadcrumb: 'Nueva Novedad' },
+            loadComponent: () =>
+              import('./features/operator/novelties/novedades-form/novedades-form.component').then(
+                (m) => m.NovedadesFormComponent,
+              ),
+          },
+        ],
       },
       {
         path: 'sincronizar',

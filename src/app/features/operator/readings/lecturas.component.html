@@ -1,5 +1,5 @@
-<div class="lecturas-mobile">
-  <!-- Route context banner (shown when navigated from a route) -->
+<div class="lecturas-screen">
+  <!-- Route context banner -->
   @if (routeContext(); as ctx) {
     <div class="route-context-banner">
       <span class="route-ctx-badge badge-{{ ctx.tipo.toLowerCase() }}">
@@ -11,29 +11,24 @@
 
   <!-- ============ STEP 1: SEARCH / LIST ============ -->
   @if (currentStep() === 'search') {
-    <div class="step-view step-search">
-      <!-- Search Header -->
-      <div class="step-header">
-        <h2 class="step-title">
-          <i class="bi bi-moisture"></i>
-          Medidores Asignados
-        </h2>
+    <div class="step-view">
+      <div class="screen-header">
+        <h1 class="screen-title">Medidores</h1>
         @if (networkService.isOnline()) {
           <button
-            class="btn-refresh"
+            class="btn-icon"
             (click)="fetchAndCacheMeters()"
             [disabled]="isLoadingMeters()"
             id="btn-refresh-meters"
+            title="Sincronizar"
           >
             <i class="bi bi-arrow-clockwise" [class.animate-spin]="isLoadingMeters()"></i>
           </button>
         }
       </div>
 
-      <!-- Search Input -->
       <app-meter-search-box [value]="searchQuery()" (valueChange)="searchQuery.set($event)" />
 
-      <!-- Estado Filter Chips -->
       <div class="estado-filters">
         @for (chip of estadoFilterChips(); track chip.value) {
           <button
@@ -47,21 +42,18 @@
         }
       </div>
 
-      <!-- Meters List -->
       <div class="meters-list">
         @if (isLoadingMeters()) {
-          <div
-            class="d-flex align-items-center justify-content-center gap-2 py-5 text-secondary small"
-          >
-            <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+          <div class="loading-state">
+            <span class="spinner-sm"></span>
             Cargando medidores...
           </div>
         }
 
         @if (filteredMeters().length === 0 && !isLoadingMeters()) {
-          <div class="text-center py-5 text-secondary small">
-            <i class="bi bi-inbox d-block fs-1 mb-2 text-primary opacity-50"></i>
-            <p class="m-0">
+          <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>
               {{
                 searchQuery() ? 'Sin resultados para la búsqueda.' : 'No hay medidores cargados.'
               }}
@@ -69,7 +61,6 @@
           </div>
         }
 
-        <!-- Secciones dinámicas agrupadas por estado -->
         @for (group of metersByEstado(); track group.estado) {
           <div class="meters-section-header">
             <span
@@ -95,13 +86,14 @@
 
   <!-- ============ STEP 2: ACTIONS ============ -->
   @if (currentStep() === 'actions') {
-    <div class="step-view step-actions">
-      <!-- Back Button -->
-      <button class="btn-back" (click)="goBackToSearch()" id="btn-back-search">
-        <i class="bi bi-arrow-left"></i> Volver
-      </button>
+    <div class="step-view">
+      <div class="screen-header">
+        <button class="back-btn" (click)="goBackToSearch()" id="btn-back-search">
+          <i class="bi bi-arrow-left"></i>
+        </button>
+        <h1 class="screen-title">Acciones</h1>
+      </div>
 
-      <!-- Selected Meter Card -->
       @if (selectedMeter(); as meter) {
         <app-selected-meter-card
           [meter]="meter"
@@ -110,18 +102,18 @@
         />
 
         @if (readMetersIds().has(meter.medidorId.toString())) {
-          <div class="alert-already-read">
+          <div class="alert-info">
             <i class="bi bi-info-circle-fill"></i>
             Esta lectura ya fue enviada para revisión y no puede modificarse.
           </div>
         }
 
-        <!-- Action Buttons -->
         @let existingReading = existingReadingMap().get(meter.medidorId.toString());
         @let isPendingOrRejected =
           existingReading &&
           (existingReading.estado === 'PENDIENTE' ||
             existingReading.estado === 'RECHAZADA_VERIFICACION');
+
         <div class="action-buttons">
           <button
             class="action-btn action-reading"
@@ -166,30 +158,26 @@
 
   <!-- ============ STEP 3: FORM ============ -->
   @if (currentStep() === 'form') {
-    <div class="step-view step-form">
-      <!-- Back Button -->
-      <button class="btn-back" (click)="goBackToActions()" id="btn-back-actions">
-        <i class="bi bi-arrow-left"></i> Volver
-      </button>
-
-      <h2 class="step-title form-title">
-        <i class="bi bi-pencil-square"></i>
-        Registrar Lectura
-      </h2>
+    <div class="step-view">
+      <div class="screen-header">
+        <button class="back-btn" (click)="goBackToActions()" id="btn-back-actions">
+          <i class="bi bi-arrow-left"></i>
+        </button>
+        <h1 class="screen-title">Registrar Lectura</h1>
+      </div>
 
       @if (selectedMeter(); as meter) {
-        <div class="form-meter-summary">
-          <span class="summary-label">Medidor:</span>
-          <span class="summary-value">{{ meter.serie }}</span>
+        <div class="meter-summary">
+          <i class="bi bi-speedometer2"></i>
+          <span class="summary-serie">{{ meter.serie }}</span>
           @if (meter.clienteNombre) {
             <span class="summary-sep">·</span>
-            <span class="summary-value">{{ meter.clienteNombre }}</span>
+            <span class="summary-cliente">{{ meter.clienteNombre }}</span>
           }
         </div>
       }
 
       <form [formGroup]="readingForm" (ngSubmit)="onSubmit()" class="reading-form">
-        <!-- Lectura Anterior -->
         <div class="form-field">
           <label for="lectura-anterior" class="field-label">Lectura Anterior</label>
           <input
@@ -202,33 +190,28 @@
           <span class="field-hint">Último valor registrado (m³)</span>
         </div>
 
-        <!-- Lectura Actual -->
         <div class="form-field">
           <label for="input-lectura-actual" class="field-label required">Lectura Actual</label>
           <input
+            id="input-lectura-actual"
             type="number"
             class="field-input"
             formControlName="lecturaActual"
             [class.invalid]="
               readingForm.get('lecturaActual')?.touched && readingForm.get('lecturaActual')?.invalid
             "
-            id="input-lectura-actual"
           />
-          @if (
-            readingForm.get('lecturaActual')?.hasError('required') &&
-            readingForm.get('lecturaActual')?.touched
-          ) {
-            <span class="field-error">La lectura actual es obligatoria.</span>
-          }
-          @if (readingForm.get('lecturaActual')?.hasError('min')) {
-            <span class="field-error">No se permiten valores negativos.</span>
-          }
-          @if (readingForm.get('lecturaActual')?.hasError('lowerThanAnterior')) {
-            <span class="field-error">Debe ser mayor o igual a la lectura anterior.</span>
+          @if (readingForm.get('lecturaActual')?.touched) {
+            @if (readingForm.get('lecturaActual')?.hasError('required')) {
+              <span class="field-error">La lectura actual es obligatoria.</span>
+            } @else if (readingForm.get('lecturaActual')?.hasError('min')) {
+              <span class="field-error">No se permiten valores negativos.</span>
+            } @else if (readingForm.get('lecturaActual')?.hasError('lowerThanAnterior')) {
+              <span class="field-error">Debe ser mayor o igual a la lectura anterior.</span>
+            }
           }
         </div>
 
-        <!-- Switch Lectura Inicial -->
         <div class="form-switch-field">
           <input
             type="checkbox"
@@ -236,11 +219,10 @@
             formControlName="lecturaInicial"
             class="switch-input"
           />
-          <label for="lecturaInicialSwitch" class="switch-label"> ¿Es Lectura Inicial? </label>
-          <span class="field-hint">Ignora la validación con la lectura anterior.</span>
+          <label for="lecturaInicialSwitch" class="switch-label">¿Es Lectura Inicial?</label>
+          <span class="field-hint full-width">Ignora la validación con la lectura anterior.</span>
         </div>
 
-        <!-- Observaciones -->
         <div class="form-field">
           <label for="descripcion-anomalia" class="field-label">Observaciones / Anomalías</label>
           <textarea
@@ -252,7 +234,6 @@
           ></textarea>
         </div>
 
-        <!-- Foto -->
         <div class="form-field">
           <span class="field-label">Fotografía del Medidor</span>
           <app-photo-capture
@@ -262,11 +243,10 @@
           <span class="field-hint">Recomendado para anomalías o lecturas altas.</span>
         </div>
 
-        <!-- Submit -->
-        <div class="d-flex gap-2 pt-2">
+        <div class="form-actions">
           <button
             type="button"
-            class="btn btn-outline-secondary py-2 fw-semibold flex-grow-1"
+            class="btn-cancel"
             (click)="goBackToActions()"
             [disabled]="isSaving()"
           >
@@ -274,12 +254,12 @@
           </button>
           <button
             type="submit"
-            class="btn btn-primary py-2 fw-semibold flex-grow-2 d-flex align-items-center justify-content-center gap-2"
+            class="btn-submit"
             [disabled]="readingForm.invalid || isSaving()"
             id="btn-submit-reading"
           >
             @if (isSaving()) {
-              <span class="spinner-border spinner-border-sm" role="status"></span>
+              <span class="spinner" role="status" aria-hidden="true"></span>
               Guardando...
             } @else {
               <i class="bi bi-check-circle-fill"></i>

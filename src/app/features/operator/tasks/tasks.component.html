@@ -40,20 +40,41 @@
           </div>
         }
 
-        <div id="map" style="height: 500px" class="map-container"></div>
+        <div id="map" style="height: 500px" class="map-container">
+          <button
+            class="map-locate-btn"
+            (click)="centerOnUser()"
+            type="button"
+            title="Ir a mi ubicación"
+          >
+            <i class="bi bi-crosshair2"></i>
+          </button>
+        </div>
 
         <div class="map-legend">
           <span class="legend-item"
-            ><span class="legend-dot" style="background: #9ca3af"></span>Sin lectura</span
+            ><span class="legend-dot" style="background: #d1d5db"></span>Sin lectura</span
           >
           <span class="legend-item"
-            ><span class="legend-dot" style="background: #f59e0b"></span>Pendiente</span
+            ><span class="legend-dot" style="background: #6b7280"></span>Pendiente</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: #f59e0b"></span>Por revisión</span
           >
           <span class="legend-item"
             ><span class="legend-dot" style="background: #ef4444"></span>Rechazada</span
           >
           <span class="legend-item"
-            ><span class="legend-dot" style="background: #10b981"></span>Aprobada</span
+            ><span class="legend-dot" style="background: #22c55e"></span>Aprobada</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: #3b82f6"></span>Estimada</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: #8b5cf6"></span>Planillada</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: #f97316"></span>Con novedad</span
           >
         </div>
 

@@ -1,172 +1,253 @@
-/* SCSS variables and custom styles for Operator Panel - Novelties */
+.novelties-screen {
+  padding: 1.25rem;
+  max-width: 900px;
+  margin: 0 auto;
+  padding-bottom: 5rem;
+}
 
-.operator-panel {
-  // Brand colors & fonts
-  --primary-dark: #0e2728;
-  --primary-light: #bff3f4;
-  --success-soft: rgba(16, 185, 129, 0.1);
-  --warning-soft: rgba(245, 158, 11, 0.1);
+// ── Header ─────────────────────────────────────────────────────────────────────
 
-  .text-primary-dark {
-    color: var(--primary-dark);
+.novelties-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+}
+
+.novelties-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--dark-text);
+}
+
+.new-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 1rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--primary-color);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:active {
+    opacity: 0.85;
+  }
+}
+
+// ── Offline ────────────────────────────────────────────────────────────────────
+
+.offline-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  color: #92400e;
+}
+
+.retry-link {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-left: auto;
+  font-size: 0.875rem;
+}
+
+// ── Skeleton ───────────────────────────────────────────────────────────────────
+
+.skeleton-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.skeleton-card {
+  height: 90px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+// ── Empty ──────────────────────────────────────────────────────────────────────
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--muted-text);
+
+  i {
+    font-size: 2.5rem;
+    display: block;
+    margin-bottom: 0.75rem;
+    color: #10b981;
   }
 
-  .text-primary-light {
+  p {
+    margin: 0;
+    font-size: 0.9375rem;
+  }
+}
+
+// ── Cards ──────────────────────────────────────────────────────────────────────
+
+.anomaly-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.anomaly-card {
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  cursor: pointer;
+
+  &:active {
+    opacity: 0.9;
+  }
+
+  app-meter-card {
+    border-bottom: 1px solid var(--border-color);
+  }
+}
+
+.meter-fallback {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--dark-text);
+  border-bottom: 1px solid var(--border-color);
+
+  i {
     color: var(--primary-color);
   }
+}
 
-  .bg-success-soft {
-    background-color: var(--success-soft);
+.anomaly-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  gap: 0.5rem;
+}
+
+.anomaly-fecha {
+  font-size: 0.8125rem;
+  color: var(--muted-text);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.anomaly-estado {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: var(--muted-text);
+
+  &.estado-pendiente {
+    background: #fef3c7;
+    color: #92400e;
   }
-
-  .bg-warning-soft {
-    background-color: var(--warning-soft);
+  &.estado-aprobada {
+    background: #d1fae5;
+    color: #065f46;
   }
-
-  // Cards style
-  .card {
-    border-radius: 16px;
-    background-color: var(--white);
-    transition:
-      transform 0.2s ease,
-      box-shadow 0.2s ease;
+  &.estado-rechazada_verificacion {
+    background: #fee2e2;
+    color: #991b1b;
   }
-
-  // Pulse animation for network dot
-  .pulse-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    display: inline-block;
-
-    &.bg-success {
-      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-      animation: pulse-green 2s infinite;
-    }
-
-    &.bg-warning {
-      box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
-      animation: pulse-yellow 2s infinite;
-    }
+  &.estado-con_novedad {
+    background: #ffedd5;
+    color: #9a3412;
   }
-
-  // Search box customization
-  .search-box {
-    .search-icon {
-      position: absolute;
-      left: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--muted-text);
-      font-size: 1.1rem;
-    }
-
-    input {
-      height: 48px;
-      border: 1px solid var(--border-color);
-      color: var(--dark-text);
-
-      &:focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 4px var(--input-focus-ring);
-      }
-    }
-
-    .clear-btn {
-      position: absolute;
-      right: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 0.8rem;
-    }
-  }
-
-  // Search Results
-  .search-results {
-    button {
-      background-color: var(--white);
-      color: var(--dark-text);
-      transition: background-color 0.2s ease;
-
-      &:hover {
-        background-color: var(--soft-blue-bg);
-      }
-    }
-  }
-
-  // Selected meter info box
-  .selected-meter-badge {
-    animation: slideDown 0.3s ease-out;
-  }
-
-  // Photo uploading container
-  .photo-preview-container {
-    width: 120px;
-    height: 120px;
-    overflow: hidden;
-    position: relative;
-    border: 1px solid var(--border-color);
-
-    .photo-preview {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-  }
-
-  // Camera button cursor pointer
-  .cursor-pointer {
-    cursor: pointer;
-  }
-
-  // Form controls focus ring
-  .form-control,
-  .form-select {
-    &:focus {
-      border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px var(--input-focus-ring);
-    }
+  &.estado-por_revision {
+    background: #fef9c3;
+    color: #713f12;
   }
 }
 
-// Animations definitions
-@keyframes pulse-green {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+.anomaly-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  padding: 0 1rem 0.5rem;
+}
+
+.anomaly-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  background: #fee2e2;
+  color: #991b1b;
+
+  i {
+    font-size: 0.7rem;
   }
 }
 
-@keyframes pulse-yellow {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
-  }
+.anomaly-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.5rem 1rem;
+  border-top: 1px solid var(--border-color);
+  background: var(--soft-blue-bg);
 }
 
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
+.btn-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.85rem;
+  border: 1.5px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--white);
+  color: var(--dark-text);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  i {
+    font-size: 0.75rem;
+    color: var(--primary-color);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  &:active {
+    opacity: 0.8;
   }
 }

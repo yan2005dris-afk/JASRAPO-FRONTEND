@@ -44,6 +44,7 @@ describe('operator.models — type contracts', () => {
   it('ReadingWithAnomaly has required fields with correct shape', () => {
     const reading: ReadingWithAnomaly = {
       lecturaId: 'l-001',
+      medidorId: null,
       medidorSerie: 'SER-001',
       fecha: '2026-06-15T10:00:00Z',
       estado: 'PROCESADA',

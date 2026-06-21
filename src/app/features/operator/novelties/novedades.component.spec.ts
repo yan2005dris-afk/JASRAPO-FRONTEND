@@ -13,6 +13,7 @@ import type { ReadingWithAnomaly } from '../models/operator.models';
 
 const mockAnomaly: ReadingWithAnomaly = {
   lecturaId: 'l-001',
+  medidorId: 'M-001',
   medidorSerie: 'SER-001',
   fecha: '2026-06-15T10:00:00Z',
   estado: 'PROCESADA',
@@ -73,7 +74,7 @@ describe('NovedadesComponent', () => {
     component = fixture.componentInstance;
   });
 
-  describe('pending anomalies loading (online)', () => {
+  describe('anomaly loading (online)', () => {
     it('calls getReadingsWithAnomalies on init when online', async () => {
       networkMock.isOnline.mockReturnValue(true);
       operatorServiceMock.getReadingsWithAnomalies.mockReturnValue(of([mockAnomaly]));
@@ -82,14 +83,14 @@ describe('NovedadesComponent', () => {
       fixture.detectChanges();
 
       expect(operatorServiceMock.getReadingsWithAnomalies).toHaveBeenCalled();
-      expect(component.pendingAnomalies().length).toBe(1);
-      expect(component.pendingAnomalies()[0].medidorSerie).toBe('SER-001');
+      expect(component.anomalies().length).toBe(1);
+      expect(component.anomalies()[0].medidorSerie).toBe('SER-001');
     });
 
-    it('populates pendingAnomalies with results from backend', async () => {
-      const anomalies = [
+    it('populates anomalies signal with results from backend', async () => {
+      const anomalies: ReadingWithAnomaly[] = [
         mockAnomaly,
-        { ...mockAnomaly, lecturaId: 'l-002', medidorSerie: 'SER-002' },
+        { ...mockAnomaly, lecturaId: 'l-002', medidorId: 'M-002', medidorSerie: 'SER-002' },
       ];
       operatorServiceMock.getReadingsWithAnomalies.mockReturnValue(of(anomalies));
       networkMock.isOnline.mockReturnValue(true);
@@ -97,11 +98,11 @@ describe('NovedadesComponent', () => {
       await fixture.whenStable();
       fixture.detectChanges();
 
-      expect(component.pendingAnomalies().length).toBe(2);
+      expect(component.anomalies().length).toBe(2);
     });
   });
 
-  describe('pending anomalies loading (offline)', () => {
+  describe('anomaly loading (offline)', () => {
     it('does NOT call getReadingsWithAnomalies when offline', async () => {
       networkMock.isOnline.mockReturnValue(false);
 
@@ -111,31 +112,32 @@ describe('NovedadesComponent', () => {
       expect(operatorServiceMock.getReadingsWithAnomalies).not.toHaveBeenCalled();
     });
 
-    it('sets offlineMode signal to true when offline', async () => {
+    it('sets isOffline signal to true when offline', async () => {
       networkMock.isOnline.mockReturnValue(false);
 
       await fixture.whenStable();
       fixture.detectChanges();
 
-      expect(component.offlineMode()).toBe(true);
+      expect(component.isOffline()).toBe(true);
+    });
+
+    it('isOffline is false by default when online', async () => {
+      networkMock.isOnline.mockReturnValue(true);
+
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(component.isOffline()).toBe(false);
     });
   });
 
-  describe('report form section visibility', () => {
-    it('reportSectionExpanded starts as false', () => {
-      expect(component.reportSectionExpanded()).toBe(false);
+  describe('initial state', () => {
+    it('anomalies signal starts empty', () => {
+      expect(component.anomalies()).toEqual([]);
     });
 
-    it('toggleReportSection flips expanded state to true', () => {
-      component.reportSectionExpanded.set(false);
-      component.toggleReportSection();
-      expect(component.reportSectionExpanded()).toBe(true);
-    });
-
-    it('toggleReportSection flips expanded state back to false', () => {
-      component.reportSectionExpanded.set(true);
-      component.toggleReportSection();
-      expect(component.reportSectionExpanded()).toBe(false);
+    it('isLoading starts false', () => {
+      expect(component.isLoading()).toBe(false);
     });
   });
 });

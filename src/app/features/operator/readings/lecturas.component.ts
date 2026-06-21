@@ -127,8 +127,13 @@ export class LecturasComponent implements OnInit {
       if (mId != null) map.set(mId.toString(), r);
     }
     for (const p of this.pendingReadings()) {
-      if (p.medidorId != null && !map.has(p.medidorId.toString())) {
-        map.set(p.medidorId.toString(), p);
+      const mId = p.medidorId;
+      if (mId != null) {
+        map.set(mId.toString(), {
+          ...map.get(mId.toString()),
+          ...p,
+          estado: p.estado || 'POR_REVISION',
+        });
       }
     }
     return map;
@@ -165,6 +170,7 @@ export class LecturasComponent implements OnInit {
       'APROBADA',
       'ESTIMADA',
       'PLANILLADA',
+      'CON_NOVEDAD',
     ];
 
     return order
@@ -346,6 +352,12 @@ export class LecturasComponent implements OnInit {
         },
         { codigo: 'ESTIMADA', nombre: 'Estimada', orden: 5, icono: 'bi-graph-up' },
         { codigo: 'PLANILLADA', nombre: 'Planillada', orden: 6, icono: 'bi-receipt' },
+        {
+          codigo: 'CON_NOVEDAD',
+          nombre: 'Con Novedad',
+          orden: 7,
+          icono: 'bi-exclamation-triangle',
+        },
       ]);
     }
   }
@@ -404,8 +416,10 @@ export class LecturasComponent implements OnInit {
   goToNoveltyForm(): void {
     const meter = this.selectedMeter();
     if (meter) {
-      this.router.navigate(['/app/operador/novedades'], {
-        queryParams: { medidorId: meter.medidorId },
+      const existing = this.existingReadingMap().get(meter.medidorId.toString());
+      const lecturaId = existing?.lecturaId ?? existing?._lecturaId ?? null;
+      this.router.navigate(['/app/operador/novedades/new'], {
+        queryParams: { medidorId: meter.medidorId, lecturaId },
       });
     }
   }
@@ -461,9 +475,22 @@ export class LecturasComponent implements OnInit {
     }
 
     try {
-      await this.syncService.submitReading(payload);
+      const response = await this.syncService.submitReading(payload);
+
+      if (this.networkService.isOnline() && response && response.lecturaId) {
+        const currentReadings = await this.dbService.getRegisteredReadingsCache();
+        const updated = currentReadings.map((r) =>
+          r.lecturaId === response.lecturaId ? response : r,
+        );
+        if (!currentReadings.some((r) => r.lecturaId === response.lecturaId)) {
+          updated.push(response);
+        }
+        await this.dbService.saveRegisteredReadingsCache(updated);
+      }
+
       this.goBackToSearch();
       await this.loadPendingReadings();
+      await this.loadCachedMeters();
     } catch (e) {
       console.error('Error al registrar lectura:', e);
     } finally {

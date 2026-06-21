@@ -1,216 +1,84 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { Router } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { NetworkService } from '../../../core/services/network.service';
 import { OperatorService } from '../service/operator.service';
-import { OperatorSyncService } from '../../../core/services/operator-sync.service';
 import { MeterCacheService } from '../../../core/services/meter-cache.service';
-import { ToastService } from '../../../shared/components/toast/toast.service';
-import { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
-import { PhotoCaptureComponent } from '../../../shared/components/photo-capture/photo-capture.component';
-import { MeterSearchBoxComponent } from '../components/meter-search-box/meter-search-box.component';
 import { MeterCardComponent } from '../components/meter-card/meter-card.component';
-import { SelectedMeterCardComponent } from '../components/selected-meter-card/selected-meter-card.component';
-import { OfflineAlertComponent } from '../../../shared/components/offline-alert/offline-alert.component';
-import { environment } from '../../../../environments/environment';
-import { firstValueFrom } from 'rxjs';
 import type { ReadingWithAnomaly } from '../models/operator.models';
+import type { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
+
+interface AnomalyWithMeter extends ReadingWithAnomaly {
+  meterDto: IMeterDto | null;
+}
 
 @Component({
   selector: 'app-operator-novelties',
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    PhotoCaptureComponent,
-    MeterSearchBoxComponent,
-    MeterCardComponent,
-    SelectedMeterCardComponent,
-    OfflineAlertComponent,
-  ],
+  imports: [CommonModule, MeterCardComponent],
   templateUrl: './novedades.component.html',
   styleUrl: './novedades.component.scss',
 })
 export class NovedadesComponent implements OnInit {
-  private readonly fb = inject(FormBuilder);
-  private readonly http = inject(HttpClient);
-  private readonly route = inject(ActivatedRoute);
-  private readonly operatorService = inject(OperatorService);
+  private readonly router = inject(Router);
   private readonly networkService = inject(NetworkService);
-  private readonly syncService = inject(OperatorSyncService);
+  private readonly operatorService = inject(OperatorService);
   private readonly meterCache = inject(MeterCacheService);
-  private readonly toastService = inject(ToastService);
 
-  // ---- Pending anomalies from backend (new) ----
-  readonly pendingAnomalies = signal<ReadingWithAnomaly[]>([]);
-  readonly isLoadingAnomalies = signal<boolean>(false);
-  readonly offlineMode = signal<boolean>(false);
-  readonly reportSectionExpanded = signal<boolean>(false);
-
-  // ---- Report form (existing, kept as secondary action) ----
-  readonly metersList = this.meterCache.metersList;
-  readonly searchQuery = signal<string>('');
-  readonly selectedMeter = signal<IMeterDto | null>(null);
-  readonly isLoadingMeters = signal<boolean>(false);
-  readonly isSaving = signal<boolean>(false);
-
-  readonly tiposAnomalia = [
-    { value: 'FUGA', label: 'Fuga de Agua' },
-    { value: 'MEDIDOR_DAÑADO', label: 'Medidor Dañado / Roto' },
-    { value: 'LECTURA_ERRONEA', label: 'Lectura Errónea' },
-    { value: 'OTRO', label: 'Otro Problema' },
-  ];
-
-  photoPreview = signal<string | null>(null);
-  noveltyForm!: FormGroup;
-
-  readonly filteredMeters = computed(() => {
-    const query = this.searchQuery().trim().toLowerCase();
-    const list = this.metersList();
-    if (!query) return list;
-    return list.filter(
-      (m) =>
-        m.serie.toLowerCase().includes(query) ||
-        (m.contratoId && m.contratoId.toString().toLowerCase().includes(query)) ||
-        (m.clienteNombre && m.clienteNombre.toLowerCase().includes(query)),
-    );
-  });
+  readonly anomalies = signal<AnomalyWithMeter[]>([]);
+  readonly isLoading = signal<boolean>(false);
+  readonly isOffline = signal<boolean>(false);
 
   ngOnInit(): void {
-    this.initForm();
-    this.loadInitialData();
-  }
-
-  private loadInitialData(): void {
     if (this.networkService.isOnline()) {
-      this.offlineMode.set(false);
-      this.loadPendingAnomalies();
+      this.loadAnomalies();
     } else {
-      this.offlineMode.set(true);
+      this.isOffline.set(true);
     }
-
-    // Always load cached meters for the report form (secondary action)
-    this.loadCachedMeters().then(() => {
-      const medidorId = this.route.snapshot.queryParamMap.get('medidorId');
-      if (medidorId) {
-        const meter = this.metersList().find((m) => m.medidorId.toString() === medidorId);
-        if (meter) {
-          this.selectMeter(meter);
-          // Pre-expand the report section if coming from another flow
-          this.reportSectionExpanded.set(true);
-        }
-      }
-    });
   }
 
-  private loadPendingAnomalies(): void {
-    this.isLoadingAnomalies.set(true);
-    this.operatorService.getReadingsWithAnomalies().subscribe({
-      next: (anomalies) => {
-        this.pendingAnomalies.set(anomalies);
-        this.isLoadingAnomalies.set(false);
-      },
-      error: () => {
-        this.isLoadingAnomalies.set(false);
-      },
-    });
-  }
-
-  toggleReportSection(): void {
-    this.reportSectionExpanded.set(!this.reportSectionExpanded());
-  }
-
-  private initForm(): void {
-    this.noveltyForm = this.fb.group({
-      tipo: ['', Validators.required],
-      observacion: ['', [Validators.required, Validators.minLength(5)]],
-    });
-  }
-
-  private async loadCachedMeters(): Promise<void> {
-    await this.meterCache.load();
-  }
-
-  selectMeter(meter: IMeterDto): void {
-    this.selectedMeter.set(meter);
-    this.searchQuery.set('');
-    this.noveltyForm.reset({
-      tipo: '',
-      observacion: '',
-    });
-    this.photoPreview.set(null);
-  }
-
-  clearSelection(): void {
-    this.selectedMeter.set(null);
-    this.photoPreview.set(null);
-    this.noveltyForm.reset();
-  }
-
-  private async getLatestReadingId(contratoId: string): Promise<string> {
-    const response = await firstValueFrom(
-      this.http.get<{ data?: { lecturaId: string }[] }>(
-        `${environment.apiUrl}/readings?contratoId=${contratoId}`,
-        { withCredentials: true },
-      ),
-    );
-    if (response?.data && response.data.length > 0) {
-      return response.data[0].lecturaId;
-    }
-    throw new Error('No se encontró ninguna lectura asociada al contrato del medidor.');
-  }
-
-  async onSubmit(): Promise<void> {
-    if (this.noveltyForm.invalid || !this.selectedMeter()) {
-      this.noveltyForm.markAllAsTouched();
-      return;
-    }
-
-    this.isSaving.set(true);
-    const formValue = this.noveltyForm.value;
-    const meter = this.selectedMeter()!;
-
-    let lecturaId: string | number = `TEMP_METER_${meter.medidorId}`;
-
-    if (this.networkService.isOnline() && meter.contratoId) {
-      try {
-        lecturaId = await this.getLatestReadingId(meter.contratoId.toString());
-      } catch (err: unknown) {
-        const msg =
-          err instanceof Error
-            ? err.message
-            : 'Error al obtener la lectura para asociar la novedad.';
-        this.toastService.error(msg, 'Error');
-        this.isSaving.set(false);
-        return;
-      }
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const payload: any = {
-      lecturaId,
-      observacion: formValue.observacion,
-      tipo: formValue.tipo,
-      estado: 'PENDIENTE',
-      fotoBase64: this.photoPreview() || null,
-      medidorId: meter.medidorId.toString(),
-      contratoId: meter.contratoId ? meter.contratoId.toString() : null,
-    };
-
+  private async loadAnomalies(): Promise<void> {
+    this.isLoading.set(true);
     try {
-      await this.syncService.submitAnomaly(payload);
-      this.clearSelection();
-      this.reportSectionExpanded.set(false);
-      // Refresh pending anomalies after successful submission (if online)
-      if (this.networkService.isOnline()) {
-        this.loadPendingAnomalies();
-      }
-    } catch (e) {
-      console.error('Error al registrar novedad:', e);
+      await this.meterCache.load();
+      const meters = this.meterCache.metersList();
+      const idMap = new Map<string, IMeterDto>();
+      for (const m of meters) idMap.set(m.medidorId.toString(), m);
+
+      const data = await firstValueFrom(this.operatorService.getReadingsWithAnomalies());
+      this.anomalies.set(
+        data.map((a) => ({
+          ...a,
+          anomalias: a.anomalias ?? [],
+          meterDto: a.medidorId ? (idMap.get(a.medidorId) ?? null) : null,
+        })),
+      );
+    } catch {
+      // leave empty
     } finally {
-      this.isSaving.set(false);
+      this.isLoading.set(false);
     }
+  }
+
+  newNovedad(): void {
+    this.router.navigate(['/app/operador/novedades/new']);
+  }
+
+  editNovedad(item: AnomalyWithMeter): void {
+    const first = item.anomalias[0];
+    this.router.navigate(['/app/operador/novedades/new'], {
+      queryParams: {
+        lecturaId: item.lecturaId,
+        medidorId: item.meterDto?.medidorId ?? null,
+        tipo: first?.tipo ?? null,
+        observacion: first?.observacion ?? null,
+      },
+    });
+  }
+
+  retry(): void {
+    this.isOffline.set(false);
+    this.loadAnomalies();
   }
 }

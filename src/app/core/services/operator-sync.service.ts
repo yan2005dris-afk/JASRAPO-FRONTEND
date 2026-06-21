@@ -128,8 +128,14 @@ export class OperatorSyncService {
   async submitAnomaly(anomaly: any): Promise<any> {
     if (this.networkService.isOnline()) {
       try {
+        const payload = {
+          lecturaId: anomaly.lecturaId,
+          tipo: anomaly.tipo,
+          estado: anomaly.estado,
+          ...(anomaly.observacion ? { observacion: anomaly.observacion } : {}),
+        };
         const response = await firstValueFrom(
-          this.http.post<any>(this.ANOMALIES_API, anomaly, { withCredentials: true }),
+          this.http.post<any>(this.ANOMALIES_API, payload, { withCredentials: true }),
         );
         this.toastService.success('Novedad/Anomalía registrada en el servidor.', 'Éxito');
         return response;
@@ -239,8 +245,14 @@ export class OperatorSyncService {
       try {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { id, syncState: _syncState2, errorMessage: _errorMessage2, ...payload } = pending;
+        const anomalyPayload = {
+          lecturaId: payload['lecturaId'],
+          tipo: payload['tipo'],
+          estado: payload['estado'],
+          ...(payload['observacion'] ? { observacion: payload['observacion'] } : {}),
+        };
         await firstValueFrom(
-          this.http.post<any>(this.ANOMALIES_API, payload, { withCredentials: true }),
+          this.http.post<any>(this.ANOMALIES_API, anomalyPayload, { withCredentials: true }),
         );
         await this.dbService.deletePendingAnomaly(id!);
         successAnomaliesCount++;
@@ -302,22 +314,25 @@ export class OperatorSyncService {
   async getReadingEstados(): Promise<
     { codigo: string; nombre: string; orden: number; icono?: string }[]
   > {
-    // Intentar desde cache offline primero
-    const cached = await this.dbService.getEstadosCache();
-    if (cached && cached.length > 0) {
-      return cached;
+    // Intentar backend primero (fuente de verdad)
+    try {
+      const estados = await firstValueFrom(
+        this.http.get<{ codigo: string; nombre: string; orden: number; icono?: string }[]>(
+          `${this.READINGS_API}/estados`,
+          { withCredentials: true },
+        ),
+      );
+      // Actualizar cache para uso offline
+      await this.dbService.saveEstadosCache(estados).catch(() => undefined);
+      return estados;
+    } catch {
+      // Fallback: cache offline
+      const cached = await this.dbService.getEstadosCache();
+      if (cached && cached.length > 0) {
+        return cached;
+      }
+      throw new Error('No se pudo obtener el catálogo de estados');
     }
-
-    // Fallback: backend
-    const estados = await firstValueFrom(
-      this.http.get<{ codigo: string; nombre: string; orden: number; icono?: string }[]>(
-        `${this.READINGS_API}/estados`,
-        { withCredentials: true },
-      ),
-    );
-    // Cachear para próxima vez
-    await this.dbService.saveEstadosCache(estados).catch(() => undefined);
-    return estados;
   }
 
   /**

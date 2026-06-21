@@ -14,16 +14,19 @@ import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
 import type { TaskResponse } from '../models/operator.models';
 import * as L from 'leaflet';
+import { firstValueFrom } from 'rxjs';
 
 type ViewMode = 'list' | 'map';
 
 const MARKER_COLORS: Record<string, string> = {
-  PENDIENTE: '#f59e0b',
+  __SIN_LECTURA__: '#d1d5db',
+  PENDIENTE: '#6b7280',
   POR_REVISION: '#f59e0b',
   RECHAZADA_VERIFICACION: '#ef4444',
-  APROBADA: '#10b981',
-  ESTIMADA: '#10b981',
-  PLANILLADA: '#10b981',
+  APROBADA: '#22c55e',
+  ESTIMADA: '#3b82f6',
+  PLANILLADA: '#8b5cf6',
+  CON_NOVEDAD: '#f97316',
 };
 
 const TIPO_ICONS: Record<string, string> = {
@@ -48,6 +51,8 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   private map?: L.Map;
   private markersGroup?: L.LayerGroup;
+  private userMarker?: L.Marker;
+  private geoWatchId?: number;
 
   readonly tasks = signal<TaskResponse[]>([]);
   readonly activeFilter = signal<string>('ALL');
@@ -119,24 +124,31 @@ export class TasksComponent implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    this.loadTasks();
-    this.loadReadingStatuses();
+    this.loadAll();
   }
 
   ngOnDestroy(): void {
     this.destroyMap();
   }
 
-  loadTasks(): void {
+  private async loadAll(): Promise<void> {
     this.isLoading.set(true);
-    this.operatorService.getTasks().subscribe({
-      next: (tasks) => {
-        this.tasks.set(tasks);
-        this.isLoading.set(false);
-        if (this.viewMode() === 'map') this.initMap();
-      },
-      error: () => this.isLoading.set(false),
-    });
+    try {
+      const [tasks] = await Promise.all([
+        firstValueFrom(this.operatorService.getTasks()),
+        this.loadReadingStatuses(),
+      ]);
+      this.tasks.set(tasks);
+    } catch {
+      // handled individually
+    } finally {
+      this.isLoading.set(false);
+      if (this.viewMode() === 'map') this.initMap();
+    }
+  }
+
+  loadTasks(): void {
+    this.loadAll();
   }
 
   private async loadReadingStatuses(): Promise<void> {
@@ -154,7 +166,8 @@ export class TasksComponent implements OnInit, OnDestroy {
 
       const idToEstado = new Map<string, string>();
       for (const r of registered) {
-        if (r.medidorId) idToEstado.set(r.medidorId.toString(), r.estado);
+        const mId = r.medidor?.medidorId ?? r.medidorId;
+        if (mId) idToEstado.set(mId.toString(), r.estado);
       }
       for (const p of pending) {
         const pId = p['medidorId'];
@@ -262,9 +275,47 @@ export class TasksComponent implements OnInit, OnDestroy {
       const bounds = L.latLngBounds(points.map((p) => [p.lat, p.lng] as L.LatLngTuple));
       this.map.fitBounds(bounds, { padding: [40, 40] });
     }
+
+    this.startGeoWatch();
+  }
+
+  private startGeoWatch(): void {
+    if (!navigator.geolocation) return;
+    this.geoWatchId = navigator.geolocation.watchPosition(
+      (pos) => this.updateUserMarker(pos.coords.latitude, pos.coords.longitude),
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      () => {},
+      { enableHighAccuracy: true, maximumAge: 5000 },
+    );
+  }
+
+  private updateUserMarker(lat: number, lng: number): void {
+    if (!this.map) return;
+    const icon = L.divIcon({
+      html: `<div class="map-user-marker"><i class="bi bi-person-fill"></i></div>`,
+      className: '',
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
+    });
+    if (this.userMarker) {
+      this.userMarker.setLatLng([lat, lng]);
+    } else {
+      this.userMarker = L.marker([lat, lng], { icon }).addTo(this.map);
+    }
+  }
+
+  centerOnUser(): void {
+    if (this.userMarker && this.map) {
+      this.map.setView(this.userMarker.getLatLng(), 16);
+    }
   }
 
   private destroyMap(): void {
+    if (this.geoWatchId !== undefined) {
+      navigator.geolocation.clearWatch(this.geoWatchId);
+      this.geoWatchId = undefined;
+    }
+    this.userMarker = undefined;
     if (this.map) {
       this.map.remove();
       this.map = undefined;

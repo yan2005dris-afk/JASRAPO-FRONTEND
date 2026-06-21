@@ -250,6 +250,7 @@
 
 .map-container {
   display: block;
+  position: relative;
   border-radius: 12px;
   overflow: hidden;
   box-shadow:
@@ -260,7 +261,65 @@
   z-index: 1;
 }
 
+.map-locate-btn {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: #2563eb;
+  color: #fff;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+
+  &:active {
+    background: #1d4ed8;
+  }
+}
+
 :host ::ng-deep {
+  .map-user-marker {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #2563eb;
+    border: 3px solid #fff;
+    box-shadow:
+      0 0 0 3px rgba(37, 99, 235, 0.35),
+      0 2px 8px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: user-pulse 2s infinite;
+
+    i {
+      color: #fff;
+      font-size: 16px;
+      line-height: 1;
+    }
+  }
+
+  @keyframes user-pulse {
+    0%,
+    100% {
+      box-shadow:
+        0 0 0 3px rgba(37, 99, 235, 0.35),
+        0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    50% {
+      box-shadow:
+        0 0 0 8px rgba(37, 99, 235, 0.1),
+        0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+  }
+
   .map-type-marker {
     width: 32px;
     height: 32px;
