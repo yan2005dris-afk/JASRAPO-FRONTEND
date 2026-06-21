@@ -5,8 +5,8 @@
       <div class="card border-0 shadow-sm status-card">
         <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
           <div>
-            <h1 class="h3 mb-1 text-primary-dark">Reporte de Novedades</h1>
-            <p class="text-muted mb-0 small">Registra daños, fugas u otras irregularidades en los medidores en campo.</p>
+            <h1 class="h3 mb-1 text-primary-dark">Novedades</h1>
+            <p class="text-muted mb-0 small">Revisá novedades pendientes y reportá nuevas irregularidades.</p>
           </div>
           <div class="d-flex align-items-center gap-3">
             <!-- Indicador de red -->
@@ -20,7 +20,7 @@
               </span>
             }
 
-            <!-- Indicador de cola de sync -->
+            <!-- Cola de sync -->
             @if (syncService.totalPending() > 0) {
               <button
                 class="btn btn-primary-light d-flex align-items-center gap-2 btn-sm rounded-pill px-3"
@@ -42,222 +42,301 @@
     </div>
   </div>
 
-  <div class="row">
-    <!-- PANEL DE BUSQUEDA / SELECCION DE MEDIDOR -->
-    <div class="col-lg-5 mb-4">
-      <div class="card border-0 shadow-sm search-card h-100">
+  <!-- SECCIÓN 1: Novedades Pendientes -->
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
         <div class="card-body">
-          <div class="d-flex align-items-center justify-content-between mb-3">
-            <h5 class="card-title text-primary-dark mb-0">Seleccionar Medidor</h5>
-          </div>
+          <h5 class="card-title text-primary-dark mb-3">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            Novedades Pendientes
+          </h5>
 
-          <!-- Input buscador -->
-          <div class="position-relative mb-3 search-box">
-            <i class="bi bi-search search-icon"></i>
-            <input
-              type="text"
-              class="form-control rounded-pill ps-5 shadow-none"
-              placeholder="Nro Serie o ID Contrato..."
-              [value]="searchQuery()"
-              (input)="searchQuery.set($any($event.target).value)"
-              [disabled]="!!selectedMeter()"
-            />
-            @if (searchQuery()) {
-              <button
-                type="button"
-                class="btn-close clear-btn"
-                aria-label="Limpiar"
-                (click)="searchQuery.set('')"
-              ></button>
-            }
-          </div>
-
-          <!-- Resultados de búsqueda -->
-          @if (filteredMeters().length > 0 && !selectedMeter()) {
-            <div class="list-group list-group-flush search-results overflow-auto rounded border" style="max-height: 400px;">
-              @for (meter of filteredMeters(); track meter.medidorId) {
-                <button
-                  type="button"
-                  class="list-group-item list-group-item-action p-3 d-flex justify-content-between align-items-center border-bottom"
-                  (click)="selectMeter(meter)"
-                >
-                  <div>
-                    <div class="fw-bold text-dark mb-1">Serie: {{ meter.serie }}</div>
-                    @if (meter.clienteNombre) {
-                      <div class="text-secondary small mb-1">
-                        <i class="bi bi-person-fill me-1"></i>{{ meter.clienteNombre }}
-                      </div>
-                    }
-                    <div class="text-muted small">
-                      <i class="bi bi-tag-fill me-1"></i>{{ meter.marca }} - {{ meter.modelo }}
-                    </div>
+          @if (offlineMode()) {
+            <!-- Offline message -->
+            <div class="alert alert-warning d-flex align-items-center gap-2 mb-0">
+              <i class="bi bi-wifi-off fs-5"></i>
+              <span>Sin conexión — lista de novedades no disponible offline</span>
+            </div>
+          } @else if (isLoadingAnomalies()) {
+            <!-- Loading -->
+            <div class="text-center py-4">
+              <span class="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
+              <span class="ms-2 text-muted">Cargando novedades...</span>
+            </div>
+          } @else if (pendingAnomalies().length === 0) {
+            <!-- Empty state -->
+            <div class="text-center py-4 text-muted">
+              <i class="bi bi-check-circle fs-2 d-block mb-2 text-success"></i>
+              Sin novedades pendientes en este momento.
+            </div>
+          } @else {
+            <!-- Anomalies list -->
+            <div class="list-group list-group-flush">
+              @for (reading of pendingAnomalies(); track reading.lecturaId) {
+                <div class="list-group-item px-0 py-3 border-bottom">
+                  <div class="d-flex justify-content-between align-items-start mb-1">
+                    <span class="fw-bold text-dark">
+                      <i class="bi bi-speedometer me-1"></i>
+                      Medidor: {{ reading.medidorSerie }}
+                    </span>
+                    <span class="badge bg-light text-muted rounded-pill small">
+                      {{ reading.fecha | date:'dd/MM/yyyy HH:mm' }}
+                    </span>
                   </div>
-                  @if (meter.contratoId) {
-                    <span class="badge bg-info text-dark rounded-pill">Contrato #{{ meter.contratoId }}</span>
-                  } @else {
-                    <span class="badge bg-light text-muted rounded-pill">Sin Contrato</span>
-                  }
-                </button>
-              }
-            </div>
-          } @else if (searchQuery() && filteredMeters().length === 0 && !selectedMeter()) {
-            <div class="text-center py-5 text-muted">
-              <i class="bi bi-info-circle fs-2 mb-2 d-block"></i>
-              No se encontraron medidores en el catálogo.
-            </div>
-          } @else if (!selectedMeter()) {
-            <div class="text-center py-5 text-muted border border-dashed rounded-3">
-              <i class="bi bi-search fs-2 mb-2 d-block text-primary-light"></i>
-              Busca el medidor por número de serie para reportar.
-            </div>
-          }
-
-          <!-- Medidor seleccionado (Resumen) -->
-          @if (selectedMeter()) {
-            <div class="selected-meter-badge p-3 rounded border border-primary bg-primary-soft mt-2">
-              <div class="d-flex justify-content-between align-items-start">
-                <div>
-                  <h6 class="text-primary-dark fw-bold mb-1">Medidor Seleccionado</h6>
-                  <div class="fs-5 fw-bold mb-1 text-dark">Serie: {{ selectedMeter()?.serie }}</div>
-                  @if (selectedMeter()?.clienteNombre) {
-                    <div class="text-secondary fw-bold small mb-1">
-                      <i class="bi bi-person-fill me-1"></i>{{ selectedMeter()?.clienteNombre }}
-                    </div>
-                  }
-                  <div class="text-muted small mb-2">{{ selectedMeter()?.marca }} - {{ selectedMeter()?.modelo }}</div>
-                  @if (selectedMeter()?.contratoId) {
-                    <div class="badge bg-primary text-white">Contrato #{{ selectedMeter()?.contratoId }}</div>
-                  }
+                  <div class="d-flex flex-wrap gap-2 mt-1">
+                    @for (anomalia of reading.anomalias; track anomalia.tipo) {
+                      <span class="badge bg-danger-soft text-danger rounded-pill small px-2 py-1">
+                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                        {{ anomalia.tipo }}
+                      </span>
+                    }
+                  </div>
                 </div>
-                <button
-                  type="button"
-                  class="btn btn-outline-danger btn-sm rounded-circle p-1"
-                  (click)="clearSelection()"
-                  title="Cambiar medidor"
-                >
-                  <i class="bi bi-x fs-5"></i>
-                </button>
-              </div>
+              }
             </div>
           }
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- FORMULARIO DE REPORTE DE NOVEDADES -->
-    <div class="col-lg-7 mb-4">
-      <div class="card border-0 shadow-sm form-card h-100">
-        <div class="card-body">
-          <h5 class="card-title text-primary-dark mb-4">Detalle de Novedad</h5>
+  <!-- SECCIÓN 2: Reportar Nueva Novedad (colapsable) -->
+  <div class="row">
+    <div class="col-12">
+      <!-- Toggle button -->
+      <button
+        class="btn btn-outline-primary w-100 mb-3 d-flex align-items-center justify-content-between"
+        type="button"
+        (click)="toggleReportSection()"
+      >
+        <span>
+          <i class="bi bi-plus-circle me-2"></i>
+          Reportar Nueva Novedad
+        </span>
+        <i class="bi" [class.bi-chevron-down]="!reportSectionExpanded()" [class.bi-chevron-up]="reportSectionExpanded()"></i>
+      </button>
 
-          @if (!selectedMeter()) {
-            <div class="text-center py-5 text-muted h-100 d-flex flex-column justify-content-center align-items-center">
-              <i class="bi bi-lock fs-1 mb-3 text-border"></i>
-              <p class="mb-0">Selecciona un medidor en el panel izquierdo para redactar el reporte.</p>
-            </div>
-          } @else {
-            <form [formGroup]="noveltyForm" (ngSubmit)="onSubmit()" class="d-flex flex-column gap-3">
-              
-              <!-- Tipo de Anomalía -->
-              <div class="mb-3">
-                <label class="form-label fw-bold small text-primary-dark">Tipo de Anomalía / Novedad *</label>
-                <select
-                  class="form-select form-select-lg shadow-none"
-                  formControlName="tipo"
-                  [class.is-invalid]="noveltyForm.get('tipo')?.touched && noveltyForm.get('tipo')?.invalid"
-                >
-                  <option value="" disabled>Selecciona el tipo de problema...</option>
-                  @for (tipo of tiposAnomalia; track tipo.value) {
-                    <option [value]="tipo.value">{{ tipo.label }}</option>
-                  }
-                </select>
-                @if (noveltyForm.get('tipo')?.touched && noveltyForm.get('tipo')?.hasError('required')) {
-                  <div class="invalid-feedback">El tipo de anomalía es obligatorio.</div>
-                }
-              </div>
+      @if (reportSectionExpanded()) {
+        <div class="row">
+          <!-- PANEL DE BUSQUEDA / SELECCION DE MEDIDOR -->
+          <div class="col-lg-5 mb-4">
+            <div class="card border-0 shadow-sm search-card h-100">
+              <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                  <h5 class="card-title text-primary-dark mb-0">Seleccionar Medidor</h5>
+                </div>
 
-              <!-- Observación / Descripción -->
-              <div class="mb-3">
-                <label class="form-label fw-bold small text-primary-dark">Descripción de la Novedad *</label>
-                <textarea
-                  class="form-control shadow-none"
-                  rows="4"
-                  placeholder="Detalla de forma clara el estado o problema encontrado..."
-                  formControlName="observacion"
-                  [class.is-invalid]="noveltyForm.get('observacion')?.touched && noveltyForm.get('observacion')?.invalid"
-                ></textarea>
-                @if (noveltyForm.get('observacion')?.touched && noveltyForm.get('observacion')?.hasError('required')) {
-                  <div class="invalid-feedback">La descripción es obligatoria.</div>
-                }
-                @if (noveltyForm.get('observacion')?.touched && noveltyForm.get('observacion')?.hasError('minlength')) {
-                  <div class="invalid-feedback">La descripción debe tener al menos 5 caracteres.</div>
-                }
-              </div>
-
-              <!-- Captura de Foto (Cámara / Galería) -->
-              <div class="mb-4">
-                <label class="form-label fw-bold small text-muted d-block">Evidencia Fotográfica (Opcional)</label>
-                
-                <div class="d-flex flex-wrap gap-3 align-items-center">
-                  <!-- Botón Cámara -->
-                  <label class="btn btn-outline-primary rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 cursor-pointer mb-0">
-                    <i class="bi bi-camera-fill fs-5"></i>
-                    <span>Capturar Foto</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      capture="environment"
-                      class="d-none"
-                      (change)="onPhotoCapture($event)"
-                    />
-                  </label>
-
-                  <!-- Vista previa foto -->
-                  @if (photoPreview()) {
-                    <div class="position-relative photo-preview-container rounded border">
-                      <img [src]="photoPreview()" alt="Foto evidencia" class="photo-preview rounded" />
-                      <button
-                        type="button"
-                        class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle p-1"
-                        (click)="photoPreview.set(null)"
-                        title="Eliminar foto"
-                      >
-                        <i class="bi bi-trash-fill"></i>
-                      </button>
-                    </div>
+                <!-- Input buscador -->
+                <div class="position-relative mb-3 search-box">
+                  <i class="bi bi-search search-icon"></i>
+                  <input
+                    type="text"
+                    class="form-control rounded-pill ps-5 shadow-none"
+                    placeholder="Nro Serie o ID Contrato..."
+                    [value]="searchQuery()"
+                    (input)="searchQuery.set($any($event.target).value)"
+                    [disabled]="!!selectedMeter()"
+                  />
+                  @if (searchQuery()) {
+                    <button
+                      type="button"
+                      class="btn-close clear-btn"
+                      aria-label="Limpiar"
+                      (click)="searchQuery.set('')"
+                    ></button>
                   }
                 </div>
-                <div class="form-text mt-1">Recomendado para evidenciar fugas o medidores en mal estado.</div>
-              </div>
 
-              <!-- Acciones de Enviar -->
-              <div class="d-flex justify-content-end gap-3 mt-auto pt-3 border-top">
-                <button
-                  type="button"
-                  class="btn btn-light rounded-pill px-4"
-                  (click)="clearSelection()"
-                  [disabled]="isSaving()"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  class="btn btn-primary rounded-pill px-5 d-flex align-items-center gap-2"
-                  [disabled]="noveltyForm.invalid || isSaving()"
-                >
-                  @if (isSaving()) {
-                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    Guardando...
-                  } @else {
-                    <i class="bi bi-exclamation-octagon-fill"></i>
-                    Reportar Novedad
-                  }
-                </button>
+                <!-- Resultados de búsqueda -->
+                @if (filteredMeters().length > 0 && !selectedMeter()) {
+                  <div class="list-group list-group-flush search-results overflow-auto rounded border" style="max-height: 400px;">
+                    @for (meter of filteredMeters(); track meter.medidorId) {
+                      <button
+                        type="button"
+                        class="list-group-item list-group-item-action p-3 d-flex justify-content-between align-items-center border-bottom"
+                        (click)="selectMeter(meter)"
+                      >
+                        <div>
+                          <div class="fw-bold text-dark mb-1">Serie: {{ meter.serie }}</div>
+                          @if (meter.clienteNombre) {
+                            <div class="text-secondary small mb-1">
+                              <i class="bi bi-person-fill me-1"></i>{{ meter.clienteNombre }}
+                            </div>
+                          }
+                          <div class="text-muted small">
+                            <i class="bi bi-tag-fill me-1"></i>{{ meter.marca }} - {{ meter.modelo }}
+                          </div>
+                        </div>
+                        @if (meter.contratoId) {
+                          <span class="badge bg-info text-dark rounded-pill">Contrato #{{ meter.contratoId }}</span>
+                        } @else {
+                          <span class="badge bg-light text-muted rounded-pill">Sin Contrato</span>
+                        }
+                      </button>
+                    }
+                  </div>
+                } @else if (searchQuery() && filteredMeters().length === 0 && !selectedMeter()) {
+                  <div class="text-center py-5 text-muted">
+                    <i class="bi bi-info-circle fs-2 mb-2 d-block"></i>
+                    No se encontraron medidores en el catálogo.
+                  </div>
+                } @else if (!selectedMeter()) {
+                  <div class="text-center py-5 text-muted border border-dashed rounded-3">
+                    <i class="bi bi-search fs-2 mb-2 d-block text-primary-light"></i>
+                    Busca el medidor por número de serie para reportar.
+                  </div>
+                }
+
+                <!-- Medidor seleccionado (Resumen) -->
+                @if (selectedMeter()) {
+                  <div class="selected-meter-badge p-3 rounded border border-primary bg-primary-soft mt-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div>
+                        <h6 class="text-primary-dark fw-bold mb-1">Medidor Seleccionado</h6>
+                        <div class="fs-5 fw-bold mb-1 text-dark">Serie: {{ selectedMeter()?.serie }}</div>
+                        @if (selectedMeter()?.clienteNombre) {
+                          <div class="text-secondary fw-bold small mb-1">
+                            <i class="bi bi-person-fill me-1"></i>{{ selectedMeter()?.clienteNombre }}
+                          </div>
+                        }
+                        <div class="text-muted small mb-2">{{ selectedMeter()?.marca }} - {{ selectedMeter()?.modelo }}</div>
+                        @if (selectedMeter()?.contratoId) {
+                          <div class="badge bg-primary text-white">Contrato #{{ selectedMeter()?.contratoId }}</div>
+                        }
+                      </div>
+                      <button
+                        type="button"
+                        class="btn btn-outline-danger btn-sm rounded-circle p-1"
+                        (click)="clearSelection()"
+                        title="Cambiar medidor"
+                      >
+                        <i class="bi bi-x fs-5"></i>
+                      </button>
+                    </div>
+                  </div>
+                }
               </div>
-            </form>
-          }
+            </div>
+          </div>
+
+          <!-- FORMULARIO DE REPORTE DE NOVEDADES -->
+          <div class="col-lg-7 mb-4">
+            <div class="card border-0 shadow-sm form-card h-100">
+              <div class="card-body">
+                <h5 class="card-title text-primary-dark mb-4">Detalle de Novedad</h5>
+
+                @if (!selectedMeter()) {
+                  <div class="text-center py-5 text-muted h-100 d-flex flex-column justify-content-center align-items-center">
+                    <i class="bi bi-lock fs-1 mb-3 text-border"></i>
+                    <p class="mb-0">Selecciona un medidor en el panel izquierdo para redactar el reporte.</p>
+                  </div>
+                } @else {
+                  <form [formGroup]="noveltyForm" (ngSubmit)="onSubmit()" class="d-flex flex-column gap-3">
+
+                    <!-- Tipo de Anomalía -->
+                    <div class="mb-3">
+                      <label class="form-label fw-bold small text-primary-dark">Tipo de Anomalía / Novedad *</label>
+                      <select
+                        class="form-select form-select-lg shadow-none"
+                        formControlName="tipo"
+                        [class.is-invalid]="noveltyForm.get('tipo')?.touched && noveltyForm.get('tipo')?.invalid"
+                      >
+                        <option value="" disabled>Selecciona el tipo de problema...</option>
+                        @for (tipo of tiposAnomalia; track tipo.value) {
+                          <option [value]="tipo.value">{{ tipo.label }}</option>
+                        }
+                      </select>
+                      @if (noveltyForm.get('tipo')?.touched && noveltyForm.get('tipo')?.hasError('required')) {
+                        <div class="invalid-feedback">El tipo de anomalía es obligatorio.</div>
+                      }
+                    </div>
+
+                    <!-- Observación / Descripción -->
+                    <div class="mb-3">
+                      <label class="form-label fw-bold small text-primary-dark">Descripción de la Novedad *</label>
+                      <textarea
+                        class="form-control shadow-none"
+                        rows="4"
+                        placeholder="Detalla de forma clara el estado o problema encontrado..."
+                        formControlName="observacion"
+                        [class.is-invalid]="noveltyForm.get('observacion')?.touched && noveltyForm.get('observacion')?.invalid"
+                      ></textarea>
+                      @if (noveltyForm.get('observacion')?.touched && noveltyForm.get('observacion')?.hasError('required')) {
+                        <div class="invalid-feedback">La descripción es obligatoria.</div>
+                      }
+                      @if (noveltyForm.get('observacion')?.touched && noveltyForm.get('observacion')?.hasError('minlength')) {
+                        <div class="invalid-feedback">La descripción debe tener al menos 5 caracteres.</div>
+                      }
+                    </div>
+
+                    <!-- Captura de Foto (Cámara / Galería) -->
+                    <div class="mb-4">
+                      <label class="form-label fw-bold small text-muted d-block">Evidencia Fotográfica (Opcional)</label>
+
+                      <div class="d-flex flex-wrap gap-3 align-items-center">
+                        <!-- Botón Cámara -->
+                        <label class="btn btn-outline-primary rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 cursor-pointer mb-0">
+                          <i class="bi bi-camera-fill fs-5"></i>
+                          <span>Capturar Foto</span>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            capture="environment"
+                            class="d-none"
+                            (change)="onPhotoCapture($event)"
+                          />
+                        </label>
+
+                        <!-- Vista previa foto -->
+                        @if (photoPreview()) {
+                          <div class="position-relative photo-preview-container rounded border">
+                            <img [src]="photoPreview()" alt="Foto evidencia" class="photo-preview rounded" />
+                            <button
+                              type="button"
+                              class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle p-1"
+                              (click)="photoPreview.set(null)"
+                              title="Eliminar foto"
+                            >
+                              <i class="bi bi-trash-fill"></i>
+                            </button>
+                          </div>
+                        }
+                      </div>
+                      <div class="form-text mt-1">Recomendado para evidenciar fugas o medidores en mal estado.</div>
+                    </div>
+
+                    <!-- Acciones de Enviar -->
+                    <div class="d-flex justify-content-end gap-3 mt-auto pt-3 border-top">
+                      <button
+                        type="button"
+                        class="btn btn-light rounded-pill px-4"
+                        (click)="clearSelection()"
+                        [disabled]="isSaving()"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        class="btn btn-primary rounded-pill px-5 d-flex align-items-center gap-2"
+                        [disabled]="noveltyForm.invalid || isSaving()"
+                      >
+                        @if (isSaving()) {
+                          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                          Guardando...
+                        } @else {
+                          <i class="bi bi-exclamation-octagon-fill"></i>
+                          Reportar Novedad
+                        }
+                      </button>
+                    </div>
+                  </form>
+                }
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      }
     </div>
   </div>
 </div>

@@ -6,11 +6,13 @@ import { ActivatedRoute } from '@angular/router';
 import { MetersService } from '../../contracts/meters/services/meters.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { NetworkService } from '../../../core/services/network.service';
+import { OperatorService } from '../service/operator.service';
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
 import { environment } from '../../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
+import type { ReadingWithAnomaly } from '../models/operator.models';
 
 @Component({
   selector: 'app-operator-novelties',
@@ -25,17 +27,24 @@ export class NovedadesComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly metersService = inject(MetersService);
   private readonly dbService = inject(IndexedDbService);
+  private readonly operatorService = inject(OperatorService);
   readonly networkService = inject(NetworkService);
   readonly syncService = inject(OperatorSyncService);
   private readonly toastService = inject(ToastService);
 
+  // ---- Pending anomalies from backend (new) ----
+  readonly pendingAnomalies = signal<ReadingWithAnomaly[]>([]);
+  readonly isLoadingAnomalies = signal<boolean>(false);
+  readonly offlineMode = signal<boolean>(false);
+  readonly reportSectionExpanded = signal<boolean>(false);
+
+  // ---- Report form (existing, kept as secondary action) ----
   readonly metersList = signal<IMeterDto[]>([]);
   readonly searchQuery = signal<string>('');
   readonly selectedMeter = signal<IMeterDto | null>(null);
   readonly isLoadingMeters = signal<boolean>(false);
   readonly isSaving = signal<boolean>(false);
 
-  // Tipos de anomalía definidos en el backend
   readonly tiposAnomalia = [
     { value: 'FUGA', label: 'Fuga de Agua' },
     { value: 'MEDIDOR_DAÑADO', label: 'Medidor Dañado / Roto' },
@@ -46,7 +55,6 @@ export class NovedadesComponent implements OnInit {
   photoPreview = signal<string | null>(null);
   noveltyForm!: FormGroup;
 
-  // Filtrado de medidores
   readonly filteredMeters = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
     const list = this.metersList();
@@ -61,16 +69,46 @@ export class NovedadesComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
+    this.loadInitialData();
+  }
+
+  private loadInitialData(): void {
+    if (this.networkService.isOnline()) {
+      this.offlineMode.set(false);
+      this.loadPendingAnomalies();
+    } else {
+      this.offlineMode.set(true);
+    }
+
+    // Always load cached meters for the report form (secondary action)
     this.loadCachedMeters().then(() => {
-      // Check for pre-selected meter via query params (from Lecturas flow)
       const medidorId = this.route.snapshot.queryParamMap.get('medidorId');
       if (medidorId) {
         const meter = this.metersList().find((m) => m.medidorId.toString() === medidorId);
         if (meter) {
           this.selectMeter(meter);
+          // Pre-expand the report section if coming from another flow
+          this.reportSectionExpanded.set(true);
         }
       }
     });
+  }
+
+  private loadPendingAnomalies(): void {
+    this.isLoadingAnomalies.set(true);
+    this.operatorService.getReadingsWithAnomalies().subscribe({
+      next: (anomalies) => {
+        this.pendingAnomalies.set(anomalies);
+        this.isLoadingAnomalies.set(false);
+      },
+      error: () => {
+        this.isLoadingAnomalies.set(false);
+      },
+    });
+  }
+
+  toggleReportSection(): void {
+    this.reportSectionExpanded.set(!this.reportSectionExpanded());
   }
 
   private initForm(): void {
@@ -117,9 +155,6 @@ export class NovedadesComponent implements OnInit {
     reader.readAsDataURL(file);
   }
 
-  /**
-   * Obtiene la última lectura del medidor/contrato en el backend
-   */
   private async getLatestReadingId(contratoId: string): Promise<string> {
     const response = await firstValueFrom(
       this.http.get<any>(`${environment.apiUrl}/readings?contratoId=${contratoId}`, {
@@ -127,7 +162,6 @@ export class NovedadesComponent implements OnInit {
       })
     );
     if (response?.data && response.data.length > 0) {
-      // Retornamos el lecturaId de la lectura más reciente
       return response.data[0].lecturaId;
     }
     throw new Error('No se encontró ninguna lectura asociada al contrato del medidor.');
@@ -147,7 +181,6 @@ export class NovedadesComponent implements OnInit {
 
     if (this.networkService.isOnline() && meter.contratoId) {
       try {
-        // En online, consultamos dinámicamente la última lectura del medidor
         lecturaId = await this.getLatestReadingId(meter.contratoId.toString());
       } catch (err: any) {
         this.toastService.error(err.message || 'Error al obtener la lectura para asociar la novedad.', 'Error');
@@ -155,18 +188,15 @@ export class NovedadesComponent implements OnInit {
         return;
       }
     } else {
-      // En offline, guardaremos una referencia temporal (o medidorId)
-      // El sync service se encargará de resolver el lecturaId al sincronizar cuando esté online.
       lecturaId = `TEMP_METER_${meter.medidorId}`;
     }
 
     const payload: any = {
-      lecturaId: lecturaId,
+      lecturaId,
       observacion: formValue.observacion,
       tipo: formValue.tipo,
       estado: 'PENDIENTE',
       fotoBase64: this.photoPreview() || null,
-      // Metadatos extras para resolver offline
       medidorId: meter.medidorId.toString(),
       contratoId: meter.contratoId ? meter.contratoId.toString() : null,
     };
@@ -174,6 +204,11 @@ export class NovedadesComponent implements OnInit {
     try {
       await this.syncService.submitAnomaly(payload);
       this.clearSelection();
+      this.reportSectionExpanded.set(false);
+      // Refresh pending anomalies after successful submission (if online)
+      if (this.networkService.isOnline()) {
+        this.loadPendingAnomalies();
+      }
     } catch (e) {
       console.error('Error al registrar novedad:', e);
     } finally {

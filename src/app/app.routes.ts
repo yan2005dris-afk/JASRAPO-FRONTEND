@@ -38,6 +38,14 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
+        path: 'tareas',
+        data: { breadcrumb: 'Tareas' },
+        loadComponent: () =>
+          import('./features/operator/tasks/tasks.component').then(
+            (m) => m.TasksComponent,
+          ),
+      },
+      {
         path: 'lecturas',
         data: { breadcrumb: 'Lecturas' },
         loadComponent: () =>

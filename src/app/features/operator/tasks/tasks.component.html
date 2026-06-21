@@ -1,0 +1,108 @@
+<div class="tasks-screen">
+  <!-- Header -->
+  <div class="tasks-header">
+    <h1 class="tasks-title">Mis Tareas</h1>
+    <button class="view-toggle-btn" (click)="toggleView()" type="button">
+      @if (viewMode() === 'list') {
+        <i class="bi bi-map"></i> Ver Mapa
+      } @else {
+        <i class="bi bi-list-ul"></i> Ver Lista
+      }
+    </button>
+  </div>
+
+  <!-- Filter chips -->
+  <div class="filter-chips" role="group" aria-label="Filtrar tareas por tipo">
+    @for (option of filterOptions; track option.value) {
+      <button
+        class="filter-chip"
+        [class.active]="activeFilter() === option.value"
+        (click)="setFilter(option.value)"
+        type="button"
+      >
+        {{ option.label }}
+      </button>
+    }
+  </div>
+
+  <!-- Loading skeleton -->
+  @if (isLoading()) {
+    <div class="skeleton-list" aria-busy="true" aria-label="Cargando tareas...">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="skeleton-card"></div>
+      }
+    </div>
+  } @else {
+
+    <!-- Map view -->
+    @if (viewMode() === 'map') {
+      <div class="map-section">
+        <!-- Google Maps integration pending — tasks ordered by campo `orden` -->
+        <div id="map" style="height:500px" class="map-placeholder">
+          <div class="map-placeholder-inner">
+            <i class="bi bi-map fs-1 mb-2 d-block"></i>
+            <p>Integración con Google Maps pendiente</p>
+            <small class="text-muted">Las tareas se ordenan por el campo <code>orden</code></small>
+          </div>
+        </div>
+        <!-- Tasks list below map, ordered by orden, showing coordinates if available -->
+        <div class="map-task-list">
+          <h2 class="map-task-list-title">Tareas en orden</h2>
+          @for (task of filteredTasks(); track task.rutaId) {
+            <div class="map-task-row">
+              <span class="task-orden-badge">{{ task.orden }}</span>
+              <span class="task-name">{{ task.nombre }}</span>
+              @if (task.medidor?.latitud && task.medidor?.longitud) {
+                <span class="task-coords">
+                  {{ task.medidor!.latitud | number:'1.4-4' }},
+                  {{ task.medidor!.longitud | number:'1.4-4' }}
+                </span>
+              } @else {
+                <span class="task-no-coords">Sin coordenadas</span>
+              }
+            </div>
+          }
+          @if (filteredTasks().length === 0) {
+            <p class="empty-state">No hay tareas para mostrar.</p>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- List view -->
+    @if (viewMode() === 'list') {
+      <div class="task-list">
+        @for (task of filteredTasks(); track task.rutaId) {
+          <div class="task-card">
+            <div class="task-card-top">
+              <span class="task-orden">#{{ task.orden }}</span>
+              <span class="route-badge badge-{{ task.tipoRuta.toLowerCase() }}">
+                {{ getRouteTypeLabel(task.tipoRuta) }}
+              </span>
+              <span class="state-badge state-{{ task.estado.toLowerCase() }}">
+                {{ getStateLabel(task.estado) }}
+              </span>
+            </div>
+            <h3 class="task-nombre">{{ task.nombre }}</h3>
+            @if (task.medidor) {
+              <p class="task-medidor">
+                <i class="bi bi-speedometer"></i>
+                Serie: {{ task.medidor.serie }}
+              </p>
+            }
+            @if (task.descripcion) {
+              <p class="task-descripcion">{{ task.descripcion }}</p>
+            }
+          </div>
+        }
+        @if (filteredTasks().length === 0) {
+          <div class="empty-state">
+            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+            No hay tareas para el filtro seleccionado.
+          </div>
+        }
+      </div>
+    }
+
+  }
+</div>
