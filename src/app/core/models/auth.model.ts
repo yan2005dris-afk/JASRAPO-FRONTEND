@@ -1,36 +1,48 @@
+export interface Avatar {
+  url: string;
+  key?: string;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
 }
 
+export interface TokenInfo {
+  iat: number;
+  exp: number;
+  iatDate: string;
+  expDate: string;
+}
+
 export interface LoginResponse {
   accessToken: string;
+  refreshToken: string;
   sid: string;
-  sub: string; // User ID
+  sub: number;
   email: string;
-  name: string;
-  roleId: number;
-  roleName?: string;
-  avatar?: string;
-  iat?: string | number;
-  exp?: string | number;
-  createdAt?: string; // ISO 8601 date string
-  expiresAt?: string; // ISO 8601 date string
+  nombre: string;
+  rolId: number | null;
+  nombreRol: string | null;
+  avatar: Avatar;
+  roles: number[];
+  accessTokenInfo: TokenInfo;
+  refreshTokenInfo: TokenInfo;
 }
 
 export interface RefreshTokenResponse {
   accessToken: string;
-  createdAt: string;
-  expiresAt: string;
+  createdAt?: string;
+  expiresAt?: string;
 }
 
 export interface User {
   id: string;
   email: string;
   name: string | null;
-  roleId: number; // ID numérico del rol
-  roleName?: string; // Nombre del rol (opcional, para display)
-  avatar?: string;
+  roleId: number | null;
+  roleName?: string | null;
+  avatar?: Avatar | null;
 }
 
 export interface AuthState {

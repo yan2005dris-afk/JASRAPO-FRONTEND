@@ -11,13 +11,28 @@ export const routes: Routes = [
   },
   {
     path: 'consulta-planilla',
-    loadComponent: () =>
-      import('./features/bill-inquiry/bill-inquiry.component').then((m) => m.BillInquiryComponent),
     canActivate: [guestGuard],
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/bill-inquiry/bill-inquiry.component').then(
+            (m) => m.BillInquiryComponent,
+          ),
+      },
+      {
+        path: 'preview',
+        loadComponent: () =>
+          import('./features/consulta-planilla/preview-planilla/preview-planilla.component').then(
+            (m) => m.PreviewPlanillaComponent,
+          ),
+      },
+    ],
   },
   {
     path: 'app',
-    loadComponent: () => import('./layout/main-layout/main-layout').then((m) => m.MainLayout),
+    loadComponent: () =>
+      import('./layout/main-layout/main-layout.component').then((m) => m.MainLayout),
     canActivate: [authGuard],
     resolve: { menu: menuResolver },
     children: [
@@ -25,7 +40,9 @@ export const routes: Routes = [
         path: 'dashboard',
         data: { breadcrumb: 'Dashboard' },
         loadComponent: () =>
-          import('./features/dashboard/dashboard/dashboard').then((m) => m.Dashboard),
+          import('./features/dashboard/dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent,
+          ),
       },
 
       // Sección Administración (Solo Admin)
@@ -37,12 +54,32 @@ export const routes: Routes = [
         children: [
           {
             path: 'users',
-            data: { breadcrumb: 'Gestión de Usuarios' },
-            loadComponent: () =>
-              import('./features/users/user-management/user-management').then(
-                (m) => m.UserManagement,
-              ),
+            children: [
+              {
+                path: '',
+                pathMatch: 'full',
+                loadComponent: () =>
+                  import('./features/users/user-management/user-management.component').then(
+                    (m) => m.UserManagementComponent,
+                  ),
+              },
+              {
+                path: 'new',
+                loadComponent: () =>
+                  import('./features/users/user-form/user-form.component').then(
+                    (m) => m.UserFormComponent,
+                  ),
+              },
+              {
+                path: ':id/edit',
+                loadComponent: () =>
+                  import('./features/users/user-form/user-form.component').then(
+                    (m) => m.UserFormComponent,
+                  ),
+              },
+            ],
           },
+
           {
             path: 'sectores',
             data: { breadcrumb: 'Sectores' },
@@ -314,12 +351,33 @@ export const routes: Routes = [
         ],
       },
 
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/profile/profile.component').then((m) => m.ProfileComponent),
+      },
+
       // Otras secciones comunes
       {
         path: 'water-sources',
-        data: { breadcrumb: 'Fuentes de Agua' },
         loadComponent: () =>
-          import('./features/dashboard/dashboard/dashboard').then((m) => m.Dashboard),
+          import('./features/dashboard/dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent,
+          ),
+      },
+      {
+        path: 'Facturacion',
+        loadComponent: () =>
+          import('./features/dashboard/dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent,
+          ),
+      },
+      {
+        path: 'Reportes',
+        loadComponent: () =>
+          import('./features/dashboard/dashboard/dashboard.component').then(
+            (m) => m.DashboardComponent,
+          ),
       },
       {
         path: '',
@@ -332,5 +390,11 @@ export const routes: Routes = [
     path: '',
     redirectTo: 'consulta-planilla',
     pathMatch: 'full',
+  },
+  // Catch-all para 404
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./features/error/error-page/error-page.component').then((m) => m.ErrorPageComponent),
   },
 ];

@@ -4,7 +4,7 @@ import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { of } from 'rxjs';
 
-import { MainLayout } from './main-layout';
+import { MainLayout } from './main-layout.component';
 import { AuthService } from '../../core/services/auth.service';
 import { MenuService } from '../../core/services/menu.service';
 

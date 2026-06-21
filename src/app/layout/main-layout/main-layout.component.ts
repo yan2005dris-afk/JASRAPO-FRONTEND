@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { Sidebar } from '../sidebar/sidebar';
+import { Sidebar } from '../sidebar/sidebar.component';
 import { Header } from '../header/header';
 import { LayoutService } from '../../core/services/layout.service';
 import { BreadcrumbComponent } from '../../shared/components/breadcrumb/breadcrumb.component';
@@ -8,8 +8,8 @@ import { BreadcrumbComponent } from '../../shared/components/breadcrumb/breadcru
 @Component({
   selector: 'app-main-layout',
   imports: [RouterModule, Sidebar, Header, BreadcrumbComponent],
-  templateUrl: './main-layout.html',
-  styleUrl: './main-layout.scss',
+  templateUrl: './main-layout.component.html',
+  styleUrl: './main-layout.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MainLayout {

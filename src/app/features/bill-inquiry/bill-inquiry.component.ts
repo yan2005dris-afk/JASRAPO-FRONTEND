@@ -49,6 +49,7 @@ export class BillInquiryComponent {
         this.loading.set(false);
         if (data) {
           this.results.set(data);
+          this.consultaPlanillaService.currentPlanilla.set(data);
         } else {
           this.noResults.set(true);
         }
