@@ -2,7 +2,10 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  OnInit,
   inject,
+  input,
+  output,
   computed,
   signal,
 } from '@angular/core';
@@ -30,10 +33,28 @@ interface BackendErrorResponse {
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class ComunidadesComponent {
+export class ComunidadesComponent implements OnInit {
   private readonly comunidadesService = inject(ComunidadesService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly toastService = inject(ToastService);
+
+  // Modo selección: cuando es true, la pantalla se usa como selector (sin crear/editar).
+  readonly selectionMode = input(false);
+  readonly comunidadSelected = output<Comunidad>();
+
+  ngOnInit(): void {
+    // En modo selección se cargan las comunidades de una vez para poder elegir.
+    if (this.selectionMode()) {
+      this.buscarComunidades();
+    }
+  }
+
+  /** Emite la comunidad elegida (solo en modo selección). */
+  selectComunidad(comunidad: Comunidad): void {
+    if (this.selectionMode()) {
+      this.comunidadSelected.emit(comunidad);
+    }
+  }
   private readonly focusableSelectors =
     'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 

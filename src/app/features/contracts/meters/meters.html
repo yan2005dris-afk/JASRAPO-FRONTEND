@@ -3,35 +3,37 @@
   Maneja la visualización de métricas, listado paginado y gestión de estados.
 -->
 <div class="meters-page p-4">
-  <!-- Cabecera de la página -->
-  <header
-    class="page-header d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3"
-  >
-    <h2 class="mb-0 fw-bold">Inventario de Medidores</h2>
-    <button class="btn btn-register btn-sm px-3 py-2 fw-medium" (click)="openRegistrar()">
-      Registrar medidor
-    </button>
-  </header>
+  <!-- Cabecera de la página (oculta en modo selección) -->
+  @if (!selectionMode()) {
+    <header
+      class="page-header d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3"
+    >
+      <h2 class="mb-0 fw-bold">Inventario de Medidores</h2>
+      <button class="btn btn-register btn-sm px-3 py-2 fw-medium" (click)="openRegistrar()">
+        Registrar medidor
+      </button>
+    </header>
 
-  <!-- Rejilla de indicadores principales -->
-  <section class="metrics-grid mb-4">
-    <div class="card metric-card card-bodega shadow-sm">
-      <span class="metric-label">[EN BODEGA]</span>
-      <h3 class="metric-value fw-bold mt-2">{{ warehouseMeters }}</h3>
-    </div>
+    <!-- Rejilla de indicadores principales -->
+    <section class="metrics-grid mb-4">
+      <div class="card metric-card card-bodega shadow-sm">
+        <span class="metric-label">[EN BODEGA]</span>
+        <h3 class="metric-value fw-bold mt-2">{{ warehouseMeters }}</h3>
+      </div>
 
-    <div class="card metric-card card-instalados shadow-sm">
-      <span class="metric-label">[INSTALADOS]</span>
-      <h3 class="metric-value fw-bold mt-2">{{ installedMeters }}</h3>
-      <i class="bi bi-link-45deg metric-icon icon-blue"></i>
-    </div>
+      <div class="card metric-card card-instalados shadow-sm">
+        <span class="metric-label">[INSTALADOS]</span>
+        <h3 class="metric-value fw-bold mt-2">{{ installedMeters }}</h3>
+        <i class="bi bi-link-45deg metric-icon icon-blue"></i>
+      </div>
 
-    <div class="card metric-card card-danados shadow-sm">
-      <span class="metric-label">[DAÑADOS]</span>
-      <h3 class="metric-value fw-bold mt-2">{{ damagedMeters }}</h3>
-      <i class="bi bi-exclamation-triangle metric-icon text-danger"></i>
-    </div>
-  </section>
+      <div class="card metric-card card-danados shadow-sm">
+        <span class="metric-label">[DAÑADOS]</span>
+        <h3 class="metric-value fw-bold mt-2">{{ damagedMeters }}</h3>
+        <i class="bi bi-exclamation-triangle metric-icon text-danger"></i>
+      </div>
+    </section>
+  }
 
   <!-- Contenedor principal de la tabla -->
   <div class="card shadow-sm table-card">
@@ -73,12 +75,18 @@
                 <th scope="col">Marca</th>
                 <th scope="col">Fecha Ingreso</th>
                 <th scope="col">Estado</th>
-                <th scope="col">Acciones</th>
+                @if (!selectionMode()) {
+                  <th scope="col">Acciones</th>
+                }
               </tr>
             </thead>
             <tbody>
               @for (medidor of pagedMetersComponent; track medidor.serie) {
-                <tr>
+                <tr
+                  [class.selectable-row]="selectionMode()"
+                  [title]="selectionMode() ? 'Doble clic para seleccionar' : ''"
+                  (dblclick)="selectMeter(medidor)"
+                >
                   <td class="ps-4 fw-medium text-dark">{{ medidor.serie }}</td>
                   <td class="text-muted">{{ medidor.marca }}</td>
                   <td class="text-muted">{{ medidor.fechaInstalacion ?? 'Sin fecha' }}</td>
@@ -96,44 +104,49 @@
                       </span>
                     </span>
                   </td>
-                  <td>
-                    <div class="dropdown">
-                      <button
-                        class="btn btn-link text-muted p-0 shadow-none"
-                        (click)="toggleDropdown(medidor.medidorId!, $event)"
-                        aria-label="Menú de acciones"
-                      >
-                        <i class="bi bi-three-dots-vertical"></i>
-                      </button>
-                      <ul
-                        class="dropdown-menu dropdown-menu-end shadow-sm border-0"
-                        [class.show]="openDropdownId === medidor.medidorId"
-                        style="min-width: 130px"
-                      >
-                        <li>
-                          <button
-                            class="dropdown-item d-flex align-items-center gap-2"
-                            (click)="openEditar(medidor)"
-                          >
-                            <i class="bi bi-pencil-fill text-primary" style="font-size: 0.8rem"></i>
-                            Editar
-                          </button>
-                        </li>
-                        <li>
-                          <hr class="dropdown-divider" />
-                        </li>
-                        <li>
-                          <button
-                            class="dropdown-item d-flex align-items-center gap-2 text-danger"
-                            (click)="eliminarMedidor(medidor)"
-                          >
-                            <i class="bi bi-trash-fill" style="font-size: 0.8rem"></i>
-                            Eliminar
-                          </button>
-                        </li>
-                      </ul>
-                    </div>
-                  </td>
+                  @if (!selectionMode()) {
+                    <td>
+                      <div class="dropdown">
+                        <button
+                          class="btn btn-link text-muted p-0 shadow-none"
+                          (click)="toggleDropdown(medidor.medidorId!, $event)"
+                          aria-label="Menú de acciones"
+                        >
+                          <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul
+                          class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                          [class.show]="openDropdownId === medidor.medidorId"
+                          style="min-width: 130px"
+                        >
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2"
+                              (click)="openEditar(medidor)"
+                            >
+                              <i
+                                class="bi bi-pencil-fill text-primary"
+                                style="font-size: 0.8rem"
+                              ></i>
+                              Editar
+                            </button>
+                          </li>
+                          <li>
+                            <hr class="dropdown-divider" />
+                          </li>
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                              (click)="eliminarMedidor(medidor)"
+                            >
+                              <i class="bi bi-trash-fill" style="font-size: 0.8rem"></i>
+                              Eliminar
+                            </button>
+                          </li>
+                        </ul>
+                      </div>
+                    </td>
+                  }
                 </tr>
               }
               @if (pagedMetersComponent.length === 0) {

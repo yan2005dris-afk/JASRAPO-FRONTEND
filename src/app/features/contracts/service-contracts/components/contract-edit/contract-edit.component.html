@@ -1,0 +1,67 @@
+<div class="modal fade show d-block contract-edit-modal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow rounded-4">
+      <!-- Encabezado -->
+      <div class="modal-header border-bottom-0 pb-2">
+        <div>
+          <h5 class="modal-title fw-bold">Editar Contrato</h5>
+          <p class="text-muted mb-0 small">{{ contract().numeroGuia }}</p>
+        </div>
+        <button
+          type="button"
+          class="btn-close shadow-none"
+          aria-label="Cerrar"
+          (click)="close()"
+        ></button>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <div class="modal-body pt-2">
+          <!-- Estado -->
+          <div class="mb-3">
+            <label for="estado" class="form-label fw-semibold text-dark">Estado</label>
+            <select id="estado" class="form-select" formControlName="estado">
+              @for (state of states(); track state.codigo) {
+                <option [value]="state.codigo">{{ state.nombre }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Dirección de suministro -->
+          <div class="mb-3">
+            <label for="direccionSuministro" class="form-label fw-semibold text-dark">
+              Dirección de suministro
+            </label>
+            <input
+              id="direccionSuministro"
+              type="text"
+              class="form-control"
+              formControlName="direccionSuministro"
+            />
+          </div>
+        </div>
+
+        <!-- Pie -->
+        <div class="modal-footer border-top-0">
+          <button type="button" class="btn btn-light" (click)="close()" [disabled]="isSaving()">
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="btn btn-primary d-flex align-items-center gap-2"
+            [disabled]="isSaving()"
+          >
+            @if (isSaving()) {
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
+            }
+            {{ isSaving() ? 'Guardando...' : 'Guardar cambios' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

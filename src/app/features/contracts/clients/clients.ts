@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  OnInit,
+  inject,
+  input,
+  output,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -26,13 +34,32 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class ClientsComponent {
+export class ClientsComponent implements OnInit {
   readonly authService = inject(AuthService);
 
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly clientsService = inject(ClientsService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
+
+  // Modo selección: cuando es true, la pantalla se usa como selector dentro de otro formulario
+  // (oculta crear/editar/eliminar y permite elegir un cliente con doble clic).
+  readonly selectionMode = input(false);
+  readonly clientSelected = output<IClient>();
+
+  ngOnInit(): void {
+    // En modo selección se cargan los clientes de una vez para poder elegir.
+    if (this.selectionMode()) {
+      this.searchClients();
+    }
+  }
+
+  /** Emite el cliente elegido (solo en modo selección). */
+  selectClient(cliente: IClient): void {
+    if (this.selectionMode()) {
+      this.clientSelected.emit(cliente);
+    }
+  }
 
   clients: IClient[] = [];
   totalItems = 0;

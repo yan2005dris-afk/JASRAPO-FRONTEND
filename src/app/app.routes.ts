@@ -192,7 +192,7 @@ export const routes: Routes = [
               import('./features/contracts/clients/clients').then((m) => m.ClientsComponent),
           },
           {
-            path: 'ContratosDeServicios',
+            path: 'Contratos',
             data: { breadcrumb: 'Contratos de Servicios' },
             loadComponent: () =>
               import('./features/contracts/service-contracts/service-contracts').then(

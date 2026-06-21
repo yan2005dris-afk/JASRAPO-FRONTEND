@@ -1,1 +1,224 @@
-<p>contratos-de-servicios works!</p>
+@if (isFormOpen()) {
+  <app-service-contract-form (saved)="onContractSaved()" (cancelled)="closeForm()" />
+} @else {
+  <div class="contracts-container">
+    <!-- Encabezado -->
+    <div class="page-header mb-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+      <div>
+        <h3 class="fw-bold mb-0 text-dark fs-4">Gestión de Contratos</h3>
+        <p class="text-muted small mb-0">
+          Registre y asocie un cliente con un medidor y una tarifa.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+        (click)="registerNewContract()"
+      >
+        <i class="bi bi-file-earmark-plus"></i>
+        Registrar Nuevo Contrato
+      </button>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-3">
+      <!-- Buscador -->
+      <div
+        class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex align-items-center gap-2 flex-wrap"
+      >
+        <div class="input-group search-group">
+          <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+            <i class="bi bi-search"></i>
+          </span>
+
+          <input
+            type="text"
+            class="form-control border-start-0 ps-0 shadow-none"
+            placeholder="Buscar por N° de guía (ej. GUIA-1-0051)..."
+            [ngModel]="searchTerm()"
+            (ngModelChange)="searchTerm.set($event)"
+            (keyup.enter)="search()"
+          />
+        </div>
+
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="search()"
+          [disabled]="isLoading()"
+        >
+          @if (isLoading()) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          } @else {
+            <i class="bi bi-search"></i>
+          }
+          {{ isLoading() ? 'Buscando...' : 'Buscar' }}
+        </button>
+      </div>
+
+      <!-- Tabla -->
+      <div class="pt-2">
+        <!-- Estado inicial: aún no se ha buscado -->
+        @if (!hasFetched() && !isLoading()) {
+          <div class="empty-state">
+            <div class="empty-state-icon">
+              <i class="bi bi-search"></i>
+            </div>
+            <p class="fw-semibold mb-1 text-dark">Sin resultados para mostrar</p>
+            <p class="text-muted small mb-0">
+              Realizá una <strong>búsqueda</strong> para visualizar los contratos registrados.
+            </p>
+          </div>
+        }
+
+        <!-- Cargando -->
+        @if (isLoading()) {
+          <div class="text-center py-5 text-muted">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+            <p class="mt-3 mb-0">Cargando contratos...</p>
+          </div>
+        }
+
+        @if (hasFetched() && !isLoading()) {
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 custom-table">
+              <thead>
+                <tr>
+                  <th scope="col" class="ps-4 text-muted fw-semibold small">N° Guía</th>
+                  <th scope="col" class="text-muted fw-semibold small">Cliente</th>
+                  <th scope="col" class="text-muted fw-semibold small">Tarifa</th>
+                  <th scope="col" class="text-muted fw-semibold small">Medidor</th>
+                  <th scope="col" class="text-muted fw-semibold small">Ubicación</th>
+                  <th scope="col" class="text-muted fw-semibold small text-center">Estado</th>
+                  <th scope="col" class="text-muted fw-semibold small text-center pe-4">
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                @for (contract of contracts(); track contract.contratoId) {
+                  <tr>
+                    <td class="ps-4 fw-medium text-dark">
+                      {{ contract.numeroGuia || '—' }}
+                    </td>
+
+                    <td>
+                      <div class="d-flex align-items-center gap-2">
+                        <div class="client-avatar">
+                          {{ (getClientName(contract) || '?').charAt(0).toUpperCase() }}
+                        </div>
+                        <div class="d-flex flex-column">
+                          <span class="text-dark small fw-medium">{{
+                            getClientName(contract)
+                          }}</span>
+                          <span class="text-muted x-small">{{
+                            contract.cliente.identificacion
+                          }}</span>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td class="text-muted small">{{ contract.categoriaTarifa.nombre }}</td>
+
+                    <td class="small">
+                      @if (getCurrentMeter(contract); as historial) {
+                        <span class="text-dark fw-medium">{{ historial.medidor.serie }}</span>
+                        <span class="text-muted d-block x-small">
+                          {{ historial.medidor.marca }} {{ historial.medidor.modelo }}
+                        </span>
+                      } @else {
+                        <span class="text-muted">Sin medidor</span>
+                      }
+                    </td>
+
+                    <td class="text-muted small">
+                      {{ contract.comunidad.nombre }}
+                      @if (contract.sector) {
+                        <span class="text-muted x-small d-block">{{ contract.sector.nombre }}</span>
+                      }
+                    </td>
+
+                    <td class="text-center small">
+                      @if (contract.estado === 'ACTIVO') {
+                        <span class="badge rounded-pill text-bg-success">
+                          {{ getEstadoLabel(contract.estado) }}
+                        </span>
+                      } @else {
+                        <span class="badge rounded-pill text-bg-secondary">
+                          {{ getEstadoLabel(contract.estado) }}
+                        </span>
+                      }
+                    </td>
+
+                    <td class="text-center pe-4">
+                      <div class="dropdown">
+                        <button
+                          class="btn btn-link text-muted p-0 shadow-none"
+                          (click)="toggleDropdown(contract.contratoId, $event)"
+                          aria-label="Menú de acciones"
+                        >
+                          <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul
+                          class="dropdown-menu dropdown-menu-end shadow-sm border-0 action-menu"
+                          [class.show]="openDropdownId() === contract.contratoId"
+                        >
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2"
+                              (click)="editContract(contract)"
+                            >
+                              <i class="bi bi-pencil-fill text-primary"></i>
+                              Editar
+                            </button>
+                          </li>
+                        </ul>
+                      </div>
+                    </td>
+                  </tr>
+                }
+
+                @if (contracts().length === 0) {
+                  <tr>
+                    <td colspan="7" class="text-center py-5">
+                      <i class="bi bi-file-earmark-x fs-2 d-block mb-2 text-muted opacity-50"></i>
+                      <span class="text-muted small">No se encontraron contratos.</span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <!-- Pie / Paginación -->
+      @if (hasFetched()) {
+        <div class="card-footer bg-white border-top px-4 py-3">
+          <app-pagination
+            [totalItems]="totalItems()"
+            [currentPage]="currentPage()"
+            [pageSize]="pageSize()"
+            [pageSizeOptions]="pageSizeOptions"
+            itemNameSingular="contrato"
+            itemNamePlural="contratos"
+            (pageChange)="goToPage($event)"
+            (pageSizeChange)="setPageSize($event)"
+          />
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- Modal de edición de contrato -->
+@if (contractToEdit(); as contract) {
+  <app-contract-edit
+    [contract]="contract"
+    [states]="contractStates()"
+    (saved)="onContractUpdated()"
+    (closed)="closeEdit()"
+  />
+}

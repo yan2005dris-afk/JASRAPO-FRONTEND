@@ -4,6 +4,8 @@ import {
   Component,
   OnInit,
   inject,
+  input,
+  output,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -40,6 +42,18 @@ export class MetersComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
+
+  // Modo selección: cuando es true, la pantalla se usa como selector (sin crear/editar/eliminar)
+  // y solo muestra medidores disponibles (en bodega).
+  readonly selectionMode = input(false);
+  readonly meterSelected = output<IMeter>();
+
+  /** Emite el medidor elegido (solo en modo selección). */
+  selectMeter(medidor: IMeter): void {
+    if (this.selectionMode()) {
+      this.meterSelected.emit(medidor);
+    }
+  }
 
   // Estado de los datos
   meters: IMeter[] = [];
@@ -114,9 +128,12 @@ export class MetersComponent implements OnInit {
     this.errorMessage = '';
     this.cdr.detectChanges();
 
+    // En modo selección solo se muestran los medidores disponibles (en bodega).
+    const estadoFiltro = this.selectionMode() ? 'BODEGA' : undefined;
+
     forkJoin({
       estados: this.metersService.getMeterStatuses(),
-      response: this.metersService.getMeters(this.currentPage(), this.pageSize()),
+      response: this.metersService.getMeters(this.currentPage(), this.pageSize(), estadoFiltro),
     })
       .pipe(
         finalize(() => {

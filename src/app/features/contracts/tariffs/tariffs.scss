@@ -1,0 +1,8 @@
+/* Filas seleccionables (modo selección): el doble clic elige la tarifa */
+.selectable-row {
+  cursor: pointer;
+}
+
+.selectable-row:hover td {
+  background-color: rgba(12, 158, 161, 0.06) !important;
+}
