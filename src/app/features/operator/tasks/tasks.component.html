@@ -37,14 +37,8 @@
     <!-- Map view -->
     @if (viewMode() === 'map') {
       <div class="map-section">
-        <!-- Google Maps integration pending — tasks ordered by campo `orden` -->
-        <div id="map" style="height:500px" class="map-placeholder">
-          <div class="map-placeholder-inner">
-            <i class="bi bi-map fs-1 mb-2 d-block"></i>
-            <p>Integración con Google Maps pendiente</p>
-            <small class="text-muted">Las tareas se ordenan por el campo <code>orden</code></small>
-          </div>
-        </div>
+        <div id="map" style="height:500px" class="map-container"></div>
+
         <!-- Tasks list below map, ordered by orden, showing coordinates if available -->
         <div class="map-task-list">
           <h2 class="map-task-list-title">Tareas en orden</h2>
