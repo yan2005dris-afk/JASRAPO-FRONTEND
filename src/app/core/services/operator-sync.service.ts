@@ -199,7 +199,13 @@ export class OperatorSyncService {
     for (const pending of readings) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { id, syncState: _syncState, errorMessage: _errorMessage, _lecturaId, ...payload } = pending;
+        const {
+          id,
+          syncState: _syncState,
+          errorMessage: _errorMessage,
+          _lecturaId,
+          ...payload
+        } = pending;
         const request$ = _lecturaId
           ? this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, payload, {
               withCredentials: true,

@@ -34,10 +34,22 @@
   letter-spacing: 0.03em;
   flex-shrink: 0;
 
-  &.badge-toma_lectura  { background: var(--primary-color); color: var(--white); }
-  &.badge-reconexion    { background: #856404; color: #fff; }
-  &.badge-instalacion   { background: #0a3622; color: #fff; }
-  &.badge-inspeccion    { background: #5a008a; color: #fff; }
+  &.badge-toma_lectura {
+    background: var(--primary-color);
+    color: var(--white);
+  }
+  &.badge-reconexion {
+    background: #856404;
+    color: #fff;
+  }
+  &.badge-instalacion {
+    background: #0a3622;
+    color: #fff;
+  }
+  &.badge-inspeccion {
+    background: #5a008a;
+    color: #fff;
+  }
 }
 
 /* --- Step Views --- */

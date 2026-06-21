@@ -186,12 +186,26 @@
               <!-- Edit Form Inline -->
               <div class="edit-form">
                 <div class="edit-row">
-                  <label [attr.for]="'edit-ant-' + record.id" class="edit-label">Lectura Anterior</label>
-                  <input [attr.id]="'edit-ant-' + record.id" type="number" class="edit-input" [(ngModel)]="editLecturaAnterior" />
+                  <label [attr.for]="'edit-ant-' + record.id" class="edit-label"
+                    >Lectura Anterior</label
+                  >
+                  <input
+                    [attr.id]="'edit-ant-' + record.id"
+                    type="number"
+                    class="edit-input"
+                    [(ngModel)]="editLecturaAnterior"
+                  />
                 </div>
                 <div class="edit-row">
-                  <label [attr.for]="'edit-act-' + record.id" class="edit-label">Lectura Actual</label>
-                  <input [attr.id]="'edit-act-' + record.id" type="number" class="edit-input" [(ngModel)]="editLecturaActual" />
+                  <label [attr.for]="'edit-act-' + record.id" class="edit-label"
+                    >Lectura Actual</label
+                  >
+                  <input
+                    [attr.id]="'edit-act-' + record.id"
+                    type="number"
+                    class="edit-input"
+                    [(ngModel)]="editLecturaActual"
+                  />
                 </div>
                 <div class="edit-row-check">
                   <input
@@ -246,7 +260,11 @@
               <div class="edit-form">
                 <div class="edit-row">
                   <label [attr.for]="'edit-tipo-' + record.id" class="edit-label">Tipo</label>
-                  <select [attr.id]="'edit-tipo-' + record.id" class="edit-input" [(ngModel)]="editTipo">
+                  <select
+                    [attr.id]="'edit-tipo-' + record.id"
+                    class="edit-input"
+                    [(ngModel)]="editTipo"
+                  >
                     <option value="FUGA">Fuga de Agua</option>
                     <option value="MEDIDOR_DAÑADO">Medidor Dañado / Roto</option>
                     <option value="LECTURA_ERRONEA">Lectura Errónea</option>

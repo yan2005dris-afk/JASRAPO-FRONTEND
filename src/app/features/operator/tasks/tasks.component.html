@@ -1,5 +1,4 @@
 <div class="tasks-screen">
-
   <div class="tasks-header">
     <h1 class="tasks-title">Mis Rutas</h1>
     <button class="view-toggle-btn" (click)="toggleView()" type="button">
@@ -31,7 +30,6 @@
       }
     </div>
   } @else {
-
     @if (viewMode() === 'map') {
       <div class="map-section">
         @if (selectedTaskId()) {
@@ -45,10 +43,18 @@
         <div id="map" style="height: 500px" class="map-container"></div>
 
         <div class="map-legend">
-          <span class="legend-item"><span class="legend-dot" style="background:#9ca3af"></span>Sin lectura</span>
-          <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span>Pendiente</span>
-          <span class="legend-item"><span class="legend-dot" style="background:#ef4444"></span>Rechazada</span>
-          <span class="legend-item"><span class="legend-dot" style="background:#10b981"></span>Aprobada</span>
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: #9ca3af"></span>Sin lectura</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: #f59e0b"></span>Pendiente</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: #ef4444"></span>Rechazada</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: #10b981"></span>Aprobada</span
+          >
         </div>
 
         <div class="map-task-list">
@@ -61,7 +67,7 @@
               role="button"
               (click)="selectTask(selectedTaskId() === task.rutaId ? null : task.rutaId)"
               (keydown.enter)="selectTask(selectedTaskId() === task.rutaId ? null : task.rutaId)"
-              style="cursor: pointer;"
+              style="cursor: pointer"
             >
               <span class="task-orden-badge">{{ task.orden }}</span>
               <span class="task-name">{{ task.nombre }}</span>
@@ -114,7 +120,10 @@
               <span class="task-hint">
                 <i class="bi bi-hand-index-thumb"></i> Doble toque para lecturas
               </span>
-              @if ((task.medidor?.latitud && task.medidor?.longitud) || (task.rutaPuntos && task.rutaPuntos.length > 0)) {
+              @if (
+                (task.medidor?.latitud && task.medidor?.longitud) ||
+                (task.rutaPuntos && task.rutaPuntos.length > 0)
+              ) {
                 <button class="btn-card-map" (click)="viewOnMap(task)" type="button">
                   <i class="bi bi-geo-alt-fill"></i> Mapa
                 </button>
@@ -131,5 +140,4 @@
       </div>
     }
   }
-
 </div>

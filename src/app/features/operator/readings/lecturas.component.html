@@ -1,12 +1,17 @@
 <div class="lecturas-mobile">
-
   <!-- Route context banner (shown when navigated from a route) -->
   @if (routeContext(); as ctx) {
     <div class="route-context-banner">
       <span class="route-ctx-badge badge-{{ ctx.tipo.toLowerCase() }}">
-        {{ ctx.tipo === 'TOMA_LECTURA' ? 'Lectura' :
-           ctx.tipo === 'RECONEXION' ? 'Reconexión' :
-           ctx.tipo === 'INSTALACION' ? 'Instalación' : 'Inspección' }}
+        {{
+          ctx.tipo === 'TOMA_LECTURA'
+            ? 'Lectura'
+            : ctx.tipo === 'RECONEXION'
+              ? 'Reconexión'
+              : ctx.tipo === 'INSTALACION'
+                ? 'Instalación'
+                : 'Inspección'
+        }}
       </span>
       <span class="route-ctx-name">{{ ctx.nombre }}</span>
     </div>

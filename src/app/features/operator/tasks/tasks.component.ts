@@ -17,19 +17,19 @@ import * as L from 'leaflet';
 type ViewMode = 'list' | 'map';
 
 const MARKER_COLORS: Record<string, string> = {
-  PENDIENTE:              '#f59e0b',
-  POR_REVISION:           '#f59e0b',
+  PENDIENTE: '#f59e0b',
+  POR_REVISION: '#f59e0b',
   RECHAZADA_VERIFICACION: '#ef4444',
-  APROBADA:               '#10b981',
-  ESTIMADA:               '#10b981',
-  PLANILLADA:             '#10b981',
+  APROBADA: '#10b981',
+  ESTIMADA: '#10b981',
+  PLANILLADA: '#10b981',
 };
 
 const TIPO_ICONS: Record<string, string> = {
   TOMA_LECTURA: 'bi-droplet-fill',
-  INSTALACION:  'bi-tools',
-  INSPECCION:   'bi-search',
-  RECONEXION:   'bi-plug-fill',
+  INSTALACION: 'bi-tools',
+  INSPECCION: 'bi-search',
+  RECONEXION: 'bi-plug-fill',
 };
 
 @Component({
@@ -64,7 +64,13 @@ export class TasksComponent implements OnInit, OnDestroy {
   readonly mapPoints = computed<
     { lat: number; lng: number; estado: string; tipoRuta: string; popupHtml: string }[]
   >(() => {
-    const points: { lat: number; lng: number; estado: string; tipoRuta: string; popupHtml: string }[] = [];
+    const points: {
+      lat: number;
+      lng: number;
+      estado: string;
+      tipoRuta: string;
+      popupHtml: string;
+    }[] = [];
     const activeSelectedId = this.selectedTaskId();
     const statusMap = this.readingStatusBySerie();
 
@@ -222,8 +228,9 @@ export class TasksComponent implements OnInit, OnDestroy {
     if (!mapElement) return;
 
     const points = this.mapPoints();
-    const center: L.LatLngExpression =
-      points[0] ? [points[0].lat, points[0].lng] : [-0.9677, -80.7089];
+    const center: L.LatLngExpression = points[0]
+      ? [points[0].lat, points[0].lng]
+      : [-0.9677, -80.7089];
 
     this.map = L.map('map').setView(center, 14);
 
@@ -274,16 +281,16 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   readonly routeTypeLabelMap: Record<string, string> = {
     TOMA_LECTURA: 'Lectura',
-    RECONEXION:   'Reconexión',
-    INSTALACION:  'Instalación',
-    INSPECCION:   'Inspección',
+    RECONEXION: 'Reconexión',
+    INSTALACION: 'Instalación',
+    INSPECCION: 'Inspección',
   };
 
   readonly stateLabelMap: Record<string, string> = {
-    PENDIENTE:   'Pendiente',
+    PENDIENTE: 'Pendiente',
     EN_PROGRESO: 'En Progreso',
-    COMPLETADA:  'Completada',
-    CANCELADA:   'Cancelada',
+    COMPLETADA: 'Completada',
+    CANCELADA: 'Cancelada',
   };
 
   getRouteTypeLabel(tipoRuta: string): string {
