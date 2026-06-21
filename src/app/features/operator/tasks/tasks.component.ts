@@ -42,33 +42,32 @@ export class TasksComponent implements OnInit, OnDestroy {
     return this.tasks().filter((t) => t.tipoRuta === filter);
   });
 
-  readonly mapPoints = computed<{ lat: number; lng: number; label: string; popupHtml: string }[]>(() => {
-    const points: { lat: number; lng: number; label: string; popupHtml: string }[] = [];
-    let globalCounter = 1;
+  readonly mapPoints = computed<{ lat: number; lng: number; label: string; popupHtml: string }[]>(
+    () => {
+      const points: { lat: number; lng: number; label: string; popupHtml: string }[] = [];
+      let globalCounter = 1;
 
-    const activeSelectedId = this.selectedTaskId();
+      const activeSelectedId = this.selectedTaskId();
 
-    const sortedTasks = this.filteredTasks()
-      .slice()
-      .sort((a, b) => a.orden - b.orden);
+      const sortedTasks = this.filteredTasks()
+        .slice()
+        .sort((a, b) => a.orden - b.orden);
 
-    for (const task of sortedTasks) {
-      // Filter out non-selected task if a selection is active
-      if (activeSelectedId !== null && task.rutaId !== activeSelectedId) {
-        continue;
-      }
+      for (const task of sortedTasks) {
+        // Filter out non-selected task if a selection is active
+        if (activeSelectedId !== null && task.rutaId !== activeSelectedId) {
+          continue;
+        }
 
-      if (task.tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos && task.rutaPuntos.length > 0) {
-        const sortedPuntos = task.rutaPuntos
-          .slice()
-          .sort((a, b) => a.orden - b.orden);
+        if (task.tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos && task.rutaPuntos.length > 0) {
+          const sortedPuntos = task.rutaPuntos.slice().sort((a, b) => a.orden - b.orden);
 
-        for (const pt of sortedPuntos) {
-          points.push({
-            lat: pt.latitud,
-            lng: pt.longitud,
-            label: `${globalCounter++}`,
-            popupHtml: `
+          for (const pt of sortedPuntos) {
+            points.push({
+              lat: pt.latitud,
+              lng: pt.longitud,
+              label: `${globalCounter++}`,
+              popupHtml: `
               <div class="map-info">
                 <strong>#${task.orden} — ${task.nombre}</strong>
                 <div style="margin-top: 4px; margin-bottom: 4px;">
@@ -80,14 +79,14 @@ export class TasksComponent implements OnInit, OnDestroy {
                 <p style="margin: 2px 0 0 0; font-size: 11px;"><strong>Cliente:</strong> ${pt.clienteNombre}</p>
               </div>
             `,
-          });
-        }
-      } else if (task.medidor?.latitud != null && task.medidor?.longitud != null) {
-        points.push({
-          lat: task.medidor.latitud,
-          lng: task.medidor.longitud,
-          label: `${globalCounter++}`,
-          popupHtml: `
+            });
+          }
+        } else if (task.medidor?.latitud != null && task.medidor?.longitud != null) {
+          points.push({
+            lat: task.medidor.latitud,
+            lng: task.medidor.longitud,
+            label: `${globalCounter++}`,
+            popupHtml: `
             <div class="map-info">
               <strong>#${task.orden} — ${task.nombre}</strong>
               <div style="margin-top: 4px; margin-bottom: 4px;">
@@ -102,12 +101,13 @@ export class TasksComponent implements OnInit, OnDestroy {
               ${task.descripcion ? `<p style="margin: 2px 0 0 0; font-size: 10px; color: #6c757d;">${task.descripcion}</p>` : ''}
             </div>
           `,
-        });
+          });
+        }
       }
-    }
 
-    return points;
-  });
+      return points;
+    },
+  );
 
   readonly routePath = computed<L.LatLngTuple[]>(() => {
     if (!this.showRouteLine()) return [];
