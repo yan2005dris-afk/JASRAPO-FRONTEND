@@ -30,6 +30,48 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'app/operador',
+    loadComponent: () =>
+      import('./layout/operator-layout/operator-layout.component').then(
+        (m) => m.OperatorLayoutComponent,
+      ),
+    canActivate: [authGuard],
+    children: [
+      {
+        path: 'lecturas',
+        data: { breadcrumb: 'Lecturas' },
+        loadComponent: () =>
+          import('./features/operator/readings/lecturas.component').then(
+            (m) => m.LecturasComponent,
+          ),
+      },
+      {
+        path: 'novedades',
+        data: { breadcrumb: 'Novedades' },
+        loadComponent: () =>
+          import('./features/operator/novelties/novedades.component').then(
+            (m) => m.NovedadesComponent,
+          ),
+      },
+      {
+        path: 'sincronizar',
+        data: { breadcrumb: 'Sincronizar' },
+        loadComponent: () =>
+          import('./features/operator/sync-queue/sincronizar.component').then(
+            (m) => m.SincronizarComponent,
+          ),
+      },
+      {
+        path: '',
+        data: { breadcrumb: 'Inicio' },
+        loadComponent: () =>
+          import('./features/operator/home/pwa-home.component').then(
+            (m) => m.PwaHomeComponent,
+          ),
+      },
+    ],
+  },
+  {
     path: 'app',
     loadComponent: () =>
       import('./layout/main-layout/main-layout.component').then((m) => m.MainLayout),

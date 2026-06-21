@@ -56,8 +56,12 @@ export class LoginComponent {
       next: () => {
         this.loading.set(false);
 
-        const returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/app/dashboard';
-        this.router.navigate([returnUrl]);
+        const returnUrl = this.route.snapshot.queryParams['returnUrl'];
+        if (returnUrl) {
+          this.router.navigate([returnUrl]);
+        } else {
+          this.router.navigate([this.authService.getDefaultRoute()]);
+        }
       },
       error: (error: Error) => {
         console.error('Error en login:', error);

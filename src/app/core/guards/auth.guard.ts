@@ -36,7 +36,7 @@ export const guestGuard: CanActivateFn = () => {
     return true;
   }
 
-  // Si ya está autenticado, redirigir al dashboard
-  router.navigate(['/app/dashboard']);
+  // Si ya está autenticado, redirigir al inicio según su rol
+  router.navigate([authService.getDefaultRoute()]);
   return false;
 };

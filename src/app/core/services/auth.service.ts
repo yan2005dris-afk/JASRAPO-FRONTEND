@@ -5,6 +5,7 @@ import { Observable, tap, catchError, throwError, switchMap, timer, Subscription
 import { LoginRequest, LoginResponse, RefreshTokenResponse, User } from '../models/auth.model';
 import { environment } from '../../../environments/environment';
 import { MenuService } from './menu.service';
+import { OperatorSyncService } from './operator-sync.service';
 
 @Injectable({
   providedIn: 'root',
@@ -13,6 +14,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly menuService = inject(MenuService);
+  private readonly operatorSyncService = inject(OperatorSyncService);
 
   private readonly API_URL = `${environment.apiUrl}/auth`;
 
@@ -51,6 +53,7 @@ export class AuthService {
   private executeLocalLogout(): void {
     this.clearAuthData();
     this.menuService.clearMenu();
+    this.operatorSyncService.clearInitialSyncFlag();
     this.router.navigate(['/login']);
   }
 
@@ -219,6 +222,16 @@ export class AuthService {
     const updated: User = { ...current, ...patch };
     this.userSignal.set(updated);
     localStorage.setItem('user', JSON.stringify(updated));
+  }
+
+  /**
+   * Retorna la ruta por defecto según el rol del usuario.
+   * Operadores → home del operador. El resto → dashboard.
+   */
+  getDefaultRoute(): string {
+    const role = this.currentUser()?.roleName?.toLowerCase();
+    if (role === 'operador' || role === 'operadores') return '/app/operador';
+    return '/app/dashboard';
   }
 
   private handleError(error: { error?: { message?: string }; status?: number }): Observable<never> {

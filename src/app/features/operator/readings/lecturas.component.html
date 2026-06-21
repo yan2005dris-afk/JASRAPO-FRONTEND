@@ -1,0 +1,337 @@
+<div class="lecturas-mobile">
+  <!-- ============ STEP 1: SEARCH / LIST ============ -->
+  @if (currentStep() === 'search') {
+    <div class="step-view step-search">
+      <!-- Search Header -->
+      <div class="step-header">
+        <h2 class="step-title">
+          <i class="bi bi-moisture"></i>
+          Medidores Asignados
+        </h2>
+        @if (networkService.isOnline()) {
+          <button
+            class="btn-refresh"
+            (click)="fetchAndCacheMeters()"
+            [disabled]="isLoadingMeters()"
+            id="btn-refresh-meters"
+          >
+            <i class="bi bi-arrow-clockwise" [class.animate-spin]="isLoadingMeters()"></i>
+          </button>
+        }
+      </div>
+
+      <!-- Search Input -->
+      <div class="search-box">
+        <i class="bi bi-search search-icon"></i>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Buscar por serie, cliente, contrato..."
+          [value]="searchQuery()"
+          (input)="searchQuery.set($any($event.target).value)"
+          id="input-search-meter"
+        />
+        @if (searchQuery()) {
+          <button
+            type="button"
+            class="btn-clear"
+            (click)="searchQuery.set('')"
+            aria-label="Limpiar búsqueda"
+          >
+            <i class="bi bi-x-lg"></i>
+          </button>
+        }
+      </div>
+
+      <!-- Estado Filter Chips -->
+      <div class="estado-filters">
+        @for (chip of estadoFilterChips(); track chip.value) {
+          <button
+            type="button"
+            class="filter-chip"
+            [class.active]="selectedEstadoFilter() === chip.value"
+            (click)="selectedEstadoFilter.set(chip.value)"
+          >
+            <i [class]="'bi ' + chip.icon"></i> {{ chip.label }}
+          </button>
+        }
+      </div>
+
+      <!-- Meters List -->
+      <div class="meters-list">
+        @if (isLoadingMeters()) {
+          <div class="loading-state">
+            <span class="spinner-border spinner-border-sm" role="status"></span>
+            Cargando medidores...
+          </div>
+        }
+
+        @if (filteredMeters().length === 0 && !isLoadingMeters()) {
+          <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>{{ searchQuery() ? 'Sin resultados para la búsqueda.' : 'No hay medidores cargados.' }}</p>
+          </div>
+        }
+
+        <!-- Secciones dinámicas agrupadas por estado -->
+        @for (group of metersByEstado(); track group.estado) {
+          <div class="meters-section-header">
+            <span class="section-label" [class.pending-label]="!group.info.cssClass" [class.done-label]="!!group.info.cssClass">
+              <i [class]="'bi ' + group.info.icon"></i> {{ group.info.label }}
+            </span>
+            <span class="section-count">{{ group.meters.length }}</span>
+          </div>
+          @for (meter of group.meters; track meter.medidorId) {
+            <button
+              type="button"
+              class="meter-item"
+              [class.read]="!!group.info.cssClass"
+              (click)="selectMeter(meter)"
+              [attr.id]="'meter-' + meter.medidorId"
+            >
+              <div class="meter-main">
+                <div class="meter-serie">{{ meter.serie }}</div>
+                @if (meter.clienteNombre) {
+                  <div class="meter-client">
+                    <i class="bi bi-person-fill"></i> {{ meter.clienteNombre }}
+                  </div>
+                }
+                <div class="meter-detail">
+                  {{ meter.marca }} {{ meter.modelo ? '- ' + meter.modelo : '' }}
+                </div>
+              </div>
+              <div class="meter-end">
+                @if (group.info.cssClass) {
+                  <span [class]="group.info.cssClass">
+                    <i [class]="'bi ' + group.info.icon"></i> {{ group.info.label }}
+                  </span>
+                }
+                @if (meter.contratoId) {
+                  <span class="badge-contract">#{{ meter.contratoId }}</span>
+                }
+                <i class="bi bi-chevron-right meter-arrow"></i>
+              </div>
+            </button>
+          }
+        }
+      </div>
+    </div>
+  }
+
+  <!-- ============ STEP 2: ACTIONS ============ -->
+  @if (currentStep() === 'actions') {
+    <div class="step-view step-actions">
+      <!-- Back Button -->
+      <button class="btn-back" (click)="goBackToSearch()" id="btn-back-search">
+        <i class="bi bi-arrow-left"></i> Volver
+      </button>
+
+      <!-- Selected Meter Card -->
+      @if (selectedMeter(); as meter) {
+        <div class="selected-card"
+             [class.read]="readMetersIds().has(meter.medidorId.toString())">
+          <div class="selected-icon">
+            <i class="bi bi-speedometer2"></i>
+          </div>
+          <div class="selected-info">
+            <div class="selected-serie">{{ meter.serie }}</div>
+            @if (meter.clienteNombre) {
+              <div class="selected-client"><i class="bi bi-person-fill"></i> {{ meter.clienteNombre }}</div>
+            }
+            <div class="selected-detail">{{ meter.marca }} {{ meter.modelo ? '- ' + meter.modelo : '' }}</div>
+            @if (meter.contratoId) {
+              <span class="selected-contract">Contrato #{{ meter.contratoId }}</span>
+            }
+          </div>
+        </div>
+
+        @if (readMetersIds().has(meter.medidorId.toString())) {
+          <div class="alert-already-read">
+            <i class="bi bi-info-circle-fill"></i>
+            Esta lectura ya fue enviada para revisión y no puede modificarse.
+          </div>
+        }
+
+        <!-- Action Buttons -->
+        @let existingReading = existingReadingMap().get(meter.medidorId.toString());
+        @let isPendingOrRejected = existingReading && (existingReading.estado === 'PENDIENTE' || existingReading.estado === 'RECHAZADA_VERIFICACION');
+        <div class="action-buttons">
+          <button
+            class="action-btn action-reading"
+            (click)="goToReadingForm()"
+            [disabled]="readMetersIds().has(meter.medidorId.toString())"
+            id="btn-action-reading"
+          >
+            <div class="action-icon">
+              <i class="bi bi-moisture"></i>
+            </div>
+            <div class="action-text">
+              <span class="action-title">{{ isPendingOrRejected ? 'Actualizar Lectura' : 'Registrar Lectura' }}</span>
+              <span class="action-desc">{{ isPendingOrRejected ? 'Completar o corregir el valor medido' : 'Ingresar consumo del medidor' }}</span>
+            </div>
+            <i class="bi bi-chevron-right"></i>
+          </button>
+
+          <button
+            class="action-btn action-novelty"
+            (click)="goToNoveltyForm()"
+            id="btn-action-novelty"
+          >
+            <div class="action-icon">
+              <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <div class="action-text">
+              <span class="action-title">Registrar Novedad</span>
+              <span class="action-desc">Fuga, daño, anomalía del medidor</span>
+            </div>
+            <i class="bi bi-chevron-right"></i>
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ============ STEP 3: FORM ============ -->
+  @if (currentStep() === 'form') {
+    <div class="step-view step-form">
+      <!-- Back Button -->
+      <button class="btn-back" (click)="goBackToActions()" id="btn-back-actions">
+        <i class="bi bi-arrow-left"></i> Volver
+      </button>
+
+      <h2 class="step-title form-title">
+        <i class="bi bi-pencil-square"></i>
+        Registrar Lectura
+      </h2>
+
+      @if (selectedMeter(); as meter) {
+        <div class="form-meter-summary">
+          <span class="summary-label">Medidor:</span>
+          <span class="summary-value">{{ meter.serie }}</span>
+          @if (meter.clienteNombre) {
+            <span class="summary-sep">·</span>
+            <span class="summary-value">{{ meter.clienteNombre }}</span>
+          }
+        </div>
+      }
+
+      <form [formGroup]="readingForm" (ngSubmit)="onSubmit()" class="reading-form">
+        <!-- Lectura Anterior -->
+        <div class="form-field">
+          <label class="field-label">Lectura Anterior</label>
+          <input
+            type="number"
+            class="field-input readonly"
+            formControlName="lecturaAnterior"
+            readonly
+          />
+          <span class="field-hint">Último valor registrado (m³)</span>
+        </div>
+
+        <!-- Lectura Actual -->
+        <div class="form-field">
+          <label class="field-label required">Lectura Actual</label>
+          <input
+            type="number"
+            class="field-input"
+            formControlName="lecturaActual"
+            [class.invalid]="readingForm.get('lecturaActual')?.touched && readingForm.get('lecturaActual')?.invalid"
+            id="input-lectura-actual"
+          />
+          @if (readingForm.get('lecturaActual')?.hasError('required') && readingForm.get('lecturaActual')?.touched) {
+            <span class="field-error">La lectura actual es obligatoria.</span>
+          }
+          @if (readingForm.get('lecturaActual')?.hasError('min')) {
+            <span class="field-error">No se permiten valores negativos.</span>
+          }
+          @if (readingForm.get('lecturaActual')?.hasError('lowerThanAnterior')) {
+            <span class="field-error">Debe ser mayor o igual a la lectura anterior.</span>
+          }
+        </div>
+
+        <!-- Switch Lectura Inicial -->
+        <div class="form-switch-field">
+          <input
+            type="checkbox"
+            id="lecturaInicialSwitch"
+            formControlName="lecturaInicial"
+            class="switch-input"
+          />
+          <label for="lecturaInicialSwitch" class="switch-label">
+            ¿Es Lectura Inicial?
+          </label>
+          <span class="field-hint">Ignora la validación con la lectura anterior.</span>
+        </div>
+
+        <!-- Observaciones -->
+        <div class="form-field">
+          <label class="field-label">Observaciones / Anomalías</label>
+          <textarea
+            class="field-input field-textarea"
+            rows="3"
+            placeholder="Describe alguna novedad (opcional)..."
+            formControlName="descripcionAnomalia"
+          ></textarea>
+        </div>
+
+        <!-- Foto -->
+        <div class="form-field">
+          <label class="field-label">Fotografía del Medidor</label>
+          <div class="photo-section">
+            <label class="btn-photo" id="btn-capture-photo">
+              <i class="bi bi-camera-fill"></i>
+              <span>{{ photoPreview() ? 'Cambiar Foto' : 'Capturar Foto' }}</span>
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                class="d-none"
+                (change)="onPhotoCapture($event)"
+              />
+            </label>
+            @if (photoPreview()) {
+              <div class="photo-preview-box">
+                <img [src]="photoPreview()" alt="Foto del medidor" class="photo-img" />
+                <button
+                  type="button"
+                  class="btn-remove-photo"
+                  (click)="photoPreview.set(null)"
+                  title="Eliminar foto"
+                >
+                  <i class="bi bi-trash-fill"></i>
+                </button>
+              </div>
+            }
+          </div>
+          <span class="field-hint">Recomendado para anomalías o lecturas altas.</span>
+        </div>
+
+        <!-- Submit -->
+        <div class="form-actions">
+          <button
+            type="button"
+            class="btn-form-cancel"
+            (click)="goBackToActions()"
+            [disabled]="isSaving()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="btn-form-submit"
+            [disabled]="readingForm.invalid || isSaving()"
+            id="btn-submit-reading"
+          >
+            @if (isSaving()) {
+              <span class="spinner-border spinner-border-sm" role="status"></span>
+              Guardando...
+            } @else {
+              <i class="bi bi-check-circle-fill"></i>
+              Guardar Lectura
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+</div>

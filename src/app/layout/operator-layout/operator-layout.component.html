@@ -1,0 +1,123 @@
+<div class="mobile-layout">
+  <!-- Top Navigation / Status Header -->
+  <header class="operator-header">
+    <div class="header-brand">
+      <i class="bi bi-droplet-fill brand-icon"></i>
+      <span class="brand-name">JASRAPO PWA</span>
+    </div>
+
+    <div class="header-status">
+      <!-- Network Badge Indicator -->
+      @if (networkService.isOnline()) {
+        <span class="status-badge online" title="Conexión Online">
+          <span class="status-dot animate-pulse"></span>
+          Online
+        </span>
+      } @else {
+        <span class="status-badge offline" title="Trabajando sin conexión">
+          <span class="status-dot"></span>
+          Offline
+        </span>
+      }
+
+      <!-- Offline Sync Badge -->
+      @if (syncService.totalPending() > 0) {
+        <button 
+          class="sync-badge border-0" 
+          [class.syncing]="syncService.isSyncing()"
+          [disabled]="!networkService.isOnline() || syncService.isSyncing()"
+          (click)="forceSync()"
+          [title]="networkService.isOnline() ? 'Sincronizar ahora' : 'Sincronización pendiente (sin conexión)'"
+        >
+          <i class="bi" [class.bi-arrow-repeat]="syncService.isSyncing()" [class.bi-cloud-arrow-up-fill]="!syncService.isSyncing()"></i>
+          <span class="pending-count">{{ syncService.totalPending() }}</span>
+        </button>
+      } @else {
+        <span class="sync-badge synced" title="Todos los datos sincronizados">
+          <i class="bi bi-cloud-check-fill"></i>
+        </span>
+      }
+    </div>
+  </header>
+
+  <!-- Main View Container -->
+  <main class="operator-viewport">
+    <div class="content-scroll">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+
+  <!-- Bottom Floating Navigation Bar -->
+  <nav class="operator-bottom-nav">
+    <div class="nav-items-container">
+      <!-- Tab 1: Inicio -->
+      <a 
+        routerLink="/app/operador" 
+        routerLinkActive="active" 
+        [routerLinkActiveOptions]="{ exact: true }"
+        class="nav-tab"
+        id="tab-inicio"
+      >
+        <div class="icon-wrapper">
+          <i class="bi bi-house"></i>
+        </div>
+        <span class="tab-label">Inicio</span>
+      </a>
+
+      <!-- Tab 2: Lecturas -->
+      <a 
+        routerLink="/app/operador/lecturas" 
+        routerLinkActive="active" 
+        class="nav-tab"
+        id="tab-lecturas"
+      >
+        <div class="icon-wrapper">
+          <i class="bi bi-moisture"></i>
+        </div>
+        <span class="tab-label">Lecturas</span>
+      </a>
+
+      <!-- Tab 3: Novedades -->
+      <a 
+        routerLink="/app/operador/novedades" 
+        routerLinkActive="active" 
+        class="nav-tab"
+        id="tab-novedades"
+      >
+        <div class="icon-wrapper">
+          <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <span class="tab-label">Novedades</span>
+      </a>
+
+      <!-- Tab 4: Sincronizar -->
+      <a 
+        routerLink="/app/operador/sincronizar" 
+        routerLinkActive="active" 
+        class="nav-tab"
+        id="tab-sincronizar"
+      >
+        <div class="icon-wrapper position-relative">
+          <i class="bi bi-cloud-arrow-up"></i>
+          @if (syncService.totalQueued() > 0) {
+            <span class="nav-badge">{{ syncService.totalQueued() }}</span>
+          }
+        </div>
+        <span class="tab-label">Sync</span>
+      </a>
+
+      <!-- Tab 5: Cerrar Sesión -->
+      <button 
+        (click)="onLogout()" 
+        class="nav-tab btn-logout border-0 bg-transparent"
+        id="tab-logout"
+        aria-label="Cerrar sesión"
+      >
+        <div class="icon-wrapper">
+          <i class="bi bi-box-arrow-right text-danger"></i>
+        </div>
+        <span class="tab-label text-danger">Salir</span>
+      </button>
+    </div>
+  </nav>
+</div>

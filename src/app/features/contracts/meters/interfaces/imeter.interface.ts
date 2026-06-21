@@ -15,6 +15,7 @@ export interface IMeter {
   estado?: IEstadoMedidor;
   fechaInstalacion: string | null;
   contratoId: string | null;
+  clienteNombre?: string | null;
   latitud: number | null;
   longitud: number | null;
   motivo?: string;
