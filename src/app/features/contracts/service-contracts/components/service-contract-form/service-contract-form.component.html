@@ -174,12 +174,12 @@
               class="form-control"
               formControlName="numeroGuia"
               placeholder="Ej. GUIA-1-0051"
-              maxlength="10"
+              maxlength="12"
               [class.is-invalid]="isFieldInvalid('numeroGuia')"
             />
             @if (isFieldInvalid('numeroGuia')) {
               <span class="text-danger x-small">
-                El N° de guía es obligatorio (máx. 10 caracteres).
+                El N° de guía es obligatorio (máx. 12 caracteres).
               </span>
             }
           </div>
@@ -199,9 +199,7 @@
               [class.is-invalid]="isFieldInvalid('lecturaInicial')"
             />
             @if (isFieldInvalid('lecturaInicial')) {
-              <span class="text-danger x-small">
-                Ingrese solo números (máx. 10 dígitos).
-              </span>
+              <span class="text-danger x-small"> Ingrese solo números (máx. 10 dígitos). </span>
             }
           </div>
 
@@ -228,17 +226,28 @@
       </div>
     </div>
 
-    <!-- Documentación legal -->
+    <!--
+      SECCIÓN DE DOCUMENTACIÓN LEGAL (subida de documentos) — PENDIENTE DE IMPLEMENTAR.
+      Se deja comentada a propósito (oculta en el frontend por ahora). Esta funcionalidad
+      (subir Cédula, Escritura, Contrato) se implementará más adelante, cuando el backend
+      tenga el endpoint para recibir los archivos.
+
     <div class="card form-section mb-4">
       <div class="card-body p-4">
-        <div class="section-title mb-3">
-          <span class="section-icon"><i class="bi bi-shield-check"></i></span>
-          <div>
-            <h5 class="fw-bold mb-0">Documentación Legal</h5>
-            <p class="text-muted small mb-0">
-              Adjunte los requisitos obligatorios en PDF o imagen.
-            </p>
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+          <div class="section-title">
+            <span class="section-icon"><i class="bi bi-shield-check"></i></span>
+            <div>
+              <h5 class="fw-bold mb-0">Documentación Legal</h5>
+              <p class="text-muted small mb-0">
+                Adjunte los requisitos obligatorios en PDF o imagen.
+              </p>
+            </div>
           </div>
+
+          <button type="button" class="btn btn-outline-primary btn-sm" (click)="comingSoon()">
+            <i class="bi bi-printer me-1"></i> Imprimir contrato
+          </button>
         </div>
 
         <div class="row g-3">
@@ -266,6 +275,7 @@
         </div>
       </div>
     </div>
+    -->
 
     <!-- Acciones -->
     <div class="d-flex justify-content-end gap-2">

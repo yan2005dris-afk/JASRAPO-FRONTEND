@@ -56,7 +56,7 @@ export class ServiceContractFormComponent {
   readonly submitted = signal(false);
 
   readonly form: FormGroup = this.fb.group({
-    numeroGuia: ['', [Validators.required, Validators.maxLength(10)]],
+    numeroGuia: ['', [Validators.required, Validators.maxLength(12)]],
     direccionSuministro: ['', [Validators.required, Validators.maxLength(50)]],
     lecturaInicial: ['0', [Validators.required, Validators.pattern(/^\d{1,10}$/)]],
   });
