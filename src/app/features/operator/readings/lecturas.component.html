@@ -3,15 +3,7 @@
   @if (routeContext(); as ctx) {
     <div class="route-context-banner">
       <span class="route-ctx-badge badge-{{ ctx.tipo.toLowerCase() }}">
-        {{
-          ctx.tipo === 'TOMA_LECTURA'
-            ? 'Lectura'
-            : ctx.tipo === 'RECONEXION'
-              ? 'Reconexión'
-              : ctx.tipo === 'INSTALACION'
-                ? 'Instalación'
-                : 'Inspección'
-        }}
+        {{ ctx.tipo | routeType }}
       </span>
       <span class="route-ctx-name">{{ ctx.nombre }}</span>
     </div>
@@ -109,25 +101,11 @@
 
       <!-- Selected Meter Card -->
       @if (selectedMeter(); as meter) {
-        <div class="selected-card" [class.read]="readMetersIds().has(meter.medidorId.toString())">
-          <div class="selected-icon">
-            <i class="bi bi-speedometer2"></i>
-          </div>
-          <div class="selected-info">
-            <div class="selected-serie">{{ meter.serie }}</div>
-            @if (meter.clienteNombre) {
-              <div class="selected-client">
-                <i class="bi bi-person-fill"></i> {{ meter.clienteNombre }}
-              </div>
-            }
-            <div class="selected-detail">
-              {{ meter.marca }} {{ meter.modelo ? '- ' + meter.modelo : '' }}
-            </div>
-            @if (meter.contratoId) {
-              <span class="selected-contract">Contrato #{{ meter.contratoId }}</span>
-            }
-          </div>
-        </div>
+        <app-selected-meter-card
+          [meter]="meter"
+          [isRead]="readMetersIds().has(meter.medidorId.toString())"
+          (clear)="clearSelection()"
+        />
 
         @if (readMetersIds().has(meter.medidorId.toString())) {
           <div class="alert-already-read">

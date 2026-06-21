@@ -2,11 +2,6 @@ import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/cor
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import {
-  fadeAnimation,
-  slideUpAnimation,
-  staggerFormElements,
-} from '../../../core/animations/route.animations';
 import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
@@ -14,7 +9,6 @@ import { AuthService } from '../../../core/services/auth.service';
   imports: [CommonModule, ReactiveFormsModule],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
-  animations: [fadeAnimation, slideUpAnimation, staggerFormElements],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {

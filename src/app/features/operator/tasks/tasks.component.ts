@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { OperatorService } from '../service/operator.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
+import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
 import type { TaskResponse } from '../models/operator.models';
 import * as L from 'leaflet';
 
@@ -36,7 +37,7 @@ const TIPO_ICONS: Record<string, string> = {
   selector: 'app-tasks',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule],
+  imports: [CommonModule, RouteTypePipe],
   templateUrl: './tasks.component.html',
   styleUrl: './tasks.component.scss',
 })
@@ -279,23 +280,12 @@ export class TasksComponent implements OnInit, OnDestroy {
     { label: 'Inspección', value: 'INSPECCION' },
   ];
 
-  readonly routeTypeLabelMap: Record<string, string> = {
-    TOMA_LECTURA: 'Lectura',
-    RECONEXION: 'Reconexión',
-    INSTALACION: 'Instalación',
-    INSPECCION: 'Inspección',
-  };
-
   readonly stateLabelMap: Record<string, string> = {
     PENDIENTE: 'Pendiente',
     EN_PROGRESO: 'En Progreso',
     COMPLETADA: 'Completada',
     CANCELADA: 'Cancelada',
   };
-
-  getRouteTypeLabel(tipoRuta: string): string {
-    return this.routeTypeLabelMap[tipoRuta] ?? tipoRuta;
-  }
 
   getStateLabel(estado: string): string {
     return this.stateLabelMap[estado] ?? estado;

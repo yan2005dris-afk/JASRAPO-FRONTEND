@@ -10,11 +10,7 @@
           </h5>
 
           @if (offlineMode()) {
-            <!-- Offline message -->
-            <div class="alert alert-warning d-flex align-items-center gap-2 mb-0">
-              <i class="bi bi-wifi-off fs-5"></i>
-              <span>Sin conexión — lista de novedades no disponible offline</span>
-            </div>
+            <app-offline-alert message="Sin conexión — lista de novedades no disponible offline" />
           } @else if (isLoadingAnomalies()) {
             <!-- Loading -->
             <div class="text-center py-4">
@@ -128,41 +124,11 @@
                 }
 
                 <!-- Medidor seleccionado (Resumen) -->
-                @if (selectedMeter()) {
-                  <div
-                    class="selected-meter-badge p-3 rounded border border-primary bg-primary-soft mt-2"
-                  >
-                    <div class="d-flex justify-content-between align-items-start">
-                      <div>
-                        <h6 class="text-primary-dark fw-bold mb-1">Medidor Seleccionado</h6>
-                        <div class="fs-5 fw-bold mb-1 text-dark">
-                          Serie: {{ selectedMeter()?.serie }}
-                        </div>
-                        @if (selectedMeter()?.clienteNombre) {
-                          <div class="text-secondary fw-bold small mb-1">
-                            <i class="bi bi-person-fill me-1"></i
-                            >{{ selectedMeter()?.clienteNombre }}
-                          </div>
-                        }
-                        <div class="text-muted small mb-2">
-                          {{ selectedMeter()?.marca }} - {{ selectedMeter()?.modelo }}
-                        </div>
-                        @if (selectedMeter()?.contratoId) {
-                          <div class="badge bg-primary text-white">
-                            Contrato #{{ selectedMeter()?.contratoId }}
-                          </div>
-                        }
-                      </div>
-                      <button
-                        type="button"
-                        class="btn btn-outline-danger btn-sm rounded-circle p-1"
-                        (click)="clearSelection()"
-                        title="Cambiar medidor"
-                      >
-                        <i class="bi bi-x fs-5"></i>
-                      </button>
-                    </div>
-                  </div>
+                @if (selectedMeter(); as meter) {
+                  <app-selected-meter-card
+                    [meter]="meter"
+                    (clear)="clearSelection()"
+                  />
                 }
               </div>
             </div>

@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IMeterDto } from '../../../features/contracts/meters/interfaces/imeter.interface';
+import { IMeterDto } from '../../../contracts/meters/interfaces/imeter.interface';
 
 export interface MeterStatusInfo {
   label: string;

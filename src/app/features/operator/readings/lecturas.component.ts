@@ -11,8 +11,10 @@ import { MeterCacheService } from '../../../core/services/meter-cache.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
 import { PhotoCaptureComponent } from '../../../shared/components/photo-capture/photo-capture.component';
-import { MeterSearchBoxComponent } from '../../../shared/components/meter-search-box/meter-search-box.component';
-import { MeterCardComponent } from '../../../shared/components/meter-card/meter-card.component';
+import { MeterSearchBoxComponent } from '../components/meter-search-box/meter-search-box.component';
+import { MeterCardComponent } from '../components/meter-card/meter-card.component';
+import { SelectedMeterCardComponent } from '../components/selected-meter-card/selected-meter-card.component';
+import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
 import { firstValueFrom } from 'rxjs';
 
 interface EstadoInfo {
@@ -45,6 +47,8 @@ type MobileStep = 'search' | 'actions' | 'form';
     PhotoCaptureComponent,
     MeterSearchBoxComponent,
     MeterCardComponent,
+    SelectedMeterCardComponent,
+    RouteTypePipe,
   ],
   templateUrl: './lecturas.component.html',
   styleUrl: './lecturas.component.scss',
