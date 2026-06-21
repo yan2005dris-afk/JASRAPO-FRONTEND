@@ -198,11 +198,11 @@ export class OperatorSyncService {
     // 1. Sincronizar primero las lecturas encoladas
     for (const pending of readings) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+         
         const {
           id,
-          syncState: _syncState,
-          errorMessage: _errorMessage,
+          syncState: _syncState, // eslint-disable-line @typescript-eslint/no-unused-vars
+          errorMessage: _errorMessage, // eslint-disable-line @typescript-eslint/no-unused-vars
           _lecturaId,
           ...payload
         } = pending;
