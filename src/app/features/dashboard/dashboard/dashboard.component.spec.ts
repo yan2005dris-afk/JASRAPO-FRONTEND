@@ -20,6 +20,7 @@ describe('DashboardComponent', () => {
       sid: signal('mock-sid'),
       tokenCreatedAt: signal(new Date().toISOString()),
       tokenExpiresAt: signal(new Date().toISOString()),
+      getDefaultRoute: vi.fn().mockReturnValue('/app/dashboard'),
     };
 
     await TestBed.configureTestingModule({
