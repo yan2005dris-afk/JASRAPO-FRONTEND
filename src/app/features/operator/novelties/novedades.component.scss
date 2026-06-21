@@ -27,7 +27,9 @@
   .card {
     border-radius: 16px;
     background-color: var(--white);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
   }
 
   // Pulse animation for network dot
@@ -118,7 +120,8 @@
   }
 
   // Form controls focus ring
-  .form-control, .form-select {
+  .form-control,
+  .form-select {
     &:focus {
       border-color: var(--primary-color);
       box-shadow: 0 0 0 3px var(--input-focus-ring);

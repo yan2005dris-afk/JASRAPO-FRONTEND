@@ -8,7 +8,11 @@
     <p class="greeting-subtitle">Panel del Operador</p>
 
     <!-- Network Status Pill -->
-    <div class="status-pill" [class.online]="networkService.isOnline()" [class.offline]="!networkService.isOnline()">
+    <div
+      class="status-pill"
+      [class.online]="networkService.isOnline()"
+      [class.offline]="!networkService.isOnline()"
+    >
       <span class="status-dot"></span>
       {{ networkService.isOnline() ? 'Conectado' : 'Sin Conexión' }}
     </div>
@@ -41,7 +45,11 @@
     </a>
 
     <!-- Reportar Novedad -->
-    <a routerLink="/app/operador/novedades" class="action-card card-novelties" id="btn-home-novedades">
+    <a
+      routerLink="/app/operador/novedades"
+      class="action-card card-novelties"
+      id="btn-home-novedades"
+    >
       <div class="card-icon-bg">
         <i class="bi bi-exclamation-triangle"></i>
       </div>
@@ -53,7 +61,11 @@
     </a>
 
     <!-- Lecturas por Sincronizar -->
-    <a routerLink="/app/operador/sincronizar" class="action-card card-sync" id="btn-home-sincronizar">
+    <a
+      routerLink="/app/operador/sincronizar"
+      class="action-card card-sync"
+      id="btn-home-sincronizar"
+    >
       <div class="card-icon-bg">
         <i class="bi bi-cloud-arrow-up"></i>
       </div>

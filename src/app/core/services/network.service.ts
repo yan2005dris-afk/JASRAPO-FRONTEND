@@ -7,13 +7,13 @@ import { Subject, Observable } from 'rxjs';
 })
 export class NetworkService {
   private readonly platformId = inject(PLATFORM_ID);
-  
+
   // Signal privado que almacena el estado de red actual
   private readonly isOnlineSignal = signal<boolean>(this.getInitialOnlineStatus());
-  
+
   // Computed público para exponer el estado de red reactivamente
   readonly isOnline = computed(() => this.isOnlineSignal());
-  
+
   // Subject para emitir eventos cuando la red se reconecta (online)
   private readonly connectedSubject = new Subject<void>();
   readonly connected$: Observable<void> = this.connectedSubject.asObservable();

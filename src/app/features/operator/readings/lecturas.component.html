@@ -69,14 +69,22 @@
         @if (filteredMeters().length === 0 && !isLoadingMeters()) {
           <div class="empty-state">
             <i class="bi bi-inbox"></i>
-            <p>{{ searchQuery() ? 'Sin resultados para la búsqueda.' : 'No hay medidores cargados.' }}</p>
+            <p>
+              {{
+                searchQuery() ? 'Sin resultados para la búsqueda.' : 'No hay medidores cargados.'
+              }}
+            </p>
           </div>
         }
 
         <!-- Secciones dinámicas agrupadas por estado -->
         @for (group of metersByEstado(); track group.estado) {
           <div class="meters-section-header">
-            <span class="section-label" [class.pending-label]="!group.info.cssClass" [class.done-label]="!!group.info.cssClass">
+            <span
+              class="section-label"
+              [class.pending-label]="!group.info.cssClass"
+              [class.done-label]="!!group.info.cssClass"
+            >
               <i [class]="'bi ' + group.info.icon"></i> {{ group.info.label }}
             </span>
             <span class="section-count">{{ group.meters.length }}</span>
@@ -128,17 +136,20 @@
 
       <!-- Selected Meter Card -->
       @if (selectedMeter(); as meter) {
-        <div class="selected-card"
-             [class.read]="readMetersIds().has(meter.medidorId.toString())">
+        <div class="selected-card" [class.read]="readMetersIds().has(meter.medidorId.toString())">
           <div class="selected-icon">
             <i class="bi bi-speedometer2"></i>
           </div>
           <div class="selected-info">
             <div class="selected-serie">{{ meter.serie }}</div>
             @if (meter.clienteNombre) {
-              <div class="selected-client"><i class="bi bi-person-fill"></i> {{ meter.clienteNombre }}</div>
+              <div class="selected-client">
+                <i class="bi bi-person-fill"></i> {{ meter.clienteNombre }}
+              </div>
             }
-            <div class="selected-detail">{{ meter.marca }} {{ meter.modelo ? '- ' + meter.modelo : '' }}</div>
+            <div class="selected-detail">
+              {{ meter.marca }} {{ meter.modelo ? '- ' + meter.modelo : '' }}
+            </div>
             @if (meter.contratoId) {
               <span class="selected-contract">Contrato #{{ meter.contratoId }}</span>
             }
@@ -154,7 +165,10 @@
 
         <!-- Action Buttons -->
         @let existingReading = existingReadingMap().get(meter.medidorId.toString());
-        @let isPendingOrRejected = existingReading && (existingReading.estado === 'PENDIENTE' || existingReading.estado === 'RECHAZADA_VERIFICACION');
+        @let isPendingOrRejected =
+          existingReading &&
+          (existingReading.estado === 'PENDIENTE' ||
+            existingReading.estado === 'RECHAZADA_VERIFICACION');
         <div class="action-buttons">
           <button
             class="action-btn action-reading"
@@ -166,8 +180,14 @@
               <i class="bi bi-moisture"></i>
             </div>
             <div class="action-text">
-              <span class="action-title">{{ isPendingOrRejected ? 'Actualizar Lectura' : 'Registrar Lectura' }}</span>
-              <span class="action-desc">{{ isPendingOrRejected ? 'Completar o corregir el valor medido' : 'Ingresar consumo del medidor' }}</span>
+              <span class="action-title">{{
+                isPendingOrRejected ? 'Actualizar Lectura' : 'Registrar Lectura'
+              }}</span>
+              <span class="action-desc">{{
+                isPendingOrRejected
+                  ? 'Completar o corregir el valor medido'
+                  : 'Ingresar consumo del medidor'
+              }}</span>
             </div>
             <i class="bi bi-chevron-right"></i>
           </button>
@@ -235,10 +255,15 @@
             type="number"
             class="field-input"
             formControlName="lecturaActual"
-            [class.invalid]="readingForm.get('lecturaActual')?.touched && readingForm.get('lecturaActual')?.invalid"
+            [class.invalid]="
+              readingForm.get('lecturaActual')?.touched && readingForm.get('lecturaActual')?.invalid
+            "
             id="input-lectura-actual"
           />
-          @if (readingForm.get('lecturaActual')?.hasError('required') && readingForm.get('lecturaActual')?.touched) {
+          @if (
+            readingForm.get('lecturaActual')?.hasError('required') &&
+            readingForm.get('lecturaActual')?.touched
+          ) {
             <span class="field-error">La lectura actual es obligatoria.</span>
           }
           @if (readingForm.get('lecturaActual')?.hasError('min')) {
@@ -257,9 +282,7 @@
             formControlName="lecturaInicial"
             class="switch-input"
           />
-          <label for="lecturaInicialSwitch" class="switch-label">
-            ¿Es Lectura Inicial?
-          </label>
+          <label for="lecturaInicialSwitch" class="switch-label"> ¿Es Lectura Inicial? </label>
           <span class="field-hint">Ignora la validación con la lectura anterior.</span>
         </div>
 

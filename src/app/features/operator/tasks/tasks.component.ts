@@ -41,16 +41,14 @@ export class TasksComponent implements OnInit, OnDestroy {
   });
 
   readonly tasksWithCoords = computed<TaskResponse[]>(() =>
-    this.filteredTasks().filter(
-      (t) => t.medidor?.latitud != null && t.medidor?.longitud != null
-    )
+    this.filteredTasks().filter((t) => t.medidor?.latitud != null && t.medidor?.longitud != null),
   );
 
   readonly routePath = computed<L.LatLngTuple[]>(() =>
     this.tasksWithCoords()
       .slice()
       .sort((a, b) => a.orden - b.orden)
-      .map((t) => [t.medidor!.latitud!, t.medidor!.longitud!] as L.LatLngTuple)
+      .map((t) => [t.medidor!.latitud!, t.medidor!.longitud!] as L.LatLngTuple),
   );
 
   ngOnInit(): void {

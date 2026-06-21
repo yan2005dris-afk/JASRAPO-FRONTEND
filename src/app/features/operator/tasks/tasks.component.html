@@ -33,11 +33,10 @@
       }
     </div>
   } @else {
-
     <!-- Map view -->
     @if (viewMode() === 'map') {
       <div class="map-section">
-        <div id="map" style="height:500px" class="map-container"></div>
+        <div id="map" style="height: 500px" class="map-container"></div>
 
         <!-- Tasks list below map, ordered by orden, showing coordinates if available -->
         <div class="map-task-list">
@@ -48,8 +47,8 @@
               <span class="task-name">{{ task.nombre }}</span>
               @if (task.medidor?.latitud && task.medidor?.longitud) {
                 <span class="task-coords">
-                  {{ task.medidor!.latitud | number:'1.4-4' }},
-                  {{ task.medidor!.longitud | number:'1.4-4' }}
+                  {{ task.medidor!.latitud | number: '1.4-4' }},
+                  {{ task.medidor!.longitud | number: '1.4-4' }}
                 </span>
               } @else {
                 <span class="task-no-coords">Sin coordenadas</span>
@@ -97,6 +96,5 @@
         }
       </div>
     }
-
   }
 </div>

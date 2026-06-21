@@ -81,8 +81,12 @@
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 // Task list
@@ -125,7 +129,9 @@
   color: #495057;
   margin: 0;
 
-  i { margin-right: 0.25rem; }
+  i {
+    margin-right: 0.25rem;
+  }
 }
 
 .task-descripcion {
@@ -143,10 +149,22 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
 
-  &.badge-toma_lectura  { background: #e0f0ff; color: #0a58ca; }
-  &.badge-reconexion    { background: #fff3cd; color: #856404; }
-  &.badge-instalacion   { background: #d1e7dd; color: #0a3622; }
-  &.badge-inspeccion    { background: #f0d9ff; color: #5a008a; }
+  &.badge-toma_lectura {
+    background: #e0f0ff;
+    color: #0a58ca;
+  }
+  &.badge-reconexion {
+    background: #fff3cd;
+    color: #856404;
+  }
+  &.badge-instalacion {
+    background: #d1e7dd;
+    color: #0a3622;
+  }
+  &.badge-inspeccion {
+    background: #f0d9ff;
+    color: #5a008a;
+  }
 }
 
 // State badges
@@ -157,10 +175,22 @@
   font-weight: 600;
   text-transform: uppercase;
 
-  &.state-pendiente   { background: #fdecea; color: #c0392b; }
-  &.state-en_progreso { background: #fff8e1; color: #9c6400; }
-  &.state-completada  { background: #e8f5e9; color: #256029; }
-  &.state-cancelada   { background: #f5f5f5; color: #555; }
+  &.state-pendiente {
+    background: #fdecea;
+    color: #c0392b;
+  }
+  &.state-en_progreso {
+    background: #fff8e1;
+    color: #9c6400;
+  }
+  &.state-completada {
+    background: #e8f5e9;
+    color: #256029;
+  }
+  &.state-cancelada {
+    background: #f5f5f5;
+    color: #555;
+  }
 }
 
 // Empty state
@@ -181,7 +211,9 @@
   display: block;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.03);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.05),
+    0 1px 3px rgba(0, 0, 0, 0.03);
   border: 1px solid #dee2e6;
   background-color: #f8f9fa;
   z-index: 1;

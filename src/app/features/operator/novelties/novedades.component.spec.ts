@@ -87,7 +87,10 @@ describe('NovedadesComponent', () => {
     });
 
     it('populates pendingAnomalies with results from backend', async () => {
-      const anomalies = [mockAnomaly, { ...mockAnomaly, lecturaId: 'l-002', medidorSerie: 'SER-002' }];
+      const anomalies = [
+        mockAnomaly,
+        { ...mockAnomaly, lecturaId: 'l-002', medidorSerie: 'SER-002' },
+      ];
       operatorServiceMock.getReadingsWithAnomalies.mockReturnValue(of(anomalies));
       networkMock.isOnline.mockReturnValue(true);
 

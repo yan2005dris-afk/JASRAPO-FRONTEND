@@ -41,7 +41,10 @@ export class IndexedDbService {
 
         // Almacén para lecturas pendientes
         if (!db.objectStoreNames.contains('lecturas_pendientes')) {
-          const store = db.createObjectStore('lecturas_pendientes', { keyPath: 'id', autoIncrement: true });
+          const store = db.createObjectStore('lecturas_pendientes', {
+            keyPath: 'id',
+            autoIncrement: true,
+          });
           store.createIndex('bySyncState', 'syncState', { unique: false });
         } else if (oldVersion < 3) {
           // Migrar store existente: agregar índice por syncState
@@ -54,7 +57,10 @@ export class IndexedDbService {
 
         // Almacén para anomalías pendientes
         if (!db.objectStoreNames.contains('anomalias_pendientes')) {
-          const store = db.createObjectStore('anomalias_pendientes', { keyPath: 'id', autoIncrement: true });
+          const store = db.createObjectStore('anomalias_pendientes', {
+            keyPath: 'id',
+            autoIncrement: true,
+          });
           store.createIndex('bySyncState', 'syncState', { unique: false });
         } else if (oldVersion < 3) {
           const tx = (event.target as IDBOpenDBRequest).transaction!;

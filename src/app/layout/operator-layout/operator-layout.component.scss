@@ -229,11 +229,11 @@
 
   .btn-logout {
     cursor: pointer;
-    
+
     .icon-wrapper i {
       color: var(--danger) !important;
     }
-    
+
     .tab-label {
       color: var(--danger) !important;
     }
@@ -277,7 +277,8 @@
 }
 
 @keyframes pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }

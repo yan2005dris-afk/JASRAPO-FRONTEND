@@ -63,7 +63,7 @@ export class NovedadesComponent implements OnInit {
       (m) =>
         m.serie.toLowerCase().includes(query) ||
         (m.contratoId && m.contratoId.toString().toLowerCase().includes(query)) ||
-        (m.clienteNombre && m.clienteNombre.toLowerCase().includes(query))
+        (m.clienteNombre && m.clienteNombre.toLowerCase().includes(query)),
     );
   });
 
@@ -159,7 +159,7 @@ export class NovedadesComponent implements OnInit {
     const response = await firstValueFrom(
       this.http.get<any>(`${environment.apiUrl}/readings?contratoId=${contratoId}`, {
         withCredentials: true,
-      })
+      }),
     );
     if (response?.data && response.data.length > 0) {
       return response.data[0].lecturaId;
@@ -183,7 +183,10 @@ export class NovedadesComponent implements OnInit {
       try {
         lecturaId = await this.getLatestReadingId(meter.contratoId.toString());
       } catch (err: any) {
-        this.toastService.error(err.message || 'Error al obtener la lectura para asociar la novedad.', 'Error');
+        this.toastService.error(
+          err.message || 'Error al obtener la lectura para asociar la novedad.',
+          'Error',
+        );
         this.isSaving.set(false);
         return;
       }

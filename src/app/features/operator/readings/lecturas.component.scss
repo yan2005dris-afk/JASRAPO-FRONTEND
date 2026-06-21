@@ -63,7 +63,9 @@
   margin-bottom: 0.5rem;
   scrollbar-width: none;
 
-  &::-webkit-scrollbar { display: none; }
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   .filter-chip {
     flex-shrink: 0;

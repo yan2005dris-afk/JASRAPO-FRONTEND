@@ -27,10 +27,14 @@ export class OperatorSyncService {
   readonly isSyncing = signal<boolean>(false);
 
   // Total de elementos pendientes (solo pendientes de envío, sin rechazados)
-  readonly totalPending = computed(() => this.pendingReadingsCount() + this.pendingAnomaliesCount());
+  readonly totalPending = computed(
+    () => this.pendingReadingsCount() + this.pendingAnomaliesCount(),
+  );
 
   // Total con problemas (rechazados)
-  readonly totalRejected = computed(() => this.rejectedReadingsCount() + this.rejectedAnomaliesCount());
+  readonly totalRejected = computed(
+    () => this.rejectedReadingsCount() + this.rejectedAnomaliesCount(),
+  );
 
   // Total general en cola (pendientes + rechazados)
   readonly totalQueued = computed(() => this.totalPending() + this.totalRejected());
@@ -90,7 +94,9 @@ export class OperatorSyncService {
     if (this.networkService.isOnline()) {
       try {
         const request$ = _lecturaId
-          ? this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, payload, { withCredentials: true })
+          ? this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, payload, {
+              withCredentials: true,
+            })
           : this.http.post<any>(this.READINGS_API, payload, { withCredentials: true });
 
         const response = await firstValueFrom(request$);
@@ -98,13 +104,19 @@ export class OperatorSyncService {
         this.toastService.success('Lectura registrada en el servidor correctamente.', 'Éxito');
         return response;
       } catch (error: any) {
-        this.toastService.error(error.error?.message || 'Error al enviar lectura al servidor.', 'Error');
+        this.toastService.error(
+          error.error?.message || 'Error al enviar lectura al servidor.',
+          'Error',
+        );
         throw error;
       }
     } else {
       await this.dbService.savePendingReading(reading); // keeps _lecturaId in record
       await this.refreshPendingCounts();
-      this.toastService.warning('Modo Offline: Lectura guardada localmente. Se sincronizará al recuperar internet.', 'Guardado Local');
+      this.toastService.warning(
+        'Modo Offline: Lectura guardada localmente. Se sincronizará al recuperar internet.',
+        'Guardado Local',
+      );
       return { offline: true };
     }
   }
@@ -115,18 +127,26 @@ export class OperatorSyncService {
   async submitAnomaly(anomaly: any): Promise<any> {
     if (this.networkService.isOnline()) {
       try {
-        const response = await firstValueFrom(this.http.post<any>(this.ANOMALIES_API, anomaly, { withCredentials: true }));
+        const response = await firstValueFrom(
+          this.http.post<any>(this.ANOMALIES_API, anomaly, { withCredentials: true }),
+        );
         this.toastService.success('Novedad/Anomalía registrada en el servidor.', 'Éxito');
         return response;
       } catch (error: any) {
-        this.toastService.error(error.error?.message || 'Error al enviar novedad al servidor.', 'Error');
+        this.toastService.error(
+          error.error?.message || 'Error al enviar novedad al servidor.',
+          'Error',
+        );
         throw error;
       }
     } else {
       // Guardar en cola local
       await this.dbService.savePendingAnomaly(anomaly);
       await this.refreshPendingCounts();
-      this.toastService.warning('Modo Offline: Novedad guardada localmente. Se sincronizará al recuperar internet.', 'Guardado Local');
+      this.toastService.warning(
+        'Modo Offline: Novedad guardada localmente. Se sincronizará al recuperar internet.',
+        'Guardado Local',
+      );
       return { offline: true };
     }
   }
@@ -144,7 +164,9 @@ export class OperatorSyncService {
    */
   private extractErrorMessage(error: HttpErrorResponse): string {
     if (error.error?.message) {
-      return typeof error.error.message === 'string' ? error.error.message : JSON.stringify(error.error.message);
+      return typeof error.error.message === 'string'
+        ? error.error.message
+        : JSON.stringify(error.error.message);
     }
     return `Error del servidor (${error.status})`;
   }
@@ -163,7 +185,10 @@ export class OperatorSyncService {
     if (readings.length === 0 && anomalies.length === 0) return;
 
     this.isSyncing.set(true);
-    this.toastService.info('Iniciando sincronización de registros guardados offline...', 'Sincronizando');
+    this.toastService.info(
+      'Iniciando sincronización de registros guardados offline...',
+      'Sincronizando',
+    );
 
     let successReadingsCount = 0;
     let successAnomaliesCount = 0;
@@ -174,7 +199,9 @@ export class OperatorSyncService {
       try {
         const { id, syncState, errorMessage, _lecturaId, ...payload } = pending;
         const request$ = _lecturaId
-          ? this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, payload, { withCredentials: true })
+          ? this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, payload, {
+              withCredentials: true,
+            })
           : this.http.post<any>(this.READINGS_API, payload, { withCredentials: true });
         await firstValueFrom(request$);
         await this.dbService.saveSyncedReading(pending);
@@ -204,7 +231,9 @@ export class OperatorSyncService {
     for (const pending of anomalies) {
       try {
         const { id, syncState, errorMessage, ...payload } = pending;
-        await firstValueFrom(this.http.post<any>(this.ANOMALIES_API, payload, { withCredentials: true }));
+        await firstValueFrom(
+          this.http.post<any>(this.ANOMALIES_API, payload, { withCredentials: true }),
+        );
         await this.dbService.deletePendingAnomaly(id!);
         successAnomaliesCount++;
       } catch (error) {
@@ -230,13 +259,13 @@ export class OperatorSyncService {
     if (successReadingsCount > 0 || successAnomaliesCount > 0) {
       this.toastService.success(
         `Sincronización completa. Enviado exitosamente: ${successReadingsCount} lecturas y ${successAnomaliesCount} novedades.`,
-        'Sincronizado'
+        'Sincronizado',
       );
     }
     if (rejectedCount > 0) {
       this.toastService.warning(
         `${rejectedCount} registro(s) fueron rechazados por el servidor. Revísalos en "Sincronizar".`,
-        'Registros Rechazados'
+        'Registros Rechazados',
       );
     }
   }
@@ -262,7 +291,9 @@ export class OperatorSyncService {
   /**
    * Obtiene el catálogo de estados de lectura: cache offline primero, backend como fallback.
    */
-  async getReadingEstados(): Promise<{ codigo: string; nombre: string; orden: number; icono?: string }[]> {
+  async getReadingEstados(): Promise<
+    { codigo: string; nombre: string; orden: number; icono?: string }[]
+  > {
     // Intentar desde cache offline primero
     const cached = await this.dbService.getEstadosCache();
     if (cached && cached.length > 0) {
@@ -308,7 +339,10 @@ export class OperatorSyncService {
       }
 
       this.markInitialSyncDone();
-      this.toastService.success('Catálogo y lecturas del período actual actualizados para uso offline.', 'Sincronizado');
+      this.toastService.success(
+        'Catálogo y lecturas del período actual actualizados para uso offline.',
+        'Sincronizado',
+      );
     } catch (err) {
       console.error('Error al sincronizar datos para offline:', err);
     }
@@ -320,7 +354,7 @@ export class OperatorSyncService {
   async getCurrentPeriodReadings(): Promise<any[]> {
     try {
       return await firstValueFrom(
-        this.http.get<any[]>(`${this.OPERATOR_API}/readings`, { withCredentials: true })
+        this.http.get<any[]>(`${this.OPERATOR_API}/readings`, { withCredentials: true }),
       );
     } catch (error) {
       console.error('Error al obtener lecturas del período actual:', error);

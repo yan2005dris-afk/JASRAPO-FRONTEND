@@ -22,14 +22,22 @@
 
       <!-- Offline Sync Badge -->
       @if (syncService.totalPending() > 0) {
-        <button 
-          class="sync-badge border-0" 
+        <button
+          class="sync-badge border-0"
           [class.syncing]="syncService.isSyncing()"
           [disabled]="!networkService.isOnline() || syncService.isSyncing()"
           (click)="forceSync()"
-          [title]="networkService.isOnline() ? 'Sincronizar ahora' : 'Sincronización pendiente (sin conexión)'"
+          [title]="
+            networkService.isOnline()
+              ? 'Sincronizar ahora'
+              : 'Sincronización pendiente (sin conexión)'
+          "
         >
-          <i class="bi" [class.bi-arrow-repeat]="syncService.isSyncing()" [class.bi-cloud-arrow-up-fill]="!syncService.isSyncing()"></i>
+          <i
+            class="bi"
+            [class.bi-arrow-repeat]="syncService.isSyncing()"
+            [class.bi-cloud-arrow-up-fill]="!syncService.isSyncing()"
+          ></i>
           <span class="pending-count">{{ syncService.totalPending() }}</span>
         </button>
       } @else {
@@ -51,9 +59,9 @@
   <nav class="operator-bottom-nav">
     <div class="nav-items-container">
       <!-- Tab 1: Inicio -->
-      <a 
-        routerLink="/app/operador" 
-        routerLinkActive="active" 
+      <a
+        routerLink="/app/operador"
+        routerLinkActive="active"
         [routerLinkActiveOptions]="{ exact: true }"
         class="nav-tab"
         id="tab-inicio"
@@ -65,9 +73,9 @@
       </a>
 
       <!-- Tab 2: Lecturas -->
-      <a 
-        routerLink="/app/operador/lecturas" 
-        routerLinkActive="active" 
+      <a
+        routerLink="/app/operador/lecturas"
+        routerLinkActive="active"
         class="nav-tab"
         id="tab-lecturas"
       >
@@ -78,9 +86,9 @@
       </a>
 
       <!-- Tab 3: Novedades -->
-      <a 
-        routerLink="/app/operador/novedades" 
-        routerLinkActive="active" 
+      <a
+        routerLink="/app/operador/novedades"
+        routerLinkActive="active"
         class="nav-tab"
         id="tab-novedades"
       >
@@ -91,9 +99,9 @@
       </a>
 
       <!-- Tab 4: Sincronizar -->
-      <a 
-        routerLink="/app/operador/sincronizar" 
-        routerLinkActive="active" 
+      <a
+        routerLink="/app/operador/sincronizar"
+        routerLinkActive="active"
         class="nav-tab"
         id="tab-sincronizar"
       >
@@ -107,8 +115,8 @@
       </a>
 
       <!-- Tab 5: Cerrar Sesión -->
-      <button 
-        (click)="onLogout()" 
+      <button
+        (click)="onLogout()"
         class="nav-tab btn-logout border-0 bg-transparent"
         id="tab-logout"
         aria-label="Cerrar sesión"

@@ -83,9 +83,7 @@ export class LecturasComponent implements OnInit {
 
   // Chips de filtro por estado
   readonly estadoFilterChips = computed<EstadoChip[]>(() => {
-    const chips: EstadoChip[] = [
-      { value: 'todas', label: 'Todas', icon: 'bi-funnel' },
-    ];
+    const chips: EstadoChip[] = [{ value: 'todas', label: 'Todas', icon: 'bi-funnel' }];
     for (const e of this.estadosCatalog()) {
       chips.push({ value: e.codigo, label: e.nombre, icon: e.icono });
     }
@@ -173,7 +171,7 @@ export class LecturasComponent implements OnInit {
         m.serie.toLowerCase().includes(query) ||
         (m.contratoId && m.contratoId.toString().toLowerCase().includes(query)) ||
         (m.clienteNombre && m.clienteNombre.toLowerCase().includes(query)) ||
-        (m.marca && m.marca.toLowerCase().includes(query))
+        (m.marca && m.marca.toLowerCase().includes(query)),
     );
   });
 
@@ -193,14 +191,16 @@ export class LecturasComponent implements OnInit {
     });
 
     // Validación cruzada para asegurar que lecturaActual >= lecturaAnterior
-    this.readingForm.get('lecturaActual')?.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
+    this.readingForm
+      .get('lecturaActual')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.validateReadings();
       });
 
-    this.readingForm.get('lecturaAnterior')?.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
+    this.readingForm
+      .get('lecturaAnterior')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.validateReadings();
       });
@@ -278,7 +278,12 @@ export class LecturasComponent implements OnInit {
         { codigo: 'PENDIENTE', nombre: 'Pendiente', orden: 1, icono: 'bi-clock' },
         { codigo: 'POR_REVISION', nombre: 'Por Revisión', orden: 2, icono: 'bi-eye' },
         { codigo: 'APROBADA', nombre: 'Aprobada', orden: 3, icono: 'bi-check-circle' },
-        { codigo: 'RECHAZADA_VERIFICACION', nombre: 'Rechazada', orden: 4, icono: 'bi-x-circle-fill' },
+        {
+          codigo: 'RECHAZADA_VERIFICACION',
+          nombre: 'Rechazada',
+          orden: 4,
+          icono: 'bi-x-circle-fill',
+        },
         { codigo: 'ESTIMADA', nombre: 'Estimada', orden: 5, icono: 'bi-graph-up' },
         { codigo: 'PLANILLADA', nombre: 'Planillada', orden: 6, icono: 'bi-receipt' },
       ]);
@@ -301,10 +306,16 @@ export class LecturasComponent implements OnInit {
       await this.dbService.saveRegisteredReadingsCache(readings);
       this.registeredReadings.set(readings);
 
-      this.toastService.success('Catálogo y lecturas del período actual actualizados para uso offline.', 'Sincronizado');
+      this.toastService.success(
+        'Catálogo y lecturas del período actual actualizados para uso offline.',
+        'Sincronizado',
+      );
     } catch (err) {
       console.error('Error al sincronizar datos para offline:', err);
-      this.toastService.error('No se pudo actualizar el catálogo y lecturas desde el servidor.', 'Error');
+      this.toastService.error(
+        'No se pudo actualizar el catálogo y lecturas desde el servidor.',
+        'Error',
+      );
     } finally {
       this.isLoadingMeters.set(false);
     }
@@ -316,7 +327,7 @@ export class LecturasComponent implements OnInit {
     this.selectedMeter.set(meter);
     this.searchQuery.set('');
     this.currentStep.set('actions');
-    
+
     // Intentar deducir lectura anterior
     this.readingForm.patchValue({
       lecturaAnterior: meter.contratoId ? 0 : 0,

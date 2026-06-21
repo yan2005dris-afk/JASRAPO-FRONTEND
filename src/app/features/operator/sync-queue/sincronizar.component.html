@@ -13,9 +13,17 @@
         [class.active]="syncService.autoSyncEnabled()"
         (click)="syncService.toggleAutoSync()"
         id="btn-toggle-auto-sync"
-        [title]="syncService.autoSyncEnabled() ? 'Auto-sync activado — click para desactivar' : 'Auto-sync desactivado — click para activar'"
+        [title]="
+          syncService.autoSyncEnabled()
+            ? 'Auto-sync activado — click para desactivar'
+            : 'Auto-sync desactivado — click para activar'
+        "
       >
-        <i class="bi" [class.bi-wifi]="syncService.autoSyncEnabled()" [class.bi-wifi-off]="!syncService.autoSyncEnabled()"></i>
+        <i
+          class="bi"
+          [class.bi-wifi]="syncService.autoSyncEnabled()"
+          [class.bi-wifi-off]="!syncService.autoSyncEnabled()"
+        ></i>
         Auto
       </button>
 
@@ -101,7 +109,9 @@
             </div>
             <div class="card-info">
               <span class="info-label">Lectura:</span>
-              <span class="info-value">{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span>
+              <span class="info-value"
+                >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
+              >
             </div>
             <div class="card-info">
               <span class="info-label">Consumo:</span>
@@ -109,9 +119,7 @@
             </div>
           </div>
           <div class="card-status">
-            <span class="status-tag pending-tag">
-              <i class="bi bi-clock"></i> Pendiente
-            </span>
+            <span class="status-tag pending-tag"> <i class="bi bi-clock"></i> Pendiente </span>
           </div>
         </div>
       }
@@ -135,9 +143,7 @@
             </div>
           </div>
           <div class="card-status">
-            <span class="status-tag pending-tag">
-              <i class="bi bi-clock"></i> Pendiente
-            </span>
+            <span class="status-tag pending-tag"> <i class="bi bi-clock"></i> Pendiente </span>
           </div>
         </div>
       }
@@ -165,7 +171,9 @@
             </div>
             <div class="card-info">
               <span class="info-label">Lectura:</span>
-              <span class="info-value">{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span>
+              <span class="info-value"
+                >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
+              >
             </div>
             <!-- Error Message -->
             <div class="error-banner">
@@ -186,8 +194,14 @@
                   <input type="number" class="edit-input" [(ngModel)]="editLecturaActual" />
                 </div>
                 <div class="edit-row-check">
-                  <input type="checkbox" id="editLecturaInicial-{{ record.id }}" [(ngModel)]="editLecturaInicial" />
-                  <label [for]="'editLecturaInicial-' + record.id" class="edit-label">¿Lectura Inicial?</label>
+                  <input
+                    type="checkbox"
+                    id="editLecturaInicial-{{ record.id }}"
+                    [(ngModel)]="editLecturaInicial"
+                  />
+                  <label [for]="'editLecturaInicial-' + record.id" class="edit-label"
+                    >¿Lectura Inicial?</label
+                  >
                 </div>
                 <div class="edit-actions">
                   <button class="btn-save" (click)="saveEditReading()">
@@ -241,7 +255,11 @@
                 </div>
                 <div class="edit-row">
                   <label class="edit-label">Observación</label>
-                  <textarea class="edit-input edit-textarea" [(ngModel)]="editObservacion" rows="3"></textarea>
+                  <textarea
+                    class="edit-input edit-textarea"
+                    [(ngModel)]="editObservacion"
+                    rows="3"
+                  ></textarea>
                 </div>
                 <div class="edit-actions">
                   <button class="btn-save" (click)="saveEditAnomaly()">
@@ -298,7 +316,9 @@
             </div>
             <div class="card-info">
               <span class="info-label">Lectura:</span>
-              <span class="info-value">{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span>
+              <span class="info-value"
+                >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
+              >
             </div>
             <div class="card-info">
               <span class="info-label">Consumo:</span>
@@ -307,7 +327,7 @@
             @if (record['syncedAt']) {
               <div class="card-info">
                 <span class="info-label">Sincronizado:</span>
-                <span class="info-value">{{ record['syncedAt'] | date:'dd/MM/yyyy HH:mm' }}</span>
+                <span class="info-value">{{ record['syncedAt'] | date: 'dd/MM/yyyy HH:mm' }}</span>
               </div>
             }
           </div>

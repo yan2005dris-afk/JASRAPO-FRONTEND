@@ -41,9 +41,7 @@ export const routes: Routes = [
         path: 'tareas',
         data: { breadcrumb: 'Tareas' },
         loadComponent: () =>
-          import('./features/operator/tasks/tasks.component').then(
-            (m) => m.TasksComponent,
-          ),
+          import('./features/operator/tasks/tasks.component').then((m) => m.TasksComponent),
       },
       {
         path: 'lecturas',
@@ -73,9 +71,7 @@ export const routes: Routes = [
         path: '',
         data: { breadcrumb: 'Inicio' },
         loadComponent: () =>
-          import('./features/operator/home/pwa-home.component').then(
-            (m) => m.PwaHomeComponent,
-          ),
+          import('./features/operator/home/pwa-home.component').then((m) => m.PwaHomeComponent),
       },
     ],
   },

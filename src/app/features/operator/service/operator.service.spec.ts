@@ -85,9 +85,14 @@ describe('OperatorService', () => {
     it('passes optional observacion field in the dto body', () => {
       httpPatchSpy.mockReturnValue(of({}));
 
-      service.updateTaskState('r-002', { estado: 'CANCELADA', observacion: 'No llegué' }).subscribe();
+      service
+        .updateTaskState('r-002', { estado: 'CANCELADA', observacion: 'No llegué' })
+        .subscribe();
 
-      const [, body] = httpPatchSpy.mock.calls[0] as [string, { estado: string; observacion?: string }];
+      const [, body] = httpPatchSpy.mock.calls[0] as [
+        string,
+        { estado: string; observacion?: string },
+      ];
       expect(body.observacion).toBe('No llegué');
       expect(body.estado).toBe('CANCELADA');
     });

@@ -41,10 +41,10 @@ export class SincronizarComponent implements OnInit {
   editTipo = '';
 
   readonly totalPendientes = computed(
-    () => this.pendingReadings().length + this.pendingAnomalies().length
+    () => this.pendingReadings().length + this.pendingAnomalies().length,
   );
   readonly totalRechazados = computed(
-    () => this.rejectedReadings().length + this.rejectedAnomalies().length
+    () => this.rejectedReadings().length + this.rejectedAnomalies().length,
   );
 
   ngOnInit(): void {
@@ -62,13 +62,13 @@ export class SincronizarComponent implements OnInit {
         this.dbService.getMetersCache(),
       ]);
 
-      const metersMap = new Map<string, any>(
-        meters.map((m: any) => [m.medidorId?.toString(), m])
-      );
+      const metersMap = new Map<string, any>(meters.map((m: any) => [m.medidorId?.toString(), m]));
 
       const enrich = (record: any) => {
         const meter = metersMap.get(record.medidorId?.toString());
-        return meter ? { ...record, clienteNombre: meter.clienteNombre, serie: meter.serie } : record;
+        return meter
+          ? { ...record, clienteNombre: meter.clienteNombre, serie: meter.serie }
+          : record;
       };
 
       this.pendingReadings.set(pendR.map(enrich));
@@ -118,7 +118,9 @@ export class SincronizarComponent implements OnInit {
     const record = this.editingRecord();
     if (!record?.id) return;
 
-    const consumo = this.editLecturaInicial ? this.editLecturaActual : this.editLecturaActual - this.editLecturaAnterior;
+    const consumo = this.editLecturaInicial
+      ? this.editLecturaActual
+      : this.editLecturaActual - this.editLecturaAnterior;
 
     await this.dbService.updatePendingReading(record.id, {
       lecturaActual: this.editLecturaActual,
@@ -129,7 +131,10 @@ export class SincronizarComponent implements OnInit {
       errorMessage: null,
     } as any);
 
-    this.toastService.success('Lectura corregida. Se reenviará en la próxima sincronización.', 'Corregido');
+    this.toastService.success(
+      'Lectura corregida. Se reenviará en la próxima sincronización.',
+      'Corregido',
+    );
     this.cancelEdit();
     await this.loadQueue();
     await this.syncService.refreshPendingCounts();
@@ -146,7 +151,10 @@ export class SincronizarComponent implements OnInit {
       errorMessage: null,
     } as any);
 
-    this.toastService.success('Novedad corregida. Se reenviará en la próxima sincronización.', 'Corregido');
+    this.toastService.success(
+      'Novedad corregida. Se reenviará en la próxima sincronización.',
+      'Corregido',
+    );
     this.cancelEdit();
     await this.loadQueue();
     await this.syncService.refreshPendingCounts();
