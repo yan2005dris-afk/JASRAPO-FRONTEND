@@ -39,27 +39,7 @@
       </div>
 
       <!-- Search Input -->
-      <div class="search-box">
-        <i class="bi bi-search search-icon"></i>
-        <input
-          type="text"
-          class="search-input"
-          placeholder="Buscar por serie, cliente, contrato..."
-          [value]="searchQuery()"
-          (input)="searchQuery.set($any($event.target).value)"
-          id="input-search-meter"
-        />
-        @if (searchQuery()) {
-          <button
-            type="button"
-            class="btn-clear"
-            (click)="searchQuery.set('')"
-            aria-label="Limpiar búsqueda"
-          >
-            <i class="bi bi-x-lg"></i>
-          </button>
-        }
-      </div>
+      <app-meter-search-box [value]="searchQuery()" (valueChange)="searchQuery.set($event)" />
 
       <!-- Estado Filter Chips -->
       <div class="estado-filters">
@@ -320,32 +300,10 @@
         <!-- Foto -->
         <div class="form-field">
           <span class="field-label">Fotografía del Medidor</span>
-          <div class="photo-section">
-            <label class="btn-photo" id="btn-capture-photo">
-              <i class="bi bi-camera-fill"></i>
-              <span>{{ photoPreview() ? 'Cambiar Foto' : 'Capturar Foto' }}</span>
-              <input
-                type="file"
-                accept="image/*"
-                capture="environment"
-                class="d-none"
-                (change)="onPhotoCapture($event)"
-              />
-            </label>
-            @if (photoPreview()) {
-              <div class="photo-preview-box">
-                <img [src]="photoPreview()" alt="Foto del medidor" class="photo-img" />
-                <button
-                  type="button"
-                  class="btn-remove-photo"
-                  (click)="photoPreview.set(null)"
-                  title="Eliminar foto"
-                >
-                  <i class="bi bi-trash-fill"></i>
-                </button>
-              </div>
-            }
-          </div>
+          <app-photo-capture
+            [preview]="photoPreview()"
+            (previewChange)="photoPreview.set($event)"
+          />
           <span class="field-hint">Recomendado para anomalías o lecturas altas.</span>
         </div>
 

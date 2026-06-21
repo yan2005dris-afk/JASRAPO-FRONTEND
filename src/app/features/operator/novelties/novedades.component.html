@@ -1,57 +1,4 @@
 <div class="container-fluid py-4 operator-panel">
-  <!-- Cabecera de estado y sincronización -->
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="card border-0 shadow-sm status-card">
-        <div class="card-body d-flex flex-wrap align-items-center justify-content-between gap-3">
-          <div>
-            <h1 class="h3 mb-1 text-primary-dark">Novedades</h1>
-            <p class="text-muted mb-0 small">
-              Revisá novedades pendientes y reportá nuevas irregularidades.
-            </p>
-          </div>
-          <div class="d-flex align-items-center gap-3">
-            <!-- Indicador de red -->
-            @if (networkService.isOnline()) {
-              <span
-                class="badge bg-success-soft text-success px-3 py-2 rounded-pill d-flex align-items-center gap-2"
-              >
-                <span class="pulse-dot bg-success"></span> Conectado
-              </span>
-            } @else {
-              <span
-                class="badge bg-warning-soft text-warning px-3 py-2 rounded-pill d-flex align-items-center gap-2"
-              >
-                <span class="pulse-dot bg-warning animate-pulse"></span> Modo Offline
-              </span>
-            }
-
-            <!-- Cola de sync -->
-            @if (syncService.totalPending() > 0) {
-              <button
-                class="btn btn-primary-light d-flex align-items-center gap-2 btn-sm rounded-pill px-3"
-                (click)="forceSync()"
-                [disabled]="syncService.isSyncing() || !networkService.isOnline()"
-              >
-                @if (syncService.isSyncing()) {
-                  <span
-                    class="spinner-border spinner-border-sm"
-                    role="status"
-                    aria-hidden="true"
-                  ></span>
-                  Sincronizando...
-                } @else {
-                  <i class="bi bi-cloud-arrow-up-fill fs-6"></i>
-                  Sincronizar ({{ syncService.totalPending() }})
-                }
-              </button>
-            }
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- SECCIÓN 1: Novedades Pendientes -->
   <div class="row mb-4">
     <div class="col-12">
@@ -146,25 +93,13 @@
                 </div>
 
                 <!-- Input buscador -->
-                <div class="position-relative mb-3 search-box">
-                  <i class="bi bi-search search-icon"></i>
-                  <input
-                    type="text"
-                    class="form-control rounded-pill ps-5 shadow-none"
-                    placeholder="Nro Serie o ID Contrato..."
-                    [value]="searchQuery()"
-                    (input)="searchQuery.set($any($event.target).value)"
-                    [disabled]="!!selectedMeter()"
-                  />
-                  @if (searchQuery()) {
-                    <button
-                      type="button"
-                      class="btn-close clear-btn"
-                      aria-label="Limpiar"
-                      (click)="searchQuery.set('')"
-                    ></button>
-                  }
-                </div>
+                <app-meter-search-box
+                  class="mb-3"
+                  [value]="searchQuery()"
+                  [disabled]="!!selectedMeter()"
+                  placeholder="Nro Serie o ID Contrato..."
+                  (valueChange)="searchQuery.set($event)"
+                />
 
                 <!-- Resultados de búsqueda -->
                 @if (filteredMeters().length > 0 && !selectedMeter()) {
@@ -340,41 +275,10 @@
                         Evidencia Fotográfica (Opcional)
                       </p>
 
-                      <div class="d-flex flex-wrap gap-3 align-items-center">
-                        <!-- Botón Cámara -->
-                        <label
-                          class="btn btn-outline-primary rounded-pill px-4 py-2 d-inline-flex align-items-center gap-2 cursor-pointer mb-0"
-                        >
-                          <i class="bi bi-camera-fill fs-5"></i>
-                          <span>Capturar Foto</span>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            capture="environment"
-                            class="d-none"
-                            (change)="onPhotoCapture($event)"
-                          />
-                        </label>
-
-                        <!-- Vista previa foto -->
-                        @if (photoPreview()) {
-                          <div class="position-relative photo-preview-container rounded border">
-                            <img
-                              [src]="photoPreview()"
-                              alt="Foto evidencia"
-                              class="photo-preview rounded"
-                            />
-                            <button
-                              type="button"
-                              class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 rounded-circle p-1"
-                              (click)="photoPreview.set(null)"
-                              title="Eliminar foto"
-                            >
-                              <i class="bi bi-trash-fill"></i>
-                            </button>
-                          </div>
-                        }
-                      </div>
+                      <app-photo-capture
+                        [preview]="photoPreview()"
+                        (previewChange)="photoPreview.set($event)"
+                      />
                       <div class="form-text mt-1">
                         Recomendado para evidenciar fugas o medidores en mal estado.
                       </div>

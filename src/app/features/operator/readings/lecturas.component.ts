@@ -7,8 +7,11 @@ import { OperatorService } from '../service/operator.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { NetworkService } from '../../../core/services/network.service';
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
+import { MeterCacheService } from '../../../core/services/meter-cache.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
+import { PhotoCaptureComponent } from '../../../shared/components/photo-capture/photo-capture.component';
+import { MeterSearchBoxComponent } from '../../../shared/components/meter-search-box/meter-search-box.component';
 import { firstValueFrom } from 'rxjs';
 
 interface EstadoInfo {
@@ -35,7 +38,7 @@ type MobileStep = 'search' | 'actions' | 'form';
 @Component({
   selector: 'app-operator-readings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, PhotoCaptureComponent, MeterSearchBoxComponent],
   templateUrl: './lecturas.component.html',
   styleUrl: './lecturas.component.scss',
 })
@@ -47,13 +50,14 @@ export class LecturasComponent implements OnInit {
   private readonly dbService = inject(IndexedDbService);
   readonly networkService = inject(NetworkService);
   readonly syncService = inject(OperatorSyncService);
+  private readonly meterCache = inject(MeterCacheService);
   private readonly toastService = inject(ToastService);
   private readonly operatorService = inject(OperatorService);
   // Mobile step flow
   readonly currentStep = signal<MobileStep>('search');
 
   // Catálogo de medidores cargado (memoria local)
-  readonly metersList = signal<IMeterDto[]>([]);
+  readonly metersList = this.meterCache.metersList;
   readonly searchQuery = signal<string>('');
   readonly selectedMeter = signal<IMeterDto | null>(null);
   readonly isLoadingMeters = signal<boolean>(false);
@@ -65,16 +69,21 @@ export class LecturasComponent implements OnInit {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly pendingReadings = signal<any[]>([]);
 
-  // Conjunto de IDs de medidores que ya tienen lectura (sincronizada o pendiente)
+  // IDs de medidores con lecturas en estado no editable por el operador (POR_REVISION, APROBADA, etc.)
   readonly readMetersIds = computed(() => {
     const registered = this.registeredReadings();
     const pending = this.pendingReadings();
     const ids = new Set<string>();
     for (const r of registered) {
-      if (r.medidorId) ids.add(r.medidorId.toString());
+      const mId = r.medidor?.medidorId ?? r.medidorId;
+      if (mId && r.estado !== 'PENDIENTE' && r.estado !== 'RECHAZADA_VERIFICACION') {
+        ids.add(mId.toString());
+      }
     }
     for (const p of pending) {
-      if (p.medidorId) ids.add(p.medidorId.toString());
+      if (p.medidorId && p.estado !== 'PENDIENTE' && p.estado !== 'RECHAZADA_VERIFICACION') {
+        ids.add(p.medidorId.toString());
+      }
     }
     return ids;
   });
@@ -102,7 +111,9 @@ export class LecturasComponent implements OnInit {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const map = new Map<string, any>();
     for (const r of this.registeredReadings()) {
-      if (r.medidorId != null) map.set(r.medidorId.toString(), r);
+      // Backend response nests medidorId inside medidor object
+      const mId = r.medidor?.medidorId ?? r.medidorId;
+      if (mId != null) map.set(mId.toString(), r);
     }
     for (const p of this.pendingReadings()) {
       if (p.medidorId != null && !map.has(p.medidorId.toString())) {
@@ -242,12 +253,9 @@ export class LecturasComponent implements OnInit {
 
   private async loadCachedMeters(): Promise<void> {
     try {
-      const cachedMeters = await this.dbService.getMetersCache();
-      this.metersList.set(cachedMeters);
-
+      await this.meterCache.load();
       const cachedReadings = await this.dbService.getRegisteredReadingsCache();
       this.registeredReadings.set(cachedReadings);
-
       this.autoSelectFromQueryParam();
     } catch (e) {
       console.error('Error al cargar caché offline:', e);
@@ -340,7 +348,7 @@ export class LecturasComponent implements OnInit {
       // 1. Descargar catálogo completo de medidores para sincronización offline
       const meters = await firstValueFrom(this.operatorService.syncAllMeters());
       await this.dbService.saveMetersCache(meters);
-      this.metersList.set(meters);
+      await this.meterCache.load();
 
       // 2. Descargar lecturas ya registradas en el periodo actual
       const readings = await this.syncService.getCurrentPeriodReadings();
@@ -411,21 +419,6 @@ export class LecturasComponent implements OnInit {
     this.goBackToSearch();
   }
 
-  /**
-   * Captura y procesa la foto seleccionada convirtiéndola a Base64
-   */
-  onPhotoCapture(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.photoPreview.set(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-  }
-
   async onSubmit(): Promise<void> {
     if (this.readingForm.invalid || !this.selectedMeter()) {
       this.readingForm.markAllAsTouched();
@@ -436,7 +429,8 @@ export class LecturasComponent implements OnInit {
     const formValue = this.readingForm.value;
     const meter = this.selectedMeter()!;
 
-    // Generar el payload del DTO compatible con CrearLecturaDto del backend
+    const existingReading = this.existingReadingMap().get(meter.medidorId.toString());
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const payload: any = {
       fecha: new Date().toISOString(),
@@ -445,9 +439,15 @@ export class LecturasComponent implements OnInit {
       consumoCalculado: Number(formValue.lecturaActual) - Number(formValue.lecturaAnterior),
       medidorId: meter.medidorId.toString(),
       lecturaInicial: !!formValue.lecturaInicial,
-      descripcionAnomalia: formValue.descripcionAnomalia || null,
-      fotoBase64: this.photoPreview() || null,
+      ...(formValue.descripcionAnomalia
+        ? { descripcionAnomalia: formValue.descripcionAnomalia }
+        : {}),
+      ...(this.photoPreview() ? { fotoBase64: this.photoPreview() } : {}),
     };
+
+    if (existingReading?.lecturaId) {
+      payload._lecturaId = existingReading.lecturaId;
+    }
 
     try {
       await this.syncService.submitReading(payload);

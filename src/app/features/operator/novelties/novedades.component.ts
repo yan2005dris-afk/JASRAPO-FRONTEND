@@ -3,13 +3,14 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { MetersService } from '../../contracts/meters/services/meters.service';
-import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { NetworkService } from '../../../core/services/network.service';
 import { OperatorService } from '../service/operator.service';
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
+import { MeterCacheService } from '../../../core/services/meter-cache.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
+import { PhotoCaptureComponent } from '../../../shared/components/photo-capture/photo-capture.component';
+import { MeterSearchBoxComponent } from '../../../shared/components/meter-search-box/meter-search-box.component';
 import { environment } from '../../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
 import type { ReadingWithAnomaly } from '../models/operator.models';
@@ -17,7 +18,7 @@ import type { ReadingWithAnomaly } from '../models/operator.models';
 @Component({
   selector: 'app-operator-novelties',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, PhotoCaptureComponent, MeterSearchBoxComponent],
   templateUrl: './novedades.component.html',
   styleUrl: './novedades.component.scss',
 })
@@ -25,11 +26,10 @@ export class NovedadesComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly http = inject(HttpClient);
   private readonly route = inject(ActivatedRoute);
-  private readonly metersService = inject(MetersService);
-  private readonly dbService = inject(IndexedDbService);
   private readonly operatorService = inject(OperatorService);
-  readonly networkService = inject(NetworkService);
-  readonly syncService = inject(OperatorSyncService);
+  private readonly networkService = inject(NetworkService);
+  private readonly syncService = inject(OperatorSyncService);
+  private readonly meterCache = inject(MeterCacheService);
   private readonly toastService = inject(ToastService);
 
   // ---- Pending anomalies from backend (new) ----
@@ -39,7 +39,7 @@ export class NovedadesComponent implements OnInit {
   readonly reportSectionExpanded = signal<boolean>(false);
 
   // ---- Report form (existing, kept as secondary action) ----
-  readonly metersList = signal<IMeterDto[]>([]);
+  readonly metersList = this.meterCache.metersList;
   readonly searchQuery = signal<string>('');
   readonly selectedMeter = signal<IMeterDto | null>(null);
   readonly isLoadingMeters = signal<boolean>(false);
@@ -119,12 +119,7 @@ export class NovedadesComponent implements OnInit {
   }
 
   private async loadCachedMeters(): Promise<void> {
-    try {
-      const cached = await this.dbService.getMetersCache();
-      this.metersList.set(cached);
-    } catch (e) {
-      console.error('Error al cargar caché de medidores:', e);
-    }
+    await this.meterCache.load();
   }
 
   selectMeter(meter: IMeterDto): void {
@@ -141,18 +136,6 @@ export class NovedadesComponent implements OnInit {
     this.selectedMeter.set(null);
     this.photoPreview.set(null);
     this.noveltyForm.reset();
-  }
-
-  onPhotoCapture(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.photoPreview.set(reader.result as string);
-    };
-    reader.readAsDataURL(file);
   }
 
   private async getLatestReadingId(contratoId: string): Promise<string> {
@@ -218,9 +201,5 @@ export class NovedadesComponent implements OnInit {
     } finally {
       this.isSaving.set(false);
     }
-  }
-
-  async forceSync(): Promise<void> {
-    await this.syncService.syncPendingData();
   }
 }

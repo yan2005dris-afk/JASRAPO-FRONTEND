@@ -2,6 +2,7 @@ import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { TasksComponent } from './tasks.component';
 import { OperatorService } from '../service/operator.service';
+import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import type { TaskResponse } from '../models/operator.models';
 
 const makeMockTask = (overrides: Partial<TaskResponse> = {}): TaskResponse => ({
@@ -25,9 +26,18 @@ describe('TasksComponent', () => {
   beforeEach(async () => {
     operatorServiceMock = { getTasks: vi.fn().mockReturnValue(of([])) };
 
+    const indexedDbMock = {
+      getMetersCache: vi.fn().mockResolvedValue([]),
+      getRegisteredReadingsCache: vi.fn().mockResolvedValue([]),
+      getPendingReadings: vi.fn().mockResolvedValue([]),
+    };
+
     await TestBed.configureTestingModule({
       imports: [TasksComponent],
-      providers: [{ provide: OperatorService, useValue: operatorServiceMock }],
+      providers: [
+        { provide: OperatorService, useValue: operatorServiceMock },
+        { provide: IndexedDbService, useValue: indexedDbMock },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(TasksComponent);
