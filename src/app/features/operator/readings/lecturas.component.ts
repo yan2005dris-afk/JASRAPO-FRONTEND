@@ -12,6 +12,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 import { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
 import { PhotoCaptureComponent } from '../../../shared/components/photo-capture/photo-capture.component';
 import { MeterSearchBoxComponent } from '../../../shared/components/meter-search-box/meter-search-box.component';
+import { MeterCardComponent } from '../../../shared/components/meter-card/meter-card.component';
 import { firstValueFrom } from 'rxjs';
 
 interface EstadoInfo {
@@ -38,7 +39,13 @@ type MobileStep = 'search' | 'actions' | 'form';
 @Component({
   selector: 'app-operator-readings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, PhotoCaptureComponent, MeterSearchBoxComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    PhotoCaptureComponent,
+    MeterSearchBoxComponent,
+    MeterCardComponent,
+  ],
   templateUrl: './lecturas.component.html',
   styleUrl: './lecturas.component.scss',
 })

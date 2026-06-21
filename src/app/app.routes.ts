@@ -69,9 +69,8 @@ export const routes: Routes = [
       },
       {
         path: '',
-        data: { breadcrumb: 'Inicio' },
-        loadComponent: () =>
-          import('./features/operator/home/pwa-home.component').then((m) => m.PwaHomeComponent),
+        redirectTo: 'tareas',
+        pathMatch: 'full',
       },
     ],
   },

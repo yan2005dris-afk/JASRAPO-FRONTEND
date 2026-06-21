@@ -108,31 +108,11 @@
                     style="max-height: 400px"
                   >
                     @for (meter of filteredMeters(); track meter.medidorId) {
-                      <button
-                        type="button"
-                        class="list-group-item list-group-item-action p-3 d-flex justify-content-between align-items-center border-bottom"
-                        (click)="selectMeter(meter)"
-                      >
-                        <div>
-                          <div class="fw-bold text-dark mb-1">Serie: {{ meter.serie }}</div>
-                          @if (meter.clienteNombre) {
-                            <div class="text-secondary small mb-1">
-                              <i class="bi bi-person-fill me-1"></i>{{ meter.clienteNombre }}
-                            </div>
-                          }
-                          <div class="text-muted small">
-                            <i class="bi bi-tag-fill me-1"></i>{{ meter.marca }} -
-                            {{ meter.modelo }}
-                          </div>
-                        </div>
-                        @if (meter.contratoId) {
-                          <span class="badge bg-info text-dark rounded-pill"
-                            >Contrato #{{ meter.contratoId }}</span
-                          >
-                        } @else {
-                          <span class="badge bg-light text-muted rounded-pill">Sin Contrato</span>
-                        }
-                      </button>
+                      <app-meter-card
+                        [meter]="meter"
+                        [showArrow]="false"
+                        (meterSelect)="selectMeter($event)"
+                      />
                     }
                   </div>
                 } @else if (searchQuery() && filteredMeters().length === 0 && !selectedMeter()) {

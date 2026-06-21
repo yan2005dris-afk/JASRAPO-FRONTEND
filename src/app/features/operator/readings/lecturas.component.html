@@ -88,36 +88,11 @@
             <span class="section-count">{{ group.meters.length }}</span>
           </div>
           @for (meter of group.meters; track meter.medidorId) {
-            <button
-              type="button"
-              class="meter-item"
-              [class.read]="!!group.info.cssClass"
-              (click)="selectMeter(meter)"
-              [attr.id]="'meter-' + meter.medidorId"
-            >
-              <div class="meter-main">
-                <div class="meter-serie">{{ meter.serie }}</div>
-                @if (meter.clienteNombre) {
-                  <div class="meter-client">
-                    <i class="bi bi-person-fill"></i> {{ meter.clienteNombre }}
-                  </div>
-                }
-                <div class="meter-detail">
-                  {{ meter.marca }} {{ meter.modelo ? '- ' + meter.modelo : '' }}
-                </div>
-              </div>
-              <div class="meter-end">
-                @if (group.info.cssClass) {
-                  <span [class]="group.info.cssClass">
-                    <i [class]="'bi ' + group.info.icon"></i> {{ group.info.label }}
-                  </span>
-                }
-                @if (meter.contratoId) {
-                  <span class="badge-contract">#{{ meter.contratoId }}</span>
-                }
-                <i class="bi bi-chevron-right meter-arrow"></i>
-              </div>
-            </button>
+            <app-meter-card
+              [meter]="meter"
+              [status]="group.info"
+              (meterSelect)="selectMeter($event)"
+            />
           }
         }
       </div>

@@ -11,6 +11,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 import { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
 import { PhotoCaptureComponent } from '../../../shared/components/photo-capture/photo-capture.component';
 import { MeterSearchBoxComponent } from '../../../shared/components/meter-search-box/meter-search-box.component';
+import { MeterCardComponent } from '../../../shared/components/meter-card/meter-card.component';
 import { environment } from '../../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
 import type { ReadingWithAnomaly } from '../models/operator.models';
@@ -18,7 +19,13 @@ import type { ReadingWithAnomaly } from '../models/operator.models';
 @Component({
   selector: 'app-operator-novelties',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, PhotoCaptureComponent, MeterSearchBoxComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    PhotoCaptureComponent,
+    MeterSearchBoxComponent,
+    MeterCardComponent,
+  ],
   templateUrl: './novedades.component.html',
   styleUrl: './novedades.component.scss',
 })

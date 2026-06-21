@@ -5,6 +5,8 @@ import { IndexedDbService, PendingRecord } from '../../../core/services/indexed-
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
 import { NetworkService } from '../../../core/services/network.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { firstValueFrom } from 'rxjs';
 
 type QueueTab = 'pendientes' | 'rechazados' | 'sincronizados';
 
@@ -20,6 +22,7 @@ export class SincronizarComponent implements OnInit {
   readonly syncService = inject(OperatorSyncService);
   readonly networkService = inject(NetworkService);
   private readonly toastService = inject(ToastService);
+  private readonly confirmService = inject(ConfirmDialogService);
 
   readonly activeTab = signal<QueueTab>('pendientes');
 
@@ -85,6 +88,18 @@ export class SincronizarComponent implements OnInit {
   }
 
   async clearHistory(): Promise<void> {
+    const confirmed = await firstValueFrom(
+      this.confirmService.confirm({
+        title: 'Limpiar Historial',
+        message: '¿Estás seguro de que querés limpiar el historial de sincronización? Esta acción no se puede deshacer.',
+        confirmText: 'Limpiar',
+        cancelText: 'Cancelar',
+        isDanger: true,
+      })
+    );
+
+    if (!confirmed) return;
+
     await this.dbService.clearSyncedReadings();
     this.syncedReadings.set([]);
     this.toastService.info('Historial de sincronización limpiado.', 'Historial');
@@ -167,6 +182,19 @@ export class SincronizarComponent implements OnInit {
 
   async discardReading(record: PendingRecord): Promise<void> {
     if (!record.id) return;
+
+    const confirmed = await firstValueFrom(
+      this.confirmService.confirm({
+        title: 'Descartar Lectura',
+        message: '¿Estás seguro de que querés descartar esta lectura de la cola de sincronización?',
+        confirmText: 'Descartar',
+        cancelText: 'Cancelar',
+        isDanger: true,
+      })
+    );
+
+    if (!confirmed) return;
+
     await this.dbService.deletePendingReading(record.id);
     this.toastService.info('Lectura descartada de la cola.', 'Descartado');
     await this.loadQueue();
@@ -175,6 +203,19 @@ export class SincronizarComponent implements OnInit {
 
   async discardAnomaly(record: PendingRecord): Promise<void> {
     if (!record.id) return;
+
+    const confirmed = await firstValueFrom(
+      this.confirmService.confirm({
+        title: 'Descartar Novedad',
+        message: '¿Estás seguro de que querés descartar esta novedad de la cola de sincronización?',
+        confirmText: 'Descartar',
+        cancelText: 'Cancelar',
+        isDanger: true,
+      })
+    );
+
+    if (!confirmed) return;
+
     await this.dbService.deletePendingAnomaly(record.id);
     this.toastService.info('Novedad descartada de la cola.', 'Descartado');
     await this.loadQueue();
