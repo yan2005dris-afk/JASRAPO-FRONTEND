@@ -9,13 +9,9 @@
   <div class="meter-main">
     <div class="meter-serie">{{ meter.serie }}</div>
     @if (meter.clienteNombre) {
-      <div class="meter-client">
-        <i class="bi bi-person-fill"></i> {{ meter.clienteNombre }}
-      </div>
+      <div class="meter-client"><i class="bi bi-person-fill"></i> {{ meter.clienteNombre }}</div>
     }
-    <div class="meter-detail">
-      {{ meter.marca }} {{ meter.modelo ? '- ' + meter.modelo : '' }}
-    </div>
+    <div class="meter-detail">{{ meter.marca }} {{ meter.modelo ? '- ' + meter.modelo : '' }}</div>
   </div>
   <div class="meter-end">
     @if (status && status.cssClass) {

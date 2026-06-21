@@ -50,16 +50,18 @@
       <!-- Meters List -->
       <div class="meters-list">
         @if (isLoadingMeters()) {
-          <div class="loading-state">
-            <span class="spinner-border spinner-border-sm" role="status"></span>
+          <div
+            class="d-flex align-items-center justify-content-center gap-2 py-5 text-secondary small"
+          >
+            <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
             Cargando medidores...
           </div>
         }
 
         @if (filteredMeters().length === 0 && !isLoadingMeters()) {
-          <div class="empty-state">
-            <i class="bi bi-inbox"></i>
-            <p>
+          <div class="text-center py-5 text-secondary small">
+            <i class="bi bi-inbox d-block fs-1 mb-2 text-primary opacity-50"></i>
+            <p class="m-0">
               {{
                 searchQuery() ? 'Sin resultados para la búsqueda.' : 'No hay medidores cargados.'
               }}
@@ -261,10 +263,10 @@
         </div>
 
         <!-- Submit -->
-        <div class="form-actions">
+        <div class="d-flex gap-2 pt-2">
           <button
             type="button"
-            class="btn-form-cancel"
+            class="btn btn-outline-secondary py-2 fw-semibold flex-grow-1"
             (click)="goBackToActions()"
             [disabled]="isSaving()"
           >
@@ -272,7 +274,7 @@
           </button>
           <button
             type="submit"
-            class="btn-form-submit"
+            class="btn btn-primary py-2 fw-semibold flex-grow-2 d-flex align-items-center justify-content-center gap-2"
             [disabled]="readingForm.invalid || isSaving()"
             id="btn-submit-reading"
           >

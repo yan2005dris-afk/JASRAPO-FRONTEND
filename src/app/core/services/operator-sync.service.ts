@@ -322,7 +322,7 @@ export class OperatorSyncService {
 
   /**
    * Sincroniza catálogo de medidores + lecturas registradas para uso offline.
-   * 
+   *
    */
   async syncCatalogAndReadings(): Promise<void> {
     try {

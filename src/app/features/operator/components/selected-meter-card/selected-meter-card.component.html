@@ -5,9 +5,7 @@
   <div class="selected-info">
     <div class="selected-serie">{{ meter.serie }}</div>
     @if (meter.clienteNombre) {
-      <div class="selected-client">
-        <i class="bi bi-person-fill"></i> {{ meter.clienteNombre }}
-      </div>
+      <div class="selected-client"><i class="bi bi-person-fill"></i> {{ meter.clienteNombre }}</div>
     }
     <div class="selected-detail">
       {{ meter.marca }} {{ meter.modelo ? '- ' + meter.modelo : '' }}
@@ -16,12 +14,7 @@
       <span class="selected-contract">Contrato #{{ meter.contratoId }}</span>
     }
   </div>
-  <button
-    type="button"
-    class="btn-clear-selection"
-    (click)="onClear()"
-    title="Cambiar medidor"
-  >
+  <button type="button" class="btn-clear-selection" (click)="onClear()" title="Cambiar medidor">
     <i class="bi bi-x fs-5"></i>
   </button>
 </div>

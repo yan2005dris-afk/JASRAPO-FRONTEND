@@ -91,11 +91,12 @@ export class SincronizarComponent implements OnInit {
     const confirmed = await firstValueFrom(
       this.confirmService.confirm({
         title: 'Limpiar Historial',
-        message: '¿Estás seguro de que querés limpiar el historial de sincronización? Esta acción no se puede deshacer.',
+        message:
+          '¿Estás seguro de que querés limpiar el historial de sincronización? Esta acción no se puede deshacer.',
         confirmText: 'Limpiar',
         cancelText: 'Cancelar',
         isDanger: true,
-      })
+      }),
     );
 
     if (!confirmed) return;
@@ -190,7 +191,7 @@ export class SincronizarComponent implements OnInit {
         confirmText: 'Descartar',
         cancelText: 'Cancelar',
         isDanger: true,
-      })
+      }),
     );
 
     if (!confirmed) return;
@@ -211,7 +212,7 @@ export class SincronizarComponent implements OnInit {
         confirmText: 'Descartar',
         cancelText: 'Cancelar',
         isDanger: true,
-      })
+      }),
     );
 
     if (!confirmed) return;

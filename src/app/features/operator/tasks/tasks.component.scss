@@ -164,34 +164,6 @@
   margin: 0.35rem 0 0;
 }
 
-// ── Route type badges ─────────────────────────────────────────────────────────
-
-.route-badge {
-  padding: 0.2rem 0.6rem;
-  border-radius: 6px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-
-  &.badge-toma_lectura {
-    background: var(--info-color);
-    color: var(--primary-color);
-  }
-  &.badge-reconexion {
-    background: #fff3cd;
-    color: #856404;
-  }
-  &.badge-instalacion {
-    background: #d1e7dd;
-    color: #0a3622;
-  }
-  &.badge-inspeccion {
-    background: #f0d9ff;
-    color: #5a008a;
-  }
-}
-
 // ── State badges ──────────────────────────────────────────────────────────────
 
 .state-badge {

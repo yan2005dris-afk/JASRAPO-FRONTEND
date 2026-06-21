@@ -125,10 +125,7 @@
 
                 <!-- Medidor seleccionado (Resumen) -->
                 @if (selectedMeter(); as meter) {
-                  <app-selected-meter-card
-                    [meter]="meter"
-                    (clear)="clearSelection()"
-                  />
+                  <app-selected-meter-card [meter]="meter" (clear)="clearSelection()" />
                 }
               </div>
             </div>
