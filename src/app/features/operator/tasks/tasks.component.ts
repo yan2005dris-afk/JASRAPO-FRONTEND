@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OperatorService } from '../service/operator.service';
-import type { TaskResponse, TaskRouteType } from '../models/operator.models';
+import type { TaskResponse } from '../models/operator.models';
 import * as L from 'leaflet';
 
 type ViewMode = 'list' | 'map';
@@ -33,6 +33,8 @@ export class TasksComponent implements OnInit, OnDestroy {
   readonly activeFilter = signal<string>('ALL');
   readonly viewMode = signal<ViewMode>('list');
   readonly isLoading = signal<boolean>(false);
+  readonly showRouteLine = signal<boolean>(true);
+  readonly selectedTaskId = signal<string | null>(null);
 
   readonly filteredTasks = computed<TaskResponse[]>(() => {
     const filter = this.activeFilter();
@@ -40,16 +42,103 @@ export class TasksComponent implements OnInit, OnDestroy {
     return this.tasks().filter((t) => t.tipoRuta === filter);
   });
 
-  readonly tasksWithCoords = computed<TaskResponse[]>(() =>
-    this.filteredTasks().filter((t) => t.medidor?.latitud != null && t.medidor?.longitud != null),
-  );
+  readonly mapPoints = computed<{ lat: number; lng: number; label: string; popupHtml: string }[]>(() => {
+    const points: { lat: number; lng: number; label: string; popupHtml: string }[] = [];
+    let globalCounter = 1;
 
-  readonly routePath = computed<L.LatLngTuple[]>(() =>
-    this.tasksWithCoords()
+    const activeSelectedId = this.selectedTaskId();
+
+    const sortedTasks = this.filteredTasks()
       .slice()
-      .sort((a, b) => a.orden - b.orden)
-      .map((t) => [t.medidor!.latitud!, t.medidor!.longitud!] as L.LatLngTuple),
-  );
+      .sort((a, b) => a.orden - b.orden);
+
+    for (const task of sortedTasks) {
+      // Filter out non-selected task if a selection is active
+      if (activeSelectedId !== null && task.rutaId !== activeSelectedId) {
+        continue;
+      }
+
+      if (task.tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos && task.rutaPuntos.length > 0) {
+        const sortedPuntos = task.rutaPuntos
+          .slice()
+          .sort((a, b) => a.orden - b.orden);
+
+        for (const pt of sortedPuntos) {
+          points.push({
+            lat: pt.latitud,
+            lng: pt.longitud,
+            label: `${globalCounter++}`,
+            popupHtml: `
+              <div class="map-info">
+                <strong>#${task.orden} — ${task.nombre}</strong>
+                <div style="margin-top: 4px; margin-bottom: 4px;">
+                  <span class="route-badge badge-toma_lectura" style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; background: #e0f0ff; color: #0a58ca;">
+                    Punto de Lectura
+                  </span>
+                </div>
+                <p style="margin: 4px 0 0 0; font-size: 11px;"><strong>Serie:</strong> ${pt.serie}</p>
+                <p style="margin: 2px 0 0 0; font-size: 11px;"><strong>Cliente:</strong> ${pt.clienteNombre}</p>
+              </div>
+            `,
+          });
+        }
+      } else if (task.medidor?.latitud != null && task.medidor?.longitud != null) {
+        points.push({
+          lat: task.medidor.latitud,
+          lng: task.medidor.longitud,
+          label: `${globalCounter++}`,
+          popupHtml: `
+            <div class="map-info">
+              <strong>#${task.orden} — ${task.nombre}</strong>
+              <div style="margin-top: 4px; margin-bottom: 4px;">
+                <span class="route-badge badge-${task.tipoRuta.toLowerCase()}" style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; background: #e0f0ff; color: #0a58ca;">
+                  ${this.getRouteTypeLabel(task.tipoRuta)}
+                </span>
+                <span class="state-badge state-${task.estado.toLowerCase()}" style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 4px;">
+                  ${this.getStateLabel(task.estado)}
+                </span>
+              </div>
+              <p style="margin: 4px 0 0 0; font-size: 11px;"><strong>Serie:</strong> ${task.medidor.serie}</p>
+              ${task.descripcion ? `<p style="margin: 2px 0 0 0; font-size: 10px; color: #6c757d;">${task.descripcion}</p>` : ''}
+            </div>
+          `,
+        });
+      }
+    }
+
+    return points;
+  });
+
+  readonly routePath = computed<L.LatLngTuple[]>(() => {
+    if (!this.showRouteLine()) return [];
+    return this.mapPoints().map((p) => [p.lat, p.lng] as L.LatLngTuple);
+  });
+
+  /**
+   * Prefers the OSRM road-following geometry when available.
+   * Falls back to straight-line routePath when rutaGeometry is absent.
+   */
+  readonly routeGeometry = computed<L.LatLngTuple[]>(() => {
+    if (!this.showRouteLine()) return [];
+
+    const activeSelectedId = this.selectedTaskId();
+    const visibleTasks = this.filteredTasks().filter(
+      (t) => activeSelectedId === null || t.rutaId === activeSelectedId,
+    );
+
+    // Collect all OSRM geometry segments from visible tasks
+    const osrmCoords: L.LatLngTuple[] = [];
+    for (const task of visibleTasks) {
+      if (task.rutaGeometry && task.rutaGeometry.length > 0) {
+        for (const [lat, lng] of task.rutaGeometry) {
+          osrmCoords.push([lat, lng] as L.LatLngTuple);
+        }
+      }
+    }
+
+    // If any task provided OSRM geometry, use it; otherwise fall back to straight lines
+    return osrmCoords.length > 0 ? osrmCoords : this.routePath();
+  });
 
   ngOnInit(): void {
     this.loadTasks();
@@ -77,6 +166,7 @@ export class TasksComponent implements OnInit, OnDestroy {
 
   setFilter(tipo: string): void {
     this.activeFilter.set(tipo);
+    this.selectedTaskId.set(null); // Clear selected task on filter change
     if (this.viewMode() === 'map') {
       setTimeout(() => {
         this.initMap();
@@ -93,8 +183,31 @@ export class TasksComponent implements OnInit, OnDestroy {
         this.initMap();
       }, 0);
     } else {
+      this.selectedTaskId.set(null); // Clear selection when returning to list
       this.destroyMap();
     }
+  }
+
+  toggleRouteLine(): void {
+    this.showRouteLine.set(!this.showRouteLine());
+    if (this.viewMode() === 'map') {
+      this.initMap();
+    }
+  }
+
+  selectTask(taskId: string | null): void {
+    this.selectedTaskId.set(taskId);
+    if (this.viewMode() === 'map') {
+      this.initMap();
+    }
+  }
+
+  viewOnMap(task: TaskResponse): void {
+    this.selectedTaskId.set(task.rutaId);
+    this.viewMode.set('map');
+    setTimeout(() => {
+      this.initMap();
+    }, 0);
   }
 
   private initMap(): void {
@@ -106,9 +219,9 @@ export class TasksComponent implements OnInit, OnDestroy {
     // Default center: Manabí (-0.9677, -80.7089)
     let center: L.LatLngExpression = [-0.9677, -80.7089];
 
-    const firstTask = this.tasksWithCoords()[0];
-    if (firstTask?.medidor?.latitud != null && firstTask?.medidor?.longitud != null) {
-      center = [firstTask.medidor.latitud, firstTask.medidor.longitud];
+    const firstPoint = this.mapPoints()[0];
+    if (firstPoint) {
+      center = [firstPoint.lat, firstPoint.lng];
     }
 
     this.map = L.map('map').setView(center, 13);
@@ -131,37 +244,21 @@ export class TasksComponent implements OnInit, OnDestroy {
 
     this.markersGroup = L.layerGroup().addTo(this.map);
 
-    this.tasksWithCoords().forEach((task) => {
-      if (task.medidor?.latitud != null && task.medidor?.longitud != null) {
-        const marker = L.marker([task.medidor.latitud, task.medidor.longitud], {
-          icon: defaultIcon,
-        }).bindPopup(`
-          <div class="map-info">
-            <strong>#${task.orden} — ${task.nombre}</strong>
-            <div style="margin-top: 4px; margin-bottom: 4px;">
-              <span class="route-badge badge-${task.tipoRuta.toLowerCase()}" style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; background: #e0f0ff; color: #0a58ca;">
-                ${this.getRouteTypeLabel(task.tipoRuta)}
-              </span>
-              <span class="state-badge state-${task.estado.toLowerCase()}" style="padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 4px;">
-                ${this.getStateLabel(task.estado)}
-              </span>
-            </div>
-            ${task.medidor ? `<p style="margin: 4px 0 0 0; font-size: 11px;">Serie: ${task.medidor.serie}</p>` : ''}
-            ${task.descripcion ? `<p style="margin: 2px 0 0 0; font-size: 10px; color: #6c757d;">${task.descripcion}</p>` : ''}
-          </div>
-        `);
+    this.mapPoints().forEach((point) => {
+      const marker = L.marker([point.lat, point.lng], {
+        icon: defaultIcon,
+      }).bindPopup(point.popupHtml);
 
-        marker.bindTooltip(task.orden.toString(), {
-          permanent: true,
-          direction: 'top',
-          className: 'marker-tooltip-label',
-        });
+      marker.bindTooltip(point.label, {
+        permanent: true,
+        direction: 'top',
+        className: 'marker-tooltip-label',
+      });
 
-        this.markersGroup?.addLayer(marker);
-      }
+      this.markersGroup?.addLayer(marker);
     });
 
-    const latLngs = this.routePath();
+    const latLngs = this.routeGeometry();
     if (latLngs.length > 0) {
       this.polyline = L.polyline(latLngs, {
         color: '#0d6efd',
@@ -180,7 +277,7 @@ export class TasksComponent implements OnInit, OnDestroy {
     }
   }
 
-  readonly filterOptions: Array<{ label: string; value: string }> = [
+  readonly filterOptions: { label: string; value: string }[] = [
     { label: 'Todas', value: 'ALL' },
     { label: 'Lecturas', value: 'TOMA_LECTURA' },
     { label: 'Reconexión', value: 'RECONEXION' },

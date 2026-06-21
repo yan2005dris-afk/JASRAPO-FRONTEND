@@ -31,6 +31,16 @@ export interface TaskResponse {
   fechaFin?: string;
   medidor: TaskMedidor | null;
   operario: TaskOperario;
+  rutaPuntos?: TaskRutaPunto[];
+  rutaGeometry?: [number, number][];
+}
+
+export interface TaskRutaPunto {
+  latitud: number;
+  longitud: number;
+  orden: number;
+  serie: string;
+  clienteNombre: string;
 }
 
 export interface AnomaliaItem {

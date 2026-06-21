@@ -4,13 +4,28 @@ import { OperatorLayoutComponent } from './operator-layout.component';
 import { AuthService } from '../../core/services/auth.service';
 import { NetworkService } from '../../core/services/network.service';
 import { OperatorSyncService } from '../../core/services/operator-sync.service';
-import { signal, computed } from '@angular/core';
+import { signal } from '@angular/core';
 import { vi } from 'vitest';
 
+interface AuthServiceMock {
+  currentUser: ReturnType<typeof signal<{ name: string; roleName: string }>>;
+  logout: ReturnType<typeof vi.fn>;
+}
+
+interface NetworkServiceMock {
+  isOnline: ReturnType<typeof signal<boolean>>;
+}
+
+interface SyncServiceMock {
+  totalPending: ReturnType<typeof signal<number>>;
+  isSyncing: ReturnType<typeof signal<boolean>>;
+  syncPendingData: ReturnType<typeof vi.fn>;
+}
+
 describe('OperatorLayoutComponent', () => {
-  let authServiceMock: any;
-  let networkServiceMock: any;
-  let syncServiceMock: any;
+  let authServiceMock: AuthServiceMock;
+  let networkServiceMock: NetworkServiceMock;
+  let syncServiceMock: SyncServiceMock;
 
   beforeEach(async () => {
     authServiceMock = {

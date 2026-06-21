@@ -36,19 +36,43 @@
     <!-- Map view -->
     @if (viewMode() === 'map') {
       <div class="map-section">
+        <div class="map-toolbar">
+          <button class="map-tool-btn" (click)="toggleRouteLine()" type="button" [class.active]="showRouteLine()">
+            <i class="bi" [class.bi-eye-slash-fill]="showRouteLine()" [class.bi-eye-fill]="!showRouteLine()"></i>
+            {{ showRouteLine() ? 'Ocultar Traza' : 'Mostrar Traza' }}
+          </button>
+          @if (selectedTaskId()) {
+            <button class="map-tool-btn btn-clear" (click)="selectTask(null)" type="button">
+              <i class="bi bi-arrow-left-circle-fill"></i> Ver Todas las Rutas
+            </button>
+          }
+        </div>
+
         <div id="map" style="height: 500px" class="map-container"></div>
 
         <!-- Tasks list below map, ordered by orden, showing coordinates if available -->
         <div class="map-task-list">
           <h2 class="map-task-list-title">Tareas en orden</h2>
           @for (task of filteredTasks(); track task.rutaId) {
-            <div class="map-task-row">
+            <div 
+              class="map-task-row" 
+              [class.selected]="selectedTaskId() === task.rutaId"
+              tabindex="0"
+              role="button"
+              (click)="selectTask(selectedTaskId() === task.rutaId ? null : task.rutaId)"
+              (keydown.enter)="selectTask(selectedTaskId() === task.rutaId ? null : task.rutaId)"
+              style="cursor: pointer;"
+            >
               <span class="task-orden-badge">{{ task.orden }}</span>
               <span class="task-name">{{ task.nombre }}</span>
               @if (task.medidor?.latitud && task.medidor?.longitud) {
                 <span class="task-coords">
                   {{ task.medidor!.latitud | number: '1.4-4' }},
                   {{ task.medidor!.longitud | number: '1.4-4' }}
+                </span>
+              } @else if (task.rutaPuntos && task.rutaPuntos.length > 0) {
+                <span class="task-coords text-success">
+                  Con ruta ({{ task.rutaPuntos.length }} pts)
                 </span>
               } @else {
                 <span class="task-no-coords">Sin coordenadas</span>
@@ -86,6 +110,13 @@
             @if (task.descripcion) {
               <p class="task-descripcion">{{ task.descripcion }}</p>
             }
+            <div class="task-card-actions">
+              @if ((task.medidor?.latitud && task.medidor?.longitud) || (task.rutaPuntos && task.rutaPuntos.length > 0)) {
+                <button class="btn-card-map" (click)="viewOnMap(task)" type="button">
+                  <i class="bi bi-geo-alt-fill"></i> Ver en Mapa
+                </button>
+              }
+            </div>
           </div>
         }
         @if (filteredTasks().length === 0) {
