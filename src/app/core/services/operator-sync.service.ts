@@ -322,7 +322,7 @@ export class OperatorSyncService {
 
   /**
    * Sincroniza catálogo de medidores + lecturas registradas para uso offline.
-   * Se ejecuta una sola vez por sesión desde PwaHomeComponent.
+   * 
    */
   async syncCatalogAndReadings(): Promise<void> {
     try {
