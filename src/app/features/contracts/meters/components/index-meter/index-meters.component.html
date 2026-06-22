@@ -252,35 +252,21 @@
 </div>
 
 <!-- Modales de Gestión -->
-@if (showRegisterModal) {
+@if (showModal) {
   <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5)">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow">
         <app-register-meter
-          [isSaving]="isSaving"
-          [errorMessage]="modalErrorMessage"
-          (save)="saveMeter($event)"
-          (cancel)="closeRegister()"
-        >
-        </app-register-meter>
-      </div>
-    </div>
-  </div>
-}
-
-@if (showEditModal && editingMeter) {
-  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5)">
-    <div class="modal-dialog modal-dialog-centered">
-      <div class="modal-content border-0 shadow">
-        <app-edit-meter
+          [isEdit]="isEditMode"
           [meter]="editingMeter"
           [statuses]="statusCatalog"
           [isSaving]="isSaving"
           [errorMessage]="modalErrorMessage"
-          (cancel)="closeEdit()"
-          (save)="updateMeterStatus($event)"
+          (saveCreate)="saveMeter($event)"
+          (saveEdit)="updateMeterStatus($event)"
+          (cancelForm)="closeModal()"
         >
-        </app-edit-meter>
+        </app-register-meter>
       </div>
     </div>
   </div>

@@ -9,7 +9,6 @@ import {
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { EditMeterComponent } from '../edit-meter/edit-meter.component';
 import { RegisterMeterComponent } from '../register-meter/register-meter.component';
 import {
   IMeter,
@@ -37,7 +36,6 @@ import {
     CommonModule,
     FormsModule,
     RegisterMeterComponent,
-    EditMeterComponent,
     PaginationComponent,
     DropdownComponent,
   ],
@@ -69,8 +67,8 @@ export class IndexMetersComponent implements OnInit {
   modalErrorMessage = '';
 
   // Control de modales
-  showRegisterModal = false;
-  showEditModal = false;
+  showModal = false;
+  isEditMode = false;
 
   // Control de dropdown de fila
   openDropdownId: number | null = null;
@@ -229,28 +227,24 @@ export class IndexMetersComponent implements OnInit {
 
   // Gestión de modales
   openRegister(): void {
-    this.showRegisterModal = true;
+    this.showModal = true;
+    this.isEditMode = false;
     this.editingMeter = null;
     this.modalErrorMessage = '';
     this.cdr.detectChanges();
   }
 
-  closeRegister(): void {
-    this.showRegisterModal = false;
+  closeModal(): void {
+    this.showModal = false;
+    this.editingMeter = null;
     this.modalErrorMessage = '';
     this.cdr.detectChanges();
   }
 
   openEdit(meter: IMeter): void {
     this.editingMeter = meter;
-    this.showEditModal = true;
-    this.modalErrorMessage = '';
-    this.cdr.detectChanges();
-  }
-
-  closeEdit(): void {
-    this.showEditModal = false;
-    this.editingMeter = null;
+    this.isEditMode = true;
+    this.showModal = true;
     this.modalErrorMessage = '';
     this.cdr.detectChanges();
   }
@@ -260,7 +254,7 @@ export class IndexMetersComponent implements OnInit {
     this.metersService.createMeter(newMeter).subscribe({
       next: () => {
         this.isSaving = false;
-        this.closeRegister();
+        this.closeModal();
         this.toastService.success('Medidor registrado correctamente', 'Éxito');
         this.loadMeters();
       },
@@ -287,7 +281,7 @@ export class IndexMetersComponent implements OnInit {
     this.metersService.updateMeter(id, body).subscribe({
       next: () => {
         this.isSaving = false;
-        this.closeEdit();
+        this.closeModal();
         this.toastService.success('Estado del medidor actualizado correctamente', 'Éxito');
         this.loadMeters();
       },
