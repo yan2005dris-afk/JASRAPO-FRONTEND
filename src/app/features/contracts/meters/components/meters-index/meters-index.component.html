@@ -256,7 +256,7 @@
   <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5)">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow">
-        <app-register-meter
+        <app-meters-form
           [isEdit]="isEditMode"
           [meter]="editingMeter"
           [statuses]="statusCatalog"
@@ -266,7 +266,7 @@
           (saveEdit)="updateMeterStatus($event)"
           (cancelForm)="closeModal()"
         >
-        </app-register-meter>
+        </app-meters-form>
       </div>
     </div>
   </div>

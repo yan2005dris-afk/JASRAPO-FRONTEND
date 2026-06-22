@@ -8,13 +8,13 @@ import { ICreateMeterPayload, IEditMeterStatusPayload, IMeter, IMeterStatus } fr
  * Gestiona la captura de datos de nuevos equipos y la edición de estados.
  */
 @Component({
-  selector: 'app-register-meter',
+  selector: 'app-meters-form',
   imports: [CommonModule, ReactiveFormsModule],
-  templateUrl: './register-meter.component.html',
-  styleUrl: './register-meter.component.scss',
+  templateUrl: './meters-form.component.html',
+  styleUrl: './meters-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class RegisterMeterComponent {
+export class MetersFormComponent {
   // Comunicación con el componente padre
   isEdit = input<boolean>(false);
   meter = input<IMeter | null>(null);

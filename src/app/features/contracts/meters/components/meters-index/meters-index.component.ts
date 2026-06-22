@@ -9,7 +9,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { RegisterMeterComponent } from '../register-meter/register-meter.component';
+import { MetersFormComponent } from '../meters-form/meters-form.component';
 import {
   IMeter,
   ICreateMeterPayload,
@@ -35,18 +35,18 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    RegisterMeterComponent,
+    MetersFormComponent,
     PaginationComponent,
     DropdownComponent,
   ],
-  templateUrl: './index-meters.component.html',
-  styleUrl: './index-meters.component.scss',
+  templateUrl: './meters-index.component.html',
+  styleUrl: './meters-index.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class IndexMetersComponent implements OnInit {
+export class MetersIndexComponent implements OnInit {
   private readonly metersService = inject(MetersService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly toastService = inject(ToastService);

@@ -254,8 +254,8 @@ export const routes: Routes = [
             path: 'Medidores',
             data: { breadcrumb: 'Medidores' },
             loadComponent: () =>
-              import('./features/contracts/meters/components/index-meter/index-meters.component').then(
-                (m) => m.IndexMetersComponent,
+              import('./features/contracts/meters/components/meters-index/meters-index.component').then(
+                (m) => m.MetersIndexComponent,
               ),
           },
           {

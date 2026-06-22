@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { IndexMetersComponent } from './index-meters.component';
+import { IndexMetersComponent } from './meters-index.component';
 
 describe('MetersComponent Component', () => {
   let component: IndexMetersComponent;
