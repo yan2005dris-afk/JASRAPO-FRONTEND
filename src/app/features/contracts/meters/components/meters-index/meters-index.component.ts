@@ -32,13 +32,7 @@ import {
 
 @Component({
   selector: 'app-meters',
-  imports: [
-    CommonModule,
-    FormsModule,
-    MetersFormComponent,
-    PaginationComponent,
-    DropdownComponent,
-  ],
+  imports: [CommonModule, FormsModule, MetersFormComponent, PaginationComponent, DropdownComponent],
   templateUrl: './meters-index.component.html',
   styleUrl: './meters-index.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

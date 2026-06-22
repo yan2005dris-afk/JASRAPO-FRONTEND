@@ -3,7 +3,8 @@
     <div>
       <h5 class="modal-title fw-bold">
         @if (isEdit()) {
-          Editar Estado del Medidor <span class="text-primary">[{{ meter()?.serie || 'S/N' }}]</span>
+          Editar Estado del Medidor
+          <span class="text-primary">[{{ meter()?.serie || 'S/N' }}]</span>
         } @else {
           Registrar Nuevo Medidor
         }
