@@ -1,0 +1,4 @@
+reviews:
+  target_branches:
+    - "main"
+    - "develop"
