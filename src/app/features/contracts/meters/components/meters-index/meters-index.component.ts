@@ -19,6 +19,7 @@ import {
   IUpdateMeterStatusBody,
   IMeterKpis,
   MeterStatusFilter,
+  MeterStatusCode,
 } from '../../interfaces/imeter.interface';
 import { MetersService } from '../../services/meters.service';
 import { finalize } from 'rxjs';
@@ -147,7 +148,7 @@ export class MetersIndexComponent implements OnInit {
 
     // Buscar el ID numérico del estado correspondiente al código del filtro
     const selectedStatus = this.statusCatalog.find((e) => e.codigo === this.statusFilter);
-    const statusId = selectedStatus?.codigo;
+    const statusId = selectedStatus?.codigo as MeterStatusCode | undefined;
 
     this.metersService
       .getMeters({

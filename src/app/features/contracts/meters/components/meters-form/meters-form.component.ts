@@ -6,6 +6,7 @@ import {
   IEditMeterStatusPayload,
   IMeter,
   IMeterStatus,
+  MeterStatusCode,
 } from '../../interfaces/imeter.interface';
 
 /**
@@ -96,6 +97,7 @@ export class MetersFormComponent {
     }
 
     const rawValues = this.form.getRawValue();
+    const statusId = rawValues.codigo as MeterStatusCode;
 
     if (this.isEdit()) {
       const selectedMeter = this.meter();
@@ -103,7 +105,7 @@ export class MetersFormComponent {
 
       this.saveEdit.emit({
         medidorId: selectedMeter.medidorId!,
-        estado: rawValues.codigo!,
+        estado: statusId,
         motivo: rawValues.observacion || '',
       });
     } else {

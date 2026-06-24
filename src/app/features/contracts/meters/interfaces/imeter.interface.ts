@@ -32,7 +32,7 @@ export interface ICreateMeterPayload {
  */
 export interface IEditMeterStatusPayload {
   medidorId: number;
-  estado: string;
+  estado: MeterStatusCode;
   motivo?: string;
 }
 
@@ -41,7 +41,7 @@ export interface IMeterDto extends Omit<IMeter, 'estado'> {
 }
 
 export interface IUpdateMeterStatusBody {
-  estado: string;
+  estado: MeterStatusCode;
   motivo?: string;
 }
 
@@ -55,7 +55,7 @@ export interface IMeterKpis {
 export interface ISearchMetersParams {
   page?: number;
   limit?: number;
-  estado?: string;
+  estado?: MeterStatusCode;
   search?: string;
 }
 

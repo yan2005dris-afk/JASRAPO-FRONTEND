@@ -68,8 +68,15 @@
           rows="4"
           formControlName="observacion"
           placeholder="Ingrese el motivo o una observación técnica..."
+          maxlength="255"
+          [class.is-invalid]="
+            form.controls.observacion.invalid && form.controls.observacion.touched
+          "
           style="resize: none"
         ></textarea>
+        @if (form.controls.observacion.hasError('maxlength') && form.controls.observacion.touched) {
+          <div class="invalid-feedback">La observación no debe exceder 255 caracteres.</div>
+        }
       </div>
     } @else {
       <div class="row g-3">
@@ -83,10 +90,13 @@
             class="form-control"
             formControlName="serie"
             placeholder="Ej. SN-001"
+            maxlength="20"
             [class.is-invalid]="form.controls.serie.invalid && form.controls.serie.touched"
           />
-          @if (form.controls.serie.invalid && form.controls.serie.touched) {
+          @if (form.controls.serie.touched && form.controls.serie.hasError('required')) {
             <div class="invalid-feedback">El número de serie es obligatorio.</div>
+          } @else if (form.controls.serie.touched && form.controls.serie.hasError('maxlength')) {
+            <div class="invalid-feedback">El número de serie no debe exceder 20 caracteres.</div>
           }
         </div>
 
@@ -100,10 +110,13 @@
             class="form-control"
             formControlName="marca"
             placeholder="Ej. Itron"
+            maxlength="20"
             [class.is-invalid]="form.controls.marca.invalid && form.controls.marca.touched"
           />
-          @if (form.controls.marca.invalid && form.controls.marca.touched) {
+          @if (form.controls.marca.touched && form.controls.marca.hasError('required')) {
             <div class="invalid-feedback">La marca es obligatoria.</div>
+          } @else if (form.controls.marca.touched && form.controls.marca.hasError('maxlength')) {
+            <div class="invalid-feedback">La marca no debe exceder 20 caracteres.</div>
           }
         </div>
 
@@ -117,10 +130,13 @@
             class="form-control"
             formControlName="modelo"
             placeholder="Ej. CX1000"
+            maxlength="20"
             [class.is-invalid]="form.controls.modelo.invalid && form.controls.modelo.touched"
           />
-          @if (form.controls.modelo.invalid && form.controls.modelo.touched) {
+          @if (form.controls.modelo.touched && form.controls.modelo.hasError('required')) {
             <div class="invalid-feedback">El modelo es obligatorio.</div>
+          } @else if (form.controls.modelo.touched && form.controls.modelo.hasError('maxlength')) {
+            <div class="invalid-feedback">El modelo no debe exceder 20 caracteres.</div>
           }
         </div>
       </div>
