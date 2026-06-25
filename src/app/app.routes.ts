@@ -254,7 +254,9 @@ export const routes: Routes = [
             path: 'Medidores',
             data: { breadcrumb: 'Medidores' },
             loadComponent: () =>
-              import('./features/contracts/meters/meters').then((m) => m.MetersComponent),
+              import('./features/contracts/meters/components/meters-index/meters-index.component').then(
+                (m) => m.MetersIndexComponent,
+              ),
           },
           {
             path: 'TarifasYCategorias',

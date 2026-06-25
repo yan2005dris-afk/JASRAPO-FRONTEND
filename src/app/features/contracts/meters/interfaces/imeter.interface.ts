@@ -1,18 +1,18 @@
-export interface IEstadoMedidor {
+export interface IMeterStatus {
   codigo: string;
   nombre: string;
   orden: number;
 }
-/**
- * Entidad Principal de Medidor
- * Representa la estructura de datos completa de un equipo de medición en el sistema.
- */
+
+export type MeterStatusCode = 'BODEGA' | 'INSTALADO' | 'DANADO' | 'PENDIENTE' | 'BAJA';
+export type MeterStatusFilter = 'todos' | MeterStatusCode;
+
 export interface IMeter {
   medidorId: number;
   marca: string;
   modelo: string;
   serie: string;
-  estado?: IEstadoMedidor;
+  estado?: IMeterStatus;
   fechaInstalacion: string | null;
   contratoId: string | null;
   latitud: number | null;
@@ -20,11 +20,7 @@ export interface IMeter {
   motivo?: string;
 }
 
-/**
- * Estructura de datos requerida para el registro inicial de un equipo.
- * Se centra en la identificación física del hardware.
- */
-export interface CrearMedidorPayload {
+export interface ICreateMeterPayload {
   marca: string;
   modelo: string;
   serie: string;
@@ -34,28 +30,36 @@ export interface CrearMedidorPayload {
  * Estructura de datos para la transición de estados.
  * Permite actualizar la situación del medidor e incluir un comentario.
  */
-export interface EditarEstadoMedidorPayload {
+export interface IEditMeterStatusPayload {
   medidorId: number;
-  estado: string;
+  estado: MeterStatusCode;
   motivo?: string;
 }
 
 export interface IMeterDto extends Omit<IMeter, 'estado'> {
-  estado?: string | IEstadoMedidor;
+  estado?: string | IMeterStatus;
 }
-export interface ActualizarEstadoMedidorBody {
-  estado: string;
+
+export interface IUpdateMeterStatusBody {
+  estado: MeterStatusCode;
   motivo?: string;
 }
 
-export interface MeterKpis {
+export interface IMeterKpis {
   enBodega: number;
   instalados: number;
   danados: number;
   total: number;
 }
 
-export interface PaginatedMetersMeta {
+export interface ISearchMetersParams {
+  page?: number;
+  limit?: number;
+  estado?: MeterStatusCode;
+  search?: string;
+}
+
+export interface IPaginatedMetersMeta {
   total: number;
   page: number;
   limit: number;
@@ -66,8 +70,8 @@ export interface PaginatedMetersMeta {
   siguiente: number | null;
 }
 
-export interface PaginatedMetersResponse {
+export interface IPaginatedMetersResponse {
   data: IMeterDto[];
-  meta: PaginatedMetersMeta;
-  kpis: MeterKpis;
+  meta: IPaginatedMetersMeta;
+  kpis: IMeterKpis;
 }
