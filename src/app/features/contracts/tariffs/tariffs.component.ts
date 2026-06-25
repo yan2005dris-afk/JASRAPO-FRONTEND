@@ -3,6 +3,8 @@ import {
   ChangeDetectorRef,
   Component,
   inject,
+  input,
+  output,
   OnInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -18,8 +20,8 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 @Component({
   selector: 'app-tariffs',
   imports: [CommonModule, TariffsFormComponent, PaginationComponent],
-  templateUrl: './tariffs.html',
-  styleUrl: './tariffs.scss',
+  templateUrl: './tariffs.component.html',
+  styleUrl: './tariffs.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '(document:click)': 'closeDropdowns()',
@@ -30,6 +32,17 @@ export class TariffsComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly toast = inject(ToastService);
   private readonly confirmDialog = inject(ConfirmDialogService);
+
+  // Modo selección: cuando es true, la pantalla se usa como selector (sin editar/eliminar).
+  readonly selectionMode = input(false);
+  readonly tariffSelected = output<ITariffCategory>();
+
+  /** Emite la tarifa elegida (solo en modo selección). */
+  selectTariff(tariff: ITariffCategory): void {
+    if (this.selectionMode()) {
+      this.tariffSelected.emit(tariff);
+    }
+  }
 
   tariffs: ITariffCategory[] = [];
   isLoading = false;

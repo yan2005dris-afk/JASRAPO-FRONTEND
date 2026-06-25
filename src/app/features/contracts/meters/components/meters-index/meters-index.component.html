@@ -3,33 +3,36 @@
   Maneja la visualización de métricas, listado paginado y gestión de estados.
 -->
 <div class="container-xl py-4">
-  <!-- Page header -->
-  <div class="page-header mb-4">
-    <div>
-      <h3 class="fw-bold mb-0 text-dark fs-4">Inventario de Medidores</h3>
-      <p class="text-muted small mb-0">Registrá, editá y consultá la información de medidores.</p>
-    </div>
-  </div>
-
-  <!-- Rejilla de indicadores principales -->
-  <section class="metrics-grid mb-4">
-    <div class="card metric-card card-bodega shadow-sm">
-      <span class="metric-label">[EN BODEGA]</span>
-      <h3 class="metric-value fw-bold mt-2">{{ warehouseMeters }}</h3>
+  <!-- Encabezado y KPIs: ocultos en modo selección (no aplican al elegir un medidor) -->
+  @if (!selectionMode()) {
+    <!-- Page header -->
+    <div class="page-header mb-4">
+      <div>
+        <h3 class="fw-bold mb-0 text-dark fs-4">Inventario de Medidores</h3>
+        <p class="text-muted small mb-0">Registrá, editá y consultá la información de medidores.</p>
+      </div>
     </div>
 
-    <div class="card metric-card card-instalados shadow-sm">
-      <span class="metric-label">[INSTALADOS]</span>
-      <h3 class="metric-value fw-bold mt-2">{{ installedMeters }}</h3>
-      <i class="bi bi-link-45deg metric-icon icon-blue"></i>
-    </div>
+    <!-- Rejilla de indicadores principales -->
+    <section class="metrics-grid mb-4">
+      <div class="card metric-card card-bodega shadow-sm">
+        <span class="metric-label">[EN BODEGA]</span>
+        <h3 class="metric-value fw-bold mt-2">{{ warehouseMeters }}</h3>
+      </div>
 
-    <div class="card metric-card card-danados shadow-sm">
-      <span class="metric-label">[DAÑADOS]</span>
-      <h3 class="metric-value fw-bold mt-2">{{ damagedMeters }}</h3>
-      <i class="bi bi-exclamation-triangle metric-icon text-danger"></i>
-    </div>
-  </section>
+      <div class="card metric-card card-instalados shadow-sm">
+        <span class="metric-label">[INSTALADOS]</span>
+        <h3 class="metric-value fw-bold mt-2">{{ installedMeters }}</h3>
+        <i class="bi bi-link-45deg metric-icon icon-blue"></i>
+      </div>
+
+      <div class="card metric-card card-danados shadow-sm">
+        <span class="metric-label">[DAÑADOS]</span>
+        <h3 class="metric-value fw-bold mt-2">{{ damagedMeters }}</h3>
+        <i class="bi bi-exclamation-triangle metric-icon text-danger"></i>
+      </div>
+    </section>
+  }
 
   <!-- Contenedor principal de la tabla -->
   <div class="card border-0 shadow-sm rounded-3">
@@ -37,14 +40,16 @@
     <div
       class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3"
     >
-      <!-- Botón Agregar -->
-      <button
-        class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
-        (click)="openRegister()"
-      >
-        <i class="bi bi-plus-lg"></i>
-        Agregar
-      </button>
+      <!-- Botón Agregar (oculto en modo selección) -->
+      @if (!selectionMode()) {
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="openRegister()"
+        >
+          <i class="bi bi-plus-lg"></i>
+          Agregar
+        </button>
+      }
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
         <!-- Search -->
@@ -88,12 +93,14 @@
           }
         </select>
 
-        <!-- Dropdown -->
-        <app-dropdown
-          label="Acciones Masivas"
-          [items]="dropdownItems"
-          (actionSelected)="handleMassAction($event)"
-        ></app-dropdown>
+        <!-- Dropdown (oculto en modo selección) -->
+        @if (!selectionMode()) {
+          <app-dropdown
+            label="Acciones Masivas"
+            [items]="dropdownItems"
+            (actionSelected)="handleMassAction($event)"
+          ></app-dropdown>
+        }
       </div>
     </div>
 
@@ -144,22 +151,35 @@
           <table class="table table-hover align-middle mb-0 custom-table">
             <thead>
               <tr>
-                <th scope="col" style="width: 40px">
-                  <input class="form-check-input table-checkbox" type="checkbox" />
-                </th>
+                @if (!selectionMode()) {
+                  <th scope="col" style="width: 40px">
+                    <input class="form-check-input table-checkbox" type="checkbox" />
+                  </th>
+                }
                 <th scope="col" class="text-muted fw-semibold small">N° Serie</th>
                 <th scope="col" class="text-muted fw-semibold small">Marca</th>
                 <th scope="col" class="text-muted fw-semibold small">Fecha Ingreso</th>
                 <th scope="col" class="text-muted fw-semibold small">Estado</th>
-                <th scope="col" class="text-muted fw-semibold small text-center">Acciones</th>
+                @if (!selectionMode()) {
+                  <th scope="col" class="text-muted fw-semibold small text-center">Acciones</th>
+                }
               </tr>
             </thead>
             <tbody>
               @for (meter of pagedMetersComponent; track meter.medidorId) {
-                <tr>
-                  <td>
-                    <input class="form-check-input table-checkbox" type="checkbox" />
-                  </td>
+                <tr
+                  [class.selectable-row]="selectionMode()"
+                  [attr.role]="selectionMode() ? 'button' : null"
+                  [attr.tabindex]="selectionMode() ? 0 : null"
+                  [title]="selectionMode() ? 'Doble clic o Enter para seleccionar' : ''"
+                  (dblclick)="selectMeter(meter)"
+                  (keydown.enter)="selectionMode() && selectMeter(meter)"
+                >
+                  @if (!selectionMode()) {
+                    <td>
+                      <input class="form-check-input table-checkbox" type="checkbox" />
+                    </td>
+                  }
                   <td class="fw-medium text-dark" style="font-size: 0.95rem">
                     {{ meter.serie }}
                   </td>
@@ -179,44 +199,49 @@
                       {{ getStatusName(meter) }}
                     </span>
                   </td>
-                  <td class="text-center">
-                    <div class="dropdown">
-                      <button
-                        class="btn btn-link text-muted p-0 shadow-none"
-                        (click)="toggleDropdown(meter.medidorId!, $event)"
-                        aria-label="Menú de acciones"
-                      >
-                        <i class="bi bi-three-dots-vertical"></i>
-                      </button>
-                      <ul
-                        class="dropdown-menu dropdown-menu-end shadow-sm border-0"
-                        [class.show]="openDropdownId === meter.medidorId"
-                        style="min-width: 130px"
-                      >
-                        <li>
-                          <button
-                            class="dropdown-item d-flex align-items-center gap-2"
-                            (click)="openEdit(meter)"
-                          >
-                            <i class="bi bi-pencil-fill text-primary" style="font-size: 0.8rem"></i>
-                            Editar estado
-                          </button>
-                        </li>
-                        <li>
-                          <hr class="dropdown-divider" />
-                        </li>
-                        <li>
-                          <button
-                            class="dropdown-item d-flex align-items-center gap-2 text-danger"
-                            (click)="deleteMeter(meter)"
-                          >
-                            <i class="bi bi-trash-fill" style="font-size: 0.8rem"></i>
-                            Eliminar
-                          </button>
-                        </li>
-                      </ul>
-                    </div>
-                  </td>
+                  @if (!selectionMode()) {
+                    <td class="text-center">
+                      <div class="dropdown">
+                        <button
+                          class="btn btn-link text-muted p-0 shadow-none"
+                          (click)="toggleDropdown(meter.medidorId!, $event)"
+                          aria-label="Menú de acciones"
+                        >
+                          <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul
+                          class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                          [class.show]="openDropdownId === meter.medidorId"
+                          style="min-width: 130px"
+                        >
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2"
+                              (click)="openEdit(meter)"
+                            >
+                              <i
+                                class="bi bi-pencil-fill text-primary"
+                                style="font-size: 0.8rem"
+                              ></i>
+                              Editar estado
+                            </button>
+                          </li>
+                          <li>
+                            <hr class="dropdown-divider" />
+                          </li>
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                              (click)="deleteMeter(meter)"
+                            >
+                              <i class="bi bi-trash-fill" style="font-size: 0.8rem"></i>
+                              Eliminar
+                            </button>
+                          </li>
+                        </ul>
+                      </div>
+                    </td>
+                  }
                 </tr>
               }
               @if (pagedMetersComponent.length === 0) {

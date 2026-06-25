@@ -226,13 +226,15 @@ export const routes: Routes = [
             path: 'Cliente',
             data: { breadcrumb: 'Clientes' },
             loadComponent: () =>
-              import('./features/contracts/clients/clients').then((m) => m.ClientsComponent),
+              import('./features/contracts/clients/clients.component').then(
+                (m) => m.ClientsComponent,
+              ),
           },
           {
-            path: 'ContratosDeServicios',
+            path: 'Contratos',
             data: { breadcrumb: 'Contratos de Servicios' },
             loadComponent: () =>
-              import('./features/contracts/service-contracts/service-contracts').then(
+              import('./features/contracts/service-contracts/service-contracts.component').then(
                 (m) => m.ServiceContractsComponent,
               ),
           },
@@ -262,7 +264,9 @@ export const routes: Routes = [
             path: 'TarifasYCategorias',
             data: { breadcrumb: 'Tarifas y Categorías' },
             loadComponent: () =>
-              import('./features/contracts/tariffs/tariffs').then((m) => m.TariffsComponent),
+              import('./features/contracts/tariffs/tariffs.component').then(
+                (m) => m.TariffsComponent,
+              ),
           },
         ],
       },

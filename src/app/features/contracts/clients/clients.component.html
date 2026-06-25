@@ -1,25 +1,29 @@
 <div class="cliente-container">
   <!-- Page header -->
-  <div class="page-header mb-4">
-    <div>
-      <h3 class="fw-bold mb-0 text-dark fs-4">Gestión de Clientes</h3>
-      <p class="text-muted small mb-0">Registrá, editá y consultá la información de clientes.</p>
+  @if (!selectionMode()) {
+    <div class="page-header mb-4">
+      <div>
+        <h3 class="fw-bold mb-0 text-dark fs-4">Gestión de Clientes</h3>
+        <p class="text-muted small mb-0">Registrá, editá y consultá la información de clientes.</p>
+      </div>
     </div>
-  </div>
+  }
 
   <div class="card border-0 shadow-sm rounded-3">
     <!-- Header: Buscar y acciones -->
     <div
       class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3"
     >
-      <!-- Botón Agregar -->
-      <button
-        class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
-        (click)="abrirModal()"
-      >
-        <i class="bi bi-plus-lg"></i>
-        Agregar
-      </button>
+      <!-- Botón Agregar (oculto en modo selección) -->
+      @if (!selectionMode()) {
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="abrirModal()"
+        >
+          <i class="bi bi-plus-lg"></i>
+          Agregar
+        </button>
+      }
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
         <!-- Input de búsqueda -->
@@ -110,27 +114,44 @@
           <table class="table table-hover align-middle mb-0 custom-table">
             <thead>
               <tr>
-                <th scope="col" class="ps-4" style="width: 56px">
-                  <input class="form-check-input table-checkbox" type="checkbox" />
-                </th>
+                @if (!selectionMode()) {
+                  <th scope="col" class="ps-4" style="width: 56px">
+                    <input class="form-check-input table-checkbox" type="checkbox" />
+                  </th>
+                }
 
                 <th scope="col" class="text-muted fw-semibold small">Tipo</th>
                 <th scope="col" class="text-muted fw-semibold small">Identificación</th>
                 <th scope="col" class="text-muted fw-semibold small">Cliente</th>
-                <th scope="col" class="text-muted fw-semibold small">Correo</th>
-                <th scope="col" class="text-muted fw-semibold small">Teléfono</th>
-                <th scope="col" class="text-muted fw-semibold small">Dirección</th>
+                @if (!selectionMode()) {
+                  <th scope="col" class="text-muted fw-semibold small">Correo</th>
+                  <th scope="col" class="text-muted fw-semibold small">Teléfono</th>
+                  <th scope="col" class="text-muted fw-semibold small">Dirección</th>
+                }
                 <th scope="col" class="text-muted fw-semibold small">Estado</th>
-                <th scope="col" class="text-muted fw-semibold small text-center pe-4">Acciones</th>
+                @if (!selectionMode()) {
+                  <th scope="col" class="text-muted fw-semibold small text-center pe-4">
+                    Acciones
+                  </th>
+                }
               </tr>
             </thead>
 
             <tbody>
               @for (client of pagedClients; track obtenerIdCliente(client) ?? $index) {
-                <tr>
-                  <td class="ps-4">
-                    <input class="form-check-input table-checkbox" type="checkbox" />
-                  </td>
+                <tr
+                  [class.selectable-row]="selectionMode()"
+                  [attr.role]="selectionMode() ? 'button' : null"
+                  [attr.tabindex]="selectionMode() ? 0 : null"
+                  [title]="selectionMode() ? 'Doble clic o Enter para seleccionar' : ''"
+                  (dblclick)="selectClient(client)"
+                  (keydown.enter)="selectionMode() && selectClient(client)"
+                >
+                  @if (!selectionMode()) {
+                    <td class="ps-4">
+                      <input class="form-check-input table-checkbox" type="checkbox" />
+                    </td>
+                  }
 
                   <td>
                     <span class="tipo-badge">
@@ -158,19 +179,21 @@
                     </div>
                   </td>
 
-                  <td class="text-muted small">
-                    {{ client.email || '—' }}
-                  </td>
+                  @if (!selectionMode()) {
+                    <td class="text-muted small">
+                      {{ client.email || '—' }}
+                    </td>
 
-                  <td class="text-muted small">
-                    {{ client.telefono || '—' }}
-                  </td>
+                    <td class="text-muted small">
+                      {{ client.telefono || '—' }}
+                    </td>
 
-                  <td class="text-muted small address-cell">
-                    <span class="text-truncate d-block" [title]="client.direccionDomicilio || ''">
-                      {{ client.direccionDomicilio || '—' }}
-                    </span>
-                  </td>
+                    <td class="text-muted small address-cell">
+                      <span class="text-truncate d-block" [title]="client.direccionDomicilio || ''">
+                        {{ client.direccionDomicilio || '—' }}
+                      </span>
+                    </td>
+                  }
 
                   <td class="small">
                     @if (client.activo === false) {
@@ -180,53 +203,58 @@
                     }
                   </td>
 
-                  <td class="text-center pe-4">
-                    <div class="dropdown">
-                      <button
-                        class="btn btn-link text-muted p-0 shadow-none"
-                        (click)="toggleDropdown(obtenerIdCliente(client)!, $event)"
-                        aria-label="Menú de acciones"
-                      >
-                        <i class="bi bi-three-dots-vertical"></i>
-                      </button>
-                      <ul
-                        class="dropdown-menu dropdown-menu-end shadow-sm border-0"
-                        [class.show]="openDropdownId === obtenerIdCliente(client)"
-                        style="min-width: 130px"
-                      >
-                        <li>
-                          <button
-                            class="dropdown-item d-flex align-items-center gap-2"
-                            (click)="verDetalleCliente(client)"
-                          >
-                            <i class="bi bi-eye text-secondary" style="font-size: 0.8rem"></i>
-                            Ver detalle
-                          </button>
-                        </li>
-                        <li>
-                          <button
-                            class="dropdown-item d-flex align-items-center gap-2"
-                            (click)="editarCliente(client)"
-                          >
-                            <i class="bi bi-pencil-fill text-primary" style="font-size: 0.8rem"></i>
-                            Editar
-                          </button>
-                        </li>
-                        <li>
-                          <hr class="dropdown-divider" />
-                        </li>
-                        <li>
-                          <button
-                            class="dropdown-item d-flex align-items-center gap-2 text-danger"
-                            (click)="eliminarCliente(client)"
-                          >
-                            <i class="bi bi-trash-fill" style="font-size: 0.8rem"></i>
-                            Eliminar
-                          </button>
-                        </li>
-                      </ul>
-                    </div>
-                  </td>
+                  @if (!selectionMode()) {
+                    <td class="text-center pe-4">
+                      <div class="dropdown">
+                        <button
+                          class="btn btn-link text-muted p-0 shadow-none"
+                          (click)="toggleDropdown(obtenerIdCliente(client)!, $event)"
+                          aria-label="Menú de acciones"
+                        >
+                          <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul
+                          class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                          [class.show]="openDropdownId === obtenerIdCliente(client)"
+                          style="min-width: 130px"
+                        >
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2"
+                              (click)="verDetalleCliente(client)"
+                            >
+                              <i class="bi bi-eye text-secondary" style="font-size: 0.8rem"></i>
+                              Ver detalle
+                            </button>
+                          </li>
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2"
+                              (click)="editarCliente(client)"
+                            >
+                              <i
+                                class="bi bi-pencil-fill text-primary"
+                                style="font-size: 0.8rem"
+                              ></i>
+                              Editar
+                            </button>
+                          </li>
+                          <li>
+                            <hr class="dropdown-divider" />
+                          </li>
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                              (click)="eliminarCliente(client)"
+                            >
+                              <i class="bi bi-trash-fill" style="font-size: 0.8rem"></i>
+                              Eliminar
+                            </button>
+                          </li>
+                        </ul>
+                      </div>
+                    </td>
+                  }
                 </tr>
               }
 

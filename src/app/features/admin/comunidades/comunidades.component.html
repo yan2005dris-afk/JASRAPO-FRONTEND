@@ -1,19 +1,23 @@
 <div class="container-fluid p-4">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold mb-0 text-dark fs-4">Gestión Comunidades</h3>
-  </div>
+  @if (!selectionMode()) {
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3 class="fw-bold mb-0 text-dark fs-4">Gestión Comunidades</h3>
+    </div>
+  }
 
   <div class="card border-0 shadow-sm rounded-3">
     <div
       class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3"
     >
-      <button
-        class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
-        type="button"
-        (click)="openCreateModal()"
-      >
-        <i class="bi bi-plus-lg"></i> Agregar
-      </button>
+      @if (!selectionMode()) {
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          type="button"
+          (click)="openCreateModal()"
+        >
+          <i class="bi bi-plus-lg"></i> Agregar
+        </button>
+      }
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
         <div class="input-group search-group">
@@ -49,16 +53,18 @@
           {{ isLoading ? 'Buscando...' : 'Buscar' }}
         </button>
 
-        <button
-          class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
-          type="button"
-          disabled
-          aria-disabled="true"
-          title="Acciones masivas no disponibles todavía"
-        >
-          Acciones Masivas
-          <i class="bi bi-chevron-down" aria-hidden="true"></i>
-        </button>
+        @if (!selectionMode()) {
+          <button
+            class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
+            type="button"
+            disabled
+            aria-disabled="true"
+            title="Acciones masivas no disponibles todavía"
+          >
+            Acciones Masivas
+            <i class="bi bi-chevron-down" aria-hidden="true"></i>
+          </button>
+        }
       </div>
     </div>
 
@@ -95,7 +101,9 @@
               <th class="text-muted fw-semibold small">Código</th>
               <th class="text-muted fw-semibold small">Nombre</th>
               <th class="text-muted fw-semibold small text-center">Porcentaje tasa de seguridad</th>
-              <th class="text-muted fw-semibold small text-center">Acciones</th>
+              @if (!selectionMode()) {
+                <th class="text-muted fw-semibold small text-center">Acciones</th>
+              }
             </tr>
           </thead>
 
@@ -110,7 +118,14 @@
             }
 
             @for (comunidad of pagedComunidades(); track comunidad.id) {
-              <tr>
+              <tr
+                [class.selectable-row]="selectionMode()"
+                [attr.role]="selectionMode() ? 'button' : null"
+                [attr.tabindex]="selectionMode() ? 0 : null"
+                [title]="selectionMode() ? 'Doble clic o Enter para seleccionar' : ''"
+                (dblclick)="selectComunidad(comunidad)"
+                (keydown.enter)="selectionMode() && selectComunidad(comunidad)"
+              >
                 <td class="fw-medium text-dark" style="font-size: 0.95rem">
                   {{ comunidad.codigo }}
                 </td>
@@ -123,41 +138,43 @@
                   {{ comunidad.porcentajeTasaSeguridad | number: '1.2-2' }}%
                 </td>
 
-                <td class="text-center">
-                  <div class="dropdown">
-                    <button
-                      class="btn btn-link text-muted p-0 shadow-none"
-                      (click)="toggleDropdown(comunidad.id, $event)"
-                      aria-label="Menú de acciones"
-                    >
-                      <i class="bi bi-three-dots-vertical"></i>
-                    </button>
-                    <ul
-                      class="dropdown-menu dropdown-menu-end shadow-sm border-0"
-                      [class.show]="openDropdownId === comunidad.id"
-                      style="min-width: 130px"
-                    >
-                      <li>
-                        <button
-                          class="dropdown-item d-flex align-items-center gap-2"
-                          (click)="openDetailModal(comunidad)"
-                        >
-                          <i class="bi bi-eye text-secondary" style="font-size: 0.8rem"></i>
-                          Ver detalle
-                        </button>
-                      </li>
-                      <li>
-                        <button
-                          class="dropdown-item d-flex align-items-center gap-2"
-                          (click)="openEditModal(comunidad)"
-                        >
-                          <i class="bi bi-pencil-fill text-primary" style="font-size: 0.8rem"></i>
-                          Editar
-                        </button>
-                      </li>
-                    </ul>
-                  </div>
-                </td>
+                @if (!selectionMode()) {
+                  <td class="text-center">
+                    <div class="dropdown">
+                      <button
+                        class="btn btn-link text-muted p-0 shadow-none"
+                        (click)="toggleDropdown(comunidad.id, $event)"
+                        aria-label="Menú de acciones"
+                      >
+                        <i class="bi bi-three-dots-vertical"></i>
+                      </button>
+                      <ul
+                        class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                        [class.show]="openDropdownId === comunidad.id"
+                        style="min-width: 130px"
+                      >
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            (click)="openDetailModal(comunidad)"
+                          >
+                            <i class="bi bi-eye text-secondary" style="font-size: 0.8rem"></i>
+                            Ver detalle
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            (click)="openEditModal(comunidad)"
+                          >
+                            <i class="bi bi-pencil-fill text-primary" style="font-size: 0.8rem"></i>
+                            Editar
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  </td>
+                }
               </tr>
             }
           </tbody>
