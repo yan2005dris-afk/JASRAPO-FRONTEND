@@ -8,7 +8,7 @@
 }
 
 /**
- * Variables de color para estados y marca
+ * Variables de color para métricas
  */
 $primary-blue: var(--primary-color);
 $hover-blue: var(--secondary-color);
@@ -115,8 +115,8 @@ $border-color: var(--border-color);
   }
 }
 
-/** 
- * Estilos de Tabla
+/**
+ * Tabla Alineada con Gestión de Clientes
  */
 .table-card {
   border-radius: 12px;
@@ -211,8 +211,12 @@ $border-color: var(--border-color);
   cursor: pointer;
 }
 
-.nav-link-custom {
-  border: none !important;
-  background: transparent !important;
-  color: $text-main !important;
+.custom-table thead tr {
+  background-color: #f8f9fa;
+}
+
+.custom-table th,
+.custom-table td {
+  padding: 0.875rem 1rem;
+  vertical-align: middle;
 }
