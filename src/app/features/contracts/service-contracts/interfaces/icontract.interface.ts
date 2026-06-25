@@ -16,6 +16,10 @@ export interface IUpdateContractRequest {
   sectorId?: string;
   medidorId?: string;
   lecturaInicial?: number;
+  // Edición completa: el backend acepta cambiar cliente, comunidad y tarifa.
+  clienteId?: string;
+  comunidadId?: string;
+  categoriaTarifaId?: string;
 }
 
 // Categoría tarifaria anidada en el contrato (viene por JOIN)
@@ -97,8 +101,16 @@ export interface ISearchContractsParams {
   limit?: number;
   contratoId?: string;
   medidorId?: string;
+  // Filtros sobre las columnas visibles de la tabla (búsqueda de texto + estado).
+  // El backend los irá soportando; hoy solo numeroGuia está implementado.
   numeroGuia?: string;
+  medidorSerie?: string;
+  ubicacion?: string;
+  estado?: string;
 }
+
+// Campos por los que se puede buscar texto en la tabla (debe coincidir con ISearchContractsParams).
+export type SearchContractField = 'numeroGuia' | 'medidorSerie' | 'ubicacion';
 
 // Datos para registrar un contrato (según el POST /contracts actualizado).
 // Obligatorios: clienteId, medidorId, categoriaTarifaId, numeroGuia, direccionSuministro, comunidadId.

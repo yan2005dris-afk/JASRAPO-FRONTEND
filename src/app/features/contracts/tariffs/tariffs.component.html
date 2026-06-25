@@ -38,8 +38,11 @@
               @for (tariff of pagedTariffs; track tariff.categoriaTarifaId) {
                 <tr
                   [class.selectable-row]="selectionMode()"
-                  [title]="selectionMode() ? 'Doble clic para seleccionar' : ''"
+                  [attr.role]="selectionMode() ? 'button' : null"
+                  [attr.tabindex]="selectionMode() ? 0 : null"
+                  [title]="selectionMode() ? 'Doble clic o Enter para seleccionar' : ''"
                   (dblclick)="selectTariff(tariff)"
+                  (keydown.enter)="selectionMode() && selectTariff(tariff)"
                 >
                   <td>{{ tariff.nombre }}</td>
                   <td>{{ tariff.descripcion }}</td>

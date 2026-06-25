@@ -84,8 +84,11 @@
               @for (medidor of pagedMetersComponent; track medidor.serie) {
                 <tr
                   [class.selectable-row]="selectionMode()"
-                  [title]="selectionMode() ? 'Doble clic para seleccionar' : ''"
+                  [attr.role]="selectionMode() ? 'button' : null"
+                  [attr.tabindex]="selectionMode() ? 0 : null"
+                  [title]="selectionMode() ? 'Doble clic o Enter para seleccionar' : ''"
                   (dblclick)="selectMeter(medidor)"
+                  (keydown.enter)="selectionMode() && selectMeter(medidor)"
                 >
                   <td class="ps-4 fw-medium text-dark">{{ medidor.serie }}</td>
                   <td class="text-muted">{{ medidor.marca }}</td>

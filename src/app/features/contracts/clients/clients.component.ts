@@ -27,8 +27,8 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 @Component({
   selector: 'app-clients',
   imports: [CommonModule, FormsModule, ClientsFormComponent, PaginationComponent],
-  templateUrl: './clients.html',
-  styleUrl: './clients.scss',
+  templateUrl: './clients.component.html',
+  styleUrl: './clients.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '(document:click)': 'closeDropdowns()',

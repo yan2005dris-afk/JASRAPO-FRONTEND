@@ -40,6 +40,15 @@ export class ContractsService {
     if (params.numeroGuia) {
       httpParams = httpParams.set('numeroGuia', params.numeroGuia);
     }
+    if (params.medidorSerie) {
+      httpParams = httpParams.set('medidorSerie', params.medidorSerie);
+    }
+    if (params.ubicacion) {
+      httpParams = httpParams.set('ubicacion', params.ubicacion);
+    }
+    if (params.estado) {
+      httpParams = httpParams.set('estado', params.estado);
+    }
 
     return this.http.get<PaginatedResponse<IContract>>(this.endpoint, { params: httpParams });
   }

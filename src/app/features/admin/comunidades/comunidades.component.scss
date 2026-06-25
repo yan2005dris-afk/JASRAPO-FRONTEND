@@ -8,7 +8,7 @@
 }
 
 .selectable-row:hover td {
-  background-color: rgba(12, 158, 161, 0.06) !important;
+  background-color: rgba(var(--bs-primary-rgb), 0.06) !important;
 }
 
 .table-responsive {

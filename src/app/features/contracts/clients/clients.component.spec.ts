@@ -5,7 +5,7 @@ import { vi } from 'vitest';
 
 import { AuthService } from '../../../core/services/auth.service';
 
-import { ClientsComponent } from './clients';
+import { ClientsComponent } from './clients.component';
 
 describe('Cliente', () => {
   let component: ClientsComponent;

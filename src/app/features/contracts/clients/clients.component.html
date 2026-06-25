@@ -141,8 +141,11 @@
               @for (client of pagedClients; track obtenerIdCliente(client) ?? $index) {
                 <tr
                   [class.selectable-row]="selectionMode()"
-                  [title]="selectionMode() ? 'Doble clic para seleccionar' : ''"
+                  [attr.role]="selectionMode() ? 'button' : null"
+                  [attr.tabindex]="selectionMode() ? 0 : null"
+                  [title]="selectionMode() ? 'Doble clic o Enter para seleccionar' : ''"
                   (dblclick)="selectClient(client)"
+                  (keydown.enter)="selectionMode() && selectClient(client)"
                 >
                   @if (!selectionMode()) {
                     <td class="ps-4">

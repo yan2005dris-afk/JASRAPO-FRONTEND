@@ -58,22 +58,7 @@
   background-color: var(--soft-blue-bg);
 }
 
-/* Panel del medidor seleccionado */
-.meter-panel {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1rem;
-  align-items: center;
-}
-
-.meter-serial {
-  flex: 0 0 160px;
-  padding: 1rem;
-  border-radius: 12px;
-  background-color: var(--soft-blue-bg);
-  text-align: center;
-}
-
+/* Detalle del medidor seleccionado */
 .meter-detail {
   flex: 1 1 240px;
   display: flex;

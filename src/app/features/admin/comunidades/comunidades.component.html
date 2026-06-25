@@ -120,8 +120,11 @@
             @for (comunidad of pagedComunidades(); track comunidad.id) {
               <tr
                 [class.selectable-row]="selectionMode()"
-                [title]="selectionMode() ? 'Doble clic para seleccionar' : ''"
+                [attr.role]="selectionMode() ? 'button' : null"
+                [attr.tabindex]="selectionMode() ? 0 : null"
+                [title]="selectionMode() ? 'Doble clic o Enter para seleccionar' : ''"
                 (dblclick)="selectComunidad(comunidad)"
+                (keydown.enter)="selectionMode() && selectComunidad(comunidad)"
               >
                 <td class="fw-medium text-dark" style="font-size: 0.95rem">
                   {{ comunidad.codigo }}

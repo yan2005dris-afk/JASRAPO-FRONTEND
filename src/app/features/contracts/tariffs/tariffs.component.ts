@@ -20,8 +20,8 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 @Component({
   selector: 'app-tariffs',
   imports: [CommonModule, TariffsFormComponent, PaginationComponent],
-  templateUrl: './tariffs.html',
-  styleUrl: './tariffs.scss',
+  templateUrl: './tariffs.component.html',
+  styleUrl: './tariffs.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '(document:click)': 'closeDropdowns()',

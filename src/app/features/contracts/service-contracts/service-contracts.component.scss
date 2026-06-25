@@ -8,10 +8,10 @@
   gap: 1rem;
 }
 
-/* Buscador */
-.search-group {
-  width: 320px;
-  max-width: 100%;
+/* Selectores de filtro (campo a buscar y estado) */
+.filter-select {
+  width: auto;
+  min-width: 150px;
 }
 
 /* Avatar circular con la inicial del cliente */

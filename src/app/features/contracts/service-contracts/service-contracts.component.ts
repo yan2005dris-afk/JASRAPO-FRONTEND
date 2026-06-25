@@ -2,17 +2,21 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { FormsModule } from '@angular/forms';
 
 import { ContractsService } from './services/contracts.service';
-import { IContract, IContractState, IHistorialMedidor } from './interfaces/icontract.interface';
+import {
+  IContract,
+  IContractState,
+  IHistorialMedidor,
+  ISearchContractsParams,
+  SearchContractField,
+} from './interfaces/icontract.interface';
 import { ServiceContractFormComponent } from './components/service-contract-form/service-contract-form.component';
-import { ContractEditComponent } from './components/contract-edit/contract-edit.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-service-contracts',
-  standalone: true,
-  imports: [FormsModule, ServiceContractFormComponent, ContractEditComponent, PaginationComponent],
-  templateUrl: './service-contracts.html',
-  styleUrl: './service-contracts.scss',
+  imports: [FormsModule, ServiceContractFormComponent, PaginationComponent],
+  templateUrl: './service-contracts.component.html',
+  styleUrl: './service-contracts.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '(document:click)': 'closeDropdowns()',
@@ -24,8 +28,8 @@ export class ServiceContractsComponent implements OnInit {
   // Menú de acciones por fila (tres puntitos)
   readonly openDropdownId = signal<string | null>(null);
 
-  // Modal de edición de contrato
-  readonly contractToEdit = signal<IContract | null>(null);
+  // Contrato en edición (null = formulario en modo creación)
+  readonly editingContract = signal<IContract | null>(null);
 
   toggleDropdown(contratoId: string, event: MouseEvent): void {
     event.stopPropagation();
@@ -36,19 +40,11 @@ export class ServiceContractsComponent implements OnInit {
     this.openDropdownId.set(null);
   }
 
-  /** Abre el modal de edición del contrato. */
+  /** Abre el formulario en modo edición con el contrato seleccionado. */
   editContract(contract: IContract): void {
     this.closeDropdowns();
-    this.contractToEdit.set(contract);
-  }
-
-  closeEdit(): void {
-    this.contractToEdit.set(null);
-  }
-
-  onContractUpdated(): void {
-    this.closeEdit();
-    this.loadContracts();
+    this.editingContract.set(contract);
+    this.isFormOpen.set(true);
   }
 
   // Estado del listado
@@ -57,8 +53,10 @@ export class ServiceContractsComponent implements OnInit {
   readonly isLoading = signal(false);
   readonly hasFetched = signal(false);
 
-  // Búsqueda por número de guía (se manda al backend)
+  // Búsqueda: texto + campo a buscar (columna visible) + filtro de estado
   readonly searchTerm = signal('');
+  readonly searchField = signal<SearchContractField>('numeroGuia');
+  readonly estadoFilter = signal(''); // '' = todos los estados
 
   // Paginación (servidor)
   readonly pageSizeOptions = [5, 10, 15];
@@ -89,36 +87,57 @@ export class ServiceContractsComponent implements OnInit {
     return this.contractStates().find((s) => s.codigo === estado)?.nombre ?? estado;
   }
 
-  /** Carga la página actual de contratos desde el backend. */
+  /** Carga la página actual de contratos desde el backend, aplicando los filtros. */
   loadContracts(): void {
     this.isLoading.set(true);
     this.hasFetched.set(true);
 
+    const params: ISearchContractsParams = {
+      page: this.currentPage(),
+      limit: this.pageSize(),
+    };
+
+    // Filtro de texto: se manda según el campo (columna) seleccionado.
     const term = this.searchTerm().trim();
-    this.contractsService
-      .getContracts({
-        page: this.currentPage(),
-        limit: this.pageSize(),
-        numeroGuia: term || undefined,
-      })
-      .subscribe({
-        next: (response) => {
-          this.contracts.set(response.data);
-          this.totalItems.set(response.meta.total);
-          this.isLoading.set(false);
-        },
-        error: (err) => {
-          console.error('Error cargando contratos:', err);
-          this.contracts.set([]);
-          this.totalItems.set(0);
-          this.isLoading.set(false);
-        },
-      });
+    if (term) {
+      params[this.searchField()] = term;
+    }
+
+    // Filtro por estado (si no es "todos").
+    const estado = this.estadoFilter();
+    if (estado) {
+      params.estado = estado;
+    }
+
+    this.contractsService.getContracts(params).subscribe({
+      next: (response) => {
+        this.contracts.set(response.data);
+        this.totalItems.set(response.meta.total);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error cargando contratos:', err);
+        this.contracts.set([]);
+        this.totalItems.set(0);
+        this.isLoading.set(false);
+      },
+    });
   }
 
   search(): void {
     this.currentPage.set(1);
     this.loadContracts();
+  }
+
+  /** Limpia los filtros y vuelve al estado inicial (sin resultados). */
+  limpiarBusqueda(): void {
+    this.searchTerm.set('');
+    this.searchField.set('numeroGuia');
+    this.estadoFilter.set('');
+    this.currentPage.set(1);
+    this.contracts.set([]);
+    this.totalItems.set(0);
+    this.hasFetched.set(false);
   }
 
   goToPage(page: number): void {
@@ -152,11 +171,13 @@ export class ServiceContractsComponent implements OnInit {
   // ---------- Registro de nuevo contrato ----------
 
   registerNewContract(): void {
+    this.editingContract.set(null);
     this.isFormOpen.set(true);
   }
 
   closeForm(): void {
     this.isFormOpen.set(false);
+    this.editingContract.set(null);
   }
 
   onContractSaved(): void {
