@@ -178,13 +178,13 @@
               class="form-control"
               formControlName="numeroGuia"
               placeholder="Ej. GUIA-1-0051"
-              maxlength="12"
+              maxlength="15"
               [readonly]="isEditing()"
               [class.is-invalid]="isFieldInvalid('numeroGuia')"
             />
             @if (isFieldInvalid('numeroGuia')) {
               <span class="text-danger x-small">
-                El N° de guía es obligatorio (máx. 12 caracteres).
+                El N° de guía es obligatorio (máx. 15 caracteres).
               </span>
             }
           </div>
@@ -230,12 +230,12 @@
               class="form-control"
               formControlName="direccionSuministro"
               placeholder="Ej. Calle Principal #45"
-              maxlength="50"
+              maxlength="200"
               [class.is-invalid]="isFieldInvalid('direccionSuministro')"
             />
             @if (isFieldInvalid('direccionSuministro')) {
               <span class="text-danger x-small">
-                La dirección es obligatoria (máx. 50 caracteres).
+                La dirección es obligatoria (máx. 200 caracteres).
               </span>
             }
           </div>

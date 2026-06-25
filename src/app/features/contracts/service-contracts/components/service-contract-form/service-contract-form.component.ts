@@ -19,7 +19,7 @@ import {
 } from '../../interfaces/icontract.interface';
 import { ClientsComponent } from '../../../clients/clients.component';
 import { TariffsComponent } from '../../../tariffs/tariffs.component';
-import { MetersComponent } from '../../../meters/meters';
+import { MetersIndexComponent } from '../../../meters/components/meters-index/meters-index.component';
 import { ComunidadesComponent } from '../../../../admin/comunidades/comunidades.component';
 import { IClient } from '../../../clients/interfaces/iclients.interface';
 import { IMeter } from '../../../meters/interfaces/imeter.interface';
@@ -38,7 +38,7 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
     ReactiveFormsModule,
     ClientsComponent,
     TariffsComponent,
-    MetersComponent,
+    MetersIndexComponent,
     ComunidadesComponent,
   ],
   templateUrl: './service-contract-form.component.html',
@@ -79,8 +79,8 @@ export class ServiceContractFormComponent implements OnInit {
   private originalMeterId: string | null = null;
 
   readonly form: FormGroup = this.fb.group({
-    numeroGuia: ['', [Validators.required, Validators.maxLength(12)]],
-    direccionSuministro: ['', [Validators.required, Validators.maxLength(50)]],
+    numeroGuia: ['', [Validators.required, Validators.maxLength(15)]],
+    direccionSuministro: ['', [Validators.required, Validators.maxLength(200)]],
     lecturaInicial: ['0', [Validators.required, Validators.pattern(/^\d{1,10}$/)]],
     estado: [''],
   });

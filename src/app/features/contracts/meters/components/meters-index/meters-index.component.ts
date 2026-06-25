@@ -4,6 +4,8 @@ import {
   Component,
   OnInit,
   inject,
+  input,
+  output,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -46,6 +48,18 @@ export class MetersIndexComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
+
+  // Modo selección: cuando es true, la pantalla se usa como selector (sin crear/editar/eliminar)
+  // y solo muestra medidores disponibles (en bodega).
+  readonly selectionMode = input(false);
+  readonly meterSelected = output<IMeter>();
+
+  /** Emite el medidor elegido (solo en modo selección). */
+  selectMeter(meter: IMeter): void {
+    if (this.selectionMode()) {
+      this.meterSelected.emit(meter);
+    }
+  }
 
   // Estado de los datos
   meters: IMeter[] = [];
@@ -128,6 +142,10 @@ export class MetersIndexComponent implements OnInit {
     this.metersService.getMeterStatuses().subscribe({
       next: (estados) => {
         this.statusCatalog = estados;
+        // En modo selección se cargan de una vez los medidores disponibles.
+        if (this.selectionMode()) {
+          this.loadMeters();
+        }
         this.cdr.markForCheck();
       },
       error: (err: HttpErrorResponse) => {
@@ -148,7 +166,12 @@ export class MetersIndexComponent implements OnInit {
 
     // Buscar el ID numérico del estado correspondiente al código del filtro
     const selectedStatus = this.statusCatalog.find((e) => e.codigo === this.statusFilter);
-    const statusId = selectedStatus?.codigo as MeterStatusCode | undefined;
+    let statusId = selectedStatus?.codigo as MeterStatusCode | undefined;
+
+    // En modo selección solo se muestran los medidores disponibles (en bodega).
+    if (this.selectionMode()) {
+      statusId = 'BODEGA' as MeterStatusCode;
+    }
 
     this.metersService
       .getMeters({
