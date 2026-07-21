@@ -4,29 +4,44 @@ import { AuthService } from '../services/auth.service';
 
 /**
  * Guard para proteger rutas que requieren autenticación.
- * Usamos '_' para el primer parámetro porque no lo necesitamos,
- * pero sí necesitamos el segundo (state).
+ * Implementa bloqueo cruzado por rol:
+ *  - Operadores que intenten acceder a rutas /app (admin) → redirigen a /app/operador/rutas
+ *  - No operadores que intenten acceder a /app/operador → redirigen a /app/dashboard
  */
 export const authGuard: CanActivateFn = (_, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  if (authService.isAuthenticated()) {
-    return true;
+  if (!authService.isAuthenticated()) {
+    router.navigate(['/login'], {
+      queryParams: { returnUrl: state.url },
+    });
+    return false;
   }
 
-  // Redirigir al login guardando la URL solicitada
-  router.navigate(['/login'], {
-    queryParams: { returnUrl: state.url },
-  });
+  const isOperator = authService.isOperator();
+  const url = state.url;
+  const isOperatorRoute = url.startsWith('/app/operador');
+  const isAdminRoute = url.startsWith('/app') && !isOperatorRoute;
 
-  return false;
+  // Operador intentando acceder a rutas del panel admin
+  if (isOperator && isAdminRoute) {
+    router.navigate(['/app/operador/rutas']);
+    return false;
+  }
+
+  // No operador intentando acceder a rutas del operador
+  if (!isOperator && isOperatorRoute) {
+    router.navigate(['/app/dashboard']);
+    return false;
+  }
+
+  return true;
 };
 
 /**
- * Guard para redirigir usuarios autenticados (ej: página de login).
- * Como no usamos ninguno de los parámetros de la firma CanActivateFn,
- * simplemente los omitimos.
+ * Guard para redirigir usuarios ya autenticados (ej: página de login).
+ * Redirige a la ruta por defecto según el rol.
  */
 export const guestGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
@@ -36,7 +51,7 @@ export const guestGuard: CanActivateFn = () => {
     return true;
   }
 
-  // Si ya está autenticado, redirigir al inicio según su rol
+  // Si ya está autenticado, redirigir al panel según su rol
   router.navigate([authService.getDefaultRoute()]);
   return false;
 };

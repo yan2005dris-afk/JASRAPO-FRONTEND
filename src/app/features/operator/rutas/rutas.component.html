@@ -1,0 +1,161 @@
+<div class="rutas-screen">
+  <!-- Header -->
+  <div class="rutas-header">
+    <h1 class="rutas-title">Mis Rutas</h1>
+    <button class="view-toggle-btn" (click)="toggleView()" type="button" aria-label="Cambiar vista">
+      @if (viewMode() === 'list') {
+        <i class="bi bi-map"></i> Mapa
+      } @else {
+        <i class="bi bi-list-ul"></i> Lista
+      }
+    </button>
+  </div>
+
+  <!-- Filtros por tipo de ruta -->
+  <div class="filter-chips" role="group" aria-label="Filtrar rutas por tipo">
+    @for (option of filterOptions; track option.value) {
+      <button
+        class="filter-chip"
+        [class.active]="activeFilter() === option.value"
+        (click)="setFilter(option.value)"
+        type="button"
+      >
+        {{ option.label }}
+      </button>
+    }
+  </div>
+
+  <!-- Skeleton de carga -->
+  @if (isLoading()) {
+    <div class="skeleton-list" aria-busy="true" aria-label="Cargando rutas...">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="skeleton-card"></div>
+      }
+    </div>
+  } @else {
+
+    <!-- ── Vista Mapa ─────────────────────────────────────────────────────── -->
+    @if (viewMode() === 'map') {
+      <div class="map-section">
+        @if (selectedTaskId()) {
+          <div class="map-toolbar">
+            <button class="map-tool-btn btn-clear" (click)="selectTask(null)" type="button">
+              <i class="bi bi-arrow-left-circle-fill"></i> Ver Todas
+            </button>
+          </div>
+        }
+
+        <div id="map" style="height: 500px" class="map-container">
+          <button
+            class="map-locate-btn"
+            (click)="centerOnUser()"
+            type="button"
+            title="Ir a mi ubicación"
+            aria-label="Centrar mapa en mi ubicación"
+          >
+            <i class="bi bi-crosshair2"></i>
+          </button>
+        </div>
+
+        <div class="map-legend" aria-label="Leyenda del mapa">
+          <span class="legend-item"><span class="legend-dot" style="background: #d1d5db"></span>Sin lectura</span>
+          <span class="legend-item"><span class="legend-dot" style="background: #6b7280"></span>Pendiente</span>
+          <span class="legend-item"><span class="legend-dot" style="background: #f59e0b"></span>Por revisión</span>
+          <span class="legend-item"><span class="legend-dot" style="background: #ef4444"></span>Rechazada</span>
+          <span class="legend-item"><span class="legend-dot" style="background: #22c55e"></span>Aprobada</span>
+          <span class="legend-item"><span class="legend-dot" style="background: #3b82f6"></span>Estimada</span>
+          <span class="legend-item"><span class="legend-dot" style="background: #8b5cf6"></span>Planillada</span>
+          <span class="legend-item"><span class="legend-dot" style="background: #f97316"></span>Con novedad</span>
+        </div>
+
+        <div class="map-task-list">
+          <h2 class="map-task-list-title">Rutas en orden</h2>
+          @for (task of filteredTasks(); track task.rutaId) {
+            <div
+              class="map-task-row"
+              [class.selected]="selectedTaskId() === task.rutaId"
+              tabindex="0"
+              role="button"
+              (click)="selectTask(selectedTaskId() === task.rutaId ? null : task.rutaId)"
+              (keydown.enter)="selectTask(selectedTaskId() === task.rutaId ? null : task.rutaId)"
+            >
+              <span class="task-orden-badge">{{ task.orden }}</span>
+              <span class="task-name">{{ task.nombre }}</span>
+              @if (task.medidor?.latitud && task.medidor?.longitud) {
+                <span class="task-coords">
+                  {{ task.medidor!.latitud | number: '1.4-4' }},
+                  {{ task.medidor!.longitud | number: '1.4-4' }}
+                </span>
+              } @else if (task.rutaPuntos && task.rutaPuntos.length > 0) {
+                <span class="task-coords task-coords--ok">{{ task.rutaPuntos.length }} pts</span>
+              } @else {
+                <span class="task-no-coords">Sin coords</span>
+              }
+            </div>
+          }
+          @if (filteredTasks().length === 0) {
+            <p class="empty-state">No hay rutas para mostrar.</p>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ── Vista Lista ─────────────────────────────────────────────────────── -->
+    @if (viewMode() === 'list') {
+      <div class="task-list">
+        @for (task of filteredTasks(); track task.rutaId) {
+          <div class="task-card">
+            <div class="task-card-top">
+              <span class="task-orden">#{{ task.orden }}</span>
+              <span class="route-badge badge-{{ task.tipoRuta.toLowerCase() }}">
+                {{ task.tipoRuta | routeType }}
+              </span>
+              <span class="state-badge state-{{ task.estado.toLowerCase() }}">
+                {{ getStateLabel(task.estado) }}
+              </span>
+            </div>
+            <h3 class="task-nombre">{{ task.nombre }}</h3>
+            @if (task.medidor) {
+              <p class="task-medidor">
+                <i class="bi bi-speedometer"></i> Serie: {{ task.medidor.serie }}
+              </p>
+            }
+            @if (task.descripcion) {
+              <p class="task-descripcion">{{ task.descripcion }}</p>
+            }
+            <div class="task-card-actions">
+              <!-- Botón principal: ir a lecturas con tap simple -->
+              <button
+                class="btn-card-lecturas"
+                (click)="openRoute(task)"
+                type="button"
+                [attr.aria-label]="'Ir a lecturas de ' + task.nombre"
+              >
+                <i class="bi bi-droplet-fill"></i> Lecturas
+              </button>
+              @if (
+                (task.medidor?.latitud && task.medidor?.longitud) ||
+                (task.rutaPuntos && task.rutaPuntos.length > 0)
+              ) {
+                <button
+                  class="btn-card-map"
+                  (click)="viewOnMap(task)"
+                  type="button"
+                  [attr.aria-label]="'Ver ' + task.nombre + ' en mapa'"
+                >
+                  <i class="bi bi-geo-alt-fill"></i> Mapa
+                </button>
+              }
+            </div>
+          </div>
+        }
+        @if (filteredTasks().length === 0) {
+          <div class="empty-state">
+            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+            No hay rutas para el filtro seleccionado.
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

@@ -16,6 +16,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 0.75rem 1.25rem;
+  /* Notch/Dynamic Island de iPhone */
+  padding-top: max(0.75rem, env(safe-area-inset-top));
   background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);

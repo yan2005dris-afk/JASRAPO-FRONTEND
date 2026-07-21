@@ -1,5 +1,5 @@
 <div class="layout-wrapper">
-  @if (layoutService.sidebarOpen()) {
+  @if (layoutService.sidebarOpen() && !authService.isOperator()) {
     <button
       type="button"
       class="sidebar-overlay border-0"
@@ -8,10 +8,13 @@
     ></button>
   }
 
-  <app-sidebar class="layout-sidebar" [class.sidebar-hidden]="!layoutService.sidebarOpen()">
-  </app-sidebar>
+  <!-- El sidebar solo se muestra para roles que no son operador -->
+  @if (!authService.isOperator()) {
+    <app-sidebar class="layout-sidebar" [class.sidebar-hidden]="!layoutService.sidebarOpen()">
+    </app-sidebar>
+  }
 
-  <div class="layout-main-container" [class.sidebar-collapsed]="!layoutService.sidebarOpen()">
+  <div class="layout-main-container" [class.sidebar-collapsed]="!layoutService.sidebarOpen() || authService.isOperator()">
     <app-header class="layout-header"></app-header>
 
     <main class="layout-content">

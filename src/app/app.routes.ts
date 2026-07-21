@@ -38,10 +38,16 @@ export const routes: Routes = [
     canActivate: [authGuard],
     children: [
       {
+        // Redirect legacy URL para backward compatibility
         path: 'tareas',
-        data: { breadcrumb: 'Tareas' },
+        redirectTo: 'rutas',
+        pathMatch: 'full',
+      },
+      {
+        path: 'rutas',
+        data: { breadcrumb: 'Rutas' },
         loadComponent: () =>
-          import('./features/operator/tasks/tasks.component').then((m) => m.TasksComponent),
+          import('./features/operator/rutas/rutas.component').then((m) => m.RutasComponent),
       },
       {
         path: 'lecturas',
@@ -83,7 +89,7 @@ export const routes: Routes = [
       },
       {
         path: '',
-        redirectTo: 'tareas',
+        redirectTo: 'rutas',
         pathMatch: 'full',
       },
     ],

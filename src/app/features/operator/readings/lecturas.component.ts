@@ -16,27 +16,26 @@ import { MeterCardComponent } from '../components/meter-card/meter-card.componen
 import { SelectedMeterCardComponent } from '../components/selected-meter-card/selected-meter-card.component';
 import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
 import { firstValueFrom } from 'rxjs';
+import {
+  EstadoInfo,
+  EstadoChip,
+  MeterGroup,
+  MobileStep,
+  READING_STATE_ORDER,
+  ESTADOS_FALLBACK,
+} from './readings.models';
 
-interface EstadoInfo {
-  codigo: string;
-  nombre: string;
-  orden: number;
-  icono: string;
+/** Registro de lectura proveniente del backend o IndexedDB. */
+interface ReadingRecord {
+  lecturaId?: string;
+  _lecturaId?: string;
+  medidorId?: string | number;
+  medidor?: { medidorId?: string | number };
+  estado?: string;
+  syncState?: string;
+  [key: string]: unknown;
 }
 
-interface EstadoChip {
-  value: string;
-  label: string;
-  icon: string;
-}
-
-interface MeterGroup {
-  estado: string;
-  info: { label: string; icon: string; cssClass: string | null };
-  meters: IMeterDto[];
-}
-
-type MobileStep = 'search' | 'actions' | 'form';
 
 @Component({
   selector: 'app-operator-readings',
@@ -75,10 +74,8 @@ export class LecturasComponent implements OnInit {
   readonly isSaving = signal<boolean>(false);
 
   // Lecturas registradas en el período activo (memoria local/caché)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  readonly registeredReadings = signal<any[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  readonly pendingReadings = signal<any[]>([]);
+  readonly registeredReadings = signal<ReadingRecord[]>([]);
+  readonly pendingReadings = signal<ReadingRecord[]>([]);
 
   // IDs de medidores con lecturas en estado no editable por el operador (POR_REVISION, APROBADA, etc.)
   readonly readMetersIds = computed(() => {
@@ -161,19 +158,8 @@ export class LecturasComponent implements OnInit {
       groups.get(estado)!.push(meter);
     }
 
-    // Orden consistente de grupos
-    const order = [
-      '__SIN_LECTURA__',
-      'PENDIENTE',
-      'POR_REVISION',
-      'RECHAZADA_VERIFICACION',
-      'APROBADA',
-      'ESTIMADA',
-      'PLANILLADA',
-      'CON_NOVEDAD',
-    ];
-
-    return order
+    // Orden consistente importado desde readings.models.ts
+    return READING_STATE_ORDER
       .filter((key) => groups.has(key))
       .map((key) => {
         const isSinLectura = key === '__SIN_LECTURA__';
@@ -327,38 +313,20 @@ export class LecturasComponent implements OnInit {
         const estados = await this.syncService.getReadingEstados();
         // Mapear response a EstadoInfo (codigo, nombre, orden, icono)
         this.estadosCatalog.set(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          estados.map((e: any) => ({
-            codigo: e.codigo ?? e.value ?? e.estado,
-            nombre: e.nombre ?? e.label,
-            orden: e.orden ?? 0,
-            icono: e.icono ?? e.icon ?? 'bi-question',
-          })),
+          (estados as { codigo?: string; value?: string; estado?: string; nombre?: string; label?: string; orden?: number; icono?: string; icon?: string }[])
+            .map((e) => ({
+              codigo: e.codigo ?? e.value ?? e.estado ?? '',
+              nombre: e.nombre ?? e.label ?? '',
+              orden: e.orden ?? 0,
+              icono: e.icono ?? e.icon ?? 'bi-question',
+            })),
         );
       } else {
         throw new Error('Offline');
       }
     } catch {
-      console.warn('Usando catálogo de estados hardcoded (offline o error)');
-      this.estadosCatalog.set([
-        { codigo: 'PENDIENTE', nombre: 'Pendiente', orden: 1, icono: 'bi-clock' },
-        { codigo: 'POR_REVISION', nombre: 'Por Revisión', orden: 2, icono: 'bi-eye' },
-        { codigo: 'APROBADA', nombre: 'Aprobada', orden: 3, icono: 'bi-check-circle' },
-        {
-          codigo: 'RECHAZADA_VERIFICACION',
-          nombre: 'Rechazada',
-          orden: 4,
-          icono: 'bi-x-circle-fill',
-        },
-        { codigo: 'ESTIMADA', nombre: 'Estimada', orden: 5, icono: 'bi-graph-up' },
-        { codigo: 'PLANILLADA', nombre: 'Planillada', orden: 6, icono: 'bi-receipt' },
-        {
-          codigo: 'CON_NOVEDAD',
-          nombre: 'Con Novedad',
-          orden: 7,
-          icono: 'bi-exclamation-triangle',
-        },
-      ]);
+      console.warn('Usando catálogo de estados offline (ESTADOS_FALLBACK)');
+      this.estadosCatalog.set(ESTADOS_FALLBACK);
     }
   }
 

@@ -183,6 +183,9 @@
           <input
             id="lectura-anterior"
             type="number"
+            inputmode="decimal"
+            min="0"
+            step="0.01"
             class="field-input readonly"
             formControlName="lecturaAnterior"
             readonly
@@ -195,6 +198,10 @@
           <input
             id="input-lectura-actual"
             type="number"
+            inputmode="decimal"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
             class="field-input"
             formControlName="lecturaActual"
             [class.invalid]="

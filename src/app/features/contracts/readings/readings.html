@@ -1,1 +1,129 @@
-<p>lectura-de-consumo works!</p>
+<div class="readings-admin-screen">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Lectura de Consumo</h1>
+      <p class="page-subtitle">Gestión de lecturas del período actual</p>
+    </div>
+    <button
+      class="btn-refresh"
+      (click)="loadReadings()"
+      [disabled]="isLoading()"
+      id="btn-refresh-readings"
+      title="Recargar"
+    >
+      <i class="bi bi-arrow-clockwise" [class.spin]="isLoading()"></i>
+      Actualizar
+    </button>
+  </div>
+
+  <!-- Resumen por estado -->
+  @if (readings().length > 0) {
+    <div class="summary-chips">
+      @for (opt of filterOptions; track opt.value) {
+        @if (opt.value !== 'TODOS' && totalByEstado()[opt.value]) {
+          <span
+            class="summary-chip"
+            [style.border-color]="getEstadoColor(opt.value)"
+            [style.color]="getEstadoColor(opt.value)"
+          >
+            {{ opt.label }}: <strong>{{ totalByEstado()[opt.value] }}</strong>
+          </span>
+        }
+      }
+    </div>
+  }
+
+  <!-- Filtros y búsqueda -->
+  <div class="controls-bar">
+    <div class="search-wrapper">
+      <i class="bi bi-search search-icon"></i>
+      <input
+        type="search"
+        class="search-input"
+        placeholder="Buscar por serie, cliente..."
+        [(ngModel)]="searchQuery"
+        id="input-search-readings"
+      />
+    </div>
+    <div class="filter-chips" role="group" aria-label="Filtrar por estado">
+      @for (opt of filterOptions; track opt.value) {
+        <button
+          class="filter-chip"
+          [class.active]="activeFilter() === opt.value"
+          (click)="setFilter(opt.value)"
+          type="button"
+        >
+          {{ opt.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Error -->
+  @if (error()) {
+    <div class="error-banner" role="alert">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      {{ error() }}
+    </div>
+  }
+
+  <!-- Loading skeleton -->
+  @if (isLoading()) {
+    <div class="skeleton-table" aria-busy="true">
+      @for (i of [1,2,3,4,5]; track i) {
+        <div class="skeleton-row"></div>
+      }
+    </div>
+  } @else {
+    <!-- Tabla de lecturas -->
+    @if (filteredReadings().length > 0) {
+      <div class="table-wrapper">
+        <table class="readings-table" aria-label="Tabla de lecturas de consumo">
+          <thead>
+            <tr>
+              <th>Serie Medidor</th>
+              <th>Cliente</th>
+              <th>Lectura Ant.</th>
+              <th>Lectura Act.</th>
+              <th>Consumo (m³)</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (reading of filteredReadings(); track reading.lecturaId) {
+              <tr class="reading-row">
+                <td class="col-serie">
+                  <i class="bi bi-speedometer2"></i>
+                  {{ reading.medidorSerie }}
+                </td>
+                <td class="col-cliente">{{ reading.clienteNombre ?? '—' }}</td>
+                <td class="col-number">{{ reading.lecturaAnterior | number: '1.0-2' }}</td>
+                <td class="col-number">{{ reading.lecturaActual | number: '1.0-2' }}</td>
+                <td class="col-number col-consumo">
+                  {{ (reading.consumoCalculado ?? reading.lecturaActual - reading.lecturaAnterior) | number: '1.0-2' }}
+                </td>
+                <td class="col-fecha">{{ formatFecha(reading.fecha) }}</td>
+                <td class="col-estado">
+                  <span
+                    class="estado-badge"
+                    [style.background]="getEstadoColor(reading.estado) + '20'"
+                    [style.color]="getEstadoColor(reading.estado)"
+                    [style.border-color]="getEstadoColor(reading.estado) + '40'"
+                  >
+                    {{ getEstadoLabel(reading.estado) }}
+                  </span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else if (!isLoading()) {
+      <div class="empty-state">
+        <i class="bi bi-inbox"></i>
+        <p>No hay lecturas que coincidan con los filtros seleccionados.</p>
+      </div>
+    }
+  }
+</div>

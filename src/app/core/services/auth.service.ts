@@ -225,13 +225,19 @@ export class AuthService {
   }
 
   /**
+   * Verifica si el usuario actual tiene rol de operador.
+   */
+  isOperator(): boolean {
+    const role = this.currentUser()?.roleName?.toLowerCase() ?? '';
+    return role === 'operador' || role === 'operadores';
+  }
+
+  /**
    * Retorna la ruta por defecto según el rol del usuario.
-   * Operadores → home del operador. El resto → dashboard.
+   * Operadores → panel del operador. El resto → dashboard.
    */
   getDefaultRoute(): string {
-    const role = this.currentUser()?.roleName?.toLowerCase();
-    if (role === 'operador' || role === 'operadores') return '/app/operador';
-    return '/app/dashboard';
+    return this.isOperator() ? '/app/operador/rutas' : '/app/dashboard';
   }
 
   private handleError(error: { error?: { message?: string }; status?: number }): Observable<never> {

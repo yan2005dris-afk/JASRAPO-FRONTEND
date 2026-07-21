@@ -4,6 +4,7 @@ import { Sidebar } from '../sidebar/sidebar.component';
 import { Header } from '../header/header';
 import { LayoutService } from '../../core/services/layout.service';
 import { BreadcrumbComponent } from '../../shared/components/breadcrumb/breadcrumb.component';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -14,4 +15,6 @@ import { BreadcrumbComponent } from '../../shared/components/breadcrumb/breadcru
 })
 export class MainLayout {
   readonly layoutService = inject(LayoutService);
+  readonly authService = inject(AuthService);
 }
+
