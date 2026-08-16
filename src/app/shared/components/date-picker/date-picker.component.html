@@ -1,5 +1,5 @@
 <div class="date-picker" appClickOutside (appClickOutside)="close()">
-  <div class="date-picker-input-group" (click)="toggle()">
+  <div class="date-picker-input-group">
     <input
       [id]="inputId()"
       type="text"
@@ -7,6 +7,9 @@
       [placeholder]="placeholder()"
       [value]="value()"
       readonly
+      (click)="toggle()"
+      (keydown.enter)="toggle()"
+      (keydown.space)="toggle(); $event.preventDefault()"
     />
     <span class="date-picker-icon">
       <i class="bi bi-calendar3"></i>
@@ -16,21 +19,11 @@
   @if (isOpen()) {
     <div class="date-picker-popover">
       <div class="date-picker-header">
-        <button
-          type="button"
-          class="date-picker-nav"
-          title="Mes anterior"
-          (click)="prevMonth()"
-        >
+        <button type="button" class="date-picker-nav" title="Mes anterior" (click)="prevMonth()">
           <i class="bi bi-chevron-left"></i>
         </button>
         <span class="date-picker-label">{{ viewLabel() }}</span>
-        <button
-          type="button"
-          class="date-picker-nav"
-          title="Mes siguiente"
-          (click)="nextMonth()"
-        >
+        <button type="button" class="date-picker-nav" title="Mes siguiente" (click)="nextMonth()">
           <i class="bi bi-chevron-right"></i>
         </button>
       </div>

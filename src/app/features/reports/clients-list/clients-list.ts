@@ -1,14 +1,18 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 
 import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/pdf-previewer.component';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
-import {
-  IClientsListFilters,
-  ISendClientsListEmailBody,
-} from '../interfaces/ireport.interface';
+import { IClientsListFilters, ISendClientsListEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
 
 type DatePreset = 'currentYear' | 'currentMonth' | 'lastMonth' | 'last3Months';
@@ -51,10 +55,7 @@ export class ClientsListComponent implements OnInit {
 
   // Validación cruzada de fechas: desde no puede ser mayor que hasta
   readonly rangoFechaInvalido = computed(
-    () =>
-      !!this.fechaDesde() &&
-      !!this.fechaHasta() &&
-      this.fechaDesde() > this.fechaHasta(),
+    () => !!this.fechaDesde() && !!this.fechaHasta() && this.fechaDesde() > this.fechaHasta(),
   );
 
   // Email de destino inválido (vacío o con formato incorrecto)
@@ -123,7 +124,10 @@ export class ClientsListComponent implements OnInit {
       },
       error: (err) => {
         this.isLoadingPdf.set(false);
-        this.toast.error(this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'), 'Error');
+        this.toast.error(
+          this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'),
+          'Error',
+        );
       },
     });
   }

@@ -4,10 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/pdf-previewer.component';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
-import {
-  IAccountStatementFilters,
-  ISendReportEmailBody,
-} from '../interfaces/ireport.interface';
+import { IAccountStatementFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
 import { ContractsService } from '../../contracts/service-contracts/services/contracts.service';
 import type { IContract } from '../../contracts/service-contracts/interfaces/icontract.interface';
@@ -56,10 +53,7 @@ export class ClientStatementComponent {
 
   // Validación cruzada de fechas: desde no puede ser mayor que hasta
   readonly rangoFechaInvalido = computed(
-    () =>
-      !!this.fechaDesde() &&
-      !!this.fechaHasta() &&
-      this.fechaDesde() > this.fechaHasta(),
+    () => !!this.fechaDesde() && !!this.fechaHasta() && this.fechaDesde() > this.fechaHasta(),
   );
 
   // Email de destino inválido (vacío o con formato incorrecto)
@@ -156,21 +150,19 @@ export class ClientStatementComponent {
 
     this.isSearching.set(true);
     this.searchError.set('');
-    this.contractsService
-      .getContracts({ search: term, page: 1, limit: 50 })
-      .subscribe({
-        next: (res) => {
-          this.searchResults.set(res.data);
-          this.searchPerformed.set(true);
-          this.isSearching.set(false);
-        },
-        error: (err) => {
-          this.searchResults.set([]);
-          this.searchPerformed.set(true);
-          this.searchError.set(this.getErrorMessage(err, 'No se pudieron buscar los contratos'));
-          this.isSearching.set(false);
-        },
-      });
+    this.contractsService.getContracts({ search: term, page: 1, limit: 50 }).subscribe({
+      next: (res) => {
+        this.searchResults.set(res.data);
+        this.searchPerformed.set(true);
+        this.isSearching.set(false);
+      },
+      error: (err) => {
+        this.searchResults.set([]);
+        this.searchPerformed.set(true);
+        this.searchError.set(this.getErrorMessage(err, 'No se pudieron buscar los contratos'));
+        this.isSearching.set(false);
+      },
+    });
   }
 
   seleccionarContrato(contrato: IContract): void {
@@ -217,7 +209,10 @@ export class ClientStatementComponent {
       },
       error: (err) => {
         this.isLoadingPdf.set(false);
-        this.toast.error(this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'), 'Error');
+        this.toast.error(
+          this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'),
+          'Error',
+        );
       },
     });
   }

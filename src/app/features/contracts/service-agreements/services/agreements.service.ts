@@ -4,10 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../../../environments/environment';
 import { PaginatedResponse } from '../../../../shared/models/paginated-response';
-import {
-  IAgreementSummary,
-  ISearchAgreementsParams,
-} from '../interfaces/iagreement.interface';
+import { IAgreementSummary, ISearchAgreementsParams } from '../interfaces/iagreement.interface';
 
 @Injectable({
   providedIn: 'root',

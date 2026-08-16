@@ -53,10 +53,7 @@ export class PaymentsReportComponent {
 
   // Validación cruzada de fechas: desde no puede ser mayor que hasta
   readonly rangoFechaInvalido = computed(
-    () =>
-      !!this.fechaDesde() &&
-      !!this.fechaHasta() &&
-      this.fechaDesde() > this.fechaHasta(),
+    () => !!this.fechaDesde() && !!this.fechaHasta() && this.fechaDesde() > this.fechaHasta(),
   );
 
   // Email de destino inválido (vacío o con formato incorrecto)
@@ -148,21 +145,19 @@ export class PaymentsReportComponent {
 
     this.isSearching.set(true);
     this.searchError.set('');
-    this.clientsService
-      .searchClients({ nombreCompleto: term, page: 1, limit: 50 })
-      .subscribe({
-        next: (res) => {
-          this.searchResults.set(res.data);
-          this.searchPerformed.set(true);
-          this.isSearching.set(false);
-        },
-        error: (err) => {
-          this.searchResults.set([]);
-          this.searchPerformed.set(true);
-          this.searchError.set(this.getErrorMessage(err, 'No se pudieron buscar los clientes'));
-          this.isSearching.set(false);
-        },
-      });
+    this.clientsService.searchClients({ nombreCompleto: term, page: 1, limit: 50 }).subscribe({
+      next: (res) => {
+        this.searchResults.set(res.data);
+        this.searchPerformed.set(true);
+        this.isSearching.set(false);
+      },
+      error: (err) => {
+        this.searchResults.set([]);
+        this.searchPerformed.set(true);
+        this.searchError.set(this.getErrorMessage(err, 'No se pudieron buscar los clientes'));
+        this.isSearching.set(false);
+      },
+    });
   }
 
   seleccionarCliente(cliente: IClient): void {
@@ -204,7 +199,10 @@ export class PaymentsReportComponent {
       },
       error: (err) => {
         this.isLoadingPdf.set(false);
-        this.toast.error(this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'), 'Error');
+        this.toast.error(
+          this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'),
+          'Error',
+        );
       },
     });
   }

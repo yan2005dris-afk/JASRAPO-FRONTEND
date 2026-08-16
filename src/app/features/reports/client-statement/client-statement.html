@@ -58,7 +58,11 @@
             [disabled]="isLoadingPdf() || rangoFechaInvalido()"
           >
             @if (isLoadingPdf()) {
-              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
             } @else {
               <i class="bi bi-file-earmark-pdf"></i>
             }
@@ -211,7 +215,11 @@
 
           @if (isSearching()) {
             <div class="text-center py-4 text-muted">
-              <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              <span
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+              ></span>
               Buscando contratos...
             </div>
           } @else if (searchError()) {
@@ -232,14 +240,17 @@
           } @else if (searchResults().length > 0) {
             <ul class="list-group list-group-flush contract-results">
               @for (contract of searchResults(); track contract.contratoId) {
-                <li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2">
+                <li
+                  class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2"
+                >
                   <div class="flex-grow-1">
                     <div class="fw-semibold text-dark">
                       <i class="bi bi-briefcase me-1 text-primary"></i>
                       {{ contract.numeroGuia }}
                     </div>
                     <div class="small text-muted">
-                      {{ formatClientName(contract.cliente) }} · {{ contract.cliente.identificacion }}
+                      {{ formatClientName(contract.cliente) }} ·
+                      {{ contract.cliente.identificacion }}
                       @if (contract.cliente.email) {
                         · {{ contract.cliente.email }}
                       }
@@ -280,7 +291,9 @@
       <div class="modal-content border-0 shadow rounded-4">
         <div class="modal-header border-bottom-0 pb-2">
           <div>
-            <h5 id="email-modal-title" class="modal-title fw-bold">Enviar estado de cuenta por email</h5>
+            <h5 id="email-modal-title" class="modal-title fw-bold">
+              Enviar estado de cuenta por email
+            </h5>
             <p class="text-muted mb-0 small">
               El reporte se generará y enviará al destinatario indicado.
             </p>
@@ -337,7 +350,11 @@
             [disabled]="isSendingEmail() || esEmailInvalido()"
           >
             @if (isSendingEmail()) {
-              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
             } @else {
               <i class="bi bi-envelope"></i>
             }

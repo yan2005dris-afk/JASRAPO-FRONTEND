@@ -48,7 +48,11 @@
             [disabled]="isLoadingPdf() || rangoFechaInvalido()"
           >
             @if (isLoadingPdf()) {
-              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
             } @else {
               <i class="bi bi-file-earmark-pdf"></i>
             }
@@ -152,7 +156,9 @@
       <div class="modal-content border-0 shadow rounded-4">
         <div class="modal-header border-bottom-0 pb-2">
           <div>
-            <h5 id="email-modal-title" class="modal-title fw-bold">Enviar listado de clientes por email</h5>
+            <h5 id="email-modal-title" class="modal-title fw-bold">
+              Enviar listado de clientes por email
+            </h5>
             <p class="text-muted mb-0 small">
               El listado se generará con los filtros actuales y se enviará al destinatario indicado.
             </p>
@@ -209,7 +215,11 @@
             [disabled]="isSendingEmail() || esEmailInvalido()"
           >
             @if (isSendingEmail()) {
-              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
             } @else {
               <i class="bi bi-envelope"></i>
             }

@@ -3,8 +3,8 @@
   <div class="page-header mb-4">
     <h3 class="fw-bold mb-0 text-dark fs-4">Convenio de Pago</h3>
     <p class="text-muted small mb-0">
-      Consulte el convenio de pago de un cliente. Busque por número de guía, nombre o
-      identificación del cliente.
+      Consulte el convenio de pago de un cliente. Busque por número de guía, nombre o identificación
+      del cliente.
     </p>
   </div>
 
@@ -42,7 +42,11 @@
             [disabled]="isLoadingPdf()"
           >
             @if (isLoadingPdf()) {
-              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
             } @else {
               <i class="bi bi-file-earmark-pdf"></i>
             }
@@ -154,7 +158,11 @@
 
           @if (isSearching()) {
             <div class="text-center py-4 text-muted">
-              <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              <span
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+              ></span>
               Buscando convenios...
             </div>
           } @else if (searchError()) {
@@ -175,7 +183,9 @@
           } @else if (searchResults().length > 0) {
             <ul class="list-group list-group-flush contract-results">
               @for (agreement of searchResults(); track agreement.convenioId) {
-                <li class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2">
+                <li
+                  class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2"
+                >
                   <div class="flex-grow-1">
                     <div class="fw-semibold text-dark">
                       <i class="bi bi-briefcase me-1 text-primary"></i>
@@ -191,8 +201,12 @@
                       }
                     </div>
                     <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
-                      <span class="badge text-bg-light border">{{ formatAgreementEstado(agreement.estado) }}</span>
-                      <span class="small fw-semibold text-dark">{{ formatMoney(agreement.deudaTotal) }}</span>
+                      <span class="badge text-bg-light border">{{
+                        formatAgreementEstado(agreement.estado)
+                      }}</span>
+                      <span class="small fw-semibold text-dark">{{
+                        formatMoney(agreement.deudaTotal)
+                      }}</span>
                     </div>
                   </div>
                   <button
@@ -230,7 +244,9 @@
       <div class="modal-content border-0 shadow rounded-4">
         <div class="modal-header border-bottom-0 pb-2">
           <div>
-            <h5 id="email-modal-title" class="modal-title fw-bold">Enviar convenio de pago por email</h5>
+            <h5 id="email-modal-title" class="modal-title fw-bold">
+              Enviar convenio de pago por email
+            </h5>
             <p class="text-muted mb-0 small">
               El reporte se generará y enviará al destinatario indicado.
             </p>
@@ -287,7 +303,11 @@
             [disabled]="isSendingEmail() || esEmailInvalido()"
           >
             @if (isSendingEmail()) {
-              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
             } @else {
               <i class="bi bi-envelope"></i>
             }

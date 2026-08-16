@@ -3,10 +3,7 @@ import { FormsModule } from '@angular/forms';
 
 import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/pdf-previewer.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
-import {
-  IPaymentAgreementFilters,
-  ISendReportEmailBody,
-} from '../interfaces/ireport.interface';
+import { IPaymentAgreementFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
 import { AgreementsService } from '../../contracts/service-agreements/services/agreements.service';
 import type { IAgreementSummary } from '../../contracts/service-agreements/interfaces/iagreement.interface';
@@ -100,21 +97,19 @@ export class PaymentAgreementComponent {
 
     this.isSearching.set(true);
     this.searchError.set('');
-    this.agreementsService
-      .getAgreements({ search: term, page: 1, limit: 50 })
-      .subscribe({
-        next: (res) => {
-          this.searchResults.set(res.data);
-          this.searchPerformed.set(true);
-          this.isSearching.set(false);
-        },
-        error: (err) => {
-          this.searchResults.set([]);
-          this.searchPerformed.set(true);
-          this.searchError.set(this.getErrorMessage(err, 'No se pudieron buscar los convenios'));
-          this.isSearching.set(false);
-        },
-      });
+    this.agreementsService.getAgreements({ search: term, page: 1, limit: 50 }).subscribe({
+      next: (res) => {
+        this.searchResults.set(res.data);
+        this.searchPerformed.set(true);
+        this.isSearching.set(false);
+      },
+      error: (err) => {
+        this.searchResults.set([]);
+        this.searchPerformed.set(true);
+        this.searchError.set(this.getErrorMessage(err, 'No se pudieron buscar los convenios'));
+        this.isSearching.set(false);
+      },
+    });
   }
 
   seleccionarConvenio(agreement: IAgreementSummary): void {
@@ -128,7 +123,7 @@ export class PaymentAgreementComponent {
   }
 
   formatAgreementEstado(estado: IAgreementSummary['estado']): string {
-    const codigo = typeof estado === 'string' ? estado : estado?.codigo ?? '';
+    const codigo = typeof estado === 'string' ? estado : (estado?.codigo ?? '');
     switch (codigo) {
       case 'ACTIVO':
         return 'Activo';
@@ -185,7 +180,10 @@ export class PaymentAgreementComponent {
       },
       error: (err) => {
         this.isLoadingPdf.set(false);
-        this.toast.error(this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'), 'Error');
+        this.toast.error(
+          this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'),
+          'Error',
+        );
       },
     });
   }
