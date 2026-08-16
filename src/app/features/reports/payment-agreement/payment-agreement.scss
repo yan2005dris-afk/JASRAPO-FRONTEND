@@ -8,17 +8,6 @@
   gap: 1rem;
 }
 
-/* Bloque JSON de la respuesta del backend */
-.json-preview {
-  background-color: #f8fafc;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 1rem;
-  font-size: 0.85rem;
-  max-height: 400px;
-  overflow: auto;
-}
-
 /* Estado inicial / sin reporte generado */
 .empty-state {
   text-align: center;
@@ -39,7 +28,7 @@
   opacity: 0.65;
 }
 
-/* Chip del contrato/cliente seleccionado */
+/* Chip del convenio/cliente seleccionado */
 .selected-chip {
   display: inline-flex;
   align-items: center;
@@ -58,7 +47,7 @@
   text-overflow: ellipsis;
 }
 
-/* Lista de resultados del buscador de contratos */
+/* Lista de resultados del buscador de convenios */
 .contract-results {
   max-height: 360px;
   overflow-y: auto;
@@ -77,15 +66,10 @@
   background-color: rgba(15, 23, 42, 0.45);
 }
 
-/* Input de contrato: toda el área abre el buscador */
+/* Input de convenio: toda el área abre el buscador */
 .contract-input {
   cursor: pointer;
   background-color: #fff;
-}
-
-/* Barra de rango rápido, pegada a la vista previa del reporte */
-.quick-range-bar {
-  padding: 0 0.25rem;
 }
 
 /* Fila propia para el chip del cliente seleccionado (no descuadra los filtros) */

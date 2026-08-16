@@ -319,11 +319,11 @@ export const routes: Routes = [
 
       // Sección Reportes
       {
-        path: 'Reportes',
+        path: 'reportes',
         data: { breadcrumb: 'Reportes' },
         children: [
           {
-            path: 'ConsumoZonas',
+            path: 'consumo-zonas',
             data: { breadcrumb: 'Consumo por Zonas' },
             loadComponent: () =>
               import('./features/reports/zone-consumption/zone-consumption').then(
@@ -331,7 +331,7 @@ export const routes: Routes = [
               ),
           },
           {
-            path: 'DashboardKpi',
+            path: 'dashboard',
             data: { breadcrumb: 'Dashboard KPI' },
             loadComponent: () =>
               import('./features/reports/kpi-dashboard/kpi-dashboard').then(
@@ -339,7 +339,7 @@ export const routes: Routes = [
               ),
           },
           {
-            path: 'EstadoCuentaCliente',
+            path: 'estado-cuenta',
             data: { breadcrumb: 'Estado de Cuenta' },
             loadComponent: () =>
               import('./features/reports/client-statement/client-statement').then(
@@ -347,11 +347,43 @@ export const routes: Routes = [
               ),
           },
           {
-            path: 'RecaudacionMorosida',
+            path: 'recaudacion-morosidad',
             data: { breadcrumb: 'Recaudación y Morosidad' },
             loadComponent: () =>
               import('./features/reports/overdue-accounts/overdue-accounts').then(
                 (m) => m.OverdueAccountsComponent,
+              ),
+          },
+          {
+            path: 'abonos',
+            data: { breadcrumb: 'Reporte de Abonos' },
+            loadComponent: () =>
+              import('./features/reports/payments-report/payments-report').then(
+                (m) => m.PaymentsReportComponent,
+              ),
+          },
+          {
+            path: 'historial-conexion',
+            data: { breadcrumb: 'Historial de Conexión' },
+            loadComponent: () =>
+              import('./features/reports/connection-history/connection-history').then(
+                (m) => m.ConnectionHistoryComponent,
+              ),
+          },
+          {
+            path: 'convenio-pago',
+            data: { breadcrumb: 'Convenio de Pago' },
+            loadComponent: () =>
+              import('./features/reports/payment-agreement/payment-agreement').then(
+                (m) => m.PaymentAgreementComponent,
+              ),
+          },
+          {
+            path: 'listado-clientes',
+            data: { breadcrumb: 'Listado de Clientes' },
+            loadComponent: () =>
+              import('./features/reports/clients-list/clients-list').then(
+                (m) => m.ClientsListComponent,
               ),
           },
         ],

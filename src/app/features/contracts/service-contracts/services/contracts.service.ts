@@ -34,6 +34,9 @@ export class ContractsService {
     if (params.contratoId) {
       httpParams = httpParams.set('contratoId', params.contratoId);
     }
+    if (params.search) {
+      httpParams = httpParams.set('search', params.search);
+    }
     if (params.medidorId) {
       httpParams = httpParams.set('medidorId', params.medidorId);
     }

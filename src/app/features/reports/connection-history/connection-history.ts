@@ -4,10 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/pdf-previewer.component';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
-import {
-  IAccountStatementFilters,
-  ISendReportEmailBody,
-} from '../interfaces/ireport.interface';
+import { IConnectionHistoryFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
 import { ContractsService } from '../../contracts/service-contracts/services/contracts.service';
 import type { IContract } from '../../contracts/service-contracts/interfaces/icontract.interface';
@@ -15,18 +12,18 @@ import type { IContract } from '../../contracts/service-contracts/interfaces/ico
 type DatePreset = 'currentMonth' | 'lastMonth' | 'last3Months' | 'lastYear';
 
 @Component({
-  selector: 'app-client-statement',
+  selector: 'app-connection-history',
   imports: [FormsModule, PdfPreviewerComponent, DatePickerComponent],
-  templateUrl: './client-statement.html',
-  styleUrl: './client-statement.scss',
+  templateUrl: './connection-history.html',
+  styleUrl: './connection-history.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ClientStatementComponent {
+export class ConnectionHistoryComponent {
   private readonly reportsService = inject(ReportsService);
   private readonly contractsService = inject(ContractsService);
   private readonly toast = inject(ToastService);
 
-  // Filtros del estado de cuenta
+  // Filtros del historial de conexión
   readonly contratoId = signal('');
   readonly selectedContractNumber = signal('');
   readonly fechaDesde = signal('');
@@ -68,13 +65,13 @@ export class ClientStatementComponent {
     return email === '' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   });
 
-  private buildFilters(): IAccountStatementFilters | null {
+  private buildFilters(): IConnectionHistoryFilters | null {
     const contrato = this.contratoId().trim();
     if (!contrato) {
       return null;
     }
 
-    const filters: IAccountStatementFilters = { contratoId: contrato };
+    const filters: IConnectionHistoryFilters = { contratoId: contrato };
     const desde = this.fechaDesde();
     const hasta = this.fechaHasta();
 
@@ -209,7 +206,7 @@ export class ClientStatementComponent {
     }
 
     this.isLoadingPdf.set(true);
-    this.reportsService.getAccountStatementPdf(filters).subscribe({
+    this.reportsService.getConnectionHistoryPdf(filters).subscribe({
       next: (blob) => {
         this.pdfBlob.set(blob);
         this.isLoadingPdf.set(false);
@@ -236,7 +233,7 @@ export class ClientStatementComponent {
     };
 
     this.isSendingEmail.set(true);
-    this.reportsService.sendAccountStatementEmail(body).subscribe({
+    this.reportsService.sendConnectionHistoryEmail(body).subscribe({
       next: () => {
         this.isSendingEmail.set(false);
         this.isEmailModalOpen.set(false);

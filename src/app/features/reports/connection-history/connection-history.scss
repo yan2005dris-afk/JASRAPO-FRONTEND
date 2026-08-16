@@ -8,17 +8,6 @@
   gap: 1rem;
 }
 
-/* Bloque JSON de la respuesta del backend */
-.json-preview {
-  background-color: #f8fafc;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 1rem;
-  font-size: 0.85rem;
-  max-height: 400px;
-  overflow: auto;
-}
-
 /* Estado inicial / sin reporte generado */
 .empty-state {
   text-align: center;

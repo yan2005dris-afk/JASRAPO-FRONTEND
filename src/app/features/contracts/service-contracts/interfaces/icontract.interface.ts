@@ -101,6 +101,8 @@ export interface ISearchContractsParams {
   limit?: number;
   contratoId?: string;
   medidorId?: string;
+  // Búsqueda libre por número de guía, nombre/razón social o identificación del cliente.
+  search?: string;
   // Filtros sobre las columnas visibles de la tabla (búsqueda de texto + estado).
   // El backend los irá soportando; hoy solo numeroGuia está implementado.
   numeroGuia?: string;
