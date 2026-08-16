@@ -4,18 +4,38 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Copiar archivos de dependencias
-COPY package.json package-lock.json* ./
+COPY package.json pnpm-lock.yaml* ./
 
 # Instalar dependencias
-RUN npm ci
+RUN corepack enable pnpm && pnpm install --frozen-lockfile
 
 # Copiar el resto del código fuente
 COPY . .
 
 # Build de producción de Angular
-RUN npm run build -- --configuration production
+RUN pnpm run build -- --configuration production
 
-# ---- Stage 2: Servir con Nginx ----
+# ---- Stage 2: Development (hot-reload) ----
+FROM node:22-alpine AS development
+
+WORKDIR /app
+
+# Copiar archivos de dependencias
+COPY package.json pnpm-lock.yaml* ./
+
+# Instalar dependencias
+RUN corepack enable pnpm && pnpm install --frozen-lockfile
+
+# Copiar el resto del código fuente
+COPY . .
+
+# Exponer puerto de desarrollo
+EXPOSE 4200
+
+# Comando para desarrollo con hot-reload
+CMD ["pnpm", "run", "start", "--", "--host", "0.0.0.0"]
+
+# ---- Stage 3: Servir con Nginx ----
 FROM nginx:alpine AS production
 
 # Copiar configuración personalizada de Nginx

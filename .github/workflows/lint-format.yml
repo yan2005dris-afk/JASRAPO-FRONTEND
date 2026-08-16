@@ -1,0 +1,40 @@
+name: Lint y Build
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Verificar Formato (Prettier)
+        run: pnpm run format:check || npx prettier --check .
+
+      - name: Ejecutar Linter (ESLint)
+        run: pnpm run lint
+
+      - name: Construir Proyecto (Build)
+        run: pnpm run build
+
+      - name: Ejecutar Pruebas Unitarias (Vitest)
+        run: pnpm test
