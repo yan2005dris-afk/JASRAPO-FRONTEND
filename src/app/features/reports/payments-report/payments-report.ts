@@ -4,30 +4,31 @@ import { FormsModule } from '@angular/forms';
 import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/pdf-previewer.component';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
-import { IAccountStatementFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
+import { IPaymentsReportFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
-import { ContractsService } from '../../contracts/service-contracts/services/contracts.service';
-import type { IContract } from '../../contracts/service-contracts/interfaces/icontract.interface';
+import { ClientsService } from '../../contracts/clients/services/clients.service';
+import type { IClient } from '../../contracts/clients/interfaces/iclients.interface';
 
 type DatePreset = 'currentMonth' | 'lastMonth' | 'last3Months' | 'lastYear';
 
 @Component({
-  selector: 'app-client-statement',
+  selector: 'app-payments-report',
   imports: [FormsModule, PdfPreviewerComponent, DatePickerComponent],
-  templateUrl: './client-statement.html',
-  styleUrl: './client-statement.scss',
+  templateUrl: './payments-report.html',
+  styleUrl: './payments-report.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ClientStatementComponent {
+export class PaymentsReportComponent {
   private readonly reportsService = inject(ReportsService);
-  private readonly contractsService = inject(ContractsService);
+  private readonly clientsService = inject(ClientsService);
   private readonly toast = inject(ToastService);
 
-  // Filtros del estado de cuenta
-  readonly contratoId = signal('');
-  readonly selectedContractNumber = signal('');
+  // Filtros del reporte de abonos
   readonly fechaDesde = signal('');
   readonly fechaHasta = signal('');
+  readonly clienteId = signal('');
+  readonly selectedClientLabel = signal('');
+  readonly selectedClientName = signal('');
 
   // Resultados
   readonly pdfBlob = signal<Blob | null>(null);
@@ -38,14 +39,13 @@ export class ClientStatementComponent {
   readonly subject = signal('');
   readonly isSendingEmail = signal(false);
 
-  // Buscador de contratos
+  // Buscador de clientes
   readonly searchTerm = signal('');
-  readonly searchResults = signal<IContract[]>([]);
+  readonly searchResults = signal<IClient[]>([]);
   readonly isSearching = signal(false);
   readonly searchError = signal('');
   readonly searchPerformed = signal(false);
-  readonly selectedContractName = signal('');
-  readonly isContractPickerOpen = signal(false);
+  readonly isClientPickerOpen = signal(false);
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Modales
@@ -62,18 +62,15 @@ export class ClientStatementComponent {
     return email === '' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   });
 
-  private buildFilters(): IAccountStatementFilters | null {
-    const contrato = this.contratoId().trim();
-    if (!contrato) {
-      return null;
-    }
-
-    const filters: IAccountStatementFilters = { contratoId: contrato };
+  private buildFilters(): IPaymentsReportFilters {
+    const filters: IPaymentsReportFilters = {};
     const desde = this.fechaDesde();
     const hasta = this.fechaHasta();
+    const cliente = this.clienteId().trim();
 
     if (desde) filters.fechaDesde = desde;
     if (hasta) filters.fechaHasta = hasta;
+    if (cliente) filters.clienteId = cliente;
     return filters;
   }
 
@@ -86,11 +83,9 @@ export class ClientStatementComponent {
 
     switch (preset) {
       case 'currentMonth':
-        // Primer día del mes actual hasta hoy
         desde.setDate(1);
         break;
       case 'lastMonth':
-        // Todo el mes anterior
         desde.setMonth(desde.getMonth() - 1, 1);
         hasta.setDate(0);
         break;
@@ -113,28 +108,28 @@ export class ClientStatementComponent {
     return `${year}-${month}-${day}`;
   }
 
-  // ---------- Buscador de contratos ----------
+  // ---------- Buscador de clientes ----------
 
   onSearchInput(value: string): void {
     this.searchTerm.set(value);
     if (this.searchTimer) {
       clearTimeout(this.searchTimer);
     }
-    this.searchTimer = setTimeout(() => this.buscarContratos(), 400);
+    this.searchTimer = setTimeout(() => this.buscarClientes(), 400);
   }
 
-  abrirBuscadorContratos(): void {
-    this.isContractPickerOpen.set(true);
+  abrirBuscadorClientes(): void {
+    this.isClientPickerOpen.set(true);
     if (!this.searchPerformed()) {
-      this.buscarContratos();
+      this.buscarClientes();
     }
   }
 
-  cerrarBuscadorContratos(): void {
-    this.isContractPickerOpen.set(false);
+  cerrarBuscadorClientes(): void {
+    this.isClientPickerOpen.set(false);
   }
 
-  buscarContratos(): void {
+  buscarClientes(): void {
     if (this.searchTimer) {
       clearTimeout(this.searchTimer);
       this.searchTimer = null;
@@ -150,7 +145,7 @@ export class ClientStatementComponent {
 
     this.isSearching.set(true);
     this.searchError.set('');
-    this.contractsService.getContracts({ search: term, page: 1, limit: 50 }).subscribe({
+    this.clientsService.searchClients({ nombreCompleto: term, page: 1, limit: 50 }).subscribe({
       next: (res) => {
         this.searchResults.set(res.data);
         this.searchPerformed.set(true);
@@ -159,25 +154,26 @@ export class ClientStatementComponent {
       error: (err) => {
         this.searchResults.set([]);
         this.searchPerformed.set(true);
-        this.searchError.set(this.getErrorMessage(err, 'No se pudieron buscar los contratos'));
+        this.searchError.set(this.getErrorMessage(err, 'No se pudieron buscar los clientes'));
         this.isSearching.set(false);
       },
     });
   }
 
-  seleccionarContrato(contrato: IContract): void {
-    this.contratoId.set(String(contrato.contratoId));
-    this.selectedContractNumber.set(contrato.numeroGuia);
-    this.selectedContractName.set(this.formatClientName(contrato.cliente));
-    this.destinatario.set(contrato.cliente.email?.trim() ?? '');
-    this.isContractPickerOpen.set(false);
+  seleccionarCliente(cliente: IClient): void {
+    this.clienteId.set(String(cliente.clienteId ?? cliente.id ?? cliente.clientId ?? ''));
+    const nombre = this.formatClientName(cliente);
+    this.selectedClientLabel.set(`${nombre} · ${cliente.identificacion}`);
+    this.selectedClientName.set(nombre);
+    this.destinatario.set(cliente.email?.trim() ?? '');
+    this.isClientPickerOpen.set(false);
   }
 
-  formatClientName(cliente: IContract['cliente']): string {
+  formatClientName(cliente: IClient): string {
     if (cliente.razonSocial) {
       return cliente.razonSocial;
     }
-    return `${cliente.nombres} ${cliente.apellidos}`.trim();
+    return `${cliente.nombres ?? ''} ${cliente.apellidos ?? ''}`.trim();
   }
 
   // ---------- Envío por email (modal) ----------
@@ -194,14 +190,8 @@ export class ClientStatementComponent {
   }
 
   generarPdf(): void {
-    const filters = this.buildFilters();
-    if (!filters) {
-      this.toast.error('Seleccione un contrato para generar el reporte', 'Error');
-      return;
-    }
-
     this.isLoadingPdf.set(true);
-    this.reportsService.getAccountStatementPdf(filters).subscribe({
+    this.reportsService.getPaymentsReportPdf(this.buildFilters()).subscribe({
       next: (blob) => {
         this.pdfBlob.set(blob);
         this.isLoadingPdf.set(false);
@@ -218,20 +208,20 @@ export class ClientStatementComponent {
   }
 
   enviarEmail(): void {
-    const contrato = this.contratoId().trim();
-    if (!contrato) {
-      this.toast.error('Seleccione un contrato para enviar el reporte', 'Error');
+    const cliente = this.clienteId().trim();
+    if (!cliente) {
+      this.toast.error('Seleccione un cliente para enviar el reporte', 'Error');
       return;
     }
 
     const body: ISendReportEmailBody = {
-      contratoId: contrato,
+      clienteId: cliente,
       destinatario: this.destinatario().trim() || undefined,
       subject: this.subject().trim() || undefined,
     };
 
     this.isSendingEmail.set(true);
-    this.reportsService.sendAccountStatementEmail(body).subscribe({
+    this.reportsService.sendPaymentsReportEmail(body).subscribe({
       next: () => {
         this.isSendingEmail.set(false);
         this.isEmailModalOpen.set(false);
@@ -250,16 +240,16 @@ export class ClientStatementComponent {
   }
 
   limpiar(): void {
-    this.contratoId.set('');
-    this.selectedContractNumber.set('');
     this.fechaDesde.set('');
     this.fechaHasta.set('');
+    this.clienteId.set('');
+    this.selectedClientLabel.set('');
+    this.selectedClientName.set('');
     this.pdfBlob.set(null);
     this.searchTerm.set('');
     this.searchResults.set([]);
     this.searchError.set('');
     this.searchPerformed.set(false);
-    this.selectedContractName.set('');
     this.destinatario.set('');
     this.subject.set('');
   }

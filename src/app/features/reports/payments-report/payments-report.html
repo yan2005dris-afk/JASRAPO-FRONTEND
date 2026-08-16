@@ -1,10 +1,10 @@
 <div class="reports-container">
   <!-- Encabezado -->
   <div class="page-header mb-4">
-    <h3 class="fw-bold mb-0 text-dark fs-4">Estado de Cuenta</h3>
+    <h3 class="fw-bold mb-0 text-dark fs-4">Reporte de Abonos</h3>
     <p class="text-muted small mb-0">
-      Consulte el estado de cuenta de un contrato. Busque el contrato por número de guía, nombre o
-      identificación del cliente.
+      Consulte los abonos realizados. Puede filtrar por cliente (nombre o identificación) y por
+      rango de fechas.
     </p>
   </div>
 
@@ -13,22 +13,22 @@
     <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
       <div class="row g-3 align-items-end">
         <div class="col-md-3">
-          <label class="form-label small fw-semibold mb-1" for="contratoId">Contrato</label>
+          <label class="form-label small fw-semibold mb-1" for="clienteId">Cliente</label>
           <div class="input-group">
             <input
-              id="contratoId"
+              id="clienteId"
               type="text"
               class="form-control shadow-none contract-input"
-              placeholder="Seleccione un contrato"
-              [value]="selectedContractNumber()"
+              placeholder="Todos los clientes"
+              [value]="selectedClientLabel()"
               readonly
-              (click)="abrirBuscadorContratos()"
+              (click)="abrirBuscadorClientes()"
             />
             <button
               type="button"
               class="btn btn-outline-primary shadow-none"
-              title="Buscar contrato"
-              (click)="abrirBuscadorContratos()"
+              title="Buscar cliente"
+              (click)="abrirBuscadorClientes()"
             >
               <i class="bi bi-search"></i>
             </button>
@@ -68,7 +68,7 @@
             }
             {{ isLoadingPdf() ? 'Generando...' : 'Generar PDF' }}
           </button>
-          @if (contratoId()) {
+          @if (clienteId()) {
             <button
               type="button"
               class="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium px-3"
@@ -91,11 +91,11 @@
         </div>
       </div>
 
-      @if (selectedContractName()) {
+      @if (selectedClientName()) {
         <div class="selected-contract-row mt-3">
           <div class="selected-chip">
             <i class="bi bi-person-check-fill text-primary"></i>
-            <span class="fw-medium text-dark">{{ selectedContractName() }}</span>
+            <span class="fw-medium text-dark">{{ selectedClientName() }}</span>
           </div>
         </div>
       }
@@ -157,7 +157,7 @@
           </div>
           <p class="fw-semibold mb-1 text-dark">Sin reporte generado</p>
           <p class="text-muted small mb-0">
-            Presione <strong>Generar PDF</strong> para previsualizar el estado de cuenta.
+            Presione <strong>Generar PDF</strong> para previsualizar el reporte de abonos.
           </p>
         </div>
       }
@@ -165,29 +165,29 @@
   </div>
 </div>
 
-<!-- Modal buscador de contratos -->
-@if (isContractPickerOpen()) {
+<!-- Modal buscador de clientes -->
+@if (isClientPickerOpen()) {
   <div
     class="modal fade show d-block picker-modal"
     tabindex="-1"
     role="dialog"
     aria-modal="true"
-    aria-labelledby="picker-contrato-title"
+    aria-labelledby="picker-cliente-title"
   >
     <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
       <div class="modal-content border-0 shadow rounded-4">
         <div class="modal-header border-bottom-0 pb-2">
           <div>
-            <h5 id="picker-contrato-title" class="modal-title fw-bold">Buscar Contrato</h5>
+            <h5 id="picker-cliente-title" class="modal-title fw-bold">Buscar Cliente</h5>
             <p class="text-muted mb-0 small">
-              Busque por número de guía, nombre, razón social o identificación del cliente.
+              Busque por nombre, razón social o identificación del cliente.
             </p>
           </div>
           <button
             type="button"
             class="btn-close shadow-none"
             aria-label="Cerrar"
-            (click)="cerrarBuscadorContratos()"
+            (click)="cerrarBuscadorClientes()"
           ></button>
         </div>
         <div class="modal-body pt-2">
@@ -198,15 +198,15 @@
             <input
               type="text"
               class="form-control shadow-none"
-              placeholder="Ej: GUIA-1-0051, María, 1105123..."
+              placeholder="Ej: María, 1105123..."
               [ngModel]="searchTerm()"
               (ngModelChange)="onSearchInput($event)"
-              (keyup.enter)="buscarContratos()"
+              (keyup.enter)="buscarClientes()"
             />
             <button
               type="button"
               class="btn btn-primary"
-              (click)="buscarContratos()"
+              (click)="buscarClientes()"
               [disabled]="isSearching()"
             >
               Buscar
@@ -220,7 +220,7 @@
                 role="status"
                 aria-hidden="true"
               ></span>
-              Buscando contratos...
+              Buscando clientes...
             </div>
           } @else if (searchError()) {
             <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0" role="alert">
@@ -234,32 +234,31 @@
               </div>
               <p class="fw-semibold mb-1 text-dark">Sin resultados</p>
               <p class="text-muted small mb-0">
-                No se encontraron contratos para el término buscado.
+                No se encontraron clientes para el término buscado.
               </p>
             </div>
           } @else if (searchResults().length > 0) {
             <ul class="list-group list-group-flush contract-results">
-              @for (contract of searchResults(); track contract.contratoId) {
+              @for (cliente of searchResults(); track cliente.clienteId ?? cliente.id) {
                 <li
                   class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2"
                 >
                   <div class="flex-grow-1">
                     <div class="fw-semibold text-dark">
-                      <i class="bi bi-briefcase me-1 text-primary"></i>
-                      {{ contract.numeroGuia }}
+                      <i class="bi bi-person me-1 text-primary"></i>
+                      {{ formatClientName(cliente) }}
                     </div>
                     <div class="small text-muted">
-                      {{ formatClientName(contract.cliente) }} ·
-                      {{ contract.cliente.identificacion }}
-                      @if (contract.cliente.email) {
-                        · {{ contract.cliente.email }}
+                      {{ cliente.identificacion }}
+                      @if (cliente.email) {
+                        · {{ cliente.email }}
                       }
                     </div>
                   </div>
                   <button
                     type="button"
                     class="btn btn-sm btn-outline-primary text-nowrap"
-                    (click)="seleccionarContrato(contract)"
+                    (click)="seleccionarCliente(cliente)"
                   >
                     <i class="bi bi-check2 me-1"></i>Seleccionar
                   </button>
@@ -292,7 +291,7 @@
         <div class="modal-header border-bottom-0 pb-2">
           <div>
             <h5 id="email-modal-title" class="modal-title fw-bold">
-              Enviar estado de cuenta por email
+              Enviar reporte de abonos por email
             </h5>
             <p class="text-muted mb-0 small">
               El reporte se generará y enviará al destinatario indicado.

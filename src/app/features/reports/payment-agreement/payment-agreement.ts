@@ -2,32 +2,28 @@ import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@a
 import { FormsModule } from '@angular/forms';
 
 import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/pdf-previewer.component';
-import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
-import { IAccountStatementFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
+import { IPaymentAgreementFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
-import { ContractsService } from '../../contracts/service-contracts/services/contracts.service';
-import type { IContract } from '../../contracts/service-contracts/interfaces/icontract.interface';
-
-type DatePreset = 'currentMonth' | 'lastMonth' | 'last3Months' | 'lastYear';
+import { AgreementsService } from '../../contracts/service-agreements/services/agreements.service';
+import type { IAgreementSummary } from '../../contracts/service-agreements/interfaces/iagreement.interface';
 
 @Component({
-  selector: 'app-client-statement',
-  imports: [FormsModule, PdfPreviewerComponent, DatePickerComponent],
-  templateUrl: './client-statement.html',
-  styleUrl: './client-statement.scss',
+  selector: 'app-payment-agreement',
+  imports: [FormsModule, PdfPreviewerComponent],
+  templateUrl: './payment-agreement.html',
+  styleUrl: './payment-agreement.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ClientStatementComponent {
+export class PaymentAgreementComponent {
   private readonly reportsService = inject(ReportsService);
-  private readonly contractsService = inject(ContractsService);
+  private readonly agreementsService = inject(AgreementsService);
   private readonly toast = inject(ToastService);
 
-  // Filtros del estado de cuenta
-  readonly contratoId = signal('');
-  readonly selectedContractNumber = signal('');
-  readonly fechaDesde = signal('');
-  readonly fechaHasta = signal('');
+  // Filtro del convenio de pago
+  readonly convenioId = signal('');
+  readonly selectedAgreementLabel = signal('');
+  readonly selectedAgreementName = signal('');
 
   // Resultados
   readonly pdfBlob = signal<Blob | null>(null);
@@ -38,23 +34,17 @@ export class ClientStatementComponent {
   readonly subject = signal('');
   readonly isSendingEmail = signal(false);
 
-  // Buscador de contratos
+  // Buscador de convenios
   readonly searchTerm = signal('');
-  readonly searchResults = signal<IContract[]>([]);
+  readonly searchResults = signal<IAgreementSummary[]>([]);
   readonly isSearching = signal(false);
   readonly searchError = signal('');
   readonly searchPerformed = signal(false);
-  readonly selectedContractName = signal('');
-  readonly isContractPickerOpen = signal(false);
+  readonly isAgreementPickerOpen = signal(false);
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Modales
   readonly isEmailModalOpen = signal(false);
-
-  // Validación cruzada de fechas: desde no puede ser mayor que hasta
-  readonly rangoFechaInvalido = computed(
-    () => !!this.fechaDesde() && !!this.fechaHasta() && this.fechaDesde() > this.fechaHasta(),
-  );
 
   // Email de destino inválido (vacío o con formato incorrecto)
   readonly esEmailInvalido = computed(() => {
@@ -62,79 +52,36 @@ export class ClientStatementComponent {
     return email === '' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   });
 
-  private buildFilters(): IAccountStatementFilters | null {
-    const contrato = this.contratoId().trim();
-    if (!contrato) {
+  private buildFilters(): IPaymentAgreementFilters | null {
+    const convenio = this.convenioId().trim();
+    if (!convenio) {
       return null;
     }
-
-    const filters: IAccountStatementFilters = { contratoId: contrato };
-    const desde = this.fechaDesde();
-    const hasta = this.fechaHasta();
-
-    if (desde) filters.fechaDesde = desde;
-    if (hasta) filters.fechaHasta = hasta;
-    return filters;
+    return { convenioId: convenio };
   }
 
-  // ---------- Presets rápidos de rango de fechas ----------
-
-  aplicarPreset(preset: DatePreset): void {
-    const hoy = new Date();
-    const desde = new Date(hoy);
-    const hasta = new Date(hoy);
-
-    switch (preset) {
-      case 'currentMonth':
-        // Primer día del mes actual hasta hoy
-        desde.setDate(1);
-        break;
-      case 'lastMonth':
-        // Todo el mes anterior
-        desde.setMonth(desde.getMonth() - 1, 1);
-        hasta.setDate(0);
-        break;
-      case 'last3Months':
-        desde.setMonth(desde.getMonth() - 3);
-        break;
-      case 'lastYear':
-        desde.setFullYear(desde.getFullYear() - 1);
-        break;
-    }
-
-    this.fechaDesde.set(this.toIsoDate(desde));
-    this.fechaHasta.set(this.toIsoDate(hasta));
-  }
-
-  private toIsoDate(date: Date): string {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  }
-
-  // ---------- Buscador de contratos ----------
+  // ---------- Buscador de convenios ----------
 
   onSearchInput(value: string): void {
     this.searchTerm.set(value);
     if (this.searchTimer) {
       clearTimeout(this.searchTimer);
     }
-    this.searchTimer = setTimeout(() => this.buscarContratos(), 400);
+    this.searchTimer = setTimeout(() => this.buscarConvenios(), 400);
   }
 
-  abrirBuscadorContratos(): void {
-    this.isContractPickerOpen.set(true);
+  abrirBuscadorConvenios(): void {
+    this.isAgreementPickerOpen.set(true);
     if (!this.searchPerformed()) {
-      this.buscarContratos();
+      this.buscarConvenios();
     }
   }
 
-  cerrarBuscadorContratos(): void {
-    this.isContractPickerOpen.set(false);
+  cerrarBuscadorConvenios(): void {
+    this.isAgreementPickerOpen.set(false);
   }
 
-  buscarContratos(): void {
+  buscarConvenios(): void {
     if (this.searchTimer) {
       clearTimeout(this.searchTimer);
       this.searchTimer = null;
@@ -150,7 +97,7 @@ export class ClientStatementComponent {
 
     this.isSearching.set(true);
     this.searchError.set('');
-    this.contractsService.getContracts({ search: term, page: 1, limit: 50 }).subscribe({
+    this.agreementsService.getAgreements({ search: term, page: 1, limit: 50 }).subscribe({
       next: (res) => {
         this.searchResults.set(res.data);
         this.searchPerformed.set(true);
@@ -159,25 +106,49 @@ export class ClientStatementComponent {
       error: (err) => {
         this.searchResults.set([]);
         this.searchPerformed.set(true);
-        this.searchError.set(this.getErrorMessage(err, 'No se pudieron buscar los contratos'));
+        this.searchError.set(this.getErrorMessage(err, 'No se pudieron buscar los convenios'));
         this.isSearching.set(false);
       },
     });
   }
 
-  seleccionarContrato(contrato: IContract): void {
-    this.contratoId.set(String(contrato.contratoId));
-    this.selectedContractNumber.set(contrato.numeroGuia);
-    this.selectedContractName.set(this.formatClientName(contrato.cliente));
-    this.destinatario.set(contrato.cliente.email?.trim() ?? '');
-    this.isContractPickerOpen.set(false);
+  seleccionarConvenio(agreement: IAgreementSummary): void {
+    this.convenioId.set(String(agreement.convenioId));
+    this.selectedAgreementLabel.set(
+      `Convenio #${agreement.convenioId} · ${agreement.numeroGuia ?? ''}`.trim(),
+    );
+    this.selectedAgreementName.set(agreement.clienteNombre ?? '');
+    this.destinatario.set(agreement.clienteEmail?.trim() ?? '');
+    this.isAgreementPickerOpen.set(false);
   }
 
-  formatClientName(cliente: IContract['cliente']): string {
-    if (cliente.razonSocial) {
-      return cliente.razonSocial;
+  formatAgreementEstado(estado: IAgreementSummary['estado']): string {
+    const codigo = typeof estado === 'string' ? estado : (estado?.codigo ?? '');
+    switch (codigo) {
+      case 'ACTIVO':
+        return 'Activo';
+      case 'PENDIENTE_ABONO':
+        return 'Pendiente de abono';
+      case 'PREPARADO':
+        return 'Preparado';
+      case 'ANULADO':
+        return 'Anulado';
+      case 'PAGADO':
+        return 'Pagado';
+      default:
+        return codigo;
     }
-    return `${cliente.nombres} ${cliente.apellidos}`.trim();
+  }
+
+  formatMoney(value: number): string {
+    const num = Number(value);
+    if (value === null || value === undefined || Number.isNaN(num)) {
+      return '$0.00';
+    }
+    return `$${num.toLocaleString('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   }
 
   // ---------- Envío por email (modal) ----------
@@ -196,12 +167,12 @@ export class ClientStatementComponent {
   generarPdf(): void {
     const filters = this.buildFilters();
     if (!filters) {
-      this.toast.error('Seleccione un contrato para generar el reporte', 'Error');
+      this.toast.error('Seleccione un convenio para generar el reporte', 'Error');
       return;
     }
 
     this.isLoadingPdf.set(true);
-    this.reportsService.getAccountStatementPdf(filters).subscribe({
+    this.reportsService.getPaymentAgreementPdf(filters).subscribe({
       next: (blob) => {
         this.pdfBlob.set(blob);
         this.isLoadingPdf.set(false);
@@ -218,20 +189,20 @@ export class ClientStatementComponent {
   }
 
   enviarEmail(): void {
-    const contrato = this.contratoId().trim();
-    if (!contrato) {
-      this.toast.error('Seleccione un contrato para enviar el reporte', 'Error');
+    const convenio = this.convenioId().trim();
+    if (!convenio) {
+      this.toast.error('Seleccione un convenio para enviar el reporte', 'Error');
       return;
     }
 
     const body: ISendReportEmailBody = {
-      contratoId: contrato,
+      convenioId: convenio,
       destinatario: this.destinatario().trim() || undefined,
       subject: this.subject().trim() || undefined,
     };
 
     this.isSendingEmail.set(true);
-    this.reportsService.sendAccountStatementEmail(body).subscribe({
+    this.reportsService.sendPaymentAgreementEmail(body).subscribe({
       next: () => {
         this.isSendingEmail.set(false);
         this.isEmailModalOpen.set(false);
@@ -250,16 +221,14 @@ export class ClientStatementComponent {
   }
 
   limpiar(): void {
-    this.contratoId.set('');
-    this.selectedContractNumber.set('');
-    this.fechaDesde.set('');
-    this.fechaHasta.set('');
+    this.convenioId.set('');
+    this.selectedAgreementLabel.set('');
+    this.selectedAgreementName.set('');
     this.pdfBlob.set(null);
     this.searchTerm.set('');
     this.searchResults.set([]);
     this.searchError.set('');
     this.searchPerformed.set(false);
-    this.selectedContractName.set('');
     this.destinatario.set('');
     this.subject.set('');
   }

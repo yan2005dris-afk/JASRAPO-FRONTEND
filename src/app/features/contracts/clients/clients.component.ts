@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { ClientsService } from './services/clients.service';
@@ -41,6 +42,7 @@ export class ClientsComponent implements OnInit {
   private readonly clientsService = inject(ClientsService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
+  private readonly router = inject(Router);
 
   // Modo selección: cuando es true, la pantalla se usa como selector dentro de otro formulario
   // (oculta crear/editar/eliminar y permite elegir un cliente con doble clic).
@@ -222,6 +224,29 @@ export class ClientsComponent implements OnInit {
     this.currentPage = 1;
     this.hasFetched = true;
     this.fetchClientsComponent();
+  }
+
+  /** Navega al reporte Listado de Clientes con el rango del año actual y el estado seleccionado. */
+  exportarPdf(): void {
+    const hoy = new Date();
+    const primerDiaAnio = new Date(hoy.getFullYear(), 0, 1);
+
+    const params: Record<string, string> = {
+      fechaDesde: this.toIsoDate(primerDiaAnio),
+      fechaHasta: this.toIsoDate(hoy),
+    };
+
+    if (this.estadoBusqueda === 'activos') params['activo'] = 'true';
+    if (this.estadoBusqueda === 'inactivos') params['activo'] = 'false';
+
+    this.router.navigate(['/app/reportes/listado-clientes'], { queryParams: params });
+  }
+
+  private toIsoDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 
   abrirModal(): void {
