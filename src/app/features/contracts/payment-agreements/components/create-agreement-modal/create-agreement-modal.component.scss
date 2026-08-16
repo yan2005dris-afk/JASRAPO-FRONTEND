@@ -19,6 +19,23 @@
   font-size: 1.25rem;
 }
 
-.tabular-nums {
-  font-variant-numeric: tabular-nums;
+.create-modal-body {
+  min-height: 210px;
+  max-height: 75vh;
+  overflow-y: auto;
+}
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1060;
+  max-height: 160px;
+  overflow-y: auto;
+  border-color: #e2e8f0;
+}
+
+.extra-small {
+  font-size: 0.78rem;
 }

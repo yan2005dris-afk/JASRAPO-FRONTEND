@@ -15,9 +15,11 @@ import {
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { CreateAgreementModalComponent } from './components/create-agreement-modal/create-agreement-modal.component';
 import { AgreementDetailModalComponent } from './components/agreement-detail-modal/agreement-detail-modal.component';
+import type { IContract } from '../service-contracts/interfaces/icontract.interface';
 
 @Component({
   selector: 'app-payment-agreements',
@@ -28,6 +30,7 @@ import { AgreementDetailModalComponent } from './components/agreement-detail-mod
     StatusBadgeComponent,
     EmptyStateComponent,
     PaginationComponent,
+    ContractPickerComponent,
     CreateAgreementModalComponent,
     AgreementDetailModalComponent,
   ],
@@ -55,8 +58,12 @@ export class PaymentAgreementsComponent implements OnInit {
   pageSize = 10;
 
   // Filters
-  filterSearch = '';
   filterContratoId = '';
+
+  // Contract picker
+  isContractPickerOpen = false;
+  selectedContractNumber = '';
+  selectedContractName = '';
 
   // Modals
   isCreateModalOpen = false;
@@ -75,9 +82,6 @@ export class PaymentAgreementsComponent implements OnInit {
       limit: this.pageSize,
     };
 
-    if (this.filterSearch.trim()) {
-      params.search = this.filterSearch.trim();
-    }
     if (this.filterContratoId.trim()) {
       params.contratoId = this.filterContratoId.trim();
     }
@@ -101,10 +105,33 @@ export class PaymentAgreementsComponent implements OnInit {
   }
 
   limpiarFiltros(): void {
-    this.filterSearch = '';
     this.filterContratoId = '';
+    this.selectedContractNumber = '';
+    this.selectedContractName = '';
     this.currentPage = 1;
     this.loadAgreements();
+  }
+
+  // ---------- Buscador de contratos ----------
+
+  abrirBuscadorContratos(): void {
+    this.isContractPickerOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  onContractSelected(contract: IContract): void {
+    this.filterContratoId = String(contract.contratoId);
+    this.selectedContractNumber = contract.numeroGuia;
+    this.selectedContractName = ContractPickerComponent.formatClientName(contract.cliente);
+    this.isContractPickerOpen = false;
+    this.currentPage = 1;
+    this.loadAgreements();
+    this.cdr.markForCheck();
+  }
+
+  onContractPickerClosed(): void {
+    this.isContractPickerOpen = false;
+    this.cdr.markForCheck();
   }
 
   onPageChange(page: number): void {

@@ -22,9 +22,9 @@
       </div>
 
       <!-- Body -->
-      <div class="modal-body p-4 bg-white" style="max-height: 75vh; overflow-y: auto">
-        <!-- 1. Buscador de Deuda por Contrato -->
-        <div class="mb-3">
+      <div class="modal-body p-4 bg-white create-modal-body">
+        <!-- 1. Buscador de Contrato (Inline Autocomplete) -->
+        <div class="mb-3 position-relative">
           <label for="inputContratoIdConvenio" class="form-label fw-semibold text-dark small mb-1">
             Contrato de Servicio <span class="text-danger">*</span>
           </label>
@@ -36,25 +36,69 @@
               id="inputContratoIdConvenio"
               type="text"
               class="form-control shadow-none"
-              placeholder="Ingresá el ID o número de contrato (ej. 1)..."
-              [(ngModel)]="contratoIdInput"
-              (keyup.enter)="searchDebt()"
-              [disabled]="isLoading"
+              placeholder="Buscar por guía, cliente o CI..."
+              [value]="contractSearchQuery"
+              [disabled]="isLoading || isSearchingDebt"
+              (input)="onContractSearchInput($any($event.target).value)"
+              (focus)="contractSearchResults.length > 0 ? isAutocompleteOpen = true : null"
+              autocomplete="off"
             />
-            <button
-              type="button"
-              class="btn btn-outline-primary fw-medium px-3"
-              (click)="searchDebt()"
-              [disabled]="!contratoIdInput.trim() || isSearchingDebt || isLoading"
-            >
-              @if (isSearchingDebt) {
-                <span class="spinner-border spinner-border-sm" role="status"></span>
-              } @else {
-                <i class="bi bi-search"></i>
-              }
-              Consultar Deuda
-            </button>
+            @if (selectedContract || contractSearchQuery) {
+              <button
+                type="button"
+                class="btn btn-outline-secondary"
+                (click)="clearSelectedContract()"
+                [disabled]="isLoading || isSearchingDebt"
+                title="Limpiar selección"
+              >
+                <i class="bi bi-x-lg"></i>
+              </button>
+            }
           </div>
+
+          <!-- Spinner o Dropdown Autocomplete -->
+          @if (isAutocompleteOpen) {
+            <div class="autocomplete-dropdown shadow-lg rounded-3 border bg-white mt-1 py-1">
+              @if (isSearchingContracts) {
+                <div class="px-3 py-2 text-muted small d-flex align-items-center gap-2">
+                  <span class="spinner-border spinner-border-sm" role="status"></span>
+                  <span>Buscando contratos...</span>
+                </div>
+              } @else if (contractSearchResults.length === 0) {
+                <div class="px-3 py-2 text-muted small">
+                  No se encontraron contratos para "{{ contractSearchQuery }}".
+                </div>
+              } @else {
+                @for (contract of contractSearchResults; track contract.contratoId) {
+                  <button
+                    type="button"
+                    class="dropdown-item px-3 py-2 text-start d-flex justify-content-between align-items-center"
+                    (click)="selectContract(contract)"
+                  >
+                    <div>
+                      <div class="fw-semibold text-dark small">{{ contract.numeroGuia }}</div>
+                      <div class="text-muted extra-small">
+                        {{ formatClientName(contract.cliente) }}
+                        @if (contract.cliente.identificacion) {
+                          · CI: {{ contract.cliente.identificacion }}
+                        }
+                      </div>
+                    </div>
+                    <span class="badge bg-light text-secondary border extra-small">
+                      ID #{{ contract.contratoId }}
+                    </span>
+                  </button>
+                }
+              }
+            </div>
+          }
+
+          @if (selectedContract) {
+            <span class="badge badge-soft-primary d-flex align-items-center gap-1 mt-2">
+              <i class="bi bi-person-check-fill"></i>
+              {{ formatClientName(selectedContract.cliente) }} · {{ selectedContract.numeroGuia }}
+            </span>
+          }
 
           @if (searchError) {
             <div class="text-danger small mt-1" style="font-size: 0.78rem">
@@ -135,12 +179,11 @@
               <label for="inputFechaPrimerPago" class="form-label fw-semibold text-dark small mb-1">
                 Fecha Primer Vencimiento <span class="text-danger">*</span>
               </label>
-              <input
-                id="inputFechaPrimerPago"
-                type="date"
-                class="form-control shadow-none"
-                [(ngModel)]="fechaPrimerPago"
+              <app-date-picker
+                [inputId]="'inputFechaPrimerPago'"
+                [value]="fechaPrimerPago"
                 [disabled]="isLoading"
+                (valueChange)="fechaPrimerPago = $event"
               />
             </div>
 

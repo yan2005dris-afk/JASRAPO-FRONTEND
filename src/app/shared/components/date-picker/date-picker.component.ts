@@ -38,6 +38,7 @@ export class DatePickerComponent {
   readonly value = input<string>('');
   readonly placeholder = input('Seleccione una fecha');
   readonly inputId = input<string>('');
+  readonly disabled = input(false);
 
   readonly valueChange = output<string>();
 

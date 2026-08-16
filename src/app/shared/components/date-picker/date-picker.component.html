@@ -6,6 +6,7 @@
       class="form-control shadow-none date-picker-input"
       [placeholder]="placeholder()"
       [value]="value()"
+      [disabled]="disabled()"
       readonly
       (click)="toggle()"
       (keydown.enter)="toggle()"

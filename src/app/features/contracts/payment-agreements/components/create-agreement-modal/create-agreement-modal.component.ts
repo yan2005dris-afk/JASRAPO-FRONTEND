@@ -15,17 +15,25 @@ import {
   ISimulatedInstallment,
 } from '../../interfaces/ipayment-agreement.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
+import { ContractsService } from '../../../service-contracts/services/contracts.service';
+import type { IContract } from '../../../service-contracts/interfaces/icontract.interface';
 
 @Component({
   selector: 'app-create-agreement-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DatePickerComponent,
+  ],
   templateUrl: './create-agreement-modal.component.html',
   styleUrl: './create-agreement-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateAgreementModalComponent implements OnInit {
   private readonly agreementsService = inject(PaymentAgreementsService);
+  private readonly contractsService = inject(ContractsService);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -36,6 +44,14 @@ export class CreateAgreementModalComponent implements OnInit {
   debtSummary: IDebtSummary | null = null;
   isSearchingDebt = false;
   searchError = '';
+
+  // Contract inline autocomplete
+  contractSearchQuery = '';
+  contractSearchResults: IContract[] = [];
+  isSearchingContracts = false;
+  isAutocompleteOpen = false;
+  selectedContract: IContract | null = null;
+  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   numeroCuotas = 6;
   abonoInicial = 0;
@@ -48,6 +64,72 @@ export class CreateAgreementModalComponent implements OnInit {
     nextMonth.setMonth(nextMonth.getMonth() + 1);
     nextMonth.setDate(1);
     this.fechaPrimerPago = nextMonth.toISOString().split('T')[0];
+  }
+
+  formatClientName(cliente: IContract['cliente']): string {
+    if (cliente.razonSocial) {
+      return cliente.razonSocial;
+    }
+    return `${cliente.nombres} ${cliente.apellidos}`.trim();
+  }
+
+  onContractSearchInput(query: string): void {
+    this.contractSearchQuery = query;
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+
+    const trimmed = query.trim();
+    if (!trimmed) {
+      this.contractSearchResults = [];
+      this.isAutocompleteOpen = false;
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.searchDebounceTimer = setTimeout(() => {
+      this.executeContractSearch(trimmed);
+    }, 350);
+  }
+
+  private executeContractSearch(term: string): void {
+    this.isSearchingContracts = true;
+    this.isAutocompleteOpen = true;
+    this.cdr.markForCheck();
+
+    this.contractsService.getContracts({ search: term, limit: 8 }).subscribe({
+      next: (res) => {
+        this.contractSearchResults = res.data;
+        this.isSearchingContracts = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.contractSearchResults = [];
+        this.isSearchingContracts = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  selectContract(contract: IContract): void {
+    this.selectedContract = contract;
+    this.contratoIdInput = String(contract.contratoId);
+    this.contractSearchQuery = `${contract.numeroGuia} - ${this.formatClientName(contract.cliente)}`;
+    this.isAutocompleteOpen = false;
+    this.contractSearchResults = [];
+    this.cdr.markForCheck();
+    this.searchDebt();
+  }
+
+  clearSelectedContract(): void {
+    this.selectedContract = null;
+    this.contratoIdInput = '';
+    this.contractSearchQuery = '';
+    this.contractSearchResults = [];
+    this.isAutocompleteOpen = false;
+    this.debtSummary = null;
+    this.searchError = '';
+    this.cdr.markForCheck();
   }
 
   searchDebt(): void {
