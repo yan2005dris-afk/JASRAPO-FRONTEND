@@ -4,18 +4,47 @@ import { Injectable, signal, TemplateRef } from '@angular/core';
   providedIn: 'root',
 })
 export class SpinnerService {
-  private customLoading = signal<TemplateRef<any> | null>(null);
-  private loading = signal(false);
-  customSpinner = this.customLoading.asReadonly();
-  spinner = this.loading.asReadonly();
+  // Cambiamos 'any' por 'unknown' para que el linter esté feliz y el código sea más seguro
+  private readonly customLoading = signal<TemplateRef<unknown> | null>(null);
+  private readonly loading = signal(false);
+  private readonly activeRequests = signal(0);
 
-  loadingOn(customLoader?: TemplateRef<any>) {
-    this.customLoading.set(customLoader ?? null);
-    this.loading.set(true);
+  // Exponemos como Readonly para seguir las buenas prácticas de Signals
+  readonly customSpinner = this.customLoading.asReadonly();
+  readonly spinner = this.loading.asReadonly();
+
+  private showTimeoutId: ReturnType<typeof setTimeout> | null = null;
+  private readonly showDelayMs = 300;
+
+  loadingOn(customLoader?: TemplateRef<unknown>): void {
+    if (customLoader) {
+      this.customLoading.set(customLoader);
+    }
+
+    const current = this.activeRequests();
+    this.activeRequests.set(current + 1);
+
+    if (current === 0 && !this.showTimeoutId) {
+      this.showTimeoutId = setTimeout(() => {
+        this.showTimeoutId = null;
+        if (this.activeRequests() > 0) {
+          this.loading.set(true);
+        }
+      }, this.showDelayMs);
+    }
   }
 
-  loadingOff() {
-    this.customLoading.set(null);
-    this.loading.set(false);
+  loadingOff(): void {
+    const newCount = Math.max(0, this.activeRequests() - 1);
+    this.activeRequests.set(newCount);
+
+    if (newCount === 0) {
+      if (this.showTimeoutId) {
+        clearTimeout(this.showTimeoutId);
+        this.showTimeoutId = null;
+      }
+      this.loading.set(false);
+      this.customLoading.set(null);
+    }
   }
 }

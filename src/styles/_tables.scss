@@ -1,0 +1,107 @@
+/* =====================
+   Global Table Styles
+   ===================== */
+
+.custom-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.custom-table th {
+  background-color: var(--light-bg) !important;
+  color: var(--dark-text) !important;
+  border-bottom: 2px solid var(--border-color) !important;
+  padding: 0.875rem 1.25rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  vertical-align: middle;
+}
+
+.custom-table td {
+  padding: 0.875rem 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+  color: var(--dark-text);
+  font-size: 0.9rem;
+  background-color: var(--white);
+}
+
+.custom-table tbody tr {
+  transition: background-color 0.15s ease-in-out;
+}
+
+.custom-table.table-hover tbody tr:hover td {
+  background-color: rgba(12, 158, 161, 0.04) !important;
+}
+
+.custom-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Checkboxes */
+.table-checkbox {
+  width: 1.1em;
+  height: 1.1em;
+  border-radius: 4px;
+  border-color: #cbd5e1;
+  cursor: pointer;
+}
+
+.table-checkbox:checked {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+/* Filter pills */
+.btn-filter {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--muted-text);
+  background-color: transparent;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+}
+
+.btn-filter:hover {
+  background-color: var(--light-bg);
+  color: var(--dark-text);
+}
+
+.btn-filter.active {
+  background-color: var(--light-bg);
+  border-color: #e2e8f0;
+  color: var(--dark-text);
+}
+
+/* Search */
+.search-group {
+  width: 250px;
+}
+
+.search-group .form-control {
+  font-size: 0.9rem;
+}
+
+.search-group .form-control:focus {
+  box-shadow: none;
+  border-color: var(--border-color);
+}
+
+/* Page size selector */
+.page-size-select {
+  width: 70px;
+  font-size: 0.85rem;
+  border-color: #e2e8f0;
+  border-radius: 8px;
+  padding: 0.2rem 0.5rem;
+}
+
+/* Evitar que el dropdown de acciones se corte en las tablas con pocos registros en tabletas y desktops */
+@media (min-width: 768px) {
+  .table-responsive {
+    overflow: visible !important;
+  }
+}

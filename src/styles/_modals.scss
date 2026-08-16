@@ -1,0 +1,104 @@
+/* ===================== 
+   Modal Styles 
+   ===================== */
+
+.modal-backdrop-custom {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(15, 23, 42, 0.45);
+  z-index: 1040;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-custom {
+  position: fixed;
+  inset: 0;
+  z-index: 1050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  pointer-events: none;
+}
+
+.modal-card {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+  width: 100%;
+  max-width: 520px;
+  pointer-events: all;
+  animation: slideUp 0.25s ease;
+}
+
+.modal-card-sm {
+  max-width: 420px;
+}
+
+.modal-card-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modal-card-body {
+  padding: 1.5rem;
+}
+
+.modal-card-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #f1f5f9;
+  background-color: #f8fafc;
+  border-radius: 0 0 16px 16px;
+}
+
+.btn-close-modal {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0.25rem;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.btn-close-modal:hover {
+  color: #334155;
+}
+
+/* Form controls inside modal */
+.modal-card-body .form-control,
+.modal-card-body .form-select {
+  border-color: #e2e8f0;
+  border-radius: 10px;
+  font-size: 0.9rem;
+}
+
+.modal-card-body .form-control:focus,
+.modal-card-body .form-select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

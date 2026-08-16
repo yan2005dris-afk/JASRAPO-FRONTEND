@@ -1,0 +1,343 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+
+import { ContractsService } from '../../services/contracts.service';
+import {
+  IContract,
+  IContractState,
+  ICreateContractRequest,
+  IUpdateContractRequest,
+} from '../../interfaces/icontract.interface';
+import { ClientsComponent } from '../../../clients/clients.component';
+import { TariffsComponent } from '../../../tariffs/tariffs.component';
+import { MetersIndexComponent } from '../../../meters/components/meters-index/meters-index.component';
+import { ComunidadesComponent } from '../../../../admin/comunidades/comunidades.component';
+import { IClient } from '../../../clients/interfaces/iclients.interface';
+import { IMeter } from '../../../meters/interfaces/imeter.interface';
+import { ITariffCategory } from '../../../tariffs/interfaces/itariff.interface';
+import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
+import { ToastService } from '../../../../../shared/components/toast/toast.service';
+
+/**
+ * Formulario de contrato cliente–medidor. Sirve para CREAR y para EDITAR:
+ * si se recibe `contractToEdit`, entra en modo edición (precarga los datos del contrato
+ * y guarda con PATCH). Si no, está en modo creación (guarda con POST).
+ */
+@Component({
+  selector: 'app-service-contract-form',
+  imports: [
+    ReactiveFormsModule,
+    ClientsComponent,
+    TariffsComponent,
+    MetersIndexComponent,
+    ComunidadesComponent,
+  ],
+  templateUrl: './service-contract-form.component.html',
+  styleUrl: './service-contract-form.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ServiceContractFormComponent implements OnInit {
+  private readonly fb = inject(FormBuilder);
+  private readonly contractsService = inject(ContractsService);
+  private readonly toast = inject(ToastService);
+
+  // Si viene un contrato, el formulario está en modo edición. Catálogo de estados (para editar).
+  readonly contractToEdit = input<IContract | null>(null);
+  readonly states = input<IContractState[]>([]);
+
+  readonly saved = output<void>();
+  readonly cancelled = output<void>();
+
+  readonly isEditing = computed(() => !!this.contractToEdit());
+
+  // Selecciones provenientes de los modales
+  readonly selectedClient = signal<IClient | null>(null);
+  readonly selectedMeter = signal<IMeter | null>(null);
+  readonly selectedTariff = signal<ITariffCategory | null>(null);
+  readonly selectedComunidad = signal<Comunidad | null>(null);
+
+  // Estado de los modales hijos
+  readonly isClientPickerOpen = signal(false);
+  readonly isMeterPickerOpen = signal(false);
+  readonly isTariffPickerOpen = signal(false);
+  readonly isComunidadPickerOpen = signal(false);
+
+  // Estado de envío
+  readonly isSaving = signal(false);
+  readonly submitted = signal(false);
+
+  // Medidor original (para detectar si se reemplazó al editar)
+  private originalMeterId: string | null = null;
+
+  readonly form: FormGroup = this.fb.group({
+    numeroGuia: ['', [Validators.required, Validators.maxLength(15)]],
+    direccionSuministro: ['', [Validators.required, Validators.maxLength(200)]],
+    lecturaInicial: ['0', [Validators.required, Validators.pattern(/^\d{1,10}$/)]],
+    estado: [''],
+  });
+
+  ngOnInit(): void {
+    const contract = this.contractToEdit();
+    if (contract) {
+      this.preloadContract(contract);
+    }
+  }
+
+  /** Precarga en el formulario los datos del contrato a editar. */
+  private preloadContract(contract: IContract): void {
+    this.form.patchValue({
+      numeroGuia: contract.numeroGuia,
+      direccionSuministro: contract.direccionSuministro,
+      estado: contract.estado,
+    });
+
+    // Cliente, tarifa y comunidad (vienen anidados en el contrato)
+    this.selectedClient.set(contract.cliente as unknown as IClient);
+    this.selectedTariff.set(contract.categoriaTarifa as ITariffCategory);
+    this.selectedComunidad.set({
+      id: contract.comunidad.comunidadId,
+      nombre: contract.comunidad.nombre,
+      codigo: contract.comunidad.codigo,
+      porcentajeTasaSeguridad: 0,
+    });
+
+    // Medidor vigente (el del historial sin fecha de fin)
+    const historial = contract.historialMedidores?.find((h) => h.fechaHasta === null);
+    if (historial) {
+      this.selectedMeter.set(historial.medidor as unknown as IMeter);
+      this.originalMeterId = String(historial.medidorId);
+    }
+  }
+
+  // ---------- Selector de cliente ----------
+  openClientPicker(): void {
+    this.isClientPickerOpen.set(true);
+  }
+
+  closeClientPicker(): void {
+    this.isClientPickerOpen.set(false);
+  }
+
+  onClientSelected(client: IClient): void {
+    this.selectedClient.set(client);
+    this.closeClientPicker();
+  }
+
+  // ---------- Selector de medidor ----------
+  openMeterPicker(): void {
+    this.isMeterPickerOpen.set(true);
+  }
+
+  closeMeterPicker(): void {
+    this.isMeterPickerOpen.set(false);
+  }
+
+  onMeterSelected(meter: IMeter): void {
+    this.selectedMeter.set(meter);
+    this.closeMeterPicker();
+  }
+
+  // ---------- Selector de tarifa ----------
+  openTariffPicker(): void {
+    this.isTariffPickerOpen.set(true);
+  }
+
+  closeTariffPicker(): void {
+    this.isTariffPickerOpen.set(false);
+  }
+
+  onTariffSelected(tariff: ITariffCategory): void {
+    this.selectedTariff.set(tariff);
+    this.closeTariffPicker();
+  }
+
+  // ---------- Selector de comunidad ----------
+  openComunidadPicker(): void {
+    this.isComunidadPickerOpen.set(true);
+  }
+
+  closeComunidadPicker(): void {
+    this.isComunidadPickerOpen.set(false);
+  }
+
+  onComunidadSelected(comunidad: Comunidad): void {
+    this.selectedComunidad.set(comunidad);
+    this.closeComunidadPicker();
+  }
+
+  /** Acciones aún no definidas con el backend (registrar nuevo cliente/medidor, documentos). */
+  comingSoon(): void {
+    this.toast.info('Esta funcionalidad estará disponible próximamente.', 'En construcción');
+  }
+
+  // ---------- Estado derivado para presentación (computed) ----------
+  readonly clientName = computed(() => {
+    const client = this.selectedClient();
+    if (!client) {
+      return '';
+    }
+    if (client.razonSocial) {
+      return client.razonSocial;
+    }
+    return `${client.nombres ?? ''} ${client.apellidos ?? ''}`.trim();
+  });
+
+  readonly meterStatusLabel = computed(() => this.selectedMeter()?.estado?.nombre ?? '');
+
+  private getClientId(client: IClient): string | number | undefined {
+    return client.clienteId ?? client.id ?? client.clientId ?? client._id;
+  }
+
+  isFieldInvalid(field: string): boolean {
+    const control = this.form.get(field);
+    return !!control && control.invalid && (control.dirty || control.touched || this.submitted());
+  }
+
+  /** Permite solo dígitos en la lectura inicial (al escribir o pegar). */
+  onLecturaInicialInput(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const digits = input.value.replace(/\D/g, '');
+    if (input.value !== digits) {
+      input.value = digits;
+      this.form.get('lecturaInicial')?.setValue(digits);
+    }
+  }
+
+  // ---------- Envío ----------
+  save(): void {
+    if (this.isEditing()) {
+      this.updateContract();
+    } else {
+      this.createContract();
+    }
+  }
+
+  /** Crea un nuevo contrato (POST). */
+  private createContract(): void {
+    this.submitted.set(true);
+
+    const client = this.selectedClient();
+    const meter = this.selectedMeter();
+    const tariff = this.selectedTariff();
+    const comunidad = this.selectedComunidad();
+
+    if (this.form.invalid || !client || !meter || !tariff || !comunidad) {
+      this.form.markAllAsTouched();
+      this.toast.warning(
+        'Complete los datos y seleccione cliente, comunidad, medidor y tarifa.',
+        'Datos incompletos',
+      );
+      return;
+    }
+
+    // Valida que el cliente tenga un id real antes de armar el payload
+    // (evita enviar el texto "undefined" al backend).
+    const clientId = this.getClientId(client);
+    if (clientId == null) {
+      this.toast.warning(
+        'El cliente seleccionado no tiene un identificador válido.',
+        'Datos incompletos',
+      );
+      return;
+    }
+
+    const value = this.form.value;
+    const payload: ICreateContractRequest = {
+      clienteId: String(clientId),
+      categoriaTarifaId: String(tariff.categoriaTarifaId),
+      medidorId: String(meter.medidorId),
+      numeroGuia: value.numeroGuia,
+      direccionSuministro: value.direccionSuministro,
+      comunidadId: String(comunidad.id),
+      lecturaInicial: Number(value.lecturaInicial),
+    };
+
+    this.isSaving.set(true);
+    this.contractsService.createContract(payload).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.toast.success('Contrato registrado correctamente', 'Éxito');
+        this.saved.emit();
+      },
+      error: (err) => {
+        this.isSaving.set(false);
+        const msg = err.error?.message ?? 'No se pudo registrar el contrato.';
+        this.toast.error(msg, 'Error');
+      },
+    });
+  }
+
+  /** Actualiza un contrato existente (PATCH). Permite editar todos los campos. */
+  private updateContract(): void {
+    this.submitted.set(true);
+
+    const contract = this.contractToEdit();
+    const client = this.selectedClient();
+    const meter = this.selectedMeter();
+    const tariff = this.selectedTariff();
+    const comunidad = this.selectedComunidad();
+
+    if (!contract || this.form.invalid || !client || !meter || !tariff || !comunidad) {
+      this.form.markAllAsTouched();
+      this.toast.warning(
+        'Complete los datos y seleccione cliente, comunidad, medidor y tarifa.',
+        'Datos incompletos',
+      );
+      return;
+    }
+
+    // Valida que el cliente tenga un id real antes de armar el payload
+    // (evita enviar el texto "undefined" al backend).
+    const clientId = this.getClientId(client);
+    if (clientId == null) {
+      this.toast.warning(
+        'El cliente seleccionado no tiene un identificador válido.',
+        'Datos incompletos',
+      );
+      return;
+    }
+
+    const value = this.form.value;
+    // Edición completa: se envían todos los campos editables (incluido el cliente).
+    const payload: IUpdateContractRequest = {
+      estado: value.estado,
+      direccionSuministro: value.direccionSuministro,
+      lecturaInicial: Number(value.lecturaInicial),
+      clienteId: String(clientId),
+      comunidadId: String(comunidad.id),
+      categoriaTarifaId: String(tariff.categoriaTarifaId),
+    };
+
+    // Si se reemplazó el medidor, se incluye el nuevo id para que el backend lo cambie.
+    if (String(meter.medidorId) !== this.originalMeterId) {
+      payload.medidorId = String(meter.medidorId);
+    }
+
+    this.isSaving.set(true);
+    this.contractsService.updateContract(contract.contratoId, payload).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.toast.success('Contrato actualizado correctamente', 'Éxito');
+        this.saved.emit();
+      },
+      error: (err) => {
+        this.isSaving.set(false);
+        const msg = err.error?.message ?? 'No se pudo actualizar el contrato.';
+        this.toast.error(msg, 'Error');
+      },
+    });
+  }
+
+  cancel(): void {
+    this.cancelled.emit();
+  }
+}

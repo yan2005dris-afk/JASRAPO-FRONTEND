@@ -1,0 +1,74 @@
+/* 
+  Component Styles
+  Global styles for UI components that are common across the app (buttons, cards, inputs). 
+  Note: Angular component-specific styles should remain in their respective .component.css files.
+*/
+
+/* Example: Global Card adjustments */
+.card-shadow {
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--border-color);
+  border-radius: 0.75rem;
+}
+
+/* Example: Interactive Row */
+.table-row-hover:hover {
+  background-color: rgba(12, 158, 161, 0.05);
+  /* Subtle primary tint */
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   Bootstrap Global Overrides to Apply Corporate Water Theme
+   ========================================================================== */
+
+/* Buttons */
+.btn-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  color: var(--white) !important;
+  transition: all 0.2s ease-in-out !important;
+
+  &:hover,
+  &:focus,
+  &:active,
+  &.active {
+    background-color: var(--secondary-color) !important;
+    border-color: var(--secondary-color) !important;
+    color: var(--white) !important;
+    box-shadow: 0 4px 10px -2px var(--input-focus-ring) !important;
+  }
+}
+
+.btn-outline-primary {
+  color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+  transition: all 0.2s ease-in-out !important;
+
+  &:hover,
+  &:focus,
+  &:active,
+  &.active {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    color: var(--white) !important;
+  }
+}
+
+/* Forms */
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary-color) !important;
+  box-shadow: 0 0 0 3px var(--input-focus-ring) !important;
+}
+
+/* Text & Spinners */
+.text-primary {
+  color: var(--primary-color) !important;
+}
+
+.spinner-border.text-primary {
+  color: var(--primary-color) !important;
+}

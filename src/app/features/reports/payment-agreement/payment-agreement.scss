@@ -1,0 +1,84 @@
+/* Contenedor de la pantalla de reportes */
+.reports-container {
+  width: 100%;
+}
+
+/* Encabezado de la página */
+.page-header {
+  gap: 1rem;
+}
+
+/* Estado inicial / sin reporte generado */
+.empty-state {
+  text-align: center;
+  padding: 3.5rem 1rem;
+}
+
+.empty-state-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  background-color: var(--soft-blue-bg);
+  color: var(--primary-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  margin: 0 auto 1rem;
+  opacity: 0.65;
+}
+
+/* Chip del convenio/cliente seleccionado */
+.selected-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  background-color: var(--soft-blue-bg);
+  border-radius: 10px;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.selected-chip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Lista de resultados del buscador de convenios */
+.contract-results {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.contract-results .list-group-item {
+  border-bottom: 1px solid var(--border-color);
+}
+
+.contract-results .list-group-item:last-child {
+  border-bottom: 0;
+}
+
+/* Fondo de los modales de selección (evita estilo inline) */
+.picker-modal {
+  background-color: rgba(15, 23, 42, 0.45);
+}
+
+/* Input de convenio: toda el área abre el buscador */
+.contract-input {
+  cursor: pointer;
+  background-color: #fff;
+}
+
+/* Fila propia para el chip del cliente seleccionado (no descuadra los filtros) */
+.selected-contract-row {
+  border-top: 1px solid var(--border-color);
+  padding-top: 0.75rem;
+}
+
+/* Texto auxiliar más pequeño */
+.x-small {
+  font-size: 0.75rem;
+}

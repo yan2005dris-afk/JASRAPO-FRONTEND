@@ -1,0 +1,451 @@
+<div class="contract-form-page">
+  <!-- Encabezado -->
+  <div class="page-header mb-4">
+    <h3 class="fw-bold mb-0 text-dark fs-4">
+      {{ isEditing() ? 'Editar Contrato' : 'Registro de Contrato Cliente–Medidor' }}
+    </h3>
+    <p class="text-muted small mb-0">
+      {{
+        isEditing()
+          ? 'Modifique los datos del contrato seleccionado.'
+          : 'Vincule un cliente activo con un medidor disponible y asigne una tarifa reglamentaria.'
+      }}
+    </p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="save()">
+    <!-- Selección de cliente y comunidad -->
+    <div class="card form-section mb-4">
+      <div class="card-body p-4">
+        <div class="section-title mb-3">
+          <span class="section-icon"><i class="bi bi-person-badge"></i></span>
+          <div>
+            <h5 class="fw-bold mb-0">Cliente y Comunidad</h5>
+            <p class="text-muted small mb-0">
+              Seleccione el cliente y la comunidad del suministro.
+            </p>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <!-- Cliente -->
+          <div class="col-md-6">
+            <button type="button" class="option-box w-100" (click)="openClientPicker()">
+              <i class="bi bi-search"></i>
+              <span class="fw-semibold">Seleccionar Cliente</span>
+              <span class="text-muted x-small">Explorar el listado de clientes activos</span>
+            </button>
+
+            @if (selectedClient(); as client) {
+              <div class="selected-chip mt-2">
+                <i class="bi bi-person-check-fill text-primary"></i>
+                <span class="fw-medium text-dark">{{ clientName() }}</span>
+                <span class="text-muted small">({{ client.identificacion }})</span>
+              </div>
+            } @else if (submitted()) {
+              <span class="text-danger x-small d-block mt-1">Seleccione un cliente.</span>
+            }
+          </div>
+
+          <!-- Comunidad -->
+          <div class="col-md-6">
+            <button type="button" class="option-box w-100" (click)="openComunidadPicker()">
+              <i class="bi bi-geo-alt"></i>
+              <span class="fw-semibold">Seleccionar Comunidad</span>
+              <span class="text-muted x-small">Elegir la comunidad del listado</span>
+            </button>
+
+            @if (selectedComunidad(); as comunidad) {
+              <div class="selected-chip mt-2">
+                <i class="bi bi-check-circle-fill text-primary"></i>
+                <span class="fw-medium text-dark">{{ comunidad.nombre }}</span>
+                <span class="text-muted small">({{ comunidad.codigo }})</span>
+              </div>
+            } @else if (submitted()) {
+              <span class="text-danger x-small d-block mt-1">Seleccione una comunidad.</span>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+      <!-- Asignación de medidor -->
+      <div class="col-lg-6">
+        <div class="card form-section h-100">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+              <div class="section-title">
+                <span class="section-icon"><i class="bi bi-speedometer2"></i></span>
+                <div>
+                  <h5 class="fw-bold mb-0">Asignación de Medidor</h5>
+                  <p class="text-muted small mb-0">Seleccione el dispositivo disponible.</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="btn btn-outline-primary btn-sm"
+                (click)="openMeterPicker()"
+              >
+                <i class="bi bi-grid me-1"></i> Catálogo
+              </button>
+            </div>
+
+            @if (selectedMeter(); as meter) {
+              <div class="meter-detail">
+                <div class="d-flex justify-content-between">
+                  <span class="text-muted small">N° Serie</span>
+                  <span class="fw-bold">{{ meter.serie }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <span class="text-muted small">Tipo / Modelo</span>
+                  <span class="fw-medium">{{ meter.marca }} {{ meter.modelo }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                  <span class="text-muted small">Estado Actual</span>
+                  <span class="badge rounded-pill text-bg-success">{{ meterStatusLabel() }}</span>
+                </div>
+              </div>
+            } @else {
+              <div class="empty-panel text-center text-muted py-4">
+                <i class="bi bi-speedometer2 fs-3 d-block mb-2 opacity-50"></i>
+                <span class="small">Aún no se ha asignado un medidor.</span>
+              </div>
+              @if (submitted()) {
+                <span class="text-danger x-small d-block mt-1">Seleccione un medidor.</span>
+              }
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Plan de tarifa -->
+      <div class="col-lg-6">
+        <div class="card form-section h-100">
+          <div class="card-body p-4">
+            <div class="section-title mb-3">
+              <span class="section-icon"><i class="bi bi-lightning-charge"></i></span>
+              <div>
+                <h5 class="fw-bold mb-0">Plan de Tarifa</h5>
+                <p class="text-muted small mb-0">Defina el esquema comercial.</p>
+              </div>
+            </div>
+
+            <p class="form-label fw-semibold text-dark mb-2">Categoría de Usuario</p>
+            <button
+              type="button"
+              class="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center gap-2"
+              (click)="openTariffPicker()"
+            >
+              <i class="bi bi-tags"></i>
+              {{ selectedTariff() ? 'Cambiar tarifa' : 'Seleccionar tarifa' }}
+            </button>
+
+            @if (selectedTariff(); as tariff) {
+              <div class="tariff-sim mt-3">
+                <i class="bi bi-info-circle text-primary me-1"></i>
+                <span class="fw-semibold">{{ tariff.nombre }}</span> — costo fijo de ${{
+                  tariff.valorBase
+                }}
+                + ${{ tariff.valorExcedenteM3 }} por m³ de excedente.
+              </div>
+            } @else if (submitted()) {
+              <span class="text-danger x-small d-block mt-2">Seleccione una tarifa.</span>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Parámetros de inicio -->
+    <div class="card form-section mb-4">
+      <div class="card-body p-4">
+        <div class="section-title mb-3">
+          <span class="section-icon"><i class="bi bi-calendar-check"></i></span>
+          <div>
+            <h5 class="fw-bold mb-0">Parámetros de Inicio</h5>
+            <p class="text-muted small mb-0">Datos del contrato y ciclo de facturación.</p>
+          </div>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label for="numeroGuia" class="form-label fw-semibold text-dark">N° de guía</label>
+            <input
+              id="numeroGuia"
+              type="text"
+              class="form-control"
+              formControlName="numeroGuia"
+              placeholder="Ej. GUIA-1-0051"
+              maxlength="15"
+              [readonly]="isEditing()"
+              [class.is-invalid]="isFieldInvalid('numeroGuia')"
+            />
+            @if (isFieldInvalid('numeroGuia')) {
+              <span class="text-danger x-small">
+                El N° de guía es obligatorio (máx. 15 caracteres).
+              </span>
+            }
+          </div>
+
+          <!-- Estado: solo en modo edición (en creación lo asigna el backend) -->
+          @if (isEditing()) {
+            <div class="col-md-6">
+              <label for="estado" class="form-label fw-semibold text-dark">Estado</label>
+              <select id="estado" class="form-select" formControlName="estado">
+                @for (state of states(); track state.codigo) {
+                  <option [value]="state.codigo">{{ state.nombre }}</option>
+                }
+              </select>
+            </div>
+          }
+
+          <div class="col-md-6">
+            <label for="lecturaInicial" class="form-label fw-semibold text-dark">
+              Lectura inicial (m³)
+            </label>
+            <input
+              id="lecturaInicial"
+              type="text"
+              inputmode="numeric"
+              maxlength="10"
+              class="form-control"
+              formControlName="lecturaInicial"
+              (input)="onLecturaInicialInput($event)"
+              [class.is-invalid]="isFieldInvalid('lecturaInicial')"
+            />
+            @if (isFieldInvalid('lecturaInicial')) {
+              <span class="text-danger x-small"> Ingrese solo números (máx. 10 dígitos). </span>
+            }
+          </div>
+
+          <div class="col-md-8">
+            <label for="direccionSuministro" class="form-label fw-semibold text-dark">
+              Dirección de suministro
+            </label>
+            <input
+              id="direccionSuministro"
+              type="text"
+              class="form-control"
+              formControlName="direccionSuministro"
+              placeholder="Ej. Calle Principal #45"
+              maxlength="200"
+              [class.is-invalid]="isFieldInvalid('direccionSuministro')"
+            />
+            @if (isFieldInvalid('direccionSuministro')) {
+              <span class="text-danger x-small">
+                La dirección es obligatoria (máx. 200 caracteres).
+              </span>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!--
+      SECCIÓN DE DOCUMENTACIÓN LEGAL (subida de documentos) — PENDIENTE DE IMPLEMENTAR.
+      Se deja comentada a propósito (oculta en el frontend por ahora). Esta funcionalidad
+      (subir Cédula, Escritura, Contrato) se implementará más adelante, cuando el backend
+      tenga el endpoint para recibir los archivos.
+
+    <div class="card form-section mb-4">
+      <div class="card-body p-4">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+          <div class="section-title">
+            <span class="section-icon"><i class="bi bi-shield-check"></i></span>
+            <div>
+              <h5 class="fw-bold mb-0">Documentación Legal</h5>
+              <p class="text-muted small mb-0">
+                Adjunte los requisitos obligatorios en PDF o imagen.
+              </p>
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-outline-primary btn-sm" (click)="comingSoon()">
+            <i class="bi bi-printer me-1"></i> Imprimir contrato
+          </button>
+        </div>
+
+        <div class="row g-3">
+          <div class="col-md-4">
+            <button type="button" class="upload-box w-100" (click)="comingSoon()">
+              <i class="bi bi-file-earmark-arrow-up"></i>
+              <span class="fw-semibold">Cédula del Propietario</span>
+              <span class="text-muted x-small">Obligatorio · PDF/JPG</span>
+            </button>
+          </div>
+          <div class="col-md-4">
+            <button type="button" class="upload-box w-100" (click)="comingSoon()">
+              <i class="bi bi-file-earmark-arrow-up"></i>
+              <span class="fw-semibold">Escritura o Posesión</span>
+              <span class="text-muted x-small">Obligatorio · PDF</span>
+            </button>
+          </div>
+          <div class="col-md-4">
+            <button type="button" class="upload-box w-100" (click)="comingSoon()">
+              <i class="bi bi-file-earmark-arrow-up"></i>
+              <span class="fw-semibold">Contrato</span>
+              <span class="text-muted x-small">Obligatorio · PDF</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    -->
+
+    <!-- Acciones -->
+    <div class="d-flex justify-content-end gap-2">
+      <button type="button" class="btn btn-light" (click)="cancel()" [disabled]="isSaving()">
+        Cancelar
+      </button>
+      <button
+        type="submit"
+        class="btn btn-primary d-flex align-items-center gap-2"
+        [disabled]="isSaving()"
+      >
+        @if (isSaving()) {
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        }
+        {{ isSaving() ? 'Guardando...' : isEditing() ? 'Guardar cambios' : 'Registrar contrato' }}
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Modal selector de cliente (pantalla de clientes en modo selección) -->
+@if (isClientPickerOpen()) {
+  <div
+    class="modal fade show d-block picker-modal"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="picker-cliente-title"
+  >
+    <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow rounded-4">
+        <div class="modal-header border-bottom-0 pb-2">
+          <div>
+            <h5 id="picker-cliente-title" class="modal-title fw-bold">Seleccionar Cliente</h5>
+            <p class="text-muted mb-0 small">
+              Busque y haga <strong>doble clic</strong> sobre un cliente para seleccionarlo.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="btn-close shadow-none"
+            aria-label="Cerrar"
+            (click)="closeClientPicker()"
+          ></button>
+        </div>
+        <div class="modal-body pt-2">
+          <app-clients [selectionMode]="true" (clientSelected)="onClientSelected($event)" />
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal selector de comunidad (pantalla de comunidades en modo selección) -->
+@if (isComunidadPickerOpen()) {
+  <div
+    class="modal fade show d-block picker-modal"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="picker-comunidad-title"
+  >
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow rounded-4">
+        <div class="modal-header border-bottom-0 pb-2">
+          <div>
+            <h5 id="picker-comunidad-title" class="modal-title fw-bold">Seleccionar Comunidad</h5>
+            <p class="text-muted mb-0 small">
+              Haga <strong>doble clic</strong> sobre una comunidad para seleccionarla.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="btn-close shadow-none"
+            aria-label="Cerrar"
+            (click)="closeComunidadPicker()"
+          ></button>
+        </div>
+        <div class="modal-body pt-2">
+          <app-comunidades
+            [selectionMode]="true"
+            (comunidadSelected)="onComunidadSelected($event)"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal selector de medidor (pantalla de medidores en modo selección) -->
+@if (isMeterPickerOpen()) {
+  <div
+    class="modal fade show d-block picker-modal"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="picker-medidor-title"
+  >
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow rounded-4">
+        <div class="modal-header border-bottom-0 pb-2">
+          <div>
+            <h5 id="picker-medidor-title" class="modal-title fw-bold">
+              Seleccionar Medidor Disponible
+            </h5>
+            <p class="text-muted mb-0 small">
+              Haga <strong>doble clic</strong> sobre un medidor para seleccionarlo.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="btn-close shadow-none"
+            aria-label="Cerrar"
+            (click)="closeMeterPicker()"
+          ></button>
+        </div>
+        <div class="modal-body pt-2">
+          <app-meters [selectionMode]="true" (meterSelected)="onMeterSelected($event)" />
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal selector de tarifa (pantalla de tarifas en modo selección) -->
+@if (isTariffPickerOpen()) {
+  <div
+    class="modal fade show d-block picker-modal"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="picker-tarifa-title"
+  >
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow rounded-4">
+        <div class="modal-header border-bottom-0 pb-2">
+          <div>
+            <h5 id="picker-tarifa-title" class="modal-title fw-bold">Seleccionar Tarifa</h5>
+            <p class="text-muted mb-0 small">
+              Haga <strong>doble clic</strong> sobre una tarifa para seleccionarla.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="btn-close shadow-none"
+            aria-label="Cerrar"
+            (click)="closeTariffPicker()"
+          ></button>
+        </div>
+        <div class="modal-body pt-2">
+          <app-tariffs [selectionMode]="true" (tariffSelected)="onTariffSelected($event)" />
+        </div>
+      </div>
+    </div>
+  </div>
+}

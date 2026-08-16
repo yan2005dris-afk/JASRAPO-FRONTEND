@@ -1,0 +1,86 @@
+<form [formGroup]="tariffForm" (ngSubmit)="onSubmit()">
+  <div class="modal-header">
+    <h5 class="modal-title fw-bold">Editar Tarifa</h5>
+    <button
+      type="button"
+      class="btn-close shadow-none"
+      aria-label="Cerrar"
+      (click)="onClose()"
+    ></button>
+  </div>
+
+  <div class="modal-body">
+    @if (errorMessage) {
+      <div class="alert alert-danger">{{ errorMessage }}</div>
+    }
+
+    <div class="row g-3">
+      <div class="col-12">
+        <label for="nombre" class="form-label">Nombre <span class="text-danger">*</span></label>
+        <input id="nombre" type="text" class="form-control" formControlName="nombre" />
+        @if (isFieldInvalid('nombre')) {
+          <small class="text-danger">El nombre es obligatorio.</small>
+        }
+      </div>
+
+      <div class="col-12">
+        <label for="descripcion" class="form-label"
+          >Descripción <span class="text-danger">*</span></label
+        >
+        <input id="descripcion" type="text" class="form-control" formControlName="descripcion" />
+        @if (isFieldInvalid('descripcion')) {
+          <small class="text-danger">La descripción es obligatoria.</small>
+        }
+      </div>
+
+      <div class="col-md-4">
+        <label for="valorBase" class="form-label"
+          >Valor Base ($) <span class="text-danger">*</span></label
+        >
+        <input id="valorBase" type="number" class="form-control" formControlName="valorBase" />
+        @if (isFieldInvalid('valorBase')) {
+          <small class="text-danger">Debe ser un número mayor o igual a 0.</small>
+        }
+      </div>
+
+      <div class="col-md-4">
+        <label for="consumoMinimoMensual" class="form-label"
+          >Consumo mínimo (m³) <span class="text-danger">*</span></label
+        >
+        <input
+          id="consumoMinimoMensual"
+          type="number"
+          class="form-control"
+          formControlName="consumoMinimoMensual"
+        />
+        @if (isFieldInvalid('consumoMinimoMensual')) {
+          <small class="text-danger">Debe ser un número mayor o igual a 0.</small>
+        }
+      </div>
+
+      <div class="col-md-4">
+        <label for="valorExcedenteM3" class="form-label"
+          >Valor por excedente ($) <span class="text-danger">*</span></label
+        >
+        <input
+          id="valorExcedenteM3"
+          type="number"
+          class="form-control"
+          formControlName="valorExcedenteM3"
+        />
+        @if (isFieldInvalid('valorExcedenteM3')) {
+          <small class="text-danger">Debe ser un número mayor o igual a 0.</small>
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" (click)="onClose()" [disabled]="isSaving">
+      Cancelar
+    </button>
+    <button type="submit" class="btn btn-primary" [disabled]="isSaving">
+      {{ isSaving ? 'Guardando...' : 'Guardar cambios' }}
+    </button>
+  </div>
+</form>

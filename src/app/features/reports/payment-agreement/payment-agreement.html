@@ -1,0 +1,320 @@
+<div class="reports-container">
+  <!-- Encabezado -->
+  <div class="page-header mb-4">
+    <h3 class="fw-bold mb-0 text-dark fs-4">Convenio de Pago</h3>
+    <p class="text-muted small mb-0">
+      Consulte el convenio de pago de un cliente. Busque por número de guía, nombre o identificación
+      del cliente.
+    </p>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold mb-1" for="convenioId">Convenio</label>
+          <div class="input-group">
+            <input
+              id="convenioId"
+              type="text"
+              class="form-control shadow-none contract-input"
+              placeholder="Seleccione un convenio"
+              [value]="selectedAgreementLabel()"
+              readonly
+              (click)="abrirBuscadorConvenios()"
+            />
+            <button
+              type="button"
+              class="btn btn-outline-primary shadow-none"
+              title="Buscar convenio"
+              (click)="abrirBuscadorConvenios()"
+            >
+              <i class="bi bi-search"></i>
+            </button>
+          </div>
+        </div>
+        <div class="col-md-3 d-flex gap-2 flex-wrap">
+          <button
+            type="button"
+            class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+            (click)="generarPdf()"
+            [disabled]="isLoadingPdf()"
+          >
+            @if (isLoadingPdf()) {
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
+            } @else {
+              <i class="bi bi-file-earmark-pdf"></i>
+            }
+            {{ isLoadingPdf() ? 'Generando...' : 'Generar PDF' }}
+          </button>
+          @if (convenioId()) {
+            <button
+              type="button"
+              class="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium px-3"
+              (click)="abrirModalEmail()"
+            >
+              <i class="bi bi-envelope"></i>
+              Enviar email
+            </button>
+          }
+          <button
+            type="button"
+            class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
+            (click)="limpiar()"
+            [disabled]="isLoadingPdf()"
+          >
+            <i class="bi bi-x-circle"></i>
+            Limpiar
+          </button>
+        </div>
+      </div>
+
+      @if (selectedAgreementName()) {
+        <div class="selected-contract-row mt-3">
+          <div class="selected-chip">
+            <i class="bi bi-person-check-fill text-primary"></i>
+            <span class="fw-medium text-dark">{{ selectedAgreementName() }}</span>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Vista previa del PDF -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
+      <h5 class="fw-bold fs-6 mb-0 text-dark">Vista previa del reporte</h5>
+    </div>
+    <div class="card-body">
+      @if (pdfBlob(); as pdf) {
+        <app-pdf-previewer [src]="pdf" height="700px" />
+      } @else {
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="bi bi-file-earmark-pdf"></i>
+          </div>
+          <p class="fw-semibold mb-1 text-dark">Sin reporte generado</p>
+          <p class="text-muted small mb-0">
+            Presione <strong>Generar PDF</strong> para previsualizar el convenio de pago.
+          </p>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Modal buscador de convenios -->
+@if (isAgreementPickerOpen()) {
+  <div
+    class="modal fade show d-block picker-modal"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="picker-convenio-title"
+  >
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow rounded-4">
+        <div class="modal-header border-bottom-0 pb-2">
+          <div>
+            <h5 id="picker-convenio-title" class="modal-title fw-bold">Buscar Convenio</h5>
+            <p class="text-muted mb-0 small">
+              Busque por número de guía, nombre, razón social o identificación del cliente.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="btn-close shadow-none"
+            aria-label="Cerrar"
+            (click)="cerrarBuscadorConvenios()"
+          ></button>
+        </div>
+        <div class="modal-body pt-2">
+          <div class="input-group mb-3">
+            <span class="input-group-text bg-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control shadow-none"
+              placeholder="Ej: GUIA-1-0051, María, 1105123..."
+              [ngModel]="searchTerm()"
+              (ngModelChange)="onSearchInput($event)"
+              (keyup.enter)="buscarConvenios()"
+            />
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="buscarConvenios()"
+              [disabled]="isSearching()"
+            >
+              Buscar
+            </button>
+          </div>
+
+          @if (isSearching()) {
+            <div class="text-center py-4 text-muted">
+              <span
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              Buscando convenios...
+            </div>
+          } @else if (searchError()) {
+            <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0" role="alert">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <span>{{ searchError() }}</span>
+            </div>
+          } @else if (searchPerformed() && searchResults().length === 0) {
+            <div class="empty-state py-4">
+              <div class="empty-state-icon">
+                <i class="bi bi-search"></i>
+              </div>
+              <p class="fw-semibold mb-1 text-dark">Sin resultados</p>
+              <p class="text-muted small mb-0">
+                No se encontraron convenios para el término buscado.
+              </p>
+            </div>
+          } @else if (searchResults().length > 0) {
+            <ul class="list-group list-group-flush contract-results">
+              @for (agreement of searchResults(); track agreement.convenioId) {
+                <li
+                  class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2"
+                >
+                  <div class="flex-grow-1">
+                    <div class="fw-semibold text-dark">
+                      <i class="bi bi-briefcase me-1 text-primary"></i>
+                      Convenio #{{ agreement.convenioId }}
+                    </div>
+                    <div class="small text-muted">
+                      {{ agreement.numeroGuia }}
+                      @if (agreement.clienteNombre) {
+                        · {{ agreement.clienteNombre }}
+                      }
+                      @if (agreement.clienteIdentificacion) {
+                        · {{ agreement.clienteIdentificacion }}
+                      }
+                    </div>
+                    <div class="mt-1 d-flex flex-wrap align-items-center gap-2">
+                      <span class="badge text-bg-light border">{{
+                        formatAgreementEstado(agreement.estado)
+                      }}</span>
+                      <span class="small fw-semibold text-dark">{{
+                        formatMoney(agreement.deudaTotal)
+                      }}</span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary text-nowrap"
+                    (click)="seleccionarConvenio(agreement)"
+                  >
+                    <i class="bi bi-check2 me-1"></i>Seleccionar
+                  </button>
+                </li>
+              }
+            </ul>
+          } @else {
+            <div class="text-center py-4 text-muted">
+              <i class="bi bi-info-circle me-1"></i>
+              Escriba un término y presione <strong>Buscar</strong>.
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal envío por email -->
+@if (isEmailModalOpen()) {
+  <div
+    class="modal fade show d-block picker-modal"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="email-modal-title"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow rounded-4">
+        <div class="modal-header border-bottom-0 pb-2">
+          <div>
+            <h5 id="email-modal-title" class="modal-title fw-bold">
+              Enviar convenio de pago por email
+            </h5>
+            <p class="text-muted mb-0 small">
+              El reporte se generará y enviará al destinatario indicado.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="btn-close shadow-none"
+            aria-label="Cerrar"
+            (click)="cerrarModalEmail()"
+          ></button>
+        </div>
+        <div class="modal-body pt-2">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold mb-1" for="destinatario">Destinatario</label>
+            <input
+              id="destinatario"
+              type="email"
+              class="form-control shadow-none"
+              placeholder="correo@ejemplo.com"
+              [ngModel]="destinatario()"
+              (ngModelChange)="destinatario.set($event)"
+            />
+            @if (destinatario() && esEmailInvalido()) {
+              <span class="text-danger x-small d-block mt-1">
+                Ingrese un correo electrónico válido.
+              </span>
+            }
+          </div>
+          <div class="mb-1">
+            <label class="form-label small fw-semibold mb-1" for="subject">Asunto</label>
+            <input
+              id="subject"
+              type="text"
+              class="form-control shadow-none"
+              placeholder="Asunto opcional"
+              [ngModel]="subject()"
+              (ngModelChange)="subject.set($event)"
+            />
+          </div>
+        </div>
+        <div class="modal-footer border-top-0 pt-2 pb-4 px-4">
+          <button
+            type="button"
+            class="btn btn-light"
+            (click)="cerrarModalEmail()"
+            [disabled]="isSendingEmail()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary d-flex align-items-center gap-2"
+            (click)="enviarEmail()"
+            [disabled]="isSendingEmail() || esEmailInvalido()"
+          >
+            @if (isSendingEmail()) {
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
+            } @else {
+              <i class="bi bi-envelope"></i>
+            }
+            {{ isSendingEmail() ? 'Enviando...' : 'Enviar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
