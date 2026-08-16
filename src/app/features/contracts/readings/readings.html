@@ -1,1 +1,244 @@
-<p>lectura-de-consumo works!</p>
+<div class="readings-container">
+  <!-- Page Header -->
+  <div class="page-header d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div class="d-flex align-items-center gap-3">
+      <div class="page-header-icon">
+        <i class="bi bi-speedometer2"></i>
+      </div>
+      <div>
+        <h3 class="fw-bold mb-0 text-dark fs-4">Lecturas de Consumo</h3>
+        <p class="text-muted small mb-0">Control de mediciones, índices de consumo por contrato y evidencia fotográfica.</p>
+      </div>
+    </div>
+
+    <!-- Primary Action -->
+    <button
+      type="button"
+      class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-4 py-2"
+      (click)="openCreateModal()"
+    >
+      <i class="bi bi-plus-circle"></i>
+      Registrar Lectura
+    </button>
+  </div>
+
+  <!-- Card with Filters & Table -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <!-- Toolbar -->
+    <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap flex-grow-1">
+          <!-- Filter Contrato -->
+          <div class="input-group search-group" style="max-width: 240px">
+            <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+              <i class="bi bi-file-text"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control border-start-0 ps-0 shadow-none"
+              placeholder="Contrato ID..."
+              [(ngModel)]="filterContratoId"
+              (keyup.enter)="loadReadings()"
+            />
+          </div>
+
+          <!-- Buscar -->
+          <button
+            class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+            (click)="loadReadings()"
+            [disabled]="isLoading"
+          >
+            @if (isLoading) {
+              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            }
+            @if (!isLoading) {
+              <i class="bi bi-search"></i>
+            }
+            Buscar
+          </button>
+
+          <!-- Limpiar -->
+          <button
+            class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
+            (click)="limpiarFiltros()"
+            [disabled]="isLoading"
+          >
+            <i class="bi bi-x-circle"></i>
+            Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="pt-2">
+      @if (isLoading) {
+        <div class="text-center py-5 text-muted">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <p class="mt-3 mb-0">Cargando lecturas de consumo...</p>
+        </div>
+      }
+
+      @if (!isLoading && readings.length === 0) {
+        <app-empty-state
+          icon="bi bi-speedometer2"
+          title="No hay lecturas registradas"
+          description="No se encontraron lecturas de consumo con los criterios seleccionados."
+          actionLabel="Registrar primera lectura"
+          actionIcon="bi bi-plus-lg"
+          (actionClicked)="openCreateModal()"
+        />
+      }
+
+      @if (!isLoading && readings.length > 0) {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 custom-table">
+            <thead>
+              <tr>
+                <th scope="col" class="ps-4">Foto / ID</th>
+                <th scope="col">Contrato / Guía</th>
+                <th scope="col">Medidor</th>
+                <th scope="col">Fecha Toma</th>
+                <th scope="col" class="text-end">Lect. Ant</th>
+                <th scope="col" class="text-end">Lect. Act</th>
+                <th scope="col" class="text-end">Consumo</th>
+                <th scope="col" class="text-center">Estado</th>
+                <th scope="col" class="text-center pe-4">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (reading of readings; track reading.lecturaId) {
+                <tr>
+                  <td class="ps-4">
+                    <div class="d-flex align-items-center gap-2">
+                      @if (reading.fotoUrl) {
+                        <button
+                          type="button"
+                          class="btn p-0 border-0 shadow-none cursor-pointer"
+                          (click)="openDetailModal(reading)"
+                          title="Ver detalle y evidencia fotográfica"
+                        >
+                          <img
+                            [src]="reading.fotoUrl"
+                            alt="Foto medidor"
+                            class="reading-thumb rounded-2 border"
+                          />
+                        </button>
+                      } @else {
+                        <div class="reading-thumb-placeholder rounded-2 border">
+                          <i class="bi bi-camera text-muted"></i>
+                        </div>
+                      }
+                      <span class="fw-bold text-dark small">#{{ reading.lecturaId }}</span>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="fw-semibold text-dark small">Contrato #{{ reading.contratoId }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem">
+                      Guía: {{ reading.contrato?.numeroGuia || '—' }}
+                    </div>
+                  </td>
+                  <td class="small text-muted">
+                    {{ reading.medidor?.serie || 'Medidor #' + (reading.medidor?.medidorId || '—') }}
+                  </td>
+                  <td class="small text-muted">
+                    {{ reading.fecha | date: 'dd/MM/yyyy' }}
+                  </td>
+                  <td class="text-end small text-muted tabular-nums">
+                    {{ reading.lecturaAnterior | number: '1.2-2' }}
+                  </td>
+                  <td class="text-end small fw-bold text-dark tabular-nums">
+                    {{ reading.lecturaActual | number: '1.2-2' }}
+                  </td>
+                  <td class="text-end fw-bold text-primary tabular-nums" style="font-size: 0.95rem">
+                    {{ reading.consumoCalculado | number: '1.2-2' }} m³
+                  </td>
+                  <td class="text-center">
+                    <app-status-badge [status]="reading.estado" />
+                  </td>
+                  <td class="text-center pe-4">
+                    <div class="dropdown">
+                      <button
+                        class="btn btn-link text-muted p-0 shadow-none"
+                        (click)="toggleDropdown(reading.lecturaId, $event)"
+                        aria-label="Menú de opciones"
+                      >
+                        <i class="bi bi-three-dots-vertical"></i>
+                      </button>
+                      <ul
+                        class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                        [class.show]="openDropdownId === reading.lecturaId"
+                        style="min-width: 155px"
+                      >
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            (click)="openDetailModal(reading)"
+                          >
+                            <i class="bi bi-eye text-secondary" style="font-size: 0.85rem"></i>
+                            Ver detalle
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            (click)="openEditModal(reading)"
+                          >
+                            <i class="bi bi-pencil text-primary" style="font-size: 0.85rem"></i>
+                            Editar
+                          </button>
+                        </li>
+                        <li>
+                          <hr class="dropdown-divider" />
+                        </li>
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                            (click)="deleteReading(reading)"
+                          >
+                            <i class="bi bi-trash-fill" style="font-size: 0.85rem"></i>
+                            Eliminar
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="px-4 py-3 border-top bg-white">
+          <app-pagination
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+            [totalItems]="totalItems"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)"
+          />
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  @if (isFormModalOpen) {
+    <app-reading-form-modal
+      [reading]="selectedReadingForEdit"
+      (saved)="onReadingSaved()"
+      (closed)="closeFormModal()"
+    />
+  }
+
+  @if (selectedReadingForDetail) {
+    <app-reading-detail-modal
+      [reading]="selectedReadingForDetail"
+      (editRequested)="openEditModal($event)"
+      (closed)="closeDetailModal()"
+    />
+  }
+</div>

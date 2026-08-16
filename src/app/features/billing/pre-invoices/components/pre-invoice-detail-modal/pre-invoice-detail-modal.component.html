@@ -1,0 +1,157 @@
+<div class="modal fade show d-block picker-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 680px">
+    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+      <!-- Header -->
+      <div class="modal-header border-bottom px-4 py-3 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="header-icon-tile">
+            <i class="bi bi-file-earmark-text"></i>
+          </div>
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <h5 class="modal-title fw-bold text-dark mb-0 fs-5">Prefactura #{{ preInvoice().prefacturaId }}</h5>
+              <app-status-badge [status]="preInvoice().estado" />
+            </div>
+            <p class="text-muted small mb-0">Contrato #{{ preInvoice().contratoId }} · Período #{{ preInvoice().periodoId }}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close shadow-none"
+          aria-label="Cerrar"
+          (click)="close()"
+        ></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4 bg-white">
+        <!-- Resumen Financiero Destacado -->
+        <div class="total-highlight-card p-3 rounded-3 mb-4 d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px">
+              Total a Pagar
+            </div>
+            <div class="fs-3 fw-bold text-dark tabular-nums mt-1">
+              ${{ preInvoice().totalPagar | number: '1.2-2' }}
+            </div>
+          </div>
+          <div class="text-end">
+            <div class="text-muted small">Subtotal: ${{ preInvoice().subtotal | number: '1.2-2' }}</div>
+            <div class="text-muted small">IVA: ${{ preInvoice().iva | number: '1.2-2' }}</div>
+            @if (preInvoice().descuentoTotal > 0) {
+              <div class="text-success small fw-semibold">
+                Descuento: -${{ preInvoice().descuentoTotal | number: '1.2-2' }}
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Info Cliente y Contrato -->
+        <div class="row g-3 mb-4">
+          <div class="col-6">
+            <div class="text-muted small">Cliente</div>
+            <div class="fw-semibold text-dark">{{ preInvoice().clienteNombre || 'Sin nombre registrado' }}</div>
+            <div class="text-muted" style="font-size: 0.78rem">CI: {{ preInvoice().clienteIdentificacion || '—' }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Correo Electrónico</div>
+            <div class="text-dark small">{{ preInvoice().clienteEmail || 'Sin correo' }}</div>
+            <div class="text-muted" style="font-size: 0.78rem">Tarifa: {{ preInvoice().tarifaNombre || 'Estándar' }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Lote de Facturación</div>
+            <div class="text-dark small">{{ preInvoice().loteId ? 'Lote #' + preInvoice().loteId : 'Individual' }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Deuda Anterior / Saldo</div>
+            <div class="text-dark small">
+              Deuda: ${{ (preInvoice().deudaAnterior || 0) | number: '1.2-2' }} · Saldo: ${{ (preInvoice().saldoActual || 0) | number: '1.2-2' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabla de Rubros / Detalles -->
+        <h6 class="fw-bold text-dark small text-uppercase mb-2" style="letter-spacing: 0.5px">
+          Rubros de la Planilla
+        </h6>
+        @if (preInvoice().detalles && preInvoice().detalles!.length > 0) {
+          <div class="table-responsive rounded-3 border">
+            <table class="table table-sm align-middle mb-0 custom-table">
+              <thead class="bg-light">
+                <tr>
+                  <th class="ps-3 text-muted small">Descripción</th>
+                  <th class="text-center text-muted small">Cant.</th>
+                  <th class="text-end text-muted small">P. Unit</th>
+                  <th class="text-end text-muted small">IVA</th>
+                  <th class="text-end pe-3 text-muted small">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of preInvoice().detalles; track item.prefacturaDetalleId) {
+                  <tr>
+                    <td class="ps-3 small fw-medium text-dark">
+                      {{ item.descripcion }}
+                    </td>
+                    <td class="text-center small text-muted">{{ item.cantidad }}</td>
+                    <td class="text-end small tabular-nums text-muted">${{ item.precioUnitario | number: '1.2-2' }}</td>
+                    <td class="text-end small tabular-nums text-muted">${{ item.iva | number: '1.2-2' }}</td>
+                    <td class="text-end pe-3 small fw-bold text-dark tabular-nums">
+                      ${{ item.total | number: '1.2-2' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="text-muted small mb-0">Sin rubros detallados registrados.</p>
+        }
+      </div>
+
+      <!-- Footer with Contextual Actions -->
+      <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+            (click)="pdfRequested.emit(preInvoice())"
+          >
+            <i class="bi bi-file-earmark-pdf"></i> Ver PDF
+          </button>
+          @if (preInvoice().clienteEmail) {
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+              (click)="emailRequested.emit(preInvoice())"
+            >
+              <i class="bi bi-envelope"></i> Enviar Email
+            </button>
+          }
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          @if (preInvoice().estado === 'EN_REVISION' || preInvoice().estado === 'GENERADA') {
+            <button
+              type="button"
+              class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 fw-medium px-3"
+              (click)="rejectRequested.emit(preInvoice())"
+            >
+              <i class="bi bi-x-circle"></i> Rechazar
+            </button>
+            <button
+              type="button"
+              class="btn btn-sm btn-primary d-flex align-items-center gap-1 fw-medium px-3"
+              (click)="approveRequested.emit(preInvoice())"
+            >
+              <i class="bi bi-check-circle"></i> Aprobar
+            </button>
+          }
+          <button type="button" class="btn btn-sm btn-secondary fw-medium px-3" (click)="close()">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>

@@ -1,0 +1,128 @@
+.page-header-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background-color: #dbf7f8;
+  color: #0c9ea1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.custom-nav-pills {
+  gap: 0.5rem;
+
+  .nav-link {
+    color: #597b7d;
+    background-color: #ffffff;
+    border: 1px solid #cbdedf;
+    border-radius: 10px;
+    padding: 0.55rem 1.25rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.2s ease-in-out;
+
+    &:hover {
+      background-color: #dbf7f8;
+      color: #0c9ea1;
+    }
+
+    &.active {
+      background-color: #0c9ea1;
+      border-color: #0c9ea1;
+      color: #ffffff;
+      font-weight: 600;
+      box-shadow: 0 4px 10px -2px rgba(15, 195, 198, 0.3);
+    }
+  }
+}
+
+.btn-filter {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+  }
+
+  &.active {
+    background-color: #dbf7f8;
+    border-color: #0c9ea1;
+    color: #0c777a;
+    font-weight: 600;
+  }
+}
+
+.custom-table {
+  thead th {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #597b7d;
+    background-color: #f8fafc;
+    border-bottom: 1px solid #cbdedf;
+    padding: 0.875rem 1rem;
+    white-space: nowrap;
+  }
+
+  tbody td {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+
+  tbody tr:hover {
+    background-color: #f8fdfd;
+  }
+}
+
+.client-avatar-sm {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background-color: #dbf7f8;
+  color: #0c777a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.75rem;
+}
+
+.kpi-icon-tile {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background-color: #dbf7f8;
+  color: #0c9ea1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.kpi-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(15, 23, 42, 0.08) !important;
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.border-bottom-subtle {
+  border-bottom: 1px solid #f1f5f9;
+}

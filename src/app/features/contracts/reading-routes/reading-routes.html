@@ -1,0 +1,276 @@
+<div class="reading-routes-container">
+  <!-- Page Header -->
+  <div class="page-header d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div class="d-flex align-items-center gap-3">
+      <div class="page-header-icon">
+        <i class="bi bi-map-fill"></i>
+      </div>
+      <div>
+        <h3 class="fw-bold mb-0 text-dark fs-4">Rutas de Lectura e Inspección</h3>
+        <p class="text-muted small mb-0">Planificación y asignación de hojas de ruta territoriales para operarios de campo.</p>
+      </div>
+    </div>
+
+    <!-- Primary Action -->
+    <button
+      type="button"
+      class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-4 py-2"
+      (click)="openCreateModal()"
+    >
+      <i class="bi bi-plus-circle"></i>
+      Nueva Ruta
+    </button>
+  </div>
+
+  <!-- Card with Filters & Table -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <!-- Toolbar -->
+    <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap flex-grow-1">
+          <!-- Filter Estado -->
+          <select
+            class="form-select shadow-none"
+            style="width: 190px"
+            [(ngModel)]="filterEstado"
+            (change)="loadRoutes()"
+          >
+            <option value="">Todos los estados</option>
+            <option value="PENDIENTE">Pendiente</option>
+            <option value="EN_PROGRESO">En Progreso</option>
+            <option value="COMPLETADA">Completada</option>
+            <option value="CANCELADA">Cancelada</option>
+          </select>
+
+          <!-- Filter Operario ID -->
+          <div class="input-group search-group" style="max-width: 190px">
+            <span class="input-group-text bg-white border-end-0 text-muted ps-2 pe-1">
+              <i class="bi bi-person-badge"></i>
+            </span>
+            <input
+              type="number"
+              min="1"
+              class="form-control border-start-0 ps-0 shadow-none"
+              placeholder="Operario ID..."
+              [(ngModel)]="filterOperarioId"
+              (keyup.enter)="loadRoutes()"
+            />
+          </div>
+
+          <!-- Filter Comunidad ID -->
+          <div class="input-group search-group" style="max-width: 190px">
+            <span class="input-group-text bg-white border-end-0 text-muted ps-2 pe-1">
+              <i class="bi bi-geo-alt"></i>
+            </span>
+            <input
+              type="number"
+              min="1"
+              class="form-control border-start-0 ps-0 shadow-none"
+              placeholder="Comunidad ID..."
+              [(ngModel)]="filterComunidadId"
+              (keyup.enter)="loadRoutes()"
+            />
+          </div>
+
+          <!-- Buscar -->
+          <button
+            class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+            (click)="loadRoutes()"
+            [disabled]="isLoading"
+          >
+            @if (isLoading) {
+              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            }
+            @if (!isLoading) {
+              <i class="bi bi-search"></i>
+            }
+            Buscar
+          </button>
+
+          <!-- Limpiar -->
+          <button
+            class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
+            (click)="limpiarFiltros()"
+            [disabled]="isLoading"
+          >
+            <i class="bi bi-x-circle"></i>
+            Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="pt-2">
+      @if (isLoading) {
+        <div class="text-center py-5 text-muted">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <p class="mt-3 mb-0">Cargando rutas de trabajo...</p>
+        </div>
+      }
+
+      @if (!isLoading && routes.length === 0) {
+        <app-empty-state
+          icon="bi bi-map"
+          title="No hay rutas registradas"
+          description="No se encontraron rutas de lectura con los filtros seleccionados."
+          actionLabel="Crear primera ruta"
+          actionIcon="bi bi-plus-lg"
+          (actionClicked)="openCreateModal()"
+        />
+      }
+
+      @if (!isLoading && routes.length > 0) {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 custom-table">
+            <thead>
+              <tr>
+                <th scope="col" class="ps-4">ID</th>
+                <th scope="col">Nombre de Ruta</th>
+                <th scope="col">Tipo</th>
+                <th scope="col">Comunidad / Sector</th>
+                <th scope="col">Operario</th>
+                <th scope="col">Fecha Planificada</th>
+                <th scope="col" class="text-center">Estado</th>
+                <th scope="col" class="text-center pe-4">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (route of routes; track route.rutaId) {
+                <tr>
+                  <td class="ps-4 fw-bold text-dark" style="font-size: 0.9rem">
+                    #{{ route.rutaId }}
+                  </td>
+                  <td>
+                    <div class="fw-semibold text-dark small">{{ route.nombre }}</div>
+                    @if (route.descripcion) {
+                      <div class="text-muted" style="font-size: 0.75rem">{{ route.descripcion }}</div>
+                    }
+                  </td>
+                  <td>
+                    <span class="badge badge-soft-primary">
+                      {{ getTipoLabel(route.tipoRuta) }}
+                    </span>
+                  </td>
+                  <td class="small text-muted">
+                    Comunidad #{{ route.comunidadId }}
+                    @if (route.sectorId) {
+                      <span> · Sector #{{ route.sectorId }}</span>
+                    }
+                  </td>
+                  <td>
+                    <span class="badge badge-soft-info d-inline-flex align-items-center gap-1">
+                      <i class="bi bi-person-badge"></i>
+                      Operario #{{ route.operarioId }}
+                    </span>
+                  </td>
+                  <td class="small text-muted">
+                    {{ route.fechaPlanificada || '—' }}
+                  </td>
+                  <td class="text-center">
+                    <app-status-badge [status]="route.estado" />
+                  </td>
+                  <td class="text-center pe-4">
+                    <div class="dropdown">
+                      <button
+                        class="btn btn-link text-muted p-0 shadow-none"
+                        (click)="toggleDropdown(route.rutaId, $event)"
+                        aria-label="Menú de acciones"
+                      >
+                        <i class="bi bi-three-dots-vertical"></i>
+                      </button>
+                      <ul
+                        class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                        [class.show]="openDropdownId === route.rutaId"
+                        style="min-width: 175px"
+                      >
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            (click)="openDetailModal(route)"
+                          >
+                            <i class="bi bi-eye text-secondary" style="font-size: 0.85rem"></i>
+                            Ver detalle
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            (click)="openEditModal(route)"
+                          >
+                            <i class="bi bi-pencil text-primary" style="font-size: 0.85rem"></i>
+                            Editar ruta
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            (click)="openReassignModal(route)"
+                          >
+                            <i class="bi bi-arrow-left-right text-info" style="font-size: 0.85rem"></i>
+                            Reasignar operario
+                          </button>
+                        </li>
+                        <li>
+                          <hr class="dropdown-divider" />
+                        </li>
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                            (click)="deleteRoute(route)"
+                          >
+                            <i class="bi bi-trash-fill" style="font-size: 0.85rem"></i>
+                            Eliminar
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="px-4 py-3 border-top bg-white">
+          <app-pagination
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+            [totalItems]="totalItems"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)"
+          />
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- MODALS -->
+  @if (isFormModalOpen) {
+    <app-route-form-modal
+      [route]="selectedRouteForEdit"
+      (saved)="onRouteSaved()"
+      (closed)="closeFormModal()"
+    />
+  }
+
+  @if (selectedRouteForReassign) {
+    <app-reassign-route-modal
+      [route]="selectedRouteForReassign"
+      (reassigned)="onRouteReassigned()"
+      (closed)="closeReassignModal()"
+    />
+  }
+
+  @if (selectedRouteForDetail) {
+    <app-route-detail-modal
+      [route]="selectedRouteForDetail"
+      (editRequested)="openEditModal($event)"
+      (reassignRequested)="openReassignModal($event)"
+      (closed)="closeDetailModal()"
+    />
+  }
+</div>

@@ -1,0 +1,121 @@
+<div class="modal fade show d-block picker-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 720px">
+    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+      <!-- Header -->
+      <div class="modal-header border-bottom px-4 py-3 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="header-icon-tile">
+            <i class="bi bi-collection"></i>
+          </div>
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <h5 class="modal-title fw-bold text-dark mb-0 fs-5">Detalle del Lote #{{ batch().loteId }}</h5>
+              <app-status-badge [status]="batch().estado" />
+            </div>
+            <p class="text-muted small mb-0">{{ batch().periodoRel?.nombre || 'Período #' + batch().periodoId }}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close shadow-none"
+          aria-label="Cerrar"
+          (click)="close()"
+        ></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4 bg-white">
+        <!-- Highlights -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <div class="p-3 bg-light rounded-3 border">
+              <div class="text-muted small">Total Recaudación Estimada</div>
+              <div class="fs-4 fw-bold text-dark tabular-nums mt-1">
+                ${{ batch().totalMonto | number: '1.2-2' }}
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="p-3 bg-light rounded-3 border">
+              <div class="text-muted small">Total de Planillas / Emisiones</div>
+              <div class="fs-4 fw-bold text-dark tabular-nums mt-1">
+                {{ batch().totalEmisiones }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="row g-3 mb-4">
+          <div class="col-6">
+            <div class="text-muted small">Comunidad</div>
+            <div class="fw-semibold text-dark">{{ batch().comunidad?.nombre || 'Todas las comunidades' }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Generado por</div>
+            <div class="text-dark small">{{ batch().creadoPor || 'Sistema' }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Fecha de Creación</div>
+            <div class="text-dark small">{{ batch().createdAt | date: 'dd/MM/yyyy HH:mm' }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Última Actualización</div>
+            <div class="text-dark small">{{ batch().updatedAt | date: 'dd/MM/yyyy HH:mm' }}</div>
+          </div>
+        </div>
+
+        <!-- Prefacturas Table if available -->
+        @if (batch().prefacturas && batch().prefacturas!.length > 0) {
+          <h6 class="fw-bold text-dark small text-uppercase mb-2" style="letter-spacing: 0.5px">
+            Planillas del Lote ({{ batch().prefacturas!.length }})
+          </h6>
+          <div class="table-responsive rounded-3 border" style="max-height: 280px; overflow-y: auto">
+            <table class="table table-sm align-middle mb-0 custom-table">
+              <thead class="bg-light sticky-top">
+                <tr>
+                  <th class="ps-3 text-muted small">ID</th>
+                  <th class="text-muted small">Cliente / Contrato</th>
+                  <th class="text-end text-muted small">Total</th>
+                  <th class="text-center text-muted small">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (pf of batch().prefacturas; track pf.prefacturaId) {
+                  <tr>
+                    <td class="ps-3 small fw-bold text-dark">#{{ pf.prefacturaId }}</td>
+                    <td class="small text-dark">
+                      {{ pf.clienteNombre || 'Contrato #' + pf.contratoId }}
+                    </td>
+                    <td class="text-end small fw-bold text-dark tabular-nums">
+                      ${{ pf.totalPagar | number: '1.2-2' }}
+                    </td>
+                    <td class="text-center">
+                      <app-status-badge [status]="pf.estado" />
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between">
+        <button
+          type="button"
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium"
+          (click)="sendEmailRequested.emit(batch())"
+        >
+          <i class="bi bi-send-fill"></i>
+          Envío Masivo de Planillas
+        </button>
+        <button type="button" class="btn btn-secondary fw-medium px-4" (click)="close()">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>

@@ -1,0 +1,125 @@
+.picker-modal {
+  z-index: 1055;
+}
+
+.modal-backdrop {
+  z-index: 1050;
+  background-color: rgba(15, 23, 42, 0.45);
+}
+
+.header-icon-tile {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background-color: #dbf7f8;
+  color: #0c9ea1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.client-results-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  z-index: 20;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.client-result-item {
+  transition: background-color 0.15s ease-in-out;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #f1f9f9;
+  }
+}
+
+.selected-client-card {
+  background-color: #f8fafc;
+}
+
+.client-avatar-tile {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background-color: #dbf7f8;
+  color: #0c777a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.billing-warning-alert {
+  background-color: #fff7ed;
+  border: 1px solid #fed7aa;
+}
+
+.consumidor-badge {
+  background-color: #e0f2fe;
+  border: 1px solid #bae6fd;
+}
+
+.statement-list {
+  background-color: #ffffff;
+}
+
+.statement-item {
+  border-bottom: 1px solid #eef2f6;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.statement-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  background-color: #dbf7f8;
+  flex-shrink: 0;
+}
+
+.statement-total-banner {
+  background-color: #dbf7f8;
+  border: 1px solid #b8eef0;
+}
+
+.saldo-favor-alert {
+  background-color: #e0f2fe;
+  border: 1px solid #bae6fd;
+}
+
+.badge-soft-info {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.pay-method-card {
+  background-color: #ffffff;
+  color: #64748b;
+  transition: all 0.15s ease;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #f1f9f9;
+    color: #0f172a;
+  }
+
+  &.active {
+    background-color: #0c9ea1;
+    color: #ffffff;
+    border-color: #0c9ea1 !important;
+    box-shadow: 0 4px 12px rgba(12, 158, 161, 0.25);
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,194 @@
+<div class="modal fade show d-block picker-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 640px">
+    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+      <!-- Header -->
+      <div class="modal-header border-bottom px-4 py-3 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="header-icon-tile">
+            <i class="bi bi-map-fill"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-dark mb-0 fs-5">
+              {{ route() ? 'Editar Ruta de Lectura' : 'Nueva Ruta de Lectura' }}
+            </h5>
+            <p class="text-muted small mb-0">Planificación territorial y asignación de operarios en campo.</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close shadow-none"
+          aria-label="Cerrar"
+          (click)="close()"
+          [disabled]="isLoading"
+        ></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4 bg-white" style="max-height: 75vh; overflow-y: auto">
+        <div class="row g-3">
+          <!-- Nombre -->
+          <div class="col-md-8">
+            <label for="inputNombreRuta" class="form-label fw-semibold text-dark small mb-1">
+              Nombre de la Ruta <span class="text-danger">*</span>
+            </label>
+            <input
+              id="inputNombreRuta"
+              type="text"
+              class="form-control shadow-none"
+              placeholder="Ej. Ruta Sector Norte - Barrio Central"
+              [(ngModel)]="nombre"
+              [disabled]="isLoading"
+            />
+          </div>
+
+          <!-- Tipo Ruta -->
+          <div class="col-md-4">
+            <label for="selectTipoRuta" class="form-label fw-semibold text-dark small mb-1">
+              Tipo de Ruta <span class="text-danger">*</span>
+            </label>
+            <select id="selectTipoRuta" class="form-select shadow-none" [(ngModel)]="tipoRuta" [disabled]="isLoading">
+              @for (opt of tipoOptions; track opt.value) {
+                <option [value]="opt.value">{{ opt.label }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Operario ID -->
+          <div class="col-md-6">
+            <label for="inputOperarioIdRuta" class="form-label fw-semibold text-dark small mb-1">
+              ID Operario Asignado <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-white text-muted">
+                <i class="bi bi-person-badge"></i>
+              </span>
+              <input
+                id="inputOperarioIdRuta"
+                type="number"
+                min="1"
+                class="form-control shadow-none"
+                placeholder="ID de usuario operario (ej. 1)"
+                [(ngModel)]="operarioId"
+                [disabled]="isLoading"
+              />
+            </div>
+          </div>
+
+          <!-- Período ID -->
+          <div class="col-md-6">
+            <label for="inputPeriodoIdRuta" class="form-label fw-semibold text-dark small mb-1">
+              ID Período <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-white text-muted">
+                <i class="bi bi-calendar3"></i>
+              </span>
+              <input
+                id="inputPeriodoIdRuta"
+                type="number"
+                min="1"
+                class="form-control shadow-none"
+                placeholder="Ej. 1"
+                [(ngModel)]="periodoId"
+                [disabled]="isLoading"
+              />
+            </div>
+          </div>
+
+          <!-- Comunidad ID -->
+          <div class="col-md-6">
+            <label for="inputComunidadIdRuta" class="form-label fw-semibold text-dark small mb-1">
+              ID Comunidad <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-white text-muted">
+                <i class="bi bi-geo-alt"></i>
+              </span>
+              <input
+                id="inputComunidadIdRuta"
+                type="number"
+                min="1"
+                class="form-control shadow-none"
+                placeholder="Ej. 1"
+                [(ngModel)]="comunidadId"
+                [disabled]="isLoading"
+              />
+            </div>
+          </div>
+
+          <!-- Sector ID (opcional) -->
+          <div class="col-md-6">
+            <label for="inputSectorIdRuta" class="form-label fw-semibold text-dark small mb-1">
+              ID Sector (Opcional)
+            </label>
+            <input
+              id="inputSectorIdRuta"
+              type="number"
+              min="1"
+              class="form-control shadow-none"
+              placeholder="Opcional..."
+              [(ngModel)]="sectorId"
+              [disabled]="isLoading"
+            />
+          </div>
+
+          <!-- Fecha Planificada -->
+          <div class="col-12">
+            <label for="inputFechaPlanificadaRuta" class="form-label fw-semibold text-dark small mb-1">
+              Fecha Planificada
+            </label>
+            <input
+              id="inputFechaPlanificadaRuta"
+              type="date"
+              class="form-control shadow-none"
+              [(ngModel)]="fechaPlanificada"
+              [disabled]="isLoading"
+            />
+          </div>
+
+          <!-- Descripción -->
+          <div class="col-12">
+            <label for="textareaDescRuta" class="form-label fw-semibold text-dark small mb-1">
+              Descripción / Notas de Campo
+            </label>
+            <textarea
+              id="textareaDescRuta"
+              class="form-control form-control-sm shadow-none"
+              rows="2"
+              placeholder="Observaciones de acceso, puntos de referencia o instrucciones..."
+              [(ngModel)]="descripcion"
+              [disabled]="isLoading"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between">
+        <button
+          type="button"
+          class="btn btn-outline-secondary fw-medium px-3"
+          (click)="close()"
+          [disabled]="isLoading"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-4"
+          (click)="submit()"
+          [disabled]="!isFormValid || isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+          @if (!isLoading) {
+            <i class="bi bi-check-circle"></i>
+          }
+          {{ isLoading ? 'Guardando...' : route() ? 'Actualizar' : 'Crear Ruta' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>

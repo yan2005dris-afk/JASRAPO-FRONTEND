@@ -247,10 +247,26 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'RutasDeLectura',
+            data: { breadcrumb: 'Rutas de Lectura' },
+            loadComponent: () =>
+              import('./features/contracts/reading-routes/reading-routes').then(
+                (m) => m.ReadingRoutesComponent,
+              ),
+          },
+          {
             path: 'LecturaDeConsumo',
             data: { breadcrumb: 'Lectura de Consumo' },
             loadComponent: () =>
               import('./features/contracts/readings/readings').then((m) => m.ReadingsComponent),
+          },
+          {
+            path: 'AnomaliasDeLectura',
+            data: { breadcrumb: 'Anomalías de Lectura' },
+            loadComponent: () =>
+              import('./features/contracts/reading-anomalies/reading-anomalies').then(
+                (m) => m.ReadingAnomaliesComponent,
+              ),
           },
           {
             path: 'Medidores',
@@ -278,10 +294,10 @@ export const routes: Routes = [
         children: [
           {
             path: 'EnvioDeFacturacion',
-            data: { breadcrumb: 'Envío de Facturación' },
+            data: { breadcrumb: 'Envío de Facturación (Lotes)' },
             loadComponent: () =>
-              import('./features/billing/billing-submission/billing-submission').then(
-                (m) => m.BillingSubmissionComponent,
+              import('./features/billing/batches/batches').then(
+                (m) => m.BatchesComponent,
               ),
           },
           {
@@ -294,10 +310,10 @@ export const routes: Routes = [
           },
           {
             path: 'GeneracionPlanilla',
-            data: { breadcrumb: 'Generación de Planilla' },
+            data: { breadcrumb: 'Generación de Planilla (Prefacturas)' },
             loadComponent: () =>
-              import('./features/billing/billing-generation/billing-generation').then(
-                (m) => m.BillingGenerationComponent,
+              import('./features/billing/pre-invoices/pre-invoices').then(
+                (m) => m.PreInvoicesComponent,
               ),
           },
           {
@@ -313,6 +329,14 @@ export const routes: Routes = [
             data: { breadcrumb: 'Recaudación y Pagos' },
             loadComponent: () =>
               import('./features/billing/payments/payments').then((m) => m.PaymentsComponent),
+          },
+          {
+            path: 'Descuentos',
+            data: { breadcrumb: 'Descuentos y Beneficios' },
+            loadComponent: () =>
+              import('./features/billing/discounts/discounts').then(
+                (m) => m.DiscountsComponent,
+              ),
           },
         ],
       },

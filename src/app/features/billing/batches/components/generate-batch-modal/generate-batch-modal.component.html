@@ -1,0 +1,114 @@
+<div class="modal fade show d-block picker-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 520px">
+    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+      <!-- Header -->
+      <div class="modal-header border-bottom px-4 py-3 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="header-icon-tile">
+            <i class="bi bi-collection-play"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-dark mb-0 fs-5">Generar Lote de Facturación</h5>
+            <p class="text-muted small mb-0">Emisión masiva de planillas para el período seleccionado.</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close shadow-none"
+          aria-label="Cerrar"
+          (click)="close()"
+          [disabled]="isLoading"
+        ></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4 bg-white">
+        <!-- Notice banner -->
+        <div class="p-3 bg-light rounded-3 mb-3 border d-flex align-items-start gap-2">
+          <i class="bi bi-info-circle-fill text-primary mt-1"></i>
+          <div class="small text-muted">
+            La generación de lotes calculará consumos, tarifas y emitirá prefacturas para todos los contratos activos del período.
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="inputPeriodoIdLote" class="form-label fw-semibold text-dark small mb-1">
+            ID de Período <span class="text-danger">*</span>
+          </label>
+          <div class="input-group">
+            <span class="input-group-text bg-white text-muted">
+              <i class="bi bi-calendar3"></i>
+            </span>
+            <input
+              id="inputPeriodoIdLote"
+              type="number"
+              min="1"
+              class="form-control shadow-none"
+              placeholder="Ej. 1"
+              [(ngModel)]="periodoId"
+              [disabled]="isLoading"
+            />
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="inputComunidadIdLote" class="form-label fw-semibold text-dark small mb-1">
+            Comunidad (Opcional)
+          </label>
+          <div class="input-group">
+            <span class="input-group-text bg-white text-muted">
+              <i class="bi bi-geo-alt"></i>
+            </span>
+            <input
+              id="inputComunidadIdLote"
+              type="number"
+              min="1"
+              class="form-control shadow-none"
+              placeholder="Dejar vacío para facturar todas las comunidades"
+              [(ngModel)]="comunidadId"
+              [disabled]="isLoading"
+            />
+          </div>
+          <div class="text-muted small mt-1" style="font-size: 0.75rem">
+            Si no se especifica, se procesarán todas las comunidades del sistema.
+          </div>
+        </div>
+
+        @if (isLoading) {
+          <div class="p-3 rounded-3 bg-light border text-center my-3">
+            <div class="spinner-border text-primary spinner-border-sm mb-2" role="status"></div>
+            <div class="small fw-semibold text-dark">Generando planillas y calculando rubros...</div>
+            <div class="text-muted small" style="font-size: 0.75rem">Esto puede tomar unos segundos. Por favor no cierres la ventana.</div>
+          </div>
+        }
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between">
+        <button
+          type="button"
+          class="btn btn-outline-secondary fw-medium px-3"
+          (click)="close()"
+          [disabled]="isLoading"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-4"
+          (click)="submitGenerate()"
+          [disabled]="!isFormValid || isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+          @if (!isLoading) {
+            <i class="bi bi-play-circle"></i>
+          }
+          {{ isLoading ? 'Generando...' : 'Generar Lote' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>

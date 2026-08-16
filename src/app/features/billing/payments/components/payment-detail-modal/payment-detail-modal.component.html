@@ -1,0 +1,137 @@
+<div class="modal fade show d-block picker-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 600px">
+    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+      <!-- Header -->
+      <div class="modal-header border-bottom px-4 py-3 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="header-icon-tile">
+            <i class="bi bi-receipt"></i>
+          </div>
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <h5 class="modal-title fw-bold text-dark mb-0 fs-5">Detalle de Pago #{{ payment().pagoId }}</h5>
+              <app-status-badge [status]="payment().estadoPago" />
+            </div>
+            <p class="text-muted small mb-0">Registrado el {{ payment().fechaPago }}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close shadow-none"
+          aria-label="Cerrar"
+          (click)="close()"
+        ></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4 bg-white">
+        <!-- Resumen de Monto -->
+        <div class="total-highlight-card p-3 rounded-3 mb-4 d-flex justify-content-between align-items-center">
+          <div>
+            <div class="text-muted text-uppercase fw-semibold" style="font-size: 0.75rem; letter-spacing: 0.5px">
+              Monto Total Recibido
+            </div>
+            <div class="fs-3 fw-bold text-dark tabular-nums mt-1">
+              ${{ payment().montoTotalRecibido | number: '1.2-2' }}
+            </div>
+          </div>
+          <div class="text-end">
+            <div class="text-muted small">Método</div>
+            <span class="badge badge-soft-info fw-semibold mt-1">
+              {{ payment().banco ? 'Transferencia (' + payment().banco + ')' : payment().tarjetaCredito ? 'Tarjeta (' + payment().tarjetaCredito + ')' : 'Efectivo' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Datos del Pago -->
+        <div class="row g-3 mb-4">
+          <div class="col-6">
+            <div class="text-muted small">Cliente ID</div>
+            <div class="fw-semibold text-dark">{{ payment().clienteId }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Nº Operación / Ref</div>
+            <div class="fw-semibold text-dark">{{ payment().numeroOperacion || payment().referenciaBanco || '—' }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Creado por</div>
+            <div class="text-dark small">{{ payment().creadoPor || '—' }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Fecha registro</div>
+            <div class="text-dark small">{{ payment().fechaCreacion || '—' }}</div>
+          </div>
+          @if (payment().observaciones) {
+            <div class="col-12">
+              <div class="text-muted small">Observaciones</div>
+              <div class="text-dark small p-2 bg-light rounded-2 border mt-1">
+                {{ payment().observaciones }}
+              </div>
+            </div>
+          }
+          @if (payment().estadoPago === 'ANULADO') {
+            <div class="col-12">
+              <div class="p-3 rounded-3 bg-danger-subtle border border-danger-subtle text-danger">
+                <div class="fw-bold small d-flex align-items-center gap-1">
+                  <i class="bi bi-exclamation-triangle-fill"></i> Pago Anulado
+                </div>
+                <div class="small mt-1">
+                  <strong>Motivo:</strong> {{ payment().motivoAnulacion || 'Sin motivo especificado' }}
+                </div>
+                <div class="small text-muted mt-1" style="font-size: 0.75rem">
+                  Anulado por {{ payment().anuladoPor || 'Sistema' }} el {{ payment().fechaAnulacion || '—' }}
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Desglose / Detalle -->
+        <h6 class="fw-bold text-dark small text-uppercase mb-2" style="letter-spacing: 0.5px">
+          Desglose de Aplicación
+        </h6>
+        @if (payment().detallePago && payment().detallePago!.length > 0) {
+          <div class="table-responsive rounded-3 border">
+            <table class="table table-sm align-middle mb-0 custom-table">
+              <thead class="bg-light">
+                <tr>
+                  <th class="ps-3 text-muted small">Tipo</th>
+                  <th class="text-muted small">Referencia</th>
+                  <th class="text-end pe-3 text-muted small">Monto</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of payment().detallePago; track item.detallePagoId) {
+                  <tr>
+                    <td class="ps-3 small fw-medium text-dark">
+                      {{ item.tipoPago }}
+                      @if (item.comprobante) {
+                        <div class="text-muted" style="font-size: 0.72rem">
+                          Comp #{{ item.comprobante.secuencial || item.comprobante.comprobanteId }}
+                        </div>
+                      }
+                    </td>
+                    <td class="small text-muted">{{ item.referencia || item.cuotaConvenioId ? 'Cuota #' + item.cuotaConvenioId : '—' }}</td>
+                    <td class="text-end pe-3 small fw-bold text-dark tabular-nums">
+                      ${{ item.montoAbonado | number: '1.2-2' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="text-muted small mb-0">Sin desglose adicional registrado.</p>
+        }
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-end">
+        <button type="button" class="btn btn-secondary fw-medium px-4" (click)="close()">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>

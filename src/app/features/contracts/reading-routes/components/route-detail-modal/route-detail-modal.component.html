@@ -1,0 +1,98 @@
+<div class="modal fade show d-block picker-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 680px">
+    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+      <!-- Header -->
+      <div class="modal-header border-bottom px-4 py-3 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="header-icon-tile">
+            <i class="bi bi-map"></i>
+          </div>
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <h5 class="modal-title fw-bold text-dark mb-0 fs-5">{{ route().nombre }}</h5>
+              <app-status-badge [status]="route().estado" />
+            </div>
+            <p class="text-muted small mb-0">Ruta #{{ route().rutaId }} · {{ route().tipoRuta }}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close shadow-none"
+          aria-label="Cerrar"
+          (click)="close()"
+        ></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4 bg-white">
+        <!-- Info Grid -->
+        <div class="row g-3 mb-4">
+          <div class="col-6">
+            <div class="text-muted small">Operario Asignado</div>
+            <div class="fw-semibold text-dark">
+              <i class="bi bi-person-badge text-primary me-1"></i>
+              Usuario #{{ route().operarioId }}
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Comunidad</div>
+            <div class="fw-semibold text-dark">Comunidad #{{ route().comunidadId }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Sector</div>
+            <div class="text-dark small">{{ route().sectorId ? 'Sector #' + route().sectorId : 'Sin sector asignado' }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Período Contable</div>
+            <div class="text-dark small">Período #{{ route().periodoId || '—' }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Fecha Planificada</div>
+            <div class="text-dark small">{{ route().fechaPlanificada || 'Sin fecha' }}</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Ejecución</div>
+            <div class="text-dark small">
+              {{ route().fechaInicio ? (route().fechaInicio | date: 'dd/MM/yyyy HH:mm') : 'No iniciada' }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Description -->
+        @if (route().descripcion) {
+          <div class="p-3 bg-light rounded-3 border mb-2">
+            <div class="fw-semibold text-dark small mb-1">Notas de la ruta / Instrucciones</div>
+            <div class="text-muted small">{{ route().descripcion }}</div>
+          </div>
+        }
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between">
+        <div class="d-flex align-items-center gap-2">
+          <button
+            type="button"
+            class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1"
+            (click)="editRequested.emit(route())"
+          >
+            <i class="bi bi-pencil"></i>
+            Editar
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1"
+            (click)="reassignRequested.emit(route())"
+          >
+            <i class="bi bi-arrow-left-right"></i>
+            Reasignar
+          </button>
+        </div>
+
+        <button type="button" class="btn btn-secondary fw-medium px-4" (click)="close()">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>

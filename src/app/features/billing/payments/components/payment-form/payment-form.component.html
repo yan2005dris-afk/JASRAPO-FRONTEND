@@ -1,0 +1,490 @@
+<div class="modal fade show d-block picker-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+      <!-- Modal Header -->
+      <div class="modal-header border-bottom px-4 py-3 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="header-icon-tile">
+            <i class="bi bi-cash-stack"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-dark mb-0 fs-5">Registrar Pago</h5>
+            <p class="text-muted small mb-0">
+              Recaudación en ventanilla — registre el pago o abono del cliente.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close shadow-none"
+          aria-label="Cerrar"
+          (click)="close()"
+          [disabled]="isLoading"
+        ></button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body p-4 bg-white">
+        <div class="row g-4">
+          <!-- LEFT COLUMN: Cliente + Estado de Cuenta -->
+          <div class="col-lg-7">
+            <!-- 1. Búsqueda de cliente -->
+            <div class="mb-3 position-relative">
+              <label for="clienteSearchInput" class="form-label fw-semibold text-dark small mb-1">
+                Cliente <span class="text-danger">*</span>
+              </label>
+
+              @if (!selectedClient) {
+                <div class="input-group">
+                  <span class="input-group-text bg-white border-end-0 text-muted ps-3">
+                    <i class="bi bi-search"></i>
+                  </span>
+                  <input
+                    id="clienteSearchInput"
+                    type="text"
+                    class="form-control border-start-0 ps-1 shadow-none"
+                    placeholder="Buscar por cédula/RUC o nombre..."
+                    [ngModel]="clientSearchQuery"
+                    (ngModelChange)="onClientSearchInput($event)"
+                  />
+                  @if (isSearchingClient) {
+                    <span class="input-group-text bg-white border-start-0 pe-3">
+                      <span
+                        class="spinner-border spinner-border-sm text-primary"
+                        role="status"
+                      ></span>
+                    </span>
+                  }
+                </div>
+
+                <!-- Dropdown Resultados -->
+                @if (clientSearchResults.length > 0) {
+                  <div class="client-results-dropdown shadow-sm border rounded-3 mt-1">
+                    @for (client of clientSearchResults; track client.identificacion) {
+                      <button
+                        type="button"
+                        class="client-result-item w-100 text-start border-0 bg-transparent px-3 py-2 d-flex justify-content-between align-items-center"
+                        (click)="selectClient(client)"
+                      >
+                        <div>
+                          <div class="fw-medium text-dark small">
+                            {{ getClientDisplayName(client) }}
+                          </div>
+                          <div class="text-muted" style="font-size: 0.75rem">
+                            {{ client.identificacion }} · {{ client.email || 'Sin email' }}
+                          </div>
+                        </div>
+                        <i class="bi bi-chevron-right text-muted small"></i>
+                      </button>
+                    }
+                  </div>
+                }
+              } @else {
+                <!-- Tarjeta de Cliente Seleccionado -->
+                <div
+                  class="selected-client-card p-3 rounded-3 border d-flex align-items-center justify-content-between gap-2"
+                >
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="client-avatar-tile">
+                      {{ getClientDisplayName(selectedClient).charAt(0).toUpperCase() }}
+                    </div>
+                    <div>
+                      <div class="fw-bold text-dark small">
+                        {{ getClientDisplayName(selectedClient) }}
+                      </div>
+                      <div class="text-muted" style="font-size: 0.78rem">
+                        ID: <span class="fw-medium">{{ selectedClient.identificacion }}</span>
+                        @if (selectedClient.telefono) {
+                          <span class="mx-1">·</span>
+                          <span>{{ selectedClient.telefono }}</span>
+                        }
+                      </div>
+                      @if (selectedClient.direccionDomicilio) {
+                        <div
+                          class="text-muted d-flex align-items-center gap-1"
+                          style="font-size: 0.78rem"
+                        >
+                          <i class="bi bi-geo-alt"></i>
+                          <span>{{ selectedClient.direccionDomicilio }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-1 flex-shrink-0"
+                    style="font-size: 0.75rem"
+                    (click)="clearSelectedClient()"
+                    [disabled]="isLoading"
+                  >
+                    <i class="bi bi-pencil-square me-1"></i> Cambiar
+                  </button>
+                </div>
+
+                <!-- Alerta de datos de facturación -->
+                @if (hasIncompleteBillingData && !usarConsumidorFinal) {
+                  <div
+                    class="billing-warning-alert mt-2 p-3 rounded-3 d-flex align-items-start justify-content-between gap-3"
+                  >
+                    <div class="d-flex align-items-start gap-2">
+                      <i class="bi bi-triangle-exclamation mt-1" style="color: #b45309"></i>
+                      <div>
+                        <div class="small fw-semibold text-dark">Datos de facturación incompletos</div>
+                        <div class="text-muted" style="font-size: 0.78rem">
+                          Faltan email, dirección o datos de RUC. Sugerimos usar CONSUMIDOR FINAL
+                          (sin identificación tributaria en el comprobante).
+                        </div>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-warning fw-medium text-dark rounded-pill px-3 flex-shrink-0"
+                      (click)="setUsarConsumidorFinal(true)"
+                    >
+                      Usar CONSUMIDOR FINAL
+                    </button>
+                  </div>
+                }
+
+                <!-- Badge Consumidor Final -->
+                @if (usarConsumidorFinal) {
+                  <div
+                    class="consumidor-badge mt-2 p-2 px-3 rounded-3 d-flex align-items-center justify-content-between gap-2"
+                  >
+                    <div class="d-flex align-items-center gap-2">
+                      <i class="bi bi-receipt text-primary"></i>
+                      <span class="small text-dark fw-medium"
+                        >Comprobante como: <strong>CONSUMIDOR FINAL</strong></span
+                      >
+                    </div>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-link text-muted p-0 shadow-none text-decoration-none"
+                      (click)="setUsarConsumidorFinal(false)"
+                    >
+                      Deshacer
+                    </button>
+                  </div>
+                }
+              }
+            </div>
+
+            <!-- 2. Estado de Cuenta Pendiente -->
+            <div class="mb-1">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="form-label d-block fw-semibold text-dark small mb-0">
+                  <i class="bi bi-receipt me-1 text-primary"></i>
+                  Estado de Cuenta Pendiente
+                </span>
+                @if (selectedClient && !isLoadingPreInvoices && pendingPreInvoices.length > 0) {
+                  <span class="badge badge-soft-danger"
+                    >{{ pendingPreInvoices.length }} pendiente(s)</span
+                  >
+                }
+              </div>
+
+              @if (!selectedClient) {
+                <div class="text-muted text-center py-4 rounded-3 border bg-light-subtle small">
+                  <i class="bi bi-person-search d-block mb-1 fs-4"></i>
+                  Seleccione un cliente para ver su saldo pendiente.
+                </div>
+              }
+
+              @if (selectedClient && isLoadingPreInvoices) {
+                <div class="text-center py-4 text-muted">
+                  <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                  <span class="small ms-2">Cargando prefacturas...</span>
+                </div>
+              }
+
+              @if (selectedClient && !isLoadingPreInvoices && pendingPreInvoices.length === 0) {
+                <div class="text-muted text-center py-4 rounded-3 border bg-light-subtle small">
+                  Sin prefacturas pendientes
+                </div>
+              }
+
+              @if (selectedClient && !isLoadingPreInvoices && pendingPreInvoices.length > 0) {
+                <div class="statement-list rounded-3 border overflow-hidden">
+                  @for (pre of pendingPreInvoices; track pre.prefacturaId) {
+                    <div
+                      class="statement-item d-flex align-items-center justify-content-between gap-2 px-3 py-2"
+                    >
+                      <div class="d-flex align-items-center gap-3">
+                        <div class="statement-dot"></div>
+                        <div>
+                          <div class="small fw-semibold text-dark">
+                            {{ getPeriodLabel(pre) }}
+                            @if (pre.tarifaNombre) {
+                              <span class="text-muted fw-normal"> · {{ pre.tarifaNombre }}</span>
+                            }
+                          </div>
+                          <div class="text-muted" style="font-size: 0.72rem">
+                            Prefactura #{{ pre.prefacturaId }}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="text-end">
+                        <div class="fw-bold text-dark tabular-nums" style="font-size: 0.9rem">
+                          {{ pre.totalPagar | currency: 'USD' : 'symbol' : '1.2-2' }}
+                        </div>
+                        <span class="badge" [ngClass]="getPreInvoiceStateTone(pre.estado)">
+                          {{ getPreInvoiceStateLabel(pre.estado) }}
+                        </span>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- Banner Total a Recaudar -->
+              @if (selectedClient && !isLoadingPreInvoices) {
+                <div
+                  class="statement-total-banner mt-2 p-3 rounded-3 d-flex align-items-center justify-content-between gap-2"
+                >
+                  <div>
+                    <div class="text-uppercase fw-bold small text-primary">Total a Recaudar</div>
+                    <div class="text-muted" style="font-size: 0.75rem">
+                      {{ pendingPreInvoices.length }} prefactura(s) pendiente(s)
+                    </div>
+                  </div>
+                  <div class="fs-4 fw-bold text-dark tabular-nums">
+                    {{ totalAPagarPendiente | currency: 'USD' : 'symbol' : '1.2-2' }}
+                  </div>
+                </div>
+              }
+
+              <!-- Banner saldo a favor (preservado) -->
+              @if (selectedClient && totalSaldoFavorDisponible > 0) {
+                <div
+                  class="saldo-favor-alert mt-2 p-2 px-3 rounded-3 d-flex align-items-center justify-content-between"
+                >
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-info-circle-fill text-info"></i>
+                    <span class="small text-dark">
+                      Saldo a favor disponible:
+                      <strong>${{ totalSaldoFavorDisponible | number: '1.2-2' }}</strong>
+                    </span>
+                  </div>
+                  <span class="badge badge-soft-info">Aplicable</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- RIGHT COLUMN: Gestión de Cobro -->
+          <div class="col-lg-5">
+            <!-- 3. Método de Pago -->
+            <div class="mb-3">
+              <span class="form-label d-block fw-semibold text-dark small mb-2">
+                Método de Pago <span class="text-danger">*</span>
+              </span>
+              <div class="row g-2">
+                <div class="col-4">
+                  <button
+                    type="button"
+                    class="pay-method-card w-100 border rounded-3 py-3 d-flex flex-column align-items-center justify-content-center gap-1"
+                    [class.active]="metodoPago === 'EFECTIVO'"
+                    (click)="setMetodoPago('EFECTIVO')"
+                  >
+                    <i class="bi bi-cash-stack fs-4"></i>
+                    <span class="small fw-bold text-uppercase">Efectivo</span>
+                  </button>
+                </div>
+                <div class="col-4">
+                  <button
+                    type="button"
+                    class="pay-method-card w-100 border rounded-3 py-3 d-flex flex-column align-items-center justify-content-center gap-1"
+                    [class.active]="metodoPago === 'TRANSFERENCIA'"
+                    (click)="setMetodoPago('TRANSFERENCIA')"
+                  >
+                    <i class="bi bi-bank fs-4"></i>
+                    <span class="small fw-bold text-uppercase">Transferencia</span>
+                  </button>
+                </div>
+                <div class="col-4">
+                  <button
+                    type="button"
+                    class="pay-method-card w-100 border rounded-3 py-3 d-flex flex-column align-items-center justify-content-center gap-1"
+                    [class.active]="metodoPago === 'TARJETA'"
+                    (click)="setMetodoPago('TARJETA')"
+                  >
+                    <i class="bi bi-credit-card fs-4"></i>
+                    <span class="small fw-bold text-uppercase">Tarjeta</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Campos condicionales: Transferencia -->
+            @if (metodoPago === 'TRANSFERENCIA') {
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label for="selectBancoPago" class="form-label fw-semibold text-dark small mb-1">
+                    Banco <span class="text-danger">*</span>
+                  </label>
+                  <select
+                    id="selectBancoPago"
+                    class="form-select form-select-sm shadow-none"
+                    [(ngModel)]="bancoSeleccionado"
+                  >
+                    <option value="">Seleccione banco...</option>
+                    @for (b of banks; track b.codigo) {
+                      <option [value]="b.codigo">{{ b.descripcion }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label
+                    for="inputNumeroOpTransf"
+                    class="form-label fw-semibold text-dark small mb-1"
+                    >N° Operación / Ref.</label
+                  >
+                  <input
+                    id="inputNumeroOpTransf"
+                    type="text"
+                    class="form-control form-control-sm shadow-none"
+                    placeholder="p. ej. TRX-98745"
+                    [(ngModel)]="numeroOperacion"
+                  />
+                </div>
+              </div>
+            }
+
+            <!-- Campos condicionales: Tarjeta -->
+            @if (metodoPago === 'TARJETA') {
+              <div class="row g-2 mb-3">
+                <div class="col-6">
+                  <label
+                    for="selectTarjetaPago"
+                    class="form-label fw-semibold text-dark small mb-1"
+                  >
+                    Marca de Tarjeta <span class="text-danger">*</span>
+                  </label>
+                  <select
+                    id="selectTarjetaPago"
+                    class="form-select form-select-sm shadow-none"
+                    [(ngModel)]="tarjetaSeleccionada"
+                  >
+                    <option value="">Seleccione marca...</option>
+                    @for (c of cards; track c.codigo) {
+                      <option [value]="c.codigo">{{ c.descripcion }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-6">
+                  <label
+                    for="inputNumeroOpTarjeta"
+                    class="form-label fw-semibold text-dark small mb-1"
+                    >N° Autorización / Voucher</label
+                  >
+                  <input
+                    id="inputNumeroOpTarjeta"
+                    type="text"
+                    class="form-control form-control-sm shadow-none"
+                    placeholder="p. ej. VOUCH-1023"
+                    [(ngModel)]="numeroOperacion"
+                  />
+                </div>
+              </div>
+            }
+
+            <!-- 4. Fecha de Pago y Monto -->
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label for="inputFechaPagoForm" class="form-label fw-semibold text-dark small mb-1">
+                  Fecha de Pago <span class="text-danger">*</span>
+                </label>
+                <input
+                  id="inputFechaPagoForm"
+                  type="date"
+                  class="form-control form-control-sm shadow-none"
+                  [(ngModel)]="fechaPago"
+                />
+              </div>
+              <div class="col-6">
+                <label
+                  for="inputMontoRecibidoForm"
+                  class="form-label fw-semibold text-dark small mb-1"
+                >
+                  Monto Recibido ($) <span class="text-danger">*</span>
+                </label>
+                <div class="input-group input-group-sm">
+                  <span class="input-group-text bg-light fw-bold text-dark">$</span>
+                  <input
+                    id="inputMontoRecibidoForm"
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    class="form-control shadow-none fw-bold text-dark tabular-nums"
+                    placeholder="0.00"
+                    [(ngModel)]="montoRecibido"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- 5. Notas -->
+            <div class="mb-1">
+              <label
+                for="textareaObservacionesPago"
+                class="form-label fw-semibold text-dark small mb-1"
+                >Notas</label
+              >
+              <textarea
+                id="textareaObservacionesPago"
+                class="form-control form-control-sm shadow-none"
+                rows="2"
+                placeholder="Detalle interno o nota sobre este pago..."
+                [(ngModel)]="observaciones"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div
+        class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between align-items-center flex-wrap gap-2"
+      >
+        <button
+          type="button"
+          class="btn btn-outline-secondary fw-medium px-3"
+          (click)="close()"
+          [disabled]="isLoading"
+        >
+          Cancelar
+        </button>
+        <div class="d-flex align-items-center gap-2">
+          <button
+            type="button"
+            class="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium px-3"
+            (click)="requestAgreement()"
+            [disabled]="isLoading"
+          >
+            <i class="bi bi-handshake"></i>
+            Solicitar Convenio
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-4"
+            (click)="submitPayment()"
+            [disabled]="!isFormValid || isLoading"
+          >
+            @if (isLoading) {
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
+            }
+            @if (!isLoading) {
+              <i class="bi bi-check-circle"></i>
+            }
+            {{ isLoading ? 'Registrando...' : 'Registrar Pago' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>
