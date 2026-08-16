@@ -1,0 +1,459 @@
+<div class="cliente-container">
+  <!-- Page header -->
+  @if (!selectionMode()) {
+    <div class="page-header mb-4">
+      <div>
+        <h3 class="fw-bold mb-0 text-dark fs-4">Gestión de Clientes</h3>
+        <p class="text-muted small mb-0">Registrá, editá y consultá la información de clientes.</p>
+      </div>
+    </div>
+  }
+
+  <div class="card border-0 shadow-sm rounded-3">
+    <!-- Header: Buscar y acciones -->
+    <div
+      class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
+      <!-- Botón Agregar (oculto en modo selección) -->
+      @if (!selectionMode()) {
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="abrirModal()"
+        >
+          <i class="bi bi-plus-lg"></i>
+          Agregar
+        </button>
+      }
+
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- Input de búsqueda -->
+        <div class="input-group search-group">
+          <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+            <i class="bi bi-search"></i>
+          </span>
+
+          <input
+            type="text"
+            class="form-control border-start-0 ps-0 shadow-none"
+            placeholder="Buscar cliente..."
+            [(ngModel)]="searchTerm"
+            (keyup.enter)="searchClients()"
+          />
+        </div>
+
+        <!-- Tipo de búsqueda -->
+        <select class="form-select shadow-none" style="width: 190px" [(ngModel)]="searchType">
+          <option value="nombreCompleto">Nombres</option>
+          <option value="identificacion">Identificación</option>
+        </select>
+
+        <!-- Estado -->
+        <select class="form-select shadow-none" style="width: 150px" [(ngModel)]="estadoBusqueda">
+          <option value="todos">Todos</option>
+          <option value="activos">Activos</option>
+          <option value="inactivos">Inactivos</option>
+        </select>
+
+        <!-- Botón Buscar -->
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="searchClients()"
+          [disabled]="isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+
+          @if (!isLoading) {
+            <i class="bi bi-search"></i>
+          }
+
+          {{ isLoading ? 'Buscando...' : 'Buscar' }}
+        </button>
+
+        <!-- Botón Limpiar -->
+        <button
+          class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="limpiarBusqueda()"
+          [disabled]="isLoading"
+        >
+          <i class="bi bi-x-circle"></i>
+          Limpiar
+        </button>
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="pt-3">
+      <!-- Estado inicial -->
+      @if (!hasFetched && !isLoading) {
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="bi bi-search"></i>
+          </div>
+          <p class="fw-semibold mb-1 text-dark">Sin resultados para mostrar</p>
+          <p class="text-muted small mb-0">
+            Realizá una <strong>búsqueda</strong> para visualizar los clientes registrados.
+          </p>
+        </div>
+      }
+
+      <!-- Cargando -->
+      @if (isLoading) {
+        <div class="text-center py-5 text-muted">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <p class="mt-3 mb-0">Cargando clientes...</p>
+        </div>
+      }
+
+      <!-- Tabla de clientes -->
+      @if (hasFetched && !isLoading) {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 custom-table">
+            <thead>
+              <tr>
+                @if (!selectionMode()) {
+                  <th scope="col" class="ps-4" style="width: 56px">
+                    <input class="form-check-input table-checkbox" type="checkbox" />
+                  </th>
+                }
+
+                <th scope="col" class="text-muted fw-semibold small">Tipo</th>
+                <th scope="col" class="text-muted fw-semibold small">Identificación</th>
+                <th scope="col" class="text-muted fw-semibold small">Cliente</th>
+                @if (!selectionMode()) {
+                  <th scope="col" class="text-muted fw-semibold small">Correo</th>
+                  <th scope="col" class="text-muted fw-semibold small">Teléfono</th>
+                  <th scope="col" class="text-muted fw-semibold small">Dirección</th>
+                }
+                <th scope="col" class="text-muted fw-semibold small">Estado</th>
+                @if (!selectionMode()) {
+                  <th scope="col" class="text-muted fw-semibold small text-center pe-4">
+                    Acciones
+                  </th>
+                }
+              </tr>
+            </thead>
+
+            <tbody>
+              @for (client of pagedClients; track obtenerIdCliente(client) ?? $index) {
+                <tr
+                  [class.selectable-row]="selectionMode()"
+                  [attr.role]="selectionMode() ? 'button' : null"
+                  [attr.tabindex]="selectionMode() ? 0 : null"
+                  [title]="selectionMode() ? 'Doble clic o Enter para seleccionar' : ''"
+                  (dblclick)="selectClient(client)"
+                  (keydown.enter)="selectionMode() && selectClient(client)"
+                >
+                  @if (!selectionMode()) {
+                    <td class="ps-4">
+                      <input class="form-check-input table-checkbox" type="checkbox" />
+                    </td>
+                  }
+
+                  <td>
+                    <span class="tipo-badge">
+                      {{
+                        $any(client.tipoIdentificacion)?.codigo ||
+                          $any(client.tipoIdentificacion)?.nombre ||
+                          client.tipoIdentificacionId ||
+                          'N/A'
+                      }}
+                    </span>
+                  </td>
+
+                  <td class="fw-medium text-dark" style="font-size: 0.95rem">
+                    {{ client.identificacion || '—' }}
+                  </td>
+
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="client-avatar">
+                        {{ (obtenerNombreCliente(client) || '?').charAt(0).toUpperCase() }}
+                      </div>
+                      <span class="text-dark small fw-medium">
+                        {{ obtenerNombreCliente(client) }}
+                      </span>
+                    </div>
+                  </td>
+
+                  @if (!selectionMode()) {
+                    <td class="text-muted small">
+                      {{ client.email || '—' }}
+                    </td>
+
+                    <td class="text-muted small">
+                      {{ client.telefono || '—' }}
+                    </td>
+
+                    <td class="text-muted small address-cell">
+                      <span class="text-truncate d-block" [title]="client.direccionDomicilio || ''">
+                        {{ client.direccionDomicilio || '—' }}
+                      </span>
+                    </td>
+                  }
+
+                  <td class="small">
+                    @if (client.activo === false) {
+                      <span class="badge rounded-pill text-bg-danger">Inactivo</span>
+                    } @else {
+                      <span class="badge rounded-pill text-bg-success">Activo</span>
+                    }
+                  </td>
+
+                  @if (!selectionMode()) {
+                    <td class="text-center pe-4">
+                      <div class="dropdown">
+                        <button
+                          class="btn btn-link text-muted p-0 shadow-none"
+                          (click)="toggleDropdown(obtenerIdCliente(client)!, $event)"
+                          aria-label="Menú de acciones"
+                        >
+                          <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul
+                          class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                          [class.show]="openDropdownId === obtenerIdCliente(client)"
+                          style="min-width: 130px"
+                        >
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2"
+                              (click)="verDetalleCliente(client)"
+                            >
+                              <i class="bi bi-eye text-secondary" style="font-size: 0.8rem"></i>
+                              Ver detalle
+                            </button>
+                          </li>
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2"
+                              (click)="editarCliente(client)"
+                            >
+                              <i
+                                class="bi bi-pencil-fill text-primary"
+                                style="font-size: 0.8rem"
+                              ></i>
+                              Editar
+                            </button>
+                          </li>
+                          <li>
+                            <hr class="dropdown-divider" />
+                          </li>
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                              (click)="eliminarCliente(client)"
+                            >
+                              <i class="bi bi-trash-fill" style="font-size: 0.8rem"></i>
+                              Eliminar
+                            </button>
+                          </li>
+                        </ul>
+                      </div>
+                    </td>
+                  }
+                </tr>
+              }
+
+              @if (pagedClients.length === 0) {
+                <tr>
+                  <td colspan="9" class="text-center py-5">
+                    <i class="bi bi-person-x fs-2 d-block mb-2 text-muted opacity-50"></i>
+                    <span class="text-muted small"
+                      >No se encontraron clientes con esos criterios.</span
+                    >
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <!-- Footer / Paginación -->
+    <div class="card-footer bg-white border-top px-4 py-3">
+      <app-pagination
+        [totalItems]="totalItems"
+        [currentPage]="currentPage"
+        [pageSize]="pageSize"
+        [pageSizeOptions]="pageSizeOptions"
+        itemNameSingular="cliente"
+        itemNamePlural="clientes"
+        (pageChange)="goToPage($event)"
+        (pageSizeChange)="setPageSize($event)"
+      />
+    </div>
+  </div>
+</div>
+
+<!-- Modal Crear / Editar Cliente -->
+@if (isModalOpen) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5)">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow">
+        <app-clients-form
+          [clienteAEditar]="objetoClienteAEditar"
+          (formSubmitted)="searchClients()"
+          (formClosed)="cerrarModal()"
+        ></app-clients-form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Ver Detalle Cliente -->
+@if (isDetalleModalOpen && clienteDetalleSeleccionado) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5)">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+      <div class="modal-content border-0 shadow rounded-4">
+        <div class="modal-header border-bottom-0 pb-0">
+          <div>
+            <h5 class="modal-title fw-bold">Detalle del Cliente</h5>
+            <p class="text-muted mb-0 small">Información completa registrada en el sistema.</p>
+          </div>
+
+          <button
+            type="button"
+            class="btn-close shadow-none"
+            aria-label="Cerrar"
+            (click)="cerrarDetalleModal()"
+          ></button>
+        </div>
+
+        <div class="modal-body pt-4">
+          <div class="detalle-cliente-header mb-4">
+            <div class="detalle-avatar">
+              <i class="bi bi-person-fill"></i>
+            </div>
+
+            <div>
+              <h5 class="fw-bold mb-1">
+                {{ obtenerNombreCliente(clienteDetalleSeleccionado) }}
+              </h5>
+
+              <div>
+                @if (clienteDetalleSeleccionado.activo === false) {
+                  <span class="badge rounded-pill text-bg-danger">Inactivo</span>
+                } @else {
+                  <span class="badge rounded-pill text-bg-success">Activo</span>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3">
+            <div class="col-md-6">
+              <div class="detalle-card">
+                <span class="detalle-label">
+                  <i class="bi bi-card-text"></i>
+                  Tipo de identificación
+                </span>
+                <strong>
+                  {{
+                    $any(clienteDetalleSeleccionado.tipoIdentificacion)?.nombre ||
+                      $any(clienteDetalleSeleccionado.tipoIdentificacion)?.codigo ||
+                      clienteDetalleSeleccionado.tipoIdentificacionId ||
+                      'No registrado'
+                  }}
+                </strong>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="detalle-card">
+                <span class="detalle-label">
+                  <i class="bi bi-fingerprint"></i>
+                  Identificación
+                </span>
+                <strong>{{ clienteDetalleSeleccionado.identificacion || 'No registrada' }}</strong>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="detalle-card">
+                <span class="detalle-label">
+                  <i class="bi bi-envelope"></i>
+                  Correo electrónico
+                </span>
+                <strong>{{ clienteDetalleSeleccionado.email || 'No registrado' }}</strong>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="detalle-card">
+                <span class="detalle-label">
+                  <i class="bi bi-telephone"></i>
+                  Teléfono
+                </span>
+                <strong>{{ clienteDetalleSeleccionado.telefono || 'No registrado' }}</strong>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="detalle-card">
+                <span class="detalle-label">
+                  <i class="bi bi-telephone-plus"></i>
+                  Teléfono secundario
+                </span>
+                <strong>{{
+                  clienteDetalleSeleccionado.telefonoSecundario || 'No registrado'
+                }}</strong>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="detalle-card">
+                <span class="detalle-label">
+                  <i class="bi bi-shield-check"></i>
+                  Condiciones especiales
+                </span>
+
+                <div class="d-flex gap-2 flex-wrap mt-1">
+                  @if (clienteDetalleSeleccionado.aplicaTerceraEdad) {
+                    <span class="badge rounded-pill text-bg-info">Tercera edad</span>
+                  }
+
+                  @if (clienteDetalleSeleccionado.aplicaDiscapacidad) {
+                    <span class="badge rounded-pill text-bg-warning">Discapacidad</span>
+                  }
+
+                  @if (
+                    !clienteDetalleSeleccionado.aplicaTerceraEdad &&
+                    !clienteDetalleSeleccionado.aplicaDiscapacidad
+                  ) {
+                    <span class="text-muted small">No aplica</span>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12">
+              <div class="detalle-card">
+                <span class="detalle-label">
+                  <i class="bi bi-geo-alt"></i>
+                  Dirección domiciliaria
+                </span>
+                <strong>{{
+                  clienteDetalleSeleccionado.direccionDomicilio || 'No registrada'
+                }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-top-0">
+          <button type="button" class="btn btn-light" (click)="cerrarDetalleModal()">Cerrar</button>
+
+          <button type="button" class="btn btn-primary" (click)="abrirEdicionDesdeDetalle()">
+            <i class="bi bi-pencil me-2"></i>
+            Editar cliente
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

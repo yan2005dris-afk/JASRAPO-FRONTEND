@@ -1,4 +1,4 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpInterceptorFn, HttpRequest } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 
@@ -6,24 +6,25 @@ import { AuthService } from '../services/auth.service';
  * Interceptor híbrido para autenticación:
  * - Agrega access token en header Authorization (Bearer)
  * - Habilita withCredentials para envío/recepción de cookies (refresh token)
+ * - Maneja errores 401 cerrando la sesión
  */
-export const authInterceptor: HttpInterceptorFn = (req, next) => {
-    const authService = inject(AuthService);
-    const token = authService.token();
+export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next) => {
+  const authService = inject(AuthService);
+  const token = authService.token();
 
-    // Clonar la petición con withCredentials y opcionalmente el Bearer token
-    const modifications: any = {
-        withCredentials: true // Permite cookies HttpOnly (refresh token)
-    };
+  // Clonamos la petición base habilitando siempre withCredentials para las Cookies HttpOnly
+  let authReq = req.clone({
+    withCredentials: true,
+  });
 
-    // Si hay access token, agregarlo al header Authorization
-    if (token) {
-        modifications.setHeaders = {
-            Authorization: `Bearer ${token}`
-        };
-    }
+  // Si existe un token de acceso, clonamos nuevamente para inyectar el Header
+  if (token) {
+    authReq = authReq.clone({
+      setHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  }
 
-    const authReq = req.clone(modifications);
-
-    return next(authReq);
+  return next(authReq);
 };

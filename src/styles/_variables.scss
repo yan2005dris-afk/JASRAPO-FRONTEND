@@ -1,0 +1,49 @@
+/* 
+  Global CSS Variables
+  Define color palettes, typography, spacing, and other design tokens here.
+  Corporate Water Theme applied.
+*/
+
+:root {
+  /* Brand Colors - Premium Turquoise/Teal Water Palette based on #0fc3c6 */
+  --primary-color: #0c9ea1;
+  /* Deep corporate teal for excellent contrast and readability */
+  --secondary-color: #0fc3c6;
+  /* The exact vibrant turquoise requested */
+  --accent-color: #4ee6e9;
+  /* Bright glow turquoise for active states and highlights */
+  --info-color: #bff3f4;
+  /* Softest highlight color */
+
+  /* Neutrals & Backgrounds */
+  --white: #ffffff;
+  --light-bg: #ffffff;
+  /* Off-white with a soft hint of teal */
+  --soft-blue-bg: #dbf7f8;
+  /* Soft background highlight for badges or cards */
+
+  /* Text & Borders */
+  --dark-text: #0e2728;
+  /* Very dark slate teal instead of black/gray */
+  --muted-text: #597b7d;
+  /* Soft slate teal for secondary text */
+  --border-color: #cbdedf;
+
+  /* Form & Interactive */
+  --input-focus-ring: rgba(15, 195, 198, 0.2);
+
+  /* State Colors */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+
+  /* Typography */
+  --font-family-base: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+
+  /* Bootstrap Native Overrides */
+  --bs-primary: var(--primary-color);
+  --bs-info: var(--info-color);
+  --bs-body-bg: var(--light-bg);
+  --bs-body-color: var(--dark-text);
+  --bs-primary-rgb: 12, 158, 161;
+}

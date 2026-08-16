@@ -6,7 +6,11 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test --watch=false",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format:check": "prettier --check \"src/**/*.{ts,html,scss,json}\"",
+    "format:fix": "prettier --write \"src/**/*.{ts,html,scss,json}\""
   },
   "prettier": {
     "printWidth": 100,
@@ -23,14 +27,18 @@
   "private": true,
   "packageManager": "pnpm@9.1.0",
   "dependencies": {
-    "@angular/animations": "~21.1.0",
+    "@angular/animations": "^21.1.0",
+    "@angular/cdk": "~21.2.8",
     "@angular/common": "^21.1.0",
     "@angular/compiler": "^21.1.0",
     "@angular/core": "^21.1.0",
     "@angular/forms": "^21.1.0",
+    "@angular/material": "~21.2.8",
     "@angular/platform-browser": "^21.1.0",
     "@angular/router": "^21.1.0",
     "bootstrap": "^5.3.8",
+    "ngx-extended-pdf-viewer": "^27.0.0",
+    "pdfmake": "^0.3.8",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
@@ -38,11 +46,18 @@
     "@angular/build": "^21.1.4",
     "@angular/cli": "^21.1.4",
     "@angular/compiler-cli": "^21.1.0",
+    "@eslint/js": "^10.0.1",
     "@tailwindcss/postcss": "^4.1.12",
+    "@types/pdfmake": "^0.3.2",
+    "angular-eslint": "21.3.1",
+    "eslint": "^10.0.3",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
     "jsdom": "^27.1.0",
     "postcss": "^8.5.3",
-    "tailwindcss": "^4.1.12",
+    "prettier": "^3.8.1",
     "typescript": "~5.9.2",
+    "typescript-eslint": "8.56.1",
     "vitest": "^4.0.8"
   }
 }

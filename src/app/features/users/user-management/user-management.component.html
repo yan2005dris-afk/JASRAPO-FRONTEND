@@ -1,0 +1,206 @@
+<div class="user-management-container">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold mb-0 text-dark fs-4">Gestión de Usuarios</h3>
+  </div>
+
+  @if (errorMessage(); as msg) {
+    <div
+      class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4"
+      role="alert"
+    >
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      {{ msg }}
+      <button
+        type="button"
+        class="btn-close"
+        (click)="errorMessage.set(null)"
+        aria-label="Cerrar"
+      ></button>
+    </div>
+  }
+
+  <div class="card border-0 shadow-sm rounded-3">
+    <!-- Card Header (Search & Actions) -->
+    <div
+      class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
+      <h5 class="fw-bold mb-0 fs-6">Lista de Usuarios</h5>
+
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- Search -->
+        <div class="input-group search-group" style="width: 280px">
+          <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+            <i class="bi bi-search"></i>
+          </span>
+          <input
+            type="text"
+            class="form-control border-start-0 ps-0 shadow-none"
+            placeholder="Buscar usuario..."
+            [value]="searchTerm()"
+            (input)="onSearch($any($event.target).value)"
+            aria-label="Buscar usuario"
+          />
+        </div>
+
+        <!-- Primary Action -->
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="navigateToCreate()"
+        >
+          <i class="bi bi-plus-lg"></i> Agregar Usuario
+        </button>
+
+        <!-- Bulk Actions Dropdown -->
+        <button
+          class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium bg-white text-muted"
+        >
+          Acciones Masivas <i class="bi bi-chevron-down ms-1" style="font-size: 0.75rem"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-responsive pt-3">
+      <table class="table table-hover align-middle mb-0 custom-table">
+        <thead>
+          <tr>
+            <th scope="col" class="ps-4" style="width: 56px">
+              <input
+                class="form-check-input table-checkbox"
+                type="checkbox"
+                [checked]="isAllSelected()"
+                [indeterminate]="isIndeterminate()"
+                (change)="toggleAll()"
+                aria-label="Seleccionar todos los usuarios"
+              />
+            </th>
+            <th scope="col" class="text-muted fw-semibold small">Nombre</th>
+            <th scope="col" class="text-muted fw-semibold small">Email</th>
+            <th scope="col" class="text-muted fw-semibold small">Teléfono</th>
+            <th scope="col" class="text-muted fw-semibold small">Rol</th>
+            <th scope="col" class="text-muted fw-semibold small text-center pe-4">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of pagedUsers(); track user.usuarioId) {
+            <tr>
+              <td class="ps-4">
+                <input
+                  class="form-check-input table-checkbox"
+                  type="checkbox"
+                  [checked]="selectedIds().has(user.usuarioId)"
+                  (change)="toggleUser(user.usuarioId)"
+                  [attr.aria-label]="'Seleccionar usuario ' + user.nombres"
+                />
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div
+                    class="user-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center overflow-hidden"
+                    style="width: 32px; height: 32px; font-size: 0.85rem; font-weight: 600"
+                  >
+                    @if (user.avatar?.url) {
+                      <img
+                        [src]="user.avatar!.url"
+                        [alt]="user.nombres"
+                        class="w-100 h-100 object-fit-cover"
+                      />
+                    } @else {
+                      {{ user.nombres.charAt(0).toUpperCase() }}
+                    }
+                  </div>
+                  <span class="fw-medium text-dark" style="font-size: 0.95rem">
+                    {{ user.nombres }} {{ user.apellidos }}
+                  </span>
+                </div>
+              </td>
+              <td class="text-muted small">{{ user.email }}</td>
+              <td class="text-muted small">{{ user.telefono || 'Sin teléfono' }}</td>
+              <td>
+                <span
+                  class="badge rounded-pill fw-medium badge-rol-default"
+                  [ngClass]="{
+                    'badge-rol-admin':
+                      user.rol?.nombre?.toLowerCase() === 'admin' ||
+                      user.rol?.nombre?.toLowerCase() === 'superadmin',
+                    'badge-rol-presidente':
+                      user.rol?.nombre?.toLowerCase() === 'presidente' ||
+                      user.rol?.nombre?.toLowerCase() === 'presidencia',
+                    'badge-rol-secretario':
+                      user.rol?.nombre?.toLowerCase() === 'secretario' ||
+                      user.rol?.nombre?.toLowerCase() === 'secretaria',
+                    'badge-rol-tesorero':
+                      user.rol?.nombre?.toLowerCase() === 'tesorero' ||
+                      user.rol?.nombre?.toLowerCase() === 'recaudacion' ||
+                      user.rol?.nombre?.toLowerCase() === 'contabilidad',
+                  }"
+                  >{{ user.rol?.nombre || 'Usuario' }}</span
+                >
+              </td>
+              <td class="text-center pe-4">
+                <div class="dropdown">
+                  <button
+                    class="btn btn-link text-muted p-0 shadow-none"
+                    (click)="toggleDropdown(user.usuarioId, $event)"
+                    aria-label="Menú de acciones"
+                  >
+                    <i class="bi bi-three-dots-vertical"></i>
+                  </button>
+                  <ul
+                    class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                    [class.show]="openDropdownId() === user.usuarioId"
+                    style="min-width: 130px"
+                  >
+                    <li>
+                      <button
+                        class="dropdown-item d-flex align-items-center gap-2"
+                        (click)="navigateToEdit(user)"
+                      >
+                        <i class="bi bi-pencil-fill text-primary" style="font-size: 0.8rem"></i>
+                        Editar
+                      </button>
+                    </li>
+                    <li>
+                      <hr class="dropdown-divider" />
+                    </li>
+                    <li>
+                      <button
+                        class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                        (click)="eliminarUsuario(user)"
+                      >
+                        <i class="bi bi-trash-fill" style="font-size: 0.8rem"></i>
+                        Eliminar
+                      </button>
+                    </li>
+                  </ul>
+                </div>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="text-center text-muted py-4">
+                <i class="bi bi-people fs-3 d-block mb-2"></i>
+                No se encontraron usuarios
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer / Paginación -->
+    <div class="card-footer bg-white border-top px-4 py-3">
+      <app-pagination
+        [totalItems]="totalItems()"
+        [currentPage]="currentPage()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="pageSizeOptions"
+        itemNameSingular="usuario"
+        itemNamePlural="usuarios"
+        (pageChange)="goToPage($event)"
+        (pageSizeChange)="setPageSize($event)"
+      />
+    </div>
+  </div>
+</div>

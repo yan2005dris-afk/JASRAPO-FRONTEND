@@ -1,0 +1,37 @@
+services:
+  frontend:
+    container_name: jasrapo-frontend
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    image: jasrapo-frontend:latest
+    ports:
+      - '${FRONTEND_PORT:-80}:80'
+    restart: unless-stopped
+    networks:
+      - jasrapo-network
+
+  frontend-dev:
+    container_name: jasrapo-frontend-dev
+    profiles:
+      - dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    image: jasrapo-frontend:dev
+    ports:
+      - '${FRONTEND_DEV_PORT:-4200}:4200'
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    restart: unless-stopped
+    networks:
+      - jasrapo-network
+
+networks:
+  jasrapo-network:
+    name: jasrapo-network

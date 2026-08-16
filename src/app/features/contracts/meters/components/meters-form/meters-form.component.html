@@ -1,0 +1,159 @@
+<form [formGroup]="form" (ngSubmit)="submit()">
+  <div class="modal-header">
+    <div>
+      <h5 class="modal-title fw-bold">
+        @if (isEdit()) {
+          Editar Estado del Medidor
+          <span class="text-primary">[{{ meter()?.serie || 'S/N' }}]</span>
+        } @else {
+          Registrar Nuevo Medidor
+        }
+      </h5>
+      <p class="text-muted mb-0 small">
+        @if (isEdit()) {
+          Actualice el estado del medidor y registre las observaciones correspondientes.
+        } @else {
+          Complete los campos para registrar la información física del nuevo medidor.
+        }
+      </p>
+    </div>
+
+    <button
+      type="button"
+      class="btn-close shadow-none"
+      aria-label="Cerrar"
+      [disabled]="isSaving()"
+      (click)="closeForm()"
+    ></button>
+  </div>
+
+  <div class="modal-body">
+    @if (errorMessage()) {
+      <div class="alert alert-danger py-2 px-3 mb-3 small d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-circle-fill"></i>
+        <span>{{ errorMessage() }}</span>
+      </div>
+    }
+
+    @if (isEdit()) {
+      <!-- Selección de Estado -->
+      <div class="mb-3">
+        <label for="estadoEditar" class="form-label fw-medium"
+          >Estado <span class="text-dark fw-bold ms-1">*</span></label
+        >
+        <select
+          id="estadoEditar"
+          class="form-select"
+          formControlName="codigo"
+          [class.is-invalid]="form.controls.codigo.invalid && form.controls.codigo.touched"
+        >
+          <option value="" disabled>ESTADO</option>
+          @for (status of statuses(); track status.codigo) {
+            <option [value]="status.codigo">
+              {{ status.nombre | uppercase }}
+            </option>
+          }
+        </select>
+        @if (form.controls.codigo.invalid && form.controls.codigo.touched) {
+          <div class="invalid-feedback">Debe seleccionar un estado.</div>
+        }
+      </div>
+
+      <!-- Área de Observaciones -->
+      <div class="col-12">
+        <label for="observacion" class="form-label fw-semibold">Observación</label>
+        <textarea
+          id="observacion"
+          class="form-control"
+          rows="4"
+          formControlName="observacion"
+          placeholder="Ingrese el motivo o una observación técnica..."
+          maxlength="255"
+          [class.is-invalid]="
+            form.controls.observacion.invalid && form.controls.observacion.touched
+          "
+          style="resize: none"
+        ></textarea>
+        @if (form.controls.observacion.hasError('maxlength') && form.controls.observacion.touched) {
+          <div class="invalid-feedback">La observación no debe exceder 255 caracteres.</div>
+        }
+      </div>
+    } @else {
+      <div class="row g-3">
+        <div class="col-12">
+          <label for="serie" class="form-label fw-semibold"
+            >N° Serie <span class="text-danger fw-bold ms-1">*</span></label
+          >
+          <input
+            id="serie"
+            type="text"
+            class="form-control"
+            formControlName="serie"
+            placeholder="Ej. SN-001"
+            maxlength="20"
+            [class.is-invalid]="form.controls.serie.invalid && form.controls.serie.touched"
+          />
+          @if (form.controls.serie.touched && form.controls.serie.hasError('required')) {
+            <div class="invalid-feedback">El número de serie es obligatorio.</div>
+          } @else if (form.controls.serie.touched && form.controls.serie.hasError('maxlength')) {
+            <div class="invalid-feedback">El número de serie no debe exceder 20 caracteres.</div>
+          }
+        </div>
+
+        <div class="col-md-6">
+          <label for="marca" class="form-label fw-semibold"
+            >Marca <span class="text-danger fw-bold ms-1">*</span></label
+          >
+          <input
+            id="marca"
+            type="text"
+            class="form-control"
+            formControlName="marca"
+            placeholder="Ej. Itron"
+            maxlength="20"
+            [class.is-invalid]="form.controls.marca.invalid && form.controls.marca.touched"
+          />
+          @if (form.controls.marca.touched && form.controls.marca.hasError('required')) {
+            <div class="invalid-feedback">La marca es obligatoria.</div>
+          } @else if (form.controls.marca.touched && form.controls.marca.hasError('maxlength')) {
+            <div class="invalid-feedback">La marca no debe exceder 20 caracteres.</div>
+          }
+        </div>
+
+        <div class="col-md-6">
+          <label for="modelo" class="form-label fw-semibold"
+            >Modelo <span class="text-danger fw-bold ms-1">*</span></label
+          >
+          <input
+            id="modelo"
+            type="text"
+            class="form-control"
+            formControlName="modelo"
+            placeholder="Ej. CX1000"
+            maxlength="20"
+            [class.is-invalid]="form.controls.modelo.invalid && form.controls.modelo.touched"
+          />
+          @if (form.controls.modelo.touched && form.controls.modelo.hasError('required')) {
+            <div class="invalid-feedback">El modelo es obligatorio.</div>
+          } @else if (form.controls.modelo.touched && form.controls.modelo.hasError('maxlength')) {
+            <div class="invalid-feedback">El modelo no debe exceder 20 caracteres.</div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="modal-footer">
+    <button
+      type="button"
+      class="btn btn-outline-secondary fw-medium px-4"
+      [disabled]="isSaving()"
+      (click)="closeForm()"
+    >
+      Cancelar
+    </button>
+    <button type="submit" class="btn btn-primary px-4" [disabled]="isSaving() || form.invalid">
+      {{ isSaving() ? 'Guardando...' : 'Guardar' }}
+    </button>
+  </div>
+</form>

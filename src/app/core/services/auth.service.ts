@@ -1,386 +1,236 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, throwError, of, delay, switchMap, timer } from 'rxjs';
+import { Observable, tap, catchError, throwError, switchMap, timer, Subscription } from 'rxjs';
 import { LoginRequest, LoginResponse, RefreshTokenResponse, User } from '../models/auth.model';
 import { environment } from '../../../environments/environment';
+import { MenuService } from './menu.service';
 
 @Injectable({
-    providedIn: 'root'
+  providedIn: 'root',
 })
 export class AuthService {
-    private readonly http = inject(HttpClient);
-    private readonly router = inject(Router);
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly menuService = inject(MenuService);
 
-    private readonly API_URL = `${environment.apiUrl}/auth`;
-    
-    // Signals para el estado de autenticación
-    private readonly tokenSignal = signal<string | null>(this.getStoredToken());
-    private readonly sidSignal = signal<string | null>(this.getStoredSid());
-    private readonly tokenCreatedAtSignal = signal<string | null>(this.getStoredTokenCreatedAt());
-    private readonly tokenExpiresAtSignal = signal<string | null>(this.getStoredTokenExpiresAt());
-    private readonly userSignal = signal<User | null>(this.getStoredUser());
-    
-    // Estado público computed
-    readonly isAuthenticated = computed(() => !!this.tokenSignal());
-    readonly currentUser = computed(() => this.userSignal());
-    readonly token = computed(() => this.tokenSignal());
-    readonly sid = computed(() => this.sidSignal());
-    readonly tokenCreatedAt = computed(() => this.tokenCreatedAtSignal());
-    readonly tokenExpiresAt = computed(() => this.tokenExpiresAtSignal());
-    
-    // Timer para auto-refresh del token
-    private refreshTimerSubscription: any = null;
+  private readonly API_URL = `${environment.apiUrl}/auth`;
 
-    /**
-     * Realiza el login del usuario
-     * @param credentials Credenciales de acceso
-     * @returns Observable con la respuesta del login
-     */
-    login(credentials: LoginRequest): Observable<LoginResponse> {
-        /*
-        // ============================================
-        // SIMULACIÓN DE BACKEND - SOLO PARA DESARROLLO
-        // ============================================
-        // Usuarios de prueba con diferentes roles
-        const DEMO_USERS = [
-            {
-                email: 'admin@japo.com',
-                password: '123456',
-                userData: {
-                    id: '1',
-                    email: 'admin@japo.com',
-                    name: 'Administrador JAPO',
-                    roleId: 1,
-                    roleName: 'Administrador',
-                    avatar: 'https://ui-avatars.com/api/?name=Admin+JAPO&background=0D6EFD&color=fff'
-                }
-            },
-            {
-                email: 'presidente@japo.com',
-                password: '123456',
-                userData: {
-                    id: '2',
-                    email: 'presidente@japo.com',
-                    name: 'Carlos Mendoza',
-                    roleId: 2,
-                    roleName: 'Presidente',
-                    avatar: 'https://ui-avatars.com/api/?name=Carlos+Mendoza&background=198754&color=fff'
-                }
-            },
-            {
-                email: 'secretario@japo.com',
-                password: '123456',
-                userData: {
-                    id: '3',
-                    email: 'secretario@japo.com',
-                    name: 'María González',
-                    roleId: 3,
-                    roleName: 'Secretario',
-                    avatar: 'https://ui-avatars.com/api/?name=Maria+Gonzalez&background=FFC107&color=000'
-                }
-            },
-            {
-                email: 'tesorero@japo.com',
-                password: '123456',
-                userData: {
-                    id: '4',
-                    email: 'tesorero@japo.com',
-                    name: 'Roberto Silva',
-                    roleId: 4,
-                    roleName: 'Tesorero',
-                    avatar: 'https://ui-avatars.com/api/?name=Roberto+Silva&background=DC3545&color=fff'
-                }
-            }
-        ];
+  private readonly tokenSignal = signal<string | null>(this.getStoredToken());
+  private readonly sidSignal = signal<string | null>(this.getStoredSid());
+  private readonly tokenCreatedAtSignal = signal<string | null>(this.getStoredTokenCreatedAt());
+  private readonly tokenExpiresAtSignal = signal<string | null>(this.getStoredTokenExpiresAt());
+  private readonly userSignal = signal<User | null>(this.getStoredUser());
 
-        // Buscar usuario por email y password
-        const foundUser = DEMO_USERS.find(
-            user => user.email === credentials.email && user.password === credentials.password
-        );
+  readonly isAuthenticated = computed(() => !!this.tokenSignal());
+  readonly currentUser = computed(() => this.userSignal());
+  readonly token = computed(() => this.tokenSignal());
+  readonly sid = computed(() => this.sidSignal());
+  readonly tokenCreatedAt = computed(() => this.tokenCreatedAtSignal());
+  readonly tokenExpiresAt = computed(() => this.tokenExpiresAtSignal());
 
-        if (foundUser) {
-            // Simular respuesta exitosa del backend
-            const now = new Date();
-            const expiresIn = 15 * 60 * 1000; // 15 minutos en milisegundos
-            const mockResponse: LoginResponse = {
-                accessToken: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${btoa(JSON.stringify(foundUser.userData))}.demo-signature`,
-                sid: 'mock-session-id',
-                sub: foundUser.userData.id,
-                email: foundUser.userData.email,
-                name: foundUser.userData.name,
-                roleId: foundUser.userData.roleId,
-                avatar: foundUser.userData.avatar,
-                createdAt: now.toISOString(),
-                expiresAt: new Date(now.getTime() + expiresIn).toISOString()
-            };
+  private refreshTimerSubscription: Subscription | null = null;
 
-            return of(mockResponse).pipe(
-                delay(800), // Simula latencia de red
-                tap(response => this.handleLoginSuccess(response))
-            );
-        } else {
-            // Simular error de credenciales inválidas
-            return throwError(() => new Error('Credenciales inválidas')).pipe(
-                delay(800)
-            );
-        }*/
+  login(credentials: LoginRequest): Observable<LoginResponse> {
+    return this.http
+      .post<LoginResponse>(`${this.API_URL}/login`, credentials, { withCredentials: true })
+      .pipe(
+        tap((response: LoginResponse) => this.handleLoginSuccess(response)),
+        catchError((error) => this.handleError(error)),
+      );
+  }
 
-        // ============================================
-        // CÓDIGO REAL PARA BACKEND
-        // Descomentar cuando el backend esté listo
-        // ============================================
-         return this.http.post<LoginResponse>(
-             `${this.API_URL}/login`,
-             credentials,
-             { withCredentials: true } // Para recibir la cookie del refresh token
-         ).pipe(
-             tap(response => this.handleLoginSuccess(response)),
-             catchError(error => this.handleError(error))
-         );
+  logout(): void {
+    this.cancelRefreshTimer();
+    this.http.post(`${this.API_URL}/logout`, {}, { withCredentials: true }).subscribe({
+      next: () => this.executeLocalLogout(),
+      error: () => this.executeLocalLogout(),
+    });
+  }
+
+  private executeLocalLogout(): void {
+    this.clearAuthData();
+    this.menuService.clearMenu();
+    this.router.navigate(['/login']);
+  }
+
+  refreshToken(): Observable<RefreshTokenResponse> {
+    return this.http
+      .post<RefreshTokenResponse>(`${this.API_URL}/refresh`, {}, { withCredentials: true })
+      .pipe(
+        tap((response: RefreshTokenResponse) => this.handleRefreshSuccess(response)),
+        catchError((error) => {
+          console.error('Error al refrescar token:', error);
+          return throwError(() => error);
+        }),
+      );
+  }
+
+  private calculateRefreshDelay(): number {
+    const expiresAt = this.tokenExpiresAtSignal();
+    if (!expiresAt) return 0;
+    const expirationTime = new Date(expiresAt).getTime();
+    const now = Date.now();
+    const createdAt = this.tokenCreatedAtSignal();
+    const createdTime = createdAt ? new Date(createdAt).getTime() : now;
+
+    const lifetime = expirationTime - createdTime;
+
+    let refreshTime: number;
+    if (lifetime <= 3 * 60 * 1000) {
+      refreshTime = createdTime + lifetime * 0.8;
+    } else {
+      refreshTime = expirationTime - 2 * 60 * 1000;
     }
 
-    /**
-     * Cierra la sesión del usuario
-     */
-    logout(): void {
-        // Cancelar el timer de auto-refresh
-        this.cancelRefreshTimer();
-        
-        // Llamar al backend para eliminar la cookie del refresh token
-         this.http.post(
-             `${this.API_URL}/logout`,
-             {},
-             { withCredentials: true }
-         ).subscribe({
-             next: () => {
-                 this.clearAuthData();
-                 this.router.navigate(['/login']);
-             },
-             error: () => {
-                 this.clearAuthData();
-                 this.router.navigate(['/login']);
-             }
-         });
-        
-        // Mientras tanto, solo limpiamos datos locales
-        this.clearAuthData();
-        this.router.navigate(['/login']);
+    const delayMs = refreshTime - now;
+    return delayMs > 0 ? delayMs : 0;
+  }
+
+  constructor() {
+    if (this.isAuthenticated()) {
+      this.startRefreshTimer();
+    }
+  }
+
+  private startRefreshTimer(): void {
+    this.cancelRefreshTimer();
+
+    if (!this.isAuthenticated() || !this.tokenExpiresAtSignal()) {
+      return;
     }
 
-    /**
-     * Refresca el token de autenticación usando el refresh token de la cookie
-     * @returns Observable con el nuevo token
-     */
-    refreshToken(): Observable<RefreshTokenResponse> {
-        // El refresh token se envía automáticamente como cookie HttpOnly
-        return this.http.post<RefreshTokenResponse>(
-            `${this.API_URL}/refresh`,
-            {}, // Body vacío, el refresh token está en la cookie
-            { withCredentials: true } // Importante para enviar/recibir cookies
-        ).pipe(
-            tap(response => this.handleRefreshSuccess(response)),
-            catchError(error => {
-                console.error('Error al refrescar token:', error);
-                this.logout();
-                return throwError(() => error);
-            })
-        );
-    }
+    const delayMs = this.calculateRefreshDelay();
 
-    /**
-     * Verifica si el token está cerca de expirar y necesita ser refrescado
-     * @returns true si el token expira en menos de 2 minutos
-     */
-    private shouldRefreshToken(): boolean {
-        const expiresAt = this.tokenExpiresAtSignal();
-        if (!expiresAt) return false;
-        
-        const expirationTime = new Date(expiresAt).getTime();
-        const now = Date.now();
-        const twoMinutes = 2 * 60 * 1000;
-        
-        return (expirationTime - now) <= twoMinutes;
-    }
+    this.refreshTimerSubscription = timer(delayMs)
+      .pipe(switchMap(() => this.refreshToken()))
+      .subscribe({
+        next: () => console.log('Token refrescado automaticamente'),
+        error: (error) => console.error('Error en auto-refresh:', error),
+      });
+  }
 
-    /**
-     * Calcula el tiempo en milisegundos hasta que el token deba ser refrescado
-     * Refresca 2 minutos antes de la expiración
-     */
-    private calculateRefreshDelay(): number {
-        const expiresAt = this.tokenExpiresAtSignal();
-        if (!expiresAt) return 0;
-        
-        const expirationTime = new Date(expiresAt).getTime();
-        const now = Date.now();
-        const twoMinutes = 2 * 60 * 1000;
-        
-        // Refrescar 2 minutos antes de la expiración
-        const refreshTime = expirationTime - twoMinutes;
-        const delay = refreshTime - now;
-        
-        return delay > 0 ? delay : 0;
+  private cancelRefreshTimer(): void {
+    if (this.refreshTimerSubscription) {
+      this.refreshTimerSubscription.unsubscribe();
+      this.refreshTimerSubscription = null;
     }
+  }
 
-    /**
-     * Inicia el timer para auto-refresh del token
-     */
-    private startRefreshTimer(): void {
-        this.cancelRefreshTimer();
-        
-        const delay = this.calculateRefreshDelay();
-        if (delay > 0) {
-            this.refreshTimerSubscription = timer(delay).pipe(
-                switchMap(() => this.refreshToken())
-            ).subscribe({
-                next: () => console.log('Token refrescado automáticamente'),
-                error: (error) => console.error('Error en auto-refresh:', error)
-            });
-        }
+  private handleLoginSuccess(response: LoginResponse): void {
+    const { sub, accessToken, sid, email, nombre, rolId, nombreRol, avatar, accessTokenInfo } =
+      response;
+
+    const createdAt = accessTokenInfo?.iatDate || new Date().toISOString();
+    const expiresAt =
+      accessTokenInfo?.expDate || new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+    const user: User = {
+      id: String(sub),
+      email: email || '',
+      name: nombre || 'Usuario',
+      roleId: rolId,
+      roleName: nombreRol || 'Usuario',
+      avatar,
+    };
+
+    this.updateSignalsAndStorage(accessToken, String(sid), createdAt, expiresAt, user);
+    this.startRefreshTimer();
+  }
+
+  private handleRefreshSuccess(response: RefreshTokenResponse): void {
+    const newAccessToken = response.accessToken;
+    const createdAt = response.createdAt || new Date().toISOString();
+    const expiresAt = response.expiresAt || new Date(Date.now() + 15 * 60 * 1000).toISOString();
+
+    this.tokenSignal.set(newAccessToken);
+    this.tokenCreatedAtSignal.set(createdAt);
+    this.tokenExpiresAtSignal.set(expiresAt);
+
+    localStorage.setItem('token', newAccessToken);
+    localStorage.setItem('tokenCreatedAt', createdAt);
+    localStorage.setItem('tokenExpiresAt', expiresAt);
+
+    this.startRefreshTimer();
+  }
+
+  private updateSignalsAndStorage(
+    token: string,
+    sid: string,
+    created: string,
+    expires: string,
+    user: User,
+  ): void {
+    this.tokenSignal.set(token);
+    this.sidSignal.set(sid);
+    this.tokenCreatedAtSignal.set(created);
+    this.tokenExpiresAtSignal.set(expires);
+    this.userSignal.set(user);
+
+    localStorage.setItem('token', token);
+    localStorage.setItem('sid', sid);
+    localStorage.setItem('tokenCreatedAt', created);
+    localStorage.setItem('tokenExpiresAt', expires);
+    localStorage.setItem('user', JSON.stringify(user));
+  }
+
+  private clearAuthData(): void {
+    this.tokenSignal.set(null);
+    this.sidSignal.set(null);
+    this.tokenCreatedAtSignal.set(null);
+    this.tokenExpiresAtSignal.set(null);
+    this.userSignal.set(null);
+
+    const keys = ['token', 'sid', 'tokenCreatedAt', 'tokenExpiresAt', 'user'];
+    keys.forEach((key) => localStorage.removeItem(key));
+
+    this.cancelRefreshTimer();
+  }
+
+  private getStoredToken(): string | null {
+    return localStorage.getItem('token');
+  }
+
+  private getStoredSid(): string | null {
+    return localStorage.getItem('sid');
+  }
+
+  private getStoredTokenCreatedAt(): string | null {
+    return localStorage.getItem('tokenCreatedAt');
+  }
+
+  private getStoredTokenExpiresAt(): string | null {
+    return localStorage.getItem('tokenExpiresAt');
+  }
+
+  private getStoredUser(): User | null {
+    const userJson = localStorage.getItem('user');
+    if (!userJson) return null;
+    try {
+      return JSON.parse(userJson);
+    } catch {
+      return null;
     }
+  }
 
-    /**
-     * Cancela el timer de auto-refresh
-     */
-    private cancelRefreshTimer(): void {
-        if (this.refreshTimerSubscription) {
-            this.refreshTimerSubscription.unsubscribe();
-            this.refreshTimerSubscription = null;
-        }
+  updateCurrentUser(patch: Partial<User>): void {
+    const current = this.userSignal();
+    if (!current) return;
+    const updated: User = { ...current, ...patch };
+    this.userSignal.set(updated);
+    localStorage.setItem('user', JSON.stringify(updated));
+  }
+
+  private handleError(error: { error?: { message?: string }; status?: number }): Observable<never> {
+    console.error('Error en autenticacion:', error);
+    let errorMessage = 'Ocurrio un error en el servidor';
+    if (error.error?.message) {
+      errorMessage = error.error.message;
+    } else if (error.status === 401) {
+      errorMessage = 'Credenciales invalidas';
+    } else if (error.status === 0) {
+      errorMessage = 'No se pudo conectar con el servidor';
     }
-
-    /**
-     * Maneja la respuesta exitosa del login
-     */
-    private handleLoginSuccess(response: LoginResponse): void {
-        const user: User = {
-            id: response.sub,
-            email: response.email,
-            name: response.name,
-            roleId: response.roleId,
-            avatar: response.avatar
-        };
-
-        this.tokenSignal.set(response.accessToken);
-        this.sidSignal.set(response.sid);
-        this.tokenCreatedAtSignal.set(response.createdAt);
-        this.tokenExpiresAtSignal.set(response.expiresAt);
-        this.userSignal.set(user);
-        
-        // Guardar en localStorage (excepto refresh token que está en cookie)
-        localStorage.setItem('token', response.accessToken);
-        localStorage.setItem('sid', response.sid);
-        localStorage.setItem('tokenCreatedAt', response.createdAt);
-        localStorage.setItem('tokenExpiresAt', response.expiresAt);
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        // Iniciar el timer para auto-refresh
-        this.startRefreshTimer();
-    }
-
-    /**
-     * Maneja la respuesta exitosa del refresh token
-     */
-    private handleRefreshSuccess(response: RefreshTokenResponse): void {
-        this.tokenSignal.set(response.token);
-        this.tokenCreatedAtSignal.set(response.createdAt);
-        this.tokenExpiresAtSignal.set(response.expiresAt);
-        
-        // Actualizar en localStorage
-        localStorage.setItem('token', response.token);
-        localStorage.setItem('tokenCreatedAt', response.createdAt);
-        localStorage.setItem('tokenExpiresAt', response.expiresAt);
-        
-        // Reiniciar el timer para el próximo refresh
-        this.startRefreshTimer();
-    }
-
-    /**
-     * Limpia los datos de autenticación
-     */
-    private clearAuthData(): void {
-        this.tokenSignal.set(null);
-        this.sidSignal.set(null);
-        this.tokenCreatedAtSignal.set(null);
-        this.tokenExpiresAtSignal.set(null);
-        this.userSignal.set(null);
-        
-        localStorage.removeItem('token');
-        localStorage.removeItem('sid');
-        localStorage.removeItem('tokenCreatedAt');
-        localStorage.removeItem('tokenExpiresAt');
-        localStorage.removeItem('user');
-        
-        this.cancelRefreshTimer();
-    }
-
-    /**
-     * Obtiene el token almacenado
-     */
-    private getStoredToken(): string | null {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('token');
-        }
-        return null;
-    }
-
-    /**
-     * Obtiene el sid almacenado
-     */
-    private getStoredSid(): string | null {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('sid');
-        }
-        return null;
-    }
-
-    /**
-     * Obtiene la fecha de creación del token almacenada
-     */
-    private getStoredTokenCreatedAt(): string | null {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('tokenCreatedAt');
-        }
-        return null;
-    }
-
-    /**
-     * Obtiene la fecha de expiración del token almacenada
-     */
-    private getStoredTokenExpiresAt(): string | null {
-        if (typeof window !== 'undefined') {
-            return localStorage.getItem('tokenExpiresAt');
-        }
-        return null;
-    }
-
-    /**
-     * Obtiene el usuario almacenado
-     */
-    private getStoredUser(): User | null {
-        if (typeof window !== 'undefined') {
-            const userJson = localStorage.getItem('user');
-            return userJson ? JSON.parse(userJson) : null;
-        }
-        return null;
-    }
-
-    /**
-     * Maneja errores de las peticiones
-     */
-    private handleError(error: any): Observable<never> {
-        console.error('Error en autenticación:', error);
-        
-        let errorMessage = 'Ocurrió un error en el servidor';
-        
-        if (error.error?.message) {
-            errorMessage = error.error.message;
-        } else if (error.status === 401) {
-            errorMessage = 'Credenciales inválidas';
-        } else if (error.status === 0) {
-            errorMessage = 'No se pudo conectar con el servidor';
-        }
-        
-        return throwError(() => new Error(errorMessage));
-    }
+    return throwError(() => new Error(errorMessage));
+  }
 }
