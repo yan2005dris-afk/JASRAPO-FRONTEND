@@ -348,6 +348,14 @@ export const routes: Routes = [
                 (m) => m.DiscountsComponent,
               ),
           },
+          {
+            path: 'Rubros',
+            data: { breadcrumb: 'Rubros y Tarifas' },
+            loadComponent: () =>
+              import('./features/billing/rubros/rubros.component').then(
+                (m) => m.RubrosComponent,
+              ),
+          },
         ],
       },
 

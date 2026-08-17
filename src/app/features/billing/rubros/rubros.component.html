@@ -1,0 +1,268 @@
+<div class="rubros-container">
+  <!-- Page Header -->
+  <div class="page-header d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div class="d-flex align-items-center gap-3">
+      <div class="page-header-icon">
+        <i class="bi bi-box-seam"></i>
+      </div>
+      <div>
+        <h3 class="fw-bold mb-0 text-dark fs-4">Catálogo de Rubros y Tarifas</h3>
+        <p class="text-muted small mb-0">Administrá los conceptos facturables, precios unitarios y tarifas de impuestos asociadas.</p>
+      </div>
+    </div>
+
+    <!-- Primary Action -->
+    <button
+      type="button"
+      class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-4 py-2"
+      (click)="openCreateModal()"
+    >
+      <i class="bi bi-plus-circle"></i>
+      Nuevo Rubro
+    </button>
+  </div>
+
+  <!-- Card with Filters & Table -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <!-- Toolbar -->
+    <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap flex-grow-1">
+          <!-- Search by Name -->
+          <div class="input-group search-group" style="max-width: 240px">
+            <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+              <i class="bi bi-search"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control border-start-0 ps-0 shadow-none"
+              placeholder="Buscar por nombre..."
+              [(ngModel)]="filterNombre"
+              (keyup.enter)="loadRubros()"
+            />
+          </div>
+
+          <!-- Filter Tipo -->
+          <select
+            class="form-select shadow-none"
+            style="width: 190px"
+            [(ngModel)]="filterTipo"
+            (change)="loadRubros()"
+          >
+            <option value="">Todos los tipos</option>
+            @for (opt of tipoOptions; track opt.value) {
+              <option [value]="opt.value">{{ opt.label }}</option>
+            }
+          </select>
+
+          <!-- Filter Tarifa Impuesto -->
+          <select
+            class="form-select shadow-none"
+            style="width: 180px"
+            [(ngModel)]="filterTarifa"
+            (change)="loadRubros()"
+          >
+            <option value="">Todas las tarifas IVA</option>
+            @for (t of tarifasImpuesto; track t.id) {
+              <option [value]="t.id">{{ t.descripcion }} ({{ t.porcentaje }}%)</option>
+            }
+          </select>
+
+          <!-- Filter Activo -->
+          <select
+            class="form-select shadow-none"
+            style="width: 140px"
+            [(ngModel)]="filterActivo"
+            (change)="loadRubros()"
+          >
+            <option value="todos">Todos</option>
+            <option value="activos">Activos</option>
+            <option value="inactivos">Inactivos</option>
+          </select>
+
+          <!-- Buscar -->
+          <button
+            class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+            (click)="loadRubros()"
+            [disabled]="isLoading"
+          >
+            @if (isLoading) {
+              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            }
+            @if (!isLoading) {
+              <i class="bi bi-search"></i>
+            }
+            Buscar
+          </button>
+
+          <!-- Limpiar -->
+          <button
+            class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
+            (click)="limpiarFiltros()"
+            [disabled]="isLoading"
+          >
+            <i class="bi bi-x-circle"></i>
+            Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="pt-2">
+      @if (isLoading) {
+        <div class="text-center py-5 text-muted">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <p class="mt-3 mb-0">Cargando catálogo de rubros...</p>
+        </div>
+      }
+
+      @if (!isLoading && rubros.length === 0) {
+        <app-empty-state
+          icon="bi bi-box-seam"
+          title="No hay rubros registrados"
+          description="No se encontraron rubros con los filtros aplicados o aún no se han configurado en el sistema."
+          actionLabel="Crear primer rubro"
+          actionIcon="bi bi-plus-lg"
+          (actionClicked)="openCreateModal()"
+        />
+      }
+
+      @if (!isLoading && rubros.length > 0) {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 custom-table">
+            <thead>
+              <tr>
+                <th scope="col" class="ps-4">ID</th>
+                <th scope="col">Código SRI</th>
+                <th scope="col">Nombre & Descripción</th>
+                <th scope="col">Tipo de Rubro</th>
+                <th scope="col">Tarifa IVA</th>
+                <th scope="col" class="text-end">Precio Unitario</th>
+                <th scope="col" class="text-center">Estado</th>
+                <th scope="col" class="text-center pe-4">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (rubro of rubros; track rubro.rubroId) {
+                <tr>
+                  <td class="ps-4 fw-bold text-dark" style="font-size: 0.9rem">
+                    #{{ rubro.rubroId }}
+                  </td>
+                  <td>
+                    @if (rubro.codigoSri) {
+                      <span class="badge bg-light text-dark border fw-medium px-2 py-1">
+                        <code>{{ rubro.codigoSri }}</code>
+                      </span>
+                    } @else {
+                      <span class="text-muted small">—</span>
+                    }
+                  </td>
+                  <td>
+                    <div class="fw-semibold text-dark small">{{ rubro.nombre }}</div>
+                    @if (rubro.descripcion) {
+                      <div class="text-muted" style="font-size: 0.78rem">{{ rubro.descripcion }}</div>
+                    }
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="getTipoBadgeClass(rubro.tipoRubro)">
+                      {{ getTipoLabel(rubro.tipoRubro) }}
+                    </span>
+                  </td>
+                  <td>
+                    @if (rubro.tarifaImpuesto) {
+                      <span class="badge badge-soft-primary">
+                        {{ rubro.tarifaImpuesto.descripcion }} ({{ rubro.tarifaImpuesto.porcentaje }}%)
+                      </span>
+                    } @else {
+                      <span class="text-muted small">Tarifa #{{ rubro.tarifaImpuestoId }}</span>
+                    }
+                  </td>
+                  <td class="text-end fw-bold text-dark tabular-nums" style="font-size: 0.95rem">
+                    ${{ rubro.precioUnitario | number: '1.2-2' }}
+                  </td>
+                  <td class="text-center">
+                    <app-status-badge [status]="rubro.activo ? 'ACTIVO' : 'INACTIVO'" />
+                  </td>
+                  <td class="text-center pe-4">
+                    <div class="dropdown">
+                      <button
+                        class="btn btn-link text-muted p-0 shadow-none"
+                        (click)="toggleDropdown(rubro.rubroId, $event)"
+                        aria-label="Menú de acciones"
+                      >
+                        <i class="bi bi-three-dots-vertical"></i>
+                      </button>
+                      <ul
+                        class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                        [class.show]="openDropdownId === rubro.rubroId"
+                        style="min-width: 160px"
+                      >
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            (click)="openEditModal(rubro)"
+                          >
+                            <i class="bi bi-pencil-fill text-primary" style="font-size: 0.85rem"></i>
+                            Editar
+                          </button>
+                        </li>
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            [ngClass]="rubro.activo ? 'text-warning' : 'text-success'"
+                            (click)="toggleRubroStatus(rubro)"
+                          >
+                            <i
+                              [class]="rubro.activo ? 'bi bi-toggle-on text-warning' : 'bi bi-toggle-off text-success'"
+                              style="font-size: 0.95rem"
+                            ></i>
+                            {{ rubro.activo ? 'Desactivar' : 'Activar' }}
+                          </button>
+                        </li>
+                        <li>
+                          <hr class="dropdown-divider" />
+                        </li>
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                            (click)="deleteRubro(rubro)"
+                          >
+                            <i class="bi bi-trash-fill" style="font-size: 0.85rem"></i>
+                            Eliminar
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="px-4 py-3 border-top bg-white">
+          <app-pagination
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+            [totalItems]="totalItems"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)"
+          />
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- CREATE / EDIT MODAL -->
+  @if (isFormModalOpen) {
+    <app-rubro-form-modal
+      [rubro]="selectedRubroForEdit"
+      (saved)="onRubroSaved()"
+      (closed)="closeFormModal()"
+    />
+  }
+</div>
