@@ -296,6 +296,7 @@
   @if (isFormModalOpen) {
     <app-anomaly-form-modal
       [anomaly]="selectedAnomalyForEdit"
+      [initialLecturaId]="initialLecturaIdForModal"
       (saved)="onAnomalySaved()"
       (closed)="closeFormModal()"
     />

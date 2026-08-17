@@ -32,6 +32,7 @@ export class AnomalyFormModalComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly anomaly = input<IReadingAnomaly | null>(null);
+  readonly initialLecturaId = input<string | null>(null);
   readonly saved = output<void>();
   readonly closed = output<void>();
 
@@ -57,6 +58,8 @@ export class AnomalyFormModalComponent implements OnInit {
       this.tipo = a.tipo as TipoAnomalia;
       this.observacion = a.observacion || '';
       this.imagePreviewUrl = a.fotoUrl || null;
+    } else if (this.initialLecturaId()) {
+      this.lecturaId = this.initialLecturaId()!;
     }
   }
 

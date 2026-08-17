@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { ReadingAnomaliesService } from './services/reading-anomalies.service';
 import {
   IReadingAnomaly,
@@ -41,6 +42,7 @@ import { AnomalyResolveModalComponent } from './components/anomaly-resolve-modal
   },
 })
 export class ReadingAnomaliesComponent implements OnInit {
+  private readonly route = inject(ActivatedRoute);
   private readonly anomaliesService = inject(ReadingAnomaliesService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
@@ -65,6 +67,7 @@ export class ReadingAnomaliesComponent implements OnInit {
   // Modals
   isFormModalOpen = false;
   selectedAnomalyForEdit: IReadingAnomaly | null = null;
+  initialLecturaIdForModal: string | null = null;
   selectedAnomalyForResolve: IReadingAnomaly | null = null;
 
   readonly tipoOptions: { value: TipoAnomalia; label: string }[] = [
@@ -75,7 +78,16 @@ export class ReadingAnomaliesComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.loadAnomalies();
+    this.route.queryParams.subscribe((params) => {
+      if (params['lecturaId']) {
+        this.filterLecturaId = String(params['lecturaId']);
+        if (params['report'] === 'true') {
+          this.initialLecturaIdForModal = String(params['lecturaId']);
+          this.isFormModalOpen = true;
+        }
+      }
+      this.loadAnomalies();
+    });
   }
 
   loadAnomalies(): void {

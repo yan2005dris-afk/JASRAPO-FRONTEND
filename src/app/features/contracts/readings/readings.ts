@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ReadingsService } from './services/readings.service';
 import {
   IReading,
@@ -45,6 +46,7 @@ import type { IContract } from '../service-contracts/interfaces/icontract.interf
   },
 })
 export class ReadingsComponent implements OnInit {
+  private readonly router = inject(Router);
   private readonly readingsService = inject(ReadingsService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
@@ -202,6 +204,16 @@ export class ReadingsComponent implements OnInit {
   closeDetailModal(): void {
     this.selectedReadingForDetail = null;
     this.cdr.markForCheck();
+  }
+
+  reportAnomaly(reading: IReading): void {
+    this.openDropdownId = null;
+    this.router.navigate(['/portal/contracts/AnomaliasDeLectura'], {
+      queryParams: {
+        lecturaId: reading.lecturaId,
+        report: 'true',
+      },
+    });
   }
 
   deleteReading(reading: IReading): void {
