@@ -26,3 +26,18 @@
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1070;
+  max-height: 180px;
+  overflow-y: auto;
+  border-color: #e2e8f0;
+}
+
+.extra-small {
+  font-size: 0.78rem;
+}

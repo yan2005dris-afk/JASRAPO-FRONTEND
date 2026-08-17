@@ -24,42 +24,170 @@
       </div>
 
       <!-- Body -->
-      <div class="modal-body p-4 bg-white" style="max-height: 75vh; overflow-y: auto">
+      <div class="modal-body p-4 bg-white create-modal-body" style="max-height: 75vh; overflow-y: auto">
         <div class="row g-3">
-          <!-- Medidor ID / Serie -->
-          <div class="col-md-6">
-            <label for="selectMedidorLectura" class="form-label fw-semibold text-dark small mb-1">
-              Medidor / Serie <span class="text-danger">*</span>
+          <!-- 1. Buscador de Contrato (Inline Autocomplete) -->
+          <div class="col-12 position-relative">
+            <label for="inputContratoIdLectura" class="form-label fw-semibold text-dark small mb-1">
+              Contrato de Servicio / Medidor <span class="text-danger">*</span>
             </label>
-            <select
-              id="selectMedidorLectura"
-              class="form-select shadow-none"
-              [(ngModel)]="medidorId"
-              [disabled]="isLoading || !!reading()"
-            >
-              <option value="">
-                {{ isLoadingMeters ? 'Cargando medidores...' : 'Seleccione un medidor...' }}
-              </option>
-              @for (m of meters; track m.medidorId) {
-                <option [value]="m.medidorId">
-                  Serie: {{ m.serie }} ({{ m.marca }} {{ m.modelo || '' }})
-                </option>
+            <div class="input-group">
+              <span class="input-group-text bg-white text-muted">
+                <i class="bi bi-file-text"></i>
+              </span>
+              <input
+                id="inputContratoIdLectura"
+                type="text"
+                class="form-control shadow-none"
+                placeholder="Buscar por guía, cliente o CI..."
+                [value]="contractSearchQuery"
+                [disabled]="isLoading || !!reading()"
+                (input)="onContractSearchInput($any($event.target).value)"
+                (focus)="contractSearchResults.length > 0 ? isContractAutocompleteOpen = true : null"
+                autocomplete="off"
+              />
+              @if ((selectedContract || contractSearchQuery) && !reading()) {
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  (click)="clearSelectedContract()"
+                  [disabled]="isLoading"
+                  title="Limpiar selección"
+                >
+                  <i class="bi bi-x-lg"></i>
+                </button>
               }
-            </select>
+            </div>
+
+            <!-- Autocomplete Dropdown Contratos -->
+            @if (isContractAutocompleteOpen) {
+              <div class="autocomplete-dropdown shadow-lg rounded-3 border bg-white mt-1 py-1">
+                @if (isSearchingContracts) {
+                  <div class="px-3 py-2 text-muted small d-flex align-items-center gap-2">
+                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                    <span>Buscando contratos...</span>
+                  </div>
+                } @else if (contractSearchResults.length === 0) {
+                  <div class="px-3 py-2 text-muted small">
+                    No se encontraron contratos para "{{ contractSearchQuery }}".
+                  </div>
+                } @else {
+                  @for (contract of contractSearchResults; track contract.contratoId) {
+                    <button
+                      type="button"
+                      class="dropdown-item px-3 py-2 text-start d-flex justify-content-between align-items-center"
+                      (click)="selectContract(contract)"
+                    >
+                      <div>
+                        <div class="fw-semibold text-dark small">
+                          {{ contract.numeroGuia }}
+                          @if (getActiveMeter(contract)?.serie) {
+                            <span class="badge bg-light text-primary border ms-1">Medidor: {{ getActiveMeter(contract)?.serie }}</span>
+                          }
+                        </div>
+                        <div class="text-muted extra-small">
+                          {{ formatClientName(contract.cliente) }}
+                          @if (contract.cliente.identificacion) {
+                            · CI: {{ contract.cliente.identificacion }}
+                          }
+                        </div>
+                      </div>
+                      <span class="badge bg-light text-secondary border extra-small">
+                        ID #{{ contract.contratoId }}
+                      </span>
+                    </button>
+                  }
+                }
+              </div>
+            }
+
+            @if (selectedContract) {
+              <div class="d-flex align-items-center gap-2 mt-2 flex-wrap">
+                <span class="badge badge-soft-primary d-flex align-items-center gap-1">
+                  <i class="bi bi-person-check-fill"></i>
+                  {{ formatClientName(selectedContract.cliente) }} · {{ selectedContract.numeroGuia }}
+                </span>
+                @if (getActiveMeter(selectedContract)?.serie) {
+                  <span class="badge bg-light text-dark border">
+                    <i class="bi bi-cpu me-1 text-primary"></i>
+                    Serie: {{ getActiveMeter(selectedContract)?.serie }} ({{ getActiveMeter(selectedContract)?.marca || '' }})
+                  </span>
+                }
+              </div>
+            }
           </div>
 
-          <!-- Fecha -->
+          <!-- 2. Fecha (Shared DatePicker) -->
           <div class="col-md-6">
             <label for="inputFechaLectura" class="form-label fw-semibold text-dark small mb-1">
               Fecha de Lectura <span class="text-danger">*</span>
             </label>
-            <input
-              id="inputFechaLectura"
-              type="date"
-              class="form-control shadow-none"
-              [(ngModel)]="fecha"
+            <app-date-picker
+              inputId="inputFechaLectura"
+              [value]="fecha"
               [disabled]="isLoading"
+              (valueChange)="fecha = $event"
             />
+          </div>
+
+          <!-- 3. Período Contable (Autocomplete) -->
+          <div class="col-md-6 position-relative">
+            <label for="inputPeriodoSearch" class="form-label fw-semibold text-dark small mb-1">
+              Período Contable
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-white text-muted">
+                <i class="bi bi-calendar-event"></i>
+              </span>
+              <input
+                id="inputPeriodoSearch"
+                type="text"
+                class="form-control shadow-none"
+                placeholder="Buscar período (ej. Enero 2026)..."
+                [value]="periodSearchQuery"
+                [disabled]="isLoading || isLoadingPeriods"
+                (input)="onPeriodSearchInput($any($event.target).value)"
+                (focus)="filteredPeriods.length > 0 ? isPeriodAutocompleteOpen = true : null"
+                autocomplete="off"
+              />
+              @if (selectedPeriod || periodSearchQuery) {
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  (click)="clearSelectedPeriod()"
+                  [disabled]="isLoading"
+                  title="Limpiar período"
+                >
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              }
+            </div>
+
+            <!-- Autocomplete Dropdown Períodos -->
+            @if (isPeriodAutocompleteOpen) {
+              <div class="autocomplete-dropdown shadow-lg rounded-3 border bg-white mt-1 py-1">
+                @if (filteredPeriods.length === 0) {
+                  <div class="px-3 py-2 text-muted small">
+                    No se encontraron períodos para "{{ periodSearchQuery }}".
+                  </div>
+                } @else {
+                  @for (p of filteredPeriods; track p.periodoId) {
+                    <button
+                      type="button"
+                      class="dropdown-item px-3 py-2 text-start d-flex justify-content-between align-items-center"
+                      (click)="selectPeriod(p)"
+                    >
+                      <div class="fw-semibold text-dark small">
+                        {{ p.nombre || 'Período #' + p.periodoId }}
+                      </div>
+                      <span class="badge bg-light text-secondary border extra-small">
+                        {{ p.estado }}
+                      </span>
+                    </button>
+                  }
+                }
+              </div>
+            }
           </div>
 
           <!-- Lectura Anterior -->
@@ -108,31 +236,19 @@
             </div>
           </div>
 
-          <!-- Período ID & Lectura Inicial -->
-          <div class="col-md-6">
-            <label for="inputPeriodoIdLectura" class="form-label fw-semibold text-dark small mb-1">ID Período</label>
-            <input
-              id="inputPeriodoIdLectura"
-              type="number"
-              min="1"
-              class="form-control shadow-none"
-              [(ngModel)]="periodoId"
-              [disabled]="isLoading"
-            />
-          </div>
-
-          <div class="col-md-6 d-flex align-items-center pt-3">
-            <div class="form-check form-switch">
+          <!-- Lectura Inicial Checkbox -->
+          <div class="col-12">
+            <div class="form-check form-switch pt-1">
               <input
-                id="switchLecturaInicial"
-                class="form-check-input"
+                class="form-check-input shadow-none cursor-pointer"
                 type="checkbox"
                 role="switch"
+                id="checkLecturaInicial"
                 [(ngModel)]="lecturaInicial"
                 [disabled]="isLoading"
               />
-              <label for="switchLecturaInicial" class="form-check-label fw-semibold text-dark small">
-                ¿Es Lectura Inicial / Instalación?
+              <label class="form-check-label text-dark small fw-medium cursor-pointer" for="checkLecturaInicial">
+                Es Lectura Inicial del Medidor (Instalación nueva o reinicio de contador)
               </label>
             </div>
           </div>

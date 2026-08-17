@@ -90,7 +90,7 @@
     <div class="pt-2">
       @if (isLoading) {
         <div class="p-3">
-          <app-table-skeleton [rows]="5" [cols]="9" />
+          <app-table-skeleton [rows]="5" [cols]="8" />
         </div>
       }
 
@@ -113,7 +113,6 @@
                 <th scope="col" class="ps-4" style="width: 56px">
                   <input class="form-check-input table-checkbox" type="checkbox" />
                 </th>
-                <th scope="col">Foto</th>
                 <th scope="col">Contrato / Guía</th>
                 <th scope="col">Medidor</th>
                 <th scope="col">Fecha Toma</th>
@@ -129,26 +128,6 @@
                 <tr>
                   <td class="ps-4">
                     <input class="form-check-input table-checkbox" type="checkbox" />
-                  </td>
-                  <td>
-                    @if (reading.fotoUrl) {
-                      <button
-                        type="button"
-                        class="btn p-0 border-0 shadow-none cursor-pointer"
-                        (click)="openDetailModal(reading)"
-                        title="Ver detalle y evidencia fotográfica"
-                      >
-                        <img
-                          [src]="reading.fotoUrl"
-                          alt="Foto medidor"
-                          class="reading-thumb rounded-2 border"
-                        />
-                      </button>
-                    } @else {
-                      <div class="reading-thumb-placeholder rounded-2 border">
-                        <i class="bi bi-camera text-muted"></i>
-                      </div>
-                    }
                   </td>
                   <td>
                     <div class="fw-semibold text-dark small">Contrato #{{ reading.contratoId }}</div>

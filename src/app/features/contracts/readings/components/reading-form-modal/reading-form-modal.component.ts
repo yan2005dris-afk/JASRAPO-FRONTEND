@@ -15,14 +15,16 @@ import {
   IReading,
   IUpdateReadingDto,
 } from '../../interfaces/ireading.interface';
-import { MetersService } from '../../../meters/services/meters.service';
-import { IMeterDto } from '../../../meters/interfaces/imeter.interface';
+import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
+import { ContractsService } from '../../../service-contracts/services/contracts.service';
+import type { IContract, IMedidorResumen } from '../../../service-contracts/interfaces/icontract.interface';
+import { ReadingRoutesService } from '../../../reading-routes/services/reading-routes.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 
 @Component({
   selector: 'app-reading-form-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, DatePickerComponent],
   templateUrl: './reading-form-modal.component.html',
   styleUrl: './reading-form-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,7 +34,8 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
 })
 export class ReadingFormModalComponent implements OnInit {
   private readonly readingsService = inject(ReadingsService);
-  private readonly metersService = inject(MetersService);
+  private readonly contractsService = inject(ContractsService);
+  private readonly routesService = inject(ReadingRoutesService);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -40,16 +43,28 @@ export class ReadingFormModalComponent implements OnInit {
   readonly saved = output<void>();
   readonly closed = output<void>();
 
-  // Catalogs
-  meters: IMeterDto[] = [];
-  isLoadingMeters = false;
+  // Contract Autocomplete Search
+  contractSearchQuery = '';
+  contractSearchResults: IContract[] = [];
+  isSearchingContracts = false;
+  isContractAutocompleteOpen = false;
+  selectedContract: IContract | null = null;
+  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Period Autocomplete Search
+  periods: { periodoId: number; nombre?: string; estado: string }[] = [];
+  isLoadingPeriods = false;
+  periodSearchQuery = '';
+  filteredPeriods: { periodoId: number; nombre?: string; estado: string }[] = [];
+  isPeriodAutocompleteOpen = false;
+  selectedPeriod: { periodoId: number; nombre?: string; estado: string } | null = null;
 
   medidorId = '';
   fecha = '';
   lecturaAnterior = 0;
   lecturaActual = 0;
   lecturaInicial = false;
-  periodoId = 1;
+  periodoId: number | null = null;
   descripcionAnomalia = '';
 
   selectedFile: File | null = null;
@@ -57,7 +72,7 @@ export class ReadingFormModalComponent implements OnInit {
   isLoading = false;
 
   ngOnInit(): void {
-    this.loadMeters();
+    this.loadPeriods();
     const r = this.reading();
     if (r) {
       this.medidorId = String(r.medidor?.medidorId || '');
@@ -65,27 +80,142 @@ export class ReadingFormModalComponent implements OnInit {
       this.lecturaAnterior = Number(r.lecturaAnterior);
       this.lecturaActual = Number(r.lecturaActual);
       this.lecturaInicial = r.lecturaInicial;
-      this.periodoId = r.periodoId || 1;
+      this.periodoId = r.periodoId || null;
       this.descripcionAnomalia = r.descripcionAnomalia || '';
       this.imagePreviewUrl = r.fotoUrl || null;
+      if (r.contrato) {
+        this.contractSearchQuery = `${r.contrato.numeroGuia || ''} - Contrato #${r.contrato.contratoId}`.trim();
+      }
+      if (r.periodoRel) {
+        this.periodSearchQuery = r.periodoRel.nombre || `Período #${r.periodoRel.periodoId}`;
+      }
     } else {
       this.fecha = new Date().toISOString().split('T')[0];
     }
   }
 
-  loadMeters(): void {
-    this.isLoadingMeters = true;
-    this.metersService.getMeters({ page: 1, limit: 100 }).subscribe({
-      next: (res) => {
-        this.meters = res.data;
-        this.isLoadingMeters = false;
+  loadPeriods(): void {
+    this.isLoadingPeriods = true;
+    this.routesService.getPeriods().subscribe({
+      next: (periods) => {
+        this.periods = periods || [];
+        this.filteredPeriods = [...this.periods];
+        this.isLoadingPeriods = false;
+        if (this.periodoId && !this.selectedPeriod) {
+          const match = this.periods.find((p) => p.periodoId === this.periodoId);
+          if (match) {
+            this.selectedPeriod = match;
+            this.periodSearchQuery = match.nombre || `Período #${match.periodoId}`;
+          }
+        }
         this.cdr.markForCheck();
       },
       error: () => {
-        this.isLoadingMeters = false;
+        this.isLoadingPeriods = false;
         this.cdr.markForCheck();
       },
     });
+  }
+
+  formatClientName(cliente: IContract['cliente']): string {
+    if (cliente.razonSocial) {
+      return cliente.razonSocial;
+    }
+    return `${cliente.nombres} ${cliente.apellidos}`.trim();
+  }
+
+  onContractSearchInput(query: string): void {
+    this.contractSearchQuery = query;
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+
+    const trimmed = query.trim();
+    if (!trimmed) {
+      this.contractSearchResults = [];
+      this.isContractAutocompleteOpen = false;
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.searchDebounceTimer = setTimeout(() => {
+      this.executeContractSearch(trimmed);
+    }, 350);
+  }
+
+  private executeContractSearch(term: string): void {
+    this.isSearchingContracts = true;
+    this.isContractAutocompleteOpen = true;
+    this.cdr.markForCheck();
+
+    this.contractsService.getContracts({ search: term, limit: 8 }).subscribe({
+      next: (res) => {
+        this.contractSearchResults = res.data;
+        this.isSearchingContracts = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.contractSearchResults = [];
+        this.isSearchingContracts = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  getActiveMeter(contract: IContract): IMedidorResumen | undefined {
+    if (!contract.historialMedidores || contract.historialMedidores.length === 0) return undefined;
+    const active = contract.historialMedidores.find((h) => !h.fechaHasta);
+    return active?.medidor || contract.historialMedidores[0]?.medidor;
+  }
+
+  selectContract(contract: IContract): void {
+    this.selectedContract = contract;
+    const activeMeter = this.getActiveMeter(contract);
+    this.medidorId = activeMeter?.medidorId ? String(activeMeter.medidorId) : '';
+    this.contractSearchQuery = `${contract.numeroGuia} - ${this.formatClientName(contract.cliente)}`;
+    this.isContractAutocompleteOpen = false;
+    this.contractSearchResults = [];
+    this.cdr.markForCheck();
+  }
+
+  clearSelectedContract(): void {
+    this.selectedContract = null;
+    this.contractSearchQuery = '';
+    this.contractSearchResults = [];
+    this.isContractAutocompleteOpen = false;
+    this.medidorId = '';
+    this.cdr.markForCheck();
+  }
+
+  onPeriodSearchInput(query: string): void {
+    this.periodSearchQuery = query;
+    const trimmed = query.toLowerCase().trim();
+    if (!trimmed) {
+      this.filteredPeriods = [...this.periods];
+    } else {
+      this.filteredPeriods = this.periods.filter((p) =>
+        (p.nombre || '').toLowerCase().includes(trimmed) || String(p.periodoId).includes(trimmed)
+      );
+    }
+    this.isPeriodAutocompleteOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  selectPeriod(period: { periodoId: number; nombre?: string; estado: string }): void {
+    this.selectedPeriod = period;
+    this.periodoId = period.periodoId;
+    this.periodSearchQuery = period.nombre || `Período #${period.periodoId}`;
+    this.isPeriodAutocompleteOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  clearSelectedPeriod(): void {
+    this.selectedPeriod = null;
+    this.periodoId = null;
+    this.periodSearchQuery = '';
+    this.filteredPeriods = [...this.periods];
+    this.isPeriodAutocompleteOpen = false;
+    this.cdr.markForCheck();
   }
 
   get calculatedConsumo(): number {
