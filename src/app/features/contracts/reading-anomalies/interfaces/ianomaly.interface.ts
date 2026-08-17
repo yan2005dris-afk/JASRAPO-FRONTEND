@@ -30,6 +30,7 @@ export interface IReadingAnomaly {
 export interface ICreateReadingAnomalyDto {
   lecturaId: string | number;
   tipo: TipoAnomalia | string;
+  estado: EstadoAnomalia | string;
   observacion?: string;
   fotoUrl?: string;
 }

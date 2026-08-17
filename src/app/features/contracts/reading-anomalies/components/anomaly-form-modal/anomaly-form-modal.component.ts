@@ -229,6 +229,7 @@ export class AnomalyFormModalComponent implements OnInit {
       const createDto: ICreateReadingAnomalyDto = {
         lecturaId: this.lecturaId.trim(),
         tipo: this.tipo,
+        estado: 'PENDIENTE',
         observacion: this.observacion.trim() || undefined,
       };
 
