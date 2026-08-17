@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ReadingAnomaliesService } from './services/reading-anomalies.service';
 import {
   IReadingAnomaly,
@@ -48,6 +48,7 @@ import type { IContract } from '../service-contracts/interfaces/icontract.interf
 })
 export class ReadingAnomaliesComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly anomaliesService = inject(ReadingAnomaliesService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
@@ -89,12 +90,17 @@ export class ReadingAnomaliesComponent implements OnInit {
 
   ngOnInit(): void {
     this.route.queryParams.subscribe((params) => {
-      if (params['lecturaId']) {
+      if (params['report'] === 'true' && params['lecturaId']) {
+        this.initialLecturaIdForModal = String(params['lecturaId']);
+        this.isFormModalOpen = true;
+        // Limpiar query params de la URL para que no filtren la tabla general
+        this.router.navigate([], {
+          relativeTo: this.route,
+          queryParams: {},
+          replaceUrl: true,
+        });
+      } else if (params['lecturaId']) {
         this.filterLecturaId = String(params['lecturaId']);
-        if (params['report'] === 'true') {
-          this.initialLecturaIdForModal = String(params['lecturaId']);
-          this.isFormModalOpen = true;
-        }
       }
       this.loadAnomalies();
     });
