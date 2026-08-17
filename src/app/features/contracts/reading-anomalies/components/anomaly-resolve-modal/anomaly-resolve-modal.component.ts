@@ -36,6 +36,11 @@ export class AnomalyResolveModalComponent {
     return this.anomaly().estado === 'PENDIENTE';
   }
 
+  get canResolve(): boolean {
+    const st = this.anomaly().estado;
+    return st === 'PENDIENTE' || st === 'EN_REVISION';
+  }
+
   setInReview(): void {
     if (this.isLoading) return;
 
