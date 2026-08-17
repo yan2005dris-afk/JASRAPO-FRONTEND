@@ -216,6 +216,22 @@ export class ReadingsComponent implements OnInit {
     });
   }
 
+  approveReading(reading: IReading): void {
+    this.openDropdownId = null;
+    this.readingsService
+      .updateReading(reading.lecturaId, { estado: 'APROBADA' })
+      .subscribe({
+        next: () => {
+          this.toastService.show('Lectura aprobada exitosamente', 'success');
+          this.loadReadings();
+        },
+        error: (err) => {
+          const msg = err?.error?.message || 'Error al aprobar la lectura';
+          this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
+        },
+      });
+  }
+
   deleteReading(reading: IReading): void {
     this.openDropdownId = null;
     this.dialogService

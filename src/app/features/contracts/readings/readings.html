@@ -186,6 +186,17 @@
                             Ver detalle
                           </button>
                         </li>
+                        @if (reading.estado !== 'APROBADA') {
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2 text-success"
+                              (click)="approveReading(reading)"
+                            >
+                              <i class="bi bi-check-circle-fill" style="font-size: 0.85rem"></i>
+                              Aprobar lectura
+                            </button>
+                          </li>
+                        }
                         <li>
                           <button
                             class="dropdown-item d-flex align-items-center gap-2"
