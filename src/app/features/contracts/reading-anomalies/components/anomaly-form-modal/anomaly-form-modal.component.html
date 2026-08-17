@@ -99,11 +99,25 @@
             }
           </div>
 
-          <!-- 2. Selección de Lectura Afectada (si hay varias) -->
-          @if (contractReadings.length > 0) {
+          <!-- 2. Selección de Lectura Afectada -->
+          @if (isLoadingContractReadings) {
+            <div class="col-12 text-muted small py-1 d-flex align-items-center gap-2">
+              <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+              <span>Buscando lecturas del contrato...</span>
+            </div>
+          } @else if (selectedContract && contractReadings.length === 0) {
+            <div class="col-12">
+              <div class="alert alert-warning py-2 px-3 mb-0 small d-flex align-items-center gap-2 rounded-3">
+                <i class="bi bi-exclamation-triangle-fill fs-5 text-warning"></i>
+                <div>
+                  <strong>Sin lecturas registradas:</strong> Este contrato aún no tiene mediciones de consumo sobre las cuales reportar una anomalía.
+                </div>
+              </div>
+            </div>
+          } @else if (contractReadings.length > 0) {
             <div class="col-md-6">
               <label for="selectLecturaAnomalia" class="form-label fw-semibold text-dark small mb-1">
-                Lectura Asociada <span class="text-danger">*</span>
+                Lectura Afectada <span class="text-danger">*</span>
               </label>
               <select
                 id="selectLecturaAnomalia"
@@ -113,7 +127,7 @@
               >
                 @for (r of contractReadings; track r.lecturaId) {
                   <option [value]="r.lecturaId">
-                    Fecha: {{ r.fecha | date: 'dd/MM/yyyy' }} · Consumo: {{ r.consumoCalculado }} m³
+                    {{ r.fecha | date: 'dd/MM/yyyy' }} · {{ r.consumoCalculado }} m³ [{{ r.estado }}]
                   </option>
                 }
               </select>
