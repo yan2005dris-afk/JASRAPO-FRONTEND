@@ -16,6 +16,10 @@ import {
   IUpdateReadingAnomalyDto,
   TipoAnomalia,
 } from '../../interfaces/ianomaly.interface';
+import { ContractsService } from '../../../service-contracts/services/contracts.service';
+import type { IContract } from '../../../service-contracts/interfaces/icontract.interface';
+import { ReadingsService } from '../../../readings/services/readings.service';
+import type { IReading } from '../../../readings/interfaces/ireading.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 
 @Component({
@@ -28,6 +32,8 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
 })
 export class AnomalyFormModalComponent implements OnInit {
   private readonly anomaliesService = inject(ReadingAnomaliesService);
+  private readonly contractsService = inject(ContractsService);
+  private readonly readingsService = inject(ReadingsService);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -35,6 +41,18 @@ export class AnomalyFormModalComponent implements OnInit {
   readonly initialLecturaId = input<string | null>(null);
   readonly saved = output<void>();
   readonly closed = output<void>();
+
+  // Contract Autocomplete Search
+  contractSearchQuery = '';
+  contractSearchResults: IContract[] = [];
+  isSearchingContracts = false;
+  isContractAutocompleteOpen = false;
+  selectedContract: IContract | null = null;
+  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Readings for selected contract
+  contractReadings: IReading[] = [];
+  isLoadingContractReadings = false;
 
   lecturaId = '';
   tipo: TipoAnomalia = 'FUGA';
@@ -58,9 +76,102 @@ export class AnomalyFormModalComponent implements OnInit {
       this.tipo = a.tipo as TipoAnomalia;
       this.observacion = a.observacion || '';
       this.imagePreviewUrl = a.fotoUrl || null;
+      if (a.lectura) {
+        this.contractSearchQuery = `Lectura #${a.lecturaId}`;
+      }
     } else if (this.initialLecturaId()) {
       this.lecturaId = this.initialLecturaId()!;
+      this.readingsService.getReadingById(this.initialLecturaId()!).subscribe({
+        next: (reading) => {
+          if (reading?.contrato) {
+            this.contractSearchQuery = `${reading.contrato.numeroGuia} - Lectura #${reading.lecturaId}`;
+          }
+          this.cdr.markForCheck();
+        },
+      });
     }
+  }
+
+  formatClientName(cliente: IContract['cliente']): string {
+    if (cliente.razonSocial) {
+      return cliente.razonSocial;
+    }
+    return `${cliente.nombres} ${cliente.apellidos}`.trim();
+  }
+
+  onContractSearchInput(query: string): void {
+    this.contractSearchQuery = query;
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
+    }
+
+    const trimmed = query.trim();
+    if (!trimmed) {
+      this.contractSearchResults = [];
+      this.isContractAutocompleteOpen = false;
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.searchDebounceTimer = setTimeout(() => {
+      this.executeContractSearch(trimmed);
+    }, 350);
+  }
+
+  private executeContractSearch(term: string): void {
+    this.isSearchingContracts = true;
+    this.isContractAutocompleteOpen = true;
+    this.cdr.markForCheck();
+
+    this.contractsService.getContracts({ search: term, limit: 8 }).subscribe({
+      next: (res) => {
+        this.contractSearchResults = res.data;
+        this.isSearchingContracts = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.contractSearchResults = [];
+        this.isSearchingContracts = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  selectContract(contract: IContract): void {
+    this.selectedContract = contract;
+    this.contractSearchQuery = `${contract.numeroGuia} - ${this.formatClientName(contract.cliente)}`;
+    this.isContractAutocompleteOpen = false;
+    this.contractSearchResults = [];
+    this.loadContractReadings(contract.contratoId);
+  }
+
+  clearSelectedContract(): void {
+    this.selectedContract = null;
+    this.contractSearchQuery = '';
+    this.contractSearchResults = [];
+    this.isContractAutocompleteOpen = false;
+    this.contractReadings = [];
+    this.lecturaId = '';
+    this.cdr.markForCheck();
+  }
+
+  loadContractReadings(contratoId: string): void {
+    this.isLoadingContractReadings = true;
+    this.readingsService.getReadings({ contratoId, page: 1, limit: 10 }).subscribe({
+      next: (res) => {
+        this.contractReadings = res.data || [];
+        this.isLoadingContractReadings = false;
+        if (this.contractReadings.length > 0 && !this.lecturaId) {
+          this.lecturaId = String(this.contractReadings[0].lecturaId);
+        }
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.contractReadings = [];
+        this.isLoadingContractReadings = false;
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   get isFormValid(): boolean {

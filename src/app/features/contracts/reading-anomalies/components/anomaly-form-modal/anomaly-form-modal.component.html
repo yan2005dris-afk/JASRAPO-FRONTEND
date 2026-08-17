@@ -26,28 +26,102 @@
       <!-- Body -->
       <div class="modal-body p-4 bg-white" style="max-height: 75vh; overflow-y: auto">
         <div class="row g-3">
-          <!-- Lectura ID -->
-          <div class="col-md-6">
-            <label for="inputLecturaIdAnomalia" class="form-label fw-semibold text-dark small mb-1">
-              ID de Lectura <span class="text-danger">*</span>
+          <!-- 1. Buscador de Contrato / Guía -->
+          <div class="col-12 position-relative">
+            <label for="inputContratoIdAnomalia" class="form-label fw-semibold text-dark small mb-1">
+              Contrato / Punto de Medición <span class="text-danger">*</span>
             </label>
             <div class="input-group">
               <span class="input-group-text bg-white text-muted">
-                <i class="bi bi-speedometer2"></i>
+                <i class="bi bi-file-text"></i>
               </span>
               <input
-                id="inputLecturaIdAnomalia"
+                id="inputContratoIdAnomalia"
                 type="text"
                 class="form-control shadow-none"
-                placeholder="Ej. 1"
-                [(ngModel)]="lecturaId"
+                placeholder="Buscar por guía, cliente o CI..."
+                [value]="contractSearchQuery"
                 [disabled]="isLoading || !!anomaly()"
+                (input)="onContractSearchInput($any($event.target).value)"
+                (focus)="contractSearchResults.length > 0 ? isContractAutocompleteOpen = true : null"
+                autocomplete="off"
               />
+              @if ((selectedContract || contractSearchQuery) && !anomaly()) {
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  (click)="clearSelectedContract()"
+                  [disabled]="isLoading"
+                  title="Limpiar selección"
+                >
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              }
             </div>
+
+            <!-- Autocomplete Dropdown Contratos -->
+            @if (isContractAutocompleteOpen) {
+              <div class="autocomplete-dropdown shadow-lg rounded-3 border bg-white mt-1 py-1">
+                @if (isSearchingContracts) {
+                  <div class="px-3 py-2 text-muted small d-flex align-items-center gap-2">
+                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                    <span>Buscando contratos...</span>
+                  </div>
+                } @else if (contractSearchResults.length === 0) {
+                  <div class="px-3 py-2 text-muted small">
+                    No se encontraron contratos para "{{ contractSearchQuery }}".
+                  </div>
+                } @else {
+                  @for (contract of contractSearchResults; track contract.contratoId) {
+                    <button
+                      type="button"
+                      class="dropdown-item px-3 py-2 text-start d-flex justify-content-between align-items-center"
+                      (click)="selectContract(contract)"
+                    >
+                      <div>
+                        <div class="fw-semibold text-dark small">
+                          {{ contract.numeroGuia }}
+                        </div>
+                        <div class="text-muted extra-small">
+                          {{ formatClientName(contract.cliente) }}
+                          @if (contract.cliente.identificacion) {
+                            · CI: {{ contract.cliente.identificacion }}
+                          }
+                        </div>
+                      </div>
+                      <span class="badge bg-light text-secondary border extra-small">
+                        ID #{{ contract.contratoId }}
+                      </span>
+                    </button>
+                  }
+                }
+              </div>
+            }
           </div>
 
+          <!-- 2. Selección de Lectura Afectada (si hay varias) -->
+          @if (contractReadings.length > 0) {
+            <div class="col-md-6">
+              <label for="selectLecturaAnomalia" class="form-label fw-semibold text-dark small mb-1">
+                Lectura Asociada <span class="text-danger">*</span>
+              </label>
+              <select
+                id="selectLecturaAnomalia"
+                class="form-select shadow-none"
+                [(ngModel)]="lecturaId"
+                [disabled]="isLoading || !!anomaly()"
+              >
+                @for (r of contractReadings; track r.lecturaId) {
+                  <option [value]="r.lecturaId">
+                    Fecha: {{ r.fecha | date: 'dd/MM/yyyy' }} · Consumo: {{ r.consumoCalculado }} m³
+                  </option>
+                }
+              </select>
+            </div>
+          }
+
           <!-- Tipo Anomalía -->
-          <div class="col-md-6">
+          <div [ngClass]="contractReadings.length > 0 ? 'col-md-6' : 'col-12'">
             <label for="selectTipoAnomalia" class="form-label fw-semibold text-dark small mb-1">
               Tipo de Incidente <span class="text-danger">*</span>
             </label>

@@ -72,19 +72,35 @@
     <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
       <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
         <div class="d-flex align-items-center gap-2 flex-wrap flex-grow-1">
-          <!-- Filter Lectura ID -->
-          <div class="input-group search-group" style="max-width: 220px">
+          <!-- Contrato seleccionado (modal buscador) -->
+          <div class="input-group search-group" style="max-width: 260px">
             <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
-              <i class="bi bi-speedometer2"></i>
+              <i class="bi bi-file-text"></i>
             </span>
             <input
               type="text"
               class="form-control border-start-0 ps-0 shadow-none"
-              placeholder="Lectura ID..."
-              [(ngModel)]="filterLecturaId"
-              (keyup.enter)="loadAnomalies()"
+              placeholder="Seleccione un contrato"
+              [value]="selectedContractNumber"
+              readonly
+              (click)="abrirBuscadorContratos()"
             />
+            <button
+              type="button"
+              class="btn btn-outline-primary shadow-none"
+              title="Buscar contrato"
+              (click)="abrirBuscadorContratos()"
+            >
+              <i class="bi bi-search"></i>
+            </button>
           </div>
+
+          @if (selectedContractName) {
+            <span class="badge badge-soft-primary d-flex align-items-center gap-1">
+              <i class="bi bi-person-check-fill"></i>
+              {{ selectedContractName }}
+            </span>
+          }
 
           <!-- Filter Tipo -->
           <select
@@ -130,11 +146,8 @@
     <!-- Table -->
     <div class="pt-2">
       @if (isLoading) {
-        <div class="text-center py-5 text-muted">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Cargando...</span>
-          </div>
-          <p class="mt-3 mb-0">Cargando anomalías...</p>
+        <div class="p-3">
+          <app-table-skeleton [rows]="5" [cols]="7" />
         </div>
       }
 
@@ -154,7 +167,9 @@
           <table class="table table-hover align-middle mb-0 custom-table">
             <thead>
               <tr>
-                <th scope="col" class="ps-4">Foto / ID</th>
+                <th scope="col" class="ps-4" style="width: 56px">
+                  <input class="form-check-input table-checkbox" type="checkbox" />
+                </th>
                 <th scope="col">Lectura Ref</th>
                 <th scope="col">Tipo Incidente</th>
                 <th scope="col">Observación</th>
@@ -167,27 +182,7 @@
               @for (anomaly of anomalies; track anomaly.anomaliaId) {
                 <tr>
                   <td class="ps-4">
-                    <div class="d-flex align-items-center gap-2">
-                      @if (anomaly.fotoUrl) {
-                        <button
-                          type="button"
-                          class="btn p-0 border-0 shadow-none cursor-pointer"
-                          (click)="openResolveModal(anomaly)"
-                          title="Ver evidencia fotográfica"
-                        >
-                          <img
-                            [src]="anomaly.fotoUrl"
-                            alt="Foto evidencia"
-                            class="anomaly-thumb rounded-2 border"
-                          />
-                        </button>
-                      } @else {
-                        <div class="anomaly-thumb-placeholder rounded-2 border">
-                          <i class="bi bi-camera text-muted"></i>
-                        </div>
-                      }
-                      <span class="fw-bold text-dark small">#{{ anomaly.anomaliaId }}</span>
-                    </div>
+                    <input class="form-check-input table-checkbox" type="checkbox" />
                   </td>
                   <td>
                     <div class="fw-semibold text-dark small">Lectura #{{ anomaly.lecturaId }}</div>
@@ -309,4 +304,12 @@
       (closed)="closeResolveModal()"
     />
   }
+
+  <!-- Contract Picker Modal -->
+  <app-contract-picker
+    [open]="isContractPickerOpen"
+    title="Buscar Contrato para Filtrar Anomalías"
+    (contractSelected)="onContractSelected($event)"
+    (closed)="cerrarBuscadorContratos()"
+  />
 </div>
