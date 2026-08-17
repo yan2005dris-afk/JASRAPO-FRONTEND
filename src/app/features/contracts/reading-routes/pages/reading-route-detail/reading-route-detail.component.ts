@@ -153,7 +153,7 @@ export class ReadingRouteDetailComponent implements OnInit {
     });
   }
 
-  // Progress metrics across all pages
+  // Progress metrics from backend KPIs
   totalApprovedReadings = 0;
 
   loadReadings(): void {
@@ -177,43 +177,17 @@ export class ReadingRouteDetailComponent implements OnInit {
         next: (res) => {
           this.readings = res.data;
           this.totalReadings = res.meta?.total ?? res.meta?.totalItems ?? res.data.length;
+          if (res.kpis) {
+            this.totalApprovedReadings = res.kpis.aprobadas ?? 0;
+          }
           this.isLoadingReadings = false;
-          this.loadGlobalProgress();
           this.cdr.markForCheck();
         },
         error: () => {
           this.readings = [];
           this.totalReadings = 0;
+          this.totalApprovedReadings = 0;
           this.isLoadingReadings = false;
-          this.cdr.markForCheck();
-        },
-      });
-  }
-
-  loadGlobalProgress(): void {
-    if (!this.readingRoute?.comunidadId) return;
-
-    this.routesService
-      .getEligibleReadings({
-        comunidadId: this.readingRoute.comunidadId,
-        sectorId: this.readingRoute.sectorId || undefined,
-        periodoId: this.readingRoute.periodoId || undefined,
-        fechaPlanificada: this.readingRoute.fechaPlanificada || undefined,
-        tipoRuta: this.readingRoute.tipoRuta as any,
-        page: 1,
-        limit: 50,
-      })
-      .subscribe({
-        next: (res) => {
-          this.totalApprovedReadings = res.data.filter(
-            (r) => r.estadoLectura === 'APROBADA',
-          ).length;
-          this.cdr.markForCheck();
-        },
-        error: () => {
-          this.totalApprovedReadings = this.readings.filter(
-            (r) => r.estadoLectura === 'APROBADA',
-          ).length;
           this.cdr.markForCheck();
         },
       });

@@ -42,9 +42,10 @@ export interface IPaginationMeta {
   limit?: number;
 }
 
-export interface IPaginatedResult<T> {
+export interface IPaginatedResult<T, K = any> {
   data: T[];
   meta?: IPaginationMeta;
+  kpis?: K;
 }
 
 export interface IPaymentStateOption {
