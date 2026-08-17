@@ -14,6 +14,7 @@ import {
 } from './interfaces/ipayment-agreement.interface';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -29,6 +30,7 @@ import type { IContract } from '../service-contracts/interfaces/icontract.interf
     FormsModule,
     StatusBadgeComponent,
     EmptyStateComponent,
+    TableSkeletonComponent,
     PaginationComponent,
     ContractPickerComponent,
     CreateAgreementModalComponent,

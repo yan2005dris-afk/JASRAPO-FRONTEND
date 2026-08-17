@@ -52,6 +52,12 @@ export class ReadingRoutesService {
     return this.http.get<IReadingRoute>(`${this.endpoint}/${id}`);
   }
 
+  getPeriods(): Observable<{ periodoId: number; nombre?: string; estado: string }[]> {
+    return this.http.get<{ periodoId: number; nombre?: string; estado: string }[]>(
+      `${this.endpoint}/periods`,
+    );
+  }
+
   createRoute(dto: ICreateRouteDto): Observable<IReadingRoute> {
     return this.http.post<IReadingRoute>(this.endpoint, dto);
   }
@@ -86,10 +92,28 @@ export class ReadingRoutesService {
     if (params?.periodoId) {
       httpParams = httpParams.set('periodoId', String(params.periodoId));
     }
+    if (params?.tipoRuta) {
+      httpParams = httpParams.set('tipoRuta', String(params.tipoRuta));
+    }
+    if (params?.fechaPlanificada) {
+      httpParams = httpParams.set('fechaPlanificada', String(params.fechaPlanificada));
+    }
+    if (params?.search) {
+      httpParams = httpParams.set('search', params.search);
+    }
 
     return this.http.get<IPaginatedResult<IReadingForRoute>>(
       `${this.endpoint}/eligible-readings`,
       { params: httpParams },
     );
+  }
+
+  updateReadingStatus(
+    lecturaId: string | number,
+    estado: 'APROBADA' | 'RECHAZADA_VERIFICACION' | 'PENDIENTE' | 'POR_REVISION',
+  ): Observable<any> {
+    return this.http.patch(`${this.baseUrl}/readings/${lecturaId}`, {
+      estado,
+    });
   }
 }

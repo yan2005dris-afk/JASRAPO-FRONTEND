@@ -255,6 +255,14 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'RutasDeLectura/:id',
+            data: { breadcrumb: 'Detalle de Ruta' },
+            loadComponent: () =>
+              import(
+                './features/contracts/reading-routes/pages/reading-route-detail/reading-route-detail.component'
+              ).then((m) => m.ReadingRouteDetailComponent),
+          },
+          {
             path: 'LecturaDeConsumo',
             data: { breadcrumb: 'Lectura de Consumo' },
             loadComponent: () =>

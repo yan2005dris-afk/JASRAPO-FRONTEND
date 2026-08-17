@@ -40,16 +40,16 @@
           <div class="col-4">
             <div class="p-3 bg-light rounded-3 border text-center">
               <div class="text-muted small">Lectura Actual</div>
-              <div class="fs-5 fw-bold text-dark tabular-nums mt-1">
-                {{ reading().lecturaActual | number: '1.2-2' }} m³
+              <div class="fs-5 fw-bold tabular-nums mt-1" [ngClass]="reading().estado === 'PENDIENTE' ? 'text-muted fst-italic' : 'text-dark'">
+                {{ reading().estado === 'PENDIENTE' ? '—' : ((reading().lecturaActual | number: '1.2-2') + ' m³') }}
               </div>
             </div>
           </div>
           <div class="col-4">
             <div class="p-3 bg-light rounded-3 border text-center">
               <div class="text-muted small">Consumo Calculado</div>
-              <div class="fs-5 fw-bold text-primary tabular-nums mt-1">
-                {{ reading().consumoCalculado | number: '1.2-2' }} m³
+              <div class="fs-5 fw-bold tabular-nums mt-1" [ngClass]="reading().estado === 'PENDIENTE' ? 'text-muted' : 'text-primary'">
+                {{ reading().estado === 'PENDIENTE' ? 'Pendiente' : ((reading().consumoCalculado | number: '1.2-2') + ' m³') }}
               </div>
             </div>
           </div>

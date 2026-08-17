@@ -84,7 +84,7 @@ export class ReadingsComponent implements OnInit {
     this.readingsService.getReadings(params).subscribe({
       next: (res) => {
         this.readings = res.data;
-        this.totalItems = res.meta?.totalItems ?? res.data.length;
+        this.totalItems = res.meta?.total ?? res.meta?.totalItems ?? res.data.length;
         this.isLoading = false;
         this.hasFetched = true;
         this.cdr.markForCheck();

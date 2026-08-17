@@ -11,6 +11,11 @@ export interface IReadingForRoute {
   direccion: string;
   sector?: string;
   estadoContrato: string;
+  medidorSerie?: string;
+  lecturaAnterior?: number;
+  lecturaActual?: number;
+  consumoCalculado?: number;
+  estadoLectura?: string;
 }
 
 export interface IReadingRoute {
@@ -64,6 +69,7 @@ export interface IFindAllRoutesParams {
   operarioId?: number;
   comunidadId?: number;
   periodoId?: number;
+  tipoRuta?: TipoRuta | string;
 }
 
 export interface IFilterReadingsParams {
@@ -72,4 +78,7 @@ export interface IFilterReadingsParams {
   comunidadId?: number;
   sectorId?: number;
   periodoId?: number;
+  fechaPlanificada?: string;
+  tipoRuta?: TipoRuta | string;
+  search?: string;
 }

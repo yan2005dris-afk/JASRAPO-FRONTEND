@@ -13,11 +13,17 @@ import {
   IReadingRoute,
   TipoRuta,
 } from './interfaces/ireading-route.interface';
+import { ComunidadesService } from '../../admin/comunidades/services/comunidades.service';
+import { UsersService } from '../../users/services/users.service';
+import { Comunidad } from '../../admin/comunidades/models/comunidad.interface';
+import { User } from '../../users/models/user.interface';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { Router } from '@angular/router';
 import { RouteFormModalComponent } from './components/route-form-modal/route-form-modal.component';
 import { ReassignRouteModalComponent } from './components/reassign-route-modal/reassign-route-modal.component';
 import { RouteDetailModalComponent } from './components/route-detail-modal/route-detail-modal.component';
@@ -30,6 +36,7 @@ import { RouteDetailModalComponent } from './components/route-detail-modal/route
     FormsModule,
     StatusBadgeComponent,
     EmptyStateComponent,
+    TableSkeletonComponent,
     PaginationComponent,
     RouteFormModalComponent,
     ReassignRouteModalComponent,
@@ -43,7 +50,10 @@ import { RouteDetailModalComponent } from './components/route-detail-modal/route
   },
 })
 export class ReadingRoutesComponent implements OnInit {
+  private readonly router = inject(Router);
   private readonly routesService = inject(ReadingRoutesService);
+  private readonly comunidadesService = inject(ComunidadesService);
+  private readonly usersService = inject(UsersService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -54,6 +64,10 @@ export class ReadingRoutesComponent implements OnInit {
   isLoading = false;
   hasFetched = false;
   openDropdownId: string | number | null = null;
+
+  // Catalogs
+  operarios: User[] = [];
+  comunidades: Comunidad[] = [];
 
   // Pagination
   currentPage = 1;
@@ -69,9 +83,46 @@ export class ReadingRoutesComponent implements OnInit {
   selectedRouteForEdit: IReadingRoute | null = null;
   selectedRouteForReassign: IReadingRoute | null = null;
   selectedRouteForDetail: IReadingRoute | null = null;
+  detailModalInitialTab: 'info' | 'readings' = 'info';
 
   ngOnInit(): void {
+    this.loadCatalogs();
     this.loadRoutes();
+  }
+
+  loadCatalogs(): void {
+    this.comunidadesService.getAllComunidades(1, 100).subscribe({
+      next: (res) => {
+        this.comunidades = res.data;
+        this.cdr.markForCheck();
+      },
+    });
+
+    this.usersService.getUsers(1, 100).subscribe({
+      next: (res) => {
+        this.operarios = res.data.filter((u) => {
+          const roleName = u.rol?.nombre?.toLowerCase() || '';
+          return roleName.includes('operador') || roleName.includes('operario');
+        });
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  getOperarioNombre(operarioId: number): string {
+    const user = this.operarios.find((u) => u.usuarioId === operarioId);
+    if (user) {
+      return `${user.nombres} ${user.apellidos}`.trim();
+    }
+    return `Operario #${operarioId}`;
+  }
+
+  getComunidadNombre(comunidadId: number): string {
+    const com = this.comunidades.find((c) => c.id === comunidadId);
+    if (com) {
+      return com.nombre;
+    }
+    return `Comunidad #${comunidadId}`;
   }
 
   loadRoutes(): void {
@@ -160,6 +211,8 @@ export class ReadingRoutesComponent implements OnInit {
 
   // Modals Actions
   openCreateModal(): void {
+    this.selectedRouteForDetail = null;
+    this.selectedRouteForReassign = null;
     this.selectedRouteForEdit = null;
     this.isFormModalOpen = true;
     this.cdr.markForCheck();
@@ -167,6 +220,8 @@ export class ReadingRoutesComponent implements OnInit {
 
   openEditModal(route: IReadingRoute): void {
     this.openDropdownId = null;
+    this.selectedRouteForDetail = null;
+    this.selectedRouteForReassign = null;
     this.selectedRouteForEdit = route;
     this.isFormModalOpen = true;
     this.cdr.markForCheck();
@@ -181,14 +236,15 @@ export class ReadingRoutesComponent implements OnInit {
   onRouteSaved(): void {
     this.isFormModalOpen = false;
     this.selectedRouteForEdit = null;
-    if (this.selectedRouteForDetail) {
-      this.selectedRouteForDetail = null;
-    }
+    this.selectedRouteForDetail = null;
+    this.selectedRouteForReassign = null;
     this.loadRoutes();
   }
 
   openReassignModal(route: IReadingRoute): void {
     this.openDropdownId = null;
+    this.isFormModalOpen = false;
+    this.selectedRouteForDetail = null;
     this.selectedRouteForReassign = route;
     this.cdr.markForCheck();
   }
@@ -206,18 +262,9 @@ export class ReadingRoutesComponent implements OnInit {
     this.loadRoutes();
   }
 
-  openDetailModal(route: IReadingRoute): void {
+  openDetailModal(route: IReadingRoute, tab: 'info' | 'readings' = 'info'): void {
     this.openDropdownId = null;
-    this.routesService.getRouteById(route.rutaId).subscribe({
-      next: (full) => {
-        this.selectedRouteForDetail = full;
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.selectedRouteForDetail = route;
-        this.cdr.markForCheck();
-      },
-    });
+    this.router.navigate(['/app/Contratos/RutasDeLectura', route.rutaId]);
   }
 
   closeDetailModal(): void {
@@ -229,29 +276,53 @@ export class ReadingRoutesComponent implements OnInit {
     this.openDropdownId = null;
     this.dialogService
       .confirm({
-        title: 'Eliminar Ruta de Trabajo',
-        message: `¿Estás seguro de eliminar la ruta "${route.nombre}"?`,
+        title: '¿Eliminar ruta de lectura?',
+        message: `¿Estás seguro de que deseas eliminar la ruta "${route.nombre}"? Esta acción no se puede deshacer.`,
         confirmText: 'Eliminar',
         cancelText: 'Cancelar',
         isDanger: true,
       })
       .subscribe((confirmed) => {
         if (confirmed) {
-          this.isLoading = true;
           this.routesService.deleteRoute(route.rutaId).subscribe({
             next: () => {
-              this.isLoading = false;
-              this.toastService.show('Ruta eliminada exitosamente', 'success');
+              this.toastService.show('Ruta eliminada correctamente', 'success');
               this.loadRoutes();
             },
             error: (err) => {
-              this.isLoading = false;
-              const msg = err?.error?.message || 'Error al eliminar ruta';
-              this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
-              this.cdr.markForCheck();
+              this.toastService.show(
+                err.error?.message || 'Error al eliminar la ruta',
+                'error',
+              );
             },
           });
         }
       });
+  }
+
+  changeRouteStatus(route: IReadingRoute, nuevoEstado: 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA' | 'PENDIENTE'): void {
+    this.openDropdownId = null;
+    this.routesService.updateRoute(route.rutaId, { estado: nuevoEstado } as any).subscribe({
+      next: (updated) => {
+        route.estado = updated.estado;
+        if (this.selectedRouteForDetail && this.selectedRouteForDetail.rutaId === route.rutaId) {
+          this.selectedRouteForDetail = { ...this.selectedRouteForDetail, estado: updated.estado };
+        }
+        const msg =
+          nuevoEstado === 'EN_PROGRESO'
+            ? 'Ruta iniciada y liberada a campo'
+            : nuevoEstado === 'COMPLETADA'
+              ? 'Ruta marcada como completada'
+              : 'Estado de la ruta actualizado';
+        this.toastService.show(msg, 'success');
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.toastService.show(
+          err.error?.message || 'No se pudo cambiar el estado de la ruta',
+          'error',
+        );
+      },
+    });
   }
 }

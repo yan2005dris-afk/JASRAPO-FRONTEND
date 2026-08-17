@@ -24,6 +24,9 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
   templateUrl: './reading-form-modal.component.html',
   styleUrl: './reading-form-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(keydown.escape)': 'close()',
+  },
 })
 export class ReadingFormModalComponent implements OnInit {
   private readonly readingsService = inject(ReadingsService);

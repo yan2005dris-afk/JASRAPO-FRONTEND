@@ -1,9 +1,11 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   computed,
   effect,
   HostListener,
+  inject,
   input,
   output,
   signal,
@@ -35,6 +37,8 @@ import { ClickOutsideDirective } from '../../directives/click-outside.directive'
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DatePickerComponent {
+  private readonly elementRef = inject(ElementRef);
+
   readonly value = input<string>('');
   readonly placeholder = input('Seleccione una fecha');
   readonly inputId = input<string>('');
@@ -43,6 +47,7 @@ export class DatePickerComponent {
   readonly valueChange = output<string>();
 
   readonly isOpen = signal(false);
+  readonly openUpwards = signal(false);
   readonly viewDate = signal(new Date());
 
   // Semana arranca en Lunes: JS devuelve 0=Dom ... 6=Sáb
@@ -89,7 +94,27 @@ export class DatePickerComponent {
   }
 
   toggle(): void {
-    this.isOpen.update((v) => !v);
+    if (!this.isOpen()) {
+      this.checkPlacement();
+      this.isOpen.set(true);
+    } else {
+      this.isOpen.set(false);
+    }
+  }
+
+  private checkPlacement(): void {
+    const el = this.elementRef.nativeElement as HTMLElement;
+    const rect = el.getBoundingClientRect();
+    const popoverHeight = 310; // Alto aproximado del popover de calendario
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+
+    // Si no hay suficiente espacio abajo (menos de 310px) y arriba hay más espacio, abrir hacia arriba
+    if (spaceBelow < popoverHeight && spaceAbove > spaceBelow) {
+      this.openUpwards.set(true);
+    } else {
+      this.openUpwards.set(false);
+    }
   }
 
   close(): void {

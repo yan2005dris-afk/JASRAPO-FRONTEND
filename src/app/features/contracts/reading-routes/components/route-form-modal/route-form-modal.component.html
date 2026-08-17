@@ -19,7 +19,7 @@
           class="btn-close shadow-none"
           aria-label="Cerrar"
           (click)="close()"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         ></button>
       </div>
 
@@ -35,9 +35,10 @@
               id="inputNombreRuta"
               type="text"
               class="form-control shadow-none"
-              placeholder="Ej. Ruta Sector Norte - Barrio Central"
-              [(ngModel)]="nombre"
-              [disabled]="isLoading"
+              placeholder="Ej. Ruta Centro - Enero 2026"
+              [ngModel]="nombre()"
+              (ngModelChange)="nombre.set($event)"
+              [disabled]="isLoading()"
             />
           </div>
 
@@ -46,90 +47,95 @@
             <label for="selectTipoRuta" class="form-label fw-semibold text-dark small mb-1">
               Tipo de Ruta <span class="text-danger">*</span>
             </label>
-            <select id="selectTipoRuta" class="form-select shadow-none" [(ngModel)]="tipoRuta" [disabled]="isLoading">
+            <select
+              id="selectTipoRuta"
+              class="form-select shadow-none"
+              [ngModel]="tipoRuta()"
+              (ngModelChange)="tipoRuta.set($event)"
+              [disabled]="isLoading()"
+            >
               @for (opt of tipoOptions; track opt.value) {
                 <option [value]="opt.value">{{ opt.label }}</option>
               }
             </select>
           </div>
 
-          <!-- Operario ID -->
+          <!-- Operario -->
           <div class="col-md-6">
-            <label for="inputOperarioIdRuta" class="form-label fw-semibold text-dark small mb-1">
-              ID Operario Asignado <span class="text-danger">*</span>
+            <label for="selectOperarioRuta" class="form-label fw-semibold text-dark small mb-1">
+              Operario Asignado <span class="text-danger">*</span>
             </label>
-            <div class="input-group">
-              <span class="input-group-text bg-white text-muted">
-                <i class="bi bi-person-badge"></i>
-              </span>
-              <input
-                id="inputOperarioIdRuta"
-                type="number"
-                min="1"
-                class="form-control shadow-none"
-                placeholder="ID de usuario operario (ej. 1)"
-                [(ngModel)]="operarioId"
-                [disabled]="isLoading"
-              />
-            </div>
+            <select
+              id="selectOperarioRuta"
+              class="form-select shadow-none"
+              [ngModel]="operarioId()"
+              (ngModelChange)="operarioId.set($event)"
+              [disabled]="isLoading()"
+            >
+              <option [ngValue]="null">Seleccione un operario...</option>
+              @for (op of operarios(); track op.usuarioId) {
+                <option [ngValue]="op.usuarioId">{{ op.nombres }} {{ op.apellidos }}</option>
+              }
+            </select>
           </div>
 
-          <!-- Período ID -->
+          <!-- Período -->
           <div class="col-md-6">
-            <label for="inputPeriodoIdRuta" class="form-label fw-semibold text-dark small mb-1">
-              ID Período <span class="text-danger">*</span>
+            <label for="selectPeriodoRuta" class="form-label fw-semibold text-dark small mb-1">
+              Período <span class="text-danger">*</span>
             </label>
-            <div class="input-group">
-              <span class="input-group-text bg-white text-muted">
-                <i class="bi bi-calendar3"></i>
-              </span>
-              <input
-                id="inputPeriodoIdRuta"
-                type="number"
-                min="1"
-                class="form-control shadow-none"
-                placeholder="Ej. 1"
-                [(ngModel)]="periodoId"
-                [disabled]="isLoading"
-              />
-            </div>
+            <select
+              id="selectPeriodoRuta"
+              class="form-select shadow-none"
+              [ngModel]="periodoId()"
+              (ngModelChange)="periodoId.set($event)"
+              [disabled]="isLoading()"
+            >
+              <option [ngValue]="null">Seleccione un período...</option>
+              @for (p of periodos(); track p.periodoId) {
+                <option [ngValue]="p.periodoId">
+                  {{ p.nombre || 'Período #' + p.periodoId }} ({{ p.estado }})
+                </option>
+              }
+            </select>
           </div>
 
-          <!-- Comunidad ID -->
+          <!-- Comunidad -->
           <div class="col-md-6">
-            <label for="inputComunidadIdRuta" class="form-label fw-semibold text-dark small mb-1">
-              ID Comunidad <span class="text-danger">*</span>
+            <label for="selectComunidadRuta" class="form-label fw-semibold text-dark small mb-1">
+              Comunidad <span class="text-danger">*</span>
             </label>
-            <div class="input-group">
-              <span class="input-group-text bg-white text-muted">
-                <i class="bi bi-geo-alt"></i>
-              </span>
-              <input
-                id="inputComunidadIdRuta"
-                type="number"
-                min="1"
-                class="form-control shadow-none"
-                placeholder="Ej. 1"
-                [(ngModel)]="comunidadId"
-                [disabled]="isLoading"
-              />
-            </div>
+            <select
+              id="selectComunidadRuta"
+              class="form-select shadow-none"
+              [ngModel]="comunidadId()"
+              (ngModelChange)="onComunidadChange($event)"
+              [disabled]="isLoading()"
+            >
+              <option [ngValue]="null">Seleccione una comunidad...</option>
+              @for (com of comunidades(); track com.id) {
+                <option [ngValue]="com.id">{{ com.nombre }}</option>
+              }
+            </select>
           </div>
 
-          <!-- Sector ID (opcional) -->
+          <!-- Sector (opcional) -->
           <div class="col-md-6">
-            <label for="inputSectorIdRuta" class="form-label fw-semibold text-dark small mb-1">
-              ID Sector (Opcional)
+            <label for="selectSectorRuta" class="form-label fw-semibold text-dark small mb-1">
+              Sector (Opcional)
             </label>
-            <input
-              id="inputSectorIdRuta"
-              type="number"
-              min="1"
-              class="form-control shadow-none"
-              placeholder="Opcional..."
-              [(ngModel)]="sectorId"
-              [disabled]="isLoading"
-            />
+            <select
+              id="selectSectorRuta"
+              class="form-select shadow-none"
+              [ngModel]="sectorId()"
+              (ngModelChange)="sectorId.set($event)"
+              [disabled]="isLoading()"
+            >
+              <option [ngValue]="null">Sin sector específico</option>
+              @for (sec of filteredSectores(); track sec.sectorId) {
+                <option [ngValue]="sec.sectorId">{{ sec.nombre }}</option>
+              }
+            </select>
           </div>
 
           <!-- Fecha Planificada -->
@@ -137,55 +143,53 @@
             <label for="inputFechaPlanificadaRuta" class="form-label fw-semibold text-dark small mb-1">
               Fecha Planificada
             </label>
-            <input
-              id="inputFechaPlanificadaRuta"
-              type="date"
-              class="form-control shadow-none"
-              [(ngModel)]="fechaPlanificada"
-              [disabled]="isLoading"
+            <app-date-picker
+              [inputId]="'inputFechaPlanificadaRuta'"
+              [value]="fechaPlanificada()"
+              [disabled]="isLoading()"
+              (valueChange)="fechaPlanificada.set($event)"
             />
           </div>
 
           <!-- Descripción -->
           <div class="col-12">
             <label for="textareaDescRuta" class="form-label fw-semibold text-dark small mb-1">
-              Descripción / Notas de Campo
+              Notas / Descripción (Opcional)
             </label>
             <textarea
               id="textareaDescRuta"
-              class="form-control form-control-sm shadow-none"
-              rows="2"
-              placeholder="Observaciones de acceso, puntos de referencia o instrucciones..."
-              [(ngModel)]="descripcion"
-              [disabled]="isLoading"
+              class="form-control shadow-none"
+              rows="3"
+              placeholder="Instrucciones especiales para el operario..."
+              [ngModel]="descripcion()"
+              (ngModelChange)="descripcion.set($event)"
+              [disabled]="isLoading()"
             ></textarea>
           </div>
         </div>
       </div>
 
       <!-- Footer -->
-      <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between">
+      <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-end gap-2">
         <button
           type="button"
-          class="btn btn-outline-secondary fw-medium px-3"
+          class="btn btn-secondary fw-medium px-3"
           (click)="close()"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         >
           Cancelar
         </button>
         <button
           type="button"
-          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-4"
-          (click)="submit()"
-          [disabled]="!isFormValid || isLoading"
+          class="btn btn-primary fw-medium px-4 d-flex align-items-center gap-2"
+          (click)="save()"
+          [disabled]="!isFormValid() || isLoading()"
         >
-          @if (isLoading) {
+          @if (isLoading()) {
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
           }
-          @if (!isLoading) {
-            <i class="bi bi-check-circle"></i>
-          }
-          {{ isLoading ? 'Guardando...' : route() ? 'Actualizar' : 'Crear Ruta' }}
+          <i class="bi bi-check2"></i>
+          {{ route() ? 'Guardar Cambios' : 'Crear Ruta' }}
         </button>
       </div>
     </div>

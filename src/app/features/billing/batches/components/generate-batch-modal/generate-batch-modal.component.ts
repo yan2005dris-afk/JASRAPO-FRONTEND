@@ -1,60 +1,170 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
+  OnInit,
+  computed,
   inject,
   output,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { BatchesService } from '../../services/batches.service';
 import { IGenerateBatchDto } from '../../interfaces/ibatch.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
+import { ReadingRoutesService } from '../../../../contracts/reading-routes/services/reading-routes.service';
+import { IReadingRoute } from '../../../../contracts/reading-routes/interfaces/ireading-route.interface';
+import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
+import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 
 @Component({
   selector: 'app-generate-batch-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StatusBadgeComponent],
   templateUrl: './generate-batch-modal.component.html',
   styleUrl: './generate-batch-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class GenerateBatchModalComponent {
+export class GenerateBatchModalComponent implements OnInit {
   private readonly batchesService = inject(BatchesService);
+  private readonly comunidadesService = inject(ComunidadesService);
+  private readonly routesService = inject(ReadingRoutesService);
   private readonly toastService = inject(ToastService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly generated = output<void>();
   readonly closed = output<void>();
 
-  periodoId = 1;
-  comunidadId: number | null = null;
-  isLoading = false;
+  // State
+  readonly periodoId = signal<number | null>(null);
+  readonly comunidadId = signal<number | null>(null);
+  readonly selectedRouteId = signal<string | number | null>(null);
+  readonly isLoading = signal(false);
+  readonly isLoadingRoutes = signal(false);
 
-  get isFormValid(): boolean {
-    return this.periodoId > 0;
+  // Catalogs
+  readonly comunidades = signal<Comunidad[]>([]);
+  readonly periodos = signal<{ periodoId: number; nombre?: string; estado: string }[]>([]);
+  readonly routes = signal<IReadingRoute[]>([]);
+
+  readonly selectedRoute = computed(() => {
+    const id = this.selectedRouteId();
+    if (!id) return null;
+    return this.routes().find((r) => r.rutaId === id) || null;
+  });
+
+  readonly hasPendingRoutes = computed(() => {
+    return this.routes().some((r) => r.estado !== 'COMPLETADA');
+  });
+
+  readonly isFormValid = computed(() => {
+    return this.periodoId() !== null && !this.isLoadingRoutes();
+  });
+
+  selectRoute(r: IReadingRoute): void {
+    if (this.selectedRouteId() === r.rutaId) {
+      this.selectedRouteId.set(null);
+    } else {
+      this.selectedRouteId.set(r.rutaId);
+      if (r.comunidadId && this.comunidadId() !== r.comunidadId) {
+        this.comunidadId.set(r.comunidadId);
+      }
+    }
+  }
+
+  ngOnInit(): void {
+    this.loadCatalogs();
+  }
+
+  private loadCatalogs(): void {
+    this.comunidadesService.getAllComunidades(1, 100).subscribe({
+      next: (res) => {
+        this.comunidades.set(res.data);
+        this.cdr.markForCheck();
+      },
+    });
+
+    this.routesService.getPeriods().subscribe({
+      next: (res) => {
+        this.periodos.set(res);
+        const active = res.find((p) => p.estado === 'ABIERTO');
+        if (active) {
+          this.periodoId.set(active.periodoId);
+          this.onFiltersChanged();
+        }
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  onPeriodoChange(val: number | null): void {
+    this.periodoId.set(val);
+    this.onFiltersChanged();
+  }
+
+  onComunidadChange(val: number | null): void {
+    this.comunidadId.set(val);
+    this.onFiltersChanged();
+  }
+
+  onFiltersChanged(): void {
+    const pId = this.periodoId();
+    if (!pId) {
+      this.routes.set([]);
+      return;
+    }
+
+    this.isLoadingRoutes.set(true);
+    this.cdr.markForCheck();
+
+    this.routesService
+      .getRoutes({
+        periodoId: pId,
+        comunidadId: this.comunidadId() || undefined,
+        tipoRuta: 'TOMA_LECTURA',
+        limit: 50,
+      })
+      .subscribe({
+        next: (res) => {
+          this.routes.set(res.data);
+          this.isLoadingRoutes.set(false);
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.routes.set([]);
+          this.isLoadingRoutes.set(false);
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   submitGenerate(): void {
-    if (!this.isFormValid || this.isLoading) return;
+    const pId = this.periodoId();
+    if (!pId || this.isLoading()) return;
 
     const dto: IGenerateBatchDto = {
-      periodoId: Number(this.periodoId),
+      periodoId: Number(pId),
     };
 
-    if (this.comunidadId) {
-      dto.comunidadId = Number(this.comunidadId);
+    const cId = this.comunidadId();
+    if (cId) {
+      dto.comunidadId = Number(cId);
     }
 
-    this.isLoading = true;
+    this.isLoading.set(true);
     this.batchesService.generateBatch(dto).subscribe({
       next: (res) => {
-        this.isLoading = false;
-        this.toastService.show(res.message || 'Lote de facturación generado exitosamente', 'success');
+        this.isLoading.set(false);
+        this.toastService.show(res.message || 'Lote de prefacturas generado exitosamente', 'success');
         this.generated.emit();
       },
       error: (err) => {
-        this.isLoading = false;
-        const msg = err?.error?.message || 'Error al generar el lote de facturación';
+        this.isLoading.set(false);
+        const msg = err?.error?.message || 'Error al generar el lote de prefacturas';
         this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
+        this.cdr.markForCheck();
       },
     });
   }

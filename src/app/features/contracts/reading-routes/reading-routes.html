@@ -42,35 +42,31 @@
             <option value="CANCELADA">Cancelada</option>
           </select>
 
-          <!-- Filter Operario ID -->
-          <div class="input-group search-group" style="max-width: 190px">
-            <span class="input-group-text bg-white border-end-0 text-muted ps-2 pe-1">
-              <i class="bi bi-person-badge"></i>
-            </span>
-            <input
-              type="number"
-              min="1"
-              class="form-control border-start-0 ps-0 shadow-none"
-              placeholder="Operario ID..."
-              [(ngModel)]="filterOperarioId"
-              (keyup.enter)="loadRoutes()"
-            />
-          </div>
+          <!-- Filter Operario -->
+          <select
+            class="form-select shadow-none"
+            style="width: 200px"
+            [(ngModel)]="filterOperarioId"
+            (change)="loadRoutes()"
+          >
+            <option [ngValue]="null">Todos los operarios</option>
+            @for (op of operarios; track op.usuarioId) {
+              <option [ngValue]="op.usuarioId">{{ op.nombres }} {{ op.apellidos }}</option>
+            }
+          </select>
 
-          <!-- Filter Comunidad ID -->
-          <div class="input-group search-group" style="max-width: 190px">
-            <span class="input-group-text bg-white border-end-0 text-muted ps-2 pe-1">
-              <i class="bi bi-geo-alt"></i>
-            </span>
-            <input
-              type="number"
-              min="1"
-              class="form-control border-start-0 ps-0 shadow-none"
-              placeholder="Comunidad ID..."
-              [(ngModel)]="filterComunidadId"
-              (keyup.enter)="loadRoutes()"
-            />
-          </div>
+          <!-- Filter Comunidad -->
+          <select
+            class="form-select shadow-none"
+            style="width: 200px"
+            [(ngModel)]="filterComunidadId"
+            (change)="loadRoutes()"
+          >
+            <option [ngValue]="null">Todas las comunidades</option>
+            @for (com of comunidades; track com.id) {
+              <option [ngValue]="com.id">{{ com.nombre }}</option>
+            }
+          </select>
 
           <!-- Buscar -->
           <button
@@ -103,11 +99,8 @@
     <!-- Table -->
     <div class="pt-2">
       @if (isLoading) {
-        <div class="text-center py-5 text-muted">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Cargando...</span>
-          </div>
-          <p class="mt-3 mb-0">Cargando rutas de trabajo...</p>
+        <div class="p-3">
+          <app-table-skeleton [rows]="5" [cols]="8" />
         </div>
       }
 
@@ -155,7 +148,7 @@
                     </span>
                   </td>
                   <td class="small text-muted">
-                    Comunidad #{{ route.comunidadId }}
+                    {{ getComunidadNombre(route.comunidadId) }}
                     @if (route.sectorId) {
                       <span> · Sector #{{ route.sectorId }}</span>
                     }
@@ -163,7 +156,7 @@
                   <td>
                     <span class="badge badge-soft-info d-inline-flex align-items-center gap-1">
                       <i class="bi bi-person-badge"></i>
-                      Operario #{{ route.operarioId }}
+                      {{ getOperarioNombre(route.operarioId) }}
                     </span>
                   </td>
                   <td class="small text-muted">
@@ -189,12 +182,56 @@
                         <li>
                           <button
                             class="dropdown-item d-flex align-items-center gap-2"
-                            (click)="openDetailModal(route)"
+                            (click)="openDetailModal(route, 'info')"
                           >
                             <i class="bi bi-eye text-secondary" style="font-size: 0.85rem"></i>
                             Ver detalle
                           </button>
                         </li>
+                        @if (route.estado === 'PENDIENTE') {
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2 text-success fw-medium"
+                              (click)="changeRouteStatus(route, 'EN_PROGRESO')"
+                            >
+                              <i class="bi bi-play-circle-fill text-success" style="font-size: 0.85rem"></i>
+                              Iniciar / Enviar a Campo
+                            </button>
+                          </li>
+                        }
+                        @if (route.estado === 'EN_PROGRESO') {
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2 text-primary fw-medium"
+                              (click)="changeRouteStatus(route, 'COMPLETADA')"
+                            >
+                              <i class="bi bi-check-circle-fill text-primary" style="font-size: 0.85rem"></i>
+                              Marcar como Completada
+                            </button>
+                          </li>
+                        }
+                        @if (route.estado !== 'CANCELADA' && route.estado !== 'COMPLETADA') {
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2 text-secondary"
+                              (click)="changeRouteStatus(route, 'CANCELADA')"
+                            >
+                              <i class="bi bi-slash-circle text-muted" style="font-size: 0.85rem"></i>
+                              Cancelar ruta
+                            </button>
+                          </li>
+                        }
+                        @if (route.estado === 'CANCELADA') {
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2 text-primary"
+                              (click)="changeRouteStatus(route, 'PENDIENTE')"
+                            >
+                              <i class="bi bi-arrow-counterclockwise text-primary" style="font-size: 0.85rem"></i>
+                              Reabrir ruta
+                            </button>
+                          </li>
+                        }
                         <li>
                           <button
                             class="dropdown-item d-flex align-items-center gap-2"
@@ -268,6 +305,7 @@
   @if (selectedRouteForDetail) {
     <app-route-detail-modal
       [route]="selectedRouteForDetail"
+      [initialTab]="detailModalInitialTab"
       (editRequested)="openEditModal($event)"
       (reassignRequested)="openReassignModal($event)"
       (closed)="closeDetailModal()"

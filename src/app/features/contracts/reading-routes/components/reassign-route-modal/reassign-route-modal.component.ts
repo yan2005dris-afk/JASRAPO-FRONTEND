@@ -1,6 +1,8 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
+  OnInit,
   inject,
   input,
   output,
@@ -8,6 +10,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReadingRoutesService } from '../../services/reading-routes.service';
+import { UsersService } from '../../../../users/services/users.service';
+import { User } from '../../../../users/models/user.interface';
 import { IReadingRoute, IReassignRouteDto } from '../../interfaces/ireading-route.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 
@@ -18,17 +22,43 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
   templateUrl: './reassign-route-modal.component.html',
   styleUrl: './reassign-route-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(keydown.escape)': 'close()',
+  },
 })
-export class ReassignRouteModalComponent {
+export class ReassignRouteModalComponent implements OnInit {
   private readonly routesService = inject(ReadingRoutesService);
+  private readonly usersService = inject(UsersService);
   private readonly toastService = inject(ToastService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly route = input.required<IReadingRoute>();
   readonly reassigned = output<void>();
   readonly closed = output<void>();
 
+  operarios: User[] = [];
   nuevoOperarioId: number | null = null;
   isLoading = false;
+
+  ngOnInit(): void {
+    this.usersService.getUsers(1, 100).subscribe({
+      next: (res) => {
+        this.operarios = res.data.filter((u) => {
+          const roleName = u.rol?.nombre?.toLowerCase() || '';
+          return roleName.includes('operador') || roleName.includes('operario');
+        });
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  getOperarioNombre(operarioId: number): string {
+    const user = this.operarios.find((u) => u.usuarioId === operarioId);
+    if (user) {
+      return `${user.nombres} ${user.apellidos}`.trim();
+    }
+    return `Operario #${operarioId}`;
+  }
 
   get isValid(): boolean {
     return !!this.nuevoOperarioId && this.nuevoOperarioId > 0 && this.nuevoOperarioId !== this.route().operarioId;

@@ -3,24 +3,23 @@ import { FormsModule } from '@angular/forms';
 
 import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/pdf-previewer.component';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
+import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { IConnectionHistoryFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
-import { ContractsService } from '../../contracts/service-contracts/services/contracts.service';
 import type { IContract } from '../../contracts/service-contracts/interfaces/icontract.interface';
 
 type DatePreset = 'currentMonth' | 'lastMonth' | 'last3Months' | 'lastYear';
 
 @Component({
   selector: 'app-connection-history',
-  imports: [FormsModule, PdfPreviewerComponent, DatePickerComponent],
+  imports: [FormsModule, PdfPreviewerComponent, DatePickerComponent, ContractPickerComponent],
   templateUrl: './connection-history.html',
   styleUrl: './connection-history.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConnectionHistoryComponent {
   private readonly reportsService = inject(ReportsService);
-  private readonly contractsService = inject(ContractsService);
   private readonly toast = inject(ToastService);
 
   // Filtros del historial de conexión
@@ -39,14 +38,8 @@ export class ConnectionHistoryComponent {
   readonly isSendingEmail = signal(false);
 
   // Buscador de contratos
-  readonly searchTerm = signal('');
-  readonly searchResults = signal<IContract[]>([]);
-  readonly isSearching = signal(false);
-  readonly searchError = signal('');
-  readonly searchPerformed = signal(false);
   readonly selectedContractName = signal('');
   readonly isContractPickerOpen = signal(false);
-  private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Modales
   readonly isEmailModalOpen = signal(false);
@@ -115,69 +108,20 @@ export class ConnectionHistoryComponent {
 
   // ---------- Buscador de contratos ----------
 
-  onSearchInput(value: string): void {
-    this.searchTerm.set(value);
-    if (this.searchTimer) {
-      clearTimeout(this.searchTimer);
-    }
-    this.searchTimer = setTimeout(() => this.buscarContratos(), 400);
-  }
-
   abrirBuscadorContratos(): void {
     this.isContractPickerOpen.set(true);
-    if (!this.searchPerformed()) {
-      this.buscarContratos();
-    }
   }
 
-  cerrarBuscadorContratos(): void {
+  onContractSelected(contract: IContract): void {
+    this.contratoId.set(String(contract.contratoId));
+    this.selectedContractNumber.set(contract.numeroGuia);
+    this.selectedContractName.set(ContractPickerComponent.formatClientName(contract.cliente));
+    this.destinatario.set(contract.cliente.email?.trim() ?? '');
     this.isContractPickerOpen.set(false);
   }
 
-  buscarContratos(): void {
-    if (this.searchTimer) {
-      clearTimeout(this.searchTimer);
-      this.searchTimer = null;
-    }
-
-    const term = this.searchTerm().trim();
-    if (!term) {
-      this.searchResults.set([]);
-      this.searchError.set('');
-      this.searchPerformed.set(false);
-      return;
-    }
-
-    this.isSearching.set(true);
-    this.searchError.set('');
-    this.contractsService.getContracts({ search: term, page: 1, limit: 50 }).subscribe({
-      next: (res) => {
-        this.searchResults.set(res.data);
-        this.searchPerformed.set(true);
-        this.isSearching.set(false);
-      },
-      error: (err) => {
-        this.searchResults.set([]);
-        this.searchPerformed.set(true);
-        this.searchError.set(this.getErrorMessage(err, 'No se pudieron buscar los contratos'));
-        this.isSearching.set(false);
-      },
-    });
-  }
-
-  seleccionarContrato(contrato: IContract): void {
-    this.contratoId.set(String(contrato.contratoId));
-    this.selectedContractNumber.set(contrato.numeroGuia);
-    this.selectedContractName.set(this.formatClientName(contrato.cliente));
-    this.destinatario.set(contrato.cliente.email?.trim() ?? '');
+  onContractPickerClosed(): void {
     this.isContractPickerOpen.set(false);
-  }
-
-  formatClientName(cliente: IContract['cliente']): string {
-    if (cliente.razonSocial) {
-      return cliente.razonSocial;
-    }
-    return `${cliente.nombres} ${cliente.apellidos}`.trim();
   }
 
   // ---------- Envío por email (modal) ----------
@@ -255,10 +199,6 @@ export class ConnectionHistoryComponent {
     this.fechaDesde.set('');
     this.fechaHasta.set('');
     this.pdfBlob.set(null);
-    this.searchTerm.set('');
-    this.searchResults.set([]);
-    this.searchError.set('');
-    this.searchPerformed.set(false);
     this.selectedContractName.set('');
     this.destinatario.set('');
     this.subject.set('');

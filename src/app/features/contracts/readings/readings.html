@@ -149,11 +149,21 @@
                   <td class="text-end small text-muted tabular-nums">
                     {{ reading.lecturaAnterior | number: '1.2-2' }}
                   </td>
-                  <td class="text-end small fw-bold text-dark tabular-nums">
-                    {{ reading.lecturaActual | number: '1.2-2' }}
+                  <td class="text-end small fw-bold tabular-nums">
+                    @if (reading.estado === 'PENDIENTE') {
+                      <span class="text-muted fst-italic">—</span>
+                    } @else {
+                      <span class="text-dark">{{ reading.lecturaActual | number: '1.2-2' }}</span>
+                    }
                   </td>
-                  <td class="text-end fw-bold text-primary tabular-nums" style="font-size: 0.95rem">
-                    {{ reading.consumoCalculado | number: '1.2-2' }} m³
+                  <td class="text-end fw-bold tabular-nums" style="font-size: 0.95rem">
+                    @if (reading.estado === 'PENDIENTE') {
+                      <span class="badge bg-light text-muted border border-dashed fw-normal">
+                        Pendiente
+                      </span>
+                    } @else {
+                      <span class="text-primary">{{ reading.consumoCalculado | number: '1.2-2' }} m³</span>
+                    }
                   </td>
                   <td class="text-center">
                     <app-status-badge [status]="reading.estado" />

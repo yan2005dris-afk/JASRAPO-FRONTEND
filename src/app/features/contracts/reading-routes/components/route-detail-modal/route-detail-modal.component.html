@@ -1,5 +1,5 @@
 <div class="modal fade show d-block picker-modal" tabindex="-1" role="dialog" aria-modal="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 680px">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" style="max-width: 780px">
     <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
       <!-- Header -->
       <div class="modal-header border-bottom px-4 py-3 bg-white">
@@ -25,44 +25,223 @@
 
       <!-- Body -->
       <div class="modal-body p-4 bg-white">
-        <!-- Info Grid -->
-        <div class="row g-3 mb-4">
-          <div class="col-6">
-            <div class="text-muted small">Operario Asignado</div>
-            <div class="fw-semibold text-dark">
-              <i class="bi bi-person-badge text-primary me-1"></i>
-              Usuario #{{ route().operarioId }}
-            </div>
-          </div>
-          <div class="col-6">
-            <div class="text-muted small">Comunidad</div>
-            <div class="fw-semibold text-dark">Comunidad #{{ route().comunidadId }}</div>
-          </div>
-          <div class="col-6">
-            <div class="text-muted small">Sector</div>
-            <div class="text-dark small">{{ route().sectorId ? 'Sector #' + route().sectorId : 'Sin sector asignado' }}</div>
-          </div>
-          <div class="col-6">
-            <div class="text-muted small">Período Contable</div>
-            <div class="text-dark small">Período #{{ route().periodoId || '—' }}</div>
-          </div>
-          <div class="col-6">
-            <div class="text-muted small">Fecha Planificada</div>
-            <div class="text-dark small">{{ route().fechaPlanificada || 'Sin fecha' }}</div>
-          </div>
-          <div class="col-6">
-            <div class="text-muted small">Ejecución</div>
-            <div class="text-dark small">
-              {{ route().fechaInicio ? (route().fechaInicio | date: 'dd/MM/yyyy HH:mm') : 'No iniciada' }}
-            </div>
-          </div>
-        </div>
+        <!-- Navigation Tabs -->
+        <ul class="nav nav-pills gap-2 mb-4 p-1 bg-light rounded-3 border">
+          <li class="nav-item">
+            <button
+              class="nav-link btn btn-sm py-2 px-3 fw-medium d-flex align-items-center gap-2 border-0 rounded-2"
+              [class.active]="activeTab === 'info'"
+              [class.bg-white]="activeTab === 'info'"
+              [class.shadow-sm]="activeTab === 'info'"
+              [class.text-primary]="activeTab === 'info'"
+              [class.text-muted]="activeTab !== 'info'"
+              (click)="setActiveTab('info')"
+            >
+              <i class="bi bi-info-circle"></i>
+              Información General
+            </button>
+          </li>
+          <li class="nav-item">
+            <button
+              class="nav-link btn btn-sm py-2 px-3 fw-medium d-flex align-items-center gap-2 border-0 rounded-2"
+              [class.active]="activeTab === 'readings'"
+              [class.bg-white]="activeTab === 'readings'"
+              [class.shadow-sm]="activeTab === 'readings'"
+              [class.text-primary]="activeTab === 'readings'"
+              [class.text-muted]="activeTab !== 'readings'"
+              (click)="setActiveTab('readings')"
+            >
+              <i class="bi bi-speedometer2"></i>
+              Lecturas / Medidores
+              <span class="badge bg-primary-subtle text-primary rounded-pill px-2">
+                {{ totalReadings }}
+              </span>
+            </button>
+          </li>
+        </ul>
 
-        <!-- Description -->
-        @if (route().descripcion) {
-          <div class="p-3 bg-light rounded-3 border mb-2">
-            <div class="fw-semibold text-dark small mb-1">Notas de la ruta / Instrucciones</div>
-            <div class="text-muted small">{{ route().descripcion }}</div>
+        @if (activeTab === 'info') {
+          <!-- Info Grid -->
+          <div class="row g-3 mb-4">
+            <div class="col-6">
+              <div class="text-muted small">Operario Asignado</div>
+              <div class="fw-semibold text-dark">
+                <i class="bi bi-person-badge text-primary me-1"></i>
+                {{ getOperarioNombre(route().operarioId) }}
+              </div>
+            </div>
+            <div class="col-6">
+              <div class="text-muted small">Comunidad</div>
+              <div class="fw-semibold text-dark">{{ getComunidadNombre(route().comunidadId) }}</div>
+            </div>
+            <div class="col-6">
+              <div class="text-muted small">Sector</div>
+              <div class="text-dark small">{{ getSectorNombre(route().sectorId) }}</div>
+            </div>
+            <div class="col-6">
+              <div class="text-muted small">Período Contable</div>
+              <div class="text-dark small">{{ getPeriodoNombre(route().periodoId) }}</div>
+            </div>
+            <div class="col-6">
+              <div class="text-muted small">Fecha Planificada</div>
+              <div class="text-dark small">{{ route().fechaPlanificada || 'Sin fecha' }}</div>
+            </div>
+            <div class="col-6">
+              <div class="text-muted small">Ejecución</div>
+              <div class="text-dark small">
+                {{ route().fechaInicio ? (route().fechaInicio | date: 'dd/MM/yyyy HH:mm') : 'No iniciada' }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          @if (route().descripcion) {
+            <div class="p-3 bg-light rounded-3 border mb-2">
+              <div class="fw-semibold text-dark small mb-1">Notas de la ruta / Instrucciones</div>
+              <div class="text-muted small">{{ route().descripcion }}</div>
+            </div>
+          }
+        } @else {
+          <!-- Readings List -->
+          <div class="readings-container">
+            @if (isLoadingReadings) {
+              <div class="text-center py-5 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary mb-2" role="status"></div>
+                <div class="small">Cargando lecturas asociadas...</div>
+              </div>
+            } @else if (readings.length === 0) {
+              <div class="text-center py-5 bg-light rounded-3 border border-dashed my-2">
+                <div class="rounded-circle bg-white shadow-sm d-inline-flex p-3 mb-2 text-muted">
+                  <i class="bi bi-speedometer2 fs-4"></i>
+                </div>
+                <h6 class="fw-bold text-dark mb-1">No hay lecturas registradas</h6>
+                <p class="text-muted small mb-0">
+                  No se encontraron lecturas generadas para esta comunidad y período.
+                </p>
+              </div>
+            } @else {
+              <!-- Toolbar / Bulk Action -->
+              <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="small text-muted">
+                  Mostrando <strong class="text-dark">{{ readings.length }}</strong> lecturas
+                  @if (pendingReviewCount > 0) {
+                    · <span class="text-warning fw-semibold">{{ pendingReviewCount }} por aprobar</span>
+                  }
+                </div>
+                @if (pendingReviewCount > 0) {
+                  <button
+                    type="button"
+                    class="btn btn-outline-success btn-sm d-flex align-items-center gap-1 fw-medium"
+                    (click)="approveAllPending()"
+                    [disabled]="isBulkApproving"
+                  >
+                    @if (isBulkApproving) {
+                      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    } @else {
+                      <i class="bi bi-check-all"></i>
+                    }
+                    Aprobar Todas ({{ pendingReviewCount }})
+                  </button>
+                }
+              </div>
+
+              <div class="table-responsive rounded-3 border readings-table-container">
+                <table class="table table-hover align-middle mb-0 small">
+                  <thead class="table-light">
+                    <tr>
+                      <th class="py-2 px-3 fw-semibold text-muted">N° Guía</th>
+                      <th class="py-2 px-3 fw-semibold text-muted">Cliente</th>
+                      <th class="py-2 px-3 fw-semibold text-muted">Medidor</th>
+                      <th class="py-2 px-3 fw-semibold text-muted text-end">Lect. Ant.</th>
+                      <th class="py-2 px-3 fw-semibold text-muted text-end">Lect. Act.</th>
+                      <th class="py-2 px-3 fw-semibold text-muted text-end">Consumo</th>
+                      <th class="py-2 px-3 fw-semibold text-muted text-center">Estado</th>
+                      <th class="py-2 px-3 fw-semibold text-muted text-center">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (r of readings; track r.lecturaId) {
+                      <tr>
+                        <td class="py-2 px-3 fw-bold text-dark text-nowrap">
+                          <i class="bi bi-hash text-muted me-1"></i>{{ r.guia }}
+                        </td>
+                        <td class="py-2 px-3">
+                          <div class="fw-medium text-dark">{{ r.clienteNombre }}</div>
+                          <div class="text-muted" style="font-size: 0.75rem">{{ r.direccion }}</div>
+                        </td>
+                        <td class="py-2 px-3 text-nowrap">
+                          <span class="badge badge-soft-primary">{{ r.medidorSerie || 'S/N' }}</span>
+                        </td>
+                        <td class="py-2 px-3 text-end text-dark font-monospace">
+                          {{ r.lecturaAnterior != null ? r.lecturaAnterior : '0.00' }}
+                        </td>
+                        <td class="py-2 px-3 text-end fw-semibold font-monospace">
+                          @if (r.estadoLectura === 'PENDIENTE' || r.lecturaActual == null) {
+                            <span class="text-muted fst-italic" title="Pendiente de toma">—</span>
+                          } @else {
+                            <span class="text-dark">{{ r.lecturaActual }}</span>
+                          }
+                        </td>
+                        <td class="py-2 px-3 text-end font-monospace">
+                          @if (r.estadoLectura === 'PENDIENTE' || r.lecturaActual == null) {
+                            <span class="badge bg-light text-muted border border-dashed">
+                              Pendiente
+                            </span>
+                          } @else {
+                            <span class="badge bg-light text-dark border">
+                              {{ r.consumoCalculado ?? 0 }} m³
+                            </span>
+                          }
+                        </td>
+                        <td class="py-2 px-3 text-center text-nowrap">
+                          <span
+                            class="badge"
+                            [ngClass]="{
+                              'badge-soft-primary': r.estadoLectura === 'PENDIENTE',
+                              'badge-soft-warning': r.estadoLectura === 'POR_REVISION',
+                              'badge-soft-success': r.estadoLectura === 'APROBADA',
+                              'badge-soft-danger': r.estadoLectura === 'RECHAZADA_VERIFICACION',
+                              'badge-soft-secondary': !r.estadoLectura
+                            }"
+                          >
+                            {{ r.estadoLectura || r.estadoContrato }}
+                          </span>
+                        </td>
+                        <td class="py-2 px-3 text-center text-nowrap">
+                          @if (processingReadingId === r.lecturaId) {
+                            <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                          } @else if (r.estadoLectura === 'APROBADA') {
+                            <span class="text-success small fw-medium">
+                              <i class="bi bi-check-circle-fill me-1"></i>Lista
+                            </span>
+                          } @else {
+                            <div class="d-flex align-items-center justify-content-center gap-1">
+                              <button
+                                type="button"
+                                class="btn btn-sm btn-outline-success p-1 px-2 d-flex align-items-center gap-1"
+                                title="Aprobar lectura para facturación"
+                                (click)="changeReadingStatus(r, 'APROBADA')"
+                              >
+                                <i class="bi bi-check-lg"></i>
+                                <span class="d-none d-md-inline" style="font-size: 0.75rem">Aprobar</span>
+                              </button>
+                              <button
+                                type="button"
+                                class="btn btn-sm btn-outline-danger p-1 px-2 d-flex align-items-center gap-1"
+                                title="Rechazar para nueva verificación en campo"
+                                (click)="changeReadingStatus(r, 'RECHAZADA_VERIFICACION')"
+                              >
+                                <i class="bi bi-x-lg"></i>
+                              </button>
+                            </div>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
           </div>
         }
       </div>

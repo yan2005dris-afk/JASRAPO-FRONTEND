@@ -15,6 +15,9 @@ import { StatusBadgeComponent } from '../../../../../shared/components/status-ba
   templateUrl: './reading-detail-modal.component.html',
   styleUrl: './reading-detail-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(keydown.escape)': 'close()',
+  },
 })
 export class ReadingDetailModalComponent {
   readonly reading = input.required<IReading>();
