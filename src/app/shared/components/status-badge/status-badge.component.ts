@@ -86,16 +86,16 @@ export class StatusBadgeComponent {
     if (this.customTone()) return this.customTone() as BadgeTone;
     const st = (this.status() || '').toUpperCase();
 
-    if (['REGISTRADO', 'ACTIVO', 'PAGADO', 'APPROVED', 'APROBADO', 'EXITOSO', 'RESUELTO'].includes(st)) {
+    if (['REGISTRADO', 'ACTIVO', 'PAGADO', 'APPROVED', 'APROBADO', 'APROBADA', 'EXITOSO', 'RESUELTO', 'RESUELTA', 'COMPLETADA'].includes(st)) {
       return 'success';
     }
-    if (['PENDIENTE', 'IN_REVIEW', 'EN_REVISION', 'EN_PROCESO', 'PARCIAL'].includes(st)) {
+    if (['PENDIENTE', 'IN_REVIEW', 'EN_REVISION', 'EN_PROCESO', 'PARCIAL', 'CON_NOVEDAD', 'POR_REVISION'].includes(st)) {
       return 'warning';
     }
-    if (['ANULADO', 'INACTIVO', 'RECHAZADO', 'REJECTED', 'VENCIDO', 'ERROR', 'FALLIDO', 'DESCARTADO'].includes(st)) {
+    if (['ANULADO', 'INACTIVO', 'RECHAZADO', 'RECHAZADA', 'RECHAZADA_VERIFICACION', 'REJECTED', 'VENCIDO', 'ERROR', 'FALLIDO', 'DESCARTADO', 'DESCARTADA', 'CANCELADA'].includes(st)) {
       return 'danger';
     }
-    if (['GENERATED', 'GENERADO', 'EMITIDO', 'NUEVA', 'NUEVO'].includes(st)) {
+    if (['GENERATED', 'GENERADO', 'EMITIDO', 'NUEVA', 'NUEVO', 'ESTIMADA', 'PLANILLADA', 'ASIGNADA', 'TOMADA'].includes(st)) {
       return 'info';
     }
     return 'secondary';
