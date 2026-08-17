@@ -24,6 +24,7 @@ import { TableSkeletonComponent } from '../../../../../shared/components/table-s
 import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { AnomalyFormModalComponent } from '../../../reading-anomalies/components/anomaly-form-modal/anomaly-form-modal.component';
 
 @Component({
   selector: 'app-reading-route-detail',
@@ -36,10 +37,14 @@ import { ConfirmDialogService } from '../../../../../shared/components/confirm-d
     EmptyStateComponent,
     TableSkeletonComponent,
     PaginationComponent,
+    AnomalyFormModalComponent,
   ],
   templateUrl: './reading-route-detail.component.html',
   styleUrl: './reading-route-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: {
+    '(document:click)': 'closeDropdowns()',
+  },
 })
 export class ReadingRouteDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -213,10 +218,65 @@ export class ReadingRouteDetailComponent implements OnInit {
     return this.readings.filter((r) => r.estadoLectura === 'APROBADA').length;
   }
 
+  // Actions & Dropdown
+  openDropdownId: string | null = null;
+  isAnomalyModalOpen = false;
+  selectedLecturaIdForAnomaly: string | null = null;
+
+  toggleDropdown(id: string, event: MouseEvent): void {
+    event.stopPropagation();
+    this.openDropdownId = this.openDropdownId === id ? null : id;
+    this.cdr.markForCheck();
+  }
+
+  closeDropdowns(): void {
+    if (this.openDropdownId !== null) {
+      this.openDropdownId = null;
+      this.cdr.markForCheck();
+    }
+  }
+
+  openAnomalyModal(lectura: IReadingForRoute): void {
+    this.openDropdownId = null;
+    this.selectedLecturaIdForAnomaly = String(lectura.lecturaId);
+    this.isAnomalyModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  closeAnomalyModal(): void {
+    this.isAnomalyModalOpen = false;
+    this.selectedLecturaIdForAnomaly = null;
+    this.cdr.markForCheck();
+  }
+
+  onAnomalySaved(): void {
+    this.isAnomalyModalOpen = false;
+    this.selectedLecturaIdForAnomaly = null;
+    this.loadReadings();
+  }
+
+  requestReReading(lectura: IReadingForRoute): void {
+    this.openDropdownId = null;
+    this.dialogService
+      .confirm({
+        title: 'Solicitar Relectura / Rechazo',
+        message: `¿Rechazar la toma actual y solicitar relectura en campo para el contrato con Guía #${lectura.guia}?`,
+        confirmText: 'Solicitar Relectura',
+        cancelText: 'Cancelar',
+        isDanger: true,
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.changeReadingStatus(lectura, 'RECHAZADA_VERIFICACION');
+        }
+      });
+  }
+
   changeReadingStatus(
     lectura: IReadingForRoute,
     nuevoEstado: 'APROBADA' | 'CON_NOVEDAD' | 'RECHAZADA_VERIFICACION' | 'PENDIENTE',
   ): void {
+    this.openDropdownId = null;
     this.processingReadingId = lectura.lecturaId;
     this.cdr.markForCheck();
 
@@ -227,9 +287,11 @@ export class ReadingRouteDetailComponent implements OnInit {
         this.toastService.success(
           nuevoEstado === 'APROBADA'
             ? 'Lectura aprobada'
-            : nuevoEstado === 'CON_NOVEDAD'
-              ? 'Lectura marcada con novedad'
-              : 'Lectura en pendiente',
+            : nuevoEstado === 'RECHAZADA_VERIFICACION'
+              ? 'Lectura rechazada: se ha solicitado relectura'
+              : nuevoEstado === 'CON_NOVEDAD'
+                ? 'Lectura marcada con novedad'
+                : 'Lectura en pendiente',
         );
         this.cdr.markForCheck();
       },

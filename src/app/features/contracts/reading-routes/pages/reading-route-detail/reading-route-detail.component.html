@@ -286,30 +286,54 @@
                     <td class="text-center pe-4 text-nowrap">
                       @if (processingReadingId === r.lecturaId) {
                         <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
-                      } @else if (r.estadoLectura === 'APROBADA') {
-                        <span class="text-success small fw-medium">
-                          <i class="bi bi-check-circle-fill me-1"></i>Aprobada
-                        </span>
                       } @else {
-                        <div class="d-flex align-items-center justify-content-center gap-1">
+                        <div class="dropdown">
                           <button
+                            class="btn btn-link text-muted p-0 shadow-none"
                             type="button"
-                            class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1 py-1 px-2"
-                            title="Aprobar lectura"
-                            (click)="changeReadingStatus(r, 'APROBADA')"
+                            (click)="toggleDropdown(r.lecturaId, $event)"
+                            aria-label="Menú de opciones"
                           >
-                            <i class="bi bi-check-lg"></i>
-                            Aprobar
+                            <i class="bi bi-three-dots-vertical"></i>
                           </button>
-                          <button
-                            type="button"
-                            class="btn btn-sm btn-outline-warning d-inline-flex align-items-center gap-1 py-1 px-2"
-                            title="Marcar con novedad / anomalía"
-                            (click)="changeReadingStatus(r, 'CON_NOVEDAD')"
+                          <ul
+                            class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                            [class.show]="openDropdownId === r.lecturaId"
+                            style="min-width: 175px"
                           >
-                            <i class="bi bi-exclamation-triangle"></i>
-                            Con Novedad
-                          </button>
+                            @if (r.estadoLectura !== 'APROBADA') {
+                              <li>
+                                <button
+                                  class="dropdown-item d-flex align-items-center gap-2 text-success"
+                                  (click)="changeReadingStatus(r, 'APROBADA')"
+                                >
+                                  <i class="bi bi-check-circle-fill" style="font-size: 0.85rem"></i>
+                                  Aprobar lectura
+                                </button>
+                              </li>
+                            }
+                            <li>
+                              <button
+                                class="dropdown-item d-flex align-items-center gap-2 text-warning"
+                                (click)="openAnomalyModal(r)"
+                              >
+                                <i class="bi bi-exclamation-triangle-fill" style="font-size: 0.85rem"></i>
+                                Reportar novedad
+                              </button>
+                            </li>
+                            <li>
+                              <hr class="dropdown-divider" />
+                            </li>
+                            <li>
+                              <button
+                                class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                                (click)="requestReReading(r)"
+                              >
+                                <i class="bi bi-arrow-repeat" style="font-size: 0.85rem"></i>
+                                Solicitar relectura
+                              </button>
+                            </li>
+                          </ul>
                         </div>
                       }
                     </td>
@@ -335,5 +359,14 @@
         }
       </div>
     </div>
+  }
+
+  <!-- Anomaly Form Modal -->
+  @if (isAnomalyModalOpen) {
+    <app-anomaly-form-modal
+      [initialLecturaId]="selectedLecturaIdForAnomaly"
+      (saved)="onAnomalySaved()"
+      (closed)="closeAnomalyModal()"
+    />
   }
 </div>
