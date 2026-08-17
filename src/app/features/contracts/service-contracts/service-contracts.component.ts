@@ -21,7 +21,6 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
     ServiceContractFormComponent,
     PaginationComponent,
     TableSkeletonComponent,
-    EmptyStateComponent,
   ],
   templateUrl: './service-contracts.component.html',
   styleUrl: './service-contracts.component.scss',
