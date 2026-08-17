@@ -65,8 +65,15 @@
           }
         </div>
 
-        <div class="text-muted small">
-          Total de configuraciones: <strong class="text-dark">{{ configs.length }}</strong>
+        <div class="d-flex align-items-center gap-3">
+          @if (selectedClaves.size > 0) {
+            <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill">
+              {{ selectedClaves.size }} seleccionado(s)
+            </span>
+          }
+          <div class="text-muted small">
+            Total de configuraciones: <strong class="text-dark">{{ configs.length }}</strong>
+          </div>
         </div>
       </div>
     </div>
@@ -75,7 +82,7 @@
     <div class="pt-1">
       @if (isLoading) {
         <div class="p-3">
-          <app-table-skeleton [rows]="4" [cols]="5" />
+          <app-table-skeleton [rows]="4" [cols]="6" />
         </div>
       } @else if (filteredConfigs.length === 0) {
         <app-empty-state
@@ -88,17 +95,36 @@
           <table class="table table-hover align-middle mb-0 custom-config-table">
             <thead class="table-light">
               <tr>
-                <th class="ps-4 py-3 fw-semibold text-muted" style="min-width: 200px">Clave</th>
+                <th scope="col" class="ps-4" style="width: 48px">
+                  <input
+                    class="form-check-input table-checkbox"
+                    type="checkbox"
+                    [checked]="isAllSelected"
+                    [indeterminate]="isIndeterminate"
+                    (change)="toggleSelectAll()"
+                    aria-label="Seleccionar todas las configuraciones"
+                  />
+                </th>
+                <th class="py-3 fw-semibold text-muted" style="min-width: 200px">Clave</th>
                 <th class="py-3 fw-semibold text-muted" style="min-width: 220px">Valor Actual</th>
                 <th class="py-3 fw-semibold text-muted">Descripción</th>
                 <th class="py-3 fw-semibold text-muted text-nowrap">Última Actualización</th>
-                <th class="py-3 fw-semibold text-muted text-end pe-4">Acciones</th>
+                <th class="py-3 fw-semibold text-muted text-center pe-4" style="width: 80px">Acciones</th>
               </tr>
             </thead>
             <tbody>
               @for (c of filteredConfigs; track c.clave) {
-                <tr>
+                <tr [class.table-active]="isSelected(c.clave)">
                   <td class="ps-4">
+                    <input
+                      class="form-check-input table-checkbox"
+                      type="checkbox"
+                      [checked]="isSelected(c.clave)"
+                      (change)="toggleSelect(c.clave, $event)"
+                      aria-label="Seleccionar configuración"
+                    />
+                  </td>
+                  <td>
                     <div class="d-flex align-items-center gap-2">
                       <span class="badge bg-light text-dark font-monospace border px-2 py-1">
                         {{ c.clave }}
@@ -142,25 +168,57 @@
                   <td class="text-nowrap small text-muted">
                     {{ c.updatedAt | date: 'dd/MM/yyyy HH:mm' }}
                   </td>
-                  <td class="text-end pe-4 text-nowrap">
-                    <div class="d-inline-flex align-items-center gap-1">
+                  <td class="text-center pe-4">
+                    <div class="dropdown">
                       <button
+                        class="btn btn-link text-muted p-0 shadow-none"
                         type="button"
-                        class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 py-1 px-2"
-                        title="Editar configuración"
-                        (click)="openEditModal(c)"
+                        (click)="toggleDropdown(c.clave, $event)"
+                        aria-label="Menú de opciones"
                       >
-                        <i class="bi bi-pencil"></i>
-                        Editar
+                        <i class="bi bi-three-dots-vertical fs-6"></i>
                       </button>
-                      <button
-                        type="button"
-                        class="btn btn-sm btn-outline-danger d-inline-flex align-items-center py-1 px-2"
-                        title="Eliminar configuración"
-                        (click)="deleteConfig(c)"
+                      <ul
+                        class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                        [class.show]="openDropdownClave === c.clave"
+                        style="min-width: 155px"
                       >
-                        <i class="bi bi-trash"></i>
-                      </button>
+                        @if (isReportStyleConfig(c)) {
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2 text-primary"
+                              type="button"
+                              (click)="toggleReportStyle(c)"
+                            >
+                              <i class="bi bi-arrow-repeat" style="font-size: 0.85rem"></i>
+                              Alternar estilo
+                            </button>
+                          </li>
+                        }
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            type="button"
+                            (click)="openEditModal(c)"
+                          >
+                            <i class="bi bi-pencil text-secondary" style="font-size: 0.85rem"></i>
+                            Editar
+                          </button>
+                        </li>
+                        <li>
+                          <hr class="dropdown-divider my-1" />
+                        </li>
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                            type="button"
+                            (click)="deleteConfig(c)"
+                          >
+                            <i class="bi bi-trash" style="font-size: 0.85rem"></i>
+                            Eliminar
+                          </button>
+                        </li>
+                      </ul>
                     </div>
                   </td>
                 </tr>

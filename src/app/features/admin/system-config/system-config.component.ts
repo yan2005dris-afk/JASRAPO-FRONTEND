@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  HostListener,
   OnInit,
   inject,
 } from '@angular/core';
@@ -39,6 +40,12 @@ export class SystemConfigComponent implements OnInit {
   isLoading = false;
   searchQuery = '';
 
+  // Selection
+  selectedClaves = new Set<string>();
+
+  // Dropdown menu
+  openDropdownClave: string | null = null;
+
   // Modal
   isModalOpen = false;
   isEditing = false;
@@ -51,6 +58,14 @@ export class SystemConfigComponent implements OnInit {
     this.loadConfigs();
   }
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.dropdown')) {
+      this.closeDropdowns();
+    }
+  }
+
   private initForm(): void {
     this.configForm = this.fb.group({
       clave: ['', [Validators.required, Validators.pattern(/^[a-zA-Z0-9_.-]+$/)]],
@@ -61,6 +76,8 @@ export class SystemConfigComponent implements OnInit {
 
   loadConfigs(): void {
     this.isLoading = true;
+    this.selectedClaves.clear();
+    this.openDropdownClave = null;
     this.cdr.markForCheck();
 
     this.configService.getConfigs().subscribe({
@@ -89,12 +106,63 @@ export class SystemConfigComponent implements OnInit {
     );
   }
 
+  // Selection Checkboxes
+  get isAllSelected(): boolean {
+    const visible = this.filteredConfigs;
+    return visible.length > 0 && visible.every((c) => this.selectedClaves.has(c.clave));
+  }
+
+  get isIndeterminate(): boolean {
+    const visible = this.filteredConfigs;
+    const count = visible.filter((c) => this.selectedClaves.has(c.clave)).length;
+    return count > 0 && count < visible.length;
+  }
+
+  toggleSelectAll(): void {
+    const visible = this.filteredConfigs;
+    if (this.isAllSelected) {
+      visible.forEach((c) => this.selectedClaves.delete(c.clave));
+    } else {
+      visible.forEach((c) => this.selectedClaves.add(c.clave));
+    }
+    this.cdr.markForCheck();
+  }
+
+  toggleSelect(clave: string, event: Event): void {
+    event.stopPropagation();
+    if (this.selectedClaves.has(clave)) {
+      this.selectedClaves.delete(clave);
+    } else {
+      this.selectedClaves.add(clave);
+    }
+    this.cdr.markForCheck();
+  }
+
+  isSelected(clave: string): boolean {
+    return this.selectedClaves.has(clave);
+  }
+
+  // Dropdown Actions
+  toggleDropdown(clave: string, event: Event): void {
+    event.stopPropagation();
+    this.openDropdownClave = this.openDropdownClave === clave ? null : clave;
+    this.cdr.markForCheck();
+  }
+
+  closeDropdowns(): void {
+    if (this.openDropdownClave !== null) {
+      this.openDropdownClave = null;
+      this.cdr.markForCheck();
+    }
+  }
+
   // Quick report style toggle helper
   isReportStyleConfig(config: ISistemaConfig): boolean {
     return config.clave === 'reporte.estilo';
   }
 
   toggleReportStyle(config: ISistemaConfig): void {
+    this.closeDropdowns();
     const nextStyle = config.valor === 'modern' ? 'legacy' : 'modern';
     this.configService
       .updateConfig(config.clave, { valor: nextStyle })
@@ -122,6 +190,7 @@ export class SystemConfigComponent implements OnInit {
   }
 
   openEditModal(config: ISistemaConfig): void {
+    this.closeDropdowns();
     this.isEditing = true;
     this.selectedClave = config.clave;
     this.configForm.patchValue({
@@ -195,6 +264,7 @@ export class SystemConfigComponent implements OnInit {
   }
 
   deleteConfig(config: ISistemaConfig): void {
+    this.closeDropdowns();
     this.dialogService
       .confirm({
         title: 'Eliminar Configuración',
