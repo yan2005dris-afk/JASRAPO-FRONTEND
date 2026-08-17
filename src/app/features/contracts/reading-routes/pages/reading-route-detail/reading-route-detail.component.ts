@@ -201,7 +201,7 @@ export class ReadingRouteDetailComponent implements OnInit {
         fechaPlanificada: this.readingRoute.fechaPlanificada || undefined,
         tipoRuta: this.readingRoute.tipoRuta as any,
         page: 1,
-        limit: 1000,
+        limit: 50,
       })
       .subscribe({
         next: (res) => {
