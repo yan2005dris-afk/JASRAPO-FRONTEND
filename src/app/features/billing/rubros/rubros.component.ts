@@ -62,6 +62,7 @@ export class RubrosComponent implements OnInit {
   filterTipo: TipoRubro | '' = '';
   filterTarifa: number | '' = '';
   filterActivo = 'todos';
+  filterGeneracion = 'todos';
 
   // Modals
   isFormModalOpen = false;
@@ -117,6 +118,11 @@ export class RubrosComponent implements OnInit {
     } else if (this.filterActivo === 'inactivos') {
       params.activo = false;
     }
+    if (this.filterGeneracion === 'automatico') {
+      params.esAutomatico = true;
+    } else if (this.filterGeneracion === 'manual') {
+      params.esAutomatico = false;
+    }
 
     this.rubrosService.getRubros(params).subscribe({
       next: (res) => {
@@ -141,6 +147,7 @@ export class RubrosComponent implements OnInit {
     this.filterTipo = '';
     this.filterTarifa = '';
     this.filterActivo = 'todos';
+    this.filterGeneracion = 'todos';
     this.currentPage = 1;
     this.loadRubros();
   }

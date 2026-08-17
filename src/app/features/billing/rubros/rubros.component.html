@@ -75,9 +75,21 @@
             [(ngModel)]="filterActivo"
             (change)="loadRubros()"
           >
-            <option value="todos">Todos</option>
+            <option value="todos">Todos (Estado)</option>
             <option value="activos">Activos</option>
             <option value="inactivos">Inactivos</option>
+          </select>
+
+          <!-- Filter Tipo Generacion -->
+          <select
+            class="form-select shadow-none"
+            style="width: 160px"
+            [(ngModel)]="filterGeneracion"
+            (change)="loadRubros()"
+          >
+            <option value="todos">Todos (Origen)</option>
+            <option value="automatico">⚙️ Automáticos</option>
+            <option value="manual">👤 Manuales</option>
           </select>
 
           <!-- Buscar -->
@@ -139,6 +151,7 @@
                 <th scope="col">Código SRI</th>
                 <th scope="col">Nombre & Descripción</th>
                 <th scope="col">Tipo de Rubro</th>
+                <th scope="col">Origen</th>
                 <th scope="col">Tarifa IVA</th>
                 <th scope="col" class="text-end">Precio Unitario</th>
                 <th scope="col" class="text-center">Estado</th>
@@ -172,6 +185,17 @@
                     </span>
                   </td>
                   <td>
+                    @if (rubro.esAutomatico) {
+                      <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-1">
+                        <i class="bi bi-gear-fill me-1"></i>Automático
+                      </span>
+                    } @else {
+                      <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle px-2 py-1">
+                        <i class="bi bi-person me-1"></i>Manual
+                      </span>
+                    }
+                  </td>
+                  <td>
                     @if (rubro.tarifaImpuesto) {
                       <span class="badge badge-soft-primary">
                         {{ rubro.tarifaImpuesto.descripcion }} ({{ rubro.tarifaImpuesto.porcentaje }}%)
@@ -181,7 +205,11 @@
                     }
                   </td>
                   <td class="text-end fw-bold text-dark tabular-nums" style="font-size: 0.95rem">
-                    ${{ rubro.precioUnitario | number: '1.2-2' }}
+                    @if (rubro.esAutomatico && rubro.precioUnitario === 0) {
+                      <span class="text-muted small fw-normal fst-italic">Dinámico (Tarifa)</span>
+                    } @else {
+                      ${{ rubro.precioUnitario | number: '1.2-2' }}
+                    }
                   </td>
                   <td class="text-center">
                     <app-status-badge [status]="rubro.activo ? 'ACTIVO' : 'INACTIVO'" />

@@ -43,6 +43,7 @@ export class RubroFormModalComponent implements OnInit {
   tipoRubro: TipoRubro = 'FIJO';
   tarifaImpuestoId: number | null = null;
   activo = true;
+  esAutomatico = false;
   isLoading = false;
   tarifasImpuesto: ITarifaImpuesto[] = [];
 
@@ -66,6 +67,7 @@ export class RubroFormModalComponent implements OnInit {
       this.tipoRubro = r.tipoRubro;
       this.tarifaImpuestoId = r.tarifaImpuestoId;
       this.activo = r.activo;
+      this.esAutomatico = r.esAutomatico ?? false;
     }
   }
 
@@ -112,6 +114,7 @@ export class RubroFormModalComponent implements OnInit {
         tipoRubro: this.tipoRubro,
         tarifaImpuestoId: Number(this.tarifaImpuestoId),
         activo: this.activo,
+        esAutomatico: this.esAutomatico,
       };
 
       this.rubrosService.updateRubro(this.rubro()!.rubroId, updateDto).subscribe({
@@ -136,6 +139,7 @@ export class RubroFormModalComponent implements OnInit {
         tipoRubro: this.tipoRubro,
         tarifaImpuestoId: Number(this.tarifaImpuestoId),
         activo: this.activo,
+        esAutomatico: this.esAutomatico,
       };
 
       this.rubrosService.createRubro(createDto).subscribe({

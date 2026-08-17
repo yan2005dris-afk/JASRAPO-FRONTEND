@@ -30,6 +30,7 @@ export interface IRubro {
     descripcion: string;
   };
   activo: boolean;
+  esAutomatico: boolean;
   createdAt: string | Date;
   updatedAt: string | Date;
   deletedAt?: string | Date | null;
@@ -43,6 +44,7 @@ export interface ICreateRubroDto {
   tipoRubro: TipoRubro;
   tarifaImpuestoId: number;
   activo?: boolean;
+  esAutomatico?: boolean;
 }
 
 export interface IUpdateRubroDto {
@@ -53,6 +55,7 @@ export interface IUpdateRubroDto {
   tipoRubro?: TipoRubro;
   tarifaImpuestoId?: number;
   activo?: boolean;
+  esAutomatico?: boolean;
 }
 
 export interface IRubroFilterParams {
@@ -62,4 +65,5 @@ export interface IRubroFilterParams {
   tipoRubro?: TipoRubro | string;
   tarifaImpuestoId?: number;
   activo?: boolean;
+  esAutomatico?: boolean;
 }
