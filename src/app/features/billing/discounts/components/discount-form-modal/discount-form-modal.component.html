@@ -61,7 +61,7 @@
             <option [ngValue]="null">General / Cargo Fijo (Por defecto)</option>
             @for (r of rubros; track r.rubroId) {
               <option [ngValue]="r.rubroId">
-                {{ r.nombre }} — ${{ r.precioUnitario }} ({{ r.tipoRubro }})
+                {{ r.nombre }} — ${{ r.precioUnitario | number: '1.2-2' }} ({{ r.tipoRubro }})
               </option>
             }
           </select>

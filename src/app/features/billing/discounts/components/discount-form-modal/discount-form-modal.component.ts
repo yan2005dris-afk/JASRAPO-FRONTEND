@@ -1,5 +1,6 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   OnInit,
   inject,
@@ -28,6 +29,7 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
 export class DiscountFormModalComponent implements OnInit {
   private readonly discountsService = inject(DiscountsService);
   private readonly toastService = inject(ToastService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly discount = input<IDiscount | null>(null);
   readonly saved = output<void>();
@@ -72,9 +74,11 @@ export class DiscountFormModalComponent implements OnInit {
     this.discountsService.getRubros().subscribe({
       next: (list) => {
         this.rubros = list;
+        this.cdr.markForCheck();
       },
       error: () => {
         this.rubros = [];
+        this.cdr.markForCheck();
       },
     });
   }
