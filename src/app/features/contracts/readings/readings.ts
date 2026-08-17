@@ -208,7 +208,7 @@ export class ReadingsComponent implements OnInit {
 
   reportAnomaly(reading: IReading): void {
     this.openDropdownId = null;
-    this.router.navigate(['/portal/Contratos/AnomaliasDeLectura'], {
+    this.router.navigate(['/app/Contratos/AnomaliasDeLectura'], {
       queryParams: {
         lecturaId: reading.lecturaId,
         report: 'true',
