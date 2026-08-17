@@ -175,6 +175,28 @@ export class ReadingFormModalComponent implements OnInit {
     this.contractSearchQuery = `${contract.numeroGuia} - ${this.formatClientName(contract.cliente)}`;
     this.isContractAutocompleteOpen = false;
     this.contractSearchResults = [];
+
+    // Cargar automáticamente la última lectura registrada para autocompletar la lectura anterior
+    if (!this.reading()) {
+      this.readingsService
+        .getReadings({ contratoId: contract.contratoId, page: 1, limit: 1 })
+        .subscribe({
+          next: (res) => {
+            if (res.data && res.data.length > 0) {
+              const ultimaLectura = res.data[0];
+              // La lectura anterior es la lectura actual del mes previo
+              this.lecturaAnterior = Number(ultimaLectura.lecturaActual || ultimaLectura.lecturaAnterior || 0);
+            } else {
+              this.lecturaAnterior = 0;
+            }
+            this.cdr.markForCheck();
+          },
+          error: () => {
+            this.cdr.markForCheck();
+          },
+        });
+    }
+
     this.cdr.markForCheck();
   }
 
@@ -184,6 +206,9 @@ export class ReadingFormModalComponent implements OnInit {
     this.contractSearchResults = [];
     this.isContractAutocompleteOpen = false;
     this.medidorId = '';
+    if (!this.reading()) {
+      this.lecturaAnterior = 0;
+    }
     this.cdr.markForCheck();
   }
 
