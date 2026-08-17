@@ -15,10 +15,13 @@ import {
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
+import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { ReadingFormModalComponent } from './components/reading-form-modal/reading-form-modal.component';
 import { ReadingDetailModalComponent } from './components/reading-detail-modal/reading-detail-modal.component';
+import type { IContract } from '../service-contracts/interfaces/icontract.interface';
 
 @Component({
   selector: 'app-readings',
@@ -29,6 +32,8 @@ import { ReadingDetailModalComponent } from './components/reading-detail-modal/r
     StatusBadgeComponent,
     EmptyStateComponent,
     PaginationComponent,
+    TableSkeletonComponent,
+    ContractPickerComponent,
     ReadingFormModalComponent,
     ReadingDetailModalComponent,
   ],
@@ -58,6 +63,9 @@ export class ReadingsComponent implements OnInit {
 
   // Filters
   filterContratoId = '';
+  selectedContractNumber = '';
+  selectedContractName = '';
+  isContractPickerOpen = false;
 
   // Modals
   isFormModalOpen = false;
@@ -99,8 +107,27 @@ export class ReadingsComponent implements OnInit {
     });
   }
 
+  abrirBuscadorContratos(): void {
+    this.isContractPickerOpen = true;
+  }
+
+  cerrarBuscadorContratos(): void {
+    this.isContractPickerOpen = false;
+  }
+
+  onContractSelected(contract: IContract): void {
+    this.filterContratoId = contract.contratoId;
+    this.selectedContractNumber = contract.numeroGuia ? `Guía: ${contract.numeroGuia}` : `Contrato #${contract.contratoId}`;
+    this.selectedContractName = ContractPickerComponent.formatClientName(contract.cliente);
+    this.isContractPickerOpen = false;
+    this.currentPage = 1;
+    this.loadReadings();
+  }
+
   limpiarFiltros(): void {
     this.filterContratoId = '';
+    this.selectedContractNumber = '';
+    this.selectedContractName = '';
     this.currentPage = 1;
     this.loadReadings();
   }

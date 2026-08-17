@@ -15,6 +15,8 @@ import {
   IReading,
   IUpdateReadingDto,
 } from '../../interfaces/ireading.interface';
+import { MetersService } from '../../../meters/services/meters.service';
+import { IMeterDto } from '../../../meters/interfaces/imeter.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 
 @Component({
@@ -30,12 +32,17 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
 })
 export class ReadingFormModalComponent implements OnInit {
   private readonly readingsService = inject(ReadingsService);
+  private readonly metersService = inject(MetersService);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly reading = input<IReading | null>(null);
   readonly saved = output<void>();
   readonly closed = output<void>();
+
+  // Catalogs
+  meters: IMeterDto[] = [];
+  isLoadingMeters = false;
 
   medidorId = '';
   fecha = '';
@@ -50,9 +57,10 @@ export class ReadingFormModalComponent implements OnInit {
   isLoading = false;
 
   ngOnInit(): void {
+    this.loadMeters();
     const r = this.reading();
     if (r) {
-      this.medidorId = r.medidor?.medidorId || '';
+      this.medidorId = String(r.medidor?.medidorId || '');
       this.fecha = typeof r.fecha === 'string' ? r.fecha.split('T')[0] : new Date(r.fecha).toISOString().split('T')[0];
       this.lecturaAnterior = Number(r.lecturaAnterior);
       this.lecturaActual = Number(r.lecturaActual);
@@ -63,6 +71,21 @@ export class ReadingFormModalComponent implements OnInit {
     } else {
       this.fecha = new Date().toISOString().split('T')[0];
     }
+  }
+
+  loadMeters(): void {
+    this.isLoadingMeters = true;
+    this.metersService.getMeters({ page: 1, limit: 100 }).subscribe({
+      next: (res) => {
+        this.meters = res.data;
+        this.isLoadingMeters = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.isLoadingMeters = false;
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   get calculatedConsumo(): number {

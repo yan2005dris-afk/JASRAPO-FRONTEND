@@ -26,24 +26,26 @@
       <!-- Body -->
       <div class="modal-body p-4 bg-white" style="max-height: 75vh; overflow-y: auto">
         <div class="row g-3">
-          <!-- Medidor ID -->
+          <!-- Medidor ID / Serie -->
           <div class="col-md-6">
-            <label for="inputMedidorIdLectura" class="form-label fw-semibold text-dark small mb-1">
-              ID o Serie de Medidor <span class="text-danger">*</span>
+            <label for="selectMedidorLectura" class="form-label fw-semibold text-dark small mb-1">
+              Medidor / Serie <span class="text-danger">*</span>
             </label>
-            <div class="input-group">
-              <span class="input-group-text bg-white text-muted">
-                <i class="bi bi-cpu"></i>
-              </span>
-              <input
-                id="inputMedidorIdLectura"
-                type="text"
-                class="form-control shadow-none"
-                placeholder="Ej. 1"
-                [(ngModel)]="medidorId"
-                [disabled]="isLoading || !!reading()"
-              />
-            </div>
+            <select
+              id="selectMedidorLectura"
+              class="form-select shadow-none"
+              [(ngModel)]="medidorId"
+              [disabled]="isLoading || !!reading()"
+            >
+              <option value="">
+                {{ isLoadingMeters ? 'Cargando medidores...' : 'Seleccione un medidor...' }}
+              </option>
+              @for (m of meters; track m.medidorId) {
+                <option [value]="m.medidorId">
+                  Serie: {{ m.serie }} ({{ m.marca }} {{ m.modelo || '' }})
+                </option>
+              }
+            </select>
           </div>
 
           <!-- Fecha -->
