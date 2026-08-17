@@ -219,11 +219,11 @@ export class ReadingRouteDetailComponent implements OnInit {
   }
 
   // Actions & Dropdown
-  openDropdownId: string | null = null;
+  openDropdownId: string | number | null = null;
   isAnomalyModalOpen = false;
   selectedLecturaIdForAnomaly: string | null = null;
 
-  toggleDropdown(id: string, event: MouseEvent): void {
+  toggleDropdown(id: string | number, event: MouseEvent): void {
     event.stopPropagation();
     this.openDropdownId = this.openDropdownId === id ? null : id;
     this.cdr.markForCheck();
