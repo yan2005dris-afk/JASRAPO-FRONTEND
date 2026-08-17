@@ -227,11 +227,11 @@
                               </button>
                               <button
                                 type="button"
-                                class="btn btn-sm btn-outline-danger p-1 px-2 d-flex align-items-center gap-1"
-                                title="Rechazar para nueva verificación en campo"
-                                (click)="changeReadingStatus(r, 'RECHAZADA_VERIFICACION')"
+                                class="btn btn-sm btn-outline-warning p-1 px-2 d-flex align-items-center gap-1"
+                                title="Marcar con novedad / anomalía"
+                                (click)="changeReadingStatus(r, 'CON_NOVEDAD')"
                               >
-                                <i class="bi bi-x-lg"></i>
+                                <i class="bi bi-exclamation-triangle"></i>
                               </button>
                             </div>
                           }

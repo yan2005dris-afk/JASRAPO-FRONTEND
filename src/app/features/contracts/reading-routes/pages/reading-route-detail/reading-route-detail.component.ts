@@ -215,7 +215,7 @@ export class ReadingRouteDetailComponent implements OnInit {
 
   changeReadingStatus(
     lectura: IReadingForRoute,
-    nuevoEstado: 'APROBADA' | 'RECHAZADA_VERIFICACION' | 'PENDIENTE',
+    nuevoEstado: 'APROBADA' | 'CON_NOVEDAD' | 'RECHAZADA_VERIFICACION' | 'PENDIENTE',
   ): void {
     this.processingReadingId = lectura.lecturaId;
     this.cdr.markForCheck();
@@ -227,8 +227,8 @@ export class ReadingRouteDetailComponent implements OnInit {
         this.toastService.success(
           nuevoEstado === 'APROBADA'
             ? 'Lectura aprobada'
-            : nuevoEstado === 'RECHAZADA_VERIFICACION'
-              ? 'Lectura enviada a verificación'
+            : nuevoEstado === 'CON_NOVEDAD'
+              ? 'Lectura marcada con novedad'
               : 'Lectura en pendiente',
         );
         this.cdr.markForCheck();

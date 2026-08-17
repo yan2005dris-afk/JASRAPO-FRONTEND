@@ -110,7 +110,7 @@ export class ReadingRoutesService {
 
   updateReadingStatus(
     lecturaId: string | number,
-    estado: 'APROBADA' | 'RECHAZADA_VERIFICACION' | 'PENDIENTE' | 'POR_REVISION',
+    estado: 'APROBADA' | 'CON_NOVEDAD' | 'RECHAZADA_VERIFICACION' | 'PENDIENTE' | 'POR_REVISION',
   ): Observable<any> {
     return this.http.patch(`${this.baseUrl}/readings/${lecturaId}`, {
       estado,

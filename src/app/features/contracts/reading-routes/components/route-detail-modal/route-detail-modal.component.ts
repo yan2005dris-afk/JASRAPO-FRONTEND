@@ -127,7 +127,7 @@ export class RouteDetailModalComponent implements OnInit {
 
   changeReadingStatus(
     lectura: IReadingForRoute,
-    nuevoEstado: 'APROBADA' | 'RECHAZADA_VERIFICACION' | 'PENDIENTE',
+    nuevoEstado: 'APROBADA' | 'CON_NOVEDAD' | 'RECHAZADA_VERIFICACION' | 'PENDIENTE',
   ): void {
     this.processingReadingId = lectura.lecturaId;
     this.cdr.markForCheck();
