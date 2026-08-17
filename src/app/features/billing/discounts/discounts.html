@@ -124,6 +124,7 @@
               <tr>
                 <th scope="col" class="ps-4">ID</th>
                 <th scope="col">Nombre</th>
+                <th scope="col">Rubro Afectado</th>
                 <th scope="col">Categoría</th>
                 <th scope="col">Modalidad</th>
                 <th scope="col" class="text-end">Valor</th>
@@ -142,6 +143,15 @@
                     <div class="fw-semibold text-dark small">{{ discount.nombre }}</div>
                     @if (discount.descripcion) {
                       <div class="text-muted" style="font-size: 0.75rem">{{ discount.descripcion }}</div>
+                    }
+                  </td>
+                  <td>
+                    @if (discount.rubro) {
+                      <span class="badge bg-light text-dark border fw-medium px-2 py-1">
+                        <i class="bi bi-box-seam me-1 text-primary"></i>{{ discount.rubro.nombre }}
+                      </span>
+                    } @else {
+                      <span class="text-muted small italic">General (Cargo Fijo)</span>
                     }
                   </td>
                   <td>
