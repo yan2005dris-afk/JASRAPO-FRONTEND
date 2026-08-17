@@ -116,7 +116,9 @@ export const routes: Routes = [
             path: 'config',
             data: { breadcrumb: 'Configuración' },
             loadComponent: () =>
-              import('./features/admin/component/admin.component').then((m) => m.AdminComponent),
+              import('./features/admin/system-config/system-config.component').then(
+                (m) => m.SystemConfigComponent,
+              ),
           },
         ],
       },
