@@ -32,9 +32,28 @@ export class AnomalyResolveModalComponent {
   isDiscarding = false;
   isLoading = false;
 
-  get canResolve(): boolean {
-    const st = this.anomaly().estado;
-    return st === 'PENDIENTE' || st === 'EN_REVISION';
+  get isPending(): boolean {
+    return this.anomaly().estado === 'PENDIENTE';
+  }
+
+  setInReview(): void {
+    if (this.isLoading) return;
+
+    this.isLoading = true;
+    this.anomaliesService
+      .updateAnomaly(this.anomaly().anomaliaId, { estado: 'EN_REVISION' })
+      .subscribe({
+        next: () => {
+          this.isLoading = false;
+          this.toastService.show('Anomalía pasada a estado "En Revisión"', 'info');
+          this.resolved.emit();
+        },
+        error: (err) => {
+          this.isLoading = false;
+          const msg = err?.error?.message || 'Error al actualizar estado a En Revisión';
+          this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
+        },
+      });
   }
 
   resolveAnomaly(): void {

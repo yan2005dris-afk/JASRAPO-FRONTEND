@@ -130,24 +130,46 @@
         </div>
 
         <div class="d-flex align-items-center gap-2">
+          @if (isPending && !isDiscarding) {
+            <button
+              type="button"
+              class="btn btn-outline-warning d-flex align-items-center gap-2 fw-medium text-dark"
+              (click)="setInReview()"
+              [disabled]="isLoading"
+              title="Mover a En Revisión para seguimiento técnico"
+            >
+              <i class="bi bi-search"></i>
+              Pasar a Revisión
+            </button>
+          }
+
           @if (canResolve && !isDiscarding) {
             <button
               type="button"
-              class="btn btn-primary d-flex align-items-center gap-2 fw-medium"
+              class="btn btn-success d-flex align-items-center gap-2 fw-medium"
               (click)="resolveAnomaly()"
               [disabled]="isLoading"
             >
               @if (isLoading) {
-                <span class="spinner-border spinner-border-sm" role="status"></span>
-              } @else {
-                <i class="bi bi-check-circle-fill"></i>
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
               }
-              Marcar Resuelta
+              @if (!isLoading) {
+                <i class="bi bi-check2-circle"></i>
+              }
+              Marcar como Resuelta
             </button>
           }
-          <button type="button" class="btn btn-secondary fw-medium px-4" (click)="close()">
-            Cerrar
-          </button>
+
+          @if (!isDiscarding) {
+            <button
+              type="button"
+              class="btn btn-secondary fw-medium px-3"
+              (click)="close()"
+              [disabled]="isLoading"
+            >
+              Cerrar
+            </button>
+          }
         </div>
       </div>
     </div>
