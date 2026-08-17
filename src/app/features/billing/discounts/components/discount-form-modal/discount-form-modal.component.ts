@@ -38,9 +38,11 @@ export class DiscountFormModalComponent implements OnInit {
   tipoDescuento: TipoDescuento = 'TERCERA_EDAD';
   valor = 0;
   esPorcentaje = true;
+  rubroId: number | null = null;
   aplicaAutomatico = false;
   activo = true;
   isLoading = false;
+  rubros: Array<{ rubroId: number; nombre: string; tipoRubro: string; precioUnitario: any }> = [];
 
   readonly tipoOptions: { value: TipoDescuento; label: string }[] = [
     { value: 'TERCERA_EDAD', label: 'Tercera Edad' },
@@ -52,6 +54,7 @@ export class DiscountFormModalComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this.loadRubros();
     const d = this.discount();
     if (d) {
       this.nombre = d.nombre;
@@ -59,9 +62,21 @@ export class DiscountFormModalComponent implements OnInit {
       this.tipoDescuento = d.tipoDescuento as TipoDescuento;
       this.valor = Number(d.valor);
       this.esPorcentaje = d.esPorcentaje;
+      this.rubroId = d.rubroId ?? null;
       this.aplicaAutomatico = d.aplicaAutomatico;
       this.activo = d.activo;
     }
+  }
+
+  private loadRubros(): void {
+    this.discountsService.getRubros().subscribe({
+      next: (list) => {
+        this.rubros = list;
+      },
+      error: () => {
+        this.rubros = [];
+      },
+    });
   }
 
   setTipoValor(esPorc: boolean): void {
@@ -85,6 +100,7 @@ export class DiscountFormModalComponent implements OnInit {
         tipoDescuento: this.tipoDescuento,
         valor: Number(this.valor),
         esPorcentaje: this.esPorcentaje,
+        rubroId: this.rubroId ? Number(this.rubroId) : undefined,
         aplicaAutomatico: this.aplicaAutomatico,
         activo: this.activo,
       };
@@ -108,6 +124,7 @@ export class DiscountFormModalComponent implements OnInit {
         tipoDescuento: this.tipoDescuento,
         valor: Number(this.valor),
         esPorcentaje: this.esPorcentaje,
+        rubroId: this.rubroId ? Number(this.rubroId) : undefined,
         aplicaAutomatico: this.aplicaAutomatico,
       };
 

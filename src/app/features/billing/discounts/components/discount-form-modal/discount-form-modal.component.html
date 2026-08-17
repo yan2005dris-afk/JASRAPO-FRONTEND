@@ -52,6 +52,24 @@
           </select>
         </div>
 
+        <!-- 2.1 Rubro Asociado (Opcional) -->
+        <div class="mb-3">
+          <label for="selectRubroDescuento" class="form-label fw-semibold text-dark small mb-1">
+            Rubro Asociado <span class="text-muted fw-normal">(Opcional)</span>
+          </label>
+          <select id="selectRubroDescuento" class="form-select shadow-none" [(ngModel)]="rubroId" [disabled]="isLoading">
+            <option [ngValue]="null">General / Cargo Fijo (Por defecto)</option>
+            @for (r of rubros; track r.rubroId) {
+              <option [ngValue]="r.rubroId">
+                {{ r.nombre }} — ${{ r.precioUnitario }} ({{ r.tipoRubro }})
+              </option>
+            }
+          </select>
+          <div class="text-muted small mt-1" style="font-size: 0.75rem">
+            Seleccioná si este descuento se deduce exclusivamente de un rubro específico.
+          </div>
+        </div>
+
         <!-- 3. Tipo de Valor (Segmented Control) -->
         <div class="mb-3">
           <span class="form-label d-block fw-semibold text-dark small mb-1">Modalidad del Descuento</span>
