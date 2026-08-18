@@ -1,0 +1,54 @@
+.permissions-table {
+  thead th {
+    background-color: var(--soft-blue-bg, #f0f4ff);
+    color: var(--text-muted, #6c757d);
+    font-size: 0.78rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+  }
+
+  tbody td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+}
+
+.module-row {
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: rgba(240, 244, 255, 0.5);
+  }
+}
+
+.permission-pill {
+  font-size: 0.78rem;
+  background-color: #fff;
+  border-color: var(--border-color, #dee2e6) !important;
+  user-select: none;
+  transition: all 0.15s ease-in-out;
+
+  &:hover {
+    border-color: var(--bs-primary) !important;
+  }
+
+  &.active-pill {
+    background-color: rgba(13, 110, 253, 0.08);
+    border-color: rgba(13, 110, 253, 0.35) !important;
+    color: var(--bs-primary);
+  }
+}
+
+.expanded-detail-row {
+  td {
+    background-color: #f8fafc !important;
+    border-top: none !important;
+  }
+}
+
+.x-small {
+  font-size: 0.72rem;
+}

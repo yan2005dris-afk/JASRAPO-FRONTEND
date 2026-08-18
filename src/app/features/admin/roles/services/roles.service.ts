@@ -25,7 +25,7 @@ export class RolesService {
   }
 
   getAllPermissions(): Observable<PermissionItem[]> {
-    const params = new HttpParams().set('limit', '100');
+    const params = new HttpParams().set('limit', '1000');
     return this.http
       .get<PermissionItem[] | { data: PermissionItem[] }>(this.permissionsUrl, {
         params,

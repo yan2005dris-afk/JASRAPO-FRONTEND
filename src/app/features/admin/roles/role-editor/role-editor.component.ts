@@ -8,6 +8,7 @@ import {
   DestroyRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
@@ -22,8 +23,9 @@ import {
 
 @Component({
   selector: 'app-role-editor',
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './role-editor.component.html',
+  styleUrl: './role-editor.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RoleEditorComponent implements OnInit {
@@ -42,10 +44,12 @@ export class RoleEditorComponent implements OnInit {
   readonly isSaving = signal(false);
   readonly assignedIds = signal<Set<number>>(new Set());
   readonly expandedGroups = signal<Set<string>>(new Set());
+  readonly searchTerm = signal('');
 
   readonly groupedPermissions = computed((): PermissionGroup[] => {
     const perms = this.allPermissions();
     const assigned = this.assignedIds();
+    const term = this.searchTerm().trim().toLowerCase();
 
     const grouped = new Map<string, PermissionWithState[]>();
     for (const p of perms) {
@@ -59,16 +63,41 @@ export class RoleEditorComponent implements OnInit {
       });
     }
 
-    return Array.from(grouped.entries()).map(([recurso, items]) => {
-      const assignedCount = items.filter((p) => p.assigned).length;
-      return {
-        recurso,
-        items,
-        allSelected: assignedCount === items.length && items.length > 0,
-        indeterminate: assignedCount > 0 && assignedCount < items.length,
-        assignedCount,
-      };
-    });
+    const groups: PermissionGroup[] = [];
+    for (const [recurso, items] of grouped.entries()) {
+      const filteredItems = term
+        ? items.filter(
+            (i) =>
+              recurso.toLowerCase().includes(term) ||
+              i.nombre.toLowerCase().includes(term) ||
+              i.accion.toLowerCase().includes(term) ||
+              (i.descripcion && i.descripcion.toLowerCase().includes(term)),
+          )
+        : items;
+
+      if (filteredItems.length > 0) {
+        const assignedCount = filteredItems.filter((p) => p.assigned).length;
+        groups.push({
+          recurso,
+          items: filteredItems,
+          allSelected: assignedCount === filteredItems.length && filteredItems.length > 0,
+          indeterminate: assignedCount > 0 && assignedCount < filteredItems.length,
+          assignedCount,
+        });
+      }
+    }
+
+    return groups.sort((a, b) => a.recurso.localeCompare(b.recurso));
+  });
+
+  readonly totalStats = computed(() => {
+    const all = this.allPermissions();
+    const assigned = this.assignedIds();
+    return {
+      total: all.length,
+      assignedCount: assigned.size,
+      groupsCount: this.groupedPermissions().length,
+    };
   });
 
   readonly hasChanges = computed(() => {
@@ -94,6 +123,7 @@ export class RoleEditorComponent implements OnInit {
     this.assignedIds.set(new Set());
     this.expandedGroups.set(new Set());
     this.originalIds = new Set();
+    this.searchTerm.set('');
   }
 
   private load(): void {
@@ -144,6 +174,39 @@ export class RoleEditorComponent implements OnInit {
       const next = new Set(groups);
       if (next.has(recurso)) next.delete(recurso);
       else next.add(recurso);
+      return next;
+    });
+  }
+
+  expandAll(): void {
+    const allKeys = new Set(this.groupedPermissions().map((g) => g.recurso));
+    this.expandedGroups.set(allKeys);
+  }
+
+  collapseAll(): void {
+    this.expandedGroups.set(new Set());
+  }
+
+  selectAllVisible(): void {
+    this.assignedIds.update((ids) => {
+      const next = new Set(ids);
+      for (const group of this.groupedPermissions()) {
+        for (const item of group.items) {
+          next.add(item.permisoId);
+        }
+      }
+      return next;
+    });
+  }
+
+  deselectAllVisible(): void {
+    this.assignedIds.update((ids) => {
+      const next = new Set(ids);
+      for (const group of this.groupedPermissions()) {
+        for (const item of group.items) {
+          next.delete(item.permisoId);
+        }
+      }
       return next;
     });
   }
