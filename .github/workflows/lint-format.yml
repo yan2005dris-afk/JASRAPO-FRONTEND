@@ -17,7 +17,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: 11
+          version: 11.22.0
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
