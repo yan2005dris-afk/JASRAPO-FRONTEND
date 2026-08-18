@@ -4,7 +4,7 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Copiar archivos de dependencias
-COPY package.json pnpm-lock.yaml* ./
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./
 
 # Instalar dependencias
 RUN corepack enable pnpm && pnpm install --frozen-lockfile
@@ -21,7 +21,7 @@ FROM node:22-alpine AS development
 WORKDIR /app
 
 # Copiar archivos de dependencias
-COPY package.json pnpm-lock.yaml* ./
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./
 
 # Instalar dependencias
 RUN corepack enable pnpm && pnpm install --frozen-lockfile

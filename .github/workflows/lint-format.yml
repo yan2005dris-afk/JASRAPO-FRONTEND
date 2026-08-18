@@ -17,18 +17,18 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v3
         with:
-          version: 9
+          version: 11
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'pnpm'
 
       - name: Instalar dependencias
         run: pnpm install --frozen-lockfile
 
       - name: Verificar Formato (Prettier)
-        run: pnpm run format:check || npx prettier --check .
+        run: pnpm run format:check || pnpm exec prettier --check .
 
       - name: Ejecutar Linter (ESLint)
         run: pnpm run lint
