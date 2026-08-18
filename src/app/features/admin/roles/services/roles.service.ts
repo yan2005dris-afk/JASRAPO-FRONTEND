@@ -35,21 +35,42 @@ export class RolesService {
   }
 
   getAllPermissions(): Observable<PermissionItem[]> {
-    const params = new HttpParams().set('limit', '1000');
-    return this.http
-      .get<PermissionItem[] | { data: PermissionItem[] }>(this.permissionsUrl, {
-        params,
-        withCredentials: true,
-      })
-      .pipe(
-        map((res) => {
-          if (Array.isArray(res)) return res;
-          if (res && typeof res === 'object' && Array.isArray((res as { data: PermissionItem[] }).data)) {
-            return (res as { data: PermissionItem[] }).data;
-          }
-          return [];
-        }),
-      );
+    return new Observable<PermissionItem[]>((subscriber) => {
+      const all: PermissionItem[] = [];
+      const fetchPage = (page: number) => {
+        const params = new HttpParams().set('page', String(page)).set('limit', '100');
+        this.http
+          .get<PermissionItem[] | { data: PermissionItem[]; meta?: { ultimaPagina?: number; total?: number } }>(
+            this.permissionsUrl,
+            { params, withCredentials: true },
+          )
+          .subscribe({
+            next: (res) => {
+              let items: PermissionItem[] = [];
+              let totalPages = 1;
+
+              if (Array.isArray(res)) {
+                items = res;
+              } else if (res && typeof res === 'object') {
+                items = Array.isArray(res.data) ? res.data : [];
+                totalPages = res.meta?.ultimaPagina ?? 1;
+              }
+
+              all.push(...items);
+
+              if (page < totalPages && items.length > 0) {
+                fetchPage(page + 1);
+              } else {
+                subscriber.next(all);
+                subscriber.complete();
+              }
+            },
+            error: (err) => subscriber.error(err),
+          });
+      };
+
+      fetchPage(1);
+    });
   }
 
   updateRole(id: number, payload: UpdateRolePayload): Observable<RoleDetail> {
