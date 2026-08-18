@@ -21,7 +21,17 @@ export class RolesService {
   }
 
   getRoleById(id: number): Observable<RoleDetail> {
-    return this.http.get<RoleDetail>(`${this.rolesUrl}/${id}`, { withCredentials: true });
+    return this.http
+      .get<RoleDetail | { data: RoleDetail }>(`${this.rolesUrl}/${id}`, { withCredentials: true })
+      .pipe(
+        map((res) => {
+          const detail = (res && typeof res === 'object' && 'data' in res ? res.data : res) as RoleDetail;
+          return {
+            ...detail,
+            permisos: Array.isArray(detail?.permisos) ? detail.permisos : [],
+          };
+        }),
+      );
   }
 
   getAllPermissions(): Observable<PermissionItem[]> {
@@ -31,7 +41,15 @@ export class RolesService {
         params,
         withCredentials: true,
       })
-      .pipe(map((res) => (Array.isArray(res) ? res : res.data)));
+      .pipe(
+        map((res) => {
+          if (Array.isArray(res)) return res;
+          if (res && typeof res === 'object' && Array.isArray((res as { data: PermissionItem[] }).data)) {
+            return (res as { data: PermissionItem[] }).data;
+          }
+          return [];
+        }),
+      );
   }
 
   updateRole(id: number, payload: UpdateRolePayload): Observable<RoleDetail> {

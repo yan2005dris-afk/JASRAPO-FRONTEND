@@ -141,8 +141,10 @@ export class RoleEditorComponent implements OnInit {
         this.expandedGroups.set(new Set());
         this.isLoading.set(false);
       },
-      error: () => {
-        this.toast.error('Error al cargar el rol', 'Error');
+      error: (err) => {
+        console.error('Error loading role or permissions:', err);
+        const msg = err?.error?.message ?? err?.message ?? 'Error al cargar el rol';
+        this.toast.error(msg, 'Error');
         this.isLoading.set(false);
       },
     });
