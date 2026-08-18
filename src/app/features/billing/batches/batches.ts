@@ -7,13 +7,13 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { BatchesService } from './services/batches.service';
 import { IBatch, IBatchStateOption } from './interfaces/ibatch.interface';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { GenerateBatchModalComponent } from './components/generate-batch-modal/generate-batch-modal.component';
-import { BatchDetailModalComponent } from './components/batch-detail-modal/batch-detail-modal.component';
 import { BatchSendEmailModalComponent } from './components/batch-send-email-modal/batch-send-email-modal.component';
 
 @Component({
@@ -26,7 +26,6 @@ import { BatchSendEmailModalComponent } from './components/batch-send-email-moda
     EmptyStateComponent,
     PaginationComponent,
     GenerateBatchModalComponent,
-    BatchDetailModalComponent,
     BatchSendEmailModalComponent,
   ],
   templateUrl: './batches.html',
@@ -38,6 +37,7 @@ import { BatchSendEmailModalComponent } from './components/batch-send-email-moda
 })
 export class BatchesComponent implements OnInit {
   private readonly batchesService = inject(BatchesService);
+  private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
 
   // List State
@@ -46,6 +46,59 @@ export class BatchesComponent implements OnInit {
   isLoading = false;
   hasFetched = false;
   openDropdownId: number | null = null;
+
+  // Selection State
+  selectedBatchIds = new Set<number>();
+
+  toggleSelectAll(): void {
+    if (this.isAllSelected()) {
+      this.selectedBatchIds.clear();
+    } else {
+      this.batches.forEach((b) => this.selectedBatchIds.add(b.loteId));
+    }
+    this.cdr.markForCheck();
+  }
+
+  toggleSelectBatch(loteId: number): void {
+    if (this.selectedBatchIds.has(loteId)) {
+      this.selectedBatchIds.delete(loteId);
+    } else {
+      this.selectedBatchIds.add(loteId);
+    }
+    this.cdr.markForCheck();
+  }
+
+  isAllSelected(): boolean {
+    return (
+      this.batches.length > 0 &&
+      this.batches.every((b) => this.selectedBatchIds.has(b.loteId))
+    );
+  }
+
+  isSelected(loteId: number): boolean {
+    return this.selectedBatchIds.has(loteId);
+  }
+
+  private readonly monthNames = [
+    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+  ];
+
+  getBatchMonth(batch: IBatch): string {
+    const year = batch.periodoRel?.nombre || (batch.createdAt ? new Date(batch.createdAt).getFullYear() : '');
+    if (batch.mes && batch.mes >= 1 && batch.mes <= 12) {
+      const monthName = this.monthNames[batch.mes - 1];
+      return `${monthName} ${year}`.trim();
+    }
+    if (batch.createdAt) {
+      const date = new Date(batch.createdAt);
+      if (!isNaN(date.getTime())) {
+        const monthName = this.monthNames[date.getMonth()];
+        return `${monthName} ${year || date.getFullYear()}`.trim();
+      }
+    }
+    return year ? String(year) : '';
+  }
 
   // Pagination
   currentPage = 1;
@@ -56,7 +109,6 @@ export class BatchesComponent implements OnInit {
 
   // Modals
   isGenerateModalOpen = false;
-  selectedDetailBatch: IBatch | null = null;
   selectedEmailBatch: IBatch | null = null;
 
   ngOnInit(): void {
@@ -142,21 +194,7 @@ export class BatchesComponent implements OnInit {
 
   openDetailModal(batch: IBatch): void {
     this.openDropdownId = null;
-    this.batchesService.getBatchById(batch.loteId).subscribe({
-      next: (full) => {
-        this.selectedDetailBatch = full;
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.selectedDetailBatch = batch;
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  closeDetailModal(): void {
-    this.selectedDetailBatch = null;
-    this.cdr.markForCheck();
+    this.router.navigate(['/app/Facturacion/EnvioDeFacturacion', batch.loteId]);
   }
 
   openEmailModal(batch: IBatch): void {
@@ -172,9 +210,6 @@ export class BatchesComponent implements OnInit {
 
   onEmailsSent(): void {
     this.selectedEmailBatch = null;
-    if (this.selectedDetailBatch) {
-      this.selectedDetailBatch = null;
-    }
     this.loadBatches();
   }
 }

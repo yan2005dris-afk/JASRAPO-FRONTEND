@@ -7,21 +7,27 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { PreInvoicesService } from './services/pre-invoices.service';
 import {
   IFindAllPreInvoicesParams,
   IPreInvoice,
   IPreInvoiceStateOption,
 } from './interfaces/ipre-invoice.interface';
+import { BatchesService } from '../batches/services/batches.service';
+import { IBatch } from '../batches/interfaces/ibatch.interface';
+import { ReadingRoutesService } from '../../contracts/reading-routes/services/reading-routes.service';
+import type { IContract } from '../../contracts/service-contracts/interfaces/icontract.interface';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
+import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
-import { PreInvoiceDetailModalComponent } from './components/pre-invoice-detail-modal/pre-invoice-detail-modal.component';
 import { SendEmailModalComponent } from './components/send-email-modal/send-email-modal.component';
 import { RejectModalComponent } from './components/reject-modal/reject-modal.component';
 import { PdfViewerModalComponent } from './components/pdf-viewer-modal/pdf-viewer-modal.component';
+import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 
 @Component({
   selector: 'app-pre-invoices',
@@ -32,10 +38,11 @@ import { PdfViewerModalComponent } from './components/pdf-viewer-modal/pdf-viewe
     StatusBadgeComponent,
     EmptyStateComponent,
     PaginationComponent,
-    PreInvoiceDetailModalComponent,
     SendEmailModalComponent,
     RejectModalComponent,
     PdfViewerModalComponent,
+    ContractPickerComponent,
+    DatePickerComponent,
   ],
   templateUrl: './pre-invoices.html',
   styleUrl: './pre-invoices.scss',
@@ -46,6 +53,9 @@ import { PdfViewerModalComponent } from './components/pdf-viewer-modal/pdf-viewe
 })
 export class PreInvoicesComponent implements OnInit {
   private readonly preInvoicesService = inject(PreInvoicesService);
+  private readonly router = inject(Router);
+  private readonly batchesService = inject(BatchesService);
+  private readonly routesService = inject(ReadingRoutesService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -61,18 +71,36 @@ export class PreInvoicesComponent implements OnInit {
   currentPage = 1;
   pageSize = 10;
 
-  // Workqueue Filter (default: EN_REVISION)
-  activeStatusFilter = 'EN_REVISION';
+  // Workqueue Filter (default: all)
+  activeStatusFilter = '';
   filterIdentificacion = '';
-  filterContratoId = '';
+  filterContratoId: number | null = null;
   filterLoteId: number | null = null;
   filterPeriodoId: number | null = null;
+  filterFechaDesde: string = '';
+  filterFechaHasta: string = '';
+  showMoreFilters = false;
 
   // Catalogs
   statesCatalog: IPreInvoiceStateOption[] = [];
+  lotesCatalog: IBatch[] = [];
+  periodosCatalog: { periodoId: number; nombre?: string; estado: string }[] = [];
+
+  // Contrato picker (mismo patrón que Convenios de Pago)
+  isContractPickerOpen = false;
+  selectedContractNumber = '';
+  selectedContractName = '';
+
+  // Template helpers
+  loteLabel(l: IBatch): string {
+    return `Lote #${l.loteId} · ${l.periodoRel?.nombre || 'Período ' + l.periodoId}`;
+  }
+
+  periodoLabel(p: { periodoId: number; nombre?: string }): string {
+    return p.nombre || `Período ${p.periodoId}`;
+  }
 
   // Modals State
-  selectedDetailPreInvoice: IPreInvoice | null = null;
   selectedEmailPreInvoice: IPreInvoice | null = null;
   selectedRejectPreInvoice: IPreInvoice | null = null;
   selectedPdfPreInvoice: IPreInvoice | null = null;
@@ -81,6 +109,7 @@ export class PreInvoicesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadStatesCatalog();
+    this.loadCatalogs();
     this.loadPreInvoices();
   }
 
@@ -94,6 +123,52 @@ export class PreInvoicesComponent implements OnInit {
         console.error('Error loading pre-invoice states catalog', err);
       },
     });
+  }
+
+  loadCatalogs(): void {
+    this.batchesService.getBatches({ page: 1, limit: 100 }).subscribe({
+      next: (res) => {
+        this.lotesCatalog = res.data;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.lotesCatalog = [];
+        this.cdr.markForCheck();
+      },
+    });
+
+    this.routesService.getPeriods().subscribe({
+      next: (periods) => {
+        this.periodosCatalog = periods;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.periodosCatalog = [];
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  // ---------- Buscador de contratos ----------
+
+  abrirBuscadorContratos(): void {
+    this.isContractPickerOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  onContractSelected(contract: IContract): void {
+    this.filterContratoId = Number(contract.contratoId);
+    this.selectedContractNumber = contract.numeroGuia;
+    this.selectedContractName = ContractPickerComponent.formatClientName(contract.cliente);
+    this.isContractPickerOpen = false;
+    this.currentPage = 1;
+    this.loadPreInvoices();
+    this.cdr.markForCheck();
+  }
+
+  onContractPickerClosed(): void {
+    this.isContractPickerOpen = false;
+    this.cdr.markForCheck();
   }
 
   loadPreInvoices(): void {
@@ -111,8 +186,8 @@ export class PreInvoicesComponent implements OnInit {
     if (this.filterIdentificacion.trim()) {
       params.identificacion = this.filterIdentificacion.trim();
     }
-    if (this.filterContratoId.trim()) {
-      params.contratoId = this.filterContratoId.trim();
+    if (this.filterContratoId) {
+      params.contratoId = String(this.filterContratoId);
     }
     if (this.filterLoteId) {
       params.loteId = this.filterLoteId;
@@ -120,11 +195,17 @@ export class PreInvoicesComponent implements OnInit {
     if (this.filterPeriodoId) {
       params.periodoId = this.filterPeriodoId;
     }
+    if (this.filterFechaDesde) {
+      params.fechaDesde = this.filterFechaDesde;
+    }
+    if (this.filterFechaHasta) {
+      params.fechaHasta = this.filterFechaHasta;
+    }
 
     this.preInvoicesService.getPreInvoices(params).subscribe({
       next: (res) => {
         this.preInvoices = res.data;
-        this.totalItems = res.meta?.totalItems ?? res.data.length;
+        this.totalItems = res.meta?.total ?? res.data.length;
         this.isLoading = false;
         this.hasFetched = true;
         this.cdr.markForCheck();
@@ -146,11 +227,16 @@ export class PreInvoicesComponent implements OnInit {
   }
 
   limpiarFiltros(): void {
-    this.activeStatusFilter = 'EN_REVISION';
+    this.activeStatusFilter = '';
     this.filterIdentificacion = '';
-    this.filterContratoId = '';
+    this.filterContratoId = null;
+    this.selectedContractNumber = '';
+    this.selectedContractName = '';
     this.filterLoteId = null;
     this.filterPeriodoId = null;
+    this.filterFechaDesde = '';
+    this.filterFechaHasta = '';
+    this.showMoreFilters = false;
     this.currentPage = 1;
     this.loadPreInvoices();
   }
@@ -199,9 +285,6 @@ export class PreInvoicesComponent implements OnInit {
               next: () => {
                 this.isLoading = false;
                 this.toastService.show('Prefactura aprobada exitosamente', 'success');
-                if (this.selectedDetailPreInvoice?.prefacturaId === preInvoice.prefacturaId) {
-                  this.selectedDetailPreInvoice = null;
-                }
                 this.loadPreInvoices();
               },
               error: (err) => {
@@ -221,6 +304,37 @@ export class PreInvoicesComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
+  moverARevision(preInvoice: IPreInvoice): void {
+    this.openDropdownId = null;
+    this.dialogService
+      .confirm({
+        title: 'Pasar a revisión',
+        message: `¿Estás seguro de enviar a revisión la prefactura #${preInvoice.prefacturaId}?`,
+        confirmText: 'Enviar',
+        cancelText: 'Cancelar',
+        isDanger: false,
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.isLoading = true;
+        this.preInvoicesService
+          .updatePreInvoiceState(preInvoice.prefacturaId, { action: 'EN_REVISION' })
+          .subscribe({
+            next: () => {
+              this.isLoading = false;
+              this.toastService.show('Prefactura enviada a revisión', 'success');
+              this.loadPreInvoices();
+            },
+            error: (err) => {
+              this.isLoading = false;
+              const msg = err?.error?.message || 'Error al enviar a revisión';
+              this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
+              this.cdr.markForCheck();
+            },
+          });
+      });
+  }
+
   closeRejectModal(): void {
     this.selectedRejectPreInvoice = null;
     this.cdr.markForCheck();
@@ -228,29 +342,12 @@ export class PreInvoicesComponent implements OnInit {
 
   onPreInvoiceRejected(): void {
     this.selectedRejectPreInvoice = null;
-    if (this.selectedDetailPreInvoice) {
-      this.selectedDetailPreInvoice = null;
-    }
     this.loadPreInvoices();
   }
 
   openDetailModal(preInvoice: IPreInvoice): void {
     this.openDropdownId = null;
-    this.preInvoicesService.getPreInvoiceById(preInvoice.prefacturaId).subscribe({
-      next: (full) => {
-        this.selectedDetailPreInvoice = full;
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.selectedDetailPreInvoice = preInvoice;
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  closeDetailModal(): void {
-    this.selectedDetailPreInvoice = null;
-    this.cdr.markForCheck();
+    this.router.navigate(['/app/Facturacion/GeneracionPlanilla', preInvoice.prefacturaId]);
   }
 
   openEmailModal(preInvoice: IPreInvoice): void {

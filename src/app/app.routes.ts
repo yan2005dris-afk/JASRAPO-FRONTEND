@@ -304,10 +304,18 @@ export const routes: Routes = [
         children: [
           {
             path: 'EnvioDeFacturacion',
-            data: { breadcrumb: 'Envío de Facturación (Lotes)' },
+            data: { breadcrumb: 'Generación de Planillas' },
             loadComponent: () =>
               import('./features/billing/batches/batches').then(
                 (m) => m.BatchesComponent,
+              ),
+          },
+          {
+            path: 'EnvioDeFacturacion/:id',
+            data: { breadcrumb: 'Detalle de Lote' },
+            loadComponent: () =>
+              import('./features/billing/batches/pages/batch-detail/batch-detail.component').then(
+                (m) => m.BatchDetailComponent,
               ),
           },
           {
@@ -320,11 +328,19 @@ export const routes: Routes = [
           },
           {
             path: 'GeneracionPlanilla',
-            data: { breadcrumb: 'Generación de Planilla (Prefacturas)' },
+            data: { breadcrumb: 'Prefacturas' },
             loadComponent: () =>
               import('./features/billing/pre-invoices/pre-invoices').then(
                 (m) => m.PreInvoicesComponent,
               ),
+          },
+          {
+            path: 'GeneracionPlanilla/:id',
+            data: { breadcrumb: 'Detalle de Prefactura' },
+            loadComponent: () =>
+              import(
+                './features/billing/pre-invoices/pages/pre-invoice-detail/pre-invoice-detail.component'
+              ).then((m) => m.PreInvoiceDetailComponent),
           },
           {
             path: 'NotasDeCreditoDebito',
@@ -339,6 +355,14 @@ export const routes: Routes = [
             data: { breadcrumb: 'Recaudación y Pagos' },
             loadComponent: () =>
               import('./features/billing/payments/payments').then((m) => m.PaymentsComponent),
+          },
+          {
+            path: 'RecaudacionYPagos/RegistrarPago',
+            data: { breadcrumb: 'Registrar Pago' },
+            loadComponent: () =>
+              import(
+                './features/billing/payments/components/payment-form/payment-form.component'
+              ).then((m) => m.PaymentFormComponent),
           },
           {
             path: 'Descuentos',

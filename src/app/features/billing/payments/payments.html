@@ -15,7 +15,7 @@
     <button
       type="button"
       class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-4 py-2"
-      (click)="openCreateModal()"
+      (click)="openCreatePage()"
     >
       <i class="bi bi-plus-circle"></i>
       Registrar Pago
@@ -199,7 +199,7 @@
             description="No hay registros de cobros para los filtros o rango de fechas seleccionados."
             actionLabel="Registrar primer pago"
             actionIcon="bi bi-plus-lg"
-            (actionClicked)="openCreateModal()"
+            (actionClicked)="openCreatePage()"
           />
         }
 
@@ -450,10 +450,6 @@
   }
 
   <!-- MODALS -->
-  @if (isCreateModalOpen) {
-    <app-payment-form (saved)="onPaymentCreated()" (closed)="closeCreateModal()" />
-  }
-
   @if (selectedPaymentForDetail) {
     <app-payment-detail-modal [payment]="selectedPaymentForDetail" (closed)="closeDetailModal()" />
   }

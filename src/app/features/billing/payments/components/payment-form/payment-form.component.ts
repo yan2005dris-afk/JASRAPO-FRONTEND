@@ -4,7 +4,6 @@ import {
   Component,
   OnInit,
   inject,
-  output,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -46,9 +45,6 @@ export class PaymentFormComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
-
-  readonly saved = output<void>();
-  readonly closed = output<void>();
 
   // State
   isLoading = false;
@@ -348,7 +344,7 @@ export class PaymentFormComponent implements OnInit {
       next: () => {
         this.isLoading = false;
         this.toastService.show('Pago registrado exitosamente', 'success');
-        this.saved.emit();
+        this.router.navigate(['/app', 'Facturacion', 'RecaudacionYPagos']);
       },
       error: (err) => {
         this.isLoading = false;
@@ -361,10 +357,9 @@ export class PaymentFormComponent implements OnInit {
 
   requestAgreement(): void {
     this.router.navigate(['/app', 'Contratos', 'ConveniosDePago']);
-    this.closed.emit();
   }
 
   close(): void {
-    this.closed.emit();
+    this.router.navigate(['/app', 'Facturacion', 'RecaudacionYPagos']);
   }
 }

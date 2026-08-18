@@ -6,7 +6,7 @@
         <i class="bi bi-collection-fill"></i>
       </div>
       <div>
-        <h3 class="fw-bold mb-0 text-dark fs-4">Lotes de Facturación</h3>
+        <h3 class="fw-bold mb-0 text-dark fs-4">Generación de Planillas</h3>
         <p class="text-muted small mb-0">Emisión masiva de planillas por período y despacho automatizado de correos.</p>
       </div>
     </div>
@@ -70,8 +70,16 @@
           <table class="table table-hover align-middle mb-0 custom-table">
             <thead>
               <tr>
-                <th scope="col" class="ps-4">ID Lote</th>
-                <th scope="col">Período</th>
+                <th scope="col" class="ps-4" style="width: 44px">
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    [checked]="isAllSelected()"
+                    (change)="toggleSelectAll()"
+                    aria-label="Seleccionar todos los lotes"
+                  />
+                </th>
+                <th scope="col">Período / Mes</th>
                 <th scope="col">Comunidad</th>
                 <th scope="col" class="text-center">Estado</th>
                 <th scope="col" class="text-center">Planillas</th>
@@ -82,13 +90,24 @@
             </thead>
             <tbody>
               @for (batch of batches; track batch.loteId) {
-                <tr>
-                  <td class="ps-4 fw-bold text-dark" style="font-size: 0.9rem">
-                    #{{ batch.loteId }}
+                <tr [class.table-active]="isSelected(batch.loteId)">
+                  <td class="ps-4">
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      [checked]="isSelected(batch.loteId)"
+                      (change)="toggleSelectBatch(batch.loteId)"
+                      aria-label="Seleccionar lote"
+                    />
                   </td>
                   <td>
-                    <div class="fw-medium text-dark small">
-                      {{ batch.periodoRel?.nombre || 'Período #' + batch.periodoId }}
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="fw-semibold text-dark small">
+                        {{ batch.periodoRel?.nombre || 'Período #' + batch.periodoId }}
+                      </div>
+                      <span class="badge bg-primary-subtle text-primary border border-primary-subtle small px-2 py-1" style="font-size: 0.75rem">
+                        {{ getBatchMonth(batch) }}
+                      </span>
                     </div>
                   </td>
                   <td class="small text-muted">
@@ -168,14 +187,6 @@
     <app-generate-batch-modal
       (generated)="onBatchGenerated()"
       (closed)="closeGenerateModal()"
-    />
-  }
-
-  @if (selectedDetailBatch) {
-    <app-batch-detail-modal
-      [batch]="selectedDetailBatch"
-      (closed)="closeDetailModal()"
-      (sendEmailRequested)="openEmailModal($event)"
     />
   }
 

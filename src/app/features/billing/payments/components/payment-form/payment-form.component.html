@@ -1,14 +1,15 @@
-<div class="modal fade show d-block picker-modal" tabindex="-1" role="dialog" aria-modal="true">
-  <div class="modal-dialog modal-dialog-centered modal-xl">
-    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
-      <!-- Modal Header -->
-      <div class="modal-header border-bottom px-4 py-3 bg-white">
+<div class="payment-form-page">
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+      <!-- Header -->
+      <div
+        class="card-header border-bottom px-4 py-3 bg-white d-flex justify-content-between align-items-center gap-3 flex-wrap"
+      >
         <div class="d-flex align-items-center gap-3">
           <div class="header-icon-tile">
             <i class="bi bi-cash-stack"></i>
           </div>
           <div>
-            <h5 class="modal-title fw-bold text-dark mb-0 fs-5">Registrar Pago</h5>
+            <h5 class="fw-bold text-dark mb-0 fs-5">Registrar Pago</h5>
             <p class="text-muted small mb-0">
               Recaudación en ventanilla — registre el pago o abono del cliente.
             </p>
@@ -16,15 +17,17 @@
         </div>
         <button
           type="button"
-          class="btn-close shadow-none"
-          aria-label="Cerrar"
+          class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="close()"
           [disabled]="isLoading"
-        ></button>
+        >
+          <i class="bi bi-arrow-left"></i>
+          Volver
+        </button>
       </div>
 
-      <!-- Modal Body -->
-      <div class="modal-body p-4 bg-white">
+      <!-- Body -->
+      <div class="card-body p-4 bg-white">
         <div class="row g-4">
           <!-- LEFT COLUMN: Cliente + Estado de Cuenta -->
           <div class="col-lg-7">
@@ -442,9 +445,9 @@
         </div>
       </div>
 
-      <!-- Modal Footer -->
+      <!-- Footer -->
       <div
-        class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between align-items-center flex-wrap gap-2"
+        class="card-footer border-top px-4 py-3 bg-white d-flex justify-content-between align-items-center flex-wrap gap-2"
       >
         <button
           type="button"
@@ -486,5 +489,3 @@
       </div>
     </div>
   </div>
-</div>
-<div class="modal-backdrop fade show"></div>

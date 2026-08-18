@@ -33,7 +33,7 @@
 
         <div class="row g-3 mb-4">
           <!-- Período -->
-          <div class="col-md-6">
+          <div class="col-md-4">
             <label for="selectPeriodoLote" class="form-label fw-semibold text-dark small mb-1">
               Período <span class="text-danger">*</span>
             </label>
@@ -53,8 +53,26 @@
             </select>
           </div>
 
+          <!-- Mes a Facturar -->
+          <div class="col-md-4">
+            <label for="selectMesLote" class="form-label fw-semibold text-dark small mb-1">
+              Mes a Facturar <span class="text-danger">*</span>
+            </label>
+            <select
+              id="selectMesLote"
+              class="form-select shadow-none"
+              [ngModel]="mes()"
+              (ngModelChange)="onMesChange($event)"
+              [disabled]="isLoading()"
+            >
+              @for (m of meses; track m.id) {
+                <option [ngValue]="m.id">{{ m.nombre }}</option>
+              }
+            </select>
+          </div>
+
           <!-- Comunidad -->
-          <div class="col-md-6">
+          <div class="col-md-4">
             <label for="selectComunidadLote" class="form-label fw-semibold text-dark small mb-1">
               Comunidad (Opcional)
             </label>

@@ -1,0 +1,389 @@
+<div class="batch-detail-page container-fluid px-4 py-4">
+  <!-- Back Button & Breadcrumbs -->
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a
+        routerLink="/app/Facturacion/EnvioDeFacturacion"
+        class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+      >
+        <i class="bi bi-arrow-left"></i>
+        <span>Volver a Lotes</span>
+      </a>
+      <span class="text-muted">/</span>
+      <span class="text-dark fw-semibold small">Detalle del Lote #{{ loteId }}</span>
+    </div>
+
+    <!-- Header Actions -->
+    @if (batch) {
+      <div class="d-flex align-items-center gap-2">
+        <button
+          type="button"
+          class="btn btn-sm btn-primary d-flex align-items-center gap-1 shadow-sm"
+          (click)="openSendEmailModal()"
+        >
+          <i class="bi bi-send-fill"></i>
+          Envío Masivo de Planillas
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (isLoading) {
+    <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4">
+      <div class="spinner-border text-primary mx-auto mb-3" role="status"></div>
+      <p class="text-muted small mb-0">Cargando detalles del lote...</p>
+    </div>
+  } @else if (batch) {
+    <!-- Main Info Header Card -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+      <div class="card-header bg-white border-bottom p-4">
+        <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <div class="batch-header-icon rounded-3 bg-primary bg-opacity-10 text-primary p-3 d-flex align-items-center justify-content-center">
+              <i class="bi bi-collection fs-3"></i>
+            </div>
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                <h4 class="fw-bold mb-0 text-dark">Lote #{{ batch.loteId }}</h4>
+                <app-status-badge [status]="batch.estado" />
+              </div>
+              <p class="text-muted small mb-0">
+                {{ batch.periodoRel?.nombre || 'Período #' + batch.periodoId }}
+                @if (batch.mes) {
+                  · Mes {{ batch.mes }}
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="card-body bg-light p-4 border-bottom">
+        <div class="row g-3">
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
+              <div class="text-muted small d-flex align-items-center gap-1 mb-1">
+                <i class="bi bi-cash-stack text-primary"></i>
+                Total Recaudación Estimada
+              </div>
+              <div class="fw-semibold text-dark tabular-nums">
+                ${{ batch.totalMonto | number: '1.2-2' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
+              <div class="text-muted small d-flex align-items-center gap-1 mb-1">
+                <i class="bi bi-receipt text-info"></i>
+                Planillas / Emisiones
+              </div>
+              <div class="fw-semibold text-dark tabular-nums">
+                {{ batch.totalEmisiones }}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
+              <div class="text-muted small d-flex align-items-center gap-1 mb-1">
+                <i class="bi bi-geo-alt text-warning"></i>
+                Comunidad
+              </div>
+              <div class="fw-semibold text-dark">
+                {{ batch.comunidad?.nombre || 'Todas las comunidades' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
+              <div class="text-muted small d-flex align-items-center gap-1 mb-1">
+                <i class="bi bi-person-badge text-success"></i>
+                Generado por
+              </div>
+              <div class="fw-semibold text-dark">
+                {{ batch.creadoPor || 'Sistema' }}
+              </div>
+              <div class="text-muted" style="font-size: 0.75rem">
+                {{ batch.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ruta Vinculada Card -->
+      @if (batch.rutaId) {
+        <div class="card-body bg-white p-4 border-bottom">
+          <div class="p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between gap-3 flex-wrap">
+            <div>
+              <div class="text-muted small d-flex align-items-center gap-1 mb-1">
+                <i class="bi bi-signpost-2 text-primary"></i>
+                Ruta de Trabajo Vinculada
+              </div>
+              <div class="fw-semibold text-dark">
+                {{ batch.ruta?.nombre || 'Ruta #' + batch.rutaId }}
+              </div>
+              <div class="text-muted" style="font-size: 0.75rem">
+                Esta planilla se generó a partir de una ruta de toma de lectura completada.
+              </div>
+            </div>
+            <button
+              type="button"
+              class="btn btn-outline-primary btn-sm fw-medium"
+              (click)="openRouteDetail()"
+            >
+              <i class="bi bi-box-arrow-up-right me-1"></i>
+              Ver ruta
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Prefacturas Table Card (Full Width) -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+      <!-- Toolbar -->
+      <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+          <div>
+            <h5 class="fw-bold text-dark mb-0">Planillas del Lote</h5>
+            <p class="text-muted small mb-0">
+              {{ prefacturas.length }} planillas generadas
+              @if (generatedCount > 0) {
+                · <span class="text-info fw-semibold">{{ generatedCount }} por revisar</span>
+              }
+              @if (pendingReviewCount > 0) {
+                · <span class="text-warning fw-semibold">{{ pendingReviewCount }} por aprobar</span>
+              }
+            </p>
+          </div>
+
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <!-- Search Input -->
+            <div class="input-group search-group" style="min-width: 260px">
+              <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+                <i class="bi bi-search"></i>
+              </span>
+              <input
+                type="text"
+                class="form-control border-start-0 ps-0 shadow-none"
+                placeholder="Buscar prefactura, contrato o cliente..."
+                [(ngModel)]="searchQuery"
+                (keyup.enter)="onSearch()"
+              />
+              @if (searchQuery) {
+                <button
+                  class="btn btn-link text-muted pe-3 ps-1"
+                  type="button"
+                  (click)="clearSearch()"
+                >
+                  <i class="bi bi-x-circle-fill"></i>
+                </button>
+              }
+            </div>
+
+            <!-- Pasar seleccionadas a revisión -->
+            @if (selectedGeneratedCount > 0) {
+              <button
+                type="button"
+                class="btn btn-outline-info d-flex align-items-center gap-1 shadow-sm px-3"
+                (click)="moveSelectedToReview()"
+                [disabled]="isBulkApproving"
+              >
+                @if (isBulkApproving) {
+                  <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                } @else {
+                  <i class="bi bi-send fs-5"></i>
+                }
+                Pasar a revisión ({{ selectedGeneratedCount }})
+              </button>
+            }
+
+            <!-- Aprobar seleccionadas (solo EN_REVISION) -->
+            @if (selectedPendingCount > 0) {
+              <button
+                type="button"
+                class="btn btn-outline-success d-flex align-items-center gap-1 shadow-sm px-3"
+                (click)="approveSelected()"
+                [disabled]="isBulkApproving"
+              >
+                @if (isBulkApproving) {
+                  <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                } @else {
+                  <i class="bi bi-check2-square fs-5"></i>
+                }
+                Aprobar Seleccionadas ({{ selectedPendingCount }})
+              </button>
+            }
+
+            <!-- Pasar todas a revisión -->
+            @if (generatedCount > 0) {
+              <button
+                type="button"
+                class="btn btn-outline-info d-flex align-items-center gap-1 shadow-sm px-3"
+                (click)="moveAllToReview()"
+                [disabled]="isBulkApproving"
+              >
+                @if (isBulkApproving) {
+                  <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                } @else {
+                  <i class="bi bi-send-fill fs-5"></i>
+                }
+                Pasar Todas a Revisión ({{ generatedCount }})
+              </button>
+            }
+
+            <!-- Aprobar todas (solo EN_REVISION) -->
+            @if (pendingReviewCount > 0) {
+              <button
+                type="button"
+                class="btn btn-outline-success d-flex align-items-center gap-1 shadow-sm px-3"
+                (click)="approveAllPending()"
+                [disabled]="isBulkApproving"
+              >
+                @if (isBulkApproving) {
+                  <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                } @else {
+                  <i class="bi bi-check-all fs-5"></i>
+                }
+                Aprobar Todas ({{ pendingReviewCount }})
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Table Body -->
+      <div class="pt-1">
+        @if (isLoadingPrefacturas) {
+          <div class="p-3">
+            <app-table-skeleton [rows]="5" [cols]="6" />
+          </div>
+        } @else if (filteredPrefacturas.length === 0) {
+          <app-empty-state
+            icon="bi bi-collection"
+            title="No se encontraron planillas"
+            description="No hay prefacturas para este lote con los filtros aplicados."
+          />
+        } @else {
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 custom-batch-table">
+              <thead class="table-light">
+                <tr>
+                  <th class="ps-4 py-3 text-center" style="width: 48px">
+                    <input
+                      type="checkbox"
+                      class="form-check-input border-secondary cursor-pointer"
+                      [checked]="isAllSelected"
+                      (change)="toggleSelectAll()"
+                      title="Seleccionar todo"
+                    />
+                  </th>
+                  <th class="py-3 fw-semibold text-muted">Cliente / Contrato</th>
+                  <th class="py-3 fw-semibold text-muted text-end">Total</th>
+                  <th class="py-3 fw-semibold text-muted text-center">Estado</th>
+                  <th class="py-3 fw-semibold text-muted text-end pe-4">Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (pf of filteredPrefacturas; track pf.prefacturaId) {
+                  <tr [class.table-active]="selectedIds.has(pf.prefacturaId)">
+                    <td class="ps-4 text-center">
+                      <input
+                        type="checkbox"
+                        class="form-check-input border-secondary cursor-pointer"
+                        [checked]="selectedIds.has(pf.prefacturaId)"
+                        (change)="toggleSelect(pf)"
+                        title="Seleccionar prefactura"
+                      />
+                    </td>
+                    <td>
+                      <div class="fw-medium text-dark">{{ pf.clienteNombre || 'Contrato #' + pf.contratoId }}</div>
+                      <div class="text-muted" style="font-size: 0.78rem">
+                        <i class="bi bi-person-vcard me-1"></i>
+                        {{ pf.clienteIdentificacion || 'Cédula/RUC no registrada' }}
+                        @if (pf.clienteEmail) {
+                          · {{ pf.clienteEmail }}
+                        }
+                      </div>
+                    </td>
+                    <td class="text-end fw-bold text-dark font-monospace tabular-nums">
+                      ${{ pf.totalPagar | number: '1.2-2' }}
+                    </td>
+                    <td class="text-center text-nowrap">
+                      <app-status-badge [status]="pf.estado" />
+                    </td>
+                    <td class="text-end pe-4 text-nowrap">
+                      <div class="dropdown" style="display: inline-block">
+                        @if (processingPreInvoiceId === pf.prefacturaId) {
+                          <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                        } @else {
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-icon btn-light border rounded-circle d-inline-flex align-items-center justify-content-center"
+                            style="width: 34px; height: 34px"
+                            (click)="toggleDropdown(pf.prefacturaId)"
+                            title="Acciones"
+                          >
+                            <i class="bi bi-three-dots-vertical"></i>
+                          </button>
+                          @if (openDropdownId === pf.prefacturaId) {
+                            <div
+                              class="dropdown-menu dropdown-menu-end shadow-sm show"
+                              style="min-width: 180px"
+                            >
+                              <button
+                                type="button"
+                                class="dropdown-item"
+                                (click)="openPreInvoiceDetail(pf)"
+                              >
+                                <i class="bi bi-receipt me-2"></i>
+                                Ver factura
+                              </button>
+                              @if (pf.estado === 'GENERADA') {
+                                <button
+                                  type="button"
+                                  class="dropdown-item text-info"
+                                  (click)="moveToReview(pf)"
+                                >
+                                  <i class="bi bi-send me-2"></i>
+                                  Pasar a revisión
+                                </button>
+                              }
+                              @if (pf.estado === 'EN_REVISION') {
+                                <button
+                                  type="button"
+                                  class="dropdown-item text-success"
+                                  (click)="approvePreInvoice(pf)"
+                                >
+                                  <i class="bi bi-check2-circle me-2"></i>
+                                  Aprobar
+                                </button>
+                              }
+                            </div>
+                          }
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- MODALS -->
+  @if (isSendEmailModalOpen && batch) {
+    <app-batch-send-email-modal
+      [batch]="batch"
+      (sent)="onEmailsSent()"
+      (closed)="closeSendEmailModal()"
+    />
+  }
+</div>

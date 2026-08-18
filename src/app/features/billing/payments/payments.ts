@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { PaymentsService } from './services/payments.service';
 import {
   EstadoPago,
@@ -20,7 +21,6 @@ import {
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
-import { PaymentFormComponent } from './components/payment-form/payment-form.component';
 import { PaymentDetailModalComponent } from './components/payment-detail-modal/payment-detail-modal.component';
 import { AnnulPaymentModalComponent } from './components/annul-payment-modal/annul-payment-modal.component';
 
@@ -36,7 +36,6 @@ type DatePreset = 'today' | 'week' | 'month' | 'custom';
     StatusBadgeComponent,
     EmptyStateComponent,
     PaginationComponent,
-    PaymentFormComponent,
     PaymentDetailModalComponent,
     AnnulPaymentModalComponent,
   ],
@@ -50,6 +49,7 @@ type DatePreset = 'today' | 'week' | 'month' | 'custom';
 export class PaymentsComponent implements OnInit {
   private readonly paymentsService = inject(PaymentsService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly router = inject(Router);
 
   // Tab State
   activeTab: ActiveTab = 'list';
@@ -84,7 +84,6 @@ export class PaymentsComponent implements OnInit {
   isLoadingDailyCash = false;
 
   // Modals
-  isCreateModalOpen = false;
   selectedPaymentForDetail: IPayment | null = null;
   selectedPaymentForAnnul: IPayment | null = null;
 
@@ -282,22 +281,8 @@ export class PaymentsComponent implements OnInit {
   }
 
   // Modals Actions
-  openCreateModal(): void {
-    this.isCreateModalOpen = true;
-    this.cdr.markForCheck();
-  }
-
-  closeCreateModal(): void {
-    this.isCreateModalOpen = false;
-    this.cdr.markForCheck();
-  }
-
-  onPaymentCreated(): void {
-    this.isCreateModalOpen = false;
-    this.loadPayments();
-    if (this.activeTab === 'dailyCash') {
-      this.loadDailyCash();
-    }
+  openCreatePage(): void {
+    this.router.navigate(['/app', 'Facturacion', 'RecaudacionYPagos', 'RegistrarPago']);
   }
 
   openDetailModal(payment: IPayment): void {

@@ -139,7 +139,7 @@ export class RubroFormModalComponent implements OnInit {
         tipoRubro: this.tipoRubro,
         tarifaImpuestoId: Number(this.tarifaImpuestoId),
         activo: this.activo,
-        esAutomatico: this.esAutomatico,
+        esAutomatico: false,
       };
 
       this.rubrosService.createRubro(createDto).subscribe({

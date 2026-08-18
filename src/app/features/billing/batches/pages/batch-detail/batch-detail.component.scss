@@ -1,0 +1,30 @@
+.batch-detail-page {
+  .batch-header-icon {
+    width: 54px;
+    height: 54px;
+  }
+
+  .custom-batch-table {
+    th {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      font-size: 0.875rem;
+    }
+  }
+
+  .search-group {
+    input {
+      font-size: 0.875rem;
+    }
+  }
+
+  .badge-soft-primary {
+    background-color: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+    font-weight: 500;
+  }
+}

@@ -12,6 +12,11 @@ export interface IBatchPeriod {
   fechaFin?: string | Date | null;
 }
 
+export interface IBatchRuta {
+  rutaId: number;
+  nombre?: string | null;
+}
+
 export interface IBatch {
   loteId: number;
   comunidadId: number;
@@ -21,6 +26,9 @@ export interface IBatch {
   notas?: string | null;
   creadoPor?: string | null;
   totalEmisiones: number;
+  mes?: number;
+  rutaId?: number | null;
+  ruta?: IBatchRuta | null;
   createdAt: string | Date;
   updatedAt: string | Date;
   comunidad?: IBatchCommunity | null;
@@ -30,6 +38,8 @@ export interface IBatch {
 
 export interface IGenerateBatchDto {
   periodoId: number;
+  rutaId: number;
+  mes?: number;
   comunidadId?: number;
   creadoPor?: string;
 }

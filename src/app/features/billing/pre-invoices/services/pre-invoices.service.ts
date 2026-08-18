@@ -43,6 +43,12 @@ export class PreInvoicesService {
     if (params.identificacion) {
       httpParams = httpParams.set('identificacion', params.identificacion);
     }
+    if (params.fechaDesde) {
+      httpParams = httpParams.set('fechaDesde', params.fechaDesde);
+    }
+    if (params.fechaHasta) {
+      httpParams = httpParams.set('fechaHasta', params.fechaHasta);
+    }
 
     return this.http.get<IPaginatedResult<IPreInvoice>>(this.endpoint, {
       params: httpParams,

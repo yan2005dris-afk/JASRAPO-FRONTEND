@@ -63,6 +63,8 @@ export interface IFindAllPreInvoicesParams {
   estado?: string;
   contratoId?: string;
   identificacion?: string;
+  fechaDesde?: string;
+  fechaHasta?: string;
 }
 
 export interface IUpdatePreInvoiceStateDto {

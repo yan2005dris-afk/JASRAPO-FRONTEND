@@ -40,6 +40,9 @@ export class RubrosService {
     if (params?.activo !== undefined) {
       httpParams = httpParams.set('activo', String(params.activo));
     }
+    if (params?.esAutomatico !== undefined) {
+      httpParams = httpParams.set('esAutomatico', String(params.esAutomatico));
+    }
 
     return this.http.get<IPaginatedResult<IRubro>>(this.endpoint, {
       params: httpParams,

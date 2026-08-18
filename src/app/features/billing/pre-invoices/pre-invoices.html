@@ -6,7 +6,7 @@
         <i class="bi bi-receipt-cutoff"></i>
       </div>
       <div>
-        <h3 class="fw-bold mb-0 text-dark fs-4">Bandeja de Prefacturas</h3>
+        <h3 class="fw-bold mb-0 text-dark fs-4">Prefacturas</h3>
         <p class="text-muted small mb-0">Revisá, aprobá, rechazá y gestioná las prefacturas emitidas por lote o individuales.</p>
       </div>
     </div>
@@ -17,18 +17,18 @@
     <button
       type="button"
       class="btn btn-sm btn-filter"
-      [class.active]="activeStatusFilter === 'EN_REVISION'"
-      (click)="setStatusFilter('EN_REVISION')"
+      [class.active]="activeStatusFilter === ''"
+      (click)="setStatusFilter('')"
     >
-      <i class="bi bi-hourglass-split me-1"></i> En Revisión (Pendientes)
+      <i class="bi bi-collection me-1"></i> Todas
     </button>
     <button
       type="button"
       class="btn btn-sm btn-filter"
-      [class.active]="activeStatusFilter === ''"
-      (click)="setStatusFilter('')"
+      [class.active]="activeStatusFilter === 'EN_REVISION'"
+      (click)="setStatusFilter('EN_REVISION')"
     >
-      Todas
+      <i class="bi bi-hourglass-split me-1"></i> En Revisión (Pendientes)
     </button>
     <button
       type="button"
@@ -68,65 +68,110 @@
   <div class="card border-0 shadow-sm rounded-3 mb-4">
     <!-- Toolbar -->
     <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
-      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-        <div class="d-flex align-items-center gap-2 flex-wrap flex-grow-1">
-          <!-- Search Identificacion -->
-          <div class="input-group search-group" style="max-width: 220px">
-            <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
-              <i class="bi bi-search"></i>
-            </span>
-            <input
-              type="text"
-              class="form-control border-start-0 ps-0 shadow-none"
-              placeholder="Cédula/RUC..."
-              [(ngModel)]="filterIdentificacion"
-              (keyup.enter)="loadPreInvoices()"
-            />
+      <div class="d-flex align-items-start justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-start gap-2 flex-wrap flex-grow-1">
+          <div class="d-flex flex-column align-items-start" style="max-width: 220px">
+            <!-- Search Identificacion -->
+            <div class="input-group search-group w-100">
+              <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+                <i class="bi bi-search"></i>
+              </span>
+              <input
+                type="text"
+                class="form-control border-start-0 ps-0 shadow-none"
+                placeholder="Cédula/RUC..."
+                [(ngModel)]="filterIdentificacion"
+                (keyup.enter)="loadPreInvoices()"
+              />
+            </div>
+
+            <!-- Ver más filtros (enlace) -->
+            <button
+              type="button"
+              class="btn btn-link btn-sm p-0 mt-1 text-primary text-decoration-none d-inline-flex align-items-center gap-1"
+              (click)="showMoreFilters = !showMoreFilters"
+              title="Mostrar u ocultar filtros adicionales"
+            >
+              @if (showMoreFilters) {
+                <i class="bi bi-chevron-up"></i>
+              } @else {
+                <i class="bi bi-chevron-down"></i>
+              }
+              Ver más filtros
+            </button>
           </div>
 
           <!-- Filter Contrato -->
-          <div class="input-group search-group" style="max-width: 170px">
+          <div class="input-group search-group" style="max-width: 300px">
             <span class="input-group-text bg-white border-end-0 text-muted ps-2 pe-1">
               <i class="bi bi-file-text"></i>
             </span>
             <input
               type="text"
               class="form-control border-start-0 ps-0 shadow-none"
-              placeholder="Contrato ID..."
-              [(ngModel)]="filterContratoId"
-              (keyup.enter)="loadPreInvoices()"
+              placeholder="Buscar contrato..."
+              [value]="selectedContractNumber"
+              readonly
+              (click)="abrirBuscadorContratos()"
             />
+            <button
+              type="button"
+              class="btn btn-outline-primary shadow-none"
+              title="Buscar contrato"
+              (click)="abrirBuscadorContratos()"
+            >
+              <i class="bi bi-search"></i>
+            </button>
           </div>
 
+          @if (selectedContractName) {
+            <span class="badge badge-soft-primary d-flex align-items-center gap-1 mt-2">
+              <i class="bi bi-person-check-fill"></i>
+              {{ selectedContractName }}
+            </span>
+          }
+
           <!-- Filter Lote ID -->
-          <div class="input-group search-group" style="max-width: 150px">
+          <div class="input-group search-group" style="max-width: 210px">
             <span class="input-group-text bg-white border-end-0 text-muted ps-2 pe-1">
               <i class="bi bi-collection"></i>
             </span>
-            <input
-              type="number"
-              class="form-control border-start-0 ps-0 shadow-none"
-              placeholder="Lote ID..."
+            <select
+              class="form-select form-select-sm border-start-0 ps-0 shadow-none"
               [(ngModel)]="filterLoteId"
-              (keyup.enter)="loadPreInvoices()"
-            />
+              (change)="loadPreInvoices()"
+            >
+              <option [ngValue]="null">Lote...</option>
+              @for (l of lotesCatalog; track l.loteId) {
+                <option [ngValue]="l.loteId">
+                  {{ loteLabel(l) }}
+                </option>
+              }
+            </select>
           </div>
 
           <!-- Filter Periodo ID -->
-          <div class="input-group search-group" style="max-width: 160px">
+          <div class="input-group search-group" style="max-width: 200px">
             <span class="input-group-text bg-white border-end-0 text-muted ps-2 pe-1">
               <i class="bi bi-calendar3"></i>
             </span>
-            <input
-              type="number"
-              class="form-control border-start-0 ps-0 shadow-none"
-              placeholder="Período ID..."
+            <select
+              class="form-select form-select-sm border-start-0 ps-0 shadow-none"
               [(ngModel)]="filterPeriodoId"
-              (keyup.enter)="loadPreInvoices()"
-            />
+              (change)="loadPreInvoices()"
+            >
+              <option [ngValue]="null">Período...</option>
+              @for (p of periodosCatalog; track p.periodoId) {
+                <option [ngValue]="p.periodoId">
+                  {{ periodoLabel(p) }}
+                </option>
+              }
+            </select>
           </div>
+        </div>
 
-          <!-- Buscar -->
+        <!-- Botones Buscar / Limpiar (derecha) -->
+        <div class="d-flex align-items-start gap-2 pt-0">
           <button
             class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
             (click)="loadPreInvoices()"
@@ -141,7 +186,6 @@
             Buscar
           </button>
 
-          <!-- Limpiar -->
           <button
             class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
             (click)="limpiarFiltros()"
@@ -152,6 +196,40 @@
           </button>
         </div>
       </div>
+
+      <!-- Más filtros (colapsable) -->
+      @if (showMoreFilters) {
+        <div class="d-flex align-items-center gap-2 flex-wrap mt-3 pt-3 border-top">
+          <label class="form-label fw-medium text-muted mb-0 me-1" style="font-size: 0.85rem">
+            <i class="bi bi-calendar-range me-1"></i>Rango de fechas
+          </label>
+
+          <app-date-picker
+            [value]="filterFechaDesde"
+            (valueChange)="filterFechaDesde = $event"
+            placeholder="Desde"
+            inputId="prefactura-fecha-desde"
+          />
+
+          <span class="text-muted small">hasta</span>
+
+          <app-date-picker
+            [value]="filterFechaHasta"
+            (valueChange)="filterFechaHasta = $event"
+            placeholder="Hasta"
+            inputId="prefactura-fecha-hasta"
+          />
+
+          <button
+            type="button"
+            class="btn btn-sm btn-primary d-flex align-items-center gap-1"
+            (click)="loadPreInvoices()"
+          >
+            <i class="bi bi-funnel"></i>
+            Aplicar
+          </button>
+        </div>
+      }
     </div>
 
     <!-- Table -->
@@ -225,8 +303,18 @@
                   </td>
                   <td class="text-center pe-4">
                     <div class="d-flex align-items-center justify-content-center gap-1">
-                      <!-- Quick Approve/Reject for reviewable states -->
-                      @if (item.estado === 'EN_REVISION' || item.estado === 'GENERADA') {
+                      <!-- Quick actions by state -->
+                      @if (item.estado === 'GENERADA') {
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-icon btn-review"
+                          title="Pasar a revisión"
+                          (click)="moverARevision(item)"
+                        >
+                          <i class="bi bi-send"></i>
+                        </button>
+                      }
+                      @if (item.estado === 'EN_REVISION') {
                         <button
                           type="button"
                           class="btn btn-sm btn-icon btn-approve"
@@ -313,17 +401,6 @@
   </div>
 
   <!-- MODALS -->
-  @if (selectedDetailPreInvoice) {
-    <app-pre-invoice-detail-modal
-      [preInvoice]="selectedDetailPreInvoice"
-      (closed)="closeDetailModal()"
-      (approveRequested)="aprobarPreInvoice($event)"
-      (rejectRequested)="openRejectModal($event)"
-      (pdfRequested)="openPdfModal($event)"
-      (emailRequested)="openEmailModal($event)"
-    />
-  }
-
   @if (selectedEmailPreInvoice) {
     <app-send-email-modal
       [preInvoice]="selectedEmailPreInvoice"
@@ -347,4 +424,10 @@
       (closed)="closePdfModal()"
     />
   }
+
+  <app-contract-picker
+    [open]="isContractPickerOpen"
+    (contractSelected)="onContractSelected($event)"
+    (closed)="onContractPickerClosed()"
+  />
 </div>

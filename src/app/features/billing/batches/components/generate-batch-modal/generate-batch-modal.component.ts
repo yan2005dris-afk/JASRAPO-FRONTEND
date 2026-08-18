@@ -39,12 +39,27 @@ export class GenerateBatchModalComponent implements OnInit {
 
   // State
   readonly periodoId = signal<number | null>(null);
+  readonly mes = signal<number>(new Date().getMonth() + 1);
   readonly comunidadId = signal<number | null>(null);
   readonly selectedRouteId = signal<string | number | null>(null);
   readonly isLoading = signal(false);
   readonly isLoadingRoutes = signal(false);
 
   // Catalogs
+  readonly meses = [
+    { id: 1, nombre: 'Enero' },
+    { id: 2, nombre: 'Febrero' },
+    { id: 3, nombre: 'Marzo' },
+    { id: 4, nombre: 'Abril' },
+    { id: 5, nombre: 'Mayo' },
+    { id: 6, nombre: 'Junio' },
+    { id: 7, nombre: 'Julio' },
+    { id: 8, nombre: 'Agosto' },
+    { id: 9, nombre: 'Septiembre' },
+    { id: 10, nombre: 'Octubre' },
+    { id: 11, nombre: 'Noviembre' },
+    { id: 12, nombre: 'Diciembre' },
+  ];
   readonly comunidades = signal<Comunidad[]>([]);
   readonly periodos = signal<{ periodoId: number; nombre?: string; estado: string }[]>([]);
   readonly routes = signal<IReadingRoute[]>([]);
@@ -60,7 +75,14 @@ export class GenerateBatchModalComponent implements OnInit {
   });
 
   readonly isFormValid = computed(() => {
-    return this.periodoId() !== null && !this.isLoadingRoutes();
+    const r = this.selectedRoute();
+    return (
+      this.periodoId() !== null &&
+      !!r &&
+      r.estado === 'COMPLETADA' &&
+      r.tipoRuta === 'TOMA_LECTURA' &&
+      !this.isLoadingRoutes()
+    );
   });
 
   selectRoute(r: IReadingRoute): void {
@@ -140,12 +162,28 @@ export class GenerateBatchModalComponent implements OnInit {
       });
   }
 
+  onMesChange(val: number): void {
+    this.mes.set(Number(val));
+    this.onFiltersChanged();
+  }
+
   submitGenerate(): void {
     const pId = this.periodoId();
-    if (!pId || this.isLoading()) return;
+    const ruta = this.selectedRoute();
+    if (!pId || !ruta || this.isLoading()) return;
+
+    if (ruta.estado !== 'COMPLETADA' || ruta.tipoRuta !== 'TOMA_LECTURA') {
+      this.toastService.show(
+        'Para generar el lote seleccione una ruta de trabajo de TOMA_LECTURA en estado COMPLETADA.',
+        'error',
+      );
+      return;
+    }
 
     const dto: IGenerateBatchDto = {
       periodoId: Number(pId),
+      rutaId: Number(ruta.rutaId),
+      mes: Number(this.mes()),
     };
 
     const cId = this.comunidadId();
