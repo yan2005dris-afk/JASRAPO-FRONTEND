@@ -1,4 +1,4 @@
-@if (breadcrumbService.breadcrumbs().length > 1) {
+@if (breadcrumbService.breadcrumbs().length > 0) {
   <nav aria-label="Navegación de migas de pan" class="pb-3">
     <ol class="breadcrumb mb-0">
       <li class="breadcrumb-item">
@@ -6,11 +6,17 @@
           <i class="bi bi-house-door"></i>
         </a>
       </li>
-      <li class="breadcrumb-item active" aria-current="page">
-        <span class="fw-semibold">{{
-          breadcrumbService.breadcrumbs()[breadcrumbService.breadcrumbs().length - 1].label
-        }}</span>
-      </li>
+      @for (crumb of breadcrumbService.breadcrumbs(); track crumb.url; let isLast = $last) {
+        @if (isLast) {
+          <li class="breadcrumb-item active" aria-current="page">
+            <span class="fw-semibold">{{ crumb.label }}</span>
+          </li>
+        } @else {
+          <li class="breadcrumb-item">
+            <a [routerLink]="crumb.url">{{ crumb.label }}</a>
+          </li>
+        }
+      }
     </ol>
   </nav>
 }

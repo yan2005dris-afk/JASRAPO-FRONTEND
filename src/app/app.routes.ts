@@ -54,6 +54,7 @@ export const routes: Routes = [
         children: [
           {
             path: 'users',
+            data: { breadcrumb: 'Usuarios' },
             children: [
               {
                 path: '',
@@ -65,6 +66,7 @@ export const routes: Routes = [
               },
               {
                 path: 'new',
+                data: { breadcrumb: 'Nuevo Usuario' },
                 loadComponent: () =>
                   import('./features/users/user-form/user-form.component').then(
                     (m) => m.UserFormComponent,
@@ -72,6 +74,7 @@ export const routes: Routes = [
               },
               {
                 path: ':id/edit',
+                data: { breadcrumb: 'Editar Usuario' },
                 loadComponent: () =>
                   import('./features/users/user-form/user-form.component').then(
                     (m) => m.UserFormComponent,
@@ -360,6 +363,22 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/billing/payments/components/payment-form/payment-form.component').then(
                 (m) => m.PaymentFormComponent,
+              ),
+          },
+          {
+            path: 'RecaudacionYPagos/:id',
+            data: { breadcrumb: 'Detalle de Pago' },
+            loadComponent: () =>
+              import('./features/billing/payments/pages/payment-detail/payment-detail.component').then(
+                (m) => m.PaymentDetailComponent,
+              ),
+          },
+          {
+            path: 'CuadroDeCaja',
+            data: { breadcrumb: 'Cuadro y Cierre de Caja' },
+            loadComponent: () =>
+              import('./features/billing/cash-sessions/pages/cash-session-detail/cash-session-detail.component').then(
+                (m) => m.CashSessionDetailComponent,
               ),
           },
           {
