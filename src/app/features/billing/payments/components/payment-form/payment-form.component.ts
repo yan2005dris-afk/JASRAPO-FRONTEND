@@ -8,9 +8,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
 import { PaymentsService } from '../../services/payments.service';
-import { ClientsService } from '../../../../contracts/clients/services/clients.service';
 import { IClient } from '../../../../contracts/clients/interfaces/iclients.interface';
 import { PreInvoicesService } from '../../../pre-invoices/services/pre-invoices.service';
 import { IPreInvoice } from '../../../pre-invoices/interfaces/ipre-invoice.interface';
@@ -25,6 +23,9 @@ import {
   TipoDetallePago,
 } from '../../interfaces/ipayments.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { ContractPickerComponent } from '../../../../../shared/components/contract-picker/contract-picker.component';
+import { CobroPuntualModalComponent } from '../cobro-puntual-modal/cobro-puntual-modal.component';
+import type { IContract } from '../../../../contracts/service-contracts/interfaces/icontract.interface';
 
 const NON_COLLECTABLE_STATES = ['PAGADA', 'ANULADA', 'RECHAZADA'];
 
@@ -33,29 +34,33 @@ type MetodoPagoUI = 'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA';
 @Component({
   selector: 'app-payment-form',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ContractPickerComponent, CobroPuntualModalComponent],
   templateUrl: './payment-form.component.html',
   styleUrl: './payment-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PaymentFormComponent implements OnInit {
   private readonly paymentsService = inject(PaymentsService);
-  private readonly clientsService = inject(ClientsService);
   private readonly preInvoicesService = inject(PreInvoicesService);
   private readonly toastService = inject(ToastService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  // State
+  // Contract picker modal
+  isPickerOpen = false;
   isLoading = false;
-  isSearchingClient = false;
-  clientSearchResults: IClient[] = [];
+
+  // Mode
+  pagoMode: 'DEUDA' | 'PUNTUAL' = 'DEUDA';
+  isCobroPuntualOpen = false;
+
+  // Selected contract and its embedded client
+  selectedContract: IContract | null = null;
   selectedClient: IClient | null = null;
-  clientSearchQuery = '';
-  private searchSubject = new Subject<string>();
 
   // Pending account statement
   pendingPreInvoices: IPreInvoice[] = [];
+  selectedPreInvoiceIds = new Set<number>();
   isLoadingPreInvoices = false;
 
   // Billing data suggestion
@@ -84,8 +89,8 @@ export class PaymentFormComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCatalogs();
-    this.setupClientSearch();
   }
+
 
   private loadCatalogs(): void {
     this.paymentsService.getBanks().subscribe({
@@ -109,49 +114,18 @@ export class PaymentFormComponent implements OnInit {
     });
   }
 
-  private setupClientSearch(): void {
-    this.searchSubject.pipe(debounceTime(300), distinctUntilChanged()).subscribe((term) => {
-      if (!term || term.trim().length < 2) {
-        this.clientSearchResults = [];
-        this.isSearchingClient = false;
-        this.cdr.markForCheck();
-        return;
-      }
-
-      this.isSearchingClient = true;
-      this.cdr.markForCheck();
-
-      const isNumeric = /^\d+$/.test(term.trim());
-      const params = isNumeric
-        ? { identificacion: term.trim(), limit: 6 }
-        : { nombreCompleto: term.trim(), limit: 6 };
-
-      this.clientsService.searchClients(params).subscribe({
-        next: (res) => {
-          this.clientSearchResults = res.data;
-          this.isSearchingClient = false;
-          this.cdr.markForCheck();
-        },
-        error: (err) => {
-          console.error('Error searching clients', err);
-          this.clientSearchResults = [];
-          this.isSearchingClient = false;
-          this.cdr.markForCheck();
-        },
-      });
-    });
+  openPicker(): void {
+    this.isPickerOpen = true;
+    this.cdr.markForCheck();
   }
 
-  onClientSearchInput(term: string): void {
-    this.searchSubject.next(term);
-  }
-
-  selectClient(client: IClient): void {
+  onContractSelected(contract: IContract): void {
+    this.isPickerOpen = false;
+    this.selectedContract = contract;
+    const client = contract.cliente as IClient;
     this.selectedClient = client;
-    this.clientSearchQuery = this.getClientDisplayName(client);
-    this.clientSearchResults = [];
     this.usarConsumidorFinal = false;
-    this.loadPendingPreInvoices(client);
+    this.loadPendingPreInvoices();
 
     const clientId = client.clienteId ?? client.id;
     if (clientId) {
@@ -167,30 +141,35 @@ export class PaymentFormComponent implements OnInit {
         },
       });
     }
-
     this.cdr.markForCheck();
   }
 
-  clearSelectedClient(): void {
+  clearSelectedContract(): void {
+    this.selectedContract = null;
     this.selectedClient = null;
-    this.clientSearchQuery = '';
     this.clientSaldos = [];
     this.aplicarSaldoFavor = false;
     this.pendingPreInvoices = [];
+    this.selectedPreInvoiceIds = new Set<number>();
     this.isLoadingPreInvoices = false;
     this.usarConsumidorFinal = false;
     this.cdr.markForCheck();
   }
 
-  private loadPendingPreInvoices(client: IClient): void {
+
+  private loadPendingPreInvoices(): void {
+    if (!this.selectedContract) return;
     this.isLoadingPreInvoices = true;
+    this.selectedPreInvoiceIds = new Set<number>();
     this.preInvoicesService
-      .getPreInvoices({ identificacion: client.identificacion, limit: 50 })
+      .getPreInvoices({ contratoId: String(this.selectedContract.contratoId), limit: 50 })
       .subscribe({
         next: (res) => {
           this.pendingPreInvoices = (res.data || []).filter(
             (pi) => !NON_COLLECTABLE_STATES.includes(pi.estado),
           );
+          // Auto-select all by default
+          this.selectedPreInvoiceIds = new Set(this.pendingPreInvoices.map((pi) => pi.prefacturaId));
           this.isLoadingPreInvoices = false;
           this.cdr.markForCheck();
         },
@@ -203,12 +182,34 @@ export class PaymentFormComponent implements OnInit {
       });
   }
 
-  getClientDisplayName(client: IClient): string {
-    if (client.razonSocial) return client.razonSocial;
-    if (client.nombres && client.apellidos) {
-      return `${client.apellidos} ${client.nombres}`;
+  isPreInvoiceSelected(id: number): boolean {
+    return this.selectedPreInvoiceIds.has(id);
+  }
+
+  togglePreInvoice(id: number): void {
+    if (this.selectedPreInvoiceIds.has(id)) {
+      this.selectedPreInvoiceIds.delete(id);
+    } else {
+      this.selectedPreInvoiceIds.add(id);
     }
-    return client.nombres || client.apellidos || client.identificacion || 'Cliente';
+    this.selectedPreInvoiceIds = new Set(this.selectedPreInvoiceIds); // trigger change detection
+    this.cdr.markForCheck();
+  }
+
+  get allPreInvoicesSelected(): boolean {
+    return (
+      this.pendingPreInvoices.length > 0 &&
+      this.pendingPreInvoices.every((pi) => this.selectedPreInvoiceIds.has(pi.prefacturaId))
+    );
+  }
+
+  toggleAllPreInvoices(): void {
+    if (this.allPreInvoicesSelected) {
+      this.selectedPreInvoiceIds = new Set<number>();
+    } else {
+      this.selectedPreInvoiceIds = new Set(this.pendingPreInvoices.map((pi) => pi.prefacturaId));
+    }
+    this.cdr.markForCheck();
   }
 
   get totalSaldoFavorDisponible(): number {
@@ -216,7 +217,17 @@ export class PaymentFormComponent implements OnInit {
   }
 
   get totalAPagarPendiente(): number {
-    return this.pendingPreInvoices.reduce((acc, pi) => acc + (Number(pi.totalPagar) || 0), 0);
+    return this.pendingPreInvoices
+      .filter((pi) => this.selectedPreInvoiceIds.has(pi.prefacturaId))
+      .reduce((acc, pi) => acc + (Number(pi.totalPagar) || 0), 0);
+  }
+
+  getClientDisplayName(client: IClient): string {
+    if (client.razonSocial) return client.razonSocial;
+    if (client.nombres && client.apellidos) {
+      return `${client.apellidos} ${client.nombres}`;
+    }
+    return client.nombres || client.apellidos || client.identificacion || 'Cliente';
   }
 
   get hasIncompleteBillingData(): boolean {
@@ -244,12 +255,11 @@ export class PaymentFormComponent implements OnInit {
   }
 
   getPeriodLabel(pre: IPreInvoice): string {
-    if (pre.periodoId != null) return `Período #${pre.periodoId}`;
     const created = pre.createdAt ? new Date(pre.createdAt) : null;
     if (created && !Number.isNaN(created.getTime())) {
-      return created.toLocaleDateString('es-EC', { month: 'short', year: 'numeric' });
+      return created.toLocaleDateString('es-EC', { month: 'long', year: 'numeric' });
     }
-    return 'Período actual';
+    return pre.periodoId != null ? `Período #${pre.periodoId}` : 'Período actual';
   }
 
   getPreInvoiceStateLabel(state: string): string {
@@ -353,6 +363,17 @@ export class PaymentFormComponent implements OnInit {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  openCobroPuntual(): void {
+    this.isCobroPuntualOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  onCobroPuntualCreated(event: { pagoId: number }): void {
+    this.isCobroPuntualOpen = false;
+    this.toastService.show('Cobro puntual registrado exitosamente', 'success');
+    this.router.navigate(['/app', 'Facturacion', 'RecaudacionYPagos']);
   }
 
   requestAgreement(): void {

@@ -188,3 +188,40 @@ export interface IUpdatePaymentStateDto {
 export interface IAnnulPaymentDto {
   motivoAnulacion: string;
 }
+
+export interface IRubro {
+  rubroId: number;
+  nombre: string;
+  descripcion: string;
+  precioUnitario: number;
+  tipoRubro: string;
+  tarifaImpuesto?: { porcentaje: number; descripcion: string };
+  esAutomatico: boolean;
+  activo: boolean;
+}
+
+export interface ICobroPuntualItem {
+  rubroId: number;
+  rubroNombre: string;
+  descripcion: string;
+  cantidad: number;
+  precioUnitario: number;
+  porcentajeIva: number;
+  subtotal: number;
+  iva: number;
+  total: number;
+}
+
+export interface ICreateCobroPuntualDto {
+  clienteId: string;
+  contratoId: string;
+  fechaPago: string;
+  items: { rubroId: number; cantidad: number; descripcion?: string }[];
+  montoTotalRecibido: number;
+  banco?: string;
+  tarjetaCredito?: string;
+  numeroOperacion?: string;
+  observaciones?: string;
+  referenciaBanco?: string;
+}
+

@@ -2,7 +2,8 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, inject
 import { FormsModule } from '@angular/forms';
 
 import { ContractsService } from '../../../features/contracts/service-contracts/services/contracts.service';
-import type { IContract } from '../../../features/contracts/service-contracts/interfaces/icontract.interface';
+import type { IContract, ISearchContractsParams } from '../../../features/contracts/service-contracts/interfaces/icontract.interface';
+
 
 @Component({
   selector: 'app-contract-picker',
@@ -15,6 +16,7 @@ import type { IContract } from '../../../features/contracts/service-contracts/in
 export class ContractPickerComponent {
   @Input({ required: true }) open = false;
   @Input() title = 'Buscar Contrato';
+  @Input() estado?: string;
 
   @Output() contractSelected = new EventEmitter<IContract>();
   @Output() closed = new EventEmitter<void>();
@@ -64,7 +66,11 @@ export class ContractPickerComponent {
 
     this.isSearching.set(true);
     this.searchError.set('');
-    this.contractsService.getContracts({ search: term, page: 1, limit: 50 }).subscribe({
+    const params: ISearchContractsParams = { search: term, page: 1, limit: 50 };
+    if (this.estado) {
+      params.estado = this.estado;
+    }
+    this.contractsService.getContracts(params).subscribe({
       next: (res) => {
         this.searchResults.set(res.data);
         this.searchPerformed.set(true);

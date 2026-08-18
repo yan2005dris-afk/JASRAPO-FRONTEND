@@ -120,3 +120,55 @@
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+.pre-invoices-table-wrap {
+  background-color: #ffffff;
+
+  .table thead th {
+    font-size: 0.72rem;
+    padding-top: 0.55rem;
+    padding-bottom: 0.55rem;
+    border-bottom: 1px solid #e2e8f0;
+    background-color: #f8fafc;
+  }
+}
+
+.pre-invoice-row {
+  transition: background-color 0.12s ease;
+
+  &:hover {
+    background-color: #f1f9f9;
+  }
+
+  &.selected {
+    background-color: #e8fafa;
+    border-left: 3px solid #0c9ea1;
+
+    td:first-child {
+      padding-left: calc(0.75rem - 3px); // compensate border
+    }
+  }
+}
+
+.mode-toggle {
+  button {
+    transition: all 0.2s;
+    font-size: 0.85rem;
+    
+    &.btn-primary {
+      background-color: #0c9ea1;
+      border-color: #0c9ea1;
+      color: white;
+      box-shadow: 0 2px 4px rgba(12, 158, 161, 0.2);
+    }
+    
+    &.text-muted {
+      background-color: transparent;
+      &:hover {
+        background-color: #f1f9f9;
+        color: #0f172a !important;
+      }
+    }
+  }
+}
+

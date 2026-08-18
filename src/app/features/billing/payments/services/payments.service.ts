@@ -8,11 +8,13 @@ import {
   IBankOption,
   ICardBrandOption,
   ICreatePaymentDto,
+  ICreateCobroPuntualDto,
   IDailyCashSummary,
   IFindAllPaymentsParams,
   IPaginatedResult,
   IPayment,
   IPaymentStateOption,
+  IRubro,
   ISaldoFavor,
   IUpdatePaymentStateDto,
 } from '../interfaces/ipayments.interface';
@@ -107,5 +109,25 @@ export class PaymentsService {
     return this.http.delete<IPayment>(`${this.endpoint}/${id}`, {
       body: dto,
     });
+  }
+
+  getRubros(params: { search?: string; activo?: boolean; limit?: number } = {}): Observable<IPaginatedResult<IRubro>> {
+    let httpParams = new HttpParams();
+    if (params.search) {
+      httpParams = httpParams.set('search', params.search);
+    }
+    if (params.activo !== undefined) {
+      httpParams = httpParams.set('activo', String(params.activo));
+    }
+    if (params.limit !== undefined) {
+      httpParams = httpParams.set('limit', String(params.limit));
+    }
+    return this.http.get<IPaginatedResult<IRubro>>(`${this.baseUrl}/rubros`, {
+      params: httpParams,
+    });
+  }
+
+  createCobroPuntual(dto: ICreateCobroPuntualDto): Observable<IPayment> {
+    return this.http.post<IPayment>(`${this.endpoint}/cobro-puntual`, dto);
   }
 }
