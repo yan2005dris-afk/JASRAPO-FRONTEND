@@ -27,34 +27,39 @@
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
           <!-- Contrato seleccionado (modal buscador) -->
-          <div class="input-group search-group" style="max-width: 260px">
+          <div class="input-group search-group" style="width: 290px">
             <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
               <i class="bi bi-file-text"></i>
             </span>
             <input
               type="text"
-              class="form-control border-start-0 ps-0 shadow-none"
-              placeholder="Seleccione un contrato"
-              [value]="selectedContractNumber"
+              class="form-control border-start-0 ps-0 shadow-none text-truncate"
+              placeholder="Buscar contrato / cliente..."
+              [value]="selectedContractNumber ? (selectedContractNumber + ' - ' + selectedContractName) : ''"
               readonly
               (click)="abrirBuscadorContratos()"
+              [title]="selectedContractName ? (selectedContractNumber + ' - ' + selectedContractName) : 'Seleccione un contrato'"
             />
-            <button
-              type="button"
-              class="btn btn-outline-primary shadow-none"
-              title="Buscar contrato"
-              (click)="abrirBuscadorContratos()"
-            >
-              <i class="bi bi-search"></i>
-            </button>
+            @if (selectedContractNumber) {
+              <button
+                type="button"
+                class="btn btn-outline-secondary border-start-0 shadow-none px-2"
+                title="Quitar filtro de contrato"
+                (click)="limpiarFiltros(); $event.stopPropagation()"
+              >
+                <i class="bi bi-x"></i>
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="btn btn-outline-primary shadow-none"
+                title="Buscar contrato"
+                (click)="abrirBuscadorContratos()"
+              >
+                <i class="bi bi-search"></i>
+              </button>
+            }
           </div>
-
-          @if (selectedContractName) {
-            <span class="badge badge-soft-primary d-flex align-items-center gap-1">
-              <i class="bi bi-person-check-fill"></i>
-              {{ selectedContractName }}
-            </span>
-          }
 
           <!-- Buscar -->
           <button
