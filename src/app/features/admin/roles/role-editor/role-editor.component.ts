@@ -11,7 +11,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin } from 'rxjs';
 import { RolesService } from '../services/roles.service';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 import {
@@ -128,22 +127,34 @@ export class RoleEditorComponent implements OnInit {
 
   private load(): void {
     this.isLoading.set(true);
-    forkJoin({
-      role: this.rolesService.getRoleById(this.rolId),
-      permissions: this.rolesService.getAllPermissions(),
-    }).subscribe({
-      next: ({ role, permissions }) => {
-        this.role.set(role);
+
+    // Cargar catálogo de todos los permisos disponibles
+    this.rolesService.getAllPermissions().subscribe({
+      next: (permissions) => {
         this.allPermissions.set(permissions);
-        const ids = new Set(role.permisos.map((p) => p.permisoId));
+        this.loadRoleDetail();
+      },
+      error: (err) => {
+        console.error('Error al cargar permisos:', err);
+        const msg = err?.error?.message ?? 'No se pudo cargar el catálogo de permisos';
+        this.toast.error(msg, 'Error');
+        this.isLoading.set(false);
+      },
+    });
+  }
+
+  private loadRoleDetail(): void {
+    this.rolesService.getRoleById(this.rolId).subscribe({
+      next: (role) => {
+        this.role.set(role);
+        const ids = new Set((role.permisos || []).map((p) => p.permisoId));
         this.assignedIds.set(ids);
         this.originalIds = new Set(ids);
-        this.expandedGroups.set(new Set());
         this.isLoading.set(false);
       },
       error: (err) => {
-        console.error('Error loading role or permissions:', err);
-        const msg = err?.error?.message ?? err?.message ?? 'Error al cargar el rol';
+        console.error('Error al cargar detalle del rol:', err);
+        const msg = err?.error?.message ?? 'No se pudo cargar el rol solicitado';
         this.toast.error(msg, 'Error');
         this.isLoading.set(false);
       },
