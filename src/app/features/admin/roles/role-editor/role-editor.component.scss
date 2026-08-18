@@ -1,13 +1,22 @@
-.permissions-table {
+.role-editor-container {
+  width: 100%;
+}
+
+.search-group {
+  .form-control:focus {
+    border-color: #dee2e6;
+  }
+}
+
+/* Tabla estándar del sistema */
+.custom-table {
   thead th {
-    background-color: var(--soft-blue-bg, #f0f4ff);
-    color: var(--text-muted, #6c757d);
+    background-color: var(--soft-blue-bg, #f8faff);
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    padding: 0.75rem 1rem;
     font-size: 0.78rem;
-    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.03em;
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--border-color, #e2e8f0);
   }
 
   tbody td {
@@ -22,6 +31,11 @@
   &:hover {
     background-color: rgba(240, 244, 255, 0.5);
   }
+}
+
+.table-checkbox {
+  cursor: pointer;
+  border-radius: 4px;
 }
 
 .permission-pill {

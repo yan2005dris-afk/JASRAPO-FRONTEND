@@ -13,6 +13,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RolesService } from '../services/roles.service';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
+import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import {
   RoleDetail,
   PermissionItem,
@@ -22,7 +23,7 @@ import {
 
 @Component({
   selector: 'app-role-editor',
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PaginationComponent],
   templateUrl: './role-editor.component.html',
   styleUrl: './role-editor.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -44,6 +45,11 @@ export class RoleEditorComponent implements OnInit {
   readonly assignedIds = signal<Set<number>>(new Set());
   readonly expandedGroups = signal<Set<string>>(new Set());
   readonly searchTerm = signal('');
+
+  // Paginación de módulos / recursos
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(10);
+  readonly pageSizeOptions = [5, 10, 15, 20];
 
   readonly groupedPermissions = computed((): PermissionGroup[] => {
     const perms = this.allPermissions();
@@ -89,6 +95,15 @@ export class RoleEditorComponent implements OnInit {
     return groups.sort((a, b) => a.recurso.localeCompare(b.recurso));
   });
 
+  // Módulos visibles en la página actual
+  readonly pagedGroups = computed(() => {
+    const groups = this.groupedPermissions();
+    const page = this.currentPage();
+    const size = this.pageSize();
+    const start = (page - 1) * size;
+    return groups.slice(start, start + size);
+  });
+
   readonly totalStats = computed(() => {
     const all = this.allPermissions();
     const assigned = this.assignedIds();
@@ -123,19 +138,19 @@ export class RoleEditorComponent implements OnInit {
     this.expandedGroups.set(new Set());
     this.originalIds = new Set();
     this.searchTerm.set('');
+    this.currentPage.set(1);
   }
 
   private load(): void {
     this.isLoading.set(true);
 
-    // Cargar catálogo de todos los permisos disponibles
     this.rolesService.getAllPermissions().subscribe({
       next: (permissions) => {
         this.allPermissions.set(permissions);
         this.loadRoleDetail();
       },
       error: (err) => {
-        console.error('Error al cargar permisos:', err);
+        console.error('Error al cargar catálogo de permisos:', err);
         const msg = err?.error?.message ?? 'No se pudo cargar el catálogo de permisos';
         this.toast.error(msg, 'Error');
         this.isLoading.set(false);
@@ -159,6 +174,20 @@ export class RoleEditorComponent implements OnInit {
         this.isLoading.set(false);
       },
     });
+  }
+
+  onSearchChange(term: string): void {
+    this.searchTerm.set(term);
+    this.currentPage.set(1);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage.set(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.currentPage.set(1);
   }
 
   togglePermission(permisoId: number): void {
@@ -203,7 +232,7 @@ export class RoleEditorComponent implements OnInit {
   selectAllVisible(): void {
     this.assignedIds.update((ids) => {
       const next = new Set(ids);
-      for (const group of this.groupedPermissions()) {
+      for (const group of this.pagedGroups()) {
         for (const item of group.items) {
           next.add(item.permisoId);
         }
@@ -215,7 +244,7 @@ export class RoleEditorComponent implements OnInit {
   deselectAllVisible(): void {
     this.assignedIds.update((ids) => {
       const next = new Set(ids);
-      for (const group of this.groupedPermissions()) {
+      for (const group of this.pagedGroups()) {
         for (const item of group.items) {
           next.delete(item.permisoId);
         }
