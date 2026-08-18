@@ -1,5 +1,8 @@
 <div class="modal fade show d-block picker-modal" tabindex="-1" role="dialog" aria-modal="true">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" style="max-width: 780px">
+  <div
+    class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg"
+    style="max-width: 780px"
+  >
     <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
       <!-- Header -->
       <div class="modal-header border-bottom px-4 py-3 bg-white">
@@ -89,7 +92,11 @@
             <div class="col-6">
               <div class="text-muted small">Ejecución</div>
               <div class="text-dark small">
-                {{ route().fechaInicio ? (route().fechaInicio | date: 'dd/MM/yyyy HH:mm') : 'No iniciada' }}
+                {{
+                  route().fechaInicio
+                    ? (route().fechaInicio | date: 'dd/MM/yyyy HH:mm')
+                    : 'No iniciada'
+                }}
               </div>
             </div>
           </div>
@@ -125,7 +132,10 @@
                 <div class="small text-muted">
                   Mostrando <strong class="text-dark">{{ readings.length }}</strong> lecturas
                   @if (pendingReviewCount > 0) {
-                    · <span class="text-warning fw-semibold">{{ pendingReviewCount }} por aprobar</span>
+                    ·
+                    <span class="text-warning fw-semibold"
+                      >{{ pendingReviewCount }} por aprobar</span
+                    >
                   }
                 </div>
                 @if (pendingReviewCount > 0) {
@@ -136,7 +146,11 @@
                     [disabled]="isBulkApproving"
                   >
                     @if (isBulkApproving) {
-                      <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                      <span
+                        class="spinner-border spinner-border-sm"
+                        role="status"
+                        aria-hidden="true"
+                      ></span>
                     } @else {
                       <i class="bi bi-check-all"></i>
                     }
@@ -170,7 +184,9 @@
                           <div class="text-muted" style="font-size: 0.75rem">{{ r.direccion }}</div>
                         </td>
                         <td class="py-2 px-3 text-nowrap">
-                          <span class="badge badge-soft-primary">{{ r.medidorSerie || 'S/N' }}</span>
+                          <span class="badge badge-soft-primary">{{
+                            r.medidorSerie || 'S/N'
+                          }}</span>
                         </td>
                         <td class="py-2 px-3 text-end text-dark font-monospace">
                           {{ r.lecturaAnterior != null ? r.lecturaAnterior : '0.00' }}
@@ -201,7 +217,7 @@
                               'badge-soft-warning': r.estadoLectura === 'POR_REVISION',
                               'badge-soft-success': r.estadoLectura === 'APROBADA',
                               'badge-soft-danger': r.estadoLectura === 'RECHAZADA_VERIFICACION',
-                              'badge-soft-secondary': !r.estadoLectura
+                              'badge-soft-secondary': !r.estadoLectura,
                             }"
                           >
                             {{ r.estadoLectura || r.estadoContrato }}
@@ -209,7 +225,10 @@
                         </td>
                         <td class="py-2 px-3 text-center text-nowrap">
                           @if (processingReadingId === r.lecturaId) {
-                            <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                            <span
+                              class="spinner-border spinner-border-sm text-primary"
+                              role="status"
+                            ></span>
                           } @else if (r.estadoLectura === 'APROBADA') {
                             <span class="text-success small fw-medium">
                               <i class="bi bi-check-circle-fill me-1"></i>Lista
@@ -223,7 +242,9 @@
                                 (click)="changeReadingStatus(r, 'APROBADA')"
                               >
                                 <i class="bi bi-check-lg"></i>
-                                <span class="d-none d-md-inline" style="font-size: 0.75rem">Aprobar</span>
+                                <span class="d-none d-md-inline" style="font-size: 0.75rem"
+                                  >Aprobar</span
+                                >
                               </button>
                               <button
                                 type="button"

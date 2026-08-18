@@ -1,191 +1,196 @@
 <div class="payment-form-page">
   <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
-      <!-- Header -->
-      <div
-        class="card-header border-bottom px-4 py-3 bg-white d-flex justify-content-between align-items-center gap-3 flex-wrap"
-      >
-        <div class="d-flex align-items-center gap-3">
-          <div class="header-icon-tile">
-            <i class="bi bi-cash-stack"></i>
-          </div>
-          <div>
-            <h5 class="fw-bold text-dark mb-0 fs-5">Registrar Pago</h5>
-            <p class="text-muted small mb-0">
-              Recaudación en ventanilla — registre el pago o abono del cliente.
-            </p>
-          </div>
+    <!-- Header -->
+    <div
+      class="card-header border-bottom px-4 py-3 bg-white d-flex justify-content-between align-items-center gap-3 flex-wrap"
+    >
+      <div class="d-flex align-items-center gap-3">
+        <div class="header-icon-tile">
+          <i class="bi bi-cash-stack"></i>
         </div>
-        <button
-          type="button"
-          class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
-          (click)="close()"
-          [disabled]="isLoading"
-        >
-          <i class="bi bi-arrow-left"></i>
-          Volver
-        </button>
+        <div>
+          <h5 class="fw-bold text-dark mb-0 fs-5">Registrar Pago</h5>
+          <p class="text-muted small mb-0">
+            Recaudación en ventanilla — registre el pago o abono del cliente.
+          </p>
+        </div>
       </div>
+      <button
+        type="button"
+        class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
+        (click)="close()"
+        [disabled]="isLoading"
+      >
+        <i class="bi bi-arrow-left"></i>
+        Volver
+      </button>
+    </div>
 
-      <!-- Body -->
-      <div class="card-body p-4 bg-white">
-        <div class="row g-4">
-          <!-- LEFT COLUMN: Cliente + Estado de Cuenta -->
-          <div class="col-lg-7">
-            <!-- 1. Búsqueda de contrato activo -->
-            <div class="mb-3">
-              <label class="form-label fw-semibold text-dark small mb-1">
-                Cliente / Contrato <span class="text-danger">*</span>
-              </label>
+    <!-- Body -->
+    <div class="card-body p-4 bg-white">
+      <div class="row g-4">
+        <!-- LEFT COLUMN: Cliente + Estado de Cuenta -->
+        <div class="col-lg-7">
+          <!-- 1. Búsqueda de contrato activo -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold text-dark small mb-1">
+              Cliente / Contrato <span class="text-danger">*</span>
+            </label>
 
-              @if (!selectedClient) {
-                <div class="input-group">
-                  <input
-                    id="contractDisplayInput"
-                    type="text"
-                    class="form-control border-end-0 shadow-none text-muted fst-italic"
-                    placeholder="Seleccione un contrato activo..."
-                    readonly
-                  />
-                  <button
-                    id="btnOpenContractPicker"
-                    type="button"
-                    class="btn btn-outline-primary border-start-0 px-3 d-flex align-items-center gap-2"
-                    (click)="openPicker()"
-                  >
-                    <i class="bi bi-search"></i>
-                    Buscar
-                  </button>
-                </div>
-              } @else {
-                <!-- Tarjeta de Cliente Seleccionado -->
-                <div
-                  class="selected-client-card p-3 rounded-3 border d-flex align-items-center justify-content-between gap-2"
+            @if (!selectedClient) {
+              <div class="input-group">
+                <input
+                  id="contractDisplayInput"
+                  type="text"
+                  class="form-control border-end-0 shadow-none text-muted fst-italic"
+                  placeholder="Seleccione un contrato activo..."
+                  readonly
+                />
+                <button
+                  id="btnOpenContractPicker"
+                  type="button"
+                  class="btn btn-outline-primary border-start-0 px-3 d-flex align-items-center gap-2"
+                  (click)="openPicker()"
                 >
-                  <div class="d-flex align-items-center gap-3">
-                    <div class="client-avatar-tile">
-                      {{ getClientDisplayName(selectedClient).charAt(0).toUpperCase() }}
-                    </div>
-                    <div>
-                      <div class="fw-bold text-dark small">
-                        {{ getClientDisplayName(selectedClient) }}
-                      </div>
-                      <div class="text-muted" style="font-size: 0.78rem">
-                        ID: <span class="fw-medium">{{ selectedClient.identificacion }}</span>
-                        @if (selectedContract) {
-                          <span class="mx-1">·</span>
-                          <span class="fw-medium">Contrato #{{ selectedContract.contratoId }}</span>
-                        }
-                        @if (selectedClient.telefono) {
-                          <span class="mx-1">·</span>
-                          <span>{{ selectedClient.telefono }}</span>
-                        }
-                      </div>
-                      @if (selectedClient.direccionDomicilio) {
-                        <div
-                          class="text-muted d-flex align-items-center gap-1"
-                          style="font-size: 0.78rem"
-                        >
-                          <i class="bi bi-geo-alt"></i>
-                          <span>{{ selectedClient.direccionDomicilio }}</span>
-                        </div>
-                      }
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-1 flex-shrink-0"
-                    style="font-size: 0.75rem"
-                    (click)="clearSelectedContract()"
-                    [disabled]="isLoading"
-                  >
-                    <i class="bi bi-pencil-square me-1"></i> Cambiar
-                  </button>
-                </div>
-
-                <!-- Alerta de datos de facturación -->
-                @if (hasIncompleteBillingData && !usarConsumidorFinal) {
-                  <div
-                    class="billing-warning-alert mt-2 p-3 rounded-3 d-flex align-items-start justify-content-between gap-3"
-                  >
-                    <div class="d-flex align-items-start gap-2">
-                      <i class="bi bi-triangle-exclamation mt-1" style="color: #b45309"></i>
-                      <div>
-                        <div class="small fw-semibold text-dark">Datos de facturación incompletos</div>
-                        <div class="text-muted" style="font-size: 0.78rem">
-                          Faltan email, dirección o datos de RUC. Sugerimos usar CONSUMIDOR FINAL
-                          (sin identificación tributaria en el comprobante).
-                        </div>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-warning fw-medium text-dark rounded-pill px-3 flex-shrink-0"
-                      (click)="setUsarConsumidorFinal(true)"
-                    >
-                      Usar CONSUMIDOR FINAL
-                    </button>
-                  </div>
-                }
-
-                <!-- Badge Consumidor Final -->
-                @if (usarConsumidorFinal) {
-                  <div
-                    class="consumidor-badge mt-2 p-2 px-3 rounded-3 d-flex align-items-center justify-content-between gap-2"
-                  >
-                    <div class="d-flex align-items-center gap-2">
-                      <i class="bi bi-receipt text-primary"></i>
-                      <span class="small text-dark fw-medium"
-                        >Comprobante como: <strong>CONSUMIDOR FINAL</strong></span
-                      >
-                    </div>
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-link text-muted p-0 shadow-none text-decoration-none"
-                      (click)="setUsarConsumidorFinal(false)"
-                    >
-                      Deshacer
-                    </button>
-                  </div>
-                }
-              }
-            </div>
-
-            @if (selectedClient) {
-              <!-- Mode toggle -->
-              <div class="mode-toggle mb-3 d-flex p-1 bg-light rounded-pill border" style="width: fit-content;">
-                <button 
-                  class="btn rounded-pill px-4 py-1 border-0 fw-medium"
-                  [class.btn-primary]="pagoMode === 'DEUDA'"
-                  [class.text-muted]="pagoMode !== 'DEUDA'"
-                  (click)="pagoMode = 'DEUDA'"
-                >
-                  Cobrar deuda
-                </button>
-                <button 
-                  class="btn rounded-pill px-4 py-1 border-0 fw-medium"
-                  [class.btn-primary]="pagoMode === 'PUNTUAL'"
-                  [class.text-muted]="pagoMode !== 'PUNTUAL'"
-                  (click)="pagoMode = 'PUNTUAL'"
-                >
-                  Cobro puntual
+                  <i class="bi bi-search"></i>
+                  Buscar
                 </button>
               </div>
+            } @else {
+              <!-- Tarjeta de Cliente Seleccionado -->
+              <div
+                class="selected-client-card p-3 rounded-3 border d-flex align-items-center justify-content-between gap-2"
+              >
+                <div class="d-flex align-items-center gap-3">
+                  <div class="client-avatar-tile">
+                    {{ getClientDisplayName(selectedClient).charAt(0).toUpperCase() }}
+                  </div>
+                  <div>
+                    <div class="fw-bold text-dark small">
+                      {{ getClientDisplayName(selectedClient) }}
+                    </div>
+                    <div class="text-muted" style="font-size: 0.78rem">
+                      ID: <span class="fw-medium">{{ selectedClient.identificacion }}</span>
+                      @if (selectedContract) {
+                        <span class="mx-1">·</span>
+                        <span class="fw-medium">Contrato #{{ selectedContract.contratoId }}</span>
+                      }
+                      @if (selectedClient.telefono) {
+                        <span class="mx-1">·</span>
+                        <span>{{ selectedClient.telefono }}</span>
+                      }
+                    </div>
+                    @if (selectedClient.direccionDomicilio) {
+                      <div
+                        class="text-muted d-flex align-items-center gap-1"
+                        style="font-size: 0.78rem"
+                      >
+                        <i class="bi bi-geo-alt"></i>
+                        <span>{{ selectedClient.direccionDomicilio }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-1 flex-shrink-0"
+                  style="font-size: 0.75rem"
+                  (click)="clearSelectedContract()"
+                  [disabled]="isLoading"
+                >
+                  <i class="bi bi-pencil-square me-1"></i> Cambiar
+                </button>
+              </div>
+
+              <!-- Alerta de datos de facturación -->
+              @if (hasIncompleteBillingData && !usarConsumidorFinal) {
+                <div
+                  class="billing-warning-alert mt-2 p-3 rounded-3 d-flex align-items-start justify-content-between gap-3"
+                >
+                  <div class="d-flex align-items-start gap-2">
+                    <i class="bi bi-triangle-exclamation mt-1" style="color: #b45309"></i>
+                    <div>
+                      <div class="small fw-semibold text-dark">
+                        Datos de facturación incompletos
+                      </div>
+                      <div class="text-muted" style="font-size: 0.78rem">
+                        Faltan email, dirección o datos de RUC. Sugerimos usar CONSUMIDOR FINAL (sin
+                        identificación tributaria en el comprobante).
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-warning fw-medium text-dark rounded-pill px-3 flex-shrink-0"
+                    (click)="setUsarConsumidorFinal(true)"
+                  >
+                    Usar CONSUMIDOR FINAL
+                  </button>
+                </div>
+              }
+
+              <!-- Badge Consumidor Final -->
+              @if (usarConsumidorFinal) {
+                <div
+                  class="consumidor-badge mt-2 p-2 px-3 rounded-3 d-flex align-items-center justify-content-between gap-2"
+                >
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-receipt text-primary"></i>
+                    <span class="small text-dark fw-medium"
+                      >Comprobante como: <strong>CONSUMIDOR FINAL</strong></span
+                    >
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-link text-muted p-0 shadow-none text-decoration-none"
+                    (click)="setUsarConsumidorFinal(false)"
+                  >
+                    Deshacer
+                  </button>
+                </div>
+              }
             }
+          </div>
 
-            <!-- Contract Picker Modal -->
-            <app-contract-picker
-              [open]="isPickerOpen"
-              title="Buscar Contrato Activo"
-              estado="ACTIVO"
-              (contractSelected)="onContractSelected($event)"
-              (closed)="isPickerOpen = false"
-            />
+          @if (selectedClient) {
+            <!-- Mode toggle -->
+            <div
+              class="mode-toggle mb-3 d-flex p-1 bg-light rounded-pill border"
+              style="width: fit-content"
+            >
+              <button
+                class="btn rounded-pill px-4 py-1 border-0 fw-medium"
+                [class.btn-primary]="pagoMode === 'DEUDA'"
+                [class.text-muted]="pagoMode !== 'DEUDA'"
+                (click)="pagoMode = 'DEUDA'"
+              >
+                Cobrar deuda
+              </button>
+              <button
+                class="btn rounded-pill px-4 py-1 border-0 fw-medium"
+                [class.btn-primary]="pagoMode === 'PUNTUAL'"
+                [class.text-muted]="pagoMode !== 'PUNTUAL'"
+                (click)="pagoMode = 'PUNTUAL'"
+              >
+                Cobro puntual
+              </button>
+            </div>
+          }
 
-            <!-- 2. Estado de Cuenta Pendiente (Solo modo DEUDA) -->
-            @if (pagoMode === 'DEUDA') {
-              <div class="mb-1">
-                <div class="d-flex align-items-center justify-content-between mb-2">
-                  <span class="form-label d-block fw-semibold text-dark small mb-0">
+          <!-- Contract Picker Modal -->
+          <app-contract-picker
+            [open]="isPickerOpen"
+            title="Buscar Contrato Activo"
+            estado="ACTIVO"
+            (contractSelected)="onContractSelected($event)"
+            (closed)="isPickerOpen = false"
+          />
+
+          <!-- 2. Estado de Cuenta Pendiente (Solo modo DEUDA) -->
+          @if (pagoMode === 'DEUDA') {
+            <div class="mb-1">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="form-label d-block fw-semibold text-dark small mb-0">
                   <i class="bi bi-receipt me-1 text-primary"></i>
                   Estado de Cuenta Pendiente
                 </span>
@@ -219,7 +224,10 @@
 
               @if (selectedClient && !isLoadingPreInvoices && pendingPreInvoices.length > 0) {
                 <div class="pre-invoices-table-wrap border rounded-3 overflow-hidden">
-                  <table class="table table-sm table-hover mb-0 align-middle" style="font-size: 0.8rem">
+                  <table
+                    class="table table-sm table-hover mb-0 align-middle"
+                    style="font-size: 0.8rem"
+                  >
                     <thead class="table-light">
                       <tr>
                         <th style="width: 2rem" class="px-3">
@@ -231,12 +239,42 @@
                             id="chkSelectAll"
                           />
                         </th>
-                        <th class="fw-semibold text-muted text-uppercase" style="letter-spacing:0.03em">Período</th>
-                        <th class="fw-semibold text-muted text-uppercase" style="letter-spacing:0.03em"># Pref.</th>
-                        <th class="fw-semibold text-muted text-uppercase text-end" style="letter-spacing:0.03em">Subtotal</th>
-                        <th class="fw-semibold text-muted text-uppercase text-end" style="letter-spacing:0.03em">IVA</th>
-                        <th class="fw-semibold text-muted text-uppercase text-end" style="letter-spacing:0.03em">Total</th>
-                        <th class="fw-semibold text-muted text-uppercase text-center" style="letter-spacing:0.03em">Estado</th>
+                        <th
+                          class="fw-semibold text-muted text-uppercase"
+                          style="letter-spacing: 0.03em"
+                        >
+                          Período
+                        </th>
+                        <th
+                          class="fw-semibold text-muted text-uppercase"
+                          style="letter-spacing: 0.03em"
+                        >
+                          # Pref.
+                        </th>
+                        <th
+                          class="fw-semibold text-muted text-uppercase text-end"
+                          style="letter-spacing: 0.03em"
+                        >
+                          Subtotal
+                        </th>
+                        <th
+                          class="fw-semibold text-muted text-uppercase text-end"
+                          style="letter-spacing: 0.03em"
+                        >
+                          IVA
+                        </th>
+                        <th
+                          class="fw-semibold text-muted text-uppercase text-end"
+                          style="letter-spacing: 0.03em"
+                        >
+                          Total
+                        </th>
+                        <th
+                          class="fw-semibold text-muted text-uppercase text-center"
+                          style="letter-spacing: 0.03em"
+                        >
+                          Estado
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -258,13 +296,21 @@
                           <td>
                             <div class="fw-medium text-dark">{{ getPeriodLabel(pre) }}</div>
                             @if (pre.tarifaNombre) {
-                              <div class="text-muted" style="font-size:0.72rem">{{ pre.tarifaNombre }}</div>
+                              <div class="text-muted" style="font-size: 0.72rem">
+                                {{ pre.tarifaNombre }}
+                              </div>
                             }
                           </td>
                           <td class="text-muted">#{{ pre.prefacturaId }}</td>
-                          <td class="text-end tabular-nums">{{ pre.subtotal | currency:'USD':'symbol':'1.2-2' }}</td>
-                          <td class="text-end tabular-nums">{{ pre.iva | currency:'USD':'symbol':'1.2-2' }}</td>
-                          <td class="text-end tabular-nums fw-bold text-dark">{{ pre.totalPagar | currency:'USD':'symbol':'1.2-2' }}</td>
+                          <td class="text-end tabular-nums">
+                            {{ pre.subtotal | currency: 'USD' : 'symbol' : '1.2-2' }}
+                          </td>
+                          <td class="text-end tabular-nums">
+                            {{ pre.iva | currency: 'USD' : 'symbol' : '1.2-2' }}
+                          </td>
+                          <td class="text-end tabular-nums fw-bold text-dark">
+                            {{ pre.totalPagar | currency: 'USD' : 'symbol' : '1.2-2' }}
+                          </td>
                           <td class="text-center">
                             <span class="badge" [ngClass]="getPreInvoiceStateTone(pre.estado)">
                               {{ getPreInvoiceStateLabel(pre.estado) }}
@@ -285,7 +331,8 @@
                   <div>
                     <div class="text-uppercase fw-bold small text-primary">Total Seleccionado</div>
                     <div class="text-muted" style="font-size: 0.75rem">
-                      {{ selectedPreInvoiceIds.size }} de {{ pendingPreInvoices.length }} prefactura(s)
+                      {{ selectedPreInvoiceIds.size }} de
+                      {{ pendingPreInvoices.length }} prefactura(s)
                     </div>
                   </div>
                   <div class="fs-4 fw-bold text-dark tabular-nums">
@@ -315,17 +362,23 @@
             <div class="mb-1 text-center py-5 rounded-3 border bg-light-subtle">
               <i class="bi bi-cart-plus d-block mb-2 fs-2 text-primary"></i>
               <h6 class="fw-bold mb-1">Cobro sin prefactura</h6>
-              <p class="text-muted small mb-3">Venta directa de rubros (ej. medidores, accesorios, certificados).</p>
+              <p class="text-muted small mb-3">
+                Venta directa de rubros (ej. medidores, accesorios, certificados).
+              </p>
               <button class="btn btn-primary px-4" (click)="openCobroPuntual()">
                 Seleccionar Rubros
               </button>
             </div>
-            
+
             @if (selectedContract && selectedClient) {
               <app-cobro-puntual-modal
                 [open]="isCobroPuntualOpen"
                 [contratoId]="selectedContract.contratoId.toString()"
-                [clienteId]="selectedClient.clienteId ? selectedClient.clienteId.toString() : selectedClient.id?.toString() || ''"
+                [clienteId]="
+                  selectedClient.clienteId
+                    ? selectedClient.clienteId.toString()
+                    : selectedClient.id?.toString() || ''
+                "
                 [fechaPago]="fechaPago"
                 [banco]="bancoSeleccionado"
                 [tarjetaCredito]="tarjetaSeleccionada"
@@ -336,220 +389,211 @@
               />
             }
           }
-          </div>
+        </div>
 
-          <!-- RIGHT COLUMN: Gestión de Cobro -->
-          <div class="col-lg-5" [class.d-none]="pagoMode === 'PUNTUAL'">
-            <!-- 3. Método de Pago -->
-            <div class="mb-3">
-              <span class="form-label d-block fw-semibold text-dark small mb-2">
-                Método de Pago <span class="text-danger">*</span>
-              </span>
-              <div class="row g-2">
-                <div class="col-4">
-                  <button
-                    type="button"
-                    class="pay-method-card w-100 border rounded-3 py-3 d-flex flex-column align-items-center justify-content-center gap-1"
-                    [class.active]="metodoPago === 'EFECTIVO'"
-                    (click)="setMetodoPago('EFECTIVO')"
-                  >
-                    <i class="bi bi-cash-stack fs-4"></i>
-                    <span class="small fw-bold text-uppercase">Efectivo</span>
-                  </button>
-                </div>
-                <div class="col-4">
-                  <button
-                    type="button"
-                    class="pay-method-card w-100 border rounded-3 py-3 d-flex flex-column align-items-center justify-content-center gap-1"
-                    [class.active]="metodoPago === 'TRANSFERENCIA'"
-                    (click)="setMetodoPago('TRANSFERENCIA')"
-                  >
-                    <i class="bi bi-bank fs-4"></i>
-                    <span class="small fw-bold text-uppercase">Transferencia</span>
-                  </button>
-                </div>
-                <div class="col-4">
-                  <button
-                    type="button"
-                    class="pay-method-card w-100 border rounded-3 py-3 d-flex flex-column align-items-center justify-content-center gap-1"
-                    [class.active]="metodoPago === 'TARJETA'"
-                    (click)="setMetodoPago('TARJETA')"
-                  >
-                    <i class="bi bi-credit-card fs-4"></i>
-                    <span class="small fw-bold text-uppercase">Tarjeta</span>
-                  </button>
-                </div>
+        <!-- RIGHT COLUMN: Gestión de Cobro -->
+        <div class="col-lg-5" [class.d-none]="pagoMode === 'PUNTUAL'">
+          <!-- 3. Método de Pago -->
+          <div class="mb-3">
+            <span class="form-label d-block fw-semibold text-dark small mb-2">
+              Método de Pago <span class="text-danger">*</span>
+            </span>
+            <div class="row g-2">
+              <div class="col-4">
+                <button
+                  type="button"
+                  class="pay-method-card w-100 border rounded-3 py-3 d-flex flex-column align-items-center justify-content-center gap-1"
+                  [class.active]="metodoPago === 'EFECTIVO'"
+                  (click)="setMetodoPago('EFECTIVO')"
+                >
+                  <i class="bi bi-cash-stack fs-4"></i>
+                  <span class="small fw-bold text-uppercase">Efectivo</span>
+                </button>
+              </div>
+              <div class="col-4">
+                <button
+                  type="button"
+                  class="pay-method-card w-100 border rounded-3 py-3 d-flex flex-column align-items-center justify-content-center gap-1"
+                  [class.active]="metodoPago === 'TRANSFERENCIA'"
+                  (click)="setMetodoPago('TRANSFERENCIA')"
+                >
+                  <i class="bi bi-bank fs-4"></i>
+                  <span class="small fw-bold text-uppercase">Transferencia</span>
+                </button>
+              </div>
+              <div class="col-4">
+                <button
+                  type="button"
+                  class="pay-method-card w-100 border rounded-3 py-3 d-flex flex-column align-items-center justify-content-center gap-1"
+                  [class.active]="metodoPago === 'TARJETA'"
+                  (click)="setMetodoPago('TARJETA')"
+                >
+                  <i class="bi bi-credit-card fs-4"></i>
+                  <span class="small fw-bold text-uppercase">Tarjeta</span>
+                </button>
               </div>
             </div>
+          </div>
 
-            <!-- Campos condicionales: Transferencia -->
-            @if (metodoPago === 'TRANSFERENCIA') {
-              <div class="row g-2 mb-3">
-                <div class="col-6">
-                  <label for="selectBancoPago" class="form-label fw-semibold text-dark small mb-1">
-                    Banco <span class="text-danger">*</span>
-                  </label>
-                  <select
-                    id="selectBancoPago"
-                    class="form-select form-select-sm shadow-none"
-                    [(ngModel)]="bancoSeleccionado"
-                  >
-                    <option value="">Seleccione banco...</option>
-                    @for (b of banks; track b.codigo) {
-                      <option [value]="b.codigo">{{ b.descripcion }}</option>
-                    }
-                  </select>
-                </div>
-                <div class="col-6">
-                  <label
-                    for="inputNumeroOpTransf"
-                    class="form-label fw-semibold text-dark small mb-1"
-                    >N° Operación / Ref.</label
-                  >
-                  <input
-                    id="inputNumeroOpTransf"
-                    type="text"
-                    class="form-control form-control-sm shadow-none"
-                    placeholder="p. ej. TRX-98745"
-                    [(ngModel)]="numeroOperacion"
-                  />
-                </div>
-              </div>
-            }
-
-            <!-- Campos condicionales: Tarjeta -->
-            @if (metodoPago === 'TARJETA') {
-              <div class="row g-2 mb-3">
-                <div class="col-6">
-                  <label
-                    for="selectTarjetaPago"
-                    class="form-label fw-semibold text-dark small mb-1"
-                  >
-                    Marca de Tarjeta <span class="text-danger">*</span>
-                  </label>
-                  <select
-                    id="selectTarjetaPago"
-                    class="form-select form-select-sm shadow-none"
-                    [(ngModel)]="tarjetaSeleccionada"
-                  >
-                    <option value="">Seleccione marca...</option>
-                    @for (c of cards; track c.codigo) {
-                      <option [value]="c.codigo">{{ c.descripcion }}</option>
-                    }
-                  </select>
-                </div>
-                <div class="col-6">
-                  <label
-                    for="inputNumeroOpTarjeta"
-                    class="form-label fw-semibold text-dark small mb-1"
-                    >N° Autorización / Voucher</label
-                  >
-                  <input
-                    id="inputNumeroOpTarjeta"
-                    type="text"
-                    class="form-control form-control-sm shadow-none"
-                    placeholder="p. ej. VOUCH-1023"
-                    [(ngModel)]="numeroOperacion"
-                  />
-                </div>
-              </div>
-            }
-
-            <!-- 4. Fecha de Pago y Monto -->
+          <!-- Campos condicionales: Transferencia -->
+          @if (metodoPago === 'TRANSFERENCIA') {
             <div class="row g-2 mb-3">
               <div class="col-6">
-                <label for="inputFechaPagoForm" class="form-label fw-semibold text-dark small mb-1">
-                  Fecha de Pago <span class="text-danger">*</span>
+                <label for="selectBancoPago" class="form-label fw-semibold text-dark small mb-1">
+                  Banco <span class="text-danger">*</span>
                 </label>
+                <select
+                  id="selectBancoPago"
+                  class="form-select form-select-sm shadow-none"
+                  [(ngModel)]="bancoSeleccionado"
+                >
+                  <option value="">Seleccione banco...</option>
+                  @for (b of banks; track b.codigo) {
+                    <option [value]="b.codigo">{{ b.descripcion }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-6">
+                <label for="inputNumeroOpTransf" class="form-label fw-semibold text-dark small mb-1"
+                  >N° Operación / Ref.</label
+                >
                 <input
-                  id="inputFechaPagoForm"
-                  type="date"
+                  id="inputNumeroOpTransf"
+                  type="text"
                   class="form-control form-control-sm shadow-none"
-                  [(ngModel)]="fechaPago"
+                  placeholder="p. ej. TRX-98745"
+                  [(ngModel)]="numeroOperacion"
                 />
+              </div>
+            </div>
+          }
+
+          <!-- Campos condicionales: Tarjeta -->
+          @if (metodoPago === 'TARJETA') {
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label for="selectTarjetaPago" class="form-label fw-semibold text-dark small mb-1">
+                  Marca de Tarjeta <span class="text-danger">*</span>
+                </label>
+                <select
+                  id="selectTarjetaPago"
+                  class="form-select form-select-sm shadow-none"
+                  [(ngModel)]="tarjetaSeleccionada"
+                >
+                  <option value="">Seleccione marca...</option>
+                  @for (c of cards; track c.codigo) {
+                    <option [value]="c.codigo">{{ c.descripcion }}</option>
+                  }
+                </select>
               </div>
               <div class="col-6">
                 <label
-                  for="inputMontoRecibidoForm"
+                  for="inputNumeroOpTarjeta"
                   class="form-label fw-semibold text-dark small mb-1"
+                  >N° Autorización / Voucher</label
                 >
-                  Monto Recibido ($) <span class="text-danger">*</span>
-                </label>
-                <div class="input-group input-group-sm">
-                  <span class="input-group-text bg-light fw-bold text-dark">$</span>
-                  <input
-                    id="inputMontoRecibidoForm"
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    class="form-control shadow-none fw-bold text-dark tabular-nums"
-                    placeholder="0.00"
-                    [(ngModel)]="montoRecibido"
-                  />
-                </div>
+                <input
+                  id="inputNumeroOpTarjeta"
+                  type="text"
+                  class="form-control form-control-sm shadow-none"
+                  placeholder="p. ej. VOUCH-1023"
+                  [(ngModel)]="numeroOperacion"
+                />
               </div>
             </div>
+          }
 
-            <!-- 5. Notas -->
-            <div class="mb-1">
-              <label
-                for="textareaObservacionesPago"
-                class="form-label fw-semibold text-dark small mb-1"
-                >Notas</label
-              >
-              <textarea
-                id="textareaObservacionesPago"
+          <!-- 4. Fecha de Pago y Monto -->
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label for="inputFechaPagoForm" class="form-label fw-semibold text-dark small mb-1">
+                Fecha de Pago <span class="text-danger">*</span>
+              </label>
+              <input
+                id="inputFechaPagoForm"
+                type="date"
                 class="form-control form-control-sm shadow-none"
-                rows="2"
-                placeholder="Detalle interno o nota sobre este pago..."
-                [(ngModel)]="observaciones"
-              ></textarea>
+                [(ngModel)]="fechaPago"
+              />
             </div>
+            <div class="col-6">
+              <label
+                for="inputMontoRecibidoForm"
+                class="form-label fw-semibold text-dark small mb-1"
+              >
+                Monto Recibido ($) <span class="text-danger">*</span>
+              </label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light fw-bold text-dark">$</span>
+                <input
+                  id="inputMontoRecibidoForm"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  class="form-control shadow-none fw-bold text-dark tabular-nums"
+                  placeholder="0.00"
+                  [(ngModel)]="montoRecibido"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Notas -->
+          <div class="mb-1">
+            <label
+              for="textareaObservacionesPago"
+              class="form-label fw-semibold text-dark small mb-1"
+              >Notas</label
+            >
+            <textarea
+              id="textareaObservacionesPago"
+              class="form-control form-control-sm shadow-none"
+              rows="2"
+              placeholder="Detalle interno o nota sobre este pago..."
+              [(ngModel)]="observaciones"
+            ></textarea>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Footer -->
-      <div
-        class="card-footer border-top px-4 py-3 bg-white d-flex justify-content-between align-items-center flex-wrap gap-2"
+    <!-- Footer -->
+    <div
+      class="card-footer border-top px-4 py-3 bg-white d-flex justify-content-between align-items-center flex-wrap gap-2"
+    >
+      <button
+        type="button"
+        class="btn btn-outline-secondary fw-medium px-3"
+        (click)="close()"
+        [disabled]="isLoading"
       >
+        Cancelar
+      </button>
+      <div class="d-flex align-items-center gap-2" [class.d-none]="pagoMode === 'PUNTUAL'">
         <button
           type="button"
-          class="btn btn-outline-secondary fw-medium px-3"
-          (click)="close()"
+          class="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="requestAgreement()"
           [disabled]="isLoading"
         >
-          Cancelar
+          <i class="bi bi-handshake"></i>
+          Solicitar Convenio
         </button>
-        <div class="d-flex align-items-center gap-2" [class.d-none]="pagoMode === 'PUNTUAL'">
-          <button
-            type="button"
-            class="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium px-3"
-            (click)="requestAgreement()"
-            [disabled]="isLoading"
-          >
-            <i class="bi bi-handshake"></i>
-            Solicitar Convenio
-          </button>
-          <button
-            type="button"
-            class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-4"
-            (click)="submitPayment()"
-            [disabled]="!isFormValid || isLoading"
-          >
-            @if (isLoading) {
-              <span
-                class="spinner-border spinner-border-sm"
-                role="status"
-                aria-hidden="true"
-              ></span>
-            }
-            @if (!isLoading) {
-              <i class="bi bi-check-circle"></i>
-            }
-            {{ isLoading ? 'Registrando...' : 'Registrar Pago' }}
-          </button>
-        </div>
+        <button
+          type="button"
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-4"
+          (click)="submitPayment()"
+          [disabled]="!isFormValid || isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+          @if (!isLoading) {
+            <i class="bi bi-check-circle"></i>
+          }
+          {{ isLoading ? 'Registrando...' : 'Registrar Pago' }}
+        </button>
       </div>
     </div>
   </div>
+</div>

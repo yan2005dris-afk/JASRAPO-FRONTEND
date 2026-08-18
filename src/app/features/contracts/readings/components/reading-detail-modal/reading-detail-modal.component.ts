@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IReading } from '../../interfaces/ireading.interface';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';

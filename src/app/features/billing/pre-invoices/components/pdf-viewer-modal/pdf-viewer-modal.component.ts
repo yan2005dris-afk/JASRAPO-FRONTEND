@@ -1,9 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  input,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PdfPreviewerComponent } from '../../../../../shared/components/pdf-previewer/pdf-previewer.component';
 import { IPreInvoice } from '../../interfaces/ipre-invoice.interface';

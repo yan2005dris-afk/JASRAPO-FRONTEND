@@ -91,7 +91,6 @@ export class PaymentFormComponent implements OnInit {
     this.loadCatalogs();
   }
 
-
   private loadCatalogs(): void {
     this.paymentsService.getBanks().subscribe({
       next: (b) => {
@@ -156,7 +155,6 @@ export class PaymentFormComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-
   private loadPendingPreInvoices(): void {
     if (!this.selectedContract) return;
     this.isLoadingPreInvoices = true;
@@ -169,7 +167,9 @@ export class PaymentFormComponent implements OnInit {
             (pi) => !NON_COLLECTABLE_STATES.includes(pi.estado),
           );
           // Auto-select all by default
-          this.selectedPreInvoiceIds = new Set(this.pendingPreInvoices.map((pi) => pi.prefacturaId));
+          this.selectedPreInvoiceIds = new Set(
+            this.pendingPreInvoices.map((pi) => pi.prefacturaId),
+          );
           this.isLoadingPreInvoices = false;
           this.cdr.markForCheck();
         },

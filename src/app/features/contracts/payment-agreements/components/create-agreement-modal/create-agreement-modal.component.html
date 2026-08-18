@@ -9,7 +9,9 @@
           </div>
           <div>
             <h5 class="modal-title fw-bold text-dark mb-0 fs-5">Nuevo Convenio de Pago</h5>
-            <p class="text-muted small mb-0">Refinanciamiento y plan de cuotas para contratos con deuda acumulada.</p>
+            <p class="text-muted small mb-0">
+              Refinanciamiento y plan de cuotas para contratos con deuda acumulada.
+            </p>
           </div>
         </div>
         <button
@@ -40,7 +42,7 @@
               [value]="contractSearchQuery"
               [disabled]="isLoading || isSearchingDebt"
               (input)="onContractSearchInput($any($event.target).value)"
-              (focus)="contractSearchResults.length > 0 ? isAutocompleteOpen = true : null"
+              (focus)="contractSearchResults.length > 0 ? (isAutocompleteOpen = true) : null"
               autocomplete="off"
             />
             @if (selectedContract || contractSearchQuery) {
@@ -155,7 +157,10 @@
 
             <!-- Abono Inicial -->
             <div class="col-md-6">
-              <label for="inputAbonoInicialConvenio" class="form-label fw-semibold text-dark small mb-1">
+              <label
+                for="inputAbonoInicialConvenio"
+                class="form-label fw-semibold text-dark small mb-1"
+              >
                 Abono Inicial ($)
               </label>
               <div class="input-group">
@@ -204,10 +209,14 @@
           </div>
 
           <!-- 4. Resumen a Financiar -->
-          <div class="d-flex justify-content-between align-items-center p-2 px-3 rounded-3 bg-light border mb-3">
+          <div
+            class="d-flex justify-content-between align-items-center p-2 px-3 rounded-3 bg-light border mb-3"
+          >
             <div>
               <span class="text-muted small">Total a Financiar: </span>
-              <span class="fw-bold text-primary tabular-nums fs-6">${{ netFinancedDebt | number: '1.2-2' }}</span>
+              <span class="fw-bold text-primary tabular-nums fs-6"
+                >${{ netFinancedDebt | number: '1.2-2' }}</span
+              >
             </div>
             <div>
               <span class="text-muted small">Valor aprox por cuota: </span>
@@ -222,7 +231,10 @@
             <h6 class="fw-bold text-dark small text-uppercase mb-2" style="letter-spacing: 0.5px">
               Tabla de Amortización Estimada
             </h6>
-            <div class="table-responsive rounded-3 border mb-2" style="max-height: 220px; overflow-y: auto">
+            <div
+              class="table-responsive rounded-3 border mb-2"
+              style="max-height: 220px; overflow-y: auto"
+            >
               <table class="table table-sm align-middle mb-0 custom-table">
                 <thead class="bg-light sticky-top">
                   <tr>
@@ -237,8 +249,12 @@
                     <tr>
                       <td class="ps-3 small fw-bold text-dark">Cuota {{ cuota.numeroCuota }}</td>
                       <td class="small text-muted">{{ cuota.fechaVencimiento }}</td>
-                      <td class="text-end small fw-bold text-dark tabular-nums">${{ cuota.valorCuota | number: '1.2-2' }}</td>
-                      <td class="text-end pe-3 small text-muted tabular-nums">${{ cuota.saldoRestante | number: '1.2-2' }}</td>
+                      <td class="text-end small fw-bold text-dark tabular-nums">
+                        ${{ cuota.valorCuota | number: '1.2-2' }}
+                      </td>
+                      <td class="text-end pe-3 small text-muted tabular-nums">
+                        ${{ cuota.saldoRestante | number: '1.2-2' }}
+                      </td>
                     </tr>
                   }
                 </tbody>

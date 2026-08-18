@@ -11,7 +11,9 @@
             <h5 class="modal-title fw-bold text-dark mb-0 fs-5">
               {{ discount() ? 'Editar Descuento' : 'Nuevo Descuento' }}
             </h5>
-            <p class="text-muted small mb-0">Configurá el porcentaje o monto y condiciones de aplicación.</p>
+            <p class="text-muted small mb-0">
+              Configurá el porcentaje o monto y condiciones de aplicación.
+            </p>
           </div>
         </div>
         <button
@@ -45,7 +47,12 @@
           <label for="selectTipoDescuento" class="form-label fw-semibold text-dark small mb-1">
             Categoría / Tipo <span class="text-danger">*</span>
           </label>
-          <select id="selectTipoDescuento" class="form-select shadow-none" [(ngModel)]="tipoDescuento" [disabled]="isLoading">
+          <select
+            id="selectTipoDescuento"
+            class="form-select shadow-none"
+            [(ngModel)]="tipoDescuento"
+            [disabled]="isLoading"
+          >
             @for (opt of tipoOptions; track opt.value) {
               <option [value]="opt.value">{{ opt.label }}</option>
             }
@@ -57,7 +64,12 @@
           <label for="selectRubroDescuento" class="form-label fw-semibold text-dark small mb-1">
             Rubro Asociado <span class="text-muted fw-normal">(Opcional)</span>
           </label>
-          <select id="selectRubroDescuento" class="form-select shadow-none" [(ngModel)]="rubroId" [disabled]="isLoading">
+          <select
+            id="selectRubroDescuento"
+            class="form-select shadow-none"
+            [(ngModel)]="rubroId"
+            [disabled]="isLoading"
+          >
             <option [ngValue]="null">General / Cargo Fijo (Por defecto)</option>
             @for (r of rubros; track r.rubroId) {
               <option [ngValue]="r.rubroId">
@@ -72,7 +84,9 @@
 
         <!-- 3. Tipo de Valor (Segmented Control) -->
         <div class="mb-3">
-          <span class="form-label d-block fw-semibold text-dark small mb-1">Modalidad del Descuento</span>
+          <span class="form-label d-block fw-semibold text-dark small mb-1"
+            >Modalidad del Descuento</span
+          >
           <div class="segmented-control d-flex p-1 rounded-3 bg-light border">
             <button
               type="button"
@@ -114,13 +128,19 @@
             </span>
           </div>
           <div class="text-muted small mt-1" style="font-size: 0.75rem">
-            {{ esPorcentaje ? 'Se descontará el ' + valor + '% del total de la planilla.' : 'Se descontará un monto fijo de $' + valor + '.' }}
+            {{
+              esPorcentaje
+                ? 'Se descontará el ' + valor + '% del total de la planilla.'
+                : 'Se descontará un monto fijo de $' + valor + '.'
+            }}
           </div>
         </div>
 
         <!-- 5. Descripción -->
         <div class="mb-3">
-          <label for="textareaDescDescuento" class="form-label fw-semibold text-dark small mb-1">Descripción</label>
+          <label for="textareaDescDescuento" class="form-label fw-semibold text-dark small mb-1"
+            >Descripción</label
+          >
           <textarea
             id="textareaDescDescuento"
             class="form-control form-control-sm shadow-none"
@@ -132,10 +152,14 @@
         </div>
 
         <!-- 6. Toggles -->
-        <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded-3 bg-light border mb-2">
+        <div
+          class="d-flex align-items-center justify-content-between p-2 px-3 rounded-3 bg-light border mb-2"
+        >
           <div>
             <div class="fw-semibold text-dark small">Aplicación Automática</div>
-            <div class="text-muted" style="font-size: 0.75rem">Se incluirá al emitir el lote para clientes elegibles</div>
+            <div class="text-muted" style="font-size: 0.75rem">
+              Se incluirá al emitir el lote para clientes elegibles
+            </div>
           </div>
           <div class="form-check form-switch mb-0">
             <input

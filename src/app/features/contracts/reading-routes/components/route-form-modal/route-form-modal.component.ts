@@ -86,13 +86,7 @@ export class RouteFormModalComponent implements OnInit {
     const com = this.comunidadId();
     const per = this.periodoId();
     return (
-      n.length >= 3 &&
-      op !== null &&
-      op > 0 &&
-      com !== null &&
-      com > 0 &&
-      per !== null &&
-      per > 0
+      n.length >= 3 && op !== null && op > 0 && com !== null && com > 0 && per !== null && per > 0
     );
   });
 
@@ -108,9 +102,7 @@ export class RouteFormModalComponent implements OnInit {
       this.comunidadId.set(r.comunidadId);
       this.sectorId.set(r.sectorId ?? null);
       this.periodoId.set(r.periodoId ?? null);
-      this.fechaPlanificada.set(
-        r.fechaPlanificada ? r.fechaPlanificada.split('T')[0] : '',
-      );
+      this.fechaPlanificada.set(r.fechaPlanificada ? r.fechaPlanificada.split('T')[0] : '');
     } else {
       this.fechaPlanificada.set(new Date().toISOString().split('T')[0]);
     }
@@ -183,10 +175,7 @@ export class RouteFormModalComponent implements OnInit {
         },
         error: (err) => {
           this.isLoading.set(false);
-          this.toastService.show(
-            err.error?.message || 'Error al actualizar la ruta',
-            'error',
-          );
+          this.toastService.show(err.error?.message || 'Error al actualizar la ruta', 'error');
         },
       });
     } else {
@@ -209,10 +198,7 @@ export class RouteFormModalComponent implements OnInit {
         },
         error: (err) => {
           this.isLoading.set(false);
-          this.toastService.show(
-            err.error?.message || 'Error al crear la ruta',
-            'error',
-          );
+          this.toastService.show(err.error?.message || 'Error al crear la ruta', 'error');
         },
       });
     }

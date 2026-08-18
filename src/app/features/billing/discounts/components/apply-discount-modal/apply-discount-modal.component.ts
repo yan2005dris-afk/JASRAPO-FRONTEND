@@ -95,7 +95,8 @@ export class ApplyDiscountModalComponent {
       catalogoDescuentoId: this.discount().id,
       motivo: this.motivo.trim() || undefined,
       autorizadoPor: this.autorizadoPor.trim() || undefined,
-      montoCustom: this.usarMontoPersonalizado && this.montoCustom ? Number(this.montoCustom) : undefined,
+      montoCustom:
+        this.usarMontoPersonalizado && this.montoCustom ? Number(this.montoCustom) : undefined,
     };
 
     this.isLoading = true;
@@ -104,7 +105,10 @@ export class ApplyDiscountModalComponent {
       .subscribe({
         next: (res) => {
           this.isLoading = false;
-          this.toastService.show(res.message || 'Descuento aplicado correctamente a la prefactura', 'success');
+          this.toastService.show(
+            res.message || 'Descuento aplicado correctamente a la prefactura',
+            'success',
+          );
           this.applied.emit();
         },
         error: (err) => {

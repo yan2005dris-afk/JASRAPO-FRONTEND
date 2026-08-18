@@ -233,21 +233,19 @@ export class AnomalyFormModalComponent implements OnInit {
         observacion: this.observacion.trim() || undefined,
       };
 
-      this.anomaliesService
-        .createAnomaly(createDto, this.selectedFile || undefined)
-        .subscribe({
-          next: () => {
-            this.isLoading = false;
-            this.toastService.show('Anomalía reportada exitosamente', 'success');
-            this.saved.emit();
-          },
-          error: (err) => {
-            this.isLoading = false;
-            const msg = err?.error?.message || 'Error al reportar anomalía';
-            this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
-            this.cdr.markForCheck();
-          },
-        });
+      this.anomaliesService.createAnomaly(createDto, this.selectedFile || undefined).subscribe({
+        next: () => {
+          this.isLoading = false;
+          this.toastService.show('Anomalía reportada exitosamente', 'success');
+          this.saved.emit();
+        },
+        error: (err) => {
+          this.isLoading = false;
+          const msg = err?.error?.message || 'Error al reportar anomalía';
+          this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
+          this.cdr.markForCheck();
+        },
+      });
     }
   }
 

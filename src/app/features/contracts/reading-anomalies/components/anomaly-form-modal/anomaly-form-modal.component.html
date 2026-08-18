@@ -11,7 +11,9 @@
             <h5 class="modal-title fw-bold text-dark mb-0 fs-5">
               {{ anomaly() ? 'Editar Anomalía' : 'Reportar Anomalía de Lectura' }}
             </h5>
-            <p class="text-muted small mb-0">Notificación de incidentes, fugas o inconsistencias en medidores.</p>
+            <p class="text-muted small mb-0">
+              Notificación de incidentes, fugas o inconsistencias en medidores.
+            </p>
           </div>
         </div>
         <button
@@ -28,7 +30,10 @@
         <div class="row g-3">
           <!-- 1. Buscador de Contrato / Guía -->
           <div class="col-12 position-relative">
-            <label for="inputContratoIdAnomalia" class="form-label fw-semibold text-dark small mb-1">
+            <label
+              for="inputContratoIdAnomalia"
+              class="form-label fw-semibold text-dark small mb-1"
+            >
               Contrato / Punto de Medición <span class="text-danger">*</span>
             </label>
             <div class="input-group">
@@ -43,7 +48,9 @@
                 [value]="contractSearchQuery"
                 [disabled]="isLoading || !!anomaly()"
                 (input)="onContractSearchInput($any($event.target).value)"
-                (focus)="contractSearchResults.length > 0 ? isContractAutocompleteOpen = true : null"
+                (focus)="
+                  contractSearchResults.length > 0 ? (isContractAutocompleteOpen = true) : null
+                "
                 autocomplete="off"
               />
               @if ((selectedContract || contractSearchQuery) && !anomaly()) {
@@ -107,16 +114,22 @@
             </div>
           } @else if (selectedContract && contractReadings.length === 0) {
             <div class="col-12">
-              <div class="alert alert-warning py-2 px-3 mb-0 small d-flex align-items-center gap-2 rounded-3">
+              <div
+                class="alert alert-warning py-2 px-3 mb-0 small d-flex align-items-center gap-2 rounded-3"
+              >
                 <i class="bi bi-exclamation-triangle-fill fs-5 text-warning"></i>
                 <div>
-                  <strong>Sin lecturas registradas:</strong> Este contrato aún no tiene mediciones de consumo sobre las cuales reportar una anomalía.
+                  <strong>Sin lecturas registradas:</strong> Este contrato aún no tiene mediciones
+                  de consumo sobre las cuales reportar una anomalía.
                 </div>
               </div>
             </div>
           } @else if (contractReadings.length > 0) {
             <div class="col-md-6">
-              <label for="selectLecturaAnomalia" class="form-label fw-semibold text-dark small mb-1">
+              <label
+                for="selectLecturaAnomalia"
+                class="form-label fw-semibold text-dark small mb-1"
+              >
                 Lectura Afectada <span class="text-danger">*</span>
               </label>
               <select
@@ -127,7 +140,9 @@
               >
                 @for (r of contractReadings; track r.lecturaId) {
                   <option [value]="r.lecturaId">
-                    {{ r.fecha | date: 'dd/MM/yyyy' }} · {{ r.consumoCalculado }} m³ [{{ r.estado }}]
+                    {{ r.fecha | date: 'dd/MM/yyyy' }} · {{ r.consumoCalculado }} m³ [{{
+                      r.estado
+                    }}]
                   </option>
                 }
               </select>
@@ -139,7 +154,12 @@
             <label for="selectTipoAnomalia" class="form-label fw-semibold text-dark small mb-1">
               Tipo de Incidente <span class="text-danger">*</span>
             </label>
-            <select id="selectTipoAnomalia" class="form-select shadow-none" [(ngModel)]="tipo" [disabled]="isLoading">
+            <select
+              id="selectTipoAnomalia"
+              class="form-select shadow-none"
+              [(ngModel)]="tipo"
+              [disabled]="isLoading"
+            >
               @for (opt of tipoOptions; track opt.value) {
                 <option [value]="opt.value">{{ opt.label }}</option>
               }
@@ -148,7 +168,10 @@
 
           <!-- Observación -->
           <div class="col-12">
-            <label for="textareaObservacionAnomalia" class="form-label fw-semibold text-dark small mb-1">
+            <label
+              for="textareaObservacionAnomalia"
+              class="form-label fw-semibold text-dark small mb-1"
+            >
               Descripción de la Anomalía
             </label>
             <textarea
@@ -163,7 +186,9 @@
 
           <!-- Captura de Foto Evidencia -->
           <div class="col-12">
-            <span class="form-label d-block fw-semibold text-dark small mb-1">Foto de Evidencia</span>
+            <span class="form-label d-block fw-semibold text-dark small mb-1"
+              >Foto de Evidencia</span
+            >
             <div class="p-3 border rounded-3 bg-light text-center">
               @if (imagePreviewUrl) {
                 <div class="position-relative d-inline-block">
@@ -186,8 +211,13 @@
               } @else {
                 <div class="py-2">
                   <i class="bi bi-camera fs-2 text-muted mb-2 d-block"></i>
-                  <p class="text-muted small mb-2">Adjuntá una fotografía del daño, fuga o irregularidad</p>
-                  <label for="inputFileFotoAnomalia" class="btn btn-sm btn-outline-primary fw-medium px-3 cursor-pointer">
+                  <p class="text-muted small mb-2">
+                    Adjuntá una fotografía del daño, fuga o irregularidad
+                  </p>
+                  <label
+                    for="inputFileFotoAnomalia"
+                    class="btn btn-sm btn-outline-primary fw-medium px-3 cursor-pointer"
+                  >
                     <i class="bi bi-upload me-1"></i> Adjuntar Foto
                     <input
                       id="inputFileFotoAnomalia"

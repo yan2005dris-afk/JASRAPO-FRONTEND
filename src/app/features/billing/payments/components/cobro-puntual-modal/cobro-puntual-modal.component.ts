@@ -34,7 +34,9 @@ import type {
                   <i class="bi bi-cart-plus text-primary"></i>
                   Cobro Puntual
                 </h5>
-                <p class="text-muted small mb-0 mt-1">Seleccione rubros a cobrar y ajuste cantidades.</p>
+                <p class="text-muted small mb-0 mt-1">
+                  Seleccione rubros a cobrar y ajuste cantidades.
+                </p>
               </div>
               <button
                 type="button"
@@ -51,9 +53,11 @@ import type {
                 <!-- Left: Catalog -->
                 <div class="col-md-5 d-flex flex-column border-end h-100">
                   <h6 class="fw-bold mb-3 text-secondary">Catálogo de Rubros</h6>
-                  
+
                   <div class="input-group mb-3">
-                    <span class="input-group-text bg-white"><i class="bi bi-search text-muted"></i></span>
+                    <span class="input-group-text bg-white"
+                      ><i class="bi bi-search text-muted"></i
+                    ></span>
                     <input
                       type="text"
                       class="form-control shadow-none"
@@ -71,22 +75,35 @@ import type {
                   } @else {
                     <div class="rubros-list flex-grow-1 overflow-auto" style="max-height: 400px;">
                       @for (rubro of rubros(); track rubro.rubroId) {
-                        <div class="card mb-2 rubro-card cursor-pointer border shadow-sm" (click)="addRubro(rubro)">
-                          <div class="card-body p-3 d-flex justify-content-between align-items-center">
+                        <div
+                          class="card mb-2 rubro-card cursor-pointer border shadow-sm"
+                          (click)="addRubro(rubro)"
+                        >
+                          <div
+                            class="card-body p-3 d-flex justify-content-between align-items-center"
+                          >
                             <div>
                               <div class="fw-bold text-dark small mb-1">{{ rubro.nombre }}</div>
-                              <div class="text-muted" style="font-size: 0.75rem;">{{ rubro.descripcion }}</div>
+                              <div class="text-muted" style="font-size: 0.75rem;">
+                                {{ rubro.descripcion }}
+                              </div>
                             </div>
                             <div class="text-end ms-2">
-                              <div class="fw-bold text-primary">{{ rubro.precioUnitario | currency }}</div>
+                              <div class="fw-bold text-primary">
+                                {{ rubro.precioUnitario | currency }}
+                              </div>
                               <span class="badge badge-soft-secondary" style="font-size: 0.65rem">
-                                {{ rubro.tarifaImpuesto ? rubro.tarifaImpuesto.porcentaje + '% IVA' : 'Sin IVA' }}
+                                {{
+                                  rubro.tarifaImpuesto
+                                    ? rubro.tarifaImpuesto.porcentaje + '% IVA'
+                                    : 'Sin IVA'
+                                }}
                               </span>
                             </div>
                           </div>
                         </div>
                       }
-                      
+
                       @if (rubros().length === 0) {
                         <div class="text-center py-4 text-muted small bg-light rounded">
                           No se encontraron rubros.
@@ -99,7 +116,7 @@ import type {
                 <!-- Right: Selected Items -->
                 <div class="col-md-7 d-flex flex-column h-100">
                   <h6 class="fw-bold mb-3 text-secondary">Items a Cobrar</h6>
-                  
+
                   <div class="table-responsive flex-grow-1" style="max-height: 400px;">
                     <table class="table table-sm align-middle" style="font-size: 0.85rem">
                       <thead class="table-light">
@@ -138,7 +155,10 @@ import type {
                             <td class="text-end">{{ item.iva | currency }}</td>
                             <td class="text-end fw-bold">{{ item.total | currency }}</td>
                             <td class="text-center">
-                              <button class="btn btn-sm text-danger shadow-none p-1" (click)="removeItem(idx)">
+                              <button
+                                class="btn btn-sm text-danger shadow-none p-1"
+                                (click)="removeItem(idx)"
+                              >
                                 <i class="bi bi-trash"></i>
                               </button>
                             </td>
@@ -209,22 +229,24 @@ import type {
       </div>
     }
   `,
-  styles: [`
-    .rubro-card {
-      transition: all 0.2s ease-in-out;
-    }
-    .rubro-card:hover {
-      transform: translateY(-2px);
-      border-color: var(--bs-primary) !important;
-    }
-    .cursor-pointer {
-      cursor: pointer;
-    }
-    .badge-soft-secondary {
-      background-color: #f3f4f6;
-      color: #4b5563;
-    }
-  `],
+  styles: [
+    `
+      .rubro-card {
+        transition: all 0.2s ease-in-out;
+      }
+      .rubro-card:hover {
+        transform: translateY(-2px);
+        border-color: var(--bs-primary) !important;
+      }
+      .cursor-pointer {
+        cursor: pointer;
+      }
+      .badge-soft-secondary {
+        background-color: #f3f4f6;
+        color: #4b5563;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CobroPuntualModalComponent {
@@ -275,46 +297,51 @@ export class CobroPuntualModalComponent {
 
   loadRubros(): void {
     this.isSearching.set(true);
-    this.paymentsService.getRubros({ activo: true, search: this.searchTerm(), limit: 50 }).subscribe({
-      next: (res) => {
-        this.rubros.set(res.data);
-        this.isSearching.set(false);
-      },
-      error: () => {
-        this.rubros.set([]);
-        this.isSearching.set(false);
-      }
-    });
+    this.paymentsService
+      .getRubros({ activo: true, search: this.searchTerm(), limit: 50 })
+      .subscribe({
+        next: (res) => {
+          this.rubros.set(res.data);
+          this.isSearching.set(false);
+        },
+        error: () => {
+          this.rubros.set([]);
+          this.isSearching.set(false);
+        },
+      });
   }
 
   addRubro(rubro: IRubro): void {
     const current = this.items();
-    const existingIdx = current.findIndex(i => i.rubroId === rubro.rubroId);
-    
+    const existingIdx = current.findIndex((i) => i.rubroId === rubro.rubroId);
+
     if (existingIdx >= 0) {
       this.updateCantidad(existingIdx, current[existingIdx].cantidad + 1);
     } else {
       const pIva = rubro.tarifaImpuesto ? Number(rubro.tarifaImpuesto.porcentaje) : 0;
       const subtotal = Number(rubro.precioUnitario);
       const iva = (subtotal * pIva) / 100;
-      
-      this.items.update(items => [...items, {
-        rubroId: rubro.rubroId,
-        rubroNombre: rubro.nombre,
-        descripcion: '',
-        cantidad: 1,
-        precioUnitario: Number(rubro.precioUnitario),
-        porcentajeIva: pIva,
-        subtotal,
-        iva,
-        total: subtotal + iva
-      }]);
+
+      this.items.update((items) => [
+        ...items,
+        {
+          rubroId: rubro.rubroId,
+          rubroNombre: rubro.nombre,
+          descripcion: '',
+          cantidad: 1,
+          precioUnitario: Number(rubro.precioUnitario),
+          porcentajeIva: pIva,
+          subtotal,
+          iva,
+          total: subtotal + iva,
+        },
+      ]);
     }
   }
 
   updateCantidad(idx: number, cantidad: number): void {
     if (cantidad < 1) cantidad = 1;
-    this.items.update(items => {
+    this.items.update((items) => {
       const newItems = [...items];
       const item = { ...newItems[idx] };
       item.cantidad = cantidad;
@@ -327,7 +354,7 @@ export class CobroPuntualModalComponent {
   }
 
   updateDescripcion(idx: number, desc: string): void {
-    this.items.update(items => {
+    this.items.update((items) => {
       const newItems = [...items];
       newItems[idx] = { ...newItems[idx], descripcion: desc };
       return newItems;
@@ -335,7 +362,7 @@ export class CobroPuntualModalComponent {
   }
 
   removeItem(idx: number): void {
-    this.items.update(items => items.filter((_, i) => i !== idx));
+    this.items.update((items) => items.filter((_, i) => i !== idx));
   }
 
   cerrar(): void {
@@ -352,16 +379,16 @@ export class CobroPuntualModalComponent {
       clienteId: this.clienteId,
       contratoId: this.contratoId,
       fechaPago: this.fechaPago,
-      items: this.items().map(i => ({
+      items: this.items().map((i) => ({
         rubroId: i.rubroId,
         cantidad: i.cantidad,
-        ...(i.descripcion ? { descripcion: i.descripcion } : {})
+        ...(i.descripcion ? { descripcion: i.descripcion } : {}),
       })),
       montoTotalRecibido: this.total(),
       banco: this.banco,
       tarjetaCredito: this.tarjetaCredito,
       numeroOperacion: this.numeroOperacion,
-      observaciones: this.observaciones
+      observaciones: this.observaciones,
     };
 
     this.paymentsService.createCobroPuntual(dto).subscribe({
@@ -373,7 +400,7 @@ export class CobroPuntualModalComponent {
         this.isSubmitting.set(false);
         const msg = err?.error?.message || 'Error al registrar cobro puntual';
         this.error.set(Array.isArray(msg) ? msg.join(', ') : msg);
-      }
+      },
     });
   }
 }

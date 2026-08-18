@@ -9,11 +9,14 @@
           </div>
           <div>
             <div class="d-flex align-items-center gap-2">
-              <h5 class="modal-title fw-bold text-dark mb-0 fs-5">Lectura #{{ reading().lecturaId }}</h5>
+              <h5 class="modal-title fw-bold text-dark mb-0 fs-5">
+                Lectura #{{ reading().lecturaId }}
+              </h5>
               <app-status-badge [status]="reading().estado" />
             </div>
             <p class="text-muted small mb-0">
-              Contrato #{{ reading().contratoId }} · Guía: {{ reading().contrato?.numeroGuia || '—' }}
+              Contrato #{{ reading().contratoId }} · Guía:
+              {{ reading().contrato?.numeroGuia || '—' }}
             </p>
           </div>
         </div>
@@ -40,16 +43,30 @@
           <div class="col-4">
             <div class="p-3 bg-light rounded-3 border text-center">
               <div class="text-muted small">Lectura Actual</div>
-              <div class="fs-5 fw-bold tabular-nums mt-1" [ngClass]="reading().estado === 'PENDIENTE' ? 'text-muted fst-italic' : 'text-dark'">
-                {{ reading().estado === 'PENDIENTE' ? '—' : ((reading().lecturaActual | number: '1.2-2') + ' m³') }}
+              <div
+                class="fs-5 fw-bold tabular-nums mt-1"
+                [ngClass]="reading().estado === 'PENDIENTE' ? 'text-muted fst-italic' : 'text-dark'"
+              >
+                {{
+                  reading().estado === 'PENDIENTE'
+                    ? '—'
+                    : (reading().lecturaActual | number: '1.2-2') + ' m³'
+                }}
               </div>
             </div>
           </div>
           <div class="col-4">
             <div class="p-3 bg-light rounded-3 border text-center">
               <div class="text-muted small">Consumo Calculado</div>
-              <div class="fs-5 fw-bold tabular-nums mt-1" [ngClass]="reading().estado === 'PENDIENTE' ? 'text-muted' : 'text-primary'">
-                {{ reading().estado === 'PENDIENTE' ? 'Pendiente' : ((reading().consumoCalculado | number: '1.2-2') + ' m³') }}
+              <div
+                class="fs-5 fw-bold tabular-nums mt-1"
+                [ngClass]="reading().estado === 'PENDIENTE' ? 'text-muted' : 'text-primary'"
+              >
+                {{
+                  reading().estado === 'PENDIENTE'
+                    ? 'Pendiente'
+                    : (reading().consumoCalculado | number: '1.2-2') + ' m³'
+                }}
               </div>
             </div>
           </div>
@@ -60,7 +77,8 @@
           <div class="col-6">
             <div class="text-muted small">Medidor Asociado</div>
             <div class="fw-semibold text-dark">
-              {{ reading().medidor?.marca || '' }} {{ reading().medidor?.modelo || '' }} (Serie: {{ reading().medidor?.serie || '—' }})
+              {{ reading().medidor?.marca || '' }} {{ reading().medidor?.modelo || '' }} (Serie:
+              {{ reading().medidor?.serie || '—' }})
             </div>
           </div>
           <div class="col-6">
@@ -69,7 +87,9 @@
           </div>
           <div class="col-6">
             <div class="text-muted small">Período Contable</div>
-            <div class="text-dark small">{{ reading().periodoRel?.nombre || 'Período #' + reading().periodoId }}</div>
+            <div class="text-dark small">
+              {{ reading().periodoRel?.nombre || 'Período #' + reading().periodoId }}
+            </div>
           </div>
           <div class="col-6">
             <div class="text-muted small">Dirección Suministro</div>

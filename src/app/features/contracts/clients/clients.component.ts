@@ -28,7 +28,13 @@ import { TableSkeletonComponent } from '../../../shared/components/table-skeleto
 
 @Component({
   selector: 'app-clients',
-  imports: [CommonModule, FormsModule, ClientsFormComponent, PaginationComponent, TableSkeletonComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ClientsFormComponent,
+    PaginationComponent,
+    TableSkeletonComponent,
+  ],
   templateUrl: './clients.component.html',
   styleUrl: './clients.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

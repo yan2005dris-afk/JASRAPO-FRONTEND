@@ -195,7 +195,10 @@ export class GenerateBatchModalComponent implements OnInit {
     this.batchesService.generateBatch(dto).subscribe({
       next: (res) => {
         this.isLoading.set(false);
-        this.toastService.show(res.message || 'Lote de prefacturas generado exitosamente', 'success');
+        this.toastService.show(
+          res.message || 'Lote de prefacturas generado exitosamente',
+          'success',
+        );
         this.generated.emit();
       },
       error: (err) => {

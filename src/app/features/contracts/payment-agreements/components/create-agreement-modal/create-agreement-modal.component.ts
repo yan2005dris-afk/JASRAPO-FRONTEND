@@ -22,11 +22,7 @@ import type { IContract } from '../../../service-contracts/interfaces/icontract.
 @Component({
   selector: 'app-create-agreement-modal',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    DatePickerComponent,
-  ],
+  imports: [CommonModule, FormsModule, DatePickerComponent],
   templateUrl: './create-agreement-modal.component.html',
   styleUrl: './create-agreement-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -167,7 +163,9 @@ export class CreateAgreementModalComponent implements OnInit {
 
     const cuotasCount = Math.max(1, Math.min(24, this.numeroCuotas));
     const cuotaBase = +(this.netFinancedDebt / cuotasCount).toFixed(2);
-    const startDate = this.fechaPrimerPago ? new Date(this.fechaPrimerPago + 'T00:00:00') : new Date();
+    const startDate = this.fechaPrimerPago
+      ? new Date(this.fechaPrimerPago + 'T00:00:00')
+      : new Date();
 
     const list: ISimulatedInstallment[] = [];
     let currentBalance = this.netFinancedDebt;
@@ -177,7 +175,7 @@ export class CreateAgreementModalComponent implements OnInit {
       dueDate.setMonth(dueDate.getMonth() + (i - 1));
 
       const isLast = i === cuotasCount;
-      const valor = isLast ? +(currentBalance).toFixed(2) : cuotaBase;
+      const valor = isLast ? +currentBalance.toFixed(2) : cuotaBase;
       currentBalance = Math.max(0, +(currentBalance - valor).toFixed(2));
 
       list.push({

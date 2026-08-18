@@ -42,7 +42,11 @@
             [disabled]="isApproving"
           >
             @if (isApproving) {
-              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
             } @else {
               <i class="bi bi-send"></i>
             }
@@ -65,7 +69,11 @@
             [disabled]="isApproving"
           >
             @if (isApproving) {
-              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
             } @else {
               <i class="bi bi-check-circle"></i>
             }
@@ -87,7 +95,9 @@
       <div class="card-header bg-white border-bottom p-4">
         <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
           <div class="d-flex align-items-center gap-3">
-            <div class="pre-invoice-header-icon rounded-3 bg-primary bg-opacity-10 text-primary p-3 d-flex align-items-center justify-content-center">
+            <div
+              class="pre-invoice-header-icon rounded-3 bg-primary bg-opacity-10 text-primary p-3 d-flex align-items-center justify-content-center"
+            >
               <i class="bi bi-file-earmark-text fs-3"></i>
             </div>
             <div>
@@ -146,10 +156,10 @@
                 Deuda Anterior
               </div>
               <div class="fw-semibold text-dark tabular-nums">
-                ${{ (preInvoice.deudaAnterior || 0) | number: '1.2-2' }}
+                ${{ preInvoice.deudaAnterior || 0 | number: '1.2-2' }}
               </div>
               <div class="text-muted" style="font-size: 0.75rem">
-                Saldo actual: ${{ (preInvoice.saldoActual || 0) | number: '1.2-2' }}
+                Saldo actual: ${{ preInvoice.saldoActual || 0 | number: '1.2-2' }}
               </div>
             </div>
           </div>
@@ -183,11 +193,15 @@
           <div class="col-12 col-md-6">
             <div class="text-muted small mb-1">Correo Electrónico</div>
             <div class="text-dark">{{ preInvoice.clienteEmail || 'Sin correo registrado' }}</div>
-            <div class="text-muted" style="font-size: 0.78rem">Tarifa: {{ preInvoice.tarifaNombre || 'Estándar' }}</div>
+            <div class="text-muted" style="font-size: 0.78rem">
+              Tarifa: {{ preInvoice.tarifaNombre || 'Estándar' }}
+            </div>
           </div>
           <div class="col-12 col-md-6">
             <div class="text-muted small mb-1">Dirección</div>
-            <div class="text-dark">{{ preInvoice.clienteDireccion || 'Sin dirección registrada' }}</div>
+            <div class="text-dark">
+              {{ preInvoice.clienteDireccion || 'Sin dirección registrada' }}
+            </div>
           </div>
           <div class="col-6 col-md-3">
             <div class="text-muted small mb-1">Lote de Facturación</div>
@@ -236,8 +250,12 @@
                   <tr>
                     <td class="ps-3 small fw-medium text-dark">{{ item.descripcion }}</td>
                     <td class="text-center small text-muted">{{ item.cantidad }}</td>
-                    <td class="text-end small tabular-nums text-muted">${{ item.precioUnitario | number: '1.2-2' }}</td>
-                    <td class="text-end small tabular-nums text-muted">${{ item.iva | number: '1.2-2' }}</td>
+                    <td class="text-end small tabular-nums text-muted">
+                      ${{ item.precioUnitario | number: '1.2-2' }}
+                    </td>
+                    <td class="text-end small tabular-nums text-muted">
+                      ${{ item.iva | number: '1.2-2' }}
+                    </td>
                     <td class="text-end pe-3 small fw-bold text-dark tabular-nums">
                       ${{ item.total | number: '1.2-2' }}
                     </td>

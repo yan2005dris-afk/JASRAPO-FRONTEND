@@ -7,7 +7,9 @@
       </div>
       <div>
         <h3 class="fw-bold mb-0 text-dark fs-4">Generación de Planillas</h3>
-        <p class="text-muted small mb-0">Emisión masiva de planillas por período y despacho automatizado de correos.</p>
+        <p class="text-muted small mb-0">
+          Emisión masiva de planillas por período y despacho automatizado de correos.
+        </p>
       </div>
     </div>
 
@@ -25,9 +27,14 @@
   <!-- Main Card -->
   <div class="card border-0 shadow-sm rounded-3 mb-4">
     <!-- Header with quick info -->
-    <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div
+      class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
       <div class="d-flex align-items-center gap-2">
-        <span class="text-muted small fw-semibold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px">
+        <span
+          class="text-muted small fw-semibold text-uppercase"
+          style="font-size: 0.75rem; letter-spacing: 0.5px"
+        >
           Historial de Emisiones
         </span>
         <span class="badge badge-soft-info">{{ totalItems }} lotes</span>
@@ -105,7 +112,10 @@
                       <div class="fw-semibold text-dark small">
                         {{ batch.periodoRel?.nombre || 'Período #' + batch.periodoId }}
                       </div>
-                      <span class="badge bg-primary-subtle text-primary border border-primary-subtle small px-2 py-1" style="font-size: 0.75rem">
+                      <span
+                        class="badge bg-primary-subtle text-primary border border-primary-subtle small px-2 py-1"
+                        style="font-size: 0.75rem"
+                      >
                         {{ getBatchMonth(batch) }}
                       </span>
                     </div>
@@ -184,10 +194,7 @@
 
   <!-- MODALS -->
   @if (isGenerateModalOpen) {
-    <app-generate-batch-modal
-      (generated)="onBatchGenerated()"
-      (closed)="closeGenerateModal()"
-    />
+    <app-generate-batch-modal (generated)="onBatchGenerated()" (closed)="closeGenerateModal()" />
   }
 
   @if (selectedEmailBatch) {

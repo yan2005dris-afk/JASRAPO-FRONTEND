@@ -7,7 +7,9 @@
       </div>
       <div>
         <h3 class="fw-bold mb-0 text-dark fs-4">Bandeja de Anomalías</h3>
-        <p class="text-muted small mb-0">Gestión de alertas de fugas, medidores dañados, saltos de lectura y desvíos de consumo.</p>
+        <p class="text-muted small mb-0">
+          Gestión de alertas de fugas, medidores dañados, saltos de lectura y desvíos de consumo.
+        </p>
       </div>
     </div>
 
@@ -122,7 +124,11 @@
             [disabled]="isLoading"
           >
             @if (isLoading) {
-              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
             }
             @if (!isLoading) {
               <i class="bi bi-search"></i>
@@ -203,7 +209,11 @@
                     </div>
                   </td>
                   <td class="text-end small fw-bold text-dark tabular-nums">
-                    {{ anomaly.lectura ? (anomaly.lectura.consumoCalculado | number: '1.2-2') + ' m³' : '—' }}
+                    {{
+                      anomaly.lectura
+                        ? (anomaly.lectura.consumoCalculado | number: '1.2-2') + ' m³'
+                        : '—'
+                    }}
                   </td>
                   <td class="text-center">
                     <app-status-badge [status]="anomaly.estado" />

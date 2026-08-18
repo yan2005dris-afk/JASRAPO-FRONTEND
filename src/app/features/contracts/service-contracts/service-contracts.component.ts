@@ -16,12 +16,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 
 @Component({
   selector: 'app-service-contracts',
-  imports: [
-    FormsModule,
-    ServiceContractFormComponent,
-    PaginationComponent,
-    TableSkeletonComponent,
-  ],
+  imports: [FormsModule, ServiceContractFormComponent, PaginationComponent, TableSkeletonComponent],
   templateUrl: './service-contracts.component.html',
   styleUrl: './service-contracts.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

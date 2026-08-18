@@ -290,17 +290,17 @@ export class ReadingRoutesComponent implements OnInit {
               this.loadRoutes();
             },
             error: (err) => {
-              this.toastService.show(
-                err.error?.message || 'Error al eliminar la ruta',
-                'error',
-              );
+              this.toastService.show(err.error?.message || 'Error al eliminar la ruta', 'error');
             },
           });
         }
       });
   }
 
-  changeRouteStatus(route: IReadingRoute, nuevoEstado: 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA' | 'PENDIENTE'): void {
+  changeRouteStatus(
+    route: IReadingRoute,
+    nuevoEstado: 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA' | 'PENDIENTE',
+  ): void {
     this.openDropdownId = null;
     this.routesService.updateRoute(route.rutaId, { estado: nuevoEstado } as any).subscribe({
       next: (updated) => {

@@ -13,7 +13,10 @@ import { CommonModule } from '@angular/common';
             <tr>
               @for (col of colsArray(); track $index) {
                 <th [class.ps-4]="$first" [class.pe-4]="$last">
-                  <div class="skeleton-shimmer skeleton-header" [style.width]="getHeaderWidth($index)"></div>
+                  <div
+                    class="skeleton-shimmer skeleton-header"
+                    [style.width]="getHeaderWidth($index)"
+                  ></div>
                 </th>
               }
             </tr>
@@ -24,7 +27,10 @@ import { CommonModule } from '@angular/common';
             <tr>
               @for (col of colsArray(); track $index) {
                 <td [class.ps-4]="$first" [class.pe-4]="$last">
-                  <div class="skeleton-shimmer skeleton-cell" [style.width]="getCellWidth($index)"></div>
+                  <div
+                    class="skeleton-shimmer skeleton-cell"
+                    [style.width]="getCellWidth($index)"
+                  ></div>
                 </td>
               }
             </tr>

@@ -29,15 +29,10 @@ export class SystemConfigService {
   }
 
   updateConfig(clave: string, dto: IUpdateSistemaConfigDto): Observable<ISistemaConfig> {
-    return this.http.patch<ISistemaConfig>(
-      `${this.endpoint}/${encodeURIComponent(clave)}`,
-      dto,
-    );
+    return this.http.patch<ISistemaConfig>(`${this.endpoint}/${encodeURIComponent(clave)}`, dto);
   }
 
   deleteConfig(clave: string): Observable<ISistemaConfig> {
-    return this.http.delete<ISistemaConfig>(
-      `${this.endpoint}/${encodeURIComponent(clave)}`,
-    );
+    return this.http.delete<ISistemaConfig>(`${this.endpoint}/${encodeURIComponent(clave)}`);
   }
 }

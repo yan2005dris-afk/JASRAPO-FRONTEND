@@ -17,7 +17,10 @@ import {
 } from '../../interfaces/ireading.interface';
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 import { ContractsService } from '../../../service-contracts/services/contracts.service';
-import type { IContract, IMedidorResumen } from '../../../service-contracts/interfaces/icontract.interface';
+import type {
+  IContract,
+  IMedidorResumen,
+} from '../../../service-contracts/interfaces/icontract.interface';
 import { ReadingRoutesService } from '../../../reading-routes/services/reading-routes.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 
@@ -76,7 +79,10 @@ export class ReadingFormModalComponent implements OnInit {
     const r = this.reading();
     if (r) {
       this.medidorId = String(r.medidor?.medidorId || '');
-      this.fecha = typeof r.fecha === 'string' ? r.fecha.split('T')[0] : new Date(r.fecha).toISOString().split('T')[0];
+      this.fecha =
+        typeof r.fecha === 'string'
+          ? r.fecha.split('T')[0]
+          : new Date(r.fecha).toISOString().split('T')[0];
       this.lecturaAnterior = Number(r.lecturaAnterior);
       this.lecturaActual = Number(r.lecturaActual);
       this.lecturaInicial = r.lecturaInicial;
@@ -84,7 +90,8 @@ export class ReadingFormModalComponent implements OnInit {
       this.descripcionAnomalia = r.descripcionAnomalia || '';
       this.imagePreviewUrl = r.fotoUrl || null;
       if (r.contrato) {
-        this.contractSearchQuery = `${r.contrato.numeroGuia || ''} - Contrato #${r.contrato.contratoId}`.trim();
+        this.contractSearchQuery =
+          `${r.contrato.numeroGuia || ''} - Contrato #${r.contrato.contratoId}`.trim();
       }
       if (r.periodoRel) {
         this.periodSearchQuery = r.periodoRel.nombre || `Período #${r.periodoRel.periodoId}`;
@@ -185,7 +192,9 @@ export class ReadingFormModalComponent implements OnInit {
             if (res.data && res.data.length > 0) {
               const ultimaLectura = res.data[0];
               // La lectura anterior es la lectura actual del mes previo
-              this.lecturaAnterior = Number(ultimaLectura.lecturaActual || ultimaLectura.lecturaAnterior || 0);
+              this.lecturaAnterior = Number(
+                ultimaLectura.lecturaActual || ultimaLectura.lecturaAnterior || 0,
+              );
             } else {
               this.lecturaAnterior = 0;
             }
@@ -218,8 +227,9 @@ export class ReadingFormModalComponent implements OnInit {
     if (!trimmed) {
       this.filteredPeriods = [...this.periods];
     } else {
-      this.filteredPeriods = this.periods.filter((p) =>
-        (p.nombre || '').toLowerCase().includes(trimmed) || String(p.periodoId).includes(trimmed)
+      this.filteredPeriods = this.periods.filter(
+        (p) =>
+          (p.nombre || '').toLowerCase().includes(trimmed) || String(p.periodoId).includes(trimmed),
       );
     }
     this.isPeriodAutocompleteOpen = true;
@@ -318,21 +328,19 @@ export class ReadingFormModalComponent implements OnInit {
         periodoId: Number(this.periodoId),
       };
 
-      this.readingsService
-        .createReading(createDto, this.selectedFile || undefined)
-        .subscribe({
-          next: () => {
-            this.isLoading = false;
-            this.toastService.show('Lectura registrada exitosamente', 'success');
-            this.saved.emit();
-          },
-          error: (err) => {
-            this.isLoading = false;
-            const msg = err?.error?.message || 'Error al registrar lectura';
-            this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
-            this.cdr.markForCheck();
-          },
-        });
+      this.readingsService.createReading(createDto, this.selectedFile || undefined).subscribe({
+        next: () => {
+          this.isLoading = false;
+          this.toastService.show('Lectura registrada exitosamente', 'success');
+          this.saved.emit();
+        },
+        error: (err) => {
+          this.isLoading = false;
+          const msg = err?.error?.message || 'Error al registrar lectura';
+          this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
+          this.cdr.markForCheck();
+        },
+      });
     }
   }
 

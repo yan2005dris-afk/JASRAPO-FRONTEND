@@ -224,4 +224,3 @@ export interface ICreateCobroPuntualDto {
   observaciones?: string;
   referenciaBanco?: string;
 }
-

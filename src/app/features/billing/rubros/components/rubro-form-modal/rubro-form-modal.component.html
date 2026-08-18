@@ -5,7 +5,10 @@
       <!-- Header -->
       <div class="modal-header border-bottom px-4 py-3 bg-light rounded-top-4">
         <div class="d-flex align-items-center gap-3">
-          <div class="modal-header-icon rounded-circle d-flex align-items-center justify-content-center bg-primary-subtle text-primary" style="width: 40px; height: 40px;">
+          <div
+            class="modal-header-icon rounded-circle d-flex align-items-center justify-content-center bg-primary-subtle text-primary"
+            style="width: 40px; height: 40px"
+          >
             <i class="bi bi-box-seam fs-5"></i>
           </div>
           <div>
@@ -13,7 +16,11 @@
               {{ rubro() ? 'Editar Rubro' : 'Nuevo Rubro' }}
             </h5>
             <p class="text-muted small mb-0">
-              {{ rubro() ? 'Modificá las especificaciones y valores del rubro' : 'Registrá un nuevo concepto facturable en el sistema' }}
+              {{
+                rubro()
+                  ? 'Modificá las especificaciones y valores del rubro'
+                  : 'Registrá un nuevo concepto facturable en el sistema'
+              }}
             </p>
           </div>
         </div>
@@ -109,9 +116,7 @@
               >
                 <option [ngValue]="null" disabled>Seleccionar tarifa de impuesto...</option>
                 @for (t of tarifasImpuesto; track t.id) {
-                  <option [ngValue]="t.id">
-                    {{ t.descripcion }} ({{ t.porcentaje }}%)
-                  </option>
+                  <option [ngValue]="t.id">{{ t.descripcion }} ({{ t.porcentaje }}%)</option>
                 }
               </select>
             </div>
@@ -152,7 +157,10 @@
                   name="activo"
                   [disabled]="isLoading"
                 />
-                <label class="form-check-label fw-semibold small text-dark ms-2" for="rubroActivoSwitch">
+                <label
+                  class="form-check-label fw-semibold small text-dark ms-2"
+                  for="rubroActivoSwitch"
+                >
                   Rubro Activo (Disponible para facturación)
                 </label>
               </div>
@@ -162,7 +170,9 @@
               <div class="col-12">
                 <div class="alert alert-info py-2 px-3 d-flex align-items-center gap-2 mb-0 small">
                   <i class="bi bi-info-circle-fill text-info"></i>
-                  <span>Este rubro es del sistema (autogenerado dinámicamente en facturación).</span>
+                  <span
+                    >Este rubro es del sistema (autogenerado dinámicamente en facturación).</span
+                  >
                 </div>
               </div>
             }

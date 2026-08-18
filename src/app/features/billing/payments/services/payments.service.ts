@@ -111,7 +111,9 @@ export class PaymentsService {
     });
   }
 
-  getRubros(params: { search?: string; activo?: boolean; limit?: number } = {}): Observable<IPaginatedResult<IRubro>> {
+  getRubros(
+    params: { search?: string; activo?: boolean; limit?: number } = {},
+  ): Observable<IPaginatedResult<IRubro>> {
     let httpParams = new HttpParams();
     if (params.search) {
       httpParams = httpParams.set('search', params.search);

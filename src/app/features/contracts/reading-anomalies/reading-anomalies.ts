@@ -158,7 +158,9 @@ export class ReadingAnomaliesComponent implements OnInit {
   }
 
   onContractSelected(contract: IContract): void {
-    this.selectedContractNumber = contract.numeroGuia ? `Guía: ${contract.numeroGuia}` : `Contrato #${contract.contratoId}`;
+    this.selectedContractNumber = contract.numeroGuia
+      ? `Guía: ${contract.numeroGuia}`
+      : `Contrato #${contract.contratoId}`;
     this.selectedContractName = ContractPickerComponent.formatClientName(contract.cliente);
     this.isContractPickerOpen = false;
     this.currentPage = 1;

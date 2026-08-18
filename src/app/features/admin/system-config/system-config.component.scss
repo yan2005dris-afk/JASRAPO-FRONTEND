@@ -1,6 +1,10 @@
 .system-config-container {
   .header-card {
-    background: linear-gradient(135deg, rgba(15, 195, 198, 0.06) 0%, rgba(255, 255, 255, 0.95) 100%);
+    background: linear-gradient(
+      135deg,
+      rgba(15, 195, 198, 0.06) 0%,
+      rgba(255, 255, 255, 0.95) 100%
+    );
     border: 1px solid rgba(15, 195, 198, 0.15) !important;
   }
 

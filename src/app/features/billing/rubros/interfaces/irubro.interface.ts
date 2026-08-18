@@ -1,10 +1,4 @@
-export type TipoRubro =
-  | 'FIJO'
-  | 'VARIABLE'
-  | 'MULTA'
-  | 'OTRO'
-  | 'BIEN'
-  | 'SERVICIO';
+export type TipoRubro = 'FIJO' | 'VARIABLE' | 'MULTA' | 'OTRO' | 'BIEN' | 'SERVICIO';
 
 export interface ITarifaImpuesto {
   id: number;

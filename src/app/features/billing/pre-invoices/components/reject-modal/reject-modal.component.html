@@ -30,11 +30,15 @@
           </div>
           <div class="d-flex justify-content-between small mb-1">
             <span class="text-muted">Cliente:</span>
-            <span class="text-dark">{{ preInvoice().clienteNombre || 'Contrato #' + preInvoice().contratoId }}</span>
+            <span class="text-dark">{{
+              preInvoice().clienteNombre || 'Contrato #' + preInvoice().contratoId
+            }}</span>
           </div>
           <div class="d-flex justify-content-between small">
             <span class="text-muted">Total:</span>
-            <span class="fw-bold text-danger">${{ preInvoice().totalPagar | number: '1.2-2' }}</span>
+            <span class="fw-bold text-danger"
+              >${{ preInvoice().totalPagar | number: '1.2-2' }}</span
+            >
           </div>
         </div>
 

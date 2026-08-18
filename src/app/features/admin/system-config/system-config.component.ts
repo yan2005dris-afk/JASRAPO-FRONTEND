@@ -7,7 +7,13 @@ import {
   inject,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  FormsModule,
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators,
+} from '@angular/forms';
 import { SystemConfigService } from './services/system-config.service';
 import { ISistemaConfig } from './interfaces/system-config.interface';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -164,20 +170,18 @@ export class SystemConfigComponent implements OnInit {
   toggleReportStyle(config: ISistemaConfig): void {
     this.closeDropdowns();
     const nextStyle = config.valor === 'modern' ? 'legacy' : 'modern';
-    this.configService
-      .updateConfig(config.clave, { valor: nextStyle })
-      .subscribe({
-        next: (updated) => {
-          config.valor = updated.valor;
-          config.updatedAt = updated.updatedAt;
-          this.toastService.show(`Estilo de reportes cambiado a: ${nextStyle}`, 'success');
-          this.cdr.markForCheck();
-        },
-        error: (err) => {
-          const msg = err?.error?.message || 'Error al actualizar el estilo de reporte';
-          this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
-        },
-      });
+    this.configService.updateConfig(config.clave, { valor: nextStyle }).subscribe({
+      next: (updated) => {
+        config.valor = updated.valor;
+        config.updatedAt = updated.updatedAt;
+        this.toastService.show(`Estilo de reportes cambiado a: ${nextStyle}`, 'success');
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        const msg = err?.error?.message || 'Error al actualizar el estilo de reporte';
+        this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
+      },
+    });
   }
 
   openCreateModal(): void {

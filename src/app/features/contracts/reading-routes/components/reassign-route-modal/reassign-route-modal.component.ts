@@ -61,7 +61,11 @@ export class ReassignRouteModalComponent implements OnInit {
   }
 
   get isValid(): boolean {
-    return !!this.nuevoOperarioId && this.nuevoOperarioId > 0 && this.nuevoOperarioId !== this.route().operarioId;
+    return (
+      !!this.nuevoOperarioId &&
+      this.nuevoOperarioId > 0 &&
+      this.nuevoOperarioId !== this.route().operarioId
+    );
   }
 
   submit(): void {

@@ -1,14 +1,6 @@
-export type TipoAnomalia =
-  | 'FUGA'
-  | 'MEDIDOR_DAÑADO'
-  | 'LECTURA_ERRONEA'
-  | 'OTRO';
+export type TipoAnomalia = 'FUGA' | 'MEDIDOR_DAÑADO' | 'LECTURA_ERRONEA' | 'OTRO';
 
-export type EstadoAnomalia =
-  | 'PENDIENTE'
-  | 'EN_REVISION'
-  | 'RESUELTA'
-  | 'DESCARTADA';
+export type EstadoAnomalia = 'PENDIENTE' | 'EN_REVISION' | 'RESUELTA' | 'DESCARTADA';
 
 export interface IReadingAnomalyReading {
   lecturaId: string;

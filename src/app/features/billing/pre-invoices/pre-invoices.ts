@@ -77,8 +77,8 @@ export class PreInvoicesComponent implements OnInit {
   filterContratoId: number | null = null;
   filterLoteId: number | null = null;
   filterPeriodoId: number | null = null;
-  filterFechaDesde: string = '';
-  filterFechaHasta: string = '';
+  filterFechaDesde = '';
+  filterFechaHasta = '';
   showMoreFilters = false;
 
   // Catalogs

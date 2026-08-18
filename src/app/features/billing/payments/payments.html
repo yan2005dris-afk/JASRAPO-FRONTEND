@@ -7,7 +7,9 @@
       </div>
       <div>
         <h3 class="fw-bold mb-0 text-dark fs-4">Recaudación y Pagos</h3>
-        <p class="text-muted small mb-0">Gestioná los cobros, abonos de clientes y el cuadro diario de caja.</p>
+        <p class="text-muted small mb-0">
+          Gestioná los cobros, abonos de clientes y el cuadro diario de caja.
+        </p>
       </div>
     </div>
 
@@ -25,11 +27,7 @@
   <!-- Navigation Tabs -->
   <ul class="nav nav-pills custom-nav-pills mb-4">
     <li class="nav-item">
-      <button
-        class="nav-link"
-        [class.active]="activeTab === 'list'"
-        (click)="switchTab('list')"
-      >
+      <button class="nav-link" [class.active]="activeTab === 'list'" (click)="switchTab('list')">
         <i class="bi bi-list-columns-reverse me-2"></i> Historial de Pagos
       </button>
     </li>
@@ -50,9 +48,14 @@
       <!-- Filters Toolbar -->
       <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
         <!-- Date Presets -->
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom">
+        <div
+          class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom"
+        >
           <div class="d-flex align-items-center gap-2 flex-wrap">
-            <span class="text-muted small fw-semibold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px">
+            <span
+              class="text-muted small fw-semibold text-uppercase"
+              style="font-size: 0.75rem; letter-spacing: 0.5px"
+            >
               Rango Rápido:
             </span>
             <button
@@ -160,7 +163,11 @@
               [disabled]="isLoading"
             >
               @if (isLoading) {
-                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span
+                  class="spinner-border spinner-border-sm"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
               }
               @if (!isLoading) {
                 <i class="bi bi-search"></i>
@@ -297,7 +304,11 @@
               <!-- Table Footer with Summary -->
               <tfoot class="bg-light border-top">
                 <tr>
-                  <td colspan="5" class="ps-4 text-uppercase fw-semibold text-muted" style="font-size: 0.8rem">
+                  <td
+                    colspan="5"
+                    class="ps-4 text-uppercase fw-semibold text-muted"
+                    style="font-size: 0.8rem"
+                  >
                     Total página actual ({{ payments.length }} pagos)
                   </td>
                   <td class="text-end fw-bold text-dark tabular-nums fs-6">
@@ -332,7 +343,9 @@
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
           <div>
             <h5 class="fw-bold text-dark mb-1">Cuadro de Caja del Día</h5>
-            <p class="text-muted small mb-0">Consultá el consolidado de cobros recaudados en una fecha específica.</p>
+            <p class="text-muted small mb-0">
+              Consultá el consolidado de cobros recaudados en una fecha específica.
+            </p>
           </div>
           <div class="d-flex align-items-center gap-2">
             <label for="dailyCashDateInput" class="text-muted small mb-0 fw-semibold">Fecha:</label>
@@ -350,7 +363,11 @@
               [disabled]="isLoadingDailyCash"
             >
               @if (isLoadingDailyCash) {
-                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span
+                  class="spinner-border spinner-border-sm"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
               }
               @if (!isLoadingDailyCash) {
                 <i class="bi bi-arrow-clockwise"></i>
@@ -375,7 +392,10 @@
           <div class="col-md-6 col-lg-3">
             <div class="card border-0 shadow-sm rounded-3 p-4 bg-white h-100 kpi-card">
               <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.5px">
+                <span
+                  class="text-muted small fw-semibold text-uppercase"
+                  style="letter-spacing: 0.5px"
+                >
                   Total Recaudado
                 </span>
                 <div class="kpi-icon-tile">
@@ -395,7 +415,10 @@
           <div class="col-md-6 col-lg-3">
             <div class="card border-0 shadow-sm rounded-3 p-4 bg-white h-100 kpi-card">
               <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="text-muted small fw-semibold text-uppercase" style="letter-spacing: 0.5px">
+                <span
+                  class="text-muted small fw-semibold text-uppercase"
+                  style="letter-spacing: 0.5px"
+                >
                   Total de Pagos
                 </span>
                 <div class="kpi-icon-tile">
@@ -412,16 +435,23 @@
           <!-- Desglose por Tipo de Detalle -->
           <div class="col-md-6 col-lg-3">
             <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100">
-              <span class="text-muted small fw-semibold text-uppercase mb-2" style="letter-spacing: 0.5px">
+              <span
+                class="text-muted small fw-semibold text-uppercase mb-2"
+                style="letter-spacing: 0.5px"
+              >
                 Por Tipo de Cobro
               </span>
               @if (dailyCashSummary.desglosePorTipoDetalle.length === 0) {
                 <div class="text-muted small py-3">Sin movimientos</div>
               }
               @for (item of dailyCashSummary.desglosePorTipoDetalle; track item.codigo) {
-                <div class="d-flex justify-content-between align-items-center py-1 border-bottom-subtle small">
+                <div
+                  class="d-flex justify-content-between align-items-center py-1 border-bottom-subtle small"
+                >
                   <span class="text-muted">{{ item.codigo }}</span>
-                  <span class="fw-bold text-dark tabular-nums">${{ item.total | number: '1.2-2' }}</span>
+                  <span class="fw-bold text-dark tabular-nums"
+                    >${{ item.total | number: '1.2-2' }}</span
+                  >
                 </div>
               }
             </div>
@@ -430,16 +460,23 @@
           <!-- Desglose por Tipo Comprobante -->
           <div class="col-md-6 col-lg-3">
             <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100">
-              <span class="text-muted small fw-semibold text-uppercase mb-2" style="letter-spacing: 0.5px">
+              <span
+                class="text-muted small fw-semibold text-uppercase mb-2"
+                style="letter-spacing: 0.5px"
+              >
                 Por Comprobante
               </span>
               @if (dailyCashSummary.desglosePorTipoComprobante.length === 0) {
                 <div class="text-muted small py-3">Sin movimientos</div>
               }
               @for (item of dailyCashSummary.desglosePorTipoComprobante; track item.codigo) {
-                <div class="d-flex justify-content-between align-items-center py-1 border-bottom-subtle small">
+                <div
+                  class="d-flex justify-content-between align-items-center py-1 border-bottom-subtle small"
+                >
                   <span class="text-muted">{{ item.codigo }}</span>
-                  <span class="fw-bold text-dark tabular-nums">${{ item.total | number: '1.2-2' }}</span>
+                  <span class="fw-bold text-dark tabular-nums"
+                    >${{ item.total | number: '1.2-2' }}</span
+                  >
                 </div>
               }
             </div>
@@ -455,6 +492,10 @@
   }
 
   @if (selectedPaymentForAnnul) {
-    <app-annul-payment-modal [payment]="selectedPaymentForAnnul" (confirmed)="onPaymentAnnulled()" (closed)="closeAnnulModal()" />
+    <app-annul-payment-modal
+      [payment]="selectedPaymentForAnnul"
+      (confirmed)="onPaymentAnnulled()"
+      (closed)="closeAnnulModal()"
+    />
   }
 </div>

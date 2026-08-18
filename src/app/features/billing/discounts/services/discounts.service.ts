@@ -46,10 +46,12 @@ export class DiscountsService {
     });
   }
 
-  getRubros(): Observable<Array<{ rubroId: number; nombre: string; tipoRubro: string; precioUnitario: any }>> {
-    return this.http.get<Array<{ rubroId: number; nombre: string; tipoRubro: string; precioUnitario: any }>>(
-      `${this.endpoint}/rubros`,
-    );
+  getRubros(): Observable<
+    { rubroId: number; nombre: string; tipoRubro: string; precioUnitario: any }[]
+  > {
+    return this.http.get<
+      { rubroId: number; nombre: string; tipoRubro: string; precioUnitario: any }[]
+    >(`${this.endpoint}/rubros`);
   }
 
   getDiscountById(id: number): Observable<IDiscount> {

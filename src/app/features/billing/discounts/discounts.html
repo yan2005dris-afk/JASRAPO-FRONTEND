@@ -7,7 +7,9 @@
       </div>
       <div>
         <h3 class="fw-bold mb-0 text-dark fs-4">Catálogo de Descuentos</h3>
-        <p class="text-muted small mb-0">Gestioná las exoneraciones, beneficios por ley y deducciones aplicables a prefacturas.</p>
+        <p class="text-muted small mb-0">
+          Gestioná las exoneraciones, beneficios por ley y deducciones aplicables a prefacturas.
+        </p>
       </div>
     </div>
 
@@ -74,7 +76,11 @@
             [disabled]="isLoading"
           >
             @if (isLoading) {
-              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
             }
             @if (!isLoading) {
               <i class="bi bi-search"></i>
@@ -142,7 +148,9 @@
                   <td>
                     <div class="fw-semibold text-dark small">{{ discount.nombre }}</div>
                     @if (discount.descripcion) {
-                      <div class="text-muted" style="font-size: 0.75rem">{{ discount.descripcion }}</div>
+                      <div class="text-muted" style="font-size: 0.75rem">
+                        {{ discount.descripcion }}
+                      </div>
                     }
                   </td>
                   <td>
@@ -160,12 +168,21 @@
                     </span>
                   </td>
                   <td>
-                    <span class="badge" [ngClass]="discount.esPorcentaje ? 'badge-soft-primary' : 'badge-soft-secondary'">
+                    <span
+                      class="badge"
+                      [ngClass]="
+                        discount.esPorcentaje ? 'badge-soft-primary' : 'badge-soft-secondary'
+                      "
+                    >
                       {{ discount.esPorcentaje ? 'Porcentual' : 'Monto Fijo' }}
                     </span>
                   </td>
                   <td class="text-end fw-bold text-dark tabular-nums" style="font-size: 0.95rem">
-                    {{ discount.esPorcentaje ? (discount.valor | number: '1.0-2') + '%' : '$' + (discount.valor | number: '1.2-2') }}
+                    {{
+                      discount.esPorcentaje
+                        ? (discount.valor | number: '1.0-2') + '%'
+                        : '$' + (discount.valor | number: '1.2-2')
+                    }}
                   </td>
                   <td class="text-center">
                     @if (discount.aplicaAutomatico) {
@@ -205,7 +222,10 @@
                             class="dropdown-item d-flex align-items-center gap-2"
                             (click)="openEditModal(discount)"
                           >
-                            <i class="bi bi-pencil-fill text-primary" style="font-size: 0.85rem"></i>
+                            <i
+                              class="bi bi-pencil-fill text-primary"
+                              style="font-size: 0.85rem"
+                            ></i>
                             Editar
                           </button>
                         </li>

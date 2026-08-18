@@ -1,5 +1,8 @@
 <div class="modal fade show d-block picker-modal" tabindex="-1" role="dialog" aria-modal="true">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" style="max-width: 700px">
+  <div
+    class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg"
+    style="max-width: 700px"
+  >
     <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
       <!-- Header -->
       <div class="modal-header border-bottom px-4 py-3 bg-white">
@@ -9,7 +12,9 @@
           </div>
           <div>
             <h5 class="modal-title fw-bold text-dark mb-0 fs-5">Generar Lote de Prefacturas</h5>
-            <p class="text-muted small mb-0">Emisión masiva y cálculo de rubros para el período seleccionado.</p>
+            <p class="text-muted small mb-0">
+              Emisión masiva y cálculo de rubros para el período seleccionado.
+            </p>
           </div>
         </div>
         <button
@@ -27,7 +32,8 @@
         <div class="p-3 bg-light rounded-3 mb-4 border d-flex align-items-start gap-2">
           <i class="bi bi-info-circle-fill text-primary mt-1"></i>
           <div class="small text-muted">
-            El sistema calculará consumos, tarifas y emitirá prefacturas exclusivamente para los contratos que cuenten con <strong>lecturas aprobadas</strong>.
+            El sistema calculará consumos, tarifas y emitirá prefacturas exclusivamente para los
+            contratos que cuenten con <strong>lecturas aprobadas</strong>.
           </div>
         </div>
 
@@ -155,7 +161,9 @@
             </div>
 
             @if (selectedRoute()) {
-              <div class="p-2 mt-2 bg-white rounded-2 border small d-flex align-items-center justify-content-between">
+              <div
+                class="p-2 mt-2 bg-white rounded-2 border small d-flex align-items-center justify-content-between"
+              >
                 <span class="text-dark">
                   Ruta seleccionada: <strong>{{ selectedRoute()?.nombre }}</strong>
                 </span>
@@ -170,10 +178,13 @@
             }
 
             @if (hasPendingRoutes()) {
-              <div class="alert alert-warning py-2 px-3 mt-3 mb-0 small d-flex align-items-center gap-2">
+              <div
+                class="alert alert-warning py-2 px-3 mt-3 mb-0 small d-flex align-items-center gap-2"
+              >
                 <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
                 <div>
-                  Hay rutas que aún están <strong>en progreso o pendientes</strong>. Las prefacturas solo se generarán para los contratos con lecturas aprobadas.
+                  Hay rutas que aún están <strong>en progreso o pendientes</strong>. Las prefacturas
+                  solo se generarán para los contratos con lecturas aprobadas.
                 </div>
               </div>
             }
@@ -183,8 +194,12 @@
         @if (isLoading()) {
           <div class="p-3 rounded-3 bg-light border text-center my-2">
             <div class="spinner-border text-primary spinner-border-sm mb-2" role="status"></div>
-            <div class="small fw-semibold text-dark">Ejecutando cálculo de consumo y prefacturación...</div>
-            <div class="text-muted small" style="font-size: 0.75rem">Esto puede tomar unos segundos. Por favor no cierres la ventana.</div>
+            <div class="small fw-semibold text-dark">
+              Ejecutando cálculo de consumo y prefacturación...
+            </div>
+            <div class="text-muted small" style="font-size: 0.75rem">
+              Esto puede tomar unos segundos. Por favor no cierres la ventana.
+            </div>
           </div>
         }
       </div>
@@ -218,4 +233,3 @@
   </div>
 </div>
 <div class="modal-backdrop fade show"></div>
-

@@ -9,7 +9,11 @@
           </div>
           <div>
             <h5 class="modal-title fw-bold text-dark mb-0 fs-5">Aplicar Descuento</h5>
-            <p class="text-muted small mb-0">{{ discount().nombre }} ({{ discount().esPorcentaje ? discount().valor + '%' : '$' + discount().valor }})</p>
+            <p class="text-muted small mb-0">
+              {{ discount().nombre }} ({{
+                discount().esPorcentaje ? discount().valor + '%' : '$' + discount().valor
+              }})
+            </p>
           </div>
         </div>
         <button
@@ -69,8 +73,15 @@
           <div class="p-3 bg-light rounded-3 mb-3 border">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <div>
-                <span class="fw-bold text-dark small">Prefactura #{{ foundPreInvoice.prefacturaId }}</span>
-                <span class="text-muted small ms-2">· {{ foundPreInvoice.clienteNombre || 'Contrato #' + foundPreInvoice.contratoId }}</span>
+                <span class="fw-bold text-dark small"
+                  >Prefactura #{{ foundPreInvoice.prefacturaId }}</span
+                >
+                <span class="text-muted small ms-2"
+                  >·
+                  {{
+                    foundPreInvoice.clienteNombre || 'Contrato #' + foundPreInvoice.contratoId
+                  }}</span
+                >
               </div>
               <span class="badge badge-soft-info">{{ foundPreInvoice.estado }}</span>
             </div>
@@ -78,15 +89,21 @@
             <div class="row g-2 border-top pt-2 mt-1">
               <div class="col-4">
                 <div class="text-muted" style="font-size: 0.75rem">Total Actual</div>
-                <div class="fw-bold text-dark tabular-nums">${{ foundPreInvoice.totalPagar | number: '1.2-2' }}</div>
+                <div class="fw-bold text-dark tabular-nums">
+                  ${{ foundPreInvoice.totalPagar | number: '1.2-2' }}
+                </div>
               </div>
               <div class="col-4">
                 <div class="text-success" style="font-size: 0.75rem">Descuento</div>
-                <div class="fw-bold text-success tabular-nums">-${{ calculatedDiscount | number: '1.2-2' }}</div>
+                <div class="fw-bold text-success tabular-nums">
+                  -${{ calculatedDiscount | number: '1.2-2' }}
+                </div>
               </div>
               <div class="col-4">
                 <div class="text-primary" style="font-size: 0.75rem">Queda en</div>
-                <div class="fw-bold text-primary tabular-nums fs-6">${{ estimatedTotalPagar | number: '1.2-2' }}</div>
+                <div class="fw-bold text-primary tabular-nums fs-6">
+                  ${{ estimatedTotalPagar | number: '1.2-2' }}
+                </div>
               </div>
             </div>
           </div>
@@ -94,7 +111,9 @@
 
         <!-- 3. Monto Custom Toggle -->
         <div class="mb-3">
-          <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded-3 bg-light border">
+          <div
+            class="d-flex align-items-center justify-content-between p-2 px-3 rounded-3 bg-light border"
+          >
             <div class="small fw-semibold text-dark">Personalizar Monto del Descuento</div>
             <div class="form-check form-switch mb-0">
               <input
@@ -109,7 +128,10 @@
 
           @if (usarMontoPersonalizado) {
             <div class="mt-2">
-              <label for="inputMontoCustomDescuento" class="form-label fw-semibold text-dark small mb-1">
+              <label
+                for="inputMontoCustomDescuento"
+                class="form-label fw-semibold text-dark small mb-1"
+              >
                 Monto Personalizado ($) <span class="text-danger">*</span>
               </label>
               <div class="input-group">
@@ -132,7 +154,9 @@
         <!-- 4. Motivo y Autorizado por -->
         <div class="row g-2 mb-2">
           <div class="col-6">
-            <label for="inputAutorizadoPorDesc" class="form-label fw-semibold text-dark small mb-1">Autorizado por</label>
+            <label for="inputAutorizadoPorDesc" class="form-label fw-semibold text-dark small mb-1"
+              >Autorizado por</label
+            >
             <input
               id="inputAutorizadoPorDesc"
               type="text"
@@ -143,7 +167,9 @@
             />
           </div>
           <div class="col-6">
-            <label for="inputMotivoDesc" class="form-label fw-semibold text-dark small mb-1">Motivo / Justificación</label>
+            <label for="inputMotivoDesc" class="form-label fw-semibold text-dark small mb-1"
+              >Motivo / Justificación</label
+            >
             <input
               id="inputMotivoDesc"
               type="text"

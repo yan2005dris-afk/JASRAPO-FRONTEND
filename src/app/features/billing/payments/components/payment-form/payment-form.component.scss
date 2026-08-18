@@ -154,14 +154,14 @@
   button {
     transition: all 0.2s;
     font-size: 0.85rem;
-    
+
     &.btn-primary {
       background-color: #0c9ea1;
       border-color: #0c9ea1;
       color: white;
       box-shadow: 0 2px 4px rgba(12, 158, 161, 0.2);
     }
-    
+
     &.text-muted {
       background-color: transparent;
       &:hover {
@@ -171,4 +171,3 @@
     }
   }
 }
-

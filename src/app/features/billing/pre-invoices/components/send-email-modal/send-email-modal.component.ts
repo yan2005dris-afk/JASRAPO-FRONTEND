@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-  input,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PreInvoicesService } from '../../services/pre-invoices.service';
@@ -48,7 +41,10 @@ export class SendEmailModalComponent implements OnInit {
     this.preInvoicesService.sendPreInvoiceEmail(this.preInvoice().prefacturaId).subscribe({
       next: (res) => {
         this.isLoading = false;
-        this.toastService.show(res.message || 'Planilla enviada por correo exitosamente', 'success');
+        this.toastService.show(
+          res.message || 'Planilla enviada por correo exitosamente',
+          'success',
+        );
         this.sent.emit();
       },
       error: (err) => {

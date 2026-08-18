@@ -7,7 +7,9 @@
       </div>
       <div>
         <h3 class="fw-bold mb-0 text-dark fs-4">Catálogo de Rubros y Tarifas</h3>
-        <p class="text-muted small mb-0">Administrá los conceptos facturables, precios unitarios y tarifas de impuestos asociadas.</p>
+        <p class="text-muted small mb-0">
+          Administrá los conceptos facturables, precios unitarios y tarifas de impuestos asociadas.
+        </p>
       </div>
     </div>
 
@@ -99,7 +101,11 @@
             [disabled]="isLoading"
           >
             @if (isLoading) {
-              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
             }
             @if (!isLoading) {
               <i class="bi bi-search"></i>
@@ -176,7 +182,9 @@
                   <td>
                     <div class="fw-semibold text-dark small">{{ rubro.nombre }}</div>
                     @if (rubro.descripcion) {
-                      <div class="text-muted" style="font-size: 0.78rem">{{ rubro.descripcion }}</div>
+                      <div class="text-muted" style="font-size: 0.78rem">
+                        {{ rubro.descripcion }}
+                      </div>
                     }
                   </td>
                   <td>
@@ -186,11 +194,15 @@
                   </td>
                   <td>
                     @if (rubro.esAutomatico) {
-                      <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-1">
+                      <span
+                        class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-1"
+                      >
                         <i class="bi bi-gear-fill me-1"></i>Automático
                       </span>
                     } @else {
-                      <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle px-2 py-1">
+                      <span
+                        class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle px-2 py-1"
+                      >
                         <i class="bi bi-person me-1"></i>Manual
                       </span>
                     }
@@ -198,7 +210,9 @@
                   <td>
                     @if (rubro.tarifaImpuesto) {
                       <span class="badge badge-soft-primary">
-                        {{ rubro.tarifaImpuesto.descripcion }} ({{ rubro.tarifaImpuesto.porcentaje }}%)
+                        {{ rubro.tarifaImpuesto.descripcion }} ({{
+                          rubro.tarifaImpuesto.porcentaje
+                        }}%)
                       </span>
                     } @else {
                       <span class="text-muted small">Tarifa #{{ rubro.tarifaImpuestoId }}</span>
@@ -233,7 +247,10 @@
                             class="dropdown-item d-flex align-items-center gap-2"
                             (click)="openEditModal(rubro)"
                           >
-                            <i class="bi bi-pencil-fill text-primary" style="font-size: 0.85rem"></i>
+                            <i
+                              class="bi bi-pencil-fill text-primary"
+                              style="font-size: 0.85rem"
+                            ></i>
                             Editar
                           </button>
                         </li>
@@ -244,7 +261,11 @@
                             (click)="toggleRubroStatus(rubro)"
                           >
                             <i
-                              [class]="rubro.activo ? 'bi bi-toggle-on text-warning' : 'bi bi-toggle-off text-success'"
+                              [class]="
+                                rubro.activo
+                                  ? 'bi bi-toggle-on text-warning'
+                                  : 'bi bi-toggle-off text-success'
+                              "
                               style="font-size: 0.95rem"
                             ></i>
                             {{ rubro.activo ? 'Desactivar' : 'Activar' }}

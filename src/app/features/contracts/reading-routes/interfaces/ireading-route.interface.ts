@@ -1,8 +1,4 @@
-export type TipoRuta =
-  | 'TOMA_LECTURA'
-  | 'RECONEXION'
-  | 'INSTALACION'
-  | 'INSPECCION';
+export type TipoRuta = 'TOMA_LECTURA' | 'RECONEXION' | 'INSTALACION' | 'INSPECCION';
 
 export interface IReadingForRoute {
   lecturaId: string | number;

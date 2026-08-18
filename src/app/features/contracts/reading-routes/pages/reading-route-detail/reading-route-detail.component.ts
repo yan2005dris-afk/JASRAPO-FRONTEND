@@ -353,7 +353,9 @@ export class ReadingRouteDetailComponent implements OnInit {
       });
   }
 
-  async updateRouteStatus(nuevoEstado: 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA'): Promise<void> {
+  async updateRouteStatus(
+    nuevoEstado: 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA',
+  ): Promise<void> {
     if (!this.readingRoute) return;
 
     this.dialogService
@@ -370,19 +372,21 @@ export class ReadingRouteDetailComponent implements OnInit {
         this.isChangingStatus = true;
         this.cdr.markForCheck();
 
-        this.routesService.updateRoute(this.readingRoute!.rutaId, { estado: nuevoEstado as any }).subscribe({
-          next: (updated) => {
-            this.readingRoute = { ...this.readingRoute!, ...updated };
-            this.isChangingStatus = false;
-            this.toastService.success(`Ruta actualizada a ${nuevoEstado}`);
-            this.cdr.markForCheck();
-          },
-          error: () => {
-            this.isChangingStatus = false;
-            this.toastService.error('No se pudo actualizar el estado de la ruta');
-            this.cdr.markForCheck();
-          },
-        });
+        this.routesService
+          .updateRoute(this.readingRoute!.rutaId, { estado: nuevoEstado as any })
+          .subscribe({
+            next: (updated) => {
+              this.readingRoute = { ...this.readingRoute!, ...updated };
+              this.isChangingStatus = false;
+              this.toastService.success(`Ruta actualizada a ${nuevoEstado}`);
+              this.cdr.markForCheck();
+            },
+            error: () => {
+              this.isChangingStatus = false;
+              this.toastService.error('No se pudo actualizar el estado de la ruta');
+              this.cdr.markForCheck();
+            },
+          });
       });
   }
 

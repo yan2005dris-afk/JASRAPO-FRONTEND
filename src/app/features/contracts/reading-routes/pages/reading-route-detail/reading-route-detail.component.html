@@ -10,9 +10,7 @@
         <span>Volver a Rutas</span>
       </a>
       <span class="text-muted">/</span>
-      <span class="text-dark fw-semibold small">
-        Detalle de Ruta #{{ routeId }}
-      </span>
+      <span class="text-dark fw-semibold small"> Detalle de Ruta #{{ routeId }} </span>
     </div>
 
     <!-- Status Action Controls -->
@@ -66,7 +64,9 @@
       <div class="card-header bg-white border-bottom p-4">
         <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
           <div class="d-flex align-items-center gap-3">
-            <div class="route-header-icon rounded-3 bg-primary bg-opacity-10 text-primary p-3 d-flex align-items-center justify-content-center">
+            <div
+              class="route-header-icon rounded-3 bg-primary bg-opacity-10 text-primary p-3 d-flex align-items-center justify-content-center"
+            >
               <i class="bi bi-map fs-3"></i>
             </div>
             <div>
@@ -98,7 +98,9 @@
                 {{ getComunidadNombre(readingRoute.comunidadId) }}
               </div>
               <div class="text-muted" style="font-size: 0.75rem">
-                {{ readingRoute.sectorId ? 'Sector #' + readingRoute.sectorId : 'Toda la comunidad' }}
+                {{
+                  readingRoute.sectorId ? 'Sector #' + readingRoute.sectorId : 'Toda la comunidad'
+                }}
               </div>
             </div>
           </div>
@@ -200,7 +202,11 @@
                 [disabled]="isBulkApproving"
               >
                 @if (isBulkApproving) {
-                  <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  <span
+                    class="spinner-border spinner-border-sm"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
                 } @else {
                   <i class="bi bi-check-all fs-5"></i>
                 }
@@ -260,7 +266,9 @@
                       </span>
                     </td>
                     <td class="text-end text-dark font-monospace tabular-nums">
-                      {{ r.lecturaAnterior != null ? (r.lecturaAnterior | number: '1.2-2') : '0.00' }}
+                      {{
+                        r.lecturaAnterior != null ? (r.lecturaAnterior | number: '1.2-2') : '0.00'
+                      }}
                     </td>
                     <td class="text-end fw-semibold font-monospace tabular-nums">
                       @if (r.estadoLectura === 'PENDIENTE' || r.lecturaActual == null) {
@@ -285,7 +293,10 @@
                     </td>
                     <td class="text-center pe-4 text-nowrap">
                       @if (processingReadingId === r.lecturaId) {
-                        <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+                        <span
+                          class="spinner-border spinner-border-sm text-primary"
+                          role="status"
+                        ></span>
                       } @else {
                         <div class="dropdown">
                           <button
@@ -317,7 +328,10 @@
                                 class="dropdown-item d-flex align-items-center gap-2 text-warning"
                                 (click)="openAnomalyModal(r)"
                               >
-                                <i class="bi bi-exclamation-triangle-fill" style="font-size: 0.85rem"></i>
+                                <i
+                                  class="bi bi-exclamation-triangle-fill"
+                                  style="font-size: 0.85rem"
+                                ></i>
                                 Reportar novedad
                               </button>
                             </li>

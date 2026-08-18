@@ -9,10 +9,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ReadingsService } from './services/readings.service';
-import {
-  IReading,
-  IReadingFilterParams,
-} from './interfaces/ireading.interface';
+import { IReading, IReadingFilterParams } from './interfaces/ireading.interface';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
@@ -119,7 +116,9 @@ export class ReadingsComponent implements OnInit {
 
   onContractSelected(contract: IContract): void {
     this.filterContratoId = contract.contratoId;
-    this.selectedContractNumber = contract.numeroGuia ? `Guía: ${contract.numeroGuia}` : `Contrato #${contract.contratoId}`;
+    this.selectedContractNumber = contract.numeroGuia
+      ? `Guía: ${contract.numeroGuia}`
+      : `Contrato #${contract.contratoId}`;
     this.selectedContractName = ContractPickerComponent.formatClientName(contract.cliente);
     this.isContractPickerOpen = false;
     this.currentPage = 1;
@@ -218,18 +217,16 @@ export class ReadingsComponent implements OnInit {
 
   approveReading(reading: IReading): void {
     this.openDropdownId = null;
-    this.readingsService
-      .updateReading(reading.lecturaId, { estado: 'APROBADA' })
-      .subscribe({
-        next: () => {
-          this.toastService.show('Lectura aprobada exitosamente', 'success');
-          this.loadReadings();
-        },
-        error: (err) => {
-          const msg = err?.error?.message || 'Error al aprobar la lectura';
-          this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
-        },
-      });
+    this.readingsService.updateReading(reading.lecturaId, { estado: 'APROBADA' }).subscribe({
+      next: () => {
+        this.toastService.show('Lectura aprobada exitosamente', 'success');
+        this.loadReadings();
+      },
+      error: (err) => {
+        const msg = err?.error?.message || 'Error al aprobar la lectura';
+        this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
+      },
+    });
   }
 
   deleteReading(reading: IReading): void {

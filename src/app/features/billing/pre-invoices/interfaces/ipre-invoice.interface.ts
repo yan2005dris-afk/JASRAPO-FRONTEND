@@ -6,11 +6,7 @@ export type PreInvoiceState =
   | 'ANULADA'
   | 'PAGADA';
 
-export type PreInvoiceStateAction =
-  | 'APROBADA'
-  | 'RECHAZADA'
-  | 'EN_REVISION'
-  | 'ANULADA';
+export type PreInvoiceStateAction = 'APROBADA' | 'RECHAZADA' | 'EN_REVISION' | 'ANULADA';
 
 export interface IPreInvoiceStateOption {
   codigo: string;

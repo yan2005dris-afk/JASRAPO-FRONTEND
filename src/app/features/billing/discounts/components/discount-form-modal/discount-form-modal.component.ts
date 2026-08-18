@@ -44,7 +44,7 @@ export class DiscountFormModalComponent implements OnInit {
   aplicaAutomatico = false;
   activo = true;
   isLoading = false;
-  rubros: Array<{ rubroId: number; nombre: string; tipoRubro: string; precioUnitario: any }> = [];
+  rubros: { rubroId: number; nombre: string; tipoRubro: string; precioUnitario: any }[] = [];
 
   readonly tipoOptions: { value: TipoDescuento; label: string }[] = [
     { value: 'TERCERA_EDAD', label: 'Tercera Edad' },

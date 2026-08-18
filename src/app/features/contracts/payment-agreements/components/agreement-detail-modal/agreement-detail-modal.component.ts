@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  input,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PaymentAgreementsService } from '../../services/payment-agreements.service';
 import { IAgreement, IInstallment } from '../../interfaces/ipayment-agreement.interface';
@@ -34,9 +28,8 @@ export class AgreementDetailModalComponent {
 
   get paidInstallmentsCount(): number {
     if (!this.agreement().cuotas) return 0;
-    return this.agreement().cuotas!.filter(
-      (c) => c.estado?.codigo === 'PAGADA' || c.pagoCompleto,
-    ).length;
+    return this.agreement().cuotas!.filter((c) => c.estado?.codigo === 'PAGADA' || c.pagoCompleto)
+      .length;
   }
 
   get totalInstallmentsCount(): number {

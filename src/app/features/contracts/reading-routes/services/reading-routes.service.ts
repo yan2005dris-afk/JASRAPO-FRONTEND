@@ -74,7 +74,9 @@ export class ReadingRoutesService {
     return this.http.delete<IReadingRoute>(`${this.endpoint}/${id}`);
   }
 
-  getEligibleReadings(params?: IFilterReadingsParams): Observable<IPaginatedResult<IReadingForRoute>> {
+  getEligibleReadings(
+    params?: IFilterReadingsParams,
+  ): Observable<IPaginatedResult<IReadingForRoute>> {
     let httpParams = new HttpParams();
 
     if (params?.page !== undefined) {
@@ -102,10 +104,9 @@ export class ReadingRoutesService {
       httpParams = httpParams.set('search', params.search);
     }
 
-    return this.http.get<IPaginatedResult<IReadingForRoute>>(
-      `${this.endpoint}/eligible-readings`,
-      { params: httpParams },
-    );
+    return this.http.get<IPaginatedResult<IReadingForRoute>>(`${this.endpoint}/eligible-readings`, {
+      params: httpParams,
+    });
   }
 
   updateReadingStatus(

@@ -157,15 +157,13 @@ export class BatchDetailComponent implements OnInit {
 
   get selectedPendingCount(): number {
     return this.prefacturas.filter(
-      (pf) =>
-        this.selectedIds.has(pf.prefacturaId) && pf.estado === 'EN_REVISION',
+      (pf) => this.selectedIds.has(pf.prefacturaId) && pf.estado === 'EN_REVISION',
     ).length;
   }
 
   get selectedGeneratedCount(): number {
     return this.prefacturas.filter(
-      (pf) =>
-        this.selectedIds.has(pf.prefacturaId) && pf.estado === 'GENERADA',
+      (pf) => this.selectedIds.has(pf.prefacturaId) && pf.estado === 'GENERADA',
     ).length;
   }
 
@@ -390,9 +388,7 @@ export class BatchDetailComponent implements OnInit {
   }
 
   approveAllPending(): void {
-    const pendingList = this.prefacturas.filter(
-      (pf) => pf.estado === 'EN_REVISION',
-    );
+    const pendingList = this.prefacturas.filter((pf) => pf.estado === 'EN_REVISION');
     if (pendingList.length === 0 || this.isBulkApproving) return;
 
     this.dialogService

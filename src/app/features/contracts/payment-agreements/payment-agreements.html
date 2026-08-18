@@ -7,7 +7,9 @@
       </div>
       <div>
         <h3 class="fw-bold mb-0 text-dark fs-4">Convenios de Pago</h3>
-        <p class="text-muted small mb-0">Gestión de refinanciamiento, acuerdos de amortización y seguimiento de cuotas morosas.</p>
+        <p class="text-muted small mb-0">
+          Gestión de refinanciamiento, acuerdos de amortización y seguimiento de cuotas morosas.
+        </p>
       </div>
     </div>
 
@@ -65,7 +67,11 @@
             [disabled]="isLoading"
           >
             @if (isLoading) {
-              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
             }
             @if (!isLoading) {
               <i class="bi bi-search"></i>
@@ -136,7 +142,9 @@
                     <div class="text-muted" style="font-size: 0.75rem">{{ ag.fechaCreacion }}</div>
                   </td>
                   <td>
-                    <div class="fw-semibold text-dark small">{{ ag.clienteNombre || 'Cliente Contrato #' + ag.contratoId }}</div>
+                    <div class="fw-semibold text-dark small">
+                      {{ ag.clienteNombre || 'Cliente Contrato #' + ag.contratoId }}
+                    </div>
                     <div class="text-muted" style="font-size: 0.75rem">
                       CI: {{ ag.clienteIdentificacion || '—' }} · Contrato #{{ ag.contratoId }}
                     </div>
@@ -146,10 +154,16 @@
                   </td>
                   <td>
                     <div class="d-flex justify-content-between align-items-center mb-1">
-                      <span class="badge bg-light text-dark border fw-medium" style="font-size: 0.75rem">
+                      <span
+                        class="badge bg-light text-dark border fw-medium"
+                        style="font-size: 0.75rem"
+                      >
                         {{ getPaidInstallmentsCount(ag) }}/{{ ag.numeroCuotas }} cuotas
                       </span>
-                      <span class="text-dark fw-semibold small tabular-nums" style="font-size: 0.75rem">
+                      <span
+                        class="text-dark fw-semibold small tabular-nums"
+                        style="font-size: 0.75rem"
+                      >
                         {{ getProgressPercentage(ag) }}%
                       </span>
                     </div>
@@ -168,7 +182,7 @@
                     ${{ ag.montoPagadoActual | number: '1.2-2' }}
                   </td>
                   <td class="text-end small fw-bold text-primary tabular-nums">
-                    ${{ (ag.deudaTotal - ag.montoPagadoActual) | number: '1.2-2' }}
+                    ${{ ag.deudaTotal - ag.montoPagadoActual | number: '1.2-2' }}
                   </td>
                   <td class="text-center">
                     <app-status-badge [status]="ag.estado.codigo || 'ACTIVO'" />
@@ -201,7 +215,10 @@
                             class="dropdown-item d-flex align-items-center gap-2"
                             (click)="downloadPdf(ag)"
                           >
-                            <i class="bi bi-file-earmark-pdf text-primary" style="font-size: 0.85rem"></i>
+                            <i
+                              class="bi bi-file-earmark-pdf text-primary"
+                              style="font-size: 0.85rem"
+                            ></i>
                             Descargar Acta PDF
                           </button>
                         </li>
@@ -230,10 +247,7 @@
 
   <!-- MODALS -->
   @if (isCreateModalOpen) {
-    <app-create-agreement-modal
-      (created)="onAgreementCreated()"
-      (closed)="closeCreateModal()"
-    />
+    <app-create-agreement-modal (created)="onAgreementCreated()" (closed)="closeCreateModal()" />
   }
 
   @if (selectedDetailAgreement) {

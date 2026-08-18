@@ -1,9 +1,19 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { ContractsService } from '../../../features/contracts/service-contracts/services/contracts.service';
-import type { IContract, ISearchContractsParams } from '../../../features/contracts/service-contracts/interfaces/icontract.interface';
-
+import type {
+  IContract,
+  ISearchContractsParams,
+} from '../../../features/contracts/service-contracts/interfaces/icontract.interface';
 
 @Component({
   selector: 'app-contract-picker',

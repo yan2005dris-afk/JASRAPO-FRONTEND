@@ -260,9 +260,9 @@ export const routes: Routes = [
             path: 'RutasDeLectura/:id',
             data: { breadcrumb: 'Detalle de Ruta' },
             loadComponent: () =>
-              import(
-                './features/contracts/reading-routes/pages/reading-route-detail/reading-route-detail.component'
-              ).then((m) => m.ReadingRouteDetailComponent),
+              import('./features/contracts/reading-routes/pages/reading-route-detail/reading-route-detail.component').then(
+                (m) => m.ReadingRouteDetailComponent,
+              ),
           },
           {
             path: 'LecturaDeConsumo',
@@ -306,9 +306,7 @@ export const routes: Routes = [
             path: 'EnvioDeFacturacion',
             data: { breadcrumb: 'Generación de Planillas' },
             loadComponent: () =>
-              import('./features/billing/batches/batches').then(
-                (m) => m.BatchesComponent,
-              ),
+              import('./features/billing/batches/batches').then((m) => m.BatchesComponent),
           },
           {
             path: 'EnvioDeFacturacion/:id',
@@ -338,9 +336,9 @@ export const routes: Routes = [
             path: 'GeneracionPlanilla/:id',
             data: { breadcrumb: 'Detalle de Prefactura' },
             loadComponent: () =>
-              import(
-                './features/billing/pre-invoices/pages/pre-invoice-detail/pre-invoice-detail.component'
-              ).then((m) => m.PreInvoiceDetailComponent),
+              import('./features/billing/pre-invoices/pages/pre-invoice-detail/pre-invoice-detail.component').then(
+                (m) => m.PreInvoiceDetailComponent,
+              ),
           },
           {
             path: 'NotasDeCreditoDebito',
@@ -360,25 +358,21 @@ export const routes: Routes = [
             path: 'RecaudacionYPagos/RegistrarPago',
             data: { breadcrumb: 'Registrar Pago' },
             loadComponent: () =>
-              import(
-                './features/billing/payments/components/payment-form/payment-form.component'
-              ).then((m) => m.PaymentFormComponent),
+              import('./features/billing/payments/components/payment-form/payment-form.component').then(
+                (m) => m.PaymentFormComponent,
+              ),
           },
           {
             path: 'Descuentos',
             data: { breadcrumb: 'Descuentos y Beneficios' },
             loadComponent: () =>
-              import('./features/billing/discounts/discounts').then(
-                (m) => m.DiscountsComponent,
-              ),
+              import('./features/billing/discounts/discounts').then((m) => m.DiscountsComponent),
           },
           {
             path: 'Rubros',
             data: { breadcrumb: 'Rubros y Tarifas' },
             loadComponent: () =>
-              import('./features/billing/rubros/rubros.component').then(
-                (m) => m.RubrosComponent,
-              ),
+              import('./features/billing/rubros/rubros.component').then((m) => m.RubrosComponent),
           },
         ],
       },

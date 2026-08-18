@@ -243,7 +243,10 @@ export class RubrosComponent implements OnInit {
           this.rubrosService.updateRubro(rubro.rubroId, { activo: newStatus }).subscribe({
             next: () => {
               this.isLoading = false;
-              this.toastService.show(`Rubro ${newStatus ? 'activado' : 'desactivado'} exitosamente`, 'success');
+              this.toastService.show(
+                `Rubro ${newStatus ? 'activado' : 'desactivado'} exitosamente`,
+                'success',
+              );
               this.loadRubros();
             },
             error: (err) => {

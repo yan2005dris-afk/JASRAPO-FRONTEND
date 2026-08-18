@@ -8,10 +8,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PaymentAgreementsService } from './services/payment-agreements.service';
-import {
-  IAgreement,
-  IFindAllAgreementsParams,
-} from './interfaces/ipayment-agreement.interface';
+import { IAgreement, IFindAllAgreementsParams } from './interfaces/ipayment-agreement.interface';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
@@ -169,9 +166,7 @@ export class PaymentAgreementsComponent implements OnInit {
 
   getPaidInstallmentsCount(agreement: IAgreement): number {
     if (!agreement.cuotas) return 0;
-    return agreement.cuotas.filter(
-      (c) => c.estado?.codigo === 'PAGADA' || c.pagoCompleto,
-    ).length;
+    return agreement.cuotas.filter((c) => c.estado?.codigo === 'PAGADA' || c.pagoCompleto).length;
   }
 
   // Modals

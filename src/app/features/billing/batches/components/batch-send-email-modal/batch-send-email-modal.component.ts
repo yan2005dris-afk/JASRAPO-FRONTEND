@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  input,
-  output,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BatchesService } from '../../services/batches.service';
 import { IBatch } from '../../interfaces/ibatch.interface';
@@ -35,7 +29,10 @@ export class BatchSendEmailModalComponent {
     this.batchesService.sendBatchEmails(this.batch().loteId).subscribe({
       next: (res) => {
         this.isLoading = false;
-        this.toastService.show(res.message || 'Envío masivo de planillas encolado exitosamente', 'success');
+        this.toastService.show(
+          res.message || 'Envío masivo de planillas encolado exitosamente',
+          'success',
+        );
         this.sent.emit();
       },
       error: (err) => {

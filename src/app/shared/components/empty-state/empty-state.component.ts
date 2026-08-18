@@ -13,7 +13,10 @@ import { CommonModule } from '@angular/common';
       <h5 class="fw-semibold text-dark mb-1">{{ title() }}</h5>
       <p class="text-muted small mb-3 max-w-sm mx-auto">{{ description() }}</p>
       @if (actionLabel()) {
-        <button class="btn btn-primary d-inline-flex align-items-center gap-2 fw-medium px-3" (click)="actionClicked.emit()">
+        <button
+          class="btn btn-primary d-inline-flex align-items-center gap-2 fw-medium px-3"
+          (click)="actionClicked.emit()"
+        >
           @if (actionIcon()) {
             <i [class]="actionIcon()"></i>
           }

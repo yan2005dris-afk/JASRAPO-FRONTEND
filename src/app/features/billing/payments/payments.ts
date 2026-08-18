@@ -173,20 +173,18 @@ export class PaymentsComponent implements OnInit {
 
   loadDailyCash(): void {
     this.isLoadingDailyCash = true;
-    this.paymentsService
-      .getDailyCashSummary({ fecha: this.dailyCashDate })
-      .subscribe({
-        next: (summary) => {
-          this.dailyCashSummary = summary;
-          this.isLoadingDailyCash = false;
-          this.cdr.markForCheck();
-        },
-        error: () => {
-          this.dailyCashSummary = null;
-          this.isLoadingDailyCash = false;
-          this.cdr.markForCheck();
-        },
-      });
+    this.paymentsService.getDailyCashSummary({ fecha: this.dailyCashDate }).subscribe({
+      next: (summary) => {
+        this.dailyCashSummary = summary;
+        this.isLoadingDailyCash = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.dailyCashSummary = null;
+        this.isLoadingDailyCash = false;
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   switchTab(tab: ActiveTab): void {

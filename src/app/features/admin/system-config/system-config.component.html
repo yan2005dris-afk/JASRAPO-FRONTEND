@@ -2,7 +2,9 @@
   <!-- Header Page Card -->
   <div class="card border-0 shadow-sm rounded-4 mb-4 header-card">
     <div class="card-body p-4">
-      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div
+        class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3"
+      >
         <div>
           <div class="d-flex align-items-center gap-2 mb-1">
             <span class="badge bg-primary-subtle text-primary fw-medium px-2 py-1 rounded-pill">
@@ -42,7 +44,9 @@
   <div class="card border-0 shadow-sm rounded-4 mb-4">
     <!-- Toolbar -->
     <div class="card-header bg-white border-0 pt-4 pb-3 px-4">
-      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <div
+        class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3"
+      >
         <!-- Search Input -->
         <div class="input-group search-group" style="max-width: 380px">
           <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
@@ -109,7 +113,9 @@
                 <th class="py-3 fw-semibold text-muted" style="min-width: 220px">Valor Actual</th>
                 <th class="py-3 fw-semibold text-muted">Descripción</th>
                 <th class="py-3 fw-semibold text-muted text-nowrap">Última Actualización</th>
-                <th class="py-3 fw-semibold text-muted text-center pe-4" style="width: 80px">Acciones</th>
+                <th class="py-3 fw-semibold text-muted text-center pe-4" style="width: 80px">
+                  Acciones
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -136,7 +142,9 @@
                       <div class="d-flex align-items-center gap-2">
                         <span
                           class="badge"
-                          [ngClass]="c.valor === 'modern' ? 'badge-soft-success' : 'badge-soft-secondary'"
+                          [ngClass]="
+                            c.valor === 'modern' ? 'badge-soft-success' : 'badge-soft-secondary'
+                          "
                         >
                           <i
                             class="bi me-1"
@@ -155,7 +163,9 @@
                         </button>
                       </div>
                     } @else {
-                      <span class="font-monospace text-primary fw-semibold bg-light px-2 py-1 rounded border">
+                      <span
+                        class="font-monospace text-primary fw-semibold bg-light px-2 py-1 rounded border"
+                      >
                         {{ c.valor }}
                       </span>
                     }
@@ -239,10 +249,20 @@
         <!-- Modal Header -->
         <div class="modal-header border-bottom px-4 py-3 bg-light">
           <h5 class="modal-title fw-bold text-dark mb-0 d-flex align-items-center gap-2">
-            <i class="bi" [ngClass]="isEditing ? 'bi-pencil-square text-primary' : 'bi-plus-circle text-primary'"></i>
+            <i
+              class="bi"
+              [ngClass]="
+                isEditing ? 'bi-pencil-square text-primary' : 'bi-plus-circle text-primary'
+              "
+            ></i>
             {{ isEditing ? 'Editar Configuración' : 'Nueva Configuración' }}
           </h5>
-          <button type="button" class="btn-close" (click)="closeModal()" aria-label="Close"></button>
+          <button
+            type="button"
+            class="btn-close"
+            (click)="closeModal()"
+            aria-label="Close"
+          ></button>
         </div>
 
         <!-- Modal Body -->
@@ -258,7 +278,9 @@
                 class="form-control"
                 placeholder="ej: reporte.estilo, NOTIFICACIONES_ENABLED"
                 formControlName="clave"
-                [class.is-invalid]="configForm.get('clave')?.invalid && configForm.get('clave')?.touched"
+                [class.is-invalid]="
+                  configForm.get('clave')?.invalid && configForm.get('clave')?.touched
+                "
               />
               @if (configForm.get('clave')?.invalid && configForm.get('clave')?.touched) {
                 <div class="invalid-feedback">
@@ -277,20 +299,18 @@
                 class="form-control"
                 placeholder="ej: modern, 3600000, true"
                 formControlName="valor"
-                [class.is-invalid]="configForm.get('valor')?.invalid && configForm.get('valor')?.touched"
+                [class.is-invalid]="
+                  configForm.get('valor')?.invalid && configForm.get('valor')?.touched
+                "
               />
               @if (configForm.get('valor')?.invalid && configForm.get('valor')?.touched) {
-                <div class="invalid-feedback">
-                  El valor es requerido.
-                </div>
+                <div class="invalid-feedback">El valor es requerido.</div>
               }
             </div>
 
             <!-- Descripción -->
             <div class="mb-3">
-              <label class="form-label fw-semibold text-dark small mb-1">
-                Descripción
-              </label>
+              <label class="form-label fw-semibold text-dark small mb-1"> Descripción </label>
               <textarea
                 class="form-control"
                 rows="3"

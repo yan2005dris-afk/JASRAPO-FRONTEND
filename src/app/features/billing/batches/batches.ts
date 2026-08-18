@@ -70,8 +70,7 @@ export class BatchesComponent implements OnInit {
 
   isAllSelected(): boolean {
     return (
-      this.batches.length > 0 &&
-      this.batches.every((b) => this.selectedBatchIds.has(b.loteId))
+      this.batches.length > 0 && this.batches.every((b) => this.selectedBatchIds.has(b.loteId))
     );
   }
 
@@ -80,12 +79,23 @@ export class BatchesComponent implements OnInit {
   }
 
   private readonly monthNames = [
-    'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-    'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
   ];
 
   getBatchMonth(batch: IBatch): string {
-    const year = batch.periodoRel?.nombre || (batch.createdAt ? new Date(batch.createdAt).getFullYear() : '');
+    const year =
+      batch.periodoRel?.nombre || (batch.createdAt ? new Date(batch.createdAt).getFullYear() : '');
     if (batch.mes && batch.mes >= 1 && batch.mes <= 12) {
       const monthName = this.monthNames[batch.mes - 1];
       return `${monthName} ${year}`.trim();
@@ -132,24 +142,22 @@ export class BatchesComponent implements OnInit {
     this.isLoading = true;
     this.openDropdownId = null;
 
-    this.batchesService
-      .getBatches({ page: this.currentPage, limit: this.pageSize })
-      .subscribe({
-        next: (res) => {
-          this.batches = res.data;
-          this.totalItems = res.meta?.totalItems ?? res.data.length;
-          this.isLoading = false;
-          this.hasFetched = true;
-          this.cdr.markForCheck();
-        },
-        error: () => {
-          this.batches = [];
-          this.totalItems = 0;
-          this.isLoading = false;
-          this.hasFetched = true;
-          this.cdr.markForCheck();
-        },
-      });
+    this.batchesService.getBatches({ page: this.currentPage, limit: this.pageSize }).subscribe({
+      next: (res) => {
+        this.batches = res.data;
+        this.totalItems = res.meta?.totalItems ?? res.data.length;
+        this.isLoading = false;
+        this.hasFetched = true;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.batches = [];
+        this.totalItems = 0;
+        this.isLoading = false;
+        this.hasFetched = true;
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   onPageChange(page: number): void {
