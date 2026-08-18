@@ -31,11 +31,21 @@ interface MorosoItem {
 }
 
 interface OverdueAccountsData {
+  data?: MorosoItem[];
+  meta?: {
+    total?: number;
+    fechaCorte?: string;
+  };
+  kpis?: {
+    totalMorosidad?: string;
+    totalMorosos?: number;
+    mayorDeuda?: string;
+  };
+  // Fallbacks para compatibilidad
   morosos?: MorosoItem[];
   totalMorosos?: number;
   totalMorosidad?: string;
   mayorDeuda?: string;
-  fechaCorte?: string;
   [key: string]: unknown;
 }
 
@@ -82,7 +92,8 @@ export class OverdueAccountsComponent implements OnInit {
   }
 
   readonly filteredMorosos = computed(() => {
-    const list = this.reportData()?.morosos ?? [];
+    const data = this.reportData();
+    const list = data?.data ?? data?.morosos ?? [];
     const term = this.searchTermTable().trim().toLowerCase();
     if (!term) return list;
 
@@ -105,15 +116,18 @@ export class OverdueAccountsComponent implements OnInit {
   });
 
   readonly totalMorosidad = computed(() => {
-    return this.reportData()?.totalMorosidad ?? '0.00';
+    const d = this.reportData();
+    return d?.kpis?.totalMorosidad ?? d?.totalMorosidad ?? '0.00';
   });
 
   readonly totalMorososCount = computed(() => {
-    return this.reportData()?.totalMorosos ?? 0;
+    const d = this.reportData();
+    return d?.kpis?.totalMorosos ?? d?.meta?.total ?? d?.totalMorosos ?? 0;
   });
 
   readonly mayorDeuda = computed(() => {
-    return this.reportData()?.mayorDeuda ?? '0.00';
+    const d = this.reportData();
+    return d?.kpis?.mayorDeuda ?? d?.mayorDeuda ?? '0.00';
   });
 
   // ---------- Buscador modal de clientes ----------
