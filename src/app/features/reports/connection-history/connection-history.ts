@@ -10,6 +10,39 @@ import { ReportsService } from '../services/reports.service';
 import type { IContract } from '../../contracts/service-contracts/interfaces/icontract.interface';
 
 type DatePreset = 'currentMonth' | 'lastMonth' | 'last3Months' | 'lastYear';
+type ReportView = 'table' | 'pdf';
+
+interface ConnectionHistoryPrefactura {
+  periodoRel?: {
+    nombre?: string;
+    fechaInicio?: string;
+    fechaFin?: string;
+  };
+  lecturaAnterior?: number | string;
+  lecturaActual?: number | string;
+  consumoM3?: number | string;
+  totalPagar?: number | string;
+  abono?: number | string;
+  saldoActual?: number | string;
+  contrato?: {
+    cliente?: {
+      nombres?: string;
+      apellidos?: string;
+      razonSocial?: string;
+    };
+    historialMedidores?: Array<{
+      medidor?: { serie?: string };
+    }>;
+  };
+}
+
+interface ConnectionHistoryData {
+  contratoId?: string;
+  prefacturas?: ConnectionHistoryPrefactura[];
+  fechaDesde?: string | null;
+  fechaHasta?: string | null;
+  [key: string]: unknown;
+}
 
 @Component({
   selector: 'app-connection-history',
@@ -28,8 +61,15 @@ export class ConnectionHistoryComponent {
   readonly fechaDesde = signal('');
   readonly fechaHasta = signal('');
 
+  // Vista activa: tabla o PDF
+  readonly activeView = signal<ReportView>('table');
+
   // Resultados
+  readonly reportData = signal<ConnectionHistoryData | null>(null);
   readonly pdfBlob = signal<Blob | null>(null);
+
+  // Estados de carga
+  readonly isLoadingData = signal(false);
   readonly isLoadingPdf = signal(false);
 
   // Envío por email
@@ -53,6 +93,50 @@ export class ConnectionHistoryComponent {
   readonly esEmailInvalido = computed(() => {
     const email = this.destinatario().trim();
     return email === '' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  });
+
+  readonly tableRows = computed(() => {
+    const data = this.reportData();
+    if (!data?.prefacturas) return [];
+
+    return data.prefacturas.map((pf) => {
+      const emision = pf.periodoRel?.nombre ?? '—';
+      const lectActual = Number(pf.lecturaActual ?? 0).toFixed(0);
+      const lectAnterior = Number(pf.lecturaAnterior ?? 0).toFixed(0);
+      const consumo = Number(pf.consumoM3 ?? 0).toFixed(0);
+      const valEmision = Number(pf.totalPagar ?? 0).toFixed(2);
+      const abonos = Number(pf.abono ?? 0).toFixed(2);
+      const saldo = Number(pf.saldoActual ?? 0).toFixed(2);
+
+      return {
+        emision,
+        lectAnterior,
+        lectActual,
+        consumo,
+        valEmision,
+        abonos,
+        saldo,
+        saldoNum: Number(pf.saldoActual ?? 0),
+      };
+    });
+  });
+
+  readonly totalValEmision = computed(() => {
+    const pfs = this.reportData()?.prefacturas ?? [];
+    const sum = pfs.reduce((s, pf) => s + Number(pf.totalPagar ?? 0), 0);
+    return sum.toFixed(2);
+  });
+
+  readonly totalAbonos = computed(() => {
+    const pfs = this.reportData()?.prefacturas ?? [];
+    const sum = pfs.reduce((s, pf) => s + Number(pf.abono ?? 0), 0);
+    return sum.toFixed(2);
+  });
+
+  readonly saldoFinal = computed(() => {
+    const pfs = this.reportData()?.prefacturas ?? [];
+    if (pfs.length === 0) return '0.00';
+    return Number(pfs[pfs.length - 1]?.saldoActual ?? 0).toFixed(2);
   });
 
   private buildFilters(): IConnectionHistoryFilters | null {
@@ -79,11 +163,9 @@ export class ConnectionHistoryComponent {
 
     switch (preset) {
       case 'currentMonth':
-        // Primer día del mes actual hasta hoy
         desde.setDate(1);
         break;
       case 'lastMonth':
-        // Todo el mes anterior
         desde.setMonth(desde.getMonth() - 1, 1);
         hasta.setDate(0);
         break;
@@ -124,18 +206,46 @@ export class ConnectionHistoryComponent {
     this.isContractPickerOpen.set(false);
   }
 
-  // ---------- Envío por email (modal) ----------
+  // ---------- Consultar (carga JSON -> tabla) ----------
 
-  abrirModalEmail(): void {
-    this.isEmailModalOpen.set(true);
-  }
-
-  cerrarModalEmail(): void {
-    if (this.isSendingEmail()) {
+  consultar(): void {
+    const filters = this.buildFilters();
+    if (!filters) {
+      this.toast.error('Seleccione un contrato para consultar el historial', 'Error');
       return;
     }
-    this.isEmailModalOpen.set(false);
+    if (this.rangoFechaInvalido()) return;
+
+    this.reportData.set(null);
+    this.pdfBlob.set(null);
+    this.activeView.set('table');
+
+    this.isLoadingData.set(true);
+    this.reportsService.getConnectionHistory(filters).subscribe({
+      next: (data) => {
+        this.reportData.set(data as unknown as ConnectionHistoryData);
+        this.isLoadingData.set(false);
+      },
+      error: (err) => {
+        this.isLoadingData.set(false);
+        this.toast.error(
+          this.getErrorMessage(err, 'No se pudieron cargar los datos del historial de conexión'),
+          'Error',
+        );
+      },
+    });
   }
+
+  // ---------- Toggle de vista ----------
+
+  setView(view: ReportView): void {
+    this.activeView.set(view);
+    if (view === 'pdf' && !this.pdfBlob()) {
+      this.generarPdf();
+    }
+  }
+
+  // ---------- Generar PDF ----------
 
   generarPdf(): void {
     const filters = this.buildFilters();
@@ -149,16 +259,42 @@ export class ConnectionHistoryComponent {
       next: (blob) => {
         this.pdfBlob.set(blob);
         this.isLoadingPdf.set(false);
-        this.toast.success('PDF generado correctamente', 'Éxito');
       },
       error: (err) => {
         this.isLoadingPdf.set(false);
+        this.activeView.set('table');
         this.toast.error(
           this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'),
           'Error',
         );
       },
     });
+  }
+
+  // ---------- Descargar PDF ----------
+
+  descargarPdf(): void {
+    const blob = this.pdfBlob();
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `historial-conexion-${this.selectedContractNumber() || this.contratoId()}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ---------- Envío por email (modal) ----------
+
+  abrirModalEmail(): void {
+    this.isEmailModalOpen.set(true);
+  }
+
+  cerrarModalEmail(): void {
+    if (this.isSendingEmail()) {
+      return;
+    }
+    this.isEmailModalOpen.set(false);
   }
 
   enviarEmail(): void {
@@ -198,10 +334,12 @@ export class ConnectionHistoryComponent {
     this.selectedContractNumber.set('');
     this.fechaDesde.set('');
     this.fechaHasta.set('');
+    this.reportData.set(null);
     this.pdfBlob.set(null);
     this.selectedContractName.set('');
     this.destinatario.set('');
     this.subject.set('');
+    this.activeView.set('table');
   }
 
   private getErrorMessage(err: unknown, fallback: string): string {

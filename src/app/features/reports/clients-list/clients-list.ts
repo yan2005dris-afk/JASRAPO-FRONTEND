@@ -16,6 +16,27 @@ import { IClientsListFilters, ISendClientsListEmailBody } from '../interfaces/ir
 import { ReportsService } from '../services/reports.service';
 
 type DatePreset = 'currentYear' | 'currentMonth' | 'lastMonth' | 'last3Months';
+type ReportView = 'table' | 'pdf';
+
+interface ClientItem {
+  clienteId?: number | string;
+  nombres?: string;
+  apellidos?: string;
+  razonSocial?: string;
+  identificacion?: string;
+  email?: string;
+  telefonoPrincipal?: string;
+  direccionPrincipal?: string;
+  activo?: boolean;
+  createdAt?: string;
+}
+
+interface ClientsListData {
+  clientes?: ClientItem[];
+  fecha?: string;
+  filtrosAplicados?: string;
+  [key: string]: unknown;
+}
 
 @Component({
   selector: 'app-clients-list',
@@ -29,13 +50,20 @@ export class ClientsListComponent implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
 
-  // Filtros del listado de clientes: rango de ingreso + estado
+  // Filtros del listado de clientes
   readonly fechaDesde = signal('');
   readonly fechaHasta = signal('');
   readonly activo = signal('');
 
+  // Vista activa: tabla o PDF
+  readonly activeView = signal<ReportView>('table');
+
   // Resultados
+  readonly reportData = signal<ClientsListData | null>(null);
   readonly pdfBlob = signal<Blob | null>(null);
+
+  // Estados de carga
+  readonly isLoadingData = signal(false);
   readonly isLoadingPdf = signal(false);
 
   // Envío por email (modal)
@@ -45,7 +73,6 @@ export class ClientsListComponent implements OnInit {
   readonly isEmailModalOpen = signal(false);
 
   ngOnInit(): void {
-    // Precarga los filtros cuando se navega desde Gestión de Clientes (Exportar PDF).
     this.route.queryParams.subscribe((params) => {
       this.fechaDesde.set(params['fechaDesde'] ?? '');
       this.fechaHasta.set(params['fechaHasta'] ?? '');
@@ -62,6 +89,45 @@ export class ClientsListComponent implements OnInit {
   readonly esEmailInvalido = computed(() => {
     const email = this.destinatario().trim();
     return email === '' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  });
+
+  readonly tableRows = computed(() => {
+    const data = this.reportData();
+    if (!data?.clientes) return [];
+
+    return data.clientes.map((c) => {
+      const nombre = [c.nombres, c.apellidos].filter(Boolean).join(' ') || c.razonSocial || '—';
+      const fechaIngreso = c.createdAt
+        ? new Date(c.createdAt).toLocaleDateString('es-EC', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+          })
+        : '—';
+
+      return {
+        clienteId: c.clienteId,
+        nombre,
+        identificacion: c.identificacion || '—',
+        email: c.email || '—',
+        telefono: c.telefonoPrincipal || '—',
+        direccion: c.direccionPrincipal || '—',
+        activo: c.activo !== false,
+        fechaIngreso,
+      };
+    });
+  });
+
+  readonly totalClientes = computed(() => {
+    return this.reportData()?.clientes?.length ?? 0;
+  });
+
+  readonly totalActivos = computed(() => {
+    return (this.reportData()?.clientes ?? []).filter((c) => c.activo !== false).length;
+  });
+
+  readonly totalInactivos = computed(() => {
+    return (this.reportData()?.clientes ?? []).filter((c) => c.activo === false).length;
   });
 
   private buildFilters(): IClientsListFilters {
@@ -86,15 +152,12 @@ export class ClientsListComponent implements OnInit {
 
     switch (preset) {
       case 'currentYear':
-        // Primer día del año actual hasta hoy
         desde.setMonth(0, 1);
         break;
       case 'currentMonth':
-        // Primer día del mes actual hasta hoy
         desde.setDate(1);
         break;
       case 'lastMonth':
-        // Todo el mes anterior
         desde.setMonth(desde.getMonth() - 1, 1);
         hasta.setDate(0);
         break;
@@ -114,22 +177,71 @@ export class ClientsListComponent implements OnInit {
     return `${year}-${month}-${day}`;
   }
 
+  // ---------- Consultar (carga JSON -> tabla) ----------
+
+  consultar(): void {
+    if (this.rangoFechaInvalido()) return;
+
+    this.reportData.set(null);
+    this.pdfBlob.set(null);
+    this.activeView.set('table');
+
+    this.isLoadingData.set(true);
+    this.reportsService.getClientsList(this.buildFilters()).subscribe({
+      next: (data) => {
+        this.reportData.set(data as unknown as ClientsListData);
+        this.isLoadingData.set(false);
+      },
+      error: (err) => {
+        this.isLoadingData.set(false);
+        this.toast.error(
+          this.getErrorMessage(err, 'No se pudieron cargar los datos de clientes'),
+          'Error',
+        );
+      },
+    });
+  }
+
+  // ---------- Toggle de vista ----------
+
+  setView(view: ReportView): void {
+    this.activeView.set(view);
+    if (view === 'pdf' && !this.pdfBlob()) {
+      this.generarPdf();
+    }
+  }
+
+  // ---------- Generar PDF ----------
+
   generarPdf(): void {
     this.isLoadingPdf.set(true);
     this.reportsService.getClientsListPdf(this.buildFilters()).subscribe({
       next: (blob) => {
         this.pdfBlob.set(blob);
         this.isLoadingPdf.set(false);
-        this.toast.success('PDF generado correctamente', 'Éxito');
       },
       error: (err) => {
         this.isLoadingPdf.set(false);
+        this.activeView.set('table');
         this.toast.error(
           this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'),
           'Error',
         );
       },
     });
+  }
+
+  // ---------- Descargar PDF ----------
+
+  descargarPdf(): void {
+    const blob = this.pdfBlob();
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.download = `listado-clientes-${this.activo() || 'todos'}.pdf`;
+    a.href = url;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   // ---------- Envío por email (modal) ----------
@@ -181,9 +293,11 @@ export class ClientsListComponent implements OnInit {
     this.fechaDesde.set('');
     this.fechaHasta.set('');
     this.activo.set('');
+    this.reportData.set(null);
     this.pdfBlob.set(null);
     this.destinatario.set('');
     this.subject.set('');
+    this.activeView.set('table');
   }
 
   private getErrorMessage(err: unknown, fallback: string): string {

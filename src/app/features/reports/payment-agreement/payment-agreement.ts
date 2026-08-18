@@ -8,6 +8,30 @@ import { ReportsService } from '../services/reports.service';
 import { AgreementsService } from '../../contracts/service-agreements/services/agreements.service';
 import type { IAgreementSummary } from '../../contracts/service-agreements/interfaces/iagreement.interface';
 
+type ReportView = 'table' | 'pdf';
+
+interface PaymentAgreementData {
+  convenio?: {
+    createdAt?: string;
+    fechaInicio?: string;
+    fechaPrimerPago?: string;
+    cuotaMensual?: number | string;
+    deudaTotal?: number | string;
+    abonoInicial?: number | string;
+    numeroCuotas?: number;
+    cliente?: {
+      nombres?: string | null;
+      apellidos?: string | null;
+      razonSocial?: string | null;
+      identificacion?: string | null;
+    };
+    contrato?: {
+      numeroGuia?: string | null;
+    };
+  };
+  [key: string]: unknown;
+}
+
 @Component({
   selector: 'app-payment-agreement',
   imports: [FormsModule, PdfPreviewerComponent],
@@ -25,8 +49,15 @@ export class PaymentAgreementComponent {
   readonly selectedAgreementLabel = signal('');
   readonly selectedAgreementName = signal('');
 
+  // Vista activa: tabla o PDF
+  readonly activeView = signal<ReportView>('table');
+
   // Resultados
+  readonly reportData = signal<PaymentAgreementData | null>(null);
   readonly pdfBlob = signal<Blob | null>(null);
+
+  // Estados de carga
+  readonly isLoadingData = signal(false);
   readonly isLoadingPdf = signal(false);
 
   // Envío por email
@@ -50,6 +81,35 @@ export class PaymentAgreementComponent {
   readonly esEmailInvalido = computed(() => {
     const email = this.destinatario().trim();
     return email === '' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  });
+
+  readonly convenioInfo = computed(() => {
+    const data = this.reportData();
+    const c = data?.convenio;
+    if (!c) return null;
+
+    const cliente = c.cliente;
+    const nombre = cliente
+      ? [cliente.nombres, cliente.apellidos].filter(Boolean).join(' ') ||
+        cliente.razonSocial ||
+        '—'
+      : '—';
+
+    return {
+      clienteNombre: nombre,
+      identificacion: cliente?.identificacion || '—',
+      numeroGuia: c.contrato?.numeroGuia || '—',
+      deudaTotal: Number(c.deudaTotal || 0).toFixed(2),
+      abonoInicial: Number(c.abonoInicial || 0).toFixed(2),
+      numeroCuotas: c.numeroCuotas || 0,
+      cuotaMensual: Number(c.cuotaMensual || 0).toFixed(2),
+      fechaInicio: c.fechaInicio
+        ? new Date(c.fechaInicio).toLocaleDateString('es-EC')
+        : '—',
+      fechaPrimerPago: c.fechaPrimerPago
+        ? new Date(c.fechaPrimerPago).toLocaleDateString('es-EC')
+        : '—',
+    };
   });
 
   private buildFilters(): IPaymentAgreementFilters | null {
@@ -151,18 +211,45 @@ export class PaymentAgreementComponent {
     })}`;
   }
 
-  // ---------- Envío por email (modal) ----------
+  // ---------- Consultar (carga JSON -> tabla) ----------
 
-  abrirModalEmail(): void {
-    this.isEmailModalOpen.set(true);
-  }
-
-  cerrarModalEmail(): void {
-    if (this.isSendingEmail()) {
+  consultar(): void {
+    const filters = this.buildFilters();
+    if (!filters) {
+      this.toast.error('Seleccione un convenio para consultar el reporte', 'Error');
       return;
     }
-    this.isEmailModalOpen.set(false);
+
+    this.reportData.set(null);
+    this.pdfBlob.set(null);
+    this.activeView.set('table');
+
+    this.isLoadingData.set(true);
+    this.reportsService.getPaymentAgreement(filters).subscribe({
+      next: (data) => {
+        this.reportData.set(data as unknown as PaymentAgreementData);
+        this.isLoadingData.set(false);
+      },
+      error: (err) => {
+        this.isLoadingData.set(false);
+        this.toast.error(
+          this.getErrorMessage(err, 'No se pudieron cargar los datos del convenio'),
+          'Error',
+        );
+      },
+    });
   }
+
+  // ---------- Toggle de vista ----------
+
+  setView(view: ReportView): void {
+    this.activeView.set(view);
+    if (view === 'pdf' && !this.pdfBlob()) {
+      this.generarPdf();
+    }
+  }
+
+  // ---------- Generar PDF ----------
 
   generarPdf(): void {
     const filters = this.buildFilters();
@@ -176,16 +263,42 @@ export class PaymentAgreementComponent {
       next: (blob) => {
         this.pdfBlob.set(blob);
         this.isLoadingPdf.set(false);
-        this.toast.success('PDF generado correctamente', 'Éxito');
       },
       error: (err) => {
         this.isLoadingPdf.set(false);
+        this.activeView.set('table');
         this.toast.error(
           this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'),
           'Error',
         );
       },
     });
+  }
+
+  // ---------- Descargar PDF ----------
+
+  descargarPdf(): void {
+    const blob = this.pdfBlob();
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.download = `convenio-pago-${this.convenioId()}.pdf`;
+    a.href = url;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ---------- Envío por email (modal) ----------
+
+  abrirModalEmail(): void {
+    this.isEmailModalOpen.set(true);
+  }
+
+  cerrarModalEmail(): void {
+    if (this.isSendingEmail()) {
+      return;
+    }
+    this.isEmailModalOpen.set(false);
   }
 
   enviarEmail(): void {
@@ -224,6 +337,7 @@ export class PaymentAgreementComponent {
     this.convenioId.set('');
     this.selectedAgreementLabel.set('');
     this.selectedAgreementName.set('');
+    this.reportData.set(null);
     this.pdfBlob.set(null);
     this.searchTerm.set('');
     this.searchResults.set([]);
@@ -231,6 +345,7 @@ export class PaymentAgreementComponent {
     this.searchPerformed.set(false);
     this.destinatario.set('');
     this.subject.set('');
+    this.activeView.set('table');
   }
 
   private getErrorMessage(err: unknown, fallback: string): string {

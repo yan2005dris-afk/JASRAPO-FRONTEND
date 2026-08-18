@@ -3,7 +3,8 @@
   <div class="page-header mb-4">
     <h3 class="fw-bold mb-0 text-dark fs-4">Listado de Clientes</h3>
     <p class="text-muted small mb-0">
-      Genere el listado de clientes aplicando los filtros deseados.
+      Consulte y exporte el padrón general de clientes registrados. Puede filtrar por estado
+      (activo/inactivo) y fecha de ingreso.
     </p>
   </div>
 
@@ -12,7 +13,20 @@
     <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
       <div class="row g-3 align-items-end">
         <div class="col-md-3">
-          <label class="form-label small fw-semibold mb-1" for="fechaDesde">Ingresados desde</label>
+          <label class="form-label small fw-semibold mb-1" for="activo">Estado del cliente</label>
+          <select
+            id="activo"
+            class="form-select shadow-none"
+            [ngModel]="activo()"
+            (ngModelChange)="activo.set($event)"
+          >
+            <option value="">Todos los estados</option>
+            <option value="true">Solo activos</option>
+            <option value="false">Solo inactivos</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold mb-1" for="fechaDesde">Fecha desde</label>
           <app-date-picker
             [inputId]="'fechaDesde'"
             [value]="fechaDesde()"
@@ -20,127 +34,264 @@
           />
         </div>
         <div class="col-md-3">
-          <label class="form-label small fw-semibold mb-1" for="fechaHasta">Ingresados hasta</label>
+          <label class="form-label small fw-semibold mb-1" for="fechaHasta">Fecha hasta</label>
           <app-date-picker
             [inputId]="'fechaHasta'"
             [value]="fechaHasta()"
             (valueChange)="fechaHasta.set($event)"
           />
         </div>
-        <div class="col-md-3">
-          <label class="form-label small fw-semibold mb-1" for="activo">Estado</label>
-          <select
-            id="activo"
-            class="form-select shadow-none"
-            [ngModel]="activo()"
-            (ngModelChange)="activo.set($event)"
-          >
-            <option value="">Todos</option>
-            <option value="true">Activo</option>
-            <option value="false">Inactivo</option>
-          </select>
-        </div>
         <div class="col-md-3 d-flex gap-2 flex-wrap">
           <button
             type="button"
             class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
-            (click)="generarPdf()"
-            [disabled]="isLoadingPdf() || rangoFechaInvalido()"
+            (click)="consultar()"
+            [disabled]="isLoadingData() || rangoFechaInvalido()"
           >
-            @if (isLoadingPdf()) {
-              <span
-                class="spinner-border spinner-border-sm"
-                role="status"
-                aria-hidden="true"
-              ></span>
+            @if (isLoadingData()) {
+              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
             } @else {
-              <i class="bi bi-file-earmark-pdf"></i>
+              <i class="bi bi-search"></i>
             }
-            {{ isLoadingPdf() ? 'Generando...' : 'Generar PDF' }}
-          </button>
-          <button
-            type="button"
-            class="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium px-3"
-            (click)="abrirModalEmail()"
-          >
-            <i class="bi bi-envelope"></i>
-            Enviar email
+            {{ isLoadingData() ? 'Consultando...' : 'Consultar' }}
           </button>
           <button
             type="button"
             class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
             (click)="limpiar()"
-            [disabled]="isLoadingPdf()"
+            [disabled]="isLoadingData()"
           >
             <i class="bi bi-x-circle"></i>
             Limpiar
           </button>
         </div>
       </div>
+    </div>
+  </div>
 
-      <!-- Presets rápidos de rango + validación cruzada -->
-      <div class="quick-range-bar mt-3 d-flex flex-wrap gap-2 align-items-center">
-        <span class="small text-muted me-1">Rango rápido:</span>
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary"
-          (click)="aplicarPreset('currentYear')"
-        >
-          Este año
-        </button>
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary"
-          (click)="aplicarPreset('currentMonth')"
-        >
-          Este mes
-        </button>
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary"
-          (click)="aplicarPreset('lastMonth')"
-        >
-          Mes pasado
-        </button>
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary"
-          (click)="aplicarPreset('last3Months')"
-        >
-          Últimos 3 meses
-        </button>
+  <!-- Presets rápidos de rango + validación cruzada -->
+  <div class="quick-range-bar mb-2 d-flex flex-wrap gap-2 align-items-center">
+    <span class="small text-muted me-1">Rango rápido:</span>
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary"
+      (click)="aplicarPreset('currentYear')"
+    >
+      Este año
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary"
+      (click)="aplicarPreset('currentMonth')"
+    >
+      Este mes
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary"
+      (click)="aplicarPreset('lastMonth')"
+    >
+      Mes pasado
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary"
+      (click)="aplicarPreset('last3Months')"
+    >
+      Últimos 3 meses
+    </button>
 
-        @if (rangoFechaInvalido()) {
-          <span class="text-danger small d-flex align-items-center gap-1 ms-auto">
-            <i class="bi bi-exclamation-circle"></i>
-            La fecha "desde" no puede ser mayor que la fecha "hasta".
+    @if (rangoFechaInvalido()) {
+      <span class="text-danger small d-flex align-items-center gap-1 ms-auto">
+        <i class="bi bi-exclamation-circle"></i>
+        La fecha "desde" no puede ser mayor que la fecha "hasta".
+      </span>
+    }
+  </div>
+
+  <!-- Panel de resultados (aparece sólo cuando hay datos) -->
+  @if (reportData()) {
+    <!-- Resumen del listado -->
+    <div class="summary-bar card border-0 shadow-sm rounded-3 mb-3">
+      <div class="summary-bar-inner">
+        <div class="stat-item">
+          <span class="stat-label">Total Clientes</span>
+          <span class="stat-value font-monospace">{{ totalClientes() }}</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-label">Activos</span>
+          <span class="stat-value font-monospace text-success">{{ totalActivos() }}</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-label">Inactivos</span>
+          <span class="stat-value font-monospace text-danger">{{ totalInactivos() }}</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-label">Filtro Estado</span>
+          <span class="stat-value">
+            {{ activo() === 'true' ? 'Solo Activos' : activo() === 'false' ? 'Solo Inactivos' : 'Todos' }}
           </span>
-        }
+        </div>
+        <div class="stat-deuda ms-auto deuda-ok">
+          <span class="stat-label">Total Listado</span>
+          <span class="stat-deuda-value">{{ totalClientes() }}</span>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Vista previa del PDF -->
-  <div class="card border-0 shadow-sm rounded-3 mb-4">
-    <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
-      <h5 class="fw-bold fs-6 mb-0 text-dark">Vista previa del reporte</h5>
+    <!-- Barra de toggle + acciones -->
+    <div class="view-toolbar d-flex align-items-center gap-3 mb-3 flex-wrap">
+      <!-- Toggle Tabla / PDF -->
+      <div class="view-toggle btn-group" role="group" aria-label="Modo de visualización">
+        <button
+          type="button"
+          class="btn btn-sm fw-medium"
+          [class.btn-primary]="activeView() === 'table'"
+          [class.btn-outline-primary]="activeView() !== 'table'"
+          (click)="setView('table')"
+        >
+          <i class="bi bi-table me-1"></i>Tabla
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm fw-medium"
+          [class.btn-primary]="activeView() === 'pdf'"
+          [class.btn-outline-primary]="activeView() !== 'pdf'"
+          [disabled]="isLoadingPdf()"
+          (click)="setView('pdf')"
+        >
+          @if (isLoadingPdf()) {
+            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+          } @else {
+            <i class="bi bi-file-earmark-pdf me-1"></i>
+          }
+          PDF
+        </button>
+      </div>
+
+      <!-- Acciones -->
+      <div class="d-flex gap-2 ms-auto flex-wrap">
+        @if (pdfBlob()) {
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 fw-medium"
+            (click)="descargarPdf()"
+          >
+            <i class="bi bi-download"></i>
+            Descargar PDF
+          </button>
+        }
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 fw-medium"
+          (click)="abrirModalEmail()"
+        >
+          <i class="bi bi-envelope"></i>
+          Enviar por email
+        </button>
+      </div>
     </div>
-    <div class="card-body">
-      @if (pdfBlob(); as pdf) {
-        <app-pdf-previewer [src]="pdf" height="700px" />
-      } @else {
+
+    <!-- Vista: TABLA -->
+    @if (activeView() === 'table') {
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle report-table">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Identificación</th>
+                  <th>Email</th>
+                  <th>Teléfono</th>
+                  <th class="text-center">Estado</th>
+                  <th>Fecha Ingreso</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (cliente of tableRows(); track cliente.clienteId || cliente.identificacion) {
+                  <tr>
+                    <td class="fw-semibold">{{ cliente.nombre }}</td>
+                    <td class="font-monospace">{{ cliente.identificacion }}</td>
+                    <td>{{ cliente.email }}</td>
+                    <td>{{ cliente.telefono }}</td>
+                    <td class="text-center">
+                      @if (cliente.activo) {
+                        <span class="badge bg-success-subtle text-success border border-success-subtle">
+                          Activo
+                        </span>
+                      } @else {
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                          Inactivo
+                        </span>
+                      }
+                    </td>
+                    <td>{{ cliente.fechaIngreso }}</td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr class="year-total-row">
+                  <td colspan="5" class="fw-semibold text-end small text-muted">
+                    Total Clientes Listados
+                  </td>
+                  <td class="font-monospace fw-bold">{{ totalClientes() }}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          @if (tableRows().length === 0) {
+            <div class="empty-state py-5">
+              <div class="empty-state-icon">
+                <i class="bi bi-inbox"></i>
+              </div>
+              <p class="fw-semibold mb-1 text-dark">Sin clientes encontrados</p>
+              <p class="text-muted small mb-0">
+                No se encontraron clientes para los filtros seleccionados.
+              </p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Vista: PDF -->
+    @if (activeView() === 'pdf') {
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body p-0">
+          @if (isLoadingPdf()) {
+            <div class="empty-state py-5">
+              <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Generando PDF...</span>
+              </div>
+              <p class="text-muted small mb-0">Generando PDF, por favor espere...</p>
+            </div>
+          } @else if (pdfBlob(); as pdf) {
+            <app-pdf-previewer [src]="pdf" height="700px" />
+          }
+        </div>
+      </div>
+    }
+  } @else if (!isLoadingData()) {
+    <!-- Estado inicial -->
+    <div class="card border-0 shadow-sm rounded-3 mb-4">
+      <div class="card-body">
         <div class="empty-state">
           <div class="empty-state-icon">
-            <i class="bi bi-file-earmark-pdf"></i>
+            <i class="bi bi-file-earmark-text"></i>
           </div>
-          <p class="fw-semibold mb-1 text-dark">Sin reporte generado</p>
+          <p class="fw-semibold mb-1 text-dark">Sin listado cargado</p>
           <p class="text-muted small mb-0">
-            Presione <strong>Generar PDF</strong> para previsualizar el listado de clientes.
+            Ajuste los filtros y presione <strong>Consultar</strong> para ver el listado de clientes.
           </p>
         </div>
-      }
+      </div>
     </div>
-  </div>
+  }
 </div>
 
 <!-- Modal envío por email -->
@@ -160,7 +311,7 @@
               Enviar listado de clientes por email
             </h5>
             <p class="text-muted mb-0 small">
-              El listado se generará con los filtros actuales y se enviará al destinatario indicado.
+              El reporte se generará y enviará al destinatario indicado.
             </p>
           </div>
           <button
@@ -215,11 +366,7 @@
             [disabled]="isSendingEmail() || esEmailInvalido()"
           >
             @if (isSendingEmail()) {
-              <span
-                class="spinner-border spinner-border-sm"
-                role="status"
-                aria-hidden="true"
-              ></span>
+              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
             } @else {
               <i class="bi bi-envelope"></i>
             }

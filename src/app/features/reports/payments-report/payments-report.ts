@@ -10,6 +10,27 @@ import { ClientsService } from '../../contracts/clients/services/clients.service
 import type { IClient } from '../../contracts/clients/interfaces/iclients.interface';
 
 type DatePreset = 'currentMonth' | 'lastMonth' | 'last3Months' | 'lastYear';
+type ReportView = 'table' | 'pdf';
+
+interface PaymentRow {
+  factura: string;
+  fecha: string;
+  clienteNombre: string;
+  cuenta: string;
+  medidor: string;
+  emision: string;
+  valor: string;
+  valorNum?: number;
+}
+
+interface PaymentsReportData {
+  pagos?: PaymentRow[];
+  fechaDesde?: string | null;
+  fechaHasta?: string | null;
+  totalGeneral?: string;
+  totalRegistros?: number;
+  [key: string]: unknown;
+}
 
 @Component({
   selector: 'app-payments-report',
@@ -30,8 +51,15 @@ export class PaymentsReportComponent {
   readonly selectedClientLabel = signal('');
   readonly selectedClientName = signal('');
 
+  // Vista activa: tabla o PDF
+  readonly activeView = signal<ReportView>('table');
+
   // Resultados
+  readonly reportData = signal<PaymentsReportData | null>(null);
   readonly pdfBlob = signal<Blob | null>(null);
+
+  // Estados de carga
+  readonly isLoadingData = signal(false);
   readonly isLoadingPdf = signal(false);
 
   // Envío por email
@@ -60,6 +88,24 @@ export class PaymentsReportComponent {
   readonly esEmailInvalido = computed(() => {
     const email = this.destinatario().trim();
     return email === '' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  });
+
+  readonly tableRows = computed(() => {
+    return this.reportData()?.pagos ?? [];
+  });
+
+  readonly totalRecaudado = computed(() => {
+    const data = this.reportData();
+    if (!data) return '0.00';
+    if (data.totalGeneral !== undefined) return String(data.totalGeneral);
+    const sum = (data.pagos ?? []).reduce((acc, r) => acc + Number(r.valor || 0), 0);
+    return sum.toFixed(2);
+  });
+
+  readonly totalRegistros = computed(() => {
+    const data = this.reportData();
+    if (!data) return 0;
+    return data.totalRegistros ?? data.pagos?.length ?? 0;
   });
 
   private buildFilters(): IPaymentsReportFilters {
@@ -176,6 +222,73 @@ export class PaymentsReportComponent {
     return `${cliente.nombres ?? ''} ${cliente.apellidos ?? ''}`.trim();
   }
 
+  // ---------- Consultar (carga JSON -> tabla) ----------
+
+  consultar(): void {
+    if (this.rangoFechaInvalido()) return;
+
+    this.reportData.set(null);
+    this.pdfBlob.set(null);
+    this.activeView.set('table');
+
+    this.isLoadingData.set(true);
+    this.reportsService.getPaymentsReport(this.buildFilters()).subscribe({
+      next: (data) => {
+        this.reportData.set(data as unknown as PaymentsReportData);
+        this.isLoadingData.set(false);
+      },
+      error: (err) => {
+        this.isLoadingData.set(false);
+        this.toast.error(
+          this.getErrorMessage(err, 'No se pudieron cargar los datos del reporte de abonos'),
+          'Error',
+        );
+      },
+    });
+  }
+
+  // ---------- Toggle de vista ----------
+
+  setView(view: ReportView): void {
+    this.activeView.set(view);
+    if (view === 'pdf' && !this.pdfBlob()) {
+      this.generarPdf();
+    }
+  }
+
+  // ---------- Generar PDF ----------
+
+  generarPdf(): void {
+    this.isLoadingPdf.set(true);
+    this.reportsService.getPaymentsReportPdf(this.buildFilters()).subscribe({
+      next: (blob) => {
+        this.pdfBlob.set(blob);
+        this.isLoadingPdf.set(false);
+      },
+      error: (err) => {
+        this.isLoadingPdf.set(false);
+        this.activeView.set('table');
+        this.toast.error(
+          this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'),
+          'Error',
+        );
+      },
+    });
+  }
+
+  // ---------- Descargar PDF ----------
+
+  descargarPdf(): void {
+    const blob = this.pdfBlob();
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `reporte-abonos-${this.clienteId() || 'general'}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   // ---------- Envío por email (modal) ----------
 
   abrirModalEmail(): void {
@@ -187,24 +300,6 @@ export class PaymentsReportComponent {
       return;
     }
     this.isEmailModalOpen.set(false);
-  }
-
-  generarPdf(): void {
-    this.isLoadingPdf.set(true);
-    this.reportsService.getPaymentsReportPdf(this.buildFilters()).subscribe({
-      next: (blob) => {
-        this.pdfBlob.set(blob);
-        this.isLoadingPdf.set(false);
-        this.toast.success('PDF generado correctamente', 'Éxito');
-      },
-      error: (err) => {
-        this.isLoadingPdf.set(false);
-        this.toast.error(
-          this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'),
-          'Error',
-        );
-      },
-    });
   }
 
   enviarEmail(): void {
@@ -245,6 +340,7 @@ export class PaymentsReportComponent {
     this.clienteId.set('');
     this.selectedClientLabel.set('');
     this.selectedClientName.set('');
+    this.reportData.set(null);
     this.pdfBlob.set(null);
     this.searchTerm.set('');
     this.searchResults.set([]);
@@ -252,6 +348,7 @@ export class PaymentsReportComponent {
     this.searchPerformed.set(false);
     this.destinatario.set('');
     this.subject.set('');
+    this.activeView.set('table');
   }
 
   private getErrorMessage(err: unknown, fallback: string): string {
