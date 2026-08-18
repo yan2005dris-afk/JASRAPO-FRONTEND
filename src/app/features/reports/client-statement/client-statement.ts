@@ -1,15 +1,63 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/pdf-previewer.component';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
-import { IAccountStatementFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
+import {
+  IAccountStatementFilters,
+  ISendReportEmailBody,
+} from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
 import type { IContract } from '../../contracts/service-contracts/interfaces/icontract.interface';
 
 type DatePreset = 'currentMonth' | 'lastMonth' | 'last3Months' | 'lastYear';
+type ReportView = 'table' | 'pdf';
+
+// Shape of the JSON response from /reports/account-statement
+interface AccountStatementPeriod {
+  prefactura?: {
+    abono?: number;
+    periodoRel?: { nombre?: string };
+  };
+  lecturas?: Array<{
+    fecha?: string;
+    lecturaActual?: number;
+    lecturaAnterior?: number;
+    consumoCalculado?: number;
+  }>;
+}
+
+interface AccountStatementData {
+  contratoId?: string | number;
+  contrato?: {
+    cliente?: {
+      nombres?: string;
+      apellidos?: string;
+      razonSocial?: string;
+      identificacion?: string;
+      email?: string;
+      direccionDomicilio?: string;
+    };
+    sector?: { nombre?: string };
+    categoriaTarifa?: {
+      nombre?: string;
+      consumoMinimoMensual?: number;
+      valorBase?: number;
+      valorExcedenteM3?: number;
+    };
+    historialMedidores?: Array<{ medidor?: { serie?: string } }>;
+    numeroGuia?: string;
+  };
+  periods?: AccountStatementPeriod[];
+}
 
 @Component({
   selector: 'app-client-statement',
@@ -28,8 +76,15 @@ export class ClientStatementComponent {
   readonly fechaDesde = signal('');
   readonly fechaHasta = signal('');
 
+  // Vista activa: tabla o PDF
+  readonly activeView = signal<ReportView>('table');
+
   // Resultados
+  readonly reportData = signal<AccountStatementData | null>(null);
   readonly pdfBlob = signal<Blob | null>(null);
+
+  // Estados de carga
+  readonly isLoadingData = signal(false);
   readonly isLoadingPdf = signal(false);
 
   // Envío por email
@@ -53,6 +108,98 @@ export class ClientStatementComponent {
   readonly esEmailInvalido = computed(() => {
     const email = this.destinatario().trim();
     return email === '' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  });
+
+  // Computed para la tabla: datos procesados del JSON
+  readonly tableYears = computed(() => {
+    const raw = this.reportData();
+    if (!raw) return [];
+
+    const periods = (raw.periods ?? []) as AccountStatementPeriod[];
+    const tarifa = raw.contrato?.categoriaTarifa;
+    const consumoBase = Number(tarifa?.consumoMinimoMensual ?? 0);
+    const valorBase = Number(tarifa?.valorBase ?? 0);
+    const valorExcedente = Number(tarifa?.valorExcedenteM3 ?? 0);
+
+    const years: Array<{
+      nombre: string;
+      meses: Array<{
+        mes: string;
+        lectActual: string;
+        lectAnterior: string;
+        consumo: string;
+        excedente: string;
+        cargoFijo: string;
+        excedenteValor: string;
+        total: string;
+        pagos: string;
+        saldo: string;
+        saldoNegativo: boolean;
+      }>;
+      subtotalAnual: string;
+      pagos: string;
+      saldo: string;
+      saldoNegativo: boolean;
+    }> = [];
+
+    for (const period of periods) {
+      const periodoNombre = period.prefactura?.periodoRel?.nombre ?? '—';
+      const abonoAnual = Number(period.prefactura?.abono ?? 0);
+      const lecturas = period.lecturas ?? [];
+
+      let saldoAcumulado = 0;
+
+      const meses = lecturas.map((lectura, idx) => {
+        const fecha = lectura.fecha ? new Date(lectura.fecha) : null;
+        const consumoM3 = Number(lectura.consumoCalculado ?? 0);
+        const excede = Math.max(consumoM3 - consumoBase, 0);
+        const excedentePrecio = excede * valorExcedente;
+        const totalMes = valorBase + excedentePrecio;
+
+        const pagoMes = abonoAnual > 0 ? +(abonoAnual / 12).toFixed(2) : 0;
+        const pagoAjustado = idx === 11 ? abonoAnual - pagoMes * 11 : pagoMes;
+
+        saldoAcumulado = saldoAcumulado + totalMes - pagoAjustado;
+
+        return {
+          mes: fecha
+            ? fecha.toLocaleDateString('es-EC', { month: 'long', year: 'numeric' })
+            : '—',
+          lectActual: Number(lectura.lecturaActual ?? 0).toFixed(2),
+          lectAnterior: Number(lectura.lecturaAnterior ?? 0).toFixed(2),
+          consumo: Math.min(consumoM3, consumoBase).toFixed(2),
+          excedente: excede.toFixed(2),
+          cargoFijo: valorBase.toFixed(2),
+          excedenteValor: excedentePrecio.toFixed(2),
+          total: totalMes.toFixed(2),
+          pagos: pagoAjustado.toFixed(2),
+          saldo: saldoAcumulado.toFixed(2),
+          saldoNegativo: saldoAcumulado < 0,
+        };
+      });
+
+      const subtotalAnual = meses.reduce((sum, m) => sum + Number(m.total), 0);
+
+      years.push({
+        nombre: periodoNombre,
+        meses,
+        subtotalAnual: subtotalAnual.toFixed(2),
+        pagos: abonoAnual.toFixed(2),
+        saldo: saldoAcumulado.toFixed(2),
+        saldoNegativo: saldoAcumulado < 0,
+      });
+    }
+
+    return years;
+  });
+
+  readonly deudaTotal = computed(() => {
+    let total = 0;
+    for (const year of this.tableYears()) {
+      const saldo = Number(year.saldo);
+      if (saldo > 0) total += saldo;
+    }
+    return total.toFixed(2);
   });
 
   private buildFilters(): IAccountStatementFilters | null {
@@ -79,11 +226,9 @@ export class ClientStatementComponent {
 
     switch (preset) {
       case 'currentMonth':
-        // Primer día del mes actual hasta hoy
         desde.setDate(1);
         break;
       case 'lastMonth':
-        // Todo el mes anterior
         desde.setMonth(desde.getMonth() - 1, 1);
         hasta.setDate(0);
         break;
@@ -124,6 +269,85 @@ export class ClientStatementComponent {
     this.isContractPickerOpen.set(false);
   }
 
+  // ---------- Consultar (carga JSON → tabla) ----------
+
+  consultar(): void {
+    const filters = this.buildFilters();
+    if (!filters) {
+      this.toast.error('Seleccione un contrato para consultar el reporte', 'Error');
+      return;
+    }
+    if (this.rangoFechaInvalido()) return;
+
+    // Reset resultados previos
+    this.reportData.set(null);
+    this.pdfBlob.set(null);
+    this.activeView.set('table');
+
+    this.isLoadingData.set(true);
+    this.reportsService.getAccountStatement(filters).subscribe({
+      next: (data) => {
+        this.reportData.set(data as unknown as AccountStatementData);
+        this.isLoadingData.set(false);
+      },
+      error: (err) => {
+        this.isLoadingData.set(false);
+        this.toast.error(
+          this.getErrorMessage(err, 'No se pudieron cargar los datos del reporte'),
+          'Error',
+        );
+      },
+    });
+  }
+
+  // ---------- Toggle de vista ----------
+
+  setView(view: ReportView): void {
+    this.activeView.set(view);
+    if (view === 'pdf' && !this.pdfBlob()) {
+      this.generarPdf();
+    }
+  }
+
+  // ---------- Generar PDF ----------
+
+  generarPdf(): void {
+    const filters = this.buildFilters();
+    if (!filters) {
+      this.toast.error('Seleccione un contrato para generar el PDF', 'Error');
+      return;
+    }
+
+    this.isLoadingPdf.set(true);
+    this.reportsService.getAccountStatementPdf(filters).subscribe({
+      next: (blob) => {
+        this.pdfBlob.set(blob);
+        this.isLoadingPdf.set(false);
+      },
+      error: (err) => {
+        this.isLoadingPdf.set(false);
+        this.activeView.set('table');
+        this.toast.error(
+          this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'),
+          'Error',
+        );
+      },
+    });
+  }
+
+  // ---------- Descargar PDF ----------
+
+  descargarPdf(): void {
+    const blob = this.pdfBlob();
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `estado-de-cuenta-${this.selectedContractNumber() || this.contratoId()}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   // ---------- Envío por email (modal) ----------
 
   abrirModalEmail(): void {
@@ -135,30 +359,6 @@ export class ClientStatementComponent {
       return;
     }
     this.isEmailModalOpen.set(false);
-  }
-
-  generarPdf(): void {
-    const filters = this.buildFilters();
-    if (!filters) {
-      this.toast.error('Seleccione un contrato para generar el reporte', 'Error');
-      return;
-    }
-
-    this.isLoadingPdf.set(true);
-    this.reportsService.getAccountStatementPdf(filters).subscribe({
-      next: (blob) => {
-        this.pdfBlob.set(blob);
-        this.isLoadingPdf.set(false);
-        this.toast.success('PDF generado correctamente', 'Éxito');
-      },
-      error: (err) => {
-        this.isLoadingPdf.set(false);
-        this.toast.error(
-          this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'),
-          'Error',
-        );
-      },
-    });
   }
 
   enviarEmail(): void {
@@ -198,10 +398,12 @@ export class ClientStatementComponent {
     this.selectedContractNumber.set('');
     this.fechaDesde.set('');
     this.fechaHasta.set('');
+    this.reportData.set(null);
     this.pdfBlob.set(null);
     this.selectedContractName.set('');
     this.destinatario.set('');
     this.subject.set('');
+    this.activeView.set('table');
   }
 
   private getErrorMessage(err: unknown, fallback: string): string {
