@@ -62,20 +62,32 @@
             <input
               id="clienteId"
               type="text"
-              class="form-control shadow-none contract-input"
+              class="form-control shadow-none contract-input text-truncate"
               placeholder="Todos los clientes"
-              [value]="selectedClientLabel()"
+              [value]="selectedClientLabel() ? (selectedClientLabel() + (selectedClientName() ? ' - ' + selectedClientName() : '')) : ''"
               readonly
               (click)="abrirBuscadorClientes()"
+              [title]="selectedClientName() ? (selectedClientLabel() + ' - ' + selectedClientName()) : 'Todos los clientes'"
             />
-            <button
-              type="button"
-              class="btn btn-outline-primary shadow-none"
-              title="Buscar cliente"
-              (click)="abrirBuscadorClientes()"
-            >
-              <i class="bi bi-search"></i>
-            </button>
+            @if (selectedClientLabel()) {
+              <button
+                type="button"
+                class="btn btn-outline-secondary border-start-0 shadow-none px-2"
+                title="Quitar cliente seleccionado"
+                (click)="limpiar(); $event.stopPropagation()"
+              >
+                <i class="bi bi-x"></i>
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="btn btn-outline-primary shadow-none"
+                title="Buscar cliente"
+                (click)="abrirBuscadorClientes()"
+              >
+                <i class="bi bi-search"></i>
+              </button>
+            }
           </div>
         </div>
 

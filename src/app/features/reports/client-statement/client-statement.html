@@ -13,25 +13,37 @@
     <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
       <div class="row g-3 align-items-end">
         <div class="col-md-3">
-          <label class="form-label small fw-semibold mb-1" for="contratoId">Contrato</label>
+          <label class="form-label small fw-semibold mb-1" for="contratoId">Contrato / Cliente</label>
           <div class="input-group">
             <input
               id="contratoId"
               type="text"
-              class="form-control shadow-none contract-input"
+              class="form-control shadow-none contract-input text-truncate"
               placeholder="Seleccione un contrato"
-              [value]="selectedContractNumber()"
+              [value]="selectedContractNumber() ? (selectedContractNumber() + ' - ' + selectedContractName()) : ''"
               readonly
               (click)="abrirBuscadorContratos()"
+              [title]="selectedContractName() ? (selectedContractNumber() + ' - ' + selectedContractName()) : 'Seleccione un contrato'"
             />
-            <button
-              type="button"
-              class="btn btn-outline-primary shadow-none"
-              title="Buscar contrato"
-              (click)="abrirBuscadorContratos()"
-            >
-              <i class="bi bi-search"></i>
-            </button>
+            @if (selectedContractNumber()) {
+              <button
+                type="button"
+                class="btn btn-outline-secondary border-start-0 shadow-none px-2"
+                title="Quitar contrato seleccionado"
+                (click)="limpiar(); $event.stopPropagation()"
+              >
+                <i class="bi bi-x"></i>
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="btn btn-outline-primary shadow-none"
+                title="Buscar contrato"
+                (click)="abrirBuscadorContratos()"
+              >
+                <i class="bi bi-search"></i>
+              </button>
+            }
           </div>
         </div>
         <div class="col-md-3">
@@ -75,15 +87,6 @@
           </button>
         </div>
       </div>
-
-      @if (selectedContractName()) {
-        <div class="selected-contract-row mt-3">
-          <div class="selected-chip">
-            <i class="bi bi-person-check-fill text-primary"></i>
-            <span class="fw-medium text-dark">{{ selectedContractName() }}</span>
-          </div>
-        </div>
-      }
     </div>
   </div>
 

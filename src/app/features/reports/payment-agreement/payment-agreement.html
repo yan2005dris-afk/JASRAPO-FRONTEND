@@ -13,25 +13,37 @@
     <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
       <div class="row g-3 align-items-end">
         <div class="col-md-6">
-          <label class="form-label small fw-semibold mb-1" for="convenioId">Convenio</label>
+          <label class="form-label small fw-semibold mb-1" for="convenioId">Convenio / Cliente</label>
           <div class="input-group">
             <input
               id="convenioId"
               type="text"
-              class="form-control shadow-none contract-input"
+              class="form-control shadow-none contract-input text-truncate"
               placeholder="Seleccione un convenio"
-              [value]="selectedAgreementLabel()"
+              [value]="selectedAgreementLabel() ? (selectedAgreementLabel() + (selectedAgreementName() ? ' - ' + selectedAgreementName() : '')) : ''"
               readonly
               (click)="abrirBuscadorConvenios()"
+              [title]="selectedAgreementName() ? (selectedAgreementLabel() + ' - ' + selectedAgreementName()) : 'Seleccione un convenio'"
             />
-            <button
-              type="button"
-              class="btn btn-outline-primary shadow-none"
-              title="Buscar convenio"
-              (click)="abrirBuscadorConvenios()"
-            >
-              <i class="bi bi-search"></i>
-            </button>
+            @if (selectedAgreementLabel()) {
+              <button
+                type="button"
+                class="btn btn-outline-secondary border-start-0 shadow-none px-2"
+                title="Quitar convenio seleccionado"
+                (click)="limpiar(); $event.stopPropagation()"
+              >
+                <i class="bi bi-x"></i>
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="btn btn-outline-primary shadow-none"
+                title="Buscar convenio"
+                (click)="abrirBuscadorConvenios()"
+              >
+                <i class="bi bi-search"></i>
+              </button>
+            }
           </div>
         </div>
         <div class="col-md-6 d-flex gap-2 flex-wrap">
@@ -59,15 +71,6 @@
           </button>
         </div>
       </div>
-
-      @if (selectedAgreementName()) {
-        <div class="selected-contract-row mt-3">
-          <div class="selected-chip">
-            <i class="bi bi-person-check-fill text-primary"></i>
-            <span class="fw-medium text-dark">{{ selectedAgreementName() }}</span>
-          </div>
-        </div>
-      }
     </div>
   </div>
 
