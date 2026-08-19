@@ -237,7 +237,7 @@
             [allowValidation]="true"
             [allowReReading]="true"
             [openDropdownId]="openDropdownId"
-            (viewDetail)="openAnomalyModal($event)"
+            (viewDetail)="openDetailModal($event)"
             (editReading)="openAnomalyModal($event)"
             (approveReading)="changeReadingStatus($any($event), 'APROBADA')"
             (reportAnomaly)="openAnomalyModal($event)"
@@ -261,6 +261,11 @@
         }
       </div>
     </div>
+  }
+
+  <!-- Reading Detail Modal (Reutilizado) -->
+  @if (selectedReadingForDetail) {
+    <app-reading-detail-modal [reading]="selectedReadingForDetail" (closed)="closeDetailModal()" />
   }
 
   <!-- Anomaly Form Modal -->
