@@ -41,6 +41,12 @@ FROM nginx:alpine AS production
 # Copiar configuración personalizada de Nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
+# Register .mjs as application/javascript in nginx mime.types.
+# nginx does not include .mjs by default; browsers block ES modules
+# served with wrong MIME type. We patch mime.types here because
+# nginx does not allow `include` inside a `types {}` block.
+RUN sed -i 's|application/javascript\s*js;|application/javascript js mjs;|' /etc/nginx/mime.types
+
 # Copiar el build de Angular al directorio de Nginx
 COPY --from=builder /app/dist/frontend/browser /usr/share/nginx/html
 
