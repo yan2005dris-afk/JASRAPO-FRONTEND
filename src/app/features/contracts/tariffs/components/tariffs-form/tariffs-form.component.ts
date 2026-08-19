@@ -71,15 +71,36 @@ export class TariffsFormComponent implements OnInit {
     }
 
     const tariff = this.tariffToEdit();
-    if (tariff?.categoriaTarifaId === undefined) {
-      this.errorMessage = 'No se encontró el ID de la tarifa a actualizar.';
-      return;
+    if (tariff?.categoriaTarifaId !== undefined) {
+      this.updateTariff(tariff.categoriaTarifaId);
+    } else {
+      this.createTariff();
     }
-
-    this.saveTariff(tariff.categoriaTarifaId);
   }
 
-  private saveTariff(id: number): void {
+  private createTariff(): void {
+    this.isSaving = true;
+    this.cdr.markForCheck();
+
+    const payload = this.tariffForm.getRawValue();
+
+    this.tariffsService.createTariff(payload).subscribe({
+      next: () => {
+        this.isSaving = false;
+        this.toast.success('Tarifa creada correctamente', 'Éxito');
+        this.formSubmitted.emit();
+        this.onClose();
+        this.cdr.markForCheck();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.isSaving = false;
+        this.toast.error(err.error?.message ?? 'No se pudo crear la tarifa.', 'Error');
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private updateTariff(id: number): void {
     this.isSaving = true;
     this.cdr.markForCheck();
 
