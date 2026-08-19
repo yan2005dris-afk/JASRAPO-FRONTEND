@@ -149,7 +149,10 @@ describe('CashSessionsService', () => {
       });
 
       const req = httpTesting.expectOne(`${baseUrl}/open`);
-      req.flush({ message: 'Monto de apertura inválido' }, { status: 400, statusText: 'Bad Request' });
+      req.flush(
+        { message: 'Monto de apertura inválido' },
+        { status: 400, statusText: 'Bad Request' },
+      );
 
       expect((errorResponse as { status: number; error: { message: string } }).status).toBe(400);
       expect((errorResponse as { status: number; error: { message: string } }).error.message).toBe(
