@@ -55,3 +55,10 @@ graft/
 test-results/
 playwright-report/
 e2e/.auth/
+
+# local tool caches and generated artifacts (regenerable)
+.atl/
+.codebase-memory/
+.codegraph/
+.impeccable/
+.ignore
