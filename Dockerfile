@@ -13,7 +13,7 @@ RUN npm ci
 COPY . .
 
 # Build de producción de Angular
-RUN npm run build -- --configuration production
+RUN npm run build
 
 # ---- Stage 2: Development (hot-reload) ----
 FROM node:22-alpine AS development
