@@ -112,7 +112,7 @@
                         <i class="bi bi-shield-exclamation"></i> Reportar Anomalía
                       </button>
                     </li>
-                    @if (allowReReading && r.estado !== 'APROBADA') {
+                    @if (allowReReading && r.estado !== 'APROBADA' && r.estado !== 'RECHAZADA_VERIFICACION') {
                       <li>
                         <hr class="dropdown-divider my-1" />
                       </li>
