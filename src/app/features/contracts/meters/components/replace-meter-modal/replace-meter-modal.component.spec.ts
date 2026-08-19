@@ -6,6 +6,7 @@ import { MetersService } from '../../services/meters.service';
 import { ReadingRoutesService } from '../../../reading-routes/services/reading-routes.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
+import { IReplaceMeterResponse } from '../../interfaces/imeter.interface';
 
 describe('ReplaceMeterModalComponent', () => {
   let component: ReplaceMeterModalComponent;
@@ -92,16 +93,26 @@ describe('ReplaceMeterModalComponent', () => {
             latitud: null,
             longitud: null,
           },
+          {
+            medidorId: 201,
+            marca: 'Itron',
+            modelo: 'Smart',
+            serie: 'MED-NEW-2',
+            fechaInstalacion: null,
+            contratoId: null,
+            latitud: null,
+            longitud: null,
+          },
         ],
         paginacion: {
-          total: 1,
+          total: 2,
           paginaActual: 1,
           porPagina: 10,
           ultimaPagina: 1,
           anterior: null,
           siguiente: null,
         },
-        kpis: { enBodega: 1, instalados: 0, danados: 0, total: 1 },
+        kpis: { enBodega: 2, instalados: 0, danados: 0, total: 2 },
       }),
     );
 
@@ -132,32 +143,52 @@ describe('ReplaceMeterModalComponent', () => {
 
   it('should create and populate available meters and active period', () => {
     expect(component).toBeTruthy();
-    expect(component.availableMeters().length).toBe(1);
+    expect(component.availableMeters().length).toBe(2);
     expect(component.periodos().length).toBe(1);
     expect(component.baseReading()).toBe(500);
+    expect(component.currentStep()).toBe(1);
     expect(component.form.controls.periodoOrigenId.value).toBe(1);
   });
 
-  it('should reject final reading lower than base reading', () => {
-    component.form.patchValue({
-      nuevoMedidorId: '200',
-      lecturaFinalSaliente: 480, // Lower than 500
-      lecturaInicialEntrante: 0,
-      motivo: 'DANO',
-      tratamientoSaliente: 'COBRO_REAL',
-      tratamientoEntrante: 'FACTURAR_PERIODO_ACTUAL',
-      periodoOrigenId: 1,
-    });
+  it('should filter meters in step 2 by search query', () => {
+    component.meterSearchQuery.set('Siemens');
+    expect(component.filteredMeters().length).toBe(1);
+    expect(component.filteredMeters()[0].serie).toBe('MED-NEW-1');
 
-    component.onSubmit();
-    expect(component.errorMessage()).toContain('no puede ser menor a la lectura inicial');
-    expect(mockMetersService.replaceMeter).not.toHaveBeenCalled();
+    component.meterSearchQuery.set('Smart');
+    expect(component.filteredMeters().length).toBe(1);
+    expect(component.filteredMeters()[0].serie).toBe('MED-NEW-2');
   });
 
-  it('should submit replace meter request when valid', () => {
-    mockMetersService.replaceMeter.mockReturnValue(
-      of({} as import('../../interfaces/imeter.interface').IReplaceMeterResponse),
-    );
+  it('should select meter and advance through wizard steps', () => {
+    component.form.controls.lecturaFinalSaliente.setValue(530);
+    component.form.controls.motivo.setValue('DANO');
+
+    // Go to step 2
+    component.goToStep(2);
+    expect(component.currentStep()).toBe(2);
+
+    // Select meter
+    const meterToSelect = component.availableMeters()[0];
+    component.selectMeter(meterToSelect);
+    expect(component.selectedNewMeter()).toBe(meterToSelect);
+    expect(component.form.controls.nuevoMedidorId.value).toBe('200');
+
+    // Go to step 3
+    component.goToStep(3);
+    expect(component.currentStep()).toBe(3);
+  });
+
+  it('should reject step 2 progression if reading in step 1 is lower than base', () => {
+    component.form.controls.lecturaFinalSaliente.setValue(450); // Lower than 500
+    component.goToStep(2);
+
+    expect(component.currentStep()).toBe(1);
+    expect(component.errorMessage()).toContain('no puede ser menor a la lectura base previa');
+  });
+
+  it('should submit replace meter request when confirmed on step 3', () => {
+    mockMetersService.replaceMeter.mockReturnValue(of({} as IReplaceMeterResponse));
 
     component.form.patchValue({
       nuevoMedidorId: '200',
@@ -169,6 +200,7 @@ describe('ReplaceMeterModalComponent', () => {
       tratamientoEntrante: 'FACTURAR_PERIODO_ACTUAL',
       periodoOrigenId: 1,
     });
+    component.selectMeter(component.availableMeters()[0]);
 
     vi.spyOn(component.saved, 'emit');
 
@@ -202,6 +234,7 @@ describe('ReplaceMeterModalComponent', () => {
       tratamientoEntrante: 'FACTURAR_PERIODO_ACTUAL',
       periodoOrigenId: 1,
     });
+    component.selectMeter(component.availableMeters()[0]);
 
     component.onSubmit();
 

@@ -10,7 +10,7 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MetersService } from '../../services/meters.service';
 import {
   IMeter,
@@ -27,7 +27,7 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
 @Component({
   selector: 'app-replace-meter-modal',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './replace-meter-modal.component.html',
   styleUrl: './replace-meter-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -43,7 +43,15 @@ export class ReplaceMeterModalComponent implements OnInit {
   readonly saved = output<void>();
   readonly cancelled = output<void>();
 
+  // Wizard state
+  readonly currentStep = signal<1 | 2 | 3>(1);
+
+  // Search in Step 2
+  readonly meterSearchQuery = signal<string>('');
   readonly availableMeters = signal<IMeter[]>([]);
+  readonly isLoadingMeters = signal<boolean>(false);
+  readonly selectedNewMeter = signal<IMeter | null>(null);
+
   readonly periodos = signal<{ periodoId: number; nombre?: string; estado: string }[]>([]);
   readonly isSaving = signal<boolean>(false);
   readonly errorMessage = signal<string>('');
@@ -74,18 +82,48 @@ export class ReplaceMeterModalComponent implements OnInit {
     return h?.lecturaInicial !== undefined ? Number(h.lecturaInicial) : 0;
   });
 
+  readonly filteredMeters = computed(() => {
+    const query = this.meterSearchQuery().trim().toLowerCase();
+    const list = this.availableMeters();
+    if (!query) return list;
+    return list.filter(
+      (m) =>
+        m.serie.toLowerCase().includes(query) ||
+        m.marca.toLowerCase().includes(query) ||
+        m.modelo.toLowerCase().includes(query),
+    );
+  });
+
+  step1Valid(): boolean {
+    const finalSaliente = Number(this.form.controls.lecturaFinalSaliente.value);
+    const motivo = this.form.controls.motivo.value;
+    const detalle = this.form.controls.detalleMotivo.value;
+    if (finalSaliente < this.baseReading()) return false;
+    if (motivo === 'OTRO' && !detalle?.trim()) return false;
+    return !!motivo;
+  }
+
+  step2Valid(): boolean {
+    const meterId = this.form.controls.nuevoMedidorId.value;
+    const initialReading = Number(this.form.controls.lecturaInicialEntrante.value);
+    return !!meterId && initialReading >= 0;
+  }
+
   ngOnInit(): void {
     this.loadAvailableMeters();
     this.loadPeriods();
   }
 
-  private loadAvailableMeters(): void {
+  loadAvailableMeters(): void {
+    this.isLoadingMeters.set(true);
     this.metersService.getMeters({ estado: 'BODEGA', limit: 100 }).subscribe({
       next: (res) => {
         this.availableMeters.set((res.datos || res.data || []) as IMeter[]);
+        this.isLoadingMeters.set(false);
         this.cdr.markForCheck();
       },
       error: () => {
+        this.isLoadingMeters.set(false);
         this.toastService.show('Error al cargar medidores en bodega', 'error');
       },
     });
@@ -107,6 +145,47 @@ export class ReplaceMeterModalComponent implements OnInit {
     });
   }
 
+  selectMeter(meter: IMeter): void {
+    this.selectedNewMeter.set(meter);
+    this.form.controls.nuevoMedidorId.setValue(String(meter.medidorId));
+    this.errorMessage.set('');
+  }
+
+  goToStep(step: 1 | 2 | 3): void {
+    if (step === 2 && !this.step1Valid()) {
+      const finalSaliente = Number(this.form.controls.lecturaFinalSaliente.value);
+      if (finalSaliente < this.baseReading()) {
+        this.errorMessage.set(
+          `La lectura final (${finalSaliente}) no puede ser menor a la lectura base previa (${this.baseReading()}).`,
+        );
+      } else {
+        this.errorMessage.set('Complete los campos requeridos del Paso 1.');
+      }
+      return;
+    }
+
+    if (step === 3 && !this.step2Valid()) {
+      this.errorMessage.set('Debe seleccionar un medidor de la lista en el Paso 2.');
+      return;
+    }
+
+    this.errorMessage.set('');
+    this.currentStep.set(step);
+  }
+
+  isMeterSelected(meter: IMeter): boolean {
+    return this.form.controls.nuevoMedidorId.value === String(meter.medidorId);
+  }
+
+  goBack(): void {
+    const step = this.currentStep();
+    if (step === 2) this.currentStep.set(1);
+    if (step === 3) this.currentStep.set(2);
+    this.errorMessage.set('');
+  }
+
+  readonly Number = Number;
+
   onSubmit(): void {
     const raw = this.form.getRawValue();
     const finalSaliente = Number(raw.lecturaFinalSaliente);
@@ -116,10 +195,17 @@ export class ReplaceMeterModalComponent implements OnInit {
       this.errorMessage.set(
         `La lectura final (${finalSaliente}) no puede ser menor a la lectura inicial registrada (${base}).`,
       );
+      this.currentStep.set(1);
       return;
     }
 
-    if (this.form.invalid || !raw.nuevoMedidorId || !raw.periodoOrigenId) {
+    if (!raw.nuevoMedidorId) {
+      this.errorMessage.set('Debe seleccionar un medidor entrante.');
+      this.currentStep.set(2);
+      return;
+    }
+
+    if (this.form.invalid || !raw.periodoOrigenId) {
       this.form.markAllAsTouched();
       this.errorMessage.set('Por favor complete todos los campos obligatorios.');
       return;
@@ -127,6 +213,7 @@ export class ReplaceMeterModalComponent implements OnInit {
 
     if (raw.motivo === 'OTRO' && !raw.detalleMotivo?.trim()) {
       this.errorMessage.set('Debe especificar un detalle cuando el motivo es OTRO.');
+      this.currentStep.set(1);
       return;
     }
 
