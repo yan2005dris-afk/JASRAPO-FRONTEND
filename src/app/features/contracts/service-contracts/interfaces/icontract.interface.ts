@@ -72,6 +72,8 @@ export interface IHistorialMedidor {
   medidorId: string;
   fechaDesde: string;
   fechaHasta: string | null;
+  lecturaInicial?: number;
+  lecturaFinal?: number | null;
   medidor: IMedidorResumen;
 }
 

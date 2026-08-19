@@ -19,6 +19,7 @@ import { DatePickerComponent } from '../../../../../shared/components/date-picke
 import { ContractsService } from '../../../service-contracts/services/contracts.service';
 import type {
   IContract,
+  IHistorialMedidor,
   IMedidorResumen,
 } from '../../../service-contracts/interfaces/icontract.interface';
 import { ReadingRoutesService } from '../../../reading-routes/services/reading-routes.service';
@@ -175,9 +176,15 @@ export class ReadingFormModalComponent implements OnInit {
     return active?.medidor || contract.historialMedidores[0]?.medidor;
   }
 
+  getActiveHistorial(contract: IContract): IHistorialMedidor | undefined {
+    if (!contract.historialMedidores || contract.historialMedidores.length === 0) return undefined;
+    return contract.historialMedidores.find((h) => !h.fechaHasta) || contract.historialMedidores[0];
+  }
+
   selectContract(contract: IContract): void {
     this.selectedContract = contract;
     const activeMeter = this.getActiveMeter(contract);
+    const activeHistorial = this.getActiveHistorial(contract);
     this.medidorId = activeMeter?.medidorId ? String(activeMeter.medidorId) : '';
     this.contractSearchQuery = `${contract.numeroGuia} - ${this.formatClientName(contract.cliente)}`;
     this.isContractAutocompleteOpen = false;
@@ -195,12 +202,19 @@ export class ReadingFormModalComponent implements OnInit {
               this.lecturaAnterior = Number(
                 ultimaLectura.lecturaActual || ultimaLectura.lecturaAnterior || 0,
               );
+              this.lecturaInicial = false;
             } else {
-              this.lecturaAnterior = 0;
+              // Si no hay lecturas previas registradas: autocompletar lecturaAnterior desde historialMedidores[activo].lecturaInicial
+              const initialFromHistory = Number(activeHistorial?.lecturaInicial ?? 0);
+              this.lecturaAnterior = initialFromHistory;
+              this.lecturaInicial = true;
             }
             this.cdr.markForCheck();
           },
           error: () => {
+            const initialFromHistory = Number(activeHistorial?.lecturaInicial ?? 0);
+            this.lecturaAnterior = initialFromHistory;
+            this.lecturaInicial = true;
             this.cdr.markForCheck();
           },
         });
@@ -217,6 +231,7 @@ export class ReadingFormModalComponent implements OnInit {
     this.medidorId = '';
     if (!this.reading()) {
       this.lecturaAnterior = 0;
+      this.lecturaInicial = false;
     }
     this.cdr.markForCheck();
   }
