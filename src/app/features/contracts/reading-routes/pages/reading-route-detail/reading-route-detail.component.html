@@ -235,11 +235,13 @@
             [showSector]="!readingRoute?.sectorId"
             [showActions]="true"
             [allowValidation]="true"
+            [allowReReading]="true"
             [openDropdownId]="openDropdownId"
             (viewDetail)="openAnomalyModal($event)"
             (editReading)="openAnomalyModal($event)"
             (approveReading)="changeReadingStatus($any($event), 'APROBADA')"
             (reportAnomaly)="openAnomalyModal($event)"
+            (requestReReading)="requestReReading($any($event))"
             (toggleDropdown)="toggleDropdown($event.id, $event.event)"
           />
 

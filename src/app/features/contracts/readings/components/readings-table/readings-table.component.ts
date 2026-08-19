@@ -31,12 +31,14 @@ export class ReadingsTableComponent {
   @Input() showSector = true;
   @Input() showActions = true;
   @Input() allowValidation = false;
+  @Input() allowReReading = true;
   @Input() openDropdownId: string | null = null;
 
   @Output() viewDetail = new EventEmitter<IReadingRowItem>();
   @Output() editReading = new EventEmitter<IReadingRowItem>();
   @Output() approveReading = new EventEmitter<IReadingRowItem>();
   @Output() reportAnomaly = new EventEmitter<IReadingRowItem>();
+  @Output() requestReReading = new EventEmitter<IReadingRowItem>();
   @Output() toggleDropdown = new EventEmitter<{ id: string; event: MouseEvent }>();
 
   onToggleDropdown(id: string | number, event: MouseEvent): void {

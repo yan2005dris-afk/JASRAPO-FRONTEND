@@ -112,6 +112,16 @@
                         <i class="bi bi-shield-exclamation"></i> Reportar Anomalía
                       </button>
                     </li>
+                    @if (allowReReading && r.estado !== 'APROBADA') {
+                      <li>
+                        <hr class="dropdown-divider my-1" />
+                      </li>
+                      <li>
+                        <button class="dropdown-item d-flex align-items-center gap-2 py-2 text-danger" (click)="requestReReading.emit(r)">
+                          <i class="bi bi-arrow-repeat"></i> Solicitar Relectura
+                        </button>
+                      </li>
+                    }
                   </ul>
                 }
               </div>
