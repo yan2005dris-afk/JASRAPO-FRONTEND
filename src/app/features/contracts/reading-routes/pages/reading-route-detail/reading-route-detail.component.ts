@@ -25,6 +25,9 @@ import { PaginationComponent } from '../../../../../shared/components/pagination
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { AnomalyFormModalComponent } from '../../../reading-anomalies/components/anomaly-form-modal/anomaly-form-modal.component';
+import { ReadingDetailModalComponent } from '../../../readings/components/reading-detail-modal/reading-detail-modal.component';
+import { ReadingsService } from '../../../readings/services/readings.service';
+import { IReading } from '../../../readings/interfaces/ireading.interface';
 import {
   ReadingsTableComponent,
   IReadingRowItem,
@@ -42,6 +45,7 @@ import {
     TableSkeletonComponent,
     PaginationComponent,
     AnomalyFormModalComponent,
+    ReadingDetailModalComponent,
     ReadingsTableComponent,
   ],
   templateUrl: './reading-route-detail.component.html',
@@ -55,6 +59,7 @@ export class ReadingRouteDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly routesService = inject(ReadingRoutesService);
+  private readonly readingsService = inject(ReadingsService);
   private readonly comunidadesService = inject(ComunidadesService);
   private readonly usersService = inject(UsersService);
   private readonly toastService = inject(ToastService);
@@ -64,6 +69,9 @@ export class ReadingRouteDetailComponent implements OnInit {
   routeId!: number;
   readingRoute: IReadingRoute | null = null;
   isLoadingRoute = true;
+
+  // Selected reading for detail modal
+  selectedReadingForDetail: IReading | null = null;
 
   // Catalogs
   comunidades: Comunidad[] = [];
@@ -262,6 +270,63 @@ export class ReadingRouteDetailComponent implements OnInit {
       consumoCalculado: r.consumoCalculado,
       estado: r.estadoLectura || 'PENDIENTE',
     }));
+  }
+
+  openDetailModal(reading: IReadingRowItem | IReadingForRoute): void {
+    this.openDropdownId = null;
+    this.readingsService.getReadingById(String(reading.lecturaId)).subscribe({
+      next: (full) => {
+        this.selectedReadingForDetail = full;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        const found = this.readings.find((r) => String(r.lecturaId) === String(reading.lecturaId));
+        if (found) {
+          this.selectedReadingForDetail = {
+            lecturaId: String(found.lecturaId),
+            fecha: new Date(),
+            lecturaAnterior: found.lecturaAnterior ?? 0,
+            lecturaActual: found.lecturaActual ?? 0,
+            consumoCalculado: found.consumoCalculado ?? 0,
+            contratoId: '',
+            isValidada: false,
+            lecturaInicial: false,
+            periodoId: this.readingRoute?.periodoId ?? 0,
+            tieneAnomalia: false,
+            estado: found.estadoLectura ?? 'PENDIENTE',
+            contrato: {
+              contratoId: '',
+              numeroGuia: found.guia ?? '',
+              direccionSuministro: found.direccion ?? '',
+              estado: found.estadoContrato ?? 'ACTIVO',
+              sector: found.sector ? { nombre: found.sector } : null,
+              cliente: found.clienteNombre
+                ? {
+                    clienteId: 0,
+                    nombres: found.clienteNombre,
+                    apellidos: '',
+                    identificacion: '',
+                  }
+                : null,
+            },
+            medidor: found.medidorSerie
+              ? {
+                  medidorId: '0',
+                  serie: found.medidorSerie,
+                  marca: '',
+                  modelo: '',
+                }
+              : null,
+          };
+        }
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  closeDetailModal(): void {
+    this.selectedReadingForDetail = null;
+    this.cdr.markForCheck();
   }
 
   openAnomalyModal(lectura: IReadingForRoute | IReadingRowItem): void {
