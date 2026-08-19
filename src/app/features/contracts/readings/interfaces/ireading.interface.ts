@@ -3,6 +3,16 @@ export interface IReadingContract {
   numeroGuia: string;
   direccionSuministro: string;
   estado: string;
+  sector?: {
+    nombre: string;
+  } | null;
+  cliente?: {
+    clienteId: string | number;
+    nombres: string;
+    apellidos: string;
+    razonSocial?: string | null;
+    identificacion: string;
+  } | null;
 }
 
 export interface IReadingMeter {

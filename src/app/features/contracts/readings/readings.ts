@@ -111,20 +111,30 @@ export class ReadingsComponent implements OnInit {
   }
 
   get tableReadings(): IReadingRowItem[] {
-    return this.readings.map((r) => ({
-      lecturaId: r.lecturaId,
-      guia: r.contrato?.numeroGuia,
-      contratoId: r.contratoId,
-      clienteNombre: (r.contrato as any)?.cliente ? `${(r.contrato as any)?.cliente?.nombres || ''} ${(r.contrato as any)?.cliente?.apellidos || ''}`.trim() : undefined,
-      direccion: r.contrato?.direccionSuministro,
-      medidorSerie: r.medidor?.serie,
-      fecha: r.fecha,
-      lecturaAnterior: r.lecturaAnterior,
-      lecturaActual: r.lecturaActual,
-      consumoCalculado: r.consumoCalculado,
-      estado: r.estado,
-      tieneAnomalia: r.tieneAnomalia,
-    }));
+    return this.readings.map((r) => {
+      const cliente = r.contrato?.cliente;
+      const clienteNombre = cliente?.razonSocial?.trim()
+        ? cliente.razonSocial.trim()
+        : cliente
+          ? `${cliente.nombres || ''} ${cliente.apellidos || ''}`.trim()
+          : undefined;
+
+      return {
+        lecturaId: r.lecturaId,
+        guia: r.contrato?.numeroGuia,
+        contratoId: r.contratoId,
+        clienteNombre: clienteNombre,
+        direccion: r.contrato?.direccionSuministro,
+        sector: r.contrato?.sector?.nombre,
+        medidorSerie: r.medidor?.serie,
+        fecha: r.fecha,
+        lecturaAnterior: r.lecturaAnterior,
+        lecturaActual: r.lecturaActual,
+        consumoCalculado: r.consumoCalculado,
+        estado: r.estado,
+        tieneAnomalia: r.tieneAnomalia,
+      };
+    });
   }
 
   abrirBuscadorContratos(): void {
