@@ -26,7 +26,6 @@ import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/
 import { Router } from '@angular/router';
 import { RouteFormModalComponent } from './components/route-form-modal/route-form-modal.component';
 import { ReassignRouteModalComponent } from './components/reassign-route-modal/reassign-route-modal.component';
-import { RouteDetailModalComponent } from './components/route-detail-modal/route-detail-modal.component';
 
 @Component({
   selector: 'app-reading-routes',
@@ -40,7 +39,6 @@ import { RouteDetailModalComponent } from './components/route-detail-modal/route
     PaginationComponent,
     RouteFormModalComponent,
     ReassignRouteModalComponent,
-    RouteDetailModalComponent,
   ],
   templateUrl: './reading-routes.html',
   styleUrl: './reading-routes.scss',
@@ -82,8 +80,6 @@ export class ReadingRoutesComponent implements OnInit {
   isFormModalOpen = false;
   selectedRouteForEdit: IReadingRoute | null = null;
   selectedRouteForReassign: IReadingRoute | null = null;
-  selectedRouteForDetail: IReadingRoute | null = null;
-  detailModalInitialTab: 'info' | 'readings' = 'info';
 
   ngOnInit(): void {
     this.loadCatalogs();
@@ -244,7 +240,6 @@ export class ReadingRoutesComponent implements OnInit {
   openReassignModal(route: IReadingRoute): void {
     this.openDropdownId = null;
     this.isFormModalOpen = false;
-    this.selectedRouteForDetail = null;
     this.selectedRouteForReassign = route;
     this.cdr.markForCheck();
   }
@@ -256,20 +251,12 @@ export class ReadingRoutesComponent implements OnInit {
 
   onRouteReassigned(): void {
     this.selectedRouteForReassign = null;
-    if (this.selectedRouteForDetail) {
-      this.selectedRouteForDetail = null;
-    }
     this.loadRoutes();
   }
 
   openDetailModal(route: IReadingRoute): void {
     this.openDropdownId = null;
     this.router.navigate(['/app/Contratos/RutasDeLectura', route.rutaId]);
-  }
-
-  closeDetailModal(): void {
-    this.selectedRouteForDetail = null;
-    this.cdr.markForCheck();
   }
 
   deleteRoute(route: IReadingRoute): void {
@@ -305,9 +292,6 @@ export class ReadingRoutesComponent implements OnInit {
     this.routesService.updateRoute(route.rutaId, { estado: nuevoEstado }).subscribe({
       next: (updated) => {
         route.estado = updated.estado;
-        if (this.selectedRouteForDetail && this.selectedRouteForDetail.rutaId === route.rutaId) {
-          this.selectedRouteForDetail = { ...this.selectedRouteForDetail, estado: updated.estado };
-        }
         const msg =
           nuevoEstado === 'EN_PROGRESO'
             ? 'Ruta iniciada y liberada a campo'

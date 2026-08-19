@@ -317,14 +317,4 @@
       (closed)="closeReassignModal()"
     />
   }
-
-  @if (selectedRouteForDetail) {
-    <app-route-detail-modal
-      [route]="selectedRouteForDetail"
-      [initialTab]="detailModalInitialTab"
-      (editRequested)="openEditModal($event)"
-      (reassignRequested)="openReassignModal($event)"
-      (closed)="closeDetailModal()"
-    />
-  }
 </div>
