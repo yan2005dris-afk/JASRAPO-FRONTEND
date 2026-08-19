@@ -96,4 +96,26 @@ describe('MetersService', () => {
     expect(req.request.params.get('search')).toBe('123');
     req.flush(mockResponse);
   });
+
+  it('debería solicitar la exportación en PDF como Blob con los filtros', () => {
+    service.exportMeters('pdf', { estado: 'INSTALADO', search: '123' }).subscribe((res) => {
+      expect(res).toBeInstanceOf(Blob);
+    });
+
+    const req = httpMock.expectOne(
+      `${environment.apiUrl}/meters/export/pdf?estado=INSTALADO&search=123`,
+    );
+    expect(req.request.method).toBe('GET');
+    expect(req.request.responseType).toBe('blob');
+    req.flush(new Blob(['pdf'], { type: 'application/pdf' }));
+  });
+
+  it('debería solicitar la exportación en CSV sin filtros vacíos', () => {
+    service.exportMeters('csv', { search: ' ' }).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiUrl}/meters/export/csv`);
+    expect(req.request.method).toBe('GET');
+    expect(req.request.params.keys()).toEqual([]);
+    req.flush(new Blob(['csv'], { type: 'text/csv' }));
+  });
 });

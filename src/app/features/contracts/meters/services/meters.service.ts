@@ -11,6 +11,8 @@ import {
 } from '../interfaces/imeter.interface';
 import { environment } from '../../../../../environments/environment';
 
+export type MeterExportFormat = 'pdf' | 'csv';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -44,6 +46,23 @@ export class MetersService {
     }
 
     return this.http.get<IPaginatedMetersResponse>(this.endpoint, { params: httpParams });
+  }
+
+  exportMeters(format: MeterExportFormat, params: ISearchMetersParams): Observable<Blob> {
+    let httpParams = new HttpParams();
+
+    if (params.estado !== undefined) {
+      httpParams = httpParams.set('estado', params.estado);
+    }
+    const search = params.search?.trim();
+    if (search) {
+      httpParams = httpParams.set('search', search);
+    }
+
+    return this.http.get(`${this.endpoint}/export/${format}`, {
+      params: httpParams,
+      responseType: 'blob',
+    });
   }
 
   getMeterById(id: number): Observable<IMeter> {

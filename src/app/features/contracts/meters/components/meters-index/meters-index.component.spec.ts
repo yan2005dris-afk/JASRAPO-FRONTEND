@@ -5,7 +5,7 @@ import { MetersIndexComponent } from './meters-index.component';
 import { MetersService } from '../../services/meters.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import { vi, Mock } from 'vitest';
 
@@ -15,6 +15,7 @@ describe('MetersIndexComponent', () => {
   let metersServiceSpy: {
     getMeterStatuses: Mock;
     getMeters: Mock;
+    exportMeters: Mock;
     createMeter: Mock;
     updateMeter: Mock;
     deleteMeter: Mock;
@@ -24,6 +25,7 @@ describe('MetersIndexComponent', () => {
     metersServiceSpy = {
       getMeterStatuses: vi.fn(),
       getMeters: vi.fn(),
+      exportMeters: vi.fn(),
       createMeter: vi.fn(),
       updateMeter: vi.fn(),
       deleteMeter: vi.fn(),
@@ -110,5 +112,37 @@ describe('MetersIndexComponent', () => {
     component.closeModal();
     expect(component.showModal).toBeFalsy();
     expect(component.editingMeter).toBeNull();
+  });
+
+  it('debería exportar con los filtros actuales y finalizar la carga', () => {
+    const exportSubject = new Subject<Blob>();
+    metersServiceSpy.exportMeters.mockReturnValue(exportSubject);
+    component.statusCatalog = [{ codigo: 'INSTALADO', nombre: 'Instalado', orden: 1 }];
+    component.statusFilter = 'INSTALADO';
+    component.searchQuery = '  123  ';
+
+    component.exportMeters('pdf');
+
+    expect(component.isExporting).toBe(true);
+    expect(metersServiceSpy.exportMeters).toHaveBeenCalledWith('pdf', {
+      estado: 'INSTALADO',
+      search: '123',
+    });
+
+    exportSubject.next(new Blob(['pdf'], { type: 'application/pdf' }));
+    exportSubject.complete();
+
+    expect(component.isExporting).toBe(false);
+  });
+
+  it('debería iniciar la exportación al seleccionar CSV en el menú', () => {
+    metersServiceSpy.exportMeters.mockReturnValue(of(new Blob(['csv'], { type: 'text/csv' })));
+
+    component.handleExportAction('csv');
+
+    expect(metersServiceSpy.exportMeters).toHaveBeenCalledWith('csv', {
+      estado: undefined,
+      search: undefined,
+    });
   });
 });

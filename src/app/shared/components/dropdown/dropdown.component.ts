@@ -32,6 +32,7 @@ export class DropdownComponent {
   buttonClass = input<string>(
     'btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium bg-white text-muted',
   );
+  disabled = input(false);
   items = input<DropdownItem[]>([]);
 
   actionSelected = output<string>();
@@ -41,6 +42,7 @@ export class DropdownComponent {
   elementRef = inject(ElementRef);
 
   toggleDropdown() {
+    if (this.disabled()) return;
     this.isOpen.update((v) => !v);
   }
 

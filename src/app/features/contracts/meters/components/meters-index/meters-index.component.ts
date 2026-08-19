@@ -23,7 +23,7 @@ import {
   MeterStatusFilter,
   MeterStatusCode,
 } from '../../interfaces/imeter.interface';
-import { MetersService } from '../../services/meters.service';
+import { MeterExportFormat, MetersService } from '../../services/meters.service';
 import { finalize } from 'rxjs';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
@@ -80,6 +80,7 @@ export class MetersIndexComponent implements OnInit {
   isLoading = false;
   hasFetched = false;
   isSaving = false;
+  isExporting = false;
   errorMessage = '';
   modalErrorMessage = '';
 
@@ -93,6 +94,11 @@ export class MetersIndexComponent implements OnInit {
   dropdownItems: DropdownItem[] = [
     { label: 'Borrar todo', action: 'deleteAll', isDanger: true, icon: 'bi bi-trash' },
     { label: 'Importar', action: 'import', icon: 'bi bi-download' },
+  ];
+
+  exportItems: DropdownItem[] = [
+    { label: 'Descargar PDF', action: 'pdf', icon: 'bi bi-file-earmark-pdf' },
+    { label: 'Descargar CSV', action: 'csv', icon: 'bi bi-filetype-csv' },
   ];
 
   toggleDropdown(meterId: number, event: MouseEvent): void {
@@ -249,6 +255,49 @@ export class MetersIndexComponent implements OnInit {
   handleMassAction(action: string) {
     console.log('Acción masiva seleccionada:', action);
     // TODO: Implementar lógica de la acción seleccionada
+  }
+
+  exportMeters(format: MeterExportFormat): void {
+    if (this.isExporting) return;
+
+    const selectedStatus = this.statusCatalog.find((status) => status.codigo === this.statusFilter);
+    const filters = {
+      estado: selectedStatus?.codigo as MeterStatusCode | undefined,
+      search: this.searchQuery.trim() || undefined,
+    };
+
+    this.isExporting = true;
+    this.cdr.markForCheck();
+    this.metersService
+      .exportMeters(format, filters)
+      .pipe(
+        finalize(() => {
+          this.isExporting = false;
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (blob) => this.downloadExport(blob, format),
+        error: (err: HttpErrorResponse) => {
+          const errorMsg = this.getBackendErrorMessage(err, 'Error al exportar los medidores.');
+          this.toastService.error(errorMsg, 'Error');
+        },
+      });
+  }
+
+  handleExportAction(action: string): void {
+    if (action === 'pdf' || action === 'csv') {
+      this.exportMeters(action);
+    }
+  }
+
+  private downloadExport(blob: Blob, format: MeterExportFormat): void {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `medidores.${format}`;
+    link.click();
+    URL.revokeObjectURL(url);
   }
 
   // Gestión de modales
