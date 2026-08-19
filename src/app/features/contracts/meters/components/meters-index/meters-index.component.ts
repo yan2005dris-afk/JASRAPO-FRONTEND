@@ -196,7 +196,7 @@ export class MetersIndexComponent implements OnInit {
       )
       .subscribe({
         next: (response) => {
-          const rawMeters = response.data as IMeterDto[];
+          const rawMeters = (response.data || response.datos || []) as IMeterDto[];
           this.meters = rawMeters.map((meterDto) => {
             const foundStatus = this.statusCatalog.find((e) => {
               if (typeof meterDto.estado === 'string') {
@@ -210,8 +210,8 @@ export class MetersIndexComponent implements OnInit {
             } as IMeter;
           });
 
-          const meta = response.meta;
-          this.totalItems.set(meta.total);
+          const total = response.meta?.total ?? response.paginacion?.total ?? 0;
+          this.totalItems.set(total);
           this.kpis.set(response.kpis);
           this.hasFetched = true;
           this.cdr.markForCheck();
