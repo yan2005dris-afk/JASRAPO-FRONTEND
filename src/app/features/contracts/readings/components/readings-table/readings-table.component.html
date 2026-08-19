@@ -1,0 +1,124 @@
+<div class="table-responsive">
+  <table class="table table-hover align-middle mb-0 custom-readings-table">
+    <thead class="table-light">
+      <tr>
+        <th scope="col" class="ps-4" style="width: 48px">
+          <input class="form-check-input table-checkbox" type="checkbox" aria-label="Seleccionar todo" />
+        </th>
+        <th scope="col">Contrato / Guía</th>
+        <th scope="col">Cliente / Ubicación</th>
+        @if (showSector) {
+          <th scope="col">Sector</th>
+        }
+        <th scope="col">Serie Medidor</th>
+        <th scope="col" class="text-end">Lect. Ant</th>
+        <th scope="col" class="text-end">Lect. Act</th>
+        <th scope="col" class="text-end">Consumo</th>
+        <th scope="col" class="text-center">Estado</th>
+        @if (showActions) {
+          <th scope="col" class="text-center pe-4">Acciones</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (r of readings; track r.lecturaId) {
+        <tr>
+          <td class="ps-4">
+            <input class="form-check-input table-checkbox" type="checkbox" [attr.aria-label]="'Seleccionar ' + r.guia" />
+          </td>
+          <td>
+            <div class="fw-bold text-dark text-nowrap small">
+              <i class="bi bi-hash text-muted me-1"></i>{{ r.guia || ('Contrato #' + r.contratoId) }}
+            </div>
+            @if (r.fecha) {
+              <div class="text-muted" style="font-size: 0.75rem">
+                {{ r.fecha | date: 'dd/MM/yyyy' }}
+              </div>
+            }
+          </td>
+          <td>
+            <div class="fw-medium text-dark small">{{ r.clienteNombre || ('Contrato #' + r.contratoId) }}</div>
+            @if (r.direccion) {
+              <div class="text-muted text-truncate" style="font-size: 0.75rem; max-width: 200px">
+                <i class="bi bi-geo-alt me-1"></i>{{ r.direccion }}
+              </div>
+            }
+          </td>
+          @if (showSector) {
+            <td class="small text-muted">
+              {{ r.sector || '—' }}
+            </td>
+          }
+          <td class="small text-muted font-monospace">
+            {{ r.medidorSerie || '—' }}
+          </td>
+          <td class="text-end small text-muted tabular-nums">
+            {{ (r.lecturaAnterior ?? 0) | number: '1.2-2' }}
+          </td>
+          <td class="text-end small fw-bold tabular-nums">
+            @if (r.estado === 'PENDIENTE' && (r.lecturaActual === undefined || r.lecturaActual === null)) {
+              <span class="text-muted fst-italic">—</span>
+            } @else {
+              <span class="text-dark">{{ (r.lecturaActual ?? 0) | number: '1.2-2' }}</span>
+            }
+          </td>
+          <td class="text-end fw-bold tabular-nums" style="font-size: 0.92rem">
+            @if (r.estado === 'PENDIENTE' && (r.consumoCalculado === undefined || r.consumoCalculado === null)) {
+              <span class="badge bg-light text-muted border border-dashed fw-normal">
+                Pendiente
+              </span>
+            } @else {
+              <span class="text-primary font-monospace">{{ (r.consumoCalculado ?? 0) | number: '1.2-2' }} m³</span>
+            }
+          </td>
+          <td class="text-center">
+            <app-status-badge [status]="r.estado" />
+          </td>
+          @if (showActions) {
+            <td class="text-center pe-4">
+              <div class="dropdown">
+                <button
+                  class="btn btn-icon btn-sm rounded-circle shadow-none border-0"
+                  type="button"
+                  (click)="onToggleDropdown(r.lecturaId, $event)"
+                  [class.active]="openDropdownId === ('' + r.lecturaId)"
+                  aria-label="Opciones"
+                >
+                  <i class="bi bi-three-dots-vertical text-muted"></i>
+                </button>
+                @if (openDropdownId === ('' + r.lecturaId)) {
+                  <ul class="dropdown-menu dropdown-menu-end show shadow-sm border-0 py-2 mt-1">
+                    <li>
+                      <button class="dropdown-item d-flex align-items-center gap-2 py-2" (click)="viewDetail.emit(r)">
+                        <i class="bi bi-eye text-primary"></i> Ver Detalle
+                      </button>
+                    </li>
+                    @if (r.estado === 'PENDIENTE' || r.estado === 'EN_REVISION') {
+                      <li>
+                        <button class="dropdown-item d-flex align-items-center gap-2 py-2" (click)="editReading.emit(r)">
+                          <i class="bi bi-pencil text-secondary"></i> Registrar / Editar Lectura
+                        </button>
+                      </li>
+                      @if (allowValidation && r.estado === 'EN_REVISION') {
+                        <li>
+                          <button class="dropdown-item d-flex align-items-center gap-2 py-2 text-success" (click)="approveReading.emit(r)">
+                            <i class="bi bi-check-circle"></i> Aprobar Lectura
+                          </button>
+                        </li>
+                      }
+                    }
+                    <li>
+                      <button class="dropdown-item d-flex align-items-center gap-2 py-2 text-warning" (click)="reportAnomaly.emit(r)">
+                        <i class="bi bi-shield-exclamation"></i> Reportar Anomalía
+                      </button>
+                    </li>
+                  </ul>
+                }
+              </div>
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

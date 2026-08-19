@@ -230,132 +230,18 @@
             description="No hay lecturas generadas para esta comunidad y período con los filtros aplicados."
           />
         } @else {
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 custom-route-table">
-              <thead class="table-light">
-                <tr>
-                  <th class="ps-4 py-3 fw-semibold text-muted">N° Guía</th>
-                  <th class="py-3 fw-semibold text-muted">Cliente / Dirección</th>
-                  <th class="py-3 fw-semibold text-muted">Sector</th>
-                  <th class="py-3 fw-semibold text-muted">Serie Medidor</th>
-                  <th class="py-3 fw-semibold text-muted text-end">Lect. Anterior</th>
-                  <th class="py-3 fw-semibold text-muted text-end">Lect. Actual</th>
-                  <th class="py-3 fw-semibold text-muted text-end">Consumo</th>
-                  <th class="py-3 fw-semibold text-muted text-center">Estado Lectura</th>
-                  <th class="py-3 fw-semibold text-muted text-center pe-4">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (r of readings; track r.lecturaId) {
-                  <tr>
-                    <td class="ps-4 fw-bold text-dark text-nowrap">
-                      <i class="bi bi-hash text-muted me-1"></i>{{ r.guia }}
-                    </td>
-                    <td>
-                      <div class="fw-medium text-dark">{{ r.clienteNombre }}</div>
-                      <div class="text-muted" style="font-size: 0.78rem">
-                        <i class="bi bi-geo-alt me-1"></i>{{ r.direccion }}
-                      </div>
-                    </td>
-                    <td class="small text-muted">
-                      {{ r.sector || '—' }}
-                    </td>
-                    <td class="text-nowrap">
-                      <span class="badge badge-soft-primary">
-                        <i class="bi bi-speedometer me-1"></i>{{ r.medidorSerie || 'S/N' }}
-                      </span>
-                    </td>
-                    <td class="text-end text-dark font-monospace tabular-nums">
-                      {{
-                        r.lecturaAnterior != null ? (r.lecturaAnterior | number: '1.2-2') : '0.00'
-                      }}
-                    </td>
-                    <td class="text-end fw-semibold font-monospace tabular-nums">
-                      @if (r.estadoLectura === 'PENDIENTE' || r.lecturaActual == null) {
-                        <span class="text-muted fst-italic" title="Pendiente de toma">—</span>
-                      } @else {
-                        <span class="text-dark">{{ r.lecturaActual | number: '1.2-2' }}</span>
-                      }
-                    </td>
-                    <td class="text-end font-monospace">
-                      @if (r.estadoLectura === 'PENDIENTE' || r.lecturaActual == null) {
-                        <span class="badge bg-light text-muted border border-dashed fw-normal">
-                          Pendiente
-                        </span>
-                      } @else {
-                        <span class="badge bg-light text-primary border fw-semibold">
-                          {{ r.consumoCalculado ?? 0 | number: '1.2-2' }} m³
-                        </span>
-                      }
-                    </td>
-                    <td class="text-center text-nowrap">
-                      <app-status-badge [status]="r.estadoLectura || r.estadoContrato" />
-                    </td>
-                    <td class="text-center pe-4 text-nowrap">
-                      @if (processingReadingId === r.lecturaId) {
-                        <span
-                          class="spinner-border spinner-border-sm text-primary"
-                          role="status"
-                        ></span>
-                      } @else {
-                        <div class="dropdown">
-                          <button
-                            class="btn btn-link text-muted p-0 shadow-none"
-                            type="button"
-                            (click)="toggleDropdown(r.lecturaId, $event)"
-                            aria-label="Menú de opciones"
-                          >
-                            <i class="bi bi-three-dots-vertical"></i>
-                          </button>
-                          <ul
-                            class="dropdown-menu dropdown-menu-end shadow-sm border-0"
-                            [class.show]="openDropdownId === r.lecturaId"
-                            style="min-width: 175px"
-                          >
-                            @if (r.estadoLectura !== 'APROBADA') {
-                              <li>
-                                <button
-                                  class="dropdown-item d-flex align-items-center gap-2 text-success"
-                                  (click)="changeReadingStatus(r, 'APROBADA')"
-                                >
-                                  <i class="bi bi-check-circle-fill" style="font-size: 0.85rem"></i>
-                                  Aprobar lectura
-                                </button>
-                              </li>
-                            }
-                            <li>
-                              <button
-                                class="dropdown-item d-flex align-items-center gap-2 text-warning"
-                                (click)="openAnomalyModal(r)"
-                              >
-                                <i
-                                  class="bi bi-exclamation-triangle-fill"
-                                  style="font-size: 0.85rem"
-                                ></i>
-                                Reportar novedad
-                              </button>
-                            </li>
-                            <li>
-                              <hr class="dropdown-divider" />
-                            </li>
-                            <li>
-                              <button
-                                class="dropdown-item d-flex align-items-center gap-2 text-danger"
-                                (click)="requestReReading(r)"
-                              >
-                                <i class="bi bi-arrow-repeat" style="font-size: 0.85rem"></i>
-                                Solicitar relectura
-                              </button>
-                            </li>
-                          </ul>
-                        </div>
-                      }
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
+          <app-readings-table
+            [readings]="tableReadings"
+            [showSector]="!readingRoute?.sectorId"
+            [showActions]="true"
+            [allowValidation]="true"
+            [openDropdownId]="openDropdownId"
+            (viewDetail)="openAnomalyModal($event)"
+            (editReading)="openAnomalyModal($event)"
+            (approveReading)="changeReadingStatus($any($event), 'APROBADA')"
+            (reportAnomaly)="openAnomalyModal($event)"
+            (toggleDropdown)="toggleDropdown($event.id, $event.event)"
+          />
 
           <!-- Shared Pagination Component -->
           <div class="px-4 py-3 border-top bg-white">

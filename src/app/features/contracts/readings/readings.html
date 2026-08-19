@@ -112,144 +112,19 @@
       }
 
       @if (!isLoading && readings.length > 0) {
-        <div class="table-responsive">
-          <table class="table table-hover align-middle mb-0 custom-table">
-            <thead>
-              <tr>
-                <th scope="col" class="ps-4" style="width: 56px">
-                  <input class="form-check-input table-checkbox" type="checkbox" />
-                </th>
-                <th scope="col">Contrato / Guía</th>
-                <th scope="col">Medidor</th>
-                <th scope="col">Fecha Toma</th>
-                <th scope="col" class="text-end">Lect. Ant</th>
-                <th scope="col" class="text-end">Lect. Act</th>
-                <th scope="col" class="text-end">Consumo</th>
-                <th scope="col" class="text-center">Estado</th>
-                <th scope="col" class="text-center pe-4">Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (reading of readings; track reading.lecturaId) {
-                <tr>
-                  <td class="ps-4">
-                    <input class="form-check-input table-checkbox" type="checkbox" />
-                  </td>
-                  <td>
-                    <div class="fw-semibold text-dark small">
-                      Contrato #{{ reading.contratoId }}
-                    </div>
-                    <div class="text-muted" style="font-size: 0.75rem">
-                      Guía: {{ reading.contrato?.numeroGuia || '—' }}
-                    </div>
-                  </td>
-                  <td class="small text-muted">
-                    {{
-                      reading.medidor?.serie || 'Medidor #' + (reading.medidor?.medidorId || '—')
-                    }}
-                  </td>
-                  <td class="small text-muted">
-                    {{ reading.fecha | date: 'dd/MM/yyyy' }}
-                  </td>
-                  <td class="text-end small text-muted tabular-nums">
-                    {{ reading.lecturaAnterior | number: '1.2-2' }}
-                  </td>
-                  <td class="text-end small fw-bold tabular-nums">
-                    @if (reading.estado === 'PENDIENTE') {
-                      <span class="text-muted fst-italic">—</span>
-                    } @else {
-                      <span class="text-dark">{{ reading.lecturaActual | number: '1.2-2' }}</span>
-                    }
-                  </td>
-                  <td class="text-end fw-bold tabular-nums" style="font-size: 0.95rem">
-                    @if (reading.estado === 'PENDIENTE') {
-                      <span class="badge bg-light text-muted border border-dashed fw-normal">
-                        Pendiente
-                      </span>
-                    } @else {
-                      <span class="text-primary"
-                        >{{ reading.consumoCalculado | number: '1.2-2' }} m³</span
-                      >
-                    }
-                  </td>
-                  <td class="text-center">
-                    <app-status-badge [status]="reading.estado" />
-                  </td>
-                  <td class="text-center pe-4">
-                    <div class="dropdown">
-                      <button
-                        class="btn btn-link text-muted p-0 shadow-none"
-                        (click)="toggleDropdown(reading.lecturaId, $event)"
-                        aria-label="Menú de opciones"
-                      >
-                        <i class="bi bi-three-dots-vertical"></i>
-                      </button>
-                      <ul
-                        class="dropdown-menu dropdown-menu-end shadow-sm border-0"
-                        [class.show]="openDropdownId === reading.lecturaId"
-                        style="min-width: 155px"
-                      >
-                        <li>
-                          <button
-                            class="dropdown-item d-flex align-items-center gap-2"
-                            (click)="openDetailModal(reading)"
-                          >
-                            <i class="bi bi-eye text-secondary" style="font-size: 0.85rem"></i>
-                            Ver detalle
-                          </button>
-                        </li>
-                        @if (reading.estado !== 'APROBADA') {
-                          <li>
-                            <button
-                              class="dropdown-item d-flex align-items-center gap-2 text-success"
-                              (click)="approveReading(reading)"
-                            >
-                              <i class="bi bi-check-circle-fill" style="font-size: 0.85rem"></i>
-                              Aprobar lectura
-                            </button>
-                          </li>
-                        }
-                        <li>
-                          <button
-                            class="dropdown-item d-flex align-items-center gap-2"
-                            (click)="openEditModal(reading)"
-                          >
-                            <i class="bi bi-pencil text-primary" style="font-size: 0.85rem"></i>
-                            Editar
-                          </button>
-                        </li>
-                        <li>
-                          <button
-                            class="dropdown-item d-flex align-items-center gap-2 text-warning"
-                            (click)="reportAnomaly(reading)"
-                          >
-                            <i
-                              class="bi bi-exclamation-triangle-fill"
-                              style="font-size: 0.85rem"
-                            ></i>
-                            Reportar anomalía
-                          </button>
-                        </li>
-                        <li>
-                          <hr class="dropdown-divider" />
-                        </li>
-                        <li>
-                          <button
-                            class="dropdown-item d-flex align-items-center gap-2 text-danger"
-                            (click)="deleteReading(reading)"
-                          >
-                            <i class="bi bi-trash-fill" style="font-size: 0.85rem"></i>
-                            Eliminar
-                          </button>
-                        </li>
-                      </ul>
-                    </div>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+        <app-readings-table
+          [readings]="tableReadings"
+          [showSector]="true"
+          [showActions]="true"
+          [allowValidation]="true"
+          [openDropdownId]="openDropdownId"
+          (viewDetail)="openDetailModal($event)"
+          (editReading)="openEditModal($event)"
+          (approveReading)="approveReading($any($event))"
+          (reportAnomaly)="reportAnomaly($event)"
+          (toggleDropdown)="toggleDropdown($event.id, $event.event)"
+        />
+      }
 
         <!-- Pagination -->
         <div class="px-4 py-3 border-top bg-white">
@@ -261,7 +136,6 @@
             (pageSizeChange)="onPageSizeChange($event)"
           />
         </div>
-      }
     </div>
   </div>
 

@@ -25,6 +25,10 @@ import { PaginationComponent } from '../../../../../shared/components/pagination
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { AnomalyFormModalComponent } from '../../../reading-anomalies/components/anomaly-form-modal/anomaly-form-modal.component';
+import {
+  ReadingsTableComponent,
+  IReadingRowItem,
+} from '../../../readings/components/readings-table/readings-table.component';
 
 @Component({
   selector: 'app-reading-route-detail',
@@ -38,6 +42,7 @@ import { AnomalyFormModalComponent } from '../../../reading-anomalies/components
     TableSkeletonComponent,
     PaginationComponent,
     AnomalyFormModalComponent,
+    ReadingsTableComponent,
   ],
   templateUrl: './reading-route-detail.component.html',
   styleUrl: './reading-route-detail.component.scss',
@@ -226,13 +231,14 @@ export class ReadingRouteDetailComponent implements OnInit {
   }
 
   // Actions & Dropdown
-  openDropdownId: string | number | null = null;
+  openDropdownId: string | null = null;
   isAnomalyModalOpen = false;
   selectedLecturaIdForAnomaly: string | null = null;
 
   toggleDropdown(id: string | number, event: MouseEvent): void {
     event.stopPropagation();
-    this.openDropdownId = this.openDropdownId === id ? null : id;
+    const strId = String(id);
+    this.openDropdownId = this.openDropdownId === strId ? null : strId;
     this.cdr.markForCheck();
   }
 
@@ -243,7 +249,22 @@ export class ReadingRouteDetailComponent implements OnInit {
     }
   }
 
-  openAnomalyModal(lectura: IReadingForRoute): void {
+  get tableReadings(): IReadingRowItem[] {
+    return this.readings.map((r) => ({
+      lecturaId: r.lecturaId,
+      guia: r.guia,
+      clienteNombre: r.clienteNombre,
+      direccion: r.direccion,
+      sector: r.sector,
+      medidorSerie: r.medidorSerie,
+      lecturaAnterior: r.lecturaAnterior,
+      lecturaActual: r.lecturaActual,
+      consumoCalculado: r.consumoCalculado,
+      estado: r.estadoLectura || 'PENDIENTE',
+    }));
+  }
+
+  openAnomalyModal(lectura: IReadingForRoute | IReadingRowItem): void {
     this.openDropdownId = null;
     this.selectedLecturaIdForAnomaly = String(lectura.lecturaId);
     this.isAnomalyModalOpen = true;

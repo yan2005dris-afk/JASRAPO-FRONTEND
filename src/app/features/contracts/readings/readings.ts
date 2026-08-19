@@ -19,6 +19,10 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { ReadingFormModalComponent } from './components/reading-form-modal/reading-form-modal.component';
 import { ReadingDetailModalComponent } from './components/reading-detail-modal/reading-detail-modal.component';
+import {
+  ReadingsTableComponent,
+  IReadingRowItem,
+} from './components/readings-table/readings-table.component';
 import type { IContract } from '../service-contracts/interfaces/icontract.interface';
 
 @Component({
@@ -27,13 +31,13 @@ import type { IContract } from '../service-contracts/interfaces/icontract.interf
   imports: [
     CommonModule,
     FormsModule,
-    StatusBadgeComponent,
     EmptyStateComponent,
     PaginationComponent,
     TableSkeletonComponent,
     ContractPickerComponent,
     ReadingFormModalComponent,
     ReadingDetailModalComponent,
+    ReadingsTableComponent,
   ],
   templateUrl: './readings.html',
   styleUrl: './readings.scss',
@@ -106,6 +110,23 @@ export class ReadingsComponent implements OnInit {
     });
   }
 
+  get tableReadings(): IReadingRowItem[] {
+    return this.readings.map((r) => ({
+      lecturaId: r.lecturaId,
+      guia: r.contrato?.numeroGuia,
+      contratoId: r.contratoId,
+      clienteNombre: (r.contrato as any)?.cliente ? `${(r.contrato as any)?.cliente?.nombres || ''} ${(r.contrato as any)?.cliente?.apellidos || ''}`.trim() : undefined,
+      direccion: r.contrato?.direccionSuministro,
+      medidorSerie: r.medidor?.serie,
+      fecha: r.fecha,
+      lecturaAnterior: r.lecturaAnterior,
+      lecturaActual: r.lecturaActual,
+      consumoCalculado: r.consumoCalculado,
+      estado: r.estado,
+      tieneAnomalia: r.tieneAnomalia,
+    }));
+  }
+
   abrirBuscadorContratos(): void {
     this.isContractPickerOpen = true;
   }
@@ -164,9 +185,10 @@ export class ReadingsComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  openEditModal(reading: IReading): void {
+  openEditModal(reading: IReadingRowItem | IReading): void {
     this.openDropdownId = null;
-    this.selectedReadingForEdit = reading;
+    const full = this.readings.find(r => String(r.lecturaId) === String(reading.lecturaId)) || (reading as IReading);
+    this.selectedReadingForEdit = full;
     this.isFormModalOpen = true;
     this.cdr.markForCheck();
   }
@@ -186,15 +208,16 @@ export class ReadingsComponent implements OnInit {
     this.loadReadings();
   }
 
-  openDetailModal(reading: IReading): void {
+  openDetailModal(reading: IReadingRowItem | IReading): void {
     this.openDropdownId = null;
-    this.readingsService.getReadingById(reading.lecturaId).subscribe({
+    this.readingsService.getReadingById(String(reading.lecturaId)).subscribe({
       next: (full) => {
         this.selectedReadingForDetail = full;
         this.cdr.markForCheck();
       },
       error: () => {
-        this.selectedReadingForDetail = reading;
+        const fallback = this.readings.find(r => String(r.lecturaId) === String(reading.lecturaId)) || (reading as IReading);
+        this.selectedReadingForDetail = fallback;
         this.cdr.markForCheck();
       },
     });
@@ -205,7 +228,7 @@ export class ReadingsComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  reportAnomaly(reading: IReading): void {
+  reportAnomaly(reading: IReadingRowItem | IReading): void {
     this.openDropdownId = null;
     this.router.navigate(['/app/Contratos/AnomaliasDeLectura'], {
       queryParams: {
