@@ -112,7 +112,7 @@ export class PaymentsService {
   }
 
   getRubros(
-    params: { search?: string; activo?: boolean; limit?: number } = {},
+    params: { search?: string; activo?: boolean; page?: number; limit?: number } = {},
   ): Observable<IPaginatedResult<IRubro>> {
     let httpParams = new HttpParams();
     if (params.search) {
@@ -120,6 +120,9 @@ export class PaymentsService {
     }
     if (params.activo !== undefined) {
       httpParams = httpParams.set('activo', String(params.activo));
+    }
+    if (params.page !== undefined) {
+      httpParams = httpParams.set('page', String(params.page));
     }
     if (params.limit !== undefined) {
       httpParams = httpParams.set('limit', String(params.limit));
@@ -131,5 +134,20 @@ export class PaymentsService {
 
   createCobroPuntual(dto: ICreateCobroPuntualDto): Observable<IPayment> {
     return this.http.post<IPayment>(`${this.endpoint}/cobro-puntual`, dto);
+  }
+
+  uploadComprobante(file: File): Observable<{ key: string; url: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ key: string; url: string }>(
+      `${this.endpoint}/upload-comprobante`,
+      formData,
+    );
+  }
+
+  getComprobanteUrl(key: string): Observable<{ url: string }> {
+    return this.http.get<{ url: string }>(`${this.endpoint}/comprobante-url`, {
+      params: { key },
+    });
   }
 }

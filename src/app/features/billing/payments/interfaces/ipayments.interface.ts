@@ -69,6 +69,13 @@ export interface IPaymentDetailComprobante {
   secuencial: string;
   importeTotal: number | null;
   estado: string;
+  prefactura?: {
+    prefacturaId: string;
+    mes?: number;
+    totalPagar?: number;
+    consumoM3?: number | null;
+    periodoNombre?: string;
+  };
 }
 
 export interface IPaymentDetail {
@@ -99,6 +106,16 @@ export interface ISaldoFavor {
 export interface IPayment {
   pagoId: string;
   clienteId: string;
+  cliente?: {
+    clienteId: string;
+    nombres: string;
+    apellidos: string;
+    razonSocial: string | null;
+    identificacion: string;
+    email: string | null;
+    telefono: string | null;
+    direccionDomicilio: string | null;
+  };
   clienteNombre?: string;
   clienteIdentificacion?: string;
   cajaId: string | null;
@@ -217,10 +234,11 @@ export interface ICreateCobroPuntualDto {
   contratoId: string;
   fechaPago: string;
   items: { rubroId: number; cantidad: number; descripcion?: string }[];
-  montoTotalRecibido: number;
-  banco?: string;
-  tarjetaCredito?: string;
+  montoTotalRecibido?: number;
+  banco?: Banco | string;
+  tarjetaCredito?: TarjetaCredito | string;
   numeroOperacion?: string;
-  observaciones?: string;
   referenciaBanco?: string;
+  observaciones?: string;
+  comprobanteUrl?: string;
 }

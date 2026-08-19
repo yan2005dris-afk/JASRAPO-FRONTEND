@@ -1,0 +1,390 @@
+<div class="company-page container-fluid px-4 py-4">
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div class="d-flex align-items-center gap-3">
+      <div class="page-header-icon bg-primary bg-opacity-10 text-primary p-3 rounded-3 d-flex align-items-center justify-content-center">
+        <i class="bi bi-buildings fs-3"></i>
+      </div>
+      <div>
+        <h3 class="fw-bold mb-0 text-dark fs-4">Empresa, Sucursales y Cajas</h3>
+        <p class="text-muted small mb-0">
+          Configuración institucional del emisor (SRI), establecimientos físicos y ventanillas de cobro.
+        </p>
+      </div>
+    </div>
+
+    @if (activeTab === 'establecimientos') {
+      <button
+        type="button"
+        class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-4"
+        (click)="openCreateEstablecimientoModal()"
+      >
+        <i class="bi bi-plus-circle"></i>
+        Nueva Sucursal / Establecimiento
+      </button>
+    }
+  </div>
+
+  @if (isLoading) {
+    <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4 bg-white">
+      <div class="spinner-border text-primary mx-auto mb-3" role="status"></div>
+      <p class="text-muted small mb-0">Cargando datos institucionales...</p>
+    </div>
+  } @else if (!company) {
+    <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4 bg-white">
+      <i class="bi bi-exclamation-triangle fs-1 text-warning d-block mb-3"></i>
+      <h5 class="fw-bold text-dark">No se encontró información del emisor</h5>
+      <p class="text-muted small mb-0">Compruebe la configuración inicial del sistema o los seeds de base de datos.</p>
+    </div>
+  } @else {
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-pills custom-pills mb-4 gap-2">
+      <li class="nav-item">
+        <button
+          class="nav-link py-2 px-3 fw-semibold small"
+          [class.active]="activeTab === 'general'"
+          (click)="activeTab = 'general'"
+        >
+          <i class="bi bi-building-gear me-1"></i> Datos Institucionales & Tributarios
+        </button>
+      </li>
+      <li class="nav-item">
+        <button
+          class="nav-link py-2 px-3 fw-semibold small"
+          [class.active]="activeTab === 'establecimientos'"
+          (click)="activeTab = 'establecimientos'"
+        >
+          <i class="bi bi-geo-alt me-1"></i> Sucursales y Puntos de Emisión / Cajas ({{ company.establecimientos.length }})
+        </button>
+      </li>
+    </ul>
+
+    <!-- TAB 1: DATOS GENERALES -->
+    @if (activeTab === 'general') {
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mb-4">
+        <div class="card-header bg-white border-bottom p-4">
+          <h5 class="fw-bold text-dark mb-1">Información Tributaria y Emisión SRI</h5>
+          <p class="text-muted small mb-0">Datos que se plasman en las facturas electrónicas y comprobantes emitidos.</p>
+        </div>
+
+        <div class="card-body p-4">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label fw-semibold text-dark small">RUC (Identificación Fiscal)</label>
+              <input type="text" class="form-control bg-light" [value]="company.ruc" disabled />
+              <small class="text-muted" style="font-size: 0.74rem">El RUC no puede modificarse una vez configurado.</small>
+            </div>
+
+            <div class="col-md-8">
+              <label class="form-label fw-semibold text-dark small">Razón Social *</label>
+              <input type="text" class="form-control" [(ngModel)]="company.razonSocial" />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold text-dark small">Nombre Comercial</label>
+              <input type="text" class="form-control" [(ngModel)]="company.nombreComercial" placeholder="Nombre comercial de la junta..." />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold text-dark small">Dirección Matriz *</label>
+              <input type="text" class="form-control" [(ngModel)]="company.direccionMatriz" />
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold text-dark small">Ambiente SRI</label>
+              <select class="form-select" [(ngModel)]="company.ambiente">
+                <option value="1">1 - Pruebas / Homologación</option>
+                <option value="2">2 - Producción</option>
+              </select>
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold text-dark small">Contribuyente Especial</label>
+              <input type="text" class="form-control" [(ngModel)]="company.contribuyenteEspecial" placeholder="Nº Resolución (opcional)" />
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold text-dark small">Agente de Retención</label>
+              <input type="text" class="form-control" [(ngModel)]="company.agenteRetencion" placeholder="Nº Resolución (opcional)" />
+            </div>
+
+            <div class="col-md-6 pt-2">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="contabilidadSwitch" [(ngModel)]="company.obligadoContabilidad" />
+                <label class="form-check-label fw-semibold text-dark small" for="contabilidadSwitch">
+                  Obligado a llevar Contabilidad
+                </label>
+              </div>
+            </div>
+
+            <div class="col-md-6 pt-2">
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="rimpeSwitch" [(ngModel)]="company.contribuyenteRimpe" />
+                <label class="form-check-label fw-semibold text-dark small" for="rimpeSwitch">
+                  Régimen RIMPE (Popular / Emprendedor)
+                </label>
+              </div>
+            </div>
+
+            <!-- Certificado Digital Banner & Status -->
+            <div class="col-12 mt-4 pt-3 border-top">
+              <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 p-3 rounded-3 border bg-light">
+                <div>
+                  <div class="d-flex align-items-center gap-2">
+                    <h6 class="fw-bold mb-0 text-dark">Firma Electrónica / Certificado Digital (.p12 / .pfx)</h6>
+                    <span
+                      class="badge px-2 py-1"
+                      [ngClass]="company.tieneCertificado ? 'bg-success-subtle text-success border border-success-subtle' : 'bg-warning-subtle text-warning-emphasis border border-warning-subtle'"
+                    >
+                      {{ company.tieneCertificado ? 'CONFIGURADO' : 'PENDIENTE' }}
+                    </span>
+                  </div>
+                  @if (company.tieneCertificado) {
+                    <p class="text-muted small mb-0 mt-1">
+                      Sujeto: <strong>{{ company.certificadoSujeto || 'Certificado Vigente' }}</strong>
+                      @if (company.certificadoValidoHasta) {
+                        · Vence: <strong>{{ company.certificadoValidoHasta | date: 'mediumDate' }}</strong>
+                      }
+                    </p>
+                  } @else {
+                    <p class="text-muted small mb-0 mt-1">
+                      No se ha cargado el archivo de firma electrónica para la emisión de comprobantes SRI.
+                    </p>
+                  }
+                </div>
+
+                <div class="d-flex align-items-center gap-2">
+                  <button type="button" class="btn btn-sm btn-primary d-flex align-items-center gap-1 shadow-none" (click)="openCertModal()">
+                    <i class="bi bi-upload"></i> {{ company.tieneCertificado ? 'Reemplazar Certificado' : 'Subir Certificado' }}
+                  </button>
+                  @if (company.tieneCertificado) {
+                    <button type="button" class="btn btn-sm btn-outline-danger shadow-none" (click)="deleteCertificado()">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-footer bg-light p-3 px-4 text-end border-top">
+          <button type="button" class="btn btn-primary px-4 fw-medium" (click)="saveCompany()" [disabled]="isSaving">
+            @if (isSaving) {
+              <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+            }
+            Guardar Cambios
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- TAB 2: SUCURSALES Y PUNTOS DE EMISIÓN (CAJAS) -->
+    @if (activeTab === 'establecimientos') {
+      <div class="row g-4">
+        @for (est of company.establecimientos; track est.id) {
+          <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white h-100">
+              <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                  <div class="rounded-circle p-2 bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px">
+                    <i class="bi bi-geo-alt-fill fs-5"></i>
+                  </div>
+                  <div>
+                    <h6 class="fw-bold mb-0 text-dark">Establecimiento {{ est.codigo }}</h6>
+                    <small class="text-muted">{{ est.direccion }}</small>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" (click)="openCreatePuntoModal(est)">
+                  <i class="bi bi-plus-circle"></i> Nueva Caja
+                </button>
+              </div>
+
+              <div class="card-body p-4">
+                <h6 class="fw-semibold text-muted small text-uppercase mb-3" style="font-size: 0.72rem; letter-spacing: 0.5px">
+                  Puntos de Emisión / Ventanillas Asignadas ({{ est.puntosEmision.length }})
+                </h6>
+
+                @if (est.puntosEmision.length === 0) {
+                  <div class="text-center py-4 text-muted bg-light rounded-3 small">
+                    Sin cajas registradas para esta sucursal.
+                  </div>
+                } @else {
+                  <div class="list-group list-group-flush border rounded-3 overflow-hidden">
+                    @for (pe of est.puntosEmision; track pe.id) {
+                      <div class="list-group-item d-flex justify-content-between align-items-center p-3">
+                        <div class="d-flex align-items-center gap-3">
+                          <span class="badge bg-secondary bg-opacity-10 text-dark border fw-bold px-2 py-1">
+                            {{ pe.codigo }}
+                          </span>
+                          <div>
+                            <div class="fw-semibold text-dark small">{{ pe.descripcion || 'Ventanilla General' }}</div>
+                            <small class="text-muted" style="font-size: 0.72rem">Código SRI: {{ est.codigo }}-{{ pe.codigo }}</small>
+                          </div>
+                        </div>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                          {{ pe.estado }}
+                        </span>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <!-- MODAL: NUEVO ESTABLECIMIENTO -->
+  @if (showEstablecimientoModal) {
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5)">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+          <div class="modal-header border-bottom p-4">
+            <h5 class="modal-title fw-bold text-dark">Nueva Sucursal / Establecimiento</h5>
+            <button type="button" class="btn-close" (click)="closeEstablecimientoModal()"></button>
+          </div>
+          <div class="modal-body p-4">
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-dark small">Código SRI (3 dígitos) *</label>
+              <input type="text" maxlength="3" class="form-control fw-bold" [(ngModel)]="establecimientoDto.codigo" placeholder="002" />
+              <small class="text-muted" style="font-size: 0.74rem">Ejemplo: 001 para matriz, 002 para sucursal.</small>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-dark small">Dirección Física del Establecimiento *</label>
+              <textarea class="form-control" rows="2" [(ngModel)]="establecimientoDto.direccion" placeholder="Dirección completa..."></textarea>
+            </div>
+          </div>
+          <div class="modal-footer border-top p-3 px-4">
+            <button type="button" class="btn btn-outline-secondary" (click)="closeEstablecimientoModal()">Cancelar</button>
+            <button type="button" class="btn btn-primary px-4" (click)="saveEstablecimiento()" [disabled]="isSaving">
+              @if (isSaving) {
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+              }
+              Crear Sucursal
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: NUEVO PUNTO DE EMISIÓN (CAJA) -->
+  @if (showPuntoModal) {
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5)">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+          <div class="modal-header border-bottom p-4">
+            <h5 class="modal-title fw-bold text-dark">Nueva Caja / Punto de Emisión</h5>
+            <button type="button" class="btn-close" (click)="closePuntoModal()"></button>
+          </div>
+          <div class="modal-body p-4">
+            <div class="p-3 bg-light rounded-3 mb-3 border">
+              <div class="text-muted small">Sucursal:</div>
+              <strong class="text-dark">Establecimiento {{ selectedEstablecimientoForPunto?.codigo }} — {{ selectedEstablecimientoForPunto?.direccion }}</strong>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-dark small">Código SRI del Punto de Emisión (3 dígitos) *</label>
+              <input type="text" maxlength="3" class="form-control fw-bold" [(ngModel)]="puntoDto.codigo" placeholder="002" />
+              <small class="text-muted" style="font-size: 0.74rem">Ejemplo: 001 para Caja 1, 002 para Caja 2.</small>
+            </div>
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-dark small">Descripción / Nombre de la Caja</label>
+              <input type="text" class="form-control" [(ngModel)]="puntoDto.descripcion" placeholder="Ej: Ventanilla 2 - Recaudación" />
+            </div>
+          </div>
+          <div class="modal-footer border-top p-3 px-4">
+            <button type="button" class="btn btn-outline-secondary" (click)="closePuntoModal()">Cancelar</button>
+            <button type="button" class="btn btn-primary px-4" (click)="savePuntoEmision()" [disabled]="isSaving">
+              @if (isSaving) {
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+              }
+              Crear Caja
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: SUBIR CERTIFICADO DIGITAL -->
+  @if (showCertModal) {
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5)">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+          <div class="modal-header border-bottom p-4">
+            <h5 class="modal-title fw-bold text-dark">Cargar Certificado Digital (Firma Electrónica)</h5>
+            <button type="button" class="btn-close" (click)="closeCertModal()"></button>
+          </div>
+          <div class="modal-body p-4">
+            <div class="alert alert-info py-2 px-3 small mb-3">
+              <i class="bi bi-info-circle me-1"></i> El archivo debe tener extensión <strong>.p12</strong> o <strong>.pfx</strong> expedido por una entidad autorizada (Security Data, Banco Central, Consejo de la Judicatura, ANF, etc.).
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-dark small">Archivo de Firma (.p12 / .pfx) *</label>
+              <input
+                #certFileInput
+                type="file"
+                class="d-none"
+                accept=".p12,.pfx"
+                (change)="onCertFileSelected($event)"
+              />
+              <div
+                class="d-flex align-items-center justify-content-between p-3 rounded-3 border bg-light cursor-pointer"
+                style="cursor: pointer"
+                (click)="certFileInput.click()"
+              >
+                <div class="d-flex align-items-center gap-2 text-truncate me-2">
+                  <i class="bi bi-file-earmark-lock text-primary fs-5"></i>
+                  @if (selectedCertFile) {
+                    <span class="fw-medium text-dark small text-truncate">{{ selectedCertFile.name }}</span>
+                  } @else {
+                    <span class="text-muted small">Ningún archivo seleccionado</span>
+                  }
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary px-3 fw-medium text-nowrap"
+                  (click)="$event.stopPropagation(); certFileInput.click()"
+                >
+                  <i class="bi bi-folder2-open me-1"></i> Seleccionar Archivo
+                </button>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-dark small">Contraseña del Certificado *</label>
+              <input
+                type="password"
+                class="form-control"
+                [(ngModel)]="certPassword"
+                placeholder="Contraseña de la firma electrónica..."
+              />
+              <small class="text-muted" style="font-size: 0.74rem">
+                La contraseña se almacena de forma encriptada de forma segura para la firma de comprobantes.
+              </small>
+            </div>
+          </div>
+          <div class="modal-footer border-top p-3 px-4">
+            <button type="button" class="btn btn-outline-secondary" (click)="closeCertModal()">Cancelar</button>
+            <button
+              type="button"
+              class="btn btn-primary px-4 d-flex align-items-center gap-2"
+              (click)="uploadCertificado()"
+              [disabled]="isUploadingCert"
+            >
+              @if (isUploadingCert) {
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+              }
+              Validar y Guardar Firma
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

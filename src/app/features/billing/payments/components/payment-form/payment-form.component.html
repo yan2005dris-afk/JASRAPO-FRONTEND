@@ -27,11 +27,11 @@
     </div>
 
     <!-- Body -->
-    <div class="card-body p-4 bg-white">
+    <div class="card-body p-4 bg-white d-flex flex-column gap-4">
+      <!-- TOP ROW: Cliente / Contrato (Izq) + Gestión de Cobro (Der) -->
       <div class="row g-4">
-        <!-- LEFT COLUMN: Cliente + Estado de Cuenta -->
-        <div class="col-lg-7">
-          <!-- 1. Búsqueda de contrato activo -->
+        <!-- TOP LEFT: Cliente / Contrato -->
+        <div class="col-lg-6">
           <div class="mb-3">
             <label class="form-label fw-semibold text-dark small mb-1">
               Cliente / Contrato <span class="text-danger">*</span>
@@ -155,22 +155,24 @@
           @if (selectedClient) {
             <!-- Mode toggle -->
             <div
-              class="mode-toggle mb-3 d-flex p-1 bg-light rounded-pill border"
+              class="mode-toggle mb-2 d-flex p-1 bg-light rounded-pill border"
               style="width: fit-content"
             >
               <button
+                type="button"
                 class="btn rounded-pill px-4 py-1 border-0 fw-medium"
                 [class.btn-primary]="pagoMode === 'DEUDA'"
                 [class.text-muted]="pagoMode !== 'DEUDA'"
-                (click)="pagoMode = 'DEUDA'"
+                (click)="setPagoMode('DEUDA')"
               >
                 Cobrar deuda
               </button>
               <button
+                type="button"
                 class="btn rounded-pill px-4 py-1 border-0 fw-medium"
                 [class.btn-primary]="pagoMode === 'PUNTUAL'"
                 [class.text-muted]="pagoMode !== 'PUNTUAL'"
-                (click)="pagoMode = 'PUNTUAL'"
+                (click)="setPagoMode('PUNTUAL')"
               >
                 Cobro puntual
               </button>
@@ -185,215 +187,11 @@
             (contractSelected)="onContractSelected($event)"
             (closed)="isPickerOpen = false"
           />
-
-          <!-- 2. Estado de Cuenta Pendiente (Solo modo DEUDA) -->
-          @if (pagoMode === 'DEUDA') {
-            <div class="mb-1">
-              <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="form-label d-block fw-semibold text-dark small mb-0">
-                  <i class="bi bi-receipt me-1 text-primary"></i>
-                  Estado de Cuenta Pendiente
-                </span>
-                @if (selectedClient && !isLoadingPreInvoices && pendingPreInvoices.length > 0) {
-                  <span class="badge badge-soft-danger"
-                    >{{ pendingPreInvoices.length }} pendiente(s)</span
-                  >
-                }
-              </div>
-
-              @if (!selectedClient) {
-                <div class="text-muted text-center py-4 rounded-3 border bg-light-subtle small">
-                  <i class="bi bi-file-earmark-text d-block mb-1 fs-4"></i>
-                  Seleccione un contrato para ver las cuentas pendientes.
-                </div>
-              }
-
-              @if (selectedClient && isLoadingPreInvoices) {
-                <div class="text-center py-4 text-muted">
-                  <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
-                  <span class="small ms-2">Cargando prefacturas...</span>
-                </div>
-              }
-
-              @if (selectedClient && !isLoadingPreInvoices && pendingPreInvoices.length === 0) {
-                <div class="text-muted text-center py-4 rounded-3 border bg-light-subtle small">
-                  <i class="bi bi-check-circle d-block mb-1 fs-4 text-success"></i>
-                  Sin cuentas pendientes para este contrato.
-                </div>
-              }
-
-              @if (selectedClient && !isLoadingPreInvoices && pendingPreInvoices.length > 0) {
-                <div class="pre-invoices-table-wrap border rounded-3 overflow-hidden">
-                  <table
-                    class="table table-sm table-hover mb-0 align-middle"
-                    style="font-size: 0.8rem"
-                  >
-                    <thead class="table-light">
-                      <tr>
-                        <th style="width: 2rem" class="px-3">
-                          <input
-                            type="checkbox"
-                            class="form-check-input"
-                            [checked]="allPreInvoicesSelected"
-                            (change)="toggleAllPreInvoices()"
-                            id="chkSelectAll"
-                          />
-                        </th>
-                        <th
-                          class="fw-semibold text-muted text-uppercase"
-                          style="letter-spacing: 0.03em"
-                        >
-                          Período
-                        </th>
-                        <th
-                          class="fw-semibold text-muted text-uppercase"
-                          style="letter-spacing: 0.03em"
-                        >
-                          # Pref.
-                        </th>
-                        <th
-                          class="fw-semibold text-muted text-uppercase text-end"
-                          style="letter-spacing: 0.03em"
-                        >
-                          Subtotal
-                        </th>
-                        <th
-                          class="fw-semibold text-muted text-uppercase text-end"
-                          style="letter-spacing: 0.03em"
-                        >
-                          IVA
-                        </th>
-                        <th
-                          class="fw-semibold text-muted text-uppercase text-end"
-                          style="letter-spacing: 0.03em"
-                        >
-                          Total
-                        </th>
-                        <th
-                          class="fw-semibold text-muted text-uppercase text-center"
-                          style="letter-spacing: 0.03em"
-                        >
-                          Estado
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      @for (pre of pendingPreInvoices; track pre.prefacturaId) {
-                        <tr
-                          class="pre-invoice-row"
-                          [class.selected]="isPreInvoiceSelected(pre.prefacturaId)"
-                          (click)="togglePreInvoice(pre.prefacturaId)"
-                          style="cursor: pointer"
-                        >
-                          <td class="px-3" (click)="$event.stopPropagation()">
-                            <input
-                              type="checkbox"
-                              class="form-check-input"
-                              [checked]="isPreInvoiceSelected(pre.prefacturaId)"
-                              (change)="togglePreInvoice(pre.prefacturaId)"
-                            />
-                          </td>
-                          <td>
-                            <div class="fw-medium text-dark">{{ getPeriodLabel(pre) }}</div>
-                            @if (pre.tarifaNombre) {
-                              <div class="text-muted" style="font-size: 0.72rem">
-                                {{ pre.tarifaNombre }}
-                              </div>
-                            }
-                          </td>
-                          <td class="text-muted">#{{ pre.prefacturaId }}</td>
-                          <td class="text-end tabular-nums">
-                            {{ pre.subtotal | currency: 'USD' : 'symbol' : '1.2-2' }}
-                          </td>
-                          <td class="text-end tabular-nums">
-                            {{ pre.iva | currency: 'USD' : 'symbol' : '1.2-2' }}
-                          </td>
-                          <td class="text-end tabular-nums fw-bold text-dark">
-                            {{ pre.totalPagar | currency: 'USD' : 'symbol' : '1.2-2' }}
-                          </td>
-                          <td class="text-center">
-                            <span class="badge" [ngClass]="getPreInvoiceStateTone(pre.estado)">
-                              {{ getPreInvoiceStateLabel(pre.estado) }}
-                            </span>
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              }
-
-              <!-- Banner Total a Recaudar -->
-              @if (selectedClient && !isLoadingPreInvoices) {
-                <div
-                  class="statement-total-banner mt-2 p-3 rounded-3 d-flex align-items-center justify-content-between gap-2"
-                >
-                  <div>
-                    <div class="text-uppercase fw-bold small text-primary">Total Seleccionado</div>
-                    <div class="text-muted" style="font-size: 0.75rem">
-                      {{ selectedPreInvoiceIds.size }} de
-                      {{ pendingPreInvoices.length }} prefactura(s)
-                    </div>
-                  </div>
-                  <div class="fs-4 fw-bold text-dark tabular-nums">
-                    {{ totalAPagarPendiente | currency: 'USD' : 'symbol' : '1.2-2' }}
-                  </div>
-                </div>
-              }
-
-              <!-- Banner saldo a favor (preservado) -->
-              @if (selectedClient && totalSaldoFavorDisponible > 0) {
-                <div
-                  class="saldo-favor-alert mt-2 p-2 px-3 rounded-3 d-flex align-items-center justify-content-between"
-                >
-                  <div class="d-flex align-items-center gap-2">
-                    <i class="bi bi-info-circle-fill text-info"></i>
-                    <span class="small text-dark">
-                      Saldo a favor disponible:
-                      <strong>${{ totalSaldoFavorDisponible | number: '1.2-2' }}</strong>
-                    </span>
-                  </div>
-                  <span class="badge badge-soft-info">Aplicable</span>
-                </div>
-              }
-            </div>
-          } @else if (selectedClient && pagoMode === 'PUNTUAL') {
-            <!-- Cobro Puntual (Call to Action) -->
-            <div class="mb-1 text-center py-5 rounded-3 border bg-light-subtle">
-              <i class="bi bi-cart-plus d-block mb-2 fs-2 text-primary"></i>
-              <h6 class="fw-bold mb-1">Cobro sin prefactura</h6>
-              <p class="text-muted small mb-3">
-                Venta directa de rubros (ej. medidores, accesorios, certificados).
-              </p>
-              <button class="btn btn-primary px-4" (click)="openCobroPuntual()">
-                Seleccionar Rubros
-              </button>
-            </div>
-
-            @if (selectedContract && selectedClient) {
-              <app-cobro-puntual-modal
-                [open]="isCobroPuntualOpen"
-                [contratoId]="selectedContract.contratoId.toString()"
-                [clienteId]="
-                  selectedClient.clienteId
-                    ? selectedClient.clienteId.toString()
-                    : selectedClient.id?.toString() || ''
-                "
-                [fechaPago]="fechaPago"
-                [banco]="bancoSeleccionado"
-                [tarjetaCredito]="tarjetaSeleccionada"
-                [numeroOperacion]="numeroOperacion"
-                [observaciones]="observaciones"
-                (cobroPuntualCreated)="onCobroPuntualCreated($event)"
-                (closed)="isCobroPuntualOpen = false"
-              />
-            }
-          }
         </div>
 
-        <!-- RIGHT COLUMN: Gestión de Cobro -->
-        <div class="col-lg-5" [class.d-none]="pagoMode === 'PUNTUAL'">
-          <!-- 3. Método de Pago -->
+        <!-- TOP RIGHT: Gestión de Cobro (Método de Pago, Fecha, Monto, Notas) -->
+        <div class="col-lg-6">
+          <!-- Método de Pago -->
           <div class="mb-3">
             <span class="form-label d-block fw-semibold text-dark small mb-2">
               Método de Pago <span class="text-danger">*</span>
@@ -466,6 +264,77 @@
                 />
               </div>
             </div>
+
+            <!-- Adjuntar Comprobante -->
+            <div class="mb-3 p-2 bg-light-subtle rounded-3 border">
+              <div class="d-flex align-items-center justify-content-between mb-1">
+                <label class="form-label fw-semibold text-dark small mb-0 d-flex align-items-center gap-1">
+                  <i class="bi bi-paperclip text-primary"></i>
+                  Comprobante de Transferencia
+                </label>
+                @if (comprobanteKey) {
+                  <span class="badge bg-success-subtle text-success border border-success-subtle d-flex align-items-center gap-1">
+                    <i class="bi bi-cloud-check-fill"></i> Adjuntado con éxito
+                  </span>
+                }
+              </div>
+
+              <input
+                #fileInput
+                type="file"
+                class="d-none"
+                accept="image/jpeg,image/png,image/webp,application/pdf"
+                (change)="onComprobanteSelected($event)"
+              />
+
+              @if (!comprobanteFile && !isUploadingComprobante) {
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2 rounded-2"
+                  (click)="fileInput.click()"
+                >
+                  <i class="bi bi-cloud-arrow-up fs-6"></i>
+                  <span>Subir Comprobante (JPG, PNG, PDF)</span>
+                </button>
+              }
+
+              @if (isUploadingComprobante) {
+                <div class="d-flex align-items-center justify-content-center gap-2 py-2 text-primary small">
+                  <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  <span>Subiendo comprobante a RustFS...</span>
+                </div>
+              }
+
+              @if (comprobanteFile && !isUploadingComprobante) {
+                <div class="d-flex align-items-center justify-content-between p-2 bg-white rounded border mt-1">
+                  <div class="d-flex align-items-center gap-2 overflow-hidden">
+                    @if (comprobantePreviewUrl) {
+                      <img [src]="comprobantePreviewUrl" alt="Preview" class="rounded object-fit-cover" style="width: 32px; height: 32px;" />
+                    } @else {
+                      <div class="p-1 rounded bg-danger-subtle text-danger">
+                        <i class="bi bi-file-earmark-pdf fs-5"></i>
+                      </div>
+                    }
+                    <div class="overflow-hidden">
+                      <div class="small fw-medium text-dark text-truncate" style="max-width: 220px;">
+                        {{ comprobanteFile.name }}
+                      </div>
+                      <div class="text-muted" style="font-size: 0.72rem">
+                        {{ (comprobanteFile.size / 1024).toFixed(1) }} KB
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-link text-danger p-0 shadow-none text-decoration-none"
+                    (click)="clearComprobante(); fileInput.value = ''"
+                    title="Eliminar comprobante"
+                  >
+                    <i class="bi bi-trash fs-6"></i>
+                  </button>
+                </div>
+              }
+            </div>
           }
 
           <!-- Campos condicionales: Tarjeta -->
@@ -503,17 +372,17 @@
             </div>
           }
 
-          <!-- 4. Fecha de Pago y Monto -->
+          <!-- Fecha de Pago y Monto -->
           <div class="row g-2 mb-3">
             <div class="col-6">
-              <label for="inputFechaPagoForm" class="form-label fw-semibold text-dark small mb-1">
+              <label class="form-label fw-semibold text-dark small mb-1">
                 Fecha de Pago <span class="text-danger">*</span>
               </label>
-              <input
-                id="inputFechaPagoForm"
-                type="date"
-                class="form-control form-control-sm shadow-none"
-                [(ngModel)]="fechaPago"
+              <app-date-picker
+                [value]="fechaPago"
+                placeholder="Seleccione fecha"
+                inputId="fechaPagoPicker"
+                (valueChange)="onFechaPagoChange($event)"
               />
             </div>
             <div class="col-6">
@@ -533,13 +402,14 @@
                   class="form-control shadow-none fw-bold text-dark tabular-nums"
                   placeholder="0.00"
                   [(ngModel)]="montoRecibido"
+                  [readonly]="pagoMode === 'PUNTUAL'"
                 />
               </div>
             </div>
           </div>
 
-          <!-- 5. Notas -->
-          <div class="mb-1">
+          <!-- Notas -->
+          <div>
             <label
               for="textareaObservacionesPago"
               class="form-label fw-semibold text-dark small mb-1"
@@ -555,6 +425,307 @@
           </div>
         </div>
       </div>
+
+      <hr class="my-0 text-muted opacity-25" />
+
+      <!-- BOTTOM SECTION: Full-Width Tables (Estado de Cuenta / Cobro Puntual) -->
+      <div class="w-100">
+        <!-- 2. Estado de Cuenta Pendiente (Solo modo DEUDA) -->
+        @if (pagoMode === 'DEUDA') {
+          <div>
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="form-label d-block fw-semibold text-dark small mb-0 fs-6">
+                <i class="bi bi-receipt me-1 text-primary"></i>
+                Estado de Cuenta Pendiente
+              </span>
+              @if (selectedClient && !isLoadingPreInvoices && pendingPreInvoices.length > 0) {
+                <span class="badge badge-soft-danger"
+                  >{{ pendingPreInvoices.length }} pendiente(s)</span
+                >
+              }
+            </div>
+
+            @if (!selectedClient) {
+              <div class="text-muted text-center py-4 rounded-3 border bg-light-subtle small">
+                <i class="bi bi-file-earmark-text d-block mb-1 fs-4"></i>
+                Seleccione un contrato para ver las cuentas pendientes.
+              </div>
+            }
+
+            @if (selectedClient && isLoadingPreInvoices) {
+              <div class="text-center py-4 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                <span class="small ms-2">Cargando prefacturas...</span>
+              </div>
+            }
+
+            @if (selectedClient && !isLoadingPreInvoices && pendingPreInvoices.length === 0) {
+              <div class="text-muted text-center py-4 rounded-3 border bg-light-subtle small">
+                <i class="bi bi-check-circle d-block mb-1 fs-4 text-success"></i>
+                Sin cuentas pendientes para este contrato.
+              </div>
+            }
+
+            @if (selectedClient && !isLoadingPreInvoices && pendingPreInvoices.length > 0) {
+              <div class="pre-invoices-table-wrap border rounded-3 overflow-hidden">
+                <table
+                  class="table table-sm table-hover mb-0 align-middle"
+                  style="font-size: 0.84rem"
+                >
+                  <thead class="table-light">
+                    <tr>
+                      <th style="width: 2.5rem" class="px-3">
+                        <input
+                          type="checkbox"
+                          class="form-check-input"
+                          [checked]="allPreInvoicesSelected"
+                          (change)="toggleAllPreInvoices()"
+                          id="chkSelectAll"
+                        />
+                      </th>
+                      <th
+                        class="fw-semibold text-muted text-uppercase"
+                        style="letter-spacing: 0.03em"
+                      >
+                        Período / Concepto
+                      </th>
+                      <th
+                        class="fw-semibold text-muted text-uppercase"
+                        style="letter-spacing: 0.03em"
+                      >
+                        # Pref. / Fecha
+                      </th>
+                      <th
+                        class="fw-semibold text-muted text-uppercase text-end"
+                        style="letter-spacing: 0.03em"
+                      >
+                        Subtotal
+                      </th>
+                      <th
+                        class="fw-semibold text-muted text-uppercase text-end"
+                        style="letter-spacing: 0.03em"
+                      >
+                        IVA
+                      </th>
+                      <th
+                        class="fw-semibold text-muted text-uppercase text-end"
+                        style="letter-spacing: 0.03em"
+                      >
+                        Total
+                      </th>
+                      <th
+                        class="fw-semibold text-muted text-uppercase text-center"
+                        style="letter-spacing: 0.03em"
+                      >
+                        Estado
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (pre of pendingPreInvoices; track pre.prefacturaId) {
+                      <tr
+                        class="pre-invoice-row"
+                        [class.selected]="isPreInvoiceSelected(pre.prefacturaId)"
+                        (click)="togglePreInvoice(pre.prefacturaId)"
+                        style="cursor: pointer"
+                      >
+                        <td class="px-3" (click)="$event.stopPropagation()">
+                          <input
+                            type="checkbox"
+                            class="form-check-input"
+                            [checked]="isPreInvoiceSelected(pre.prefacturaId)"
+                            (change)="togglePreInvoice(pre.prefacturaId)"
+                          />
+                        </td>
+                        <td>
+                          <div class="fw-bold text-dark d-flex align-items-center gap-1">
+                            <span>{{ getPeriodLabel(pre) }}</span>
+                          </div>
+                          <div class="text-muted" style="font-size: 0.76rem" [title]="getPreInvoiceConceptos(pre)">
+                            <i class="bi bi-droplet-half me-1 text-primary"></i>
+                            {{ getPreInvoiceConceptos(pre) }}
+                          </div>
+                        </td>
+                        <td>
+                          <div class="fw-medium text-dark">#{{ pre.prefacturaId }}</div>
+                          @if (getPreInvoiceDate(pre)) {
+                            <div class="text-muted" style="font-size: 0.72rem">
+                              <i class="bi bi-calendar3 me-1"></i>{{ getPreInvoiceDate(pre) }}
+                            </div>
+                          }
+                        </td>
+                        <td class="text-end tabular-nums">
+                          {{ pre.subtotal | currency: 'USD' : 'symbol' : '1.2-2' }}
+                        </td>
+                        <td class="text-end tabular-nums">
+                          {{ pre.iva | currency: 'USD' : 'symbol' : '1.2-2' }}
+                        </td>
+                        <td class="text-end tabular-nums fw-bold text-dark">
+                          {{ pre.totalPagar | currency: 'USD' : 'symbol' : '1.2-2' }}
+                        </td>
+                        <td class="text-center">
+                          <span class="badge" [ngClass]="getPreInvoiceStateTone(pre.estado)">
+                            {{ getPreInvoiceStateLabel(pre.estado) }}
+                          </span>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+
+            <!-- Banner Total a Recaudar -->
+            @if (selectedClient && !isLoadingPreInvoices && pendingPreInvoices.length > 0) {
+              <div
+                class="statement-total-banner mt-3 p-3 rounded-3 d-flex align-items-center justify-content-between gap-2"
+              >
+                <div>
+                  <div class="text-uppercase fw-bold small text-primary">Total Seleccionado</div>
+                  <div class="text-muted" style="font-size: 0.78rem">
+                    {{ selectedPreInvoiceIds.size }} de
+                    {{ pendingPreInvoices.length }} prefactura(s)
+                  </div>
+                </div>
+                <div class="fs-3 fw-bold text-dark tabular-nums">
+                  {{ totalAPagarPendiente | currency: 'USD' : 'symbol' : '1.2-2' }}
+                </div>
+              </div>
+            }
+
+            <!-- Banner saldo a favor -->
+            @if (selectedClient && totalSaldoFavorDisponible > 0) {
+              <div
+                class="saldo-favor-alert mt-2 p-2 px-3 rounded-3 d-flex align-items-center justify-content-between"
+              >
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-info-circle-fill text-info"></i>
+                  <span class="small text-dark">
+                    Saldo a favor disponible:
+                    <strong>${{ totalSaldoFavorDisponible | number: '1.2-2' }}</strong>
+                  </span>
+                </div>
+                <span class="badge badge-soft-info">Aplicable</span>
+              </div>
+            }
+          </div>
+        } @else if (pagoMode === 'PUNTUAL') {
+          <!-- Cobro Puntual Full-Width -->
+          <div class="puntual-inline-section">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="form-label d-block fw-semibold text-dark small mb-0 fs-6">
+                <i class="bi bi-bag-plus me-1 text-primary"></i>
+                Rubros a Cobrar
+              </span>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge badge-soft-primary">{{ puntualItems.length }} item(s)</span>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary d-flex align-items-center gap-1 py-1 px-3 rounded-pill fw-medium"
+                  style="font-size: 0.82rem"
+                  (click)="openRubroPicker()"
+                >
+                  <i class="bi bi-search"></i>
+                  Buscar Rubro
+                </button>
+              </div>
+            </div>
+
+            <!-- Rubro Picker Modal -->
+            <app-rubro-picker
+              [open]="isRubroPickerOpen"
+              title="Catálogo de Rubros y Servicios"
+              (rubroSelected)="onRubroSelected($event)"
+              (closed)="isRubroPickerOpen = false"
+            />
+
+            <!-- Tabla de Items seleccionados para cobro puntual -->
+            <div class="border rounded-3 overflow-hidden mb-2">
+              <table class="table table-sm table-hover mb-0 align-middle" style="font-size: 0.84rem">
+                <thead class="table-light">
+                  <tr>
+                    <th class="fw-semibold text-muted text-uppercase px-3">Rubro</th>
+                    <th class="fw-semibold text-muted text-uppercase text-center" style="width: 100px">Cant.</th>
+                    <th class="fw-semibold text-muted text-uppercase text-end">P. Unit</th>
+                    <th class="fw-semibold text-muted text-uppercase text-end">IVA</th>
+                    <th class="fw-semibold text-muted text-uppercase text-end">Total</th>
+                    <th style="width: 50px"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of puntualItems; track item.rubroId; let idx = $index) {
+                    <tr>
+                      <td class="px-3">
+                        <div class="fw-semibold text-dark">{{ item.rubroNombre }}</div>
+                        <input
+                          type="text"
+                          class="form-control form-control-sm border-0 bg-transparent p-0 text-muted"
+                          style="font-size: 0.76rem"
+                          placeholder="Nota opcional..."
+                          [ngModel]="item.descripcion"
+                          (ngModelChange)="updatePuntualDescripcion(idx, $event)"
+                        />
+                      </td>
+                      <td class="text-center">
+                        <input
+                          type="number"
+                          min="1"
+                          class="form-control form-control-sm text-center px-1 shadow-none"
+                          style="width: 70px; margin: 0 auto"
+                          [ngModel]="item.cantidad"
+                          (ngModelChange)="updatePuntualCantidad(idx, $event)"
+                        />
+                      </td>
+                      <td class="text-end tabular-nums text-muted">
+                        {{ item.precioUnitario | currency: 'USD' : 'symbol' : '1.2-2' }}
+                      </td>
+                      <td class="text-end tabular-nums text-muted">
+                        {{ item.iva | currency: 'USD' : 'symbol' : '1.2-2' }}
+                      </td>
+                      <td class="text-end tabular-nums fw-bold text-dark">
+                        {{ item.total | currency: 'USD' : 'symbol' : '1.2-2' }}
+                      </td>
+                      <td class="text-center">
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-link text-danger p-0 shadow-none"
+                          (click)="removePuntualItem(idx)"
+                          title="Quitar"
+                        >
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                  @if (puntualItems.length === 0) {
+                    <tr>
+                      <td colspan="6" class="text-center py-4 text-muted bg-light">
+                        <i class="bi bi-cart-x fs-4 d-block mb-1"></i>
+                        Haga clic en <strong>Buscar Rubro</strong> para agregar ítems al cobro puntual.
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Resumen de Totales Puntual -->
+            @if (puntualItems.length > 0) {
+              <div class="statement-total-banner mt-3 p-3 rounded-3 d-flex align-items-center justify-content-between gap-2">
+                <div>
+                  <div class="text-uppercase fw-bold small text-primary">Total a Cobrar</div>
+                  <div class="text-muted" style="font-size: 0.78rem">
+                    Subtotal: {{ puntualSubtotal | currency: 'USD' : 'symbol' : '1.2-2' }} | IVA: {{ puntualIva | currency: 'USD' : 'symbol' : '1.2-2' }}
+                  </div>
+                </div>
+                <div class="fs-3 fw-bold text-dark tabular-nums">
+                  {{ puntualTotal | currency: 'USD' : 'symbol' : '1.2-2' }}
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
     </div>
 
     <!-- Footer -->
@@ -569,16 +740,18 @@
       >
         Cancelar
       </button>
-      <div class="d-flex align-items-center gap-2" [class.d-none]="pagoMode === 'PUNTUAL'">
-        <button
-          type="button"
-          class="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium px-3"
-          (click)="requestAgreement()"
-          [disabled]="isLoading"
-        >
-          <i class="bi bi-handshake"></i>
-          Solicitar Convenio
-        </button>
+      <div class="d-flex align-items-center gap-2">
+        @if (pagoMode === 'DEUDA') {
+          <button
+            type="button"
+            class="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium px-3"
+            (click)="requestAgreement()"
+            [disabled]="isLoading"
+          >
+            <i class="bi bi-handshake"></i>
+            Solicitar Convenio
+          </button>
+        }
         <button
           type="button"
           class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-4"
@@ -591,7 +764,7 @@
           @if (!isLoading) {
             <i class="bi bi-check-circle"></i>
           }
-          {{ isLoading ? 'Registrando...' : 'Registrar Pago' }}
+          {{ isLoading ? 'Registrando...' : (pagoMode === 'PUNTUAL' ? 'Registrar Cobro' : 'Registrar Pago') }}
         </button>
       </div>
     </div>

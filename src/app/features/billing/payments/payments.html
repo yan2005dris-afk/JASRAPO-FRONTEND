@@ -24,27 +24,8 @@
     </button>
   </div>
 
-  <!-- Navigation Tabs -->
-  <ul class="nav nav-pills custom-nav-pills mb-4">
-    <li class="nav-item">
-      <button class="nav-link" [class.active]="activeTab === 'list'" (click)="switchTab('list')">
-        <i class="bi bi-list-columns-reverse me-2"></i> Historial de Pagos
-      </button>
-    </li>
-    <li class="nav-item">
-      <button
-        class="nav-link"
-        [class.active]="activeTab === 'dailyCash'"
-        (click)="switchTab('dailyCash')"
-      >
-        <i class="bi bi-calendar-check me-2"></i> Cuadro Diario de Caja
-      </button>
-    </li>
-  </ul>
-
-  <!-- TAB 1: HISTORIAL DE PAGOS -->
-  @if (activeTab === 'list') {
-    <div class="card border-0 shadow-sm rounded-3 mb-4">
+  <!-- HISTORIAL DE PAGOS -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
       <!-- Filters Toolbar -->
       <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
         <!-- Date Presets -->
@@ -109,19 +90,55 @@
         <!-- Filter Controls -->
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
           <div class="d-flex align-items-center gap-2 flex-wrap flex-grow-1">
-            <!-- Search by Client ID -->
-            <div class="input-group search-group" style="max-width: 260px">
-              <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
-                <i class="bi bi-search"></i>
-              </span>
-              <input
-                type="text"
-                class="form-control border-start-0 ps-0 shadow-none"
-                placeholder="ID Cliente..."
-                [(ngModel)]="filterClienteId"
-                (keyup.enter)="loadPayments()"
-              />
+            <!-- Selector / Buscador de Contrato / Cliente -->
+            <div style="min-width: 260px; max-width: 340px;">
+              @if (!selectedFilterContract) {
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-between text-muted shadow-none bg-white text-truncate"
+                  style="font-size: 0.85rem; padding: 0.375rem 0.75rem;"
+                  (click)="isContractPickerOpen = true"
+                >
+                  <span class="d-flex align-items-center gap-2 text-truncate">
+                    <i class="bi bi-person-search text-primary"></i>
+                    <span>Buscar por Contrato / Cliente...</span>
+                  </span>
+                  <i class="bi bi-chevron-expand ms-1"></i>
+                </button>
+              } @else {
+                <div class="d-flex align-items-center justify-content-between p-1 px-2 border rounded bg-light-subtle">
+                  <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
+                    <div class="client-avatar-sm flex-shrink-0" style="width: 26px; height: 26px; font-size: 0.75rem;">
+                      {{ (selectedFilterContract.cliente.nombres || 'C').charAt(0) }}
+                    </div>
+                    <div class="overflow-hidden">
+                      <div class="small fw-bold text-dark text-truncate" style="font-size: 0.8rem; line-height: 1.1;">
+                        {{ selectedFilterContract.cliente.nombres }} {{ selectedFilterContract.cliente.apellidos }}
+                      </div>
+                      <div class="text-muted" style="font-size: 0.7rem;">
+                        Guía: {{ selectedFilterContract.numeroGuia || selectedFilterContract.contratoId }} · ID: {{ selectedFilterContract.cliente.identificacion }}
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-link text-muted p-0 shadow-none"
+                    (click)="clearContractFilter()"
+                    title="Quitar filtro"
+                  >
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                </div>
+              }
             </div>
+
+            <!-- Contract Picker Modal -->
+            <app-contract-picker
+              [open]="isContractPickerOpen"
+              title="Filtrar por Contrato / Cliente"
+              (contractSelected)="onContractFilterSelected($event)"
+              (closed)="isContractPickerOpen = false"
+            />
 
             <!-- Filter by Estado -->
             <select
@@ -215,9 +232,17 @@
             <table class="table table-hover align-middle mb-0 custom-table">
               <thead>
                 <tr>
-                  <th scope="col" class="ps-4">ID Pago</th>
+                  <th scope="col" class="ps-4" style="width: 2.5rem">
+                    <input
+                      type="checkbox"
+                      class="form-check-input"
+                      [checked]="allPaymentsSelected"
+                      (change)="toggleSelectAll()"
+                      title="Seleccionar todos"
+                    />
+                  </th>
                   <th scope="col">Fecha</th>
-                  <th scope="col">Cliente ID</th>
+                  <th scope="col">Cliente</th>
                   <th scope="col">Método</th>
                   <th scope="col">Nº Operación / Ref</th>
                   <th scope="col" class="text-end">Monto Recibido</th>
@@ -227,9 +252,14 @@
               </thead>
               <tbody>
                 @for (payment of payments; track payment.pagoId) {
-                  <tr>
-                    <td class="ps-4 fw-bold text-dark" style="font-size: 0.9rem">
-                      #{{ payment.pagoId }}
+                  <tr [class.table-active]="isPaymentSelected(payment.pagoId)">
+                    <td class="ps-4" (click)="$event.stopPropagation()">
+                      <input
+                        type="checkbox"
+                        class="form-check-input"
+                        [checked]="isPaymentSelected(payment.pagoId)"
+                        (change)="toggleSelectPayment(payment.pagoId, $event)"
+                      />
                     </td>
                     <td class="small text-muted">
                       {{ payment.fechaPago }}
@@ -237,11 +267,16 @@
                     <td>
                       <div class="d-flex align-items-center gap-2">
                         <div class="client-avatar-sm">
-                          {{ (payment.clienteId || '?').charAt(0) }}
+                          {{ getClientInitials(payment) }}
                         </div>
-                        <span class="text-dark small fw-medium">
-                          Cliente #{{ payment.clienteId }}
-                        </span>
+                        <div>
+                          <div class="text-dark small fw-bold">
+                            {{ getClientDisplayName(payment) }}
+                          </div>
+                          <div class="text-muted" style="font-size: 0.72rem">
+                            ID: {{ payment.cliente?.identificacion || payment.clienteIdentificacion || payment.clienteId }}
+                          </div>
+                        </div>
                       </div>
                     </td>
                     <td>
@@ -333,158 +368,6 @@
         }
       </div>
     </div>
-  }
-
-  <!-- TAB 2: CUADRO DIARIO DE CAJA -->
-  @if (activeTab === 'dailyCash') {
-    <div class="daily-cash-section">
-      <!-- Day Selector Card -->
-      <div class="card border-0 shadow-sm rounded-3 mb-4 p-4 bg-white">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-          <div>
-            <h5 class="fw-bold text-dark mb-1">Cuadro de Caja del Día</h5>
-            <p class="text-muted small mb-0">
-              Consultá el consolidado de cobros recaudados en una fecha específica.
-            </p>
-          </div>
-          <div class="d-flex align-items-center gap-2">
-            <label for="dailyCashDateInput" class="text-muted small mb-0 fw-semibold">Fecha:</label>
-            <input
-              id="dailyCashDateInput"
-              type="date"
-              class="form-control form-control-sm shadow-none"
-              style="width: 160px"
-              [(ngModel)]="dailyCashDate"
-              (change)="loadDailyCash()"
-            />
-            <button
-              class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3 py-1"
-              (click)="loadDailyCash()"
-              [disabled]="isLoadingDailyCash"
-            >
-              @if (isLoadingDailyCash) {
-                <span
-                  class="spinner-border spinner-border-sm"
-                  role="status"
-                  aria-hidden="true"
-                ></span>
-              }
-              @if (!isLoadingDailyCash) {
-                <i class="bi bi-arrow-clockwise"></i>
-              }
-              Actualizar
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- KPI Summary Cards -->
-      @if (isLoadingDailyCash) {
-        <div class="text-center py-5 text-muted">
-          <div class="spinner-border text-primary" role="status"></div>
-          <p class="mt-3 mb-0">Calculando arqueo de caja...</p>
-        </div>
-      }
-
-      @if (!isLoadingDailyCash && dailyCashSummary) {
-        <div class="row g-4 mb-4">
-          <!-- Total Recaudado -->
-          <div class="col-md-6 col-lg-3">
-            <div class="card border-0 shadow-sm rounded-3 p-4 bg-white h-100 kpi-card">
-              <div class="d-flex align-items-center justify-content-between mb-2">
-                <span
-                  class="text-muted small fw-semibold text-uppercase"
-                  style="letter-spacing: 0.5px"
-                >
-                  Total Recaudado
-                </span>
-                <div class="kpi-icon-tile">
-                  <i class="bi bi-wallet2"></i>
-                </div>
-              </div>
-              <div class="fs-2 fw-bold text-dark tabular-nums">
-                ${{ dailyCashSummary.totalRecaudado | number: '1.2-2' }}
-              </div>
-              <div class="text-muted small mt-1">
-                Fecha: <span class="fw-medium text-dark">{{ dailyCashSummary.fecha }}</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Total Pagos -->
-          <div class="col-md-6 col-lg-3">
-            <div class="card border-0 shadow-sm rounded-3 p-4 bg-white h-100 kpi-card">
-              <div class="d-flex align-items-center justify-content-between mb-2">
-                <span
-                  class="text-muted small fw-semibold text-uppercase"
-                  style="letter-spacing: 0.5px"
-                >
-                  Total de Pagos
-                </span>
-                <div class="kpi-icon-tile">
-                  <i class="bi bi-receipt-cutoff"></i>
-                </div>
-              </div>
-              <div class="fs-2 fw-bold text-dark tabular-nums">
-                {{ dailyCashSummary.totalPagos }}
-              </div>
-              <div class="text-muted small mt-1">Transacciones procesadas</div>
-            </div>
-          </div>
-
-          <!-- Desglose por Tipo de Detalle -->
-          <div class="col-md-6 col-lg-3">
-            <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100">
-              <span
-                class="text-muted small fw-semibold text-uppercase mb-2"
-                style="letter-spacing: 0.5px"
-              >
-                Por Tipo de Cobro
-              </span>
-              @if (dailyCashSummary.desglosePorTipoDetalle.length === 0) {
-                <div class="text-muted small py-3">Sin movimientos</div>
-              }
-              @for (item of dailyCashSummary.desglosePorTipoDetalle; track item.codigo) {
-                <div
-                  class="d-flex justify-content-between align-items-center py-1 border-bottom-subtle small"
-                >
-                  <span class="text-muted">{{ item.codigo }}</span>
-                  <span class="fw-bold text-dark tabular-nums"
-                    >${{ item.total | number: '1.2-2' }}</span
-                  >
-                </div>
-              }
-            </div>
-          </div>
-
-          <!-- Desglose por Tipo Comprobante -->
-          <div class="col-md-6 col-lg-3">
-            <div class="card border-0 shadow-sm rounded-3 p-3 bg-white h-100">
-              <span
-                class="text-muted small fw-semibold text-uppercase mb-2"
-                style="letter-spacing: 0.5px"
-              >
-                Por Comprobante
-              </span>
-              @if (dailyCashSummary.desglosePorTipoComprobante.length === 0) {
-                <div class="text-muted small py-3">Sin movimientos</div>
-              }
-              @for (item of dailyCashSummary.desglosePorTipoComprobante; track item.codigo) {
-                <div
-                  class="d-flex justify-content-between align-items-center py-1 border-bottom-subtle small"
-                >
-                  <span class="text-muted">{{ item.codigo }}</span>
-                  <span class="fw-bold text-dark tabular-nums"
-                    >${{ item.total | number: '1.2-2' }}</span
-                  >
-                </div>
-              }
-            </div>
-          </div>
-        </div>
-      }
-    </div>
-  }
 
   <!-- MODALS -->
   @if (selectedPaymentForDetail) {

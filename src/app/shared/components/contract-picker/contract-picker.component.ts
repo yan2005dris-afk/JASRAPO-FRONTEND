@@ -1,13 +1,18 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
   EventEmitter,
   Input,
   Output,
+  ViewChild,
   inject,
   signal,
 } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { PaginationComponent } from '../pagination/pagination.component';
+import { TableSkeletonComponent } from '../table-skeleton/table-skeleton.component';
 
 import { ContractsService } from '../../../features/contracts/service-contracts/services/contracts.service';
 import type {
@@ -18,14 +23,30 @@ import type {
 @Component({
   selector: 'app-contract-picker',
   standalone: true,
-  imports: [FormsModule],
+  imports: [CommonModule, FormsModule, PaginationComponent, TableSkeletonComponent],
   templateUrl: './contract-picker.component.html',
   styleUrl: './contract-picker.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContractPickerComponent {
-  @Input({ required: true }) open = false;
-  @Input() title = 'Buscar Contrato';
+  @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
+
+  @Input() set open(value: boolean) {
+    this._open = value;
+    if (value) {
+      this.searchTerm.set('');
+      this.searchError.set('');
+      this.currentPage.set(1);
+      this.buscarContratos();
+      setTimeout(() => this.searchInput?.nativeElement.focus(), 150);
+    }
+  }
+  get open(): boolean {
+    return this._open;
+  }
+  private _open = false;
+
+  @Input() title = 'Buscar Contrato Activo';
   @Input() estado?: string;
 
   @Output() contractSelected = new EventEmitter<IContract>();
@@ -39,6 +60,12 @@ export class ContractPickerComponent {
   readonly isSearching = signal(false);
   readonly searchError = signal('');
   readonly searchPerformed = signal(false);
+
+  // Paginación
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(10);
+  readonly totalItems = signal(0);
+
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   static formatClientName(cliente: IContract['cliente']): string {
@@ -54,6 +81,7 @@ export class ContractPickerComponent {
 
   onSearchInput(value: string): void {
     this.searchTerm.set(value);
+    this.currentPage.set(1);
     if (this.searchTimer) {
       clearTimeout(this.searchTimer);
     }
@@ -67,32 +95,43 @@ export class ContractPickerComponent {
     }
 
     const term = this.searchTerm().trim();
-    if (!term) {
-      this.searchResults.set([]);
-      this.searchError.set('');
-      this.searchPerformed.set(false);
-      return;
-    }
 
     this.isSearching.set(true);
     this.searchError.set('');
-    const params: ISearchContractsParams = { search: term, page: 1, limit: 50 };
+    const params: ISearchContractsParams = {
+      search: term || undefined,
+      page: this.currentPage(),
+      limit: this.pageSize(),
+    };
     if (this.estado) {
       params.estado = this.estado;
     }
     this.contractsService.getContracts(params).subscribe({
       next: (res) => {
-        this.searchResults.set(res.data);
+        this.searchResults.set(res.data || []);
+        this.totalItems.set(res.meta?.total || (res.data ? res.data.length : 0));
         this.searchPerformed.set(true);
         this.isSearching.set(false);
       },
       error: (err) => {
         this.searchResults.set([]);
+        this.totalItems.set(0);
         this.searchPerformed.set(true);
         this.searchError.set(this.getErrorMessage(err, 'No se pudieron buscar los contratos'));
         this.isSearching.set(false);
       },
     });
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage.set(page);
+    this.buscarContratos();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.currentPage.set(1);
+    this.buscarContratos();
   }
 
   cerrar(): void {
@@ -101,16 +140,14 @@ export class ContractPickerComponent {
 
   seleccionar(contract: IContract): void {
     this.contractSelected.emit(contract);
+    this.cerrar();
   }
 
   private getErrorMessage(err: unknown, fallback: string): string {
     if (err && typeof err === 'object' && 'error' in err) {
-      const inner = (err as { error?: unknown }).error;
-      if (inner && typeof inner === 'object' && 'message' in inner) {
-        const message = (inner as { message?: unknown }).message;
-        if (typeof message === 'string' && message) {
-          return message;
-        }
+      const apiErr = (err as { error?: { message?: string } }).error;
+      if (apiErr?.message) {
+        return apiErr.message;
       }
     }
     return fallback;

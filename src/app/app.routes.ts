@@ -123,6 +123,14 @@ export const routes: Routes = [
                 (m) => m.SystemConfigComponent,
               ),
           },
+          {
+            path: 'empresa',
+            data: { breadcrumb: 'Empresa y Sucursales' },
+            loadComponent: () =>
+              import('./features/admin/company/pages/company-detail/company-detail.component').then(
+                (m) => m.CompanyDetailComponent,
+              ),
+          },
         ],
       },
 

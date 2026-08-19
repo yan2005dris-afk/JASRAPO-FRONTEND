@@ -13,7 +13,6 @@ import {
   EstadoPago,
   IBankOption,
   ICardBrandOption,
-  IDailyCashSummary,
   IFindAllPaymentsParams,
   IPayment,
   IPaymentStateOption,
@@ -24,7 +23,9 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 import { PaymentDetailModalComponent } from './components/payment-detail-modal/payment-detail-modal.component';
 import { AnnulPaymentModalComponent } from './components/annul-payment-modal/annul-payment-modal.component';
 
-type ActiveTab = 'list' | 'dailyCash';
+import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
+import { IContract } from '../../contracts/service-contracts/interfaces/icontract.interface';
+
 type DatePreset = 'today' | 'week' | 'month' | 'custom';
 
 @Component({
@@ -38,6 +39,7 @@ type DatePreset = 'today' | 'week' | 'month' | 'custom';
     PaginationComponent,
     PaymentDetailModalComponent,
     AnnulPaymentModalComponent,
+    ContractPickerComponent,
   ],
   templateUrl: './payments.html',
   styleUrl: './payments.scss',
@@ -51,15 +53,15 @@ export class PaymentsComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
 
-  // Tab State
-  activeTab: ActiveTab = 'list';
-
   // List State
   payments: IPayment[] = [];
   totalItems = 0;
   isLoading = false;
   hasFetched = false;
   openDropdownId: string | null = null;
+
+  // Selected Rows (Checkboxes)
+  selectedPaymentIds = new Set<string>();
 
   // Pagination
   currentPage = 1;
@@ -71,17 +73,14 @@ export class PaymentsComponent implements OnInit {
   filterFechaDesde = '';
   filterFechaHasta = '';
   filterClienteId = '';
+  selectedFilterContract: IContract | null = null;
+  isContractPickerOpen = false;
   selectedDatePreset: DatePreset = 'month';
 
   // Catalogs
   statesCatalog: IPaymentStateOption[] = [];
   banksCatalog: IBankOption[] = [];
   cardsCatalog: ICardBrandOption[] = [];
-
-  // Cuadro Diario State
-  dailyCashDate = new Date().toISOString().split('T')[0];
-  dailyCashSummary: IDailyCashSummary | null = null;
-  isLoadingDailyCash = false;
 
   // Modals
   selectedPaymentForDetail: IPayment | null = null;
@@ -171,30 +170,6 @@ export class PaymentsComponent implements OnInit {
     });
   }
 
-  loadDailyCash(): void {
-    this.isLoadingDailyCash = true;
-    this.paymentsService.getDailyCashSummary({ fecha: this.dailyCashDate }).subscribe({
-      next: (summary) => {
-        this.dailyCashSummary = summary;
-        this.isLoadingDailyCash = false;
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.dailyCashSummary = null;
-        this.isLoadingDailyCash = false;
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  switchTab(tab: ActiveTab): void {
-    this.activeTab = tab;
-    if (tab === 'dailyCash' && !this.dailyCashSummary) {
-      this.loadDailyCash();
-    }
-    this.cdr.markForCheck();
-  }
-
   applyDatePreset(preset: DatePreset, reload = true): void {
     this.selectedDatePreset = preset;
     const now = new Date();
@@ -225,10 +200,72 @@ export class PaymentsComponent implements OnInit {
     this.selectedDatePreset = 'custom';
   }
 
+  onContractFilterSelected(contract: IContract): void {
+    this.isContractPickerOpen = false;
+    this.selectedFilterContract = contract;
+    const clientId = contract.cliente?.clienteId ?? (contract.cliente as any)?.id ?? contract.clienteId;
+    this.filterClienteId = clientId ? String(clientId) : '';
+    this.currentPage = 1;
+    this.loadPayments();
+    this.cdr.markForCheck();
+  }
+
+  clearContractFilter(): void {
+    this.selectedFilterContract = null;
+    this.filterClienteId = '';
+    this.currentPage = 1;
+    this.loadPayments();
+    this.cdr.markForCheck();
+  }
+
+  // Row selection helpers
+  get allPaymentsSelected(): boolean {
+    return this.payments.length > 0 && this.payments.every((p) => this.selectedPaymentIds.has(p.pagoId));
+  }
+
+  toggleSelectAll(): void {
+    if (this.allPaymentsSelected) {
+      this.selectedPaymentIds.clear();
+    } else {
+      this.payments.forEach((p) => this.selectedPaymentIds.add(p.pagoId));
+    }
+    this.cdr.markForCheck();
+  }
+
+  toggleSelectPayment(pagoId: string, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    if (this.selectedPaymentIds.has(pagoId)) {
+      this.selectedPaymentIds.delete(pagoId);
+    } else {
+      this.selectedPaymentIds.add(pagoId);
+    }
+    this.cdr.markForCheck();
+  }
+
+  isPaymentSelected(pagoId: string): boolean {
+    return this.selectedPaymentIds.has(pagoId);
+  }
+
+  getClientDisplayName(payment: IPayment): string {
+    if (payment.cliente) {
+      const names = [payment.cliente.nombres, payment.cliente.apellidos].filter(Boolean).join(' ').trim();
+      return names || payment.cliente.razonSocial || `Cliente #${payment.clienteId}`;
+    }
+    return payment.clienteNombre || `Cliente #${payment.clienteId}`;
+  }
+
+  getClientInitials(payment: IPayment): string {
+    const name = this.getClientDisplayName(payment);
+    return name.charAt(0).toUpperCase() || 'C';
+  }
+
   limpiarFiltros(): void {
     this.filterEstado = '';
     this.filterMetodo = '';
     this.filterClienteId = '';
+    this.selectedFilterContract = null;
     this.applyDatePreset('month', false);
     this.currentPage = 1;
     this.loadPayments();
@@ -278,23 +315,18 @@ export class PaymentsComponent implements OnInit {
     return 'success';
   }
 
-  // Modals Actions
+  // Navigation & Actions
   openCreatePage(): void {
     this.router.navigate(['/app', 'Facturacion', 'RecaudacionYPagos', 'RegistrarPago']);
   }
 
-  openDetailModal(payment: IPayment): void {
+  openDetailPage(payment: IPayment): void {
     this.openDropdownId = null;
-    this.paymentsService.getPaymentById(payment.pagoId).subscribe({
-      next: (fullPayment) => {
-        this.selectedPaymentForDetail = fullPayment;
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.selectedPaymentForDetail = payment;
-        this.cdr.markForCheck();
-      },
-    });
+    this.router.navigate(['/app', 'Facturacion', 'RecaudacionYPagos', payment.pagoId]);
+  }
+
+  openDetailModal(payment: IPayment): void {
+    this.openDetailPage(payment);
   }
 
   closeDetailModal(): void {
@@ -316,8 +348,5 @@ export class PaymentsComponent implements OnInit {
   onPaymentAnnulled(): void {
     this.selectedPaymentForAnnul = null;
     this.loadPayments();
-    if (this.activeTab === 'dailyCash') {
-      this.loadDailyCash();
-    }
   }
 }

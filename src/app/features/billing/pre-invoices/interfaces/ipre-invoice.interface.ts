@@ -46,6 +46,10 @@ export interface IPreInvoice {
   clienteDireccion?: string | null;
   clienteEmail?: string | null;
   tarifaNombre?: string | null;
+  comprobanteId?: string | number | null;
+  periodoNombre?: string | null;
+  periodoFechaInicio?: string | Date | null;
+  periodoFechaFin?: string | Date | null;
   createdAt: string | Date;
   updatedAt: string | Date;
   detalles?: IPreInvoiceDetail[];
