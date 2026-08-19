@@ -93,7 +93,9 @@
                 <i class="bi bi-check-circle-fill text-primary"></i>
                 <span class="fw-medium text-dark">{{ meter.serie }}</span>
                 <span class="text-muted small">({{ meter.marca }} {{ meter.modelo }})</span>
-                <span class="badge rounded-pill text-bg-success ms-1">{{ meterStatusLabel() }}</span>
+                <span class="badge rounded-pill text-bg-success ms-1">{{
+                  meterStatusLabel()
+                }}</span>
               </div>
             } @else if (submitted()) {
               <span class="text-danger x-small d-block mt-1">Seleccione un medidor.</span>
