@@ -14,23 +14,27 @@ jobs:
       - name: Checkout del código
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 11.22.0
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: '22'
+          cache: 'pnpm'
 
       - name: Instalar dependencias
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Verificar Formato (Prettier)
-        run: npm run format:check || npx prettier --check .
+        run: pnpm run format:check || pnpm exec prettier --check .
 
       - name: Ejecutar Linter (ESLint)
-        run: npm run lint
+        run: pnpm run lint
 
       - name: Construir Proyecto (Build)
-        run: npm run build
+        run: pnpm run build
 
       - name: Ejecutar Pruebas Unitarias (Vitest)
-        run: npm test
+        run: pnpm test

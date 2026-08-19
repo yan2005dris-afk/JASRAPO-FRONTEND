@@ -1,10 +1,5 @@
 export type PreInvoiceState =
-  | 'GENERADA'
-  | 'EN_REVISION'
-  | 'APROBADA'
-  | 'RECHAZADA'
-  | 'ANULADA'
-  | 'PAGADA';
+  'GENERADA' | 'EN_REVISION' | 'APROBADA' | 'RECHAZADA' | 'ANULADA' | 'PAGADA';
 
 export type PreInvoiceStateAction = 'APROBADA' | 'RECHAZADA' | 'EN_REVISION' | 'ANULADA';
 

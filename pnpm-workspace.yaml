@@ -1,0 +1,25 @@
+packages:
+  - '.'
+
+# No instalar dependencias publicadas hace menos de 1 día (1440 minutos).
+# Da tiempo a la comunidad para detectar y retirar versiones maliciosas.
+# Desde pnpm 11 este es el valor por defecto; se declara explícitamente.
+minimumReleaseAge: 1440
+
+# Dependencias transitivas del lockfile publicadas hace <24h. Excluidas por
+# versión exacta (no por nombre) para no debilitar la política en versiones
+# futuras. Eliminar estas 3 entradas cuando pasen 24h (~16:45Z de hoy).
+minimumReleaseAgeExclude:
+  - '@csstools/color-helpers@6.1.1'
+  - '@csstools/css-color-parser@4.2.0'
+  - '@csstools/css-syntax-patches-for-csstree@1.1.8'
+
+# Los scripts de instalación de dependencias están bloqueados por defecto
+# en pnpm 11. Allowlist explícita para paquetes nativos conocidos que
+# requieren build (compilar binarios nativos). Cualquier paquete no listado
+# aquí queda bloqueado.
+allowBuilds:
+  esbuild: true
+  '@parcel/watcher': true
+  lmdb: true
+  msgpackr-extract: true
