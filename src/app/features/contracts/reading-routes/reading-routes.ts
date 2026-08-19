@@ -207,7 +207,6 @@ export class ReadingRoutesComponent implements OnInit {
 
   // Modals Actions
   openCreateModal(): void {
-    this.selectedRouteForDetail = null;
     this.selectedRouteForReassign = null;
     this.selectedRouteForEdit = null;
     this.isFormModalOpen = true;
@@ -216,7 +215,6 @@ export class ReadingRoutesComponent implements OnInit {
 
   openEditModal(route: IReadingRoute): void {
     this.openDropdownId = null;
-    this.selectedRouteForDetail = null;
     this.selectedRouteForReassign = null;
     this.selectedRouteForEdit = route;
     this.isFormModalOpen = true;
@@ -232,7 +230,6 @@ export class ReadingRoutesComponent implements OnInit {
   onRouteSaved(): void {
     this.isFormModalOpen = false;
     this.selectedRouteForEdit = null;
-    this.selectedRouteForDetail = null;
     this.selectedRouteForReassign = null;
     this.loadRoutes();
   }
