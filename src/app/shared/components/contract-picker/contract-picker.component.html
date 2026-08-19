@@ -1,0 +1,184 @@
+@if (open) {
+  <div
+    class="modal fade show d-block picker-modal"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="picker-contrato-title"
+  >
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+        <!-- Header -->
+        <div class="modal-header border-bottom px-4 py-3 bg-white">
+          <div>
+            <h5
+              id="picker-contrato-title"
+              class="modal-title fw-bold text-dark d-flex align-items-center gap-2"
+            >
+              <i class="bi bi-file-earmark-person text-primary"></i>
+              {{ title }}
+            </h5>
+            <p class="text-muted mb-0 small">
+              Busque por número de guía, nombre, razón social o identificación del cliente.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="btn-close shadow-none"
+            aria-label="Cerrar"
+            (click)="cerrar()"
+          ></button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body p-4 bg-white d-flex flex-column gap-3">
+          <div class="input-group">
+            <span class="input-group-text bg-white">
+              <i class="bi bi-search text-muted"></i>
+            </span>
+            <input
+              #searchInput
+              type="text"
+              class="form-control shadow-none"
+              placeholder="Ej: GUIA-1-0051, María, 1105123..."
+              [ngModel]="searchTerm()"
+              (ngModelChange)="onSearchInput($event)"
+              (keyup.enter)="buscarContratos()"
+            />
+            <button
+              type="button"
+              class="btn btn-primary px-4"
+              (click)="buscarContratos()"
+              [disabled]="isSearching()"
+            >
+              Buscar
+            </button>
+          </div>
+
+          @if (isSearching()) {
+            <!-- Skeleton Loader preserving table geometry & height -->
+            <div class="picker-table-wrapper border rounded-3 overflow-hidden p-2">
+              <app-table-skeleton [rows]="pageSize()" [cols]="5" [showHeaders]="true" />
+            </div>
+          } @else if (searchError()) {
+            <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0" role="alert">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <span>{{ searchError() }}</span>
+            </div>
+          } @else if (searchPerformed() && searchResults().length === 0) {
+            <div class="text-center py-5 text-muted">
+              <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
+              <p class="fw-semibold mb-1 text-dark">Sin resultados</p>
+              <p class="text-muted small mb-0">
+                No se encontraron contratos para el término buscado.
+              </p>
+            </div>
+          } @else if (searchResults().length > 0) {
+            <!-- Table container with explicit scroll and no overlapping -->
+            <div class="picker-table-wrapper border rounded-3 overflow-auto">
+              <table
+                class="table table-hover table-sm align-middle mb-0"
+                style="font-size: 0.84rem"
+              >
+                <thead class="table-light sticky-top">
+                  <tr>
+                    <th class="fw-semibold text-muted text-uppercase px-3">N° Guía / Contrato</th>
+                    <th class="fw-semibold text-muted text-uppercase">Cliente / Titular</th>
+                    <th class="fw-semibold text-muted text-uppercase text-center">
+                      Identificación
+                    </th>
+                    <th class="fw-semibold text-muted text-uppercase text-center">Estado</th>
+                    <th class="text-center" style="width: 100px">Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (contract of searchResults(); track contract.contratoId) {
+                    <tr
+                      class="contract-row"
+                      (click)="seleccionar(contract)"
+                      style="cursor: pointer"
+                    >
+                      <td class="px-3">
+                        <div class="fw-bold text-dark d-flex align-items-center gap-1">
+                          <i class="bi bi-file-text text-primary"></i>
+                          <span>{{ contract.numeroGuia }}</span>
+                        </div>
+                        <div class="text-muted" style="font-size: 0.72rem">
+                          ID #{{ contract.contratoId }}
+                        </div>
+                      </td>
+                      <td>
+                        <div class="fw-bold text-dark">
+                          {{ formatClientName(contract.cliente) }}
+                        </div>
+                        @if (contract.cliente.direccionDomicilio) {
+                          <div
+                            class="text-muted text-truncate"
+                            style="font-size: 0.73rem; max-width: 260px"
+                          >
+                            <i class="bi bi-geo-alt me-1"></i
+                            >{{ contract.cliente.direccionDomicilio }}
+                          </div>
+                        }
+                      </td>
+                      <td class="text-center tabular-nums">
+                        <span class="badge badge-soft-secondary font-monospace">{{
+                          contract.cliente.identificacion
+                        }}</span>
+                      </td>
+                      <td class="text-center">
+                        <span
+                          class="badge"
+                          [class.badge-soft-success]="contract.estado === 'ACTIVO'"
+                          [class.badge-soft-warning]="contract.estado !== 'ACTIVO'"
+                        >
+                          {{ contract.estado }}
+                        </span>
+                      </td>
+                      <td class="text-center" (click)="$event.stopPropagation()">
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-medium"
+                          style="font-size: 0.75rem"
+                          (click)="seleccionar(contract)"
+                        >
+                          <i class="bi bi-check2 me-1"></i>Elegir
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination block cleanly underneath table -->
+            @if (totalItems() > 0) {
+              <div class="picker-pagination-box pt-2 border-top">
+                <app-pagination
+                  [totalItems]="totalItems()"
+                  [currentPage]="currentPage()"
+                  [pageSize]="pageSize()"
+                  [pageSizeOptions]="[5, 10, 20]"
+                  itemNameSingular="contrato"
+                  itemNamePlural="contratos"
+                  (pageChange)="onPageChange($event)"
+                  (pageSizeChange)="onPageSizeChange($event)"
+                />
+              </div>
+            }
+          }
+        </div>
+
+        <!-- Footer -->
+        <div
+          class="modal-footer border-top px-4 py-2 bg-light d-flex justify-content-end align-items-center"
+        >
+          <button type="button" class="btn btn-outline-secondary px-4" (click)="cerrar()">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+}

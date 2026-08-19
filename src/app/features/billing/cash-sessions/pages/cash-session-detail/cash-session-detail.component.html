@@ -1,0 +1,649 @@
+<div class="cash-session-page container-fluid px-4 py-4">
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div class="d-flex align-items-center gap-3">
+      <div
+        class="page-header-icon bg-primary bg-opacity-10 text-primary p-3 rounded-3 d-flex align-items-center justify-content-center"
+      >
+        <i class="bi bi-wallet2 fs-3"></i>
+      </div>
+      <div>
+        <h3 class="fw-bold mb-0 text-dark fs-4">Cuadro y Cierre de Caja</h3>
+        <p class="text-muted small mb-0">
+          Control de recaudación diaria, egresos menores y arqueo físico de efectivo.
+        </p>
+      </div>
+    </div>
+
+    @if (session && session.estado === 'ABIERTA') {
+      <div class="d-flex align-items-center gap-2">
+        <button
+          type="button"
+          class="btn btn-outline-danger d-flex align-items-center gap-2 fw-medium shadow-none bg-white"
+          (click)="openAddMovementModal()"
+        >
+          <i class="bi bi-dash-circle"></i>
+          Registrar Gasto / Egreso
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-4"
+          (click)="openCloseCajaModal()"
+        >
+          <i class="bi bi-lock"></i>
+          Cerrar Caja & Arqueo
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (isLoading) {
+    <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4 bg-white">
+      <div class="spinner-border text-primary mx-auto mb-3" role="status"></div>
+      <p class="text-muted small mb-0">Consultando sesión de caja...</p>
+    </div>
+  } @else if (!session) {
+    <!-- CAJA CERRADA / APERTURA REQUERIDA -->
+    <div
+      class="card border-0 shadow-sm rounded-4 p-5 text-center my-4 bg-white mx-auto"
+      style="max-width: 540px"
+    >
+      <div
+        class="bg-primary bg-opacity-10 text-primary rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center"
+        style="width: 72px; height: 72px"
+      >
+        <i class="bi bi-door-open fs-1"></i>
+      </div>
+      <h4 class="fw-bold text-dark mb-2">No hay una caja abierta actualmente</h4>
+      <p class="text-muted small mb-4">
+        Para comenzar a registrar cobros o gastos menores en ventanilla, ingresá el fondo inicial
+        (cambio) y abrí el turno de caja.
+      </p>
+
+      <div class="mb-3 text-start bg-light p-3 rounded-3 border">
+        <label for="puntoEmisionSelect" class="form-label fw-semibold text-dark small mb-1"
+          >Ventanilla / Punto de Emisión</label
+        >
+        <select
+          id="puntoEmisionSelect"
+          class="form-select shadow-none mb-2"
+          [(ngModel)]="selectedPuntoId"
+        >
+          @for (p of activePuntos; track p.id) {
+            <option [value]="p.id">{{ p.label }}</option>
+          }
+        </select>
+        <small class="text-muted" style="font-size: 0.74rem">
+          Seleccioná la caja física o sucursal donde estás operando.
+        </small>
+      </div>
+
+      <div class="mb-4 text-start bg-light p-3 rounded-3 border">
+        <label for="montoAperturaInput" class="form-label fw-semibold text-dark small mb-1"
+          >Fondo de Apertura / Cambio ($)</label
+        >
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0 text-muted fw-bold">$</span>
+          <input
+            id="montoAperturaInput"
+            type="number"
+            step="0.01"
+            class="form-control border-start-0 shadow-none fw-bold fs-5 tabular-nums text-dark"
+            [(ngModel)]="montoAperturaInput"
+            placeholder="0.00"
+          />
+        </div>
+        <small class="text-muted" style="font-size: 0.74rem">
+          Efectivo físico inicial asignado a la ventanilla para dar cambio.
+        </small>
+      </div>
+
+      <button
+        type="button"
+        class="btn btn-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2"
+        (click)="openCaja()"
+        [disabled]="isSaving"
+      >
+        @if (isSaving) {
+          <span class="spinner-border spinner-border-sm" role="status"></span>
+        }
+        <i class="bi bi-check-circle"></i>
+        Abrir Turno de Caja
+      </button>
+    </div>
+  } @else {
+    <!-- CAJA ABIERTA: DASHBOARD -->
+    <!-- Status Banner Card -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden bg-white">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <div
+              class="rounded-circle p-3 d-flex align-items-center justify-content-center bg-success bg-opacity-10 text-success"
+              style="width: 48px; height: 48px"
+            >
+              <i class="bi bi-unlock-fill fs-4"></i>
+            </div>
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1">
+                <h5 class="fw-bold mb-0 text-dark">Sesión de Caja #{{ session.cajaId }}</h5>
+                <span
+                  class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1"
+                >
+                  {{ session.estado }}
+                </span>
+              </div>
+              <p class="text-muted small mb-0">
+                Apertura: <strong>{{ session.fechaApertura | date: 'medium' }}</strong> ·
+                Responsable: <strong>{{ session.creadoPor }}</strong>
+              </p>
+            </div>
+          </div>
+
+          <div class="d-flex align-items-center gap-3">
+            <div class="text-end border-end pe-3">
+              <div class="text-uppercase text-muted fw-semibold" style="font-size: 0.72rem">
+                Fondo Inicial
+              </div>
+              <div class="fs-5 fw-bold text-dark tabular-nums">
+                ${{ session.montoApertura | number: '1.2-2' }}
+              </div>
+            </div>
+            <div class="text-end">
+              <div class="text-uppercase text-primary fw-bold" style="font-size: 0.72rem">
+                Efectivo Esperado
+              </div>
+              <div class="fs-4 fw-bold text-primary tabular-nums">
+                ${{ session.resumen.efectivoEsperado | number: '1.2-2' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPI Summary Grid -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-6 col-lg-3">
+        <div
+          class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-success"
+        >
+          <span class="text-muted small fw-semibold text-uppercase" style="font-size: 0.72rem"
+            >Recaudación Efectivo</span
+          >
+          <div class="fs-4 fw-bold text-success mt-1 tabular-nums">
+            ${{ session.resumen.totalEfectivo | number: '1.2-2' }}
+          </div>
+          <small class="text-muted" style="font-size: 0.74rem">Ingresos por cobros directos</small>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-3">
+        <div
+          class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-info"
+        >
+          <span class="text-muted small fw-semibold text-uppercase" style="font-size: 0.72rem"
+            >Transferencias Bancarias</span
+          >
+          <div class="fs-4 fw-bold text-dark mt-1 tabular-nums">
+            ${{ session.resumen.totalTransferencia | number: '1.2-2' }}
+          </div>
+          <small class="text-muted" style="font-size: 0.74rem">Comprobantes acreditados</small>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-3">
+        <div
+          class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-warning"
+        >
+          <span class="text-muted small fw-semibold text-uppercase" style="font-size: 0.72rem"
+            >Cobros con Tarjeta</span
+          >
+          <div class="fs-4 fw-bold text-dark mt-1 tabular-nums">
+            ${{ session.resumen.totalTarjeta | number: '1.2-2' }}
+          </div>
+          <small class="text-muted" style="font-size: 0.74rem">Ventas POS / Débito / Crédito</small>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-3">
+        <div
+          class="card border-0 shadow-sm rounded-4 p-3 bg-white h-100 border-start border-4 border-danger"
+        >
+          <span class="text-muted small fw-semibold text-uppercase" style="font-size: 0.72rem"
+            >Gastos / Egresos Caja</span
+          >
+          <div class="fs-4 fw-bold text-danger mt-1 tabular-nums">
+            -${{ session.resumen.totalEgresos | number: '1.2-2' }}
+          </div>
+          <small class="text-muted" style="font-size: 0.74rem"
+            >{{ session.resumen.cantidadMovimientos }} egreso(s) registrados</small
+          >
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs for Details -->
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mb-4">
+      <div class="card-header bg-white border-bottom p-3 px-4">
+        <ul class="nav nav-pills custom-pills gap-2">
+          <li class="nav-item">
+            <button
+              class="nav-link py-2 px-3 fw-semibold small"
+              [class.active]="activeTab === 'summary'"
+              (click)="activeTab = 'summary'"
+            >
+              <i class="bi bi-calculator me-1"></i> Arqueo Físico de Efectivo
+            </button>
+          </li>
+          <li class="nav-item">
+            <button
+              class="nav-link py-2 px-3 fw-semibold small"
+              [class.active]="activeTab === 'movements'"
+              (click)="activeTab = 'movements'"
+            >
+              <i class="bi bi-dash-circle me-1"></i> Gastos y Egresos ({{
+                session.movimientos.length
+              }})
+            </button>
+          </li>
+          <li class="nav-item">
+            <button
+              class="nav-link py-2 px-3 fw-semibold small"
+              [class.active]="activeTab === 'payments'"
+              (click)="activeTab = 'payments'"
+            >
+              <i class="bi bi-receipt me-1"></i> Pagos Recaudados ({{ session.pagos.length }})
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card-body p-4">
+        <!-- TAB 1: ARQUEO FÍSICO INTERACTIVO -->
+        @if (activeTab === 'summary') {
+          <div class="row g-4">
+            <!-- Billetes -->
+            <div class="col-lg-6">
+              <div class="border rounded-4 p-3 bg-light bg-opacity-50">
+                <div
+                  class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2"
+                >
+                  <div class="fw-bold text-dark">
+                    <i class="bi bi-cash-stack me-1 text-success"></i> Conteo de Billetes
+                  </div>
+                  <div class="fw-bold text-success tabular-nums fs-6">
+                    ${{ totalBilletes | number: '1.2-2' }}
+                  </div>
+                </div>
+
+                <div class="table-responsive">
+                  <table class="table table-sm align-middle mb-0">
+                    <thead>
+                      <tr class="text-muted small" style="font-size: 0.74rem">
+                        <th>Denominación</th>
+                        <th style="width: 130px">Cantidad</th>
+                        <th class="text-end">Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (b of billetes; track b.def.valor) {
+                        <tr>
+                          <td class="fw-bold text-dark">{{ b.def.label }}</td>
+                          <td>
+                            <input
+                              type="number"
+                              min="0"
+                              class="form-control form-control-sm text-center shadow-none tabular-nums"
+                              [(ngModel)]="b.cantidad"
+                            />
+                          </td>
+                          <td class="text-end fw-semibold tabular-nums text-dark">
+                            ${{ b.def.valor * (b.cantidad || 0) | number: '1.2-2' }}
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Monedas -->
+            <div class="col-lg-6">
+              <div class="border rounded-4 p-3 bg-light bg-opacity-50">
+                <div
+                  class="d-flex align-items-center justify-content-between mb-3 border-bottom pb-2"
+                >
+                  <div class="fw-bold text-dark">
+                    <i class="bi bi-coin me-1 text-warning"></i> Conteo de Monedas
+                  </div>
+                  <div class="fw-bold text-warning tabular-nums fs-6">
+                    ${{ totalMonedas | number: '1.2-2' }}
+                  </div>
+                </div>
+
+                <div class="table-responsive">
+                  <table class="table table-sm align-middle mb-0">
+                    <thead>
+                      <tr class="text-muted small" style="font-size: 0.74rem">
+                        <th>Denominación</th>
+                        <th style="width: 130px">Cantidad</th>
+                        <th class="text-end">Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (m of monedas; track m.def.valor) {
+                        <tr>
+                          <td class="fw-bold text-dark">{{ m.def.label }}</td>
+                          <td>
+                            <input
+                              type="number"
+                              min="0"
+                              class="form-control form-control-sm text-center shadow-none tabular-nums"
+                              [(ngModel)]="m.cantidad"
+                            />
+                          </td>
+                          <td class="text-end fw-semibold tabular-nums text-dark">
+                            ${{ m.def.valor * (m.cantidad || 0) | number: '1.2-2' }}
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cuadre Final Banner -->
+            <div class="col-12">
+              <div
+                class="p-4 rounded-4 border d-flex align-items-center justify-content-between flex-wrap gap-3 bg-light"
+              >
+                <div>
+                  <div class="text-muted small text-uppercase fw-semibold">
+                    Total Físico en Caja
+                  </div>
+                  <div class="fs-3 fw-bold text-dark tabular-nums">
+                    ${{ totalFisicoContado | number: '1.2-2' }}
+                  </div>
+                </div>
+
+                <div
+                  class="text-center px-4 py-2 rounded-3 border"
+                  [ngClass]="'bg-' + estadoCuadre.tone + '-subtle border-' + estadoCuadre.tone"
+                >
+                  <div
+                    class="d-flex align-items-center gap-2 fw-bold"
+                    [ngClass]="'text-' + estadoCuadre.tone"
+                  >
+                    <i class="bi" [ngClass]="estadoCuadre.icon"></i>
+                    <span>{{ estadoCuadre.label }}</span>
+                  </div>
+                </div>
+
+                <div class="text-end">
+                  <div class="text-muted small text-uppercase fw-semibold">
+                    Efectivo Teórico Esperado
+                  </div>
+                  <div class="fs-4 fw-bold text-primary tabular-nums">
+                    ${{ efectivoEsperado | number: '1.2-2' }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- TAB 2: GASTOS Y EGRESOS -->
+        @if (activeTab === 'movements') {
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6 class="fw-bold text-dark mb-0">Egresos y Gastos Menores de Caja</h6>
+            <button
+              type="button"
+              class="btn btn-sm btn-primary d-flex align-items-center gap-1"
+              (click)="openAddMovementModal()"
+            >
+              <i class="bi bi-plus-circle"></i> Nuevo Gasto
+            </button>
+          </div>
+
+          @if (session.movimientos.length === 0) {
+            <div class="text-center py-5 text-muted bg-light rounded-3">
+              <i class="bi bi-clipboard-check fs-2 d-block mb-2 text-muted"></i>
+              No hay egresos o gastos registrados en este turno.
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                  <tr class="small text-muted" style="font-size: 0.76rem">
+                    <th>Tipo</th>
+                    <th>Motivo / Justificación</th>
+                    <th>Comprobante / Recibo</th>
+                    <th>Registrado Por</th>
+                    <th>Hora</th>
+                    <th class="text-end">Monto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (m of session.movimientos; track m.id) {
+                    <tr>
+                      <td>
+                        <span
+                          class="badge"
+                          [ngClass]="
+                            m.tipoMovimiento === 'EGRESO'
+                              ? 'bg-danger-subtle text-danger'
+                              : 'bg-success-subtle text-success'
+                          "
+                        >
+                          {{ m.tipoMovimiento }}
+                        </span>
+                      </td>
+                      <td class="fw-medium text-dark">{{ m.motivo }}</td>
+                      <td class="text-muted small">{{ m.comprobanteRef || '—' }}</td>
+                      <td class="text-muted small">{{ m.creadoPor }}</td>
+                      <td class="text-muted small">{{ m.createdAt | date: 'shortTime' }}</td>
+                      <td class="text-end fw-bold tabular-nums text-danger">
+                        -${{ m.monto | number: '1.2-2' }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        }
+
+        <!-- TAB 3: PAGOS RECAUDADOS -->
+        @if (activeTab === 'payments') {
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr class="small text-muted" style="font-size: 0.76rem">
+                  <th>Pago ID</th>
+                  <th>Cliente</th>
+                  <th>Método</th>
+                  <th>Nº Operación / Ref</th>
+                  <th>Fecha</th>
+                  <th class="text-end">Monto</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of session.pagos; track p.pagoId) {
+                  <tr>
+                    <td class="fw-bold text-dark">#{{ p.pagoId }}</td>
+                    <td>
+                      <div class="fw-semibold text-dark">{{ p.clienteNombre }}</div>
+                      <small class="text-muted">{{ p.clienteIdentificacion }}</small>
+                    </td>
+                    <td>
+                      <span class="badge bg-secondary bg-opacity-10 text-dark border">
+                        {{ p.metodo }}
+                      </span>
+                    </td>
+                    <td class="text-muted small">
+                      {{ p.numeroOperacion || p.referenciaBanco || '—' }}
+                    </td>
+                    <td class="text-muted small">{{ p.fechaPago }}</td>
+                    <td class="text-end fw-bold tabular-nums text-success">
+                      ${{ p.montoTotalRecibido | number: '1.2-2' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: REGISTRAR GASTO MENOR -->
+  @if (showMovementModal) {
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5)">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+          <div class="modal-header border-bottom p-4">
+            <h5 class="modal-title fw-bold text-dark">Registrar Gasto / Egreso de Caja</h5>
+            <button
+              type="button"
+              class="btn-close"
+              aria-label="Cerrar"
+              (click)="closeMovementModal()"
+            ></button>
+          </div>
+          <div class="modal-body p-4">
+            <div class="mb-3">
+              <label for="movimientoMontoInput" class="form-label fw-semibold text-dark small"
+                >Monto del Egreso ($) *</label
+              >
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted fw-bold">$</span>
+                <input
+                  id="movimientoMontoInput"
+                  type="number"
+                  step="0.01"
+                  class="form-control shadow-none fw-bold"
+                  [(ngModel)]="movementDto.monto"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="movimientoMotivoTextarea" class="form-label fw-semibold text-dark small"
+                >Motivo / Justificación *</label
+              >
+              <textarea
+                id="movimientoMotivoTextarea"
+                class="form-control shadow-none"
+                rows="2"
+                [(ngModel)]="movementDto.motivo"
+                placeholder="Ej: Pasajes de mensajería para entrega de recibos..."
+              ></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label for="movimientoComprobanteInput" class="form-label fw-semibold text-dark small"
+                >Nº Recibo / Comprobante Físico (Opcional)</label
+              >
+              <input
+                id="movimientoComprobanteInput"
+                type="text"
+                class="form-control shadow-none"
+                [(ngModel)]="movementDto.comprobanteRef"
+                placeholder="Ej: FACT-1029 / RECIBO-04"
+              />
+            </div>
+          </div>
+          <div class="modal-footer border-top p-3 px-4">
+            <button type="button" class="btn btn-outline-secondary" (click)="closeMovementModal()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger px-4"
+              (click)="saveMovement()"
+              [disabled]="isSaving"
+            >
+              @if (isSaving) {
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+              }
+              Guardar Egreso
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: CIERRE DE CAJA -->
+  @if (showCloseModal) {
+    <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5)">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+          <div class="modal-header border-bottom p-4">
+            <h5 class="modal-title fw-bold text-dark">Confirmar Cierre de Caja</h5>
+            <button
+              type="button"
+              class="btn-close"
+              aria-label="Cerrar"
+              (click)="closeCloseCajaModal()"
+            ></button>
+          </div>
+          <div class="modal-body p-4">
+            <div
+              class="p-3 rounded-3 mb-3 border"
+              [ngClass]="'bg-' + estadoCuadre.tone + '-subtle border-' + estadoCuadre.tone"
+            >
+              <div class="d-flex justify-content-between mb-1">
+                <span class="text-muted small">Efectivo Contado Físicamente:</span>
+                <strong class="text-dark">${{ totalFisicoContado | number: '1.2-2' }}</strong>
+              </div>
+              <div class="d-flex justify-content-between mb-1">
+                <span class="text-muted small">Efectivo Esperado en Sistema:</span>
+                <strong class="text-primary">${{ efectivoEsperado | number: '1.2-2' }}</strong>
+              </div>
+              <hr class="my-2" />
+              <div class="d-flex justify-content-between fw-bold">
+                <span>Resultado:</span>
+                <span [ngClass]="'text-' + estadoCuadre.tone">{{ estadoCuadre.label }}</span>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="novedadCierreTextarea" class="form-label fw-semibold text-dark small"
+                >Observaciones / Novedades de Cierre</label
+              >
+              <textarea
+                id="novedadCierreTextarea"
+                class="form-control shadow-none"
+                rows="2"
+                [(ngModel)]="novedadCierre"
+                placeholder="Observaciones adicionales sobre el turno..."
+              ></textarea>
+            </div>
+          </div>
+          <div class="modal-footer border-top p-3 px-4">
+            <button type="button" class="btn btn-outline-secondary" (click)="closeCloseCajaModal()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary px-4"
+              (click)="confirmCloseCaja()"
+              [disabled]="isSaving"
+            >
+              @if (isSaving) {
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+              }
+              Confirmar y Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

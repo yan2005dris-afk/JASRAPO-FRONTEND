@@ -1,0 +1,298 @@
+<div class="pre-invoice-detail-page container-fluid px-4 py-4">
+  <!-- Back Button & Breadcrumbs -->
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a
+        routerLink="/app/Facturacion/GeneracionPlanilla"
+        class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+      >
+        <i class="bi bi-arrow-left"></i>
+        <span>Volver a Prefacturas</span>
+      </a>
+      <span class="text-muted">/</span>
+      <span class="text-dark fw-semibold small">Prefactura #{{ prefacturaId }}</span>
+    </div>
+
+    <!-- Header Actions -->
+    @if (preInvoice) {
+      <div class="d-flex align-items-center gap-2">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+          (click)="openPdfModal()"
+        >
+          <i class="bi bi-file-earmark-pdf"></i>
+          Ver PDF
+        </button>
+        @if (preInvoice.clienteEmail) {
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+            (click)="openEmailModal()"
+          >
+            <i class="bi bi-envelope"></i>
+            Enviar Email
+          </button>
+        }
+        @if (preInvoice.estado === 'GENERADA') {
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-info d-flex align-items-center gap-1 fw-medium shadow-sm"
+            (click)="moveToReview()"
+            [disabled]="isApproving"
+          >
+            @if (isApproving) {
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
+            } @else {
+              <i class="bi bi-send"></i>
+            }
+            Pasar a revisión
+          </button>
+        }
+        @if (preInvoice.estado === 'EN_REVISION') {
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 fw-medium"
+            (click)="openRejectModal()"
+          >
+            <i class="bi bi-x-circle"></i>
+            Rechazar
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-primary d-flex align-items-center gap-1 fw-medium shadow-sm"
+            (click)="approvePreInvoice()"
+            [disabled]="isApproving"
+          >
+            @if (isApproving) {
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
+            } @else {
+              <i class="bi bi-check-circle"></i>
+            }
+            Aprobar
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (isLoading) {
+    <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4">
+      <div class="spinner-border text-primary mx-auto mb-3" role="status"></div>
+      <p class="text-muted small mb-0">Cargando detalle de la prefactura...</p>
+    </div>
+  } @else if (preInvoice) {
+    <!-- Main Info Header Card -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+      <div class="card-header bg-white border-bottom p-4">
+        <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <div
+              class="pre-invoice-header-icon rounded-3 bg-primary bg-opacity-10 text-primary p-3 d-flex align-items-center justify-content-center"
+            >
+              <i class="bi bi-file-earmark-text fs-3"></i>
+            </div>
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                <h4 class="fw-bold mb-0 text-dark">Prefactura #{{ preInvoice.prefacturaId }}</h4>
+                <app-status-badge [status]="preInvoice.estado" />
+              </div>
+              <p class="text-muted small mb-0">
+                Contrato #{{ preInvoice.contratoId }} · Período #{{ preInvoice.periodoId }}
+                @if (preInvoice.loteId) {
+                  · Lote #{{ preInvoice.loteId }}
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="card-body bg-light p-4 border-bottom">
+        <div class="row g-3">
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
+              <div class="text-muted small d-flex align-items-center gap-1 mb-1">
+                <i class="bi bi-cash-stack text-primary"></i>
+                Total a Pagar
+              </div>
+              <div class="fw-bold text-dark tabular-nums">
+                ${{ preInvoice.totalPagar | number: '1.2-2' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
+              <div class="text-muted small d-flex align-items-center gap-1 mb-1">
+                <i class="bi bi-receipt text-info"></i>
+                Subtotal
+              </div>
+              <div class="fw-semibold text-dark tabular-nums">
+                ${{ preInvoice.subtotal | number: '1.2-2' }}
+              </div>
+              <div class="text-muted" style="font-size: 0.75rem">
+                IVA: ${{ preInvoice.iva | number: '1.2-2' }}
+                @if (preInvoice.descuentoTotal > 0) {
+                  · Desc: -${{ preInvoice.descuentoTotal | number: '1.2-2' }}
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
+              <div class="text-muted small d-flex align-items-center gap-1 mb-1">
+                <i class="bi bi-piggy-bank text-warning"></i>
+                Deuda Anterior
+              </div>
+              <div class="fw-semibold text-dark tabular-nums">
+                ${{ preInvoice.deudaAnterior || 0 | number: '1.2-2' }}
+              </div>
+              <div class="text-muted" style="font-size: 0.75rem">
+                Saldo actual: ${{ preInvoice.saldoActual || 0 | number: '1.2-2' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
+              <div class="text-muted small d-flex align-items-center gap-1 mb-1">
+                <i class="bi bi-person-vcard text-success"></i>
+                Cliente
+              </div>
+              <div class="fw-semibold text-dark" style="word-break: break-word">
+                {{ preInvoice.clienteNombre || 'Sin nombre registrado' }}
+              </div>
+              <div class="text-muted" style="font-size: 0.75rem">
+                CI: {{ preInvoice.clienteIdentificacion || '—' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Información Detallada -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+      <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
+        <h5 class="fw-bold text-dark mb-0">Información de la Planilla</h5>
+        <p class="text-muted small mb-0">Datos del cliente, contrato y facturación del período.</p>
+      </div>
+      <div class="card-body pt-1 px-4 pb-4">
+        <div class="row g-4">
+          <div class="col-12 col-md-6">
+            <div class="text-muted small mb-1">Correo Electrónico</div>
+            <div class="text-dark">{{ preInvoice.clienteEmail || 'Sin correo registrado' }}</div>
+            <div class="text-muted" style="font-size: 0.78rem">
+              Tarifa: {{ preInvoice.tarifaNombre || 'Estándar' }}
+            </div>
+          </div>
+          <div class="col-12 col-md-6">
+            <div class="text-muted small mb-1">Dirección</div>
+            <div class="text-dark">
+              {{ preInvoice.clienteDireccion || 'Sin dirección registrada' }}
+            </div>
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-muted small mb-1">Lote de Facturación</div>
+            @if (preInvoice.loteId) {
+              <button
+                type="button"
+                class="btn btn-link btn-sm p-0 fw-semibold text-primary d-flex align-items-center gap-1"
+                (click)="goToBatch()"
+              >
+                <i class="bi bi-box-arrow-up-right"></i>
+                Lote #{{ preInvoice.loteId }}
+              </button>
+            } @else {
+              <span class="text-dark small">Individual</span>
+            }
+          </div>
+          <div class="col-6 col-md-3">
+            <div class="text-muted small mb-1">Fecha de Emisión</div>
+            <div class="text-dark small">{{ preInvoice.createdAt | date: 'dd/MM/yyyy HH:mm' }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rubros / Detalles Table -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+      <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
+        <h5 class="fw-bold text-dark mb-0">Rubros de la Planilla</h5>
+        <p class="text-muted small mb-0">Desglose de cargos aplicados a la prefactura.</p>
+      </div>
+      <div class="card-body pt-1 pb-4 px-4">
+        @if (preInvoice.detalles && preInvoice.detalles!.length > 0) {
+          <div class="table-responsive rounded-3 border">
+            <table class="table table-sm align-middle mb-0 custom-detail-table">
+              <thead class="bg-light">
+                <tr>
+                  <th class="ps-3 text-muted small">Descripción</th>
+                  <th class="text-center text-muted small">Cant.</th>
+                  <th class="text-end text-muted small">P. Unit</th>
+                  <th class="text-end text-muted small">IVA</th>
+                  <th class="text-end pe-3 text-muted small">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of preInvoice.detalles; track item.prefacturaDetalleId) {
+                  <tr>
+                    <td class="ps-3 small fw-medium text-dark">{{ item.descripcion }}</td>
+                    <td class="text-center small text-muted">{{ item.cantidad }}</td>
+                    <td class="text-end small tabular-nums text-muted">
+                      ${{ item.precioUnitario | number: '1.2-2' }}
+                    </td>
+                    <td class="text-end small tabular-nums text-muted">
+                      ${{ item.iva | number: '1.2-2' }}
+                    </td>
+                    <td class="text-end pe-3 small fw-bold text-dark tabular-nums">
+                      ${{ item.total | number: '1.2-2' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="text-muted small mb-0">Sin rubros detallados registrados.</p>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- MODALS -->
+  @if (isEmailModalOpen && preInvoice) {
+    <app-send-email-modal
+      [preInvoice]="preInvoice"
+      (sent)="onEmailsSent()"
+      (closed)="closeEmailModal()"
+    />
+  }
+
+  @if (isRejectModalOpen && preInvoice) {
+    <app-reject-modal
+      [preInvoice]="preInvoice"
+      (confirmed)="onPreInvoiceRejected()"
+      (closed)="closeRejectModal()"
+    />
+  }
+
+  @if (selectedPdfPreInvoice) {
+    <app-pdf-viewer-modal
+      [preInvoice]="selectedPdfPreInvoice"
+      [pdfBlob]="pdfBlob"
+      (closed)="closePdfModal()"
+    />
+  }
+</div>

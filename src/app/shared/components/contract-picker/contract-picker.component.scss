@@ -1,0 +1,45 @@
+.picker-modal {
+  z-index: 1055;
+}
+
+.modal-backdrop {
+  z-index: 1050;
+  background-color: rgba(15, 23, 42, 0.45);
+}
+
+.picker-table-wrapper {
+  max-height: 340px;
+  background-color: #ffffff;
+}
+
+.picker-pagination-box {
+  background-color: #ffffff;
+  z-index: 5;
+}
+
+.contract-row {
+  transition: background-color 0.12s ease-in-out;
+
+  &:hover {
+    background-color: #f1f9f9;
+  }
+}
+
+.badge-soft-secondary {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.badge-soft-success {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.badge-soft-warning {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

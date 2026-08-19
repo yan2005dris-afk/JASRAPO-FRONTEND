@@ -1,0 +1,274 @@
+<div class="route-detail-page container-fluid px-4 py-4">
+  <!-- Back Button & Breadcrumbs -->
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a
+        routerLink="/app/Contratos/RutasDeLectura"
+        class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+      >
+        <i class="bi bi-arrow-left"></i>
+        <span>Volver a Rutas</span>
+      </a>
+      <span class="text-muted">/</span>
+      <span class="text-dark fw-semibold small"> Detalle de Ruta #{{ routeId }} </span>
+    </div>
+
+    <!-- Status Action Controls -->
+    @if (readingRoute) {
+      <div class="d-flex align-items-center gap-2">
+        @if (readingRoute.estado === 'PENDIENTE') {
+          <button
+            type="button"
+            class="btn btn-sm btn-success d-flex align-items-center gap-1 shadow-sm"
+            (click)="updateRouteStatus('EN_PROGRESO')"
+            [disabled]="isChangingStatus"
+          >
+            <i class="bi bi-play-circle-fill"></i>
+            Iniciar Ruta (Enviar a Campo)
+          </button>
+        }
+        @if (readingRoute.estado === 'EN_PROGRESO') {
+          <button
+            type="button"
+            class="btn btn-sm btn-primary d-flex align-items-center gap-1 shadow-sm"
+            (click)="updateRouteStatus('COMPLETADA')"
+            [disabled]="isChangingStatus"
+          >
+            <i class="bi bi-check-circle-fill"></i>
+            Marcar como Completada
+          </button>
+        }
+        @if (readingRoute.estado !== 'CANCELADA' && readingRoute.estado !== 'COMPLETADA') {
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1"
+            (click)="updateRouteStatus('CANCELADA')"
+            [disabled]="isChangingStatus"
+          >
+            <i class="bi bi-x-circle"></i>
+            Cancelar Ruta
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (isLoadingRoute) {
+    <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4">
+      <div class="spinner-border text-primary mx-auto mb-3" role="status"></div>
+      <p class="text-muted small mb-0">Cargando detalles de la ruta de trabajo...</p>
+    </div>
+  } @else if (readingRoute) {
+    <!-- Main Info Header Card -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+      <div class="card-header bg-white border-bottom p-4">
+        <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <div
+              class="route-header-icon rounded-3 bg-primary bg-opacity-10 text-primary p-3 d-flex align-items-center justify-content-center"
+            >
+              <i class="bi bi-map fs-3"></i>
+            </div>
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                <h4 class="fw-bold mb-0 text-dark">{{ readingRoute.nombre }}</h4>
+                <span class="badge badge-soft-primary px-3 py-1">
+                  {{ getTipoLabel(readingRoute.tipoRuta) }}
+                </span>
+                <app-status-badge [status]="readingRoute.estado" />
+              </div>
+              <p class="text-muted small mb-0">
+                {{ readingRoute.descripcion || 'Sin instrucciones adicionales para el operador' }}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="card-body bg-light p-4 border-bottom">
+        <div class="row g-3">
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
+              <div class="text-muted small d-flex align-items-center gap-1 mb-1">
+                <i class="bi bi-geo-alt text-primary"></i>
+                Comunidad / Sector
+              </div>
+              <div class="fw-semibold text-dark">
+                {{ getComunidadNombre(readingRoute.comunidadId) }}
+              </div>
+              <div class="text-muted" style="font-size: 0.75rem">
+                {{
+                  readingRoute.sectorId ? 'Sector #' + readingRoute.sectorId : 'Toda la comunidad'
+                }}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
+              <div class="text-muted small d-flex align-items-center gap-1 mb-1">
+                <i class="bi bi-person-badge text-info"></i>
+                Operario Asignado
+              </div>
+              <div class="fw-semibold text-dark">
+                {{ getOperarioNombre(readingRoute.operarioId) }}
+              </div>
+              <div class="text-muted" style="font-size: 0.75rem">
+                {{ 'Operario ID: ' + (readingRoute.operarioId || '—') }}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
+              <div class="text-muted small d-flex align-items-center gap-1 mb-1">
+                <i class="bi bi-calendar-check text-warning"></i>
+                Planificación
+              </div>
+              <div class="fw-semibold text-dark">
+                {{ readingRoute.fechaPlanificada | date: 'dd/MM/yyyy' }}
+              </div>
+              <div class="text-muted" style="font-size: 0.75rem">
+                Período: {{ getPeriodoNombre(readingRoute.periodoId) }}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-6 col-md-3">
+            <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
+              <div class="text-muted small d-flex align-items-center gap-1 mb-1">
+                <i class="bi bi-speedometer2 text-success"></i>
+                Progreso de Lecturas
+              </div>
+              <div class="fw-semibold text-dark">
+                {{ approvedCount }} / {{ totalReadings }} Aprobadas
+              </div>
+              <div class="progress mt-2" style="height: 6px">
+                <div
+                  class="progress-bar bg-success"
+                  role="progressbar"
+                  [style.width.%]="totalReadings > 0 ? (approvedCount / totalReadings) * 100 : 0"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Readings Table Card (Full Width) -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4">
+      <!-- Toolbar -->
+      <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+          <div>
+            <h5 class="fw-bold text-dark mb-0">Lecturas y Medidores de la Ruta</h5>
+            <p class="text-muted small mb-0">
+              Listado completo de medidores para la toma de lectura en el mes planificado.
+            </p>
+          </div>
+
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <!-- Search Input -->
+            <div class="input-group search-group" style="min-width: 260px">
+              <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+                <i class="bi bi-search"></i>
+              </span>
+              <input
+                type="text"
+                class="form-control border-start-0 ps-0 shadow-none"
+                placeholder="Buscar guía o cliente..."
+                [(ngModel)]="searchQuery"
+                (keyup.enter)="onSearch()"
+              />
+              @if (searchQuery) {
+                <button
+                  class="btn btn-link text-muted pe-3 ps-1"
+                  type="button"
+                  (click)="clearSearch()"
+                >
+                  <i class="bi bi-x-circle-fill"></i>
+                </button>
+              }
+            </div>
+
+            <!-- Bulk Approve Button -->
+            @if (pendingReviewCount > 0) {
+              <button
+                type="button"
+                class="btn btn-outline-success d-flex align-items-center gap-1 shadow-sm px-3"
+                (click)="approveAllPending()"
+                [disabled]="isBulkApproving"
+              >
+                @if (isBulkApproving) {
+                  <span
+                    class="spinner-border spinner-border-sm"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                } @else {
+                  <i class="bi bi-check-all fs-5"></i>
+                }
+                Aprobar Todas ({{ pendingReviewCount }})
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Table Body -->
+      <div class="pt-1">
+        @if (isLoadingReadings) {
+          <div class="p-3">
+            <app-table-skeleton [rows]="5" [cols]="9" />
+          </div>
+        } @else if (readings.length === 0) {
+          <app-empty-state
+            icon="bi bi-speedometer2"
+            title="No se encontraron lecturas"
+            description="No hay lecturas generadas para esta comunidad y período con los filtros aplicados."
+          />
+        } @else {
+          <app-readings-table
+            [readings]="tableReadings"
+            [showSector]="!readingRoute.sectorId"
+            [showActions]="true"
+            [allowValidation]="true"
+            [allowReReading]="true"
+            [openDropdownId]="openDropdownId"
+            (viewDetail)="openAnomalyModal($event)"
+            (editReading)="openAnomalyModal($event)"
+            (approveReading)="changeReadingStatus($any($event), 'APROBADA')"
+            (reportAnomaly)="openAnomalyModal($event)"
+            (requestReReading)="requestReReading($any($event))"
+            (toggleDropdown)="toggleDropdown($event.id, $event.event)"
+          />
+
+          <!-- Shared Pagination Component -->
+          <div class="px-4 py-3 border-top bg-white">
+            <app-pagination
+              [currentPage]="currentPage"
+              [pageSize]="pageSize"
+              [totalItems]="totalReadings"
+              [pageSizeOptions]="[5, 10, 15, 20]"
+              itemNameSingular="lectura"
+              itemNamePlural="lecturas"
+              (pageChange)="onPageChange($event)"
+              (pageSizeChange)="onPageSizeChange($event)"
+            />
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Anomaly Form Modal -->
+  @if (isAnomalyModalOpen) {
+    <app-anomaly-form-modal
+      [initialLecturaId]="selectedLecturaIdForAnomaly"
+      (saved)="onAnomalySaved()"
+      (closed)="closeAnomalyModal()"
+    />
+  }
+</div>

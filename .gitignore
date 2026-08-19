@@ -44,3 +44,21 @@ __screenshots__/
 Thumbs.db
 
 /generated/prisma
+
+# -- foglamp local scan --
+.foglamp/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+graft/
+
+# playwright artifacts (local only)
+test-results/
+playwright-report/
+e2e/.auth/
+
+# local tool caches and generated artifacts (regenerable)
+.atl/
+.codebase-memory/
+.codegraph/
+.impeccable/
+.ignore

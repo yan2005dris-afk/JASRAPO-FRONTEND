@@ -3,7 +3,8 @@
   <div class="page-header mb-4">
     <h3 class="fw-bold mb-0 text-dark fs-4">Listado de Clientes</h3>
     <p class="text-muted small mb-0">
-      Genere el listado de clientes aplicando los filtros deseados.
+      Consulte y exporte el padrón general de clientes registrados en PDF. Puede filtrar por estado
+      (activo/inactivo) y fecha de ingreso.
     </p>
   </div>
 
@@ -12,7 +13,20 @@
     <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
       <div class="row g-3 align-items-end">
         <div class="col-md-3">
-          <label class="form-label small fw-semibold mb-1" for="fechaDesde">Ingresados desde</label>
+          <label class="form-label small fw-semibold mb-1" for="activo">Estado del cliente</label>
+          <select
+            id="activo"
+            class="form-select shadow-none"
+            [ngModel]="activo()"
+            (ngModelChange)="activo.set($event)"
+          >
+            <option value="">Todos los estados</option>
+            <option value="true">Solo activos</option>
+            <option value="false">Solo inactivos</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold mb-1" for="fechaDesde">Fecha desde</label>
           <app-date-picker
             [inputId]="'fechaDesde'"
             [value]="fechaDesde()"
@@ -20,25 +34,12 @@
           />
         </div>
         <div class="col-md-3">
-          <label class="form-label small fw-semibold mb-1" for="fechaHasta">Ingresados hasta</label>
+          <label class="form-label small fw-semibold mb-1" for="fechaHasta">Fecha hasta</label>
           <app-date-picker
             [inputId]="'fechaHasta'"
             [value]="fechaHasta()"
             (valueChange)="fechaHasta.set($event)"
           />
-        </div>
-        <div class="col-md-3">
-          <label class="form-label small fw-semibold mb-1" for="activo">Estado</label>
-          <select
-            id="activo"
-            class="form-select shadow-none"
-            [ngModel]="activo()"
-            (ngModelChange)="activo.set($event)"
-          >
-            <option value="">Todos</option>
-            <option value="true">Activo</option>
-            <option value="false">Inactivo</option>
-          </select>
         </div>
         <div class="col-md-3 d-flex gap-2 flex-wrap">
           <button
@@ -62,6 +63,7 @@
             type="button"
             class="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium px-3"
             (click)="abrirModalEmail()"
+            [disabled]="rangoFechaInvalido()"
           >
             <i class="bi bi-envelope"></i>
             Enviar email
@@ -77,53 +79,65 @@
           </button>
         </div>
       </div>
-
-      <!-- Presets rápidos de rango + validación cruzada -->
-      <div class="quick-range-bar mt-3 d-flex flex-wrap gap-2 align-items-center">
-        <span class="small text-muted me-1">Rango rápido:</span>
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary"
-          (click)="aplicarPreset('currentYear')"
-        >
-          Este año
-        </button>
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary"
-          (click)="aplicarPreset('currentMonth')"
-        >
-          Este mes
-        </button>
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary"
-          (click)="aplicarPreset('lastMonth')"
-        >
-          Mes pasado
-        </button>
-        <button
-          type="button"
-          class="btn btn-sm btn-outline-secondary"
-          (click)="aplicarPreset('last3Months')"
-        >
-          Últimos 3 meses
-        </button>
-
-        @if (rangoFechaInvalido()) {
-          <span class="text-danger small d-flex align-items-center gap-1 ms-auto">
-            <i class="bi bi-exclamation-circle"></i>
-            La fecha "desde" no puede ser mayor que la fecha "hasta".
-          </span>
-        }
-      </div>
     </div>
+  </div>
+
+  <!-- Presets rápidos de rango + validación cruzada -->
+  <div class="quick-range-bar mb-2 d-flex flex-wrap gap-2 align-items-center">
+    <span class="small text-muted me-1">Rango rápido:</span>
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary"
+      (click)="aplicarPreset('currentYear')"
+    >
+      Este año
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary"
+      (click)="aplicarPreset('currentMonth')"
+    >
+      Este mes
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary"
+      (click)="aplicarPreset('lastMonth')"
+    >
+      Mes pasado
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary"
+      (click)="aplicarPreset('last3Months')"
+    >
+      Últimos 3 meses
+    </button>
+
+    @if (rangoFechaInvalido()) {
+      <span class="text-danger small d-flex align-items-center gap-1 ms-auto">
+        <i class="bi bi-exclamation-circle"></i>
+        La fecha "desde" no puede ser mayor que la fecha "hasta".
+      </span>
+    }
   </div>
 
   <!-- Vista previa del PDF -->
   <div class="card border-0 shadow-sm rounded-3 mb-4">
-    <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
+    <div
+      class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center"
+    >
       <h5 class="fw-bold fs-6 mb-0 text-dark">Vista previa del reporte</h5>
+      @if (pdfBlob()) {
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 fw-medium"
+          (click)="descargarPdf()"
+        >
+          <i class="bi bi-download"></i>
+          Descargar PDF
+        </button>
+      }
     </div>
     <div class="card-body">
       @if (pdfBlob(); as pdf) {
@@ -135,7 +149,8 @@
           </div>
           <p class="fw-semibold mb-1 text-dark">Sin reporte generado</p>
           <p class="text-muted small mb-0">
-            Presione <strong>Generar PDF</strong> para previsualizar el listado de clientes.
+            Ajuste los filtros y presione <strong>Generar PDF</strong> para previsualizar el
+            listado.
           </p>
         </div>
       }
@@ -160,7 +175,7 @@
               Enviar listado de clientes por email
             </h5>
             <p class="text-muted mb-0 small">
-              El listado se generará con los filtros actuales y se enviará al destinatario indicado.
+              El reporte se generará y enviará al destinatario indicado.
             </p>
           </div>
           <button

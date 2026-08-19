@@ -24,10 +24,17 @@ import { ClientsFormComponent } from './components/clients-form/clients-form.com
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
 
 @Component({
   selector: 'app-clients',
-  imports: [CommonModule, FormsModule, ClientsFormComponent, PaginationComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ClientsFormComponent,
+    PaginationComponent,
+    TableSkeletonComponent,
+  ],
   templateUrl: './clients.component.html',
   styleUrl: './clients.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

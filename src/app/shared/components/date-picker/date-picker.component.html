@@ -6,6 +6,7 @@
       class="form-control shadow-none date-picker-input"
       [placeholder]="placeholder()"
       [value]="value()"
+      [disabled]="disabled()"
       readonly
       (click)="toggle()"
       (keydown.enter)="toggle()"
@@ -17,7 +18,7 @@
   </div>
 
   @if (isOpen()) {
-    <div class="date-picker-popover">
+    <div class="date-picker-popover" [class.open-upwards]="openUpwards()">
       <div class="date-picker-header">
         <button type="button" class="date-picker-nav" title="Mes anterior" (click)="prevMonth()">
           <i class="bi bi-chevron-left"></i>

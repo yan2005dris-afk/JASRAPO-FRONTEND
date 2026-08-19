@@ -1,0 +1,213 @@
+<div class="modal fade show d-block picker-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 560px">
+    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+      <!-- Header -->
+      <div class="modal-header border-bottom px-4 py-3 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="header-icon-tile">
+            <i class="bi bi-percent"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-dark mb-0 fs-5">Aplicar Descuento</h5>
+            <p class="text-muted small mb-0">
+              {{ discount().nombre }} ({{
+                discount().esPorcentaje ? discount().valor + '%' : '$' + discount().valor
+              }})
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close shadow-none"
+          aria-label="Cerrar"
+          (click)="close()"
+          [disabled]="isLoading"
+        ></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4 bg-white">
+        <!-- 1. Buscador de Prefactura -->
+        <div class="mb-3">
+          <label for="inputBuscarPrefacturaId" class="form-label fw-semibold text-dark small mb-1">
+            Buscar Prefactura ID <span class="text-danger">*</span>
+          </label>
+          <div class="input-group">
+            <span class="input-group-text bg-white text-muted">
+              <i class="bi bi-receipt"></i>
+            </span>
+            <input
+              id="inputBuscarPrefacturaId"
+              type="number"
+              min="1"
+              class="form-control shadow-none"
+              placeholder="Ingresá el ID de la prefactura (ej. 1)..."
+              [(ngModel)]="prefacturaIdInput"
+              (keyup.enter)="searchPreInvoice()"
+              [disabled]="isLoading"
+            />
+            <button
+              type="button"
+              class="btn btn-outline-primary fw-medium px-3"
+              (click)="searchPreInvoice()"
+              [disabled]="!prefacturaIdInput || isSearchingPreInvoice || isLoading"
+            >
+              @if (isSearchingPreInvoice) {
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+              } @else {
+                <i class="bi bi-search"></i>
+              }
+              Buscar
+            </button>
+          </div>
+
+          @if (searchError) {
+            <div class="text-danger small mt-1" style="font-size: 0.78rem">
+              {{ searchError }}
+            </div>
+          }
+        </div>
+
+        <!-- 2. Found Prefactura Card & Live Preview -->
+        @if (foundPreInvoice) {
+          <div class="p-3 bg-light rounded-3 mb-3 border">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <div>
+                <span class="fw-bold text-dark small"
+                  >Prefactura #{{ foundPreInvoice.prefacturaId }}</span
+                >
+                <span class="text-muted small ms-2"
+                  >·
+                  {{
+                    foundPreInvoice.clienteNombre || 'Contrato #' + foundPreInvoice.contratoId
+                  }}</span
+                >
+              </div>
+              <span class="badge badge-soft-info">{{ foundPreInvoice.estado }}</span>
+            </div>
+
+            <div class="row g-2 border-top pt-2 mt-1">
+              <div class="col-4">
+                <div class="text-muted" style="font-size: 0.75rem">Total Actual</div>
+                <div class="fw-bold text-dark tabular-nums">
+                  ${{ foundPreInvoice.totalPagar | number: '1.2-2' }}
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="text-success" style="font-size: 0.75rem">Descuento</div>
+                <div class="fw-bold text-success tabular-nums">
+                  -${{ calculatedDiscount | number: '1.2-2' }}
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="text-primary" style="font-size: 0.75rem">Queda en</div>
+                <div class="fw-bold text-primary tabular-nums fs-6">
+                  ${{ estimatedTotalPagar | number: '1.2-2' }}
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- 3. Monto Custom Toggle -->
+        <div class="mb-3">
+          <div
+            class="d-flex align-items-center justify-content-between p-2 px-3 rounded-3 bg-light border"
+          >
+            <div class="small fw-semibold text-dark">Personalizar Monto del Descuento</div>
+            <div class="form-check form-switch mb-0">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                role="switch"
+                [(ngModel)]="usarMontoPersonalizado"
+                [disabled]="isLoading"
+              />
+            </div>
+          </div>
+
+          @if (usarMontoPersonalizado) {
+            <div class="mt-2">
+              <label
+                for="inputMontoCustomDescuento"
+                class="form-label fw-semibold text-dark small mb-1"
+              >
+                Monto Personalizado ($) <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-dark fw-bold">$</span>
+                <input
+                  id="inputMontoCustomDescuento"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  class="form-control shadow-none fw-bold tabular-nums"
+                  placeholder="0.00"
+                  [(ngModel)]="montoCustom"
+                  [disabled]="isLoading"
+                />
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- 4. Motivo y Autorizado por -->
+        <div class="row g-2 mb-2">
+          <div class="col-6">
+            <label for="inputAutorizadoPorDesc" class="form-label fw-semibold text-dark small mb-1"
+              >Autorizado por</label
+            >
+            <input
+              id="inputAutorizadoPorDesc"
+              type="text"
+              class="form-control form-control-sm shadow-none"
+              placeholder="Ej. Gerencia / Director"
+              [(ngModel)]="autorizadoPor"
+              [disabled]="isLoading"
+            />
+          </div>
+          <div class="col-6">
+            <label for="inputMotivoDesc" class="form-label fw-semibold text-dark small mb-1"
+              >Motivo / Justificación</label
+            >
+            <input
+              id="inputMotivoDesc"
+              type="text"
+              class="form-control form-control-sm shadow-none"
+              placeholder="Ej. Ley de adulto mayor"
+              [(ngModel)]="motivo"
+              [disabled]="isLoading"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between">
+        <button
+          type="button"
+          class="btn btn-outline-secondary fw-medium px-3"
+          (click)="close()"
+          [disabled]="isLoading"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-4"
+          (click)="submitApply()"
+          [disabled]="!isValid || isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+          @if (!isLoading) {
+            <i class="bi bi-check-circle"></i>
+          }
+          {{ isLoading ? 'Aplicando...' : 'Aplicar a Prefactura' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>

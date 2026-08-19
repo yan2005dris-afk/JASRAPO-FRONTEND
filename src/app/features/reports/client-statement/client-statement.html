@@ -13,25 +13,47 @@
     <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
       <div class="row g-3 align-items-end">
         <div class="col-md-3">
-          <label class="form-label small fw-semibold mb-1" for="contratoId">Contrato</label>
+          <label class="form-label small fw-semibold mb-1" for="contratoId"
+            >Contrato / Cliente</label
+          >
           <div class="input-group">
             <input
               id="contratoId"
               type="text"
-              class="form-control shadow-none contract-input"
+              class="form-control shadow-none contract-input text-truncate"
               placeholder="Seleccione un contrato"
-              [value]="selectedContractNumber()"
+              [value]="
+                selectedContractNumber()
+                  ? selectedContractNumber() + ' - ' + selectedContractName()
+                  : ''
+              "
               readonly
               (click)="abrirBuscadorContratos()"
+              [title]="
+                selectedContractName()
+                  ? selectedContractNumber() + ' - ' + selectedContractName()
+                  : 'Seleccione un contrato'
+              "
             />
-            <button
-              type="button"
-              class="btn btn-outline-primary shadow-none"
-              title="Buscar contrato"
-              (click)="abrirBuscadorContratos()"
-            >
-              <i class="bi bi-search"></i>
-            </button>
+            @if (selectedContractNumber()) {
+              <button
+                type="button"
+                class="btn btn-outline-secondary border-start-0 shadow-none px-2"
+                title="Quitar contrato seleccionado"
+                (click)="limpiar(); $event.stopPropagation()"
+              >
+                <i class="bi bi-x"></i>
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="btn btn-outline-primary shadow-none"
+                title="Buscar contrato"
+                (click)="abrirBuscadorContratos()"
+              >
+                <i class="bi bi-search"></i>
+              </button>
+            }
           </div>
         </div>
         <div class="col-md-3">
@@ -54,51 +76,31 @@
           <button
             type="button"
             class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
-            (click)="generarPdf()"
-            [disabled]="isLoadingPdf() || rangoFechaInvalido()"
+            (click)="consultar()"
+            [disabled]="isLoadingData() || rangoFechaInvalido()"
           >
-            @if (isLoadingPdf()) {
+            @if (isLoadingData()) {
               <span
                 class="spinner-border spinner-border-sm"
                 role="status"
                 aria-hidden="true"
               ></span>
             } @else {
-              <i class="bi bi-file-earmark-pdf"></i>
+              <i class="bi bi-search"></i>
             }
-            {{ isLoadingPdf() ? 'Generando...' : 'Generar PDF' }}
+            {{ isLoadingData() ? 'Consultando...' : 'Consultar' }}
           </button>
-          @if (contratoId()) {
-            <button
-              type="button"
-              class="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium px-3"
-              (click)="abrirModalEmail()"
-              [disabled]="rangoFechaInvalido()"
-            >
-              <i class="bi bi-envelope"></i>
-              Enviar email
-            </button>
-          }
           <button
             type="button"
             class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
             (click)="limpiar()"
-            [disabled]="isLoadingPdf()"
+            [disabled]="isLoadingData()"
           >
             <i class="bi bi-x-circle"></i>
             Limpiar
           </button>
         </div>
       </div>
-
-      @if (selectedContractName()) {
-        <div class="selected-contract-row mt-3">
-          <div class="selected-chip">
-            <i class="bi bi-person-check-fill text-primary"></i>
-            <span class="fw-medium text-dark">{{ selectedContractName() }}</span>
-          </div>
-        </div>
-      }
     </div>
   </div>
 
@@ -142,141 +144,231 @@
     }
   </div>
 
-  <!-- Vista previa del PDF -->
-  <div class="card border-0 shadow-sm rounded-3 mb-4">
-    <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
-      <h5 class="fw-bold fs-6 mb-0 text-dark">Vista previa del reporte</h5>
-    </div>
-    <div class="card-body">
-      @if (pdfBlob(); as pdf) {
-        <app-pdf-previewer [src]="pdf" height="700px" />
-      } @else {
-        <div class="empty-state">
-          <div class="empty-state-icon">
-            <i class="bi bi-file-earmark-pdf"></i>
-          </div>
-          <p class="fw-semibold mb-1 text-dark">Sin reporte generado</p>
-          <p class="text-muted small mb-0">
-            Presione <strong>Generar PDF</strong> para previsualizar el estado de cuenta.
-          </p>
+  <!-- Panel de resultados (aparece sólo cuando hay datos) -->
+  @if (reportData(); as data) {
+    <!-- Resumen del contrato -->
+    <div class="summary-bar card border-0 shadow-sm rounded-3 mb-3">
+      <div class="summary-bar-inner">
+        <div class="stat-item">
+          <span class="stat-label">Cliente</span>
+          <span class="stat-value">
+            {{
+              (data.contrato?.cliente?.nombres ?? '') +
+                ' ' +
+                (data.contrato?.cliente?.apellidos ?? '') ||
+                (data.contrato?.cliente?.razonSocial ?? '—')
+            }}
+          </span>
         </div>
-      }
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-label">Identificación</span>
+          <span class="stat-value font-monospace">
+            {{ data.contrato?.cliente?.identificacion ?? '—' }}
+          </span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-label">Sector</span>
+          <span class="stat-value">{{ data.contrato?.sector?.nombre ?? '—' }}</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-label">Tarifa</span>
+          <span class="stat-value">{{ data.contrato?.categoriaTarifa?.nombre ?? '—' }}</span>
+        </div>
+        <div
+          class="stat-deuda"
+          [class.deuda-pendiente]="deudaTotal() !== '0.00'"
+          [class.deuda-ok]="deudaTotal() === '0.00'"
+        >
+          <span class="stat-label">Deuda total</span>
+          <span class="stat-deuda-value">${{ deudaTotal() }}</span>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
-<!-- Modal buscador de contratos -->
-@if (isContractPickerOpen()) {
-  <div
-    class="modal fade show d-block picker-modal"
-    tabindex="-1"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="picker-contrato-title"
-  >
-    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-      <div class="modal-content border-0 shadow rounded-4">
-        <div class="modal-header border-bottom-0 pb-2">
-          <div>
-            <h5 id="picker-contrato-title" class="modal-title fw-bold">Buscar Contrato</h5>
-            <p class="text-muted mb-0 small">
-              Busque por número de guía, nombre, razón social o identificación del cliente.
-            </p>
-          </div>
+    <!-- Barra de toggle + acciones -->
+    <div class="view-toolbar d-flex align-items-center gap-3 mb-3 flex-wrap">
+      <!-- Toggle Tabla / PDF -->
+      <div class="view-toggle btn-group" role="group" aria-label="Modo de visualización">
+        <button
+          type="button"
+          class="btn btn-sm fw-medium"
+          [class.btn-primary]="activeView() === 'table'"
+          [class.btn-outline-primary]="activeView() !== 'table'"
+          (click)="setView('table')"
+        >
+          <i class="bi bi-table me-1"></i>Tabla
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm fw-medium"
+          [class.btn-primary]="activeView() === 'pdf'"
+          [class.btn-outline-primary]="activeView() !== 'pdf'"
+          [disabled]="isLoadingPdf()"
+          (click)="setView('pdf')"
+        >
+          @if (isLoadingPdf()) {
+            <span
+              class="spinner-border spinner-border-sm me-1"
+              role="status"
+              aria-hidden="true"
+            ></span>
+          } @else {
+            <i class="bi bi-file-earmark-pdf me-1"></i>
+          }
+          PDF
+        </button>
+      </div>
+
+      <!-- Acciones (sólo cuando hay datos) -->
+      <div class="d-flex gap-2 ms-auto flex-wrap">
+        @if (pdfBlob()) {
           <button
             type="button"
-            class="btn-close shadow-none"
-            aria-label="Cerrar"
-            (click)="cerrarBuscadorContratos()"
-          ></button>
-        </div>
-        <div class="modal-body pt-2">
-          <div class="input-group mb-3">
-            <span class="input-group-text bg-white">
-              <i class="bi bi-search"></i>
-            </span>
-            <input
-              type="text"
-              class="form-control shadow-none"
-              placeholder="Ej: GUIA-1-0051, María, 1105123..."
-              [ngModel]="searchTerm()"
-              (ngModelChange)="onSearchInput($event)"
-              (keyup.enter)="buscarContratos()"
-            />
-            <button
-              type="button"
-              class="btn btn-primary"
-              (click)="buscarContratos()"
-              [disabled]="isSearching()"
-            >
-              Buscar
-            </button>
-          </div>
+            class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 fw-medium"
+            (click)="descargarPdf()"
+          >
+            <i class="bi bi-download"></i>
+            Descargar PDF
+          </button>
+        }
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 fw-medium"
+          (click)="abrirModalEmail()"
+        >
+          <i class="bi bi-envelope"></i>
+          Enviar por email
+        </button>
+      </div>
+    </div>
 
-          @if (isSearching()) {
-            <div class="text-center py-4 text-muted">
-              <span
-                class="spinner-border spinner-border-sm me-2"
-                role="status"
-                aria-hidden="true"
-              ></span>
-              Buscando contratos...
-            </div>
-          } @else if (searchError()) {
-            <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0" role="alert">
-              <i class="bi bi-exclamation-triangle-fill"></i>
-              <span>{{ searchError() }}</span>
-            </div>
-          } @else if (searchPerformed() && searchResults().length === 0) {
-            <div class="empty-state py-4">
-              <div class="empty-state-icon">
-                <i class="bi bi-search"></i>
+    <!-- Vista: TABLA -->
+    @if (activeView() === 'table') {
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body p-0">
+          @for (year of tableYears(); track year.nombre) {
+            <div class="year-section">
+              <div class="year-header px-4 py-2">
+                <span class="fw-semibold text-dark small">Período: {{ year.nombre }}</span>
               </div>
-              <p class="fw-semibold mb-1 text-dark">Sin resultados</p>
-              <p class="text-muted small mb-0">
-                No se encontraron contratos para el término buscado.
-              </p>
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0 align-middle report-table">
+                  <thead>
+                    <tr>
+                      <th>Mes</th>
+                      <th class="text-end">Lect. anterior</th>
+                      <th class="text-end">Lect. actual</th>
+                      <th class="text-end">Consumo m³</th>
+                      <th class="text-end">Excedente m³</th>
+                      <th class="text-end">Cargo fijo</th>
+                      <th class="text-end">Excedente $</th>
+                      <th class="text-end fw-semibold">Total mes</th>
+                      <th class="text-end">Pagos</th>
+                      <th class="text-end fw-semibold">Saldo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (mes of year.meses; track mes.mes) {
+                      <tr>
+                        <td class="text-capitalize">{{ mes.mes }}</td>
+                        <td class="text-end font-monospace">{{ mes.lectAnterior }}</td>
+                        <td class="text-end font-monospace">{{ mes.lectActual }}</td>
+                        <td class="text-end font-monospace">{{ mes.consumo }}</td>
+                        <td class="text-end font-monospace">{{ mes.excedente }}</td>
+                        <td class="text-end font-monospace">${{ mes.cargoFijo }}</td>
+                        <td class="text-end font-monospace">${{ mes.excedenteValor }}</td>
+                        <td class="text-end font-monospace fw-semibold">${{ mes.total }}</td>
+                        <td class="text-end font-monospace">${{ mes.pagos }}</td>
+                        <td
+                          class="text-end font-monospace fw-semibold"
+                          [class.text-danger]="mes.saldoNegativo === false && mes.saldo !== '0.00'"
+                          [class.text-success]="mes.saldoNegativo"
+                        >
+                          ${{ mes.saldo }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                  <tfoot>
+                    <tr class="year-total-row">
+                      <td colspan="7" class="fw-semibold text-end small text-muted">
+                        Subtotal {{ year.nombre }}
+                      </td>
+                      <td class="text-end font-monospace fw-bold">${{ year.subtotalAnual }}</td>
+                      <td class="text-end font-monospace fw-semibold">${{ year.pagos }}</td>
+                      <td
+                        class="text-end font-monospace fw-bold"
+                        [class.text-danger]="year.saldoNegativo === false && year.saldo !== '0.00'"
+                        [class.text-success]="year.saldoNegativo"
+                      >
+                        ${{ year.saldo }}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
-          } @else if (searchResults().length > 0) {
-            <ul class="list-group list-group-flush contract-results">
-              @for (contract of searchResults(); track contract.contratoId) {
-                <li
-                  class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2"
-                >
-                  <div class="flex-grow-1">
-                    <div class="fw-semibold text-dark">
-                      <i class="bi bi-briefcase me-1 text-primary"></i>
-                      {{ contract.numeroGuia }}
-                    </div>
-                    <div class="small text-muted">
-                      {{ formatClientName(contract.cliente) }} ·
-                      {{ contract.cliente.identificacion }}
-                      @if (contract.cliente.email) {
-                        · {{ contract.cliente.email }}
-                      }
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-primary text-nowrap"
-                    (click)="seleccionarContrato(contract)"
-                  >
-                    <i class="bi bi-check2 me-1"></i>Seleccionar
-                  </button>
-                </li>
-              }
-            </ul>
-          } @else {
-            <div class="text-center py-4 text-muted">
-              <i class="bi bi-info-circle me-1"></i>
-              Escriba un término y presione <strong>Buscar</strong>.
+          }
+
+          @if (tableYears().length === 0) {
+            <div class="empty-state py-5">
+              <div class="empty-state-icon">
+                <i class="bi bi-inbox"></i>
+              </div>
+              <p class="fw-semibold mb-1 text-dark">Sin datos en el período</p>
+              <p class="text-muted small mb-0">
+                No se encontraron lecturas para el contrato y rango de fechas seleccionados.
+              </p>
             </div>
           }
         </div>
       </div>
+    }
+
+    <!-- Vista: PDF -->
+    @if (activeView() === 'pdf') {
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body p-0">
+          @if (isLoadingPdf()) {
+            <div class="empty-state py-5">
+              <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Generando PDF...</span>
+              </div>
+              <p class="text-muted small mb-0">Generando PDF, por favor espere...</p>
+            </div>
+          } @else if (pdfBlob(); as pdf) {
+            <app-pdf-previewer [src]="pdf" height="700px" />
+          }
+        </div>
+      </div>
+    }
+  } @else if (!isLoadingData()) {
+    <!-- Estado inicial -->
+    <div class="card border-0 shadow-sm rounded-3 mb-4">
+      <div class="card-body">
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="bi bi-file-earmark-text"></i>
+          </div>
+          <p class="fw-semibold mb-1 text-dark">Sin reporte cargado</p>
+          <p class="text-muted small mb-0">
+            Seleccione un contrato y presione <strong>Consultar</strong> para ver el estado de
+            cuenta.
+          </p>
+        </div>
+      </div>
     </div>
-  </div>
-}
+  }
+</div>
+
+<app-contract-picker
+  [open]="isContractPickerOpen()"
+  (contractSelected)="onContractSelected($event)"
+  (closed)="onContractPickerClosed()"
+/>
 
 <!-- Modal envío por email -->
 @if (isEmailModalOpen()) {

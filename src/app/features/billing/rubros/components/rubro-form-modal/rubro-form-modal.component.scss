@@ -1,0 +1,13 @@
+.modal-backdrop {
+  z-index: 1050;
+  background-color: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  z-index: 1055;
+}
+
+.modal-content {
+  border: none;
+}

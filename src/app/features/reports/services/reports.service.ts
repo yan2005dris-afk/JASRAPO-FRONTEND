@@ -7,6 +7,7 @@ import {
   IAccountStatementFilters,
   IClientsListFilters,
   IConnectionHistoryFilters,
+  IOverdueAccountsFilters,
   IPaymentAgreementFilters,
   IPaymentsReportFilters,
   IReportResponse,
@@ -147,5 +148,13 @@ export class ReportsService {
   /** Envía por email el estado de cuenta (contratoId obligatorio). */
   sendAccountStatementEmail(body: ISendReportEmailBody): Observable<unknown> {
     return this.http.post(`${this.endpoint}/account-statement/email`, body);
+  }
+
+  // ---------- Recaudación y Morosidad ----------
+
+  /** Obtiene el reporte de recaudación y morosidad en formato JSON. */
+  getOverdueAccounts(filters: IOverdueAccountsFilters = {}): Observable<IReportResponse> {
+    const params = this.buildParams(filters);
+    return this.http.get<IReportResponse>(`${this.endpoint}/overdue-accounts`, { params });
   }
 }

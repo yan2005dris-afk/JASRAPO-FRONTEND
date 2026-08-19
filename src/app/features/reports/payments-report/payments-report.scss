@@ -61,29 +61,146 @@
   border-bottom: 0;
 }
 
-/* Fondo de los modales de selección (evita estilo inline) */
+/* Fondo de los modales de selección */
 .picker-modal {
   background-color: rgba(15, 23, 42, 0.45);
 }
 
-/* Input de cliente: toda el área abre el buscador */
+/* Input de cliente */
 .contract-input {
   cursor: pointer;
   background-color: #fff;
 }
 
-/* Barra de rango rápido, pegada a la vista previa del reporte */
+/* Barra de rango rápido */
 .quick-range-bar {
   padding: 0 0.25rem;
 }
 
-/* Fila propia para el chip del cliente seleccionado (no descuadra los filtros) */
+/* Fila propia para el chip */
 .selected-contract-row {
   border-top: 1px solid var(--border-color);
   padding-top: 0.75rem;
 }
 
-/* Texto auxiliar más pequeño */
+/* Texto auxiliar */
 .x-small {
   font-size: 0.75rem;
+}
+
+/* Barra de resumen */
+.summary-bar {
+  overflow: hidden;
+}
+
+.summary-bar-inner {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0;
+  padding: 0.25rem 0;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.9rem 1.5rem;
+}
+
+.stat-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bs-secondary-color, #6c757d);
+  white-space: nowrap;
+}
+
+.stat-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--bs-body-color, #212529);
+  white-space: nowrap;
+}
+
+.stat-divider {
+  width: 1px;
+  height: 2.5rem;
+  background-color: var(--border-color, #e2e8f0);
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.stat-deuda {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.6rem 1.25rem;
+  margin-left: auto;
+  border-radius: 10px;
+  margin-right: 1rem;
+  min-width: 120px;
+  text-align: center;
+  align-items: center;
+
+  &.deuda-ok {
+    background-color: rgba(25, 135, 84, 0.08);
+    border: 1px solid rgba(25, 135, 84, 0.2);
+
+    .stat-deuda-value {
+      color: #198754;
+    }
+  }
+}
+
+.stat-deuda-value {
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* Barra de herramientas */
+.view-toolbar {
+  min-height: 36px;
+}
+
+.view-toggle {
+  .btn {
+    min-width: 80px;
+  }
+}
+
+/* Tabla del reporte */
+.report-table {
+  font-size: 0.82rem;
+
+  thead th {
+    background-color: var(--soft-blue-bg, #f0f4ff);
+    color: var(--text-muted, #6c757d);
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  tbody td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    vertical-align: middle;
+  }
+
+  tfoot td {
+    background-color: #f8fafc;
+    border-top: 2px solid var(--border-color);
+    padding: 0.55rem 0.75rem;
+    font-size: 0.83rem;
+  }
+}
+
+.year-total-row td {
+  background-color: #f0f4ff;
 }

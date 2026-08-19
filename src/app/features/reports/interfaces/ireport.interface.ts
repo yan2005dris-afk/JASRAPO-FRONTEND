@@ -35,6 +35,14 @@ export interface IAccountStatementFilters {
   fechaHasta?: string;
 }
 
+/** Filtros para el reporte de recaudación y morosidad. */
+export interface IOverdueAccountsFilters {
+  contratoId?: string;
+  clienteId?: string;
+  sectorId?: string;
+  fechaCorte?: string;
+}
+
 /** Cuerpo de envío por email de la mayoría de los reportes. */
 export interface ISendReportEmailBody {
   clienteId?: string;

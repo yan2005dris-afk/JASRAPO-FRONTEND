@@ -1,0 +1,40 @@
+.picker-modal {
+  z-index: 1055;
+}
+
+.modal-backdrop {
+  z-index: 1050;
+  background-color: rgba(15, 23, 42, 0.45);
+}
+
+.picker-table-wrapper {
+  max-height: 340px;
+  background-color: #ffffff;
+}
+
+.picker-pagination-box {
+  background-color: #ffffff;
+  z-index: 5;
+}
+
+.rubro-row {
+  transition: background-color 0.12s ease-in-out;
+
+  &:hover {
+    background-color: #f1f9f9;
+  }
+}
+
+.badge-soft-secondary {
+  background-color: #f1f5f9;
+  color: #475569;
+}
+
+.badge-soft-info {
+  background-color: #e0f2fe;
+  color: #0369a1;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}

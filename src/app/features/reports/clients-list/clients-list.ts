@@ -29,7 +29,7 @@ export class ClientsListComponent implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
 
-  // Filtros del listado de clientes: rango de ingreso + estado
+  // Filtros del listado de clientes
   readonly fechaDesde = signal('');
   readonly fechaHasta = signal('');
   readonly activo = signal('');
@@ -45,7 +45,6 @@ export class ClientsListComponent implements OnInit {
   readonly isEmailModalOpen = signal(false);
 
   ngOnInit(): void {
-    // Precarga los filtros cuando se navega desde Gestión de Clientes (Exportar PDF).
     this.route.queryParams.subscribe((params) => {
       this.fechaDesde.set(params['fechaDesde'] ?? '');
       this.fechaHasta.set(params['fechaHasta'] ?? '');
@@ -86,15 +85,12 @@ export class ClientsListComponent implements OnInit {
 
     switch (preset) {
       case 'currentYear':
-        // Primer día del año actual hasta hoy
         desde.setMonth(0, 1);
         break;
       case 'currentMonth':
-        // Primer día del mes actual hasta hoy
         desde.setDate(1);
         break;
       case 'lastMonth':
-        // Todo el mes anterior
         desde.setMonth(desde.getMonth() - 1, 1);
         hasta.setDate(0);
         break;
@@ -114,7 +110,11 @@ export class ClientsListComponent implements OnInit {
     return `${year}-${month}-${day}`;
   }
 
+  // ---------- Generar PDF ----------
+
   generarPdf(): void {
+    if (this.rangoFechaInvalido()) return;
+
     this.isLoadingPdf.set(true);
     this.reportsService.getClientsListPdf(this.buildFilters()).subscribe({
       next: (blob) => {
@@ -130,6 +130,18 @@ export class ClientsListComponent implements OnInit {
         );
       },
     });
+  }
+
+  // ---------- Descargar PDF ----------
+
+  descargarPdf(): void {
+    const blob = this.pdfBlob();
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.download = `listado-clientes-${this.activo() || 'todos'}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   // ---------- Envío por email (modal) ----------
