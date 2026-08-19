@@ -80,6 +80,18 @@
           <i class="bi bi-x-circle"></i>
           Limpiar
         </button>
+
+        <!-- Botón Exportar PDF: navega al reporte con los filtros actuales (solo fuera de modo selección) -->
+        @if (!selectionMode()) {
+          <button
+            class="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium px-3"
+            (click)="exportarPdf()"
+            title="Generar el listado de clientes en PDF"
+          >
+            <i class="bi bi-file-earmark-pdf"></i>
+            Exportar PDF
+          </button>
+        }
       </div>
     </div>
 
@@ -100,11 +112,8 @@
 
       <!-- Cargando -->
       @if (isLoading) {
-        <div class="text-center py-5 text-muted">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Cargando...</span>
-          </div>
-          <p class="mt-3 mb-0">Cargando clientes...</p>
+        <div class="p-3">
+          <app-table-skeleton [rows]="5" [cols]="selectionMode() ? 4 : 8" />
         </div>
       }
 

@@ -1,0 +1,189 @@
+<div class="modal fade show d-block picker-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 680px">
+    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+      <!-- Header -->
+      <div class="modal-header border-bottom px-4 py-3 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="header-icon-tile">
+            <i class="bi bi-shield-exclamation text-warning"></i>
+          </div>
+          <div>
+            <div class="d-flex align-items-center gap-2">
+              <h5 class="modal-title fw-bold text-dark mb-0 fs-5">
+                Anomalía #{{ anomaly().anomaliaId }}
+              </h5>
+              <app-status-badge [status]="anomaly().estado" />
+            </div>
+            <p class="text-muted small mb-0">
+              Lectura #{{ anomaly().lecturaId }} · {{ anomaly().tipo.replace('_', ' ') }}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close shadow-none"
+          aria-label="Cerrar"
+          (click)="close()"
+        ></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4 bg-white" style="max-height: 75vh; overflow-y: auto">
+        <!-- Highlights Reading Grid -->
+        @if (anomaly().lectura) {
+          <div class="p-3 bg-light rounded-3 mb-3 border">
+            <div class="row g-2 text-center">
+              <div class="col-4">
+                <div class="text-muted small">Fecha Toma</div>
+                <div class="fw-bold text-dark small mt-1">
+                  {{ anomaly().lectura!.fecha | date: 'dd/MM/yyyy' }}
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="text-muted small">Lectura Actual</div>
+                <div class="fw-bold text-dark tabular-nums mt-1">
+                  {{ anomaly().lectura!.lecturaActual }} m³
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="text-muted small">Consumo Calculado</div>
+                <div class="fw-bold text-primary tabular-nums mt-1">
+                  {{ anomaly().lectura!.consumoCalculado }} m³
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Description -->
+        <div class="mb-3">
+          <div class="text-muted small fw-semibold">Observación del Operario</div>
+          <div class="p-3 bg-light rounded-3 border mt-1 small text-dark">
+            {{ anomaly().observacion || 'Sin observaciones adicionales registradas.' }}
+          </div>
+        </div>
+
+        <!-- Photo preview -->
+        @if (anomaly().fotoUrl) {
+          <div class="mb-3">
+            <div class="text-muted small fw-semibold mb-2">Evidencia Fotográfica</div>
+            <div class="p-3 bg-light rounded-3 border text-center">
+              <a [href]="anomaly().fotoUrl!" target="_blank" title="Ver foto en tamaño completo">
+                <img
+                  [src]="anomaly().fotoUrl!"
+                  alt="Foto evidencia anomalía"
+                  class="rounded-3 shadow-sm img-fluid"
+                  style="max-height: 260px; object-fit: contain"
+                />
+              </a>
+            </div>
+          </div>
+        }
+
+        <!-- Discard input if discarding -->
+        @if (isDiscarding) {
+          <div class="p-3 rounded-3 border border-danger bg-light mb-2">
+            <label
+              for="textareaMotivoDescarte"
+              class="form-label fw-semibold text-danger small mb-1"
+            >
+              Motivo del Descarte <span class="text-danger">*</span>
+            </label>
+            <textarea
+              id="textareaMotivoDescarte"
+              class="form-control form-control-sm shadow-none"
+              rows="2"
+              placeholder="Especificá por qué se descarta esta anomalía (falsa alarma, lectura corregida)..."
+              [(ngModel)]="motivoDescarte"
+              [disabled]="isLoading"
+            ></textarea>
+            <div class="d-flex justify-content-end gap-2 mt-2">
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-secondary"
+                (click)="cancelDiscard()"
+                [disabled]="isLoading"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm btn-danger d-flex align-items-center gap-1"
+                (click)="confirmDiscard()"
+                [disabled]="!motivoDescarte.trim() || isLoading"
+              >
+                <i class="bi bi-x-circle"></i>
+                Confirmar Descarte
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between">
+        <div>
+          @if (canResolve && !isDiscarding) {
+            <button
+              type="button"
+              class="btn btn-outline-danger d-flex align-items-center gap-1"
+              (click)="showDiscardForm()"
+              [disabled]="isLoading"
+            >
+              <i class="bi bi-x-circle"></i>
+              Descartar
+            </button>
+          }
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+          @if (isPending && !isDiscarding) {
+            <button
+              type="button"
+              class="btn btn-outline-warning d-flex align-items-center gap-2 fw-medium text-dark"
+              (click)="setInReview()"
+              [disabled]="isLoading"
+              title="Mover a En Revisión para seguimiento técnico"
+            >
+              <i class="bi bi-search"></i>
+              Pasar a Revisión
+            </button>
+          }
+
+          @if (canResolve && !isDiscarding) {
+            <button
+              type="button"
+              class="btn btn-success d-flex align-items-center gap-2 fw-medium"
+              (click)="resolveAnomaly()"
+              [disabled]="isLoading"
+            >
+              @if (isLoading) {
+                <span
+                  class="spinner-border spinner-border-sm"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+              }
+              @if (!isLoading) {
+                <i class="bi bi-check2-circle"></i>
+              }
+              Marcar como Resuelta
+            </button>
+          }
+
+          @if (!isDiscarding) {
+            <button
+              type="button"
+              class="btn btn-secondary fw-medium px-3"
+              (click)="close()"
+              [disabled]="isLoading"
+            >
+              Cerrar
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>

@@ -1,0 +1,160 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { inject, Injectable } from '@angular/core';
+import { Observable } from 'rxjs';
+
+import { environment } from '../../../../environments/environment';
+import {
+  IAccountStatementFilters,
+  IClientsListFilters,
+  IConnectionHistoryFilters,
+  IOverdueAccountsFilters,
+  IPaymentAgreementFilters,
+  IPaymentsReportFilters,
+  IReportResponse,
+  ISendClientsListEmailBody,
+  ISendReportEmailBody,
+} from '../interfaces/ireport.interface';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class ReportsService {
+  private readonly http = inject(HttpClient);
+
+  private readonly baseUrl = environment.apiUrl;
+  private readonly endpoint = `${this.baseUrl}/reports`;
+
+  /** Construye query params omitiendo valores vacíos. */
+  private buildParams<T extends object>(filters: T): HttpParams {
+    let httpParams = new HttpParams();
+    for (const [key, value] of Object.entries(filters as Record<string, unknown>)) {
+      if (value !== undefined && value !== null && value !== '') {
+        httpParams = httpParams.set(key, String(value));
+      }
+    }
+    return httpParams;
+  }
+
+  // ---------- Reporte de Abonos ----------
+
+  /** Obtiene el reporte de abonos en formato JSON. */
+  getPaymentsReport(filters: IPaymentsReportFilters = {}): Observable<IReportResponse> {
+    const params = this.buildParams(filters);
+    return this.http.get<IReportResponse>(`${this.endpoint}/payments-report`, { params });
+  }
+
+  /** Obtiene el reporte de abonos en PDF (negociación de contenido por header Accept). */
+  getPaymentsReportPdf(filters: IPaymentsReportFilters = {}): Observable<Blob> {
+    const params = this.buildParams(filters);
+    return this.http.get(`${this.endpoint}/payments-report`, {
+      params,
+      headers: { Accept: 'application/pdf' },
+      responseType: 'blob',
+    });
+  }
+
+  /** Envía por email el reporte de abonos (clienteId obligatorio). */
+  sendPaymentsReportEmail(body: ISendReportEmailBody): Observable<unknown> {
+    return this.http.post(`${this.endpoint}/payments-report/email`, body);
+  }
+
+  // ---------- Historial de Conexión ----------
+
+  /** Obtiene el historial de conexión en formato JSON. */
+  getConnectionHistory(filters: IConnectionHistoryFilters): Observable<IReportResponse> {
+    const params = this.buildParams(filters);
+    return this.http.get<IReportResponse>(`${this.endpoint}/connection-history`, { params });
+  }
+
+  /** Obtiene el historial de conexión en PDF. */
+  getConnectionHistoryPdf(filters: IConnectionHistoryFilters): Observable<Blob> {
+    const params = this.buildParams(filters);
+    return this.http.get(`${this.endpoint}/connection-history`, {
+      params,
+      headers: { Accept: 'application/pdf' },
+      responseType: 'blob',
+    });
+  }
+
+  /** Envía por email el historial de conexión (contratoId obligatorio). */
+  sendConnectionHistoryEmail(body: ISendReportEmailBody): Observable<unknown> {
+    return this.http.post(`${this.endpoint}/connection-history/email`, body);
+  }
+
+  // ---------- Convenio de Pago ----------
+
+  /** Obtiene el convenio de pago en formato JSON. */
+  getPaymentAgreement(filters: IPaymentAgreementFilters): Observable<IReportResponse> {
+    const params = this.buildParams(filters);
+    return this.http.get<IReportResponse>(`${this.endpoint}/payment-agreement`, { params });
+  }
+
+  /** Obtiene el convenio de pago en PDF. */
+  getPaymentAgreementPdf(filters: IPaymentAgreementFilters): Observable<Blob> {
+    const params = this.buildParams(filters);
+    return this.http.get(`${this.endpoint}/payment-agreement`, {
+      params,
+      headers: { Accept: 'application/pdf' },
+      responseType: 'blob',
+    });
+  }
+
+  /** Envía por email el convenio de pago (convenioId obligatorio). */
+  sendPaymentAgreementEmail(body: ISendReportEmailBody): Observable<unknown> {
+    return this.http.post(`${this.endpoint}/payment-agreement/email`, body);
+  }
+
+  // ---------- Listado de Clientes ----------
+
+  /** Obtiene el listado de clientes en formato JSON. */
+  getClientsList(filters: IClientsListFilters = {}): Observable<IReportResponse> {
+    const params = this.buildParams(filters);
+    return this.http.get<IReportResponse>(`${this.endpoint}/clients-list`, { params });
+  }
+
+  /** Obtiene el listado de clientes en PDF. */
+  getClientsListPdf(filters: IClientsListFilters = {}): Observable<Blob> {
+    const params = this.buildParams(filters);
+    return this.http.get(`${this.endpoint}/clients-list`, {
+      params,
+      headers: { Accept: 'application/pdf' },
+      responseType: 'blob',
+    });
+  }
+
+  /** Envía por email el listado de clientes (destinatario obligatorio). */
+  sendClientsListEmail(body: ISendClientsListEmailBody): Observable<unknown> {
+    return this.http.post(`${this.endpoint}/clients/email`, body);
+  }
+
+  // ---------- Estado de Cuenta ----------
+
+  /** Obtiene el estado de cuenta en formato JSON. */
+  getAccountStatement(filters: IAccountStatementFilters): Observable<IReportResponse> {
+    const params = this.buildParams(filters);
+    return this.http.get<IReportResponse>(`${this.endpoint}/account-statement`, { params });
+  }
+
+  /** Obtiene el estado de cuenta en PDF. */
+  getAccountStatementPdf(filters: IAccountStatementFilters): Observable<Blob> {
+    const params = this.buildParams(filters);
+    return this.http.get(`${this.endpoint}/account-statement`, {
+      params,
+      headers: { Accept: 'application/pdf' },
+      responseType: 'blob',
+    });
+  }
+
+  /** Envía por email el estado de cuenta (contratoId obligatorio). */
+  sendAccountStatementEmail(body: ISendReportEmailBody): Observable<unknown> {
+    return this.http.post(`${this.endpoint}/account-statement/email`, body);
+  }
+
+  // ---------- Recaudación y Morosidad ----------
+
+  /** Obtiene el reporte de recaudación y morosidad en formato JSON. */
+  getOverdueAccounts(filters: IOverdueAccountsFilters = {}): Observable<IReportResponse> {
+    const params = this.buildParams(filters);
+    return this.http.get<IReportResponse>(`${this.endpoint}/overdue-accounts`, { params });
+  }
+}

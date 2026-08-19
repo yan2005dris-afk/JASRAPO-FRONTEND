@@ -1,0 +1,49 @@
+.system-config-container {
+  .header-card {
+    background: linear-gradient(
+      135deg,
+      rgba(15, 195, 198, 0.06) 0%,
+      rgba(255, 255, 255, 0.95) 100%
+    );
+    border: 1px solid rgba(15, 195, 198, 0.15) !important;
+  }
+
+  .search-group {
+    border-radius: 0.5rem;
+    overflow: hidden;
+    border: 1px solid #cbdedf;
+    transition: all 0.2s ease;
+
+    &:focus-within {
+      border-color: #0c9ea1;
+      box-shadow: 0 0 0 3px rgba(15, 195, 198, 0.15);
+    }
+  }
+
+  .custom-config-table {
+    thead th {
+      font-size: 0.78rem;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    tbody td {
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #f1f5f9;
+    }
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

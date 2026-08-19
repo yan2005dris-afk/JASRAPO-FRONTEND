@@ -8,11 +8,12 @@ import {
   DestroyRef,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { forkJoin } from 'rxjs';
 import { RolesService } from '../services/roles.service';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
+import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 import {
   RoleDetail,
   PermissionItem,
@@ -22,8 +23,9 @@ import {
 
 @Component({
   selector: 'app-role-editor',
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule, PaginationComponent],
   templateUrl: './role-editor.component.html',
+  styleUrl: './role-editor.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RoleEditorComponent implements OnInit {
@@ -42,10 +44,17 @@ export class RoleEditorComponent implements OnInit {
   readonly isSaving = signal(false);
   readonly assignedIds = signal<Set<number>>(new Set());
   readonly expandedGroups = signal<Set<string>>(new Set());
+  readonly searchTerm = signal('');
+
+  // Paginación de módulos / recursos
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(10);
+  readonly pageSizeOptions = [5, 10, 15, 20];
 
   readonly groupedPermissions = computed((): PermissionGroup[] => {
     const perms = this.allPermissions();
     const assigned = this.assignedIds();
+    const term = this.searchTerm().trim().toLowerCase();
 
     const grouped = new Map<string, PermissionWithState[]>();
     for (const p of perms) {
@@ -59,16 +68,50 @@ export class RoleEditorComponent implements OnInit {
       });
     }
 
-    return Array.from(grouped.entries()).map(([recurso, items]) => {
-      const assignedCount = items.filter((p) => p.assigned).length;
-      return {
-        recurso,
-        items,
-        allSelected: assignedCount === items.length && items.length > 0,
-        indeterminate: assignedCount > 0 && assignedCount < items.length,
-        assignedCount,
-      };
-    });
+    const groups: PermissionGroup[] = [];
+    for (const [recurso, items] of grouped.entries()) {
+      const filteredItems = term
+        ? items.filter(
+            (i) =>
+              recurso.toLowerCase().includes(term) ||
+              i.nombre.toLowerCase().includes(term) ||
+              i.accion.toLowerCase().includes(term) ||
+              (i.descripcion && i.descripcion.toLowerCase().includes(term)),
+          )
+        : items;
+
+      if (filteredItems.length > 0) {
+        const assignedCount = filteredItems.filter((p) => p.assigned).length;
+        groups.push({
+          recurso,
+          items: filteredItems,
+          allSelected: assignedCount === filteredItems.length && filteredItems.length > 0,
+          indeterminate: assignedCount > 0 && assignedCount < filteredItems.length,
+          assignedCount,
+        });
+      }
+    }
+
+    return groups.sort((a, b) => a.recurso.localeCompare(b.recurso));
+  });
+
+  // Módulos visibles en la página actual
+  readonly pagedGroups = computed(() => {
+    const groups = this.groupedPermissions();
+    const page = this.currentPage();
+    const size = this.pageSize();
+    const start = (page - 1) * size;
+    return groups.slice(start, start + size);
+  });
+
+  readonly totalStats = computed(() => {
+    const all = this.allPermissions();
+    const assigned = this.assignedIds();
+    return {
+      total: all.length,
+      assignedCount: assigned.size,
+      groupsCount: this.groupedPermissions().length,
+    };
   });
 
   readonly hasChanges = computed(() => {
@@ -94,28 +137,57 @@ export class RoleEditorComponent implements OnInit {
     this.assignedIds.set(new Set());
     this.expandedGroups.set(new Set());
     this.originalIds = new Set();
+    this.searchTerm.set('');
+    this.currentPage.set(1);
   }
 
   private load(): void {
     this.isLoading.set(true);
-    forkJoin({
-      role: this.rolesService.getRoleById(this.rolId),
-      permissions: this.rolesService.getAllPermissions(),
-    }).subscribe({
-      next: ({ role, permissions }) => {
-        this.role.set(role);
+
+    this.rolesService.getAllPermissions().subscribe({
+      next: (permissions) => {
         this.allPermissions.set(permissions);
-        const ids = new Set(role.permisos.map((p) => p.permisoId));
-        this.assignedIds.set(ids);
-        this.originalIds = new Set(ids);
-        this.expandedGroups.set(new Set());
-        this.isLoading.set(false);
+        this.loadRoleDetail();
       },
-      error: () => {
-        this.toast.error('Error al cargar el rol', 'Error');
+      error: (err) => {
+        console.error('Error al cargar catálogo de permisos:', err);
+        const msg = err?.error?.message ?? 'No se pudo cargar el catálogo de permisos';
+        this.toast.error(msg, 'Error');
         this.isLoading.set(false);
       },
     });
+  }
+
+  private loadRoleDetail(): void {
+    this.rolesService.getRoleById(this.rolId).subscribe({
+      next: (role) => {
+        this.role.set(role);
+        const ids = new Set((role.permisos || []).map((p) => p.permisoId));
+        this.assignedIds.set(ids);
+        this.originalIds = new Set(ids);
+        this.isLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Error al cargar detalle del rol:', err);
+        const msg = err?.error?.message ?? 'No se pudo cargar el rol solicitado';
+        this.toast.error(msg, 'Error');
+        this.isLoading.set(false);
+      },
+    });
+  }
+
+  onSearchChange(term: string): void {
+    this.searchTerm.set(term);
+    this.currentPage.set(1);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage.set(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.currentPage.set(1);
   }
 
   togglePermission(permisoId: number): void {
@@ -144,6 +216,39 @@ export class RoleEditorComponent implements OnInit {
       const next = new Set(groups);
       if (next.has(recurso)) next.delete(recurso);
       else next.add(recurso);
+      return next;
+    });
+  }
+
+  expandAll(): void {
+    const allKeys = new Set(this.groupedPermissions().map((g) => g.recurso));
+    this.expandedGroups.set(allKeys);
+  }
+
+  collapseAll(): void {
+    this.expandedGroups.set(new Set());
+  }
+
+  selectAllVisible(): void {
+    this.assignedIds.update((ids) => {
+      const next = new Set(ids);
+      for (const group of this.pagedGroups()) {
+        for (const item of group.items) {
+          next.add(item.permisoId);
+        }
+      }
+      return next;
+    });
+  }
+
+  deselectAllVisible(): void {
+    this.assignedIds.update((ids) => {
+      const next = new Set(ids);
+      for (const group of this.pagedGroups()) {
+        for (const item of group.items) {
+          next.delete(item.permisoId);
+        }
+      }
       return next;
     });
   }

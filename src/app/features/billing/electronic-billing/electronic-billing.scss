@@ -1,0 +1,57 @@
+.billing-container {
+  width: 100%;
+}
+
+.stat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+
+.search-group {
+  .form-control:focus {
+    border-color: #dee2e6;
+  }
+}
+
+.custom-table {
+  thead th {
+    background-color: var(--soft-blue-bg, #f8faff);
+    border-bottom: 1px solid var(--border-color, #e2e8f0);
+    padding: 0.75rem 1rem;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  tbody td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.empty-state-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background-color: var(--soft-blue-bg, #f0f4ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6rem;
+  margin: 0 auto 0.75rem;
+}
+
+.detail-modal {
+  background-color: rgba(15, 23, 42, 0.45);
+}

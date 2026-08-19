@@ -54,6 +54,7 @@ export const routes: Routes = [
         children: [
           {
             path: 'users',
+            data: { breadcrumb: 'Usuarios' },
             children: [
               {
                 path: '',
@@ -65,6 +66,7 @@ export const routes: Routes = [
               },
               {
                 path: 'new',
+                data: { breadcrumb: 'Nuevo Usuario' },
                 loadComponent: () =>
                   import('./features/users/user-form/user-form.component').then(
                     (m) => m.UserFormComponent,
@@ -72,6 +74,7 @@ export const routes: Routes = [
               },
               {
                 path: ':id/edit',
+                data: { breadcrumb: 'Editar Usuario' },
                 loadComponent: () =>
                   import('./features/users/user-form/user-form.component').then(
                     (m) => m.UserFormComponent,
@@ -116,7 +119,17 @@ export const routes: Routes = [
             path: 'config',
             data: { breadcrumb: 'Configuración' },
             loadComponent: () =>
-              import('./features/admin/component/admin.component').then((m) => m.AdminComponent),
+              import('./features/admin/system-config/system-config.component').then(
+                (m) => m.SystemConfigComponent,
+              ),
+          },
+          {
+            path: 'empresa',
+            data: { breadcrumb: 'Empresa y Sucursales' },
+            loadComponent: () =>
+              import('./features/admin/company/pages/company-detail/company-detail.component').then(
+                (m) => m.CompanyDetailComponent,
+              ),
           },
         ],
       },
@@ -247,10 +260,34 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'RutasDeLectura',
+            data: { breadcrumb: 'Rutas de Lectura' },
+            loadComponent: () =>
+              import('./features/contracts/reading-routes/reading-routes').then(
+                (m) => m.ReadingRoutesComponent,
+              ),
+          },
+          {
+            path: 'RutasDeLectura/:id',
+            data: { breadcrumb: 'Detalle de Ruta' },
+            loadComponent: () =>
+              import('./features/contracts/reading-routes/pages/reading-route-detail/reading-route-detail.component').then(
+                (m) => m.ReadingRouteDetailComponent,
+              ),
+          },
+          {
             path: 'LecturaDeConsumo',
             data: { breadcrumb: 'Lectura de Consumo' },
             loadComponent: () =>
               import('./features/contracts/readings/readings').then((m) => m.ReadingsComponent),
+          },
+          {
+            path: 'AnomaliasDeLectura',
+            data: { breadcrumb: 'Anomalías de Lectura' },
+            loadComponent: () =>
+              import('./features/contracts/reading-anomalies/reading-anomalies').then(
+                (m) => m.ReadingAnomaliesComponent,
+              ),
           },
           {
             path: 'Medidores',
@@ -278,10 +315,16 @@ export const routes: Routes = [
         children: [
           {
             path: 'EnvioDeFacturacion',
-            data: { breadcrumb: 'Envío de Facturación' },
+            data: { breadcrumb: 'Generación de Planillas' },
             loadComponent: () =>
-              import('./features/billing/billing-submission/billing-submission').then(
-                (m) => m.BillingSubmissionComponent,
+              import('./features/billing/batches/batches').then((m) => m.BatchesComponent),
+          },
+          {
+            path: 'EnvioDeFacturacion/:id',
+            data: { breadcrumb: 'Detalle de Lote' },
+            loadComponent: () =>
+              import('./features/billing/batches/pages/batch-detail/batch-detail.component').then(
+                (m) => m.BatchDetailComponent,
               ),
           },
           {
@@ -294,10 +337,18 @@ export const routes: Routes = [
           },
           {
             path: 'GeneracionPlanilla',
-            data: { breadcrumb: 'Generación de Planilla' },
+            data: { breadcrumb: 'Prefacturas' },
             loadComponent: () =>
-              import('./features/billing/billing-generation/billing-generation').then(
-                (m) => m.BillingGenerationComponent,
+              import('./features/billing/pre-invoices/pre-invoices').then(
+                (m) => m.PreInvoicesComponent,
+              ),
+          },
+          {
+            path: 'GeneracionPlanilla/:id',
+            data: { breadcrumb: 'Detalle de Prefactura' },
+            loadComponent: () =>
+              import('./features/billing/pre-invoices/pages/pre-invoice-detail/pre-invoice-detail.component').then(
+                (m) => m.PreInvoiceDetailComponent,
               ),
           },
           {
@@ -314,16 +365,52 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/billing/payments/payments').then((m) => m.PaymentsComponent),
           },
+          {
+            path: 'RecaudacionYPagos/RegistrarPago',
+            data: { breadcrumb: 'Registrar Pago' },
+            loadComponent: () =>
+              import('./features/billing/payments/components/payment-form/payment-form.component').then(
+                (m) => m.PaymentFormComponent,
+              ),
+          },
+          {
+            path: 'RecaudacionYPagos/:id',
+            data: { breadcrumb: 'Detalle de Pago' },
+            loadComponent: () =>
+              import('./features/billing/payments/pages/payment-detail/payment-detail.component').then(
+                (m) => m.PaymentDetailComponent,
+              ),
+          },
+          {
+            path: 'CuadroDeCaja',
+            data: { breadcrumb: 'Cuadro y Cierre de Caja' },
+            loadComponent: () =>
+              import('./features/billing/cash-sessions/pages/cash-session-detail/cash-session-detail.component').then(
+                (m) => m.CashSessionDetailComponent,
+              ),
+          },
+          {
+            path: 'Descuentos',
+            data: { breadcrumb: 'Descuentos y Beneficios' },
+            loadComponent: () =>
+              import('./features/billing/discounts/discounts').then((m) => m.DiscountsComponent),
+          },
+          {
+            path: 'Rubros',
+            data: { breadcrumb: 'Rubros y Tarifas' },
+            loadComponent: () =>
+              import('./features/billing/rubros/rubros.component').then((m) => m.RubrosComponent),
+          },
         ],
       },
 
       // Sección Reportes
       {
-        path: 'Reportes',
+        path: 'reportes',
         data: { breadcrumb: 'Reportes' },
         children: [
           {
-            path: 'ConsumoZonas',
+            path: 'consumo-zonas',
             data: { breadcrumb: 'Consumo por Zonas' },
             loadComponent: () =>
               import('./features/reports/zone-consumption/zone-consumption').then(
@@ -331,7 +418,7 @@ export const routes: Routes = [
               ),
           },
           {
-            path: 'DashboardKpi',
+            path: 'dashboard',
             data: { breadcrumb: 'Dashboard KPI' },
             loadComponent: () =>
               import('./features/reports/kpi-dashboard/kpi-dashboard').then(
@@ -339,7 +426,7 @@ export const routes: Routes = [
               ),
           },
           {
-            path: 'EstadoCuentaCliente',
+            path: 'estado-cuenta',
             data: { breadcrumb: 'Estado de Cuenta' },
             loadComponent: () =>
               import('./features/reports/client-statement/client-statement').then(
@@ -347,11 +434,43 @@ export const routes: Routes = [
               ),
           },
           {
-            path: 'RecaudacionMorosida',
+            path: 'recaudacion-morosidad',
             data: { breadcrumb: 'Recaudación y Morosidad' },
             loadComponent: () =>
               import('./features/reports/overdue-accounts/overdue-accounts').then(
                 (m) => m.OverdueAccountsComponent,
+              ),
+          },
+          {
+            path: 'abonos',
+            data: { breadcrumb: 'Reporte de Abonos' },
+            loadComponent: () =>
+              import('./features/reports/payments-report/payments-report').then(
+                (m) => m.PaymentsReportComponent,
+              ),
+          },
+          {
+            path: 'historial-conexion',
+            data: { breadcrumb: 'Historial de Conexión' },
+            loadComponent: () =>
+              import('./features/reports/connection-history/connection-history').then(
+                (m) => m.ConnectionHistoryComponent,
+              ),
+          },
+          {
+            path: 'convenio-pago',
+            data: { breadcrumb: 'Convenio de Pago' },
+            loadComponent: () =>
+              import('./features/reports/payment-agreement/payment-agreement').then(
+                (m) => m.PaymentAgreementComponent,
+              ),
+          },
+          {
+            path: 'listado-clientes',
+            data: { breadcrumb: 'Listado de Clientes' },
+            loadComponent: () =>
+              import('./features/reports/clients-list/clients-list').then(
+                (m) => m.ClientsListComponent,
               ),
           },
         ],

@@ -28,6 +28,7 @@ import { finalize } from 'rxjs';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
+import { TableSkeletonComponent } from '../../../../../shared/components/table-skeleton/table-skeleton.component';
 import {
   DropdownComponent,
   DropdownItem,
@@ -35,7 +36,14 @@ import {
 
 @Component({
   selector: 'app-meters',
-  imports: [CommonModule, FormsModule, MetersFormComponent, PaginationComponent, DropdownComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MetersFormComponent,
+    PaginationComponent,
+    DropdownComponent,
+    TableSkeletonComponent,
+  ],
   templateUrl: './meters-index.component.html',
   styleUrl: './meters-index.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

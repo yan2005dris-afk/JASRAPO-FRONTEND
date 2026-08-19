@@ -1,0 +1,266 @@
+<div class="modal fade show d-block picker-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 540px">
+    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+      <!-- Header -->
+      <div class="modal-header border-bottom px-4 py-3 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="header-icon-tile">
+            <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-dark mb-0 fs-5">
+              {{ anomaly() ? 'Editar Anomalía' : 'Reportar Anomalía de Lectura' }}
+            </h5>
+            <p class="text-muted small mb-0">
+              Notificación de incidentes, fugas o inconsistencias en medidores.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close shadow-none"
+          aria-label="Cerrar"
+          (click)="close()"
+          [disabled]="isLoading"
+        ></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4 bg-white" style="max-height: 75vh; overflow-y: auto">
+        <div class="row g-3">
+          <!-- 1. Buscador de Contrato / Guía -->
+          <div class="col-12 position-relative">
+            <label
+              for="inputContratoIdAnomalia"
+              class="form-label fw-semibold text-dark small mb-1"
+            >
+              Contrato / Punto de Medición <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text bg-white text-muted">
+                <i class="bi bi-file-text"></i>
+              </span>
+              <input
+                id="inputContratoIdAnomalia"
+                type="text"
+                class="form-control shadow-none"
+                placeholder="Buscar por guía, cliente o CI..."
+                [value]="contractSearchQuery"
+                [disabled]="isLoading || !!anomaly()"
+                (input)="onContractSearchInput($any($event.target).value)"
+                (focus)="
+                  contractSearchResults.length > 0 ? (isContractAutocompleteOpen = true) : null
+                "
+                autocomplete="off"
+              />
+              @if ((selectedContract || contractSearchQuery) && !anomaly()) {
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  (click)="clearSelectedContract()"
+                  [disabled]="isLoading"
+                  title="Limpiar selección"
+                >
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              }
+            </div>
+
+            <!-- Autocomplete Dropdown Contratos -->
+            @if (isContractAutocompleteOpen) {
+              <div class="autocomplete-dropdown shadow-lg rounded-3 border bg-white mt-1 py-1">
+                @if (isSearchingContracts) {
+                  <div class="px-3 py-2 text-muted small d-flex align-items-center gap-2">
+                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                    <span>Buscando contratos...</span>
+                  </div>
+                } @else if (contractSearchResults.length === 0) {
+                  <div class="px-3 py-2 text-muted small">
+                    No se encontraron contratos para "{{ contractSearchQuery }}".
+                  </div>
+                } @else {
+                  @for (contract of contractSearchResults; track contract.contratoId) {
+                    <button
+                      type="button"
+                      class="dropdown-item px-3 py-2 text-start d-flex justify-content-between align-items-center"
+                      (click)="selectContract(contract)"
+                    >
+                      <div>
+                        <div class="fw-semibold text-dark small">
+                          {{ contract.numeroGuia }}
+                        </div>
+                        <div class="text-muted extra-small">
+                          {{ formatClientName(contract.cliente) }}
+                          @if (contract.cliente.identificacion) {
+                            · CI: {{ contract.cliente.identificacion }}
+                          }
+                        </div>
+                      </div>
+                      <span class="badge bg-light text-secondary border extra-small">
+                        ID #{{ contract.contratoId }}
+                      </span>
+                    </button>
+                  }
+                }
+              </div>
+            }
+          </div>
+
+          <!-- 2. Selección de Lectura Afectada -->
+          @if (isLoadingContractReadings) {
+            <div class="col-12 text-muted small py-1 d-flex align-items-center gap-2">
+              <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+              <span>Buscando lecturas del contrato...</span>
+            </div>
+          } @else if (selectedContract && contractReadings.length === 0) {
+            <div class="col-12">
+              <div
+                class="alert alert-warning py-2 px-3 mb-0 small d-flex align-items-center gap-2 rounded-3"
+              >
+                <i class="bi bi-exclamation-triangle-fill fs-5 text-warning"></i>
+                <div>
+                  <strong>Sin lecturas registradas:</strong> Este contrato aún no tiene mediciones
+                  de consumo sobre las cuales reportar una anomalía.
+                </div>
+              </div>
+            </div>
+          } @else if (contractReadings.length > 0) {
+            <div class="col-md-6">
+              <label
+                for="selectLecturaAnomalia"
+                class="form-label fw-semibold text-dark small mb-1"
+              >
+                Lectura Afectada <span class="text-danger">*</span>
+              </label>
+              <select
+                id="selectLecturaAnomalia"
+                class="form-select shadow-none"
+                [(ngModel)]="lecturaId"
+                [disabled]="isLoading || !!anomaly()"
+              >
+                @for (r of contractReadings; track r.lecturaId) {
+                  <option [value]="r.lecturaId">
+                    {{ r.fecha | date: 'dd/MM/yyyy' }} · {{ r.consumoCalculado }} m³ [{{
+                      r.estado
+                    }}]
+                  </option>
+                }
+              </select>
+            </div>
+          }
+
+          <!-- Tipo Anomalía -->
+          <div [ngClass]="contractReadings.length > 0 ? 'col-md-6' : 'col-12'">
+            <label for="selectTipoAnomalia" class="form-label fw-semibold text-dark small mb-1">
+              Tipo de Incidente <span class="text-danger">*</span>
+            </label>
+            <select
+              id="selectTipoAnomalia"
+              class="form-select shadow-none"
+              [(ngModel)]="tipo"
+              [disabled]="isLoading"
+            >
+              @for (opt of tipoOptions; track opt.value) {
+                <option [value]="opt.value">{{ opt.label }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Observación -->
+          <div class="col-12">
+            <label
+              for="textareaObservacionAnomalia"
+              class="form-label fw-semibold text-dark small mb-1"
+            >
+              Descripción de la Anomalía
+            </label>
+            <textarea
+              id="textareaObservacionAnomalia"
+              class="form-control form-control-sm shadow-none"
+              rows="3"
+              placeholder="Detallá lo observado en el punto de medición..."
+              [(ngModel)]="observacion"
+              [disabled]="isLoading"
+            ></textarea>
+          </div>
+
+          <!-- Captura de Foto Evidencia -->
+          <div class="col-12">
+            <span class="form-label d-block fw-semibold text-dark small mb-1"
+              >Foto de Evidencia</span
+            >
+            <div class="p-3 border rounded-3 bg-light text-center">
+              @if (imagePreviewUrl) {
+                <div class="position-relative d-inline-block">
+                  <img
+                    [src]="imagePreviewUrl"
+                    alt="Evidencia anomalía"
+                    class="rounded-3 shadow-sm"
+                    style="max-height: 180px; max-width: 100%; object-fit: contain"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-danger position-absolute top-0 end-0 m-1 rounded-circle p-1"
+                    style="width: 26px; height: 26px; line-height: 1"
+                    (click)="removePhoto()"
+                    title="Eliminar foto"
+                  >
+                    <i class="bi bi-x"></i>
+                  </button>
+                </div>
+              } @else {
+                <div class="py-2">
+                  <i class="bi bi-camera fs-2 text-muted mb-2 d-block"></i>
+                  <p class="text-muted small mb-2">
+                    Adjuntá una fotografía del daño, fuga o irregularidad
+                  </p>
+                  <label
+                    for="inputFileFotoAnomalia"
+                    class="btn btn-sm btn-outline-primary fw-medium px-3 cursor-pointer"
+                  >
+                    <i class="bi bi-upload me-1"></i> Adjuntar Foto
+                    <input
+                      id="inputFileFotoAnomalia"
+                      type="file"
+                      accept="image/*"
+                      class="d-none"
+                      (change)="onFileSelected($event)"
+                      [disabled]="isLoading"
+                    />
+                  </label>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between">
+        <button
+          type="button"
+          class="btn btn-outline-secondary fw-medium px-3"
+          (click)="close()"
+          [disabled]="isLoading"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-4"
+          (click)="submit()"
+          [disabled]="!isFormValid || isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status"></span>
+          }
+          @if (!isLoading) {
+            <i class="bi bi-check-circle"></i>
+          }
+          {{ isLoading ? 'Guardando...' : anomaly() ? 'Actualizar' : 'Reportar Anomalía' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>

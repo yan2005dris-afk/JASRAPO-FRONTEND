@@ -8,6 +8,7 @@ import {
   OnInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 
 import { TariffsService } from './services/tariffs.service';
@@ -19,7 +20,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 
 @Component({
   selector: 'app-tariffs',
-  imports: [CommonModule, TariffsFormComponent, PaginationComponent],
+  imports: [CommonModule, FormsModule, TariffsFormComponent, PaginationComponent],
   templateUrl: './tariffs.component.html',
   styleUrl: './tariffs.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -47,22 +48,49 @@ export class TariffsComponent implements OnInit {
   tariffs: ITariffCategory[] = [];
   isLoading = false;
 
+  // Filtros de búsqueda
+  searchNombre = '';
+
   isModalOpen = false;
   selectedTariff: ITariffCategory | null = null;
 
   openDropdownId: number | null = null;
   // Paginación (client-side)
-  pageSizeOptions = [5, 10, 15];
-  pageSize = 5;
+  pageSizeOptions = [5, 10, 15, 20];
+  pageSize = 10;
   currentPage = 1;
 
+  get filteredTariffs(): ITariffCategory[] {
+    if (!this.searchNombre.trim()) {
+      return this.tariffs;
+    }
+    const q = this.searchNombre.toLowerCase().trim();
+    return this.tariffs.filter(
+      (t) =>
+        t.nombre.toLowerCase().includes(q) ||
+        (t.descripcion && t.descripcion.toLowerCase().includes(q)),
+    );
+  }
+
   get totalPages(): number {
-    return Math.max(1, Math.ceil(this.tariffs.length / this.pageSize));
+    return Math.max(1, Math.ceil(this.filteredTariffs.length / this.pageSize));
   }
 
   get pagedTariffs(): ITariffCategory[] {
     const start = (this.currentPage - 1) * this.pageSize;
-    return this.tariffs.slice(start, start + this.pageSize);
+    return this.filteredTariffs.slice(start, start + this.pageSize);
+  }
+
+  openCreateModal(): void {
+    this.selectedTariff = null;
+    this.isModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  clearFilters(): void {
+    this.searchNombre = '';
+    this.currentPage = 1;
+    this.loadTariffs();
   }
 
   setPageSize(size: number): void {

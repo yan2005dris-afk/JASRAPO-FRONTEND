@@ -1,0 +1,92 @@
+<div class="modal fade show d-block picker-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 480px">
+    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+      <!-- Header -->
+      <div class="modal-header border-bottom px-4 py-3 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="header-icon-tile">
+            <i class="bi bi-envelope-paper"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-dark mb-0 fs-5">Enviar Planilla por Correo</h5>
+            <p class="text-muted small mb-0">Prefactura #{{ preInvoice().prefacturaId }}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close shadow-none"
+          aria-label="Cerrar"
+          (click)="close()"
+          [disabled]="isLoading"
+        ></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4 bg-white">
+        <div class="p-3 bg-light rounded-3 mb-3 border">
+          <div class="d-flex justify-content-between small mb-1">
+            <span class="text-muted">Cliente:</span>
+            <span class="fw-bold text-dark">{{
+              preInvoice().clienteNombre || 'Cliente #' + preInvoice().contratoId
+            }}</span>
+          </div>
+          <div class="d-flex justify-content-between small">
+            <span class="text-muted">Total Planilla:</span>
+            <span class="fw-bold text-dark">${{ preInvoice().totalPagar | number: '1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div class="mb-2">
+          <label for="emailDestinatarioInput" class="form-label fw-semibold text-dark small mb-1">
+            Correo del destinatario <span class="text-danger">*</span>
+          </label>
+          <div class="input-group">
+            <span class="input-group-text bg-white text-muted">
+              <i class="bi bi-at"></i>
+            </span>
+            <input
+              id="emailDestinatarioInput"
+              type="email"
+              class="form-control shadow-none"
+              placeholder="cliente@ejemplo.com"
+              [(ngModel)]="destinatario"
+              [disabled]="isLoading"
+            />
+          </div>
+          @if (destinatario.length > 0 && !isEmailValid) {
+            <div class="text-danger small mt-1" style="font-size: 0.75rem">
+              Por favor ingresá un formato de correo válido.
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between">
+        <button
+          type="button"
+          class="btn btn-outline-secondary fw-medium px-3"
+          (click)="close()"
+          [disabled]="isLoading"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-4"
+          (click)="sendEmail()"
+          [disabled]="!isEmailValid || isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+          @if (!isLoading) {
+            <i class="bi bi-send"></i>
+          }
+          {{ isLoading ? 'Enviando...' : 'Enviar Correo' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>
