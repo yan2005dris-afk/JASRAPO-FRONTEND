@@ -74,47 +74,31 @@
       <div class="col-lg-6">
         <div class="card form-section h-100">
           <div class="card-body p-4">
-            <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
-              <div class="section-title">
-                <span class="section-icon"><i class="bi bi-speedometer2"></i></span>
-                <div>
-                  <h5 class="fw-bold mb-0">Asignación de Medidor</h5>
-                  <p class="text-muted small mb-0">Seleccione el dispositivo disponible.</p>
-                </div>
+            <div class="section-title mb-3">
+              <span class="section-icon"><i class="bi bi-speedometer2"></i></span>
+              <div>
+                <h5 class="fw-bold mb-0">Asignación de Medidor</h5>
+                <p class="text-muted small mb-0">Seleccione el dispositivo disponible.</p>
               </div>
-
-              <button
-                type="button"
-                class="btn btn-outline-primary btn-sm"
-                (click)="openMeterPicker()"
-              >
-                <i class="bi bi-grid me-1"></i> Catálogo
-              </button>
             </div>
 
+            <button type="button" class="option-box w-100" (click)="openMeterPicker()">
+              <i class="bi bi-search"></i>
+              <span class="fw-semibold">Seleccionar Medidor</span>
+              <span class="text-muted x-small">Explorar el catálogo de medidores activos</span>
+            </button>
+
             @if (selectedMeter(); as meter) {
-              <div class="meter-detail">
-                <div class="d-flex justify-content-between">
-                  <span class="text-muted small">N° Serie</span>
-                  <span class="fw-bold">{{ meter.serie }}</span>
-                </div>
-                <div class="d-flex justify-content-between">
-                  <span class="text-muted small">Tipo / Modelo</span>
-                  <span class="fw-medium">{{ meter.marca }} {{ meter.modelo }}</span>
-                </div>
-                <div class="d-flex justify-content-between">
-                  <span class="text-muted small">Estado Actual</span>
-                  <span class="badge rounded-pill text-bg-success">{{ meterStatusLabel() }}</span>
-                </div>
+              <div class="selected-chip mt-2">
+                <i class="bi bi-check-circle-fill text-primary"></i>
+                <span class="fw-medium text-dark">{{ meter.serie }}</span>
+                <span class="text-muted small">({{ meter.marca }} {{ meter.modelo }})</span>
+                <span class="badge rounded-pill text-bg-success ms-1">{{
+                  meterStatusLabel()
+                }}</span>
               </div>
-            } @else {
-              <div class="empty-panel text-center text-muted py-4">
-                <i class="bi bi-speedometer2 fs-3 d-block mb-2 opacity-50"></i>
-                <span class="small">Aún no se ha asignado un medidor.</span>
-              </div>
-              @if (submitted()) {
-                <span class="text-danger x-small d-block mt-1">Seleccione un medidor.</span>
-              }
+            } @else if (submitted()) {
+              <span class="text-danger x-small d-block mt-1">Seleccione un medidor.</span>
             }
           </div>
         </div>
@@ -132,23 +116,19 @@
               </div>
             </div>
 
-            <p class="form-label fw-semibold text-dark mb-2">Categoría de Usuario</p>
-            <button
-              type="button"
-              class="btn btn-outline-primary w-100 d-flex align-items-center justify-content-center gap-2"
-              (click)="openTariffPicker()"
-            >
-              <i class="bi bi-tags"></i>
-              {{ selectedTariff() ? 'Cambiar tarifa' : 'Seleccionar tarifa' }}
+            <button type="button" class="option-box w-100" (click)="openTariffPicker()">
+              <i class="bi bi-search"></i>
+              <span class="fw-semibold">Seleccionar Tarifa</span>
+              <span class="text-muted x-small">Explorar el plan de tarifas disponible</span>
             </button>
 
             @if (selectedTariff(); as tariff) {
-              <div class="tariff-sim mt-3">
-                <i class="bi bi-info-circle text-primary me-1"></i>
-                <span class="fw-semibold">{{ tariff.nombre }}</span> — costo fijo de ${{
-                  tariff.valorBase
-                }}
-                + ${{ tariff.valorExcedenteM3 }} por m³ de excedente.
+              <div class="selected-chip mt-2">
+                <i class="bi bi-info-circle text-primary"></i>
+                <span class="fw-medium text-dark">{{ tariff.nombre }}</span>
+                <span class="text-muted small">
+                  (Costo fijo ${{ tariff.valorBase }} + ${{ tariff.valorExcedenteM3 }} por m³)
+                </span>
               </div>
             } @else if (submitted()) {
               <span class="text-danger x-small d-block mt-2">Seleccione una tarifa.</span>
