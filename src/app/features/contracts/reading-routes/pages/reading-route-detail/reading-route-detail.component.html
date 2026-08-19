@@ -265,10 +265,7 @@
 
   <!-- Reading Detail Modal (Reutilizado) -->
   @if (selectedReadingForDetail) {
-    <app-reading-detail-modal
-      [reading]="selectedReadingForDetail"
-      (closed)="closeDetailModal()"
-    />
+    <app-reading-detail-modal [reading]="selectedReadingForDetail" (closed)="closeDetailModal()" />
   }
 
   <!-- Anomaly Form Modal -->
