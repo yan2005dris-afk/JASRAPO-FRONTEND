@@ -27,14 +27,18 @@ export class TariffsService {
   private readonly baseUrl = environment.apiUrl;
   private readonly endpoint = `${this.baseUrl}/tariff-categories`;
 
-  getTariffs(params?: { page?: number; limit?: number; nombre?: string }): Observable<ITariffCategory[]> {
+  getTariffs(params?: {
+    page?: number;
+    limit?: number;
+    nombre?: string;
+  }): Observable<ITariffCategory[]> {
     let httpParams = new HttpParams();
     if (params?.page) httpParams = httpParams.set('page', params.page.toString());
     if (params?.limit) httpParams = httpParams.set('limit', params.limit.toString());
     if (params?.nombre) httpParams = httpParams.set('nombre', params.nombre);
 
     return this.http
-      .get<{ data: ITariffCategory[]; meta?: any }>(this.endpoint, { params: httpParams })
+      .get<ITariffResponse>(this.endpoint, { params: httpParams })
       .pipe(map((res) => res.data));
   }
 

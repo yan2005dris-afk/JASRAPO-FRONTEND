@@ -1,20 +1,11 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/pdf-previewer.component';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
-import {
-  IAccountStatementFilters,
-  ISendReportEmailBody,
-} from '../interfaces/ireport.interface';
+import { IAccountStatementFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
 import type { IContract } from '../../contracts/service-contracts/interfaces/icontract.interface';
 
@@ -27,12 +18,12 @@ interface AccountStatementPeriod {
     abono?: number;
     periodoRel?: { nombre?: string };
   };
-  lecturas?: Array<{
+  lecturas?: {
     fecha?: string;
     lecturaActual?: number;
     lecturaAnterior?: number;
     consumoCalculado?: number;
-  }>;
+  }[];
 }
 
 interface AccountStatementData {
@@ -53,7 +44,7 @@ interface AccountStatementData {
       valorBase?: number;
       valorExcedenteM3?: number;
     };
-    historialMedidores?: Array<{ medidor?: { serie?: string } }>;
+    historialMedidores?: { medidor?: { serie?: string } }[];
     numeroGuia?: string;
   };
   periods?: AccountStatementPeriod[];
@@ -121,9 +112,9 @@ export class ClientStatementComponent {
     const valorBase = Number(tarifa?.valorBase ?? 0);
     const valorExcedente = Number(tarifa?.valorExcedenteM3 ?? 0);
 
-    const years: Array<{
+    const years: {
       nombre: string;
-      meses: Array<{
+      meses: {
         mes: string;
         lectActual: string;
         lectAnterior: string;
@@ -135,12 +126,12 @@ export class ClientStatementComponent {
         pagos: string;
         saldo: string;
         saldoNegativo: boolean;
-      }>;
+      }[];
       subtotalAnual: string;
       pagos: string;
       saldo: string;
       saldoNegativo: boolean;
-    }> = [];
+    }[] = [];
 
     for (const period of periods) {
       const periodoNombre = period.prefactura?.periodoRel?.nombre ?? '—';
@@ -162,9 +153,7 @@ export class ClientStatementComponent {
         saldoAcumulado = saldoAcumulado + totalMes - pagoAjustado;
 
         return {
-          mes: fecha
-            ? fecha.toLocaleDateString('es-EC', { month: 'long', year: 'numeric' })
-            : '—',
+          mes: fecha ? fecha.toLocaleDateString('es-EC', { month: 'long', year: 'numeric' }) : '—',
           lectActual: Number(lectura.lecturaActual ?? 0).toFixed(2),
           lectAnterior: Number(lectura.lecturaAnterior ?? 0).toFixed(2),
           consumo: Math.min(consumoM3, consumoBase).toFixed(2),

@@ -26,348 +26,364 @@
 
   <!-- HISTORIAL DE PAGOS -->
   <div class="card border-0 shadow-sm rounded-3 mb-4">
-      <!-- Filters Toolbar -->
-      <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
-        <!-- Date Presets -->
-        <div
-          class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom"
-        >
-          <div class="d-flex align-items-center gap-2 flex-wrap">
-            <span
-              class="text-muted small fw-semibold text-uppercase"
-              style="font-size: 0.75rem; letter-spacing: 0.5px"
-            >
-              Rango Rápido:
-            </span>
-            <button
-              type="button"
-              class="btn btn-sm btn-filter"
-              [class.active]="selectedDatePreset === 'today'"
-              (click)="applyDatePreset('today')"
-            >
-              Hoy
-            </button>
-            <button
-              type="button"
-              class="btn btn-sm btn-filter"
-              [class.active]="selectedDatePreset === 'week'"
-              (click)="applyDatePreset('week')"
-            >
-              Esta semana
-            </button>
-            <button
-              type="button"
-              class="btn btn-sm btn-filter"
-              [class.active]="selectedDatePreset === 'month'"
-              (click)="applyDatePreset('month')"
-            >
-              Este mes
-            </button>
-          </div>
-
-          <div class="d-flex align-items-center gap-2">
-            <label for="filterFechaDesdeInput" class="text-muted small mb-0">Desde:</label>
-            <input
-              id="filterFechaDesdeInput"
-              type="date"
-              class="form-control form-control-sm shadow-none"
-              style="width: 140px"
-              [(ngModel)]="filterFechaDesde"
-              (change)="onCustomDateChange()"
-            />
-            <label for="filterFechaHastaInput" class="text-muted small mb-0">Hasta:</label>
-            <input
-              id="filterFechaHastaInput"
-              type="date"
-              class="form-control form-control-sm shadow-none"
-              style="width: 140px"
-              [(ngModel)]="filterFechaHasta"
-              (change)="onCustomDateChange()"
-            />
-          </div>
+    <!-- Filters Toolbar -->
+    <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
+      <!-- Date Presets -->
+      <div
+        class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3 pb-2 border-bottom"
+      >
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+          <span
+            class="text-muted small fw-semibold text-uppercase"
+            style="font-size: 0.75rem; letter-spacing: 0.5px"
+          >
+            Rango Rápido:
+          </span>
+          <button
+            type="button"
+            class="btn btn-sm btn-filter"
+            [class.active]="selectedDatePreset === 'today'"
+            (click)="applyDatePreset('today')"
+          >
+            Hoy
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-filter"
+            [class.active]="selectedDatePreset === 'week'"
+            (click)="applyDatePreset('week')"
+          >
+            Esta semana
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-filter"
+            [class.active]="selectedDatePreset === 'month'"
+            (click)="applyDatePreset('month')"
+          >
+            Este mes
+          </button>
         </div>
 
-        <!-- Filter Controls -->
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
-          <div class="d-flex align-items-center gap-2 flex-wrap flex-grow-1">
-            <!-- Selector / Buscador de Contrato / Cliente -->
-            <div style="min-width: 260px; max-width: 340px;">
-              @if (!selectedFilterContract) {
-                <button
-                  type="button"
-                  class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-between text-muted shadow-none bg-white text-truncate"
-                  style="font-size: 0.85rem; padding: 0.375rem 0.75rem;"
-                  (click)="isContractPickerOpen = true"
-                >
-                  <span class="d-flex align-items-center gap-2 text-truncate">
-                    <i class="bi bi-person-search text-primary"></i>
-                    <span>Buscar por Contrato / Cliente...</span>
-                  </span>
-                  <i class="bi bi-chevron-expand ms-1"></i>
-                </button>
-              } @else {
-                <div class="d-flex align-items-center justify-content-between p-1 px-2 border rounded bg-light-subtle">
-                  <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
-                    <div class="client-avatar-sm flex-shrink-0" style="width: 26px; height: 26px; font-size: 0.75rem;">
-                      {{ (selectedFilterContract.cliente.nombres || 'C').charAt(0) }}
-                    </div>
-                    <div class="overflow-hidden">
-                      <div class="small fw-bold text-dark text-truncate" style="font-size: 0.8rem; line-height: 1.1;">
-                        {{ selectedFilterContract.cliente.nombres }} {{ selectedFilterContract.cliente.apellidos }}
-                      </div>
-                      <div class="text-muted" style="font-size: 0.7rem;">
-                        Guía: {{ selectedFilterContract.numeroGuia || selectedFilterContract.contratoId }} · ID: {{ selectedFilterContract.cliente.identificacion }}
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-link text-muted p-0 shadow-none"
-                    (click)="clearContractFilter()"
-                    title="Quitar filtro"
-                  >
-                    <i class="bi bi-x-lg"></i>
-                  </button>
-                </div>
-              }
-            </div>
-
-            <!-- Contract Picker Modal -->
-            <app-contract-picker
-              [open]="isContractPickerOpen"
-              title="Filtrar por Contrato / Cliente"
-              (contractSelected)="onContractFilterSelected($event)"
-              (closed)="isContractPickerOpen = false"
-            />
-
-            <!-- Filter by Estado -->
-            <select
-              class="form-select shadow-none"
-              style="width: 160px"
-              [(ngModel)]="filterEstado"
-              (change)="loadPayments()"
-            >
-              <option value="">Todos los estados</option>
-              <option value="REGISTRADO">Registrado</option>
-              <option value="PENDIENTE">Pendiente</option>
-              <option value="ANULADO">Anulado</option>
-            </select>
-
-            <!-- Filter by Método -->
-            <select
-              class="form-select shadow-none"
-              style="width: 180px"
-              [(ngModel)]="filterMetodo"
-              (change)="loadPayments()"
-            >
-              <option value="">Todos los métodos</option>
-              <optgroup label="Bancos (Transferencia)">
-                @for (b of banksCatalog; track b.codigo) {
-                  <option [value]="'BANCO:' + b.codigo">{{ b.descripcion }}</option>
-                }
-              </optgroup>
-              <optgroup label="Tarjetas">
-                @for (c of cardsCatalog; track c.codigo) {
-                  <option [value]="'TARJETA:' + c.codigo">{{ c.descripcion }}</option>
-                }
-              </optgroup>
-            </select>
-
-            <!-- Buscar -->
-            <button
-              class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
-              (click)="loadPayments()"
-              [disabled]="isLoading"
-            >
-              @if (isLoading) {
-                <span
-                  class="spinner-border spinner-border-sm"
-                  role="status"
-                  aria-hidden="true"
-                ></span>
-              }
-              @if (!isLoading) {
-                <i class="bi bi-search"></i>
-              }
-              Buscar
-            </button>
-
-            <!-- Limpiar -->
-            <button
-              class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
-              (click)="limpiarFiltros()"
-              [disabled]="isLoading"
-            >
-              <i class="bi bi-x-circle"></i>
-              Limpiar
-            </button>
-          </div>
+        <div class="d-flex align-items-center gap-2">
+          <label for="filterFechaDesdeInput" class="text-muted small mb-0">Desde:</label>
+          <input
+            id="filterFechaDesdeInput"
+            type="date"
+            class="form-control form-control-sm shadow-none"
+            style="width: 140px"
+            [(ngModel)]="filterFechaDesde"
+            (change)="onCustomDateChange()"
+          />
+          <label for="filterFechaHastaInput" class="text-muted small mb-0">Hasta:</label>
+          <input
+            id="filterFechaHastaInput"
+            type="date"
+            class="form-control form-control-sm shadow-none"
+            style="width: 140px"
+            [(ngModel)]="filterFechaHasta"
+            (change)="onCustomDateChange()"
+          />
         </div>
       </div>
 
-      <!-- Tabla de Pagos -->
-      <div class="pt-2">
-        @if (isLoading) {
-          <div class="text-center py-5 text-muted">
-            <div class="spinner-border text-primary" role="status">
-              <span class="visually-hidden">Cargando...</span>
-            </div>
-            <p class="mt-3 mb-0">Cargando pagos...</p>
+      <!-- Filter Controls -->
+      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div class="d-flex align-items-center gap-2 flex-wrap flex-grow-1">
+          <!-- Selector / Buscador de Contrato / Cliente -->
+          <div style="min-width: 260px; max-width: 340px">
+            @if (!selectedFilterContract) {
+              <button
+                type="button"
+                class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-between text-muted shadow-none bg-white text-truncate"
+                style="font-size: 0.85rem; padding: 0.375rem 0.75rem"
+                (click)="isContractPickerOpen = true"
+              >
+                <span class="d-flex align-items-center gap-2 text-truncate">
+                  <i class="bi bi-person-search text-primary"></i>
+                  <span>Buscar por Contrato / Cliente...</span>
+                </span>
+                <i class="bi bi-chevron-expand ms-1"></i>
+              </button>
+            } @else {
+              <div
+                class="d-flex align-items-center justify-content-between p-1 px-2 border rounded bg-light-subtle"
+              >
+                <div class="d-flex align-items-center gap-2 overflow-hidden me-2">
+                  <div
+                    class="client-avatar-sm flex-shrink-0"
+                    style="width: 26px; height: 26px; font-size: 0.75rem"
+                  >
+                    {{ (selectedFilterContract.cliente.nombres || 'C').charAt(0) }}
+                  </div>
+                  <div class="overflow-hidden">
+                    <div
+                      class="small fw-bold text-dark text-truncate"
+                      style="font-size: 0.8rem; line-height: 1.1"
+                    >
+                      {{ selectedFilterContract.cliente.nombres }}
+                      {{ selectedFilterContract.cliente.apellidos }}
+                    </div>
+                    <div class="text-muted" style="font-size: 0.7rem">
+                      Guía:
+                      {{ selectedFilterContract.numeroGuia || selectedFilterContract.contratoId }} ·
+                      ID: {{ selectedFilterContract.cliente.identificacion }}
+                    </div>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-link text-muted p-0 shadow-none"
+                  (click)="clearContractFilter()"
+                  title="Quitar filtro"
+                >
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            }
           </div>
-        }
 
-        @if (!isLoading && payments.length === 0) {
-          <app-empty-state
-            icon="bi bi-cash-stack"
-            title="No se encontraron pagos"
-            description="No hay registros de cobros para los filtros o rango de fechas seleccionados."
-            actionLabel="Registrar primer pago"
-            actionIcon="bi bi-plus-lg"
-            (actionClicked)="openCreatePage()"
+          <!-- Contract Picker Modal -->
+          <app-contract-picker
+            [open]="isContractPickerOpen"
+            title="Filtrar por Contrato / Cliente"
+            (contractSelected)="onContractFilterSelected($event)"
+            (closed)="isContractPickerOpen = false"
           />
-        }
 
-        @if (!isLoading && payments.length > 0) {
-          <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0 custom-table">
-              <thead>
-                <tr>
-                  <th scope="col" class="ps-4" style="width: 2.5rem">
+          <!-- Filter by Estado -->
+          <select
+            class="form-select shadow-none"
+            style="width: 160px"
+            [(ngModel)]="filterEstado"
+            (change)="loadPayments()"
+          >
+            <option value="">Todos los estados</option>
+            <option value="REGISTRADO">Registrado</option>
+            <option value="PENDIENTE">Pendiente</option>
+            <option value="ANULADO">Anulado</option>
+          </select>
+
+          <!-- Filter by Método -->
+          <select
+            class="form-select shadow-none"
+            style="width: 180px"
+            [(ngModel)]="filterMetodo"
+            (change)="loadPayments()"
+          >
+            <option value="">Todos los métodos</option>
+            <optgroup label="Bancos (Transferencia)">
+              @for (b of banksCatalog; track b.codigo) {
+                <option [value]="'BANCO:' + b.codigo">{{ b.descripcion }}</option>
+              }
+            </optgroup>
+            <optgroup label="Tarjetas">
+              @for (c of cardsCatalog; track c.codigo) {
+                <option [value]="'TARJETA:' + c.codigo">{{ c.descripcion }}</option>
+              }
+            </optgroup>
+          </select>
+
+          <!-- Buscar -->
+          <button
+            class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+            (click)="loadPayments()"
+            [disabled]="isLoading"
+          >
+            @if (isLoading) {
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
+            }
+            @if (!isLoading) {
+              <i class="bi bi-search"></i>
+            }
+            Buscar
+          </button>
+
+          <!-- Limpiar -->
+          <button
+            class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
+            (click)="limpiarFiltros()"
+            [disabled]="isLoading"
+          >
+            <i class="bi bi-x-circle"></i>
+            Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabla de Pagos -->
+    <div class="pt-2">
+      @if (isLoading) {
+        <div class="text-center py-5 text-muted">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <p class="mt-3 mb-0">Cargando pagos...</p>
+        </div>
+      }
+
+      @if (!isLoading && payments.length === 0) {
+        <app-empty-state
+          icon="bi bi-cash-stack"
+          title="No se encontraron pagos"
+          description="No hay registros de cobros para los filtros o rango de fechas seleccionados."
+          actionLabel="Registrar primer pago"
+          actionIcon="bi bi-plus-lg"
+          (actionClicked)="openCreatePage()"
+        />
+      }
+
+      @if (!isLoading && payments.length > 0) {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 custom-table">
+            <thead>
+              <tr>
+                <th scope="col" class="ps-4" style="width: 2.5rem">
+                  <input
+                    type="checkbox"
+                    class="form-check-input"
+                    [checked]="allPaymentsSelected"
+                    (change)="toggleSelectAll()"
+                    title="Seleccionar todos"
+                  />
+                </th>
+                <th scope="col">Fecha</th>
+                <th scope="col">Cliente</th>
+                <th scope="col">Método</th>
+                <th scope="col">Nº Operación / Ref</th>
+                <th scope="col" class="text-end">Monto Recibido</th>
+                <th scope="col" class="text-center">Estado</th>
+                <th scope="col" class="text-center pe-4">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (payment of payments; track payment.pagoId) {
+                <tr [class.table-active]="isPaymentSelected(payment.pagoId)">
+                  <td class="ps-4" (click)="$event.stopPropagation()">
                     <input
                       type="checkbox"
                       class="form-check-input"
-                      [checked]="allPaymentsSelected"
-                      (change)="toggleSelectAll()"
-                      title="Seleccionar todos"
+                      [checked]="isPaymentSelected(payment.pagoId)"
+                      (change)="toggleSelectPayment(payment.pagoId, $event)"
                     />
-                  </th>
-                  <th scope="col">Fecha</th>
-                  <th scope="col">Cliente</th>
-                  <th scope="col">Método</th>
-                  <th scope="col">Nº Operación / Ref</th>
-                  <th scope="col" class="text-end">Monto Recibido</th>
-                  <th scope="col" class="text-center">Estado</th>
-                  <th scope="col" class="text-center pe-4">Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (payment of payments; track payment.pagoId) {
-                  <tr [class.table-active]="isPaymentSelected(payment.pagoId)">
-                    <td class="ps-4" (click)="$event.stopPropagation()">
-                      <input
-                        type="checkbox"
-                        class="form-check-input"
-                        [checked]="isPaymentSelected(payment.pagoId)"
-                        (change)="toggleSelectPayment(payment.pagoId, $event)"
-                      />
-                    </td>
-                    <td class="small text-muted">
-                      {{ payment.fechaPago }}
-                    </td>
-                    <td>
-                      <div class="d-flex align-items-center gap-2">
-                        <div class="client-avatar-sm">
-                          {{ getClientInitials(payment) }}
+                  </td>
+                  <td class="small text-muted">
+                    {{ payment.fechaPago }}
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="client-avatar-sm">
+                        {{ getClientInitials(payment) }}
+                      </div>
+                      <div>
+                        <div class="text-dark small fw-bold">
+                          {{ getClientDisplayName(payment) }}
                         </div>
-                        <div>
-                          <div class="text-dark small fw-bold">
-                            {{ getClientDisplayName(payment) }}
-                          </div>
-                          <div class="text-muted" style="font-size: 0.72rem">
-                            ID: {{ payment.cliente?.identificacion || payment.clienteIdentificacion || payment.clienteId }}
-                          </div>
+                        <div class="text-muted" style="font-size: 0.72rem">
+                          ID:
+                          {{
+                            payment.cliente?.identificacion ||
+                              payment.clienteIdentificacion ||
+                              payment.clienteId
+                          }}
                         </div>
                       </div>
-                    </td>
-                    <td>
-                      <span class="badge" [ngClass]="'badge-soft-' + getPaymentMethodTone(payment)">
-                        {{ getPaymentMethodLabel(payment) }}
-                      </span>
-                    </td>
-                    <td class="small text-muted">
-                      {{ payment.numeroOperacion || payment.referenciaBanco || '—' }}
-                    </td>
-                    <td class="text-end fw-bold text-dark tabular-nums" style="font-size: 0.95rem">
-                      ${{ payment.montoTotalRecibido | number: '1.2-2' }}
-                    </td>
-                    <td class="text-center">
-                      <app-status-badge [status]="payment.estadoPago" />
-                    </td>
-                    <td class="text-center pe-4">
-                      <div class="dropdown">
-                        <button
-                          class="btn btn-link text-muted p-0 shadow-none"
-                          (click)="toggleDropdown(payment.pagoId, $event)"
-                          aria-label="Menú de acciones"
-                        >
-                          <i class="bi bi-three-dots-vertical"></i>
-                        </button>
-                        <ul
-                          class="dropdown-menu dropdown-menu-end shadow-sm border-0"
-                          [class.show]="openDropdownId === payment.pagoId"
-                          style="min-width: 140px"
-                        >
+                    </div>
+                  </td>
+                  <td>
+                    <span class="badge" [ngClass]="'badge-soft-' + getPaymentMethodTone(payment)">
+                      {{ getPaymentMethodLabel(payment) }}
+                    </span>
+                  </td>
+                  <td class="small text-muted">
+                    {{ payment.numeroOperacion || payment.referenciaBanco || '—' }}
+                  </td>
+                  <td class="text-end fw-bold text-dark tabular-nums" style="font-size: 0.95rem">
+                    ${{ payment.montoTotalRecibido | number: '1.2-2' }}
+                  </td>
+                  <td class="text-center">
+                    <app-status-badge [status]="payment.estadoPago" />
+                  </td>
+                  <td class="text-center pe-4">
+                    <div class="dropdown">
+                      <button
+                        class="btn btn-link text-muted p-0 shadow-none"
+                        (click)="toggleDropdown(payment.pagoId, $event)"
+                        aria-label="Menú de acciones"
+                      >
+                        <i class="bi bi-three-dots-vertical"></i>
+                      </button>
+                      <ul
+                        class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                        [class.show]="openDropdownId === payment.pagoId"
+                        style="min-width: 140px"
+                      >
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            (click)="openDetailModal(payment)"
+                          >
+                            <i class="bi bi-eye text-secondary" style="font-size: 0.85rem"></i>
+                            Ver detalle
+                          </button>
+                        </li>
+                        @if (payment.estadoPago !== 'ANULADO') {
+                          <li>
+                            <hr class="dropdown-divider" />
+                          </li>
                           <li>
                             <button
-                              class="dropdown-item d-flex align-items-center gap-2"
-                              (click)="openDetailModal(payment)"
+                              class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                              (click)="openAnnulModal(payment)"
                             >
-                              <i class="bi bi-eye text-secondary" style="font-size: 0.85rem"></i>
-                              Ver detalle
+                              <i class="bi bi-x-octagon-fill" style="font-size: 0.85rem"></i>
+                              Anular pago
                             </button>
                           </li>
-                          @if (payment.estadoPago !== 'ANULADO') {
-                            <li>
-                              <hr class="dropdown-divider" />
-                            </li>
-                            <li>
-                              <button
-                                class="dropdown-item d-flex align-items-center gap-2 text-danger"
-                                (click)="openAnnulModal(payment)"
-                              >
-                                <i class="bi bi-x-octagon-fill" style="font-size: 0.85rem"></i>
-                                Anular pago
-                              </button>
-                            </li>
-                          }
-                        </ul>
-                      </div>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-              <!-- Table Footer with Summary -->
-              <tfoot class="bg-light border-top">
-                <tr>
-                  <td
-                    colspan="5"
-                    class="ps-4 text-uppercase fw-semibold text-muted"
-                    style="font-size: 0.8rem"
-                  >
-                    Total página actual ({{ payments.length }} pagos)
+                        }
+                      </ul>
+                    </div>
                   </td>
-                  <td class="text-end fw-bold text-dark tabular-nums fs-6">
-                    ${{ totalAmountOnCurrentPage | number: '1.2-2' }}
-                  </td>
-                  <td colspan="2"></td>
                 </tr>
-              </tfoot>
-            </table>
-          </div>
+              }
+            </tbody>
+            <!-- Table Footer with Summary -->
+            <tfoot class="bg-light border-top">
+              <tr>
+                <td
+                  colspan="5"
+                  class="ps-4 text-uppercase fw-semibold text-muted"
+                  style="font-size: 0.8rem"
+                >
+                  Total página actual ({{ payments.length }} pagos)
+                </td>
+                <td class="text-end fw-bold text-dark tabular-nums fs-6">
+                  ${{ totalAmountOnCurrentPage | number: '1.2-2' }}
+                </td>
+                <td colspan="2"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
 
-          <!-- Pagination -->
-          <div class="px-4 py-3 border-top bg-white">
-            <app-pagination
-              [currentPage]="currentPage"
-              [pageSize]="pageSize"
-              [totalItems]="totalItems"
-              (pageChange)="onPageChange($event)"
-              (pageSizeChange)="onPageSizeChange($event)"
-            />
-          </div>
-        }
-      </div>
+        <!-- Pagination -->
+        <div class="px-4 py-3 border-top bg-white">
+          <app-pagination
+            [currentPage]="currentPage"
+            [pageSize]="pageSize"
+            [totalItems]="totalItems"
+            (pageChange)="onPageChange($event)"
+            (pageSizeChange)="onPageSizeChange($event)"
+          />
+        </div>
+      }
     </div>
+  </div>
 
   <!-- MODALS -->
   @if (selectedPaymentForDetail) {

@@ -30,9 +30,9 @@ interface ConnectionHistoryPrefactura {
       apellidos?: string;
       razonSocial?: string;
     };
-    historialMedidores?: Array<{
+    historialMedidores?: {
       medidor?: { serie?: string };
-    }>;
+    }[];
   };
 }
 

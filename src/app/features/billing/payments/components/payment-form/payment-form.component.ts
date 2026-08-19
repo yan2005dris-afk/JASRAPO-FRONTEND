@@ -121,7 +121,10 @@ export class PaymentFormComponent implements OnInit {
     const file = input.files[0];
     const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
     if (!allowedTypes.includes(file.type)) {
-      this.toastService.show('Formato no permitido. Suba una imagen JPG, PNG, WEBP o un archivo PDF.', 'error');
+      this.toastService.show(
+        'Formato no permitido. Suba una imagen JPG, PNG, WEBP o un archivo PDF.',
+        'error',
+      );
       input.value = '';
       return;
     }
@@ -139,8 +142,8 @@ export class PaymentFormComponent implements OnInit {
     // Si es imagen, crear preview local
     if (file.type.startsWith('image/')) {
       const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.comprobantePreviewUrl = e.target.result;
+      reader.onload = (e: ProgressEvent<FileReader>) => {
+        this.comprobantePreviewUrl = e.target?.result as string;
         this.cdr.markForCheck();
       };
       reader.readAsDataURL(file);
@@ -373,7 +376,10 @@ export class PaymentFormComponent implements OnInit {
 
   getPreInvoiceConceptos(pre: IPreInvoice): string {
     if (pre.detalles && pre.detalles.length > 0) {
-      return pre.detalles.map((d) => d.descripcion).filter(Boolean).join(', ');
+      return pre.detalles
+        .map((d) => d.descripcion)
+        .filter(Boolean)
+        .join(', ');
     }
     if (pre.tarifaNombre) {
       return `Consumo de agua (${pre.tarifaNombre})`;
@@ -568,7 +574,7 @@ export class PaymentFormComponent implements OnInit {
 
     const rawClientId =
       this.selectedClient.clienteId ??
-      (this.selectedClient as any).id ??
+      (this.selectedClient as { id?: string | number }).id ??
       this.selectedContract?.clienteId ??
       '';
     const clientId = String(rawClientId).trim();
@@ -587,12 +593,21 @@ export class PaymentFormComponent implements OnInit {
           cantidad: Number(i.cantidad),
           ...(i.descripcion && i.descripcion.trim() ? { descripcion: i.descripcion.trim() } : {}),
         })),
-        banco: this.metodoPago === 'TRANSFERENCIA' && this.bancoSeleccionado ? this.bancoSeleccionado : undefined,
-        tarjetaCredito: this.metodoPago === 'TARJETA' && this.tarjetaSeleccionada ? this.tarjetaSeleccionada : undefined,
+        banco:
+          this.metodoPago === 'TRANSFERENCIA' && this.bancoSeleccionado
+            ? this.bancoSeleccionado
+            : undefined,
+        tarjetaCredito:
+          this.metodoPago === 'TARJETA' && this.tarjetaSeleccionada
+            ? this.tarjetaSeleccionada
+            : undefined,
         numeroOperacion: this.numeroOperacion?.trim() || undefined,
         referenciaBanco: this.referenciaBanco?.trim() || undefined,
         observaciones: this.observaciones?.trim() || undefined,
-        comprobanteUrl: this.metodoPago === 'TRANSFERENCIA' && this.comprobanteKey ? this.comprobanteKey : undefined,
+        comprobanteUrl:
+          this.metodoPago === 'TRANSFERENCIA' && this.comprobanteKey
+            ? this.comprobanteKey
+            : undefined,
       };
 
       this.paymentsService.createCobroPuntual(puntualDto).subscribe({
@@ -620,7 +635,7 @@ export class PaymentFormComponent implements OnInit {
       this.metodoPago === 'EFECTIVO' ? 1 : this.metodoPago === 'TRANSFERENCIA' ? 20 : 19;
     const ref = this.referenciaBanco || this.numeroOperacion || undefined;
 
-    let detalles: ICreatePaymentDetailDto[] = [];
+    let detalles: ICreatePaymentDetailDto[];
 
     if (selectedList.length > 0) {
       detalles = selectedList.map((pi) => ({

@@ -2,7 +2,12 @@
   <!-- Header de página -->
   <div class="page-header mb-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
     <div class="d-flex align-items-center gap-3">
-      <button class="btn btn-outline-secondary btn-sm" type="button" (click)="goBack()" title="Volver a roles">
+      <button
+        class="btn btn-outline-secondary btn-sm"
+        type="button"
+        (click)="goBack()"
+        title="Volver a roles"
+      >
         <i class="bi bi-arrow-left"></i>
       </button>
       <div>
@@ -29,9 +34,11 @@
 
   <div class="card border-0 shadow-sm rounded-3">
     <!-- Header de la tarjeta: Filtros y Acciones -->
-    <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div
+      class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
       <!-- Input de búsqueda -->
-      <div class="d-flex align-items-center gap-2 flex-wrap flex-grow-1" style="max-width: 480px;">
+      <div class="d-flex align-items-center gap-2 flex-wrap flex-grow-1" style="max-width: 480px">
         <div class="input-group search-group flex-grow-1">
           <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
             <i class="bi bi-search"></i>
@@ -44,7 +51,11 @@
             (ngModelChange)="onSearchChange($event)"
           />
           @if (searchTerm()) {
-            <button class="btn btn-link text-muted border-start-0 text-decoration-none" type="button" (click)="onSearchChange('')">
+            <button
+              class="btn btn-link text-muted border-start-0 text-decoration-none"
+              type="button"
+              (click)="onSearchChange('')"
+            >
               <i class="bi bi-x"></i>
             </button>
           }
@@ -53,15 +64,27 @@
 
       <!-- Acciones de control -->
       <div class="d-flex align-items-center gap-2 flex-wrap">
-        <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fs-6">
+        <span
+          class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fs-6"
+        >
           {{ totalStats().assignedCount }} de {{ totalStats().total }} permisos
         </span>
 
         <div class="btn-group btn-group-sm">
-          <button type="button" class="btn btn-outline-secondary" (click)="expandAll()" title="Expandir módulos">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="expandAll()"
+            title="Expandir módulos"
+          >
             <i class="bi bi-arrows-expand me-1"></i>Expandir
           </button>
-          <button type="button" class="btn btn-outline-secondary" (click)="collapseAll()" title="Colapsar módulos">
+          <button
+            type="button"
+            class="btn btn-outline-secondary"
+            (click)="collapseAll()"
+            title="Colapsar módulos"
+          >
             <i class="bi bi-arrows-collapse me-1"></i>Colapsar
           </button>
         </div>
@@ -90,21 +113,30 @@
           <table class="table table-hover align-middle mb-0 custom-table">
             <thead>
               <tr>
-                <th scope="col" class="text-center ps-3" style="width: 48px;">#</th>
-                <th scope="col" class="text-muted fw-semibold small" style="width: 280px;">Módulo / Recurso</th>
-                <th scope="col" class="text-muted fw-semibold small text-center" style="width: 140px;">Asignados</th>
+                <th scope="col" class="text-center ps-3" style="width: 48px">#</th>
+                <th scope="col" class="text-muted fw-semibold small" style="width: 280px">
+                  Módulo / Recurso
+                </th>
+                <th
+                  scope="col"
+                  class="text-muted fw-semibold small text-center"
+                  style="width: 140px"
+                >
+                  Asignados
+                </th>
                 <th scope="col" class="text-muted fw-semibold small pe-4">Acciones Permitidas</th>
               </tr>
             </thead>
             <tbody>
               @for (group of pagedGroups(); track group.recurso) {
                 <!-- Fila Principal del Módulo -->
-                <tr
-                  class="module-row"
-                  [class.table-active]="expandedGroups().has(group.recurso)"
-                >
+                <tr class="module-row" [class.table-active]="expandedGroups().has(group.recurso)">
                   <!-- Botón expandir/colapsar -->
-                  <td class="text-center ps-3" (click)="toggleExpansion(group.recurso)" style="cursor: pointer;">
+                  <td
+                    class="text-center ps-3"
+                    (click)="toggleExpansion(group.recurso)"
+                    style="cursor: pointer"
+                  >
                     <button
                       type="button"
                       class="btn btn-sm btn-link p-0 text-dark shadow-none"
@@ -119,7 +151,7 @@
                   </td>
 
                   <!-- Checkbox del Módulo completo -->
-                  <td (click)="toggleExpansion(group.recurso)" style="cursor: pointer;">
+                  <td (click)="toggleExpansion(group.recurso)" style="cursor: pointer">
                     <div class="d-flex align-items-center gap-2">
                       <input
                         type="checkbox"
@@ -135,7 +167,11 @@
                   </td>
 
                   <!-- Badge de conteo asignado -->
-                  <td class="text-center" (click)="toggleExpansion(group.recurso)" style="cursor: pointer;">
+                  <td
+                    class="text-center"
+                    (click)="toggleExpansion(group.recurso)"
+                    style="cursor: pointer"
+                  >
                     @if (group.allSelected) {
                       <span class="badge rounded-pill text-bg-success">
                         {{ group.assignedCount }} / {{ group.items.length }}
@@ -158,8 +194,16 @@
                         <div
                           class="permission-pill d-inline-flex align-items-center gap-1 px-2 py-1 rounded border"
                           [class.active-pill]="perm.assigned"
+                          role="button"
+                          tabindex="0"
                           (click)="togglePermission(perm.permisoId)"
-                          style="cursor: pointer;"
+                          (keydown.enter)="
+                            togglePermission(perm.permisoId); $event.preventDefault()
+                          "
+                          (keydown.space)="
+                            togglePermission(perm.permisoId); $event.preventDefault()
+                          "
+                          style="cursor: pointer"
                           title="{{ perm.nombre }}: {{ perm.descripcion || '' }}"
                         >
                           <input
@@ -168,7 +212,9 @@
                             [checked]="perm.assigned"
                             (click)="$event.stopPropagation(); togglePermission(perm.permisoId)"
                           />
-                          <span class="font-monospace small fw-medium text-uppercase">{{ perm.accion }}</span>
+                          <span class="font-monospace small fw-medium text-uppercase">{{
+                            perm.accion
+                          }}</span>
                         </div>
                       }
                     </div>
@@ -186,22 +232,36 @@
                               class="card border p-2 h-100 shadow-none bg-white"
                               [class.border-primary]="perm.assigned"
                               [class.bg-primary-subtle]="perm.assigned"
+                              role="button"
+                              tabindex="0"
                               (click)="togglePermission(perm.permisoId)"
-                              style="cursor: pointer;"
+                              (keydown.enter)="
+                                togglePermission(perm.permisoId); $event.preventDefault()
+                              "
+                              (keydown.space)="
+                                togglePermission(perm.permisoId); $event.preventDefault()
+                              "
+                              style="cursor: pointer"
                             >
                               <div class="d-flex gap-2 align-items-start">
                                 <input
                                   type="checkbox"
                                   class="form-check-input table-checkbox mt-1 flex-shrink-0"
                                   [checked]="perm.assigned"
-                                  (click)="$event.stopPropagation(); togglePermission(perm.permisoId)"
+                                  (click)="
+                                    $event.stopPropagation(); togglePermission(perm.permisoId)
+                                  "
                                 />
                                 <div>
                                   <div class="fw-semibold small text-dark">{{ perm.nombre }}</div>
                                   @if (perm.descripcion) {
-                                    <div class="text-muted x-small mt-1">{{ perm.descripcion }}</div>
+                                    <div class="text-muted x-small mt-1">
+                                      {{ perm.descripcion }}
+                                    </div>
                                   }
-                                  <span class="badge bg-light text-dark border font-monospace x-small mt-1">
+                                  <span
+                                    class="badge bg-light text-dark border font-monospace x-small mt-1"
+                                  >
                                     {{ perm.accion }}
                                   </span>
                                 </div>
@@ -219,7 +279,9 @@
                 <tr>
                   <td colspan="4" class="text-center py-5">
                     <i class="bi bi-shield-x fs-2 d-block mb-2 text-muted opacity-50"></i>
-                    <span class="text-muted small">No se encontraron permisos coincidentes con la búsqueda.</span>
+                    <span class="text-muted small"
+                      >No se encontraron permisos coincidentes con la búsqueda.</span
+                    >
                   </td>
                 </tr>
               }

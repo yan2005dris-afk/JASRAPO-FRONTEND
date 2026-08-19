@@ -10,7 +10,6 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ReadingsService } from './services/readings.service';
 import { IReading, IReadingFilterParams } from './interfaces/ireading.interface';
-import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
@@ -197,7 +196,9 @@ export class ReadingsComponent implements OnInit {
 
   openEditModal(reading: IReadingRowItem | IReading): void {
     this.openDropdownId = null;
-    const full = this.readings.find(r => String(r.lecturaId) === String(reading.lecturaId)) || (reading as IReading);
+    const full =
+      this.readings.find((r) => String(r.lecturaId) === String(reading.lecturaId)) ||
+      (reading as IReading);
     this.selectedReadingForEdit = full;
     this.isFormModalOpen = true;
     this.cdr.markForCheck();
@@ -226,7 +227,9 @@ export class ReadingsComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: () => {
-        const fallback = this.readings.find(r => String(r.lecturaId) === String(reading.lecturaId)) || (reading as IReading);
+        const fallback =
+          this.readings.find((r) => String(r.lecturaId) === String(reading.lecturaId)) ||
+          (reading as IReading);
         this.selectedReadingForDetail = fallback;
         this.cdr.markForCheck();
       },

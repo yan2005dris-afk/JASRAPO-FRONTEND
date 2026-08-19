@@ -20,10 +20,19 @@
               type="text"
               class="form-control shadow-none contract-input text-truncate"
               placeholder="Todos los clientes"
-              [value]="selectedClientLabel() ? (selectedClientLabel() + (selectedClientName() ? ' - ' + selectedClientName() : '')) : ''"
+              [value]="
+                selectedClientLabel()
+                  ? selectedClientLabel() +
+                    (selectedClientName() ? ' - ' + selectedClientName() : '')
+                  : ''
+              "
               readonly
               (click)="abrirBuscadorClientes()"
-              [title]="selectedClientName() ? (selectedClientLabel() + ' - ' + selectedClientName()) : 'Todos los clientes'"
+              [title]="
+                selectedClientName()
+                  ? selectedClientLabel() + ' - ' + selectedClientName()
+                  : 'Todos los clientes'
+              "
             />
             @if (selectedClientLabel()) {
               <button
@@ -70,7 +79,11 @@
             [disabled]="isLoadingData() || rangoFechaInvalido()"
           >
             @if (isLoadingData()) {
-              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
             } @else {
               <i class="bi bi-search"></i>
             }
@@ -184,7 +197,11 @@
           (click)="setView('pdf')"
         >
           @if (isLoadingPdf()) {
-            <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
+            <span
+              class="spinner-border spinner-border-sm me-1"
+              role="status"
+              aria-hidden="true"
+            ></span>
           } @else {
             <i class="bi bi-file-earmark-pdf me-1"></i>
           }
@@ -243,15 +260,15 @@
                     <td class="text-center font-monospace">{{ pago.cuenta }}</td>
                     <td class="text-center font-monospace">{{ pago.medidor }}</td>
                     <td class="text-center">{{ pago.emision }}</td>
-                    <td class="text-end font-monospace fw-semibold text-success">${{ pago.valor }}</td>
+                    <td class="text-end font-monospace fw-semibold text-success">
+                      ${{ pago.valor }}
+                    </td>
                   </tr>
                 }
               </tbody>
               <tfoot>
                 <tr class="year-total-row">
-                  <td colspan="6" class="fw-semibold text-end small text-muted">
-                    Total General
-                  </td>
+                  <td colspan="6" class="fw-semibold text-end small text-muted">Total General</td>
                   <td class="text-end font-monospace fw-bold text-success">
                     ${{ totalRecaudado() }}
                   </td>
@@ -494,7 +511,11 @@
             [disabled]="isSendingEmail() || esEmailInvalido()"
           >
             @if (isSendingEmail()) {
-              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
             } @else {
               <i class="bi bi-envelope"></i>
             }

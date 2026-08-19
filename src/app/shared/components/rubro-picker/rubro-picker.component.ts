@@ -89,9 +89,7 @@ export class RubroPickerComponent {
           this.rubros.set([]);
           this.totalItems.set(0);
           this.isSearching.set(false);
-          this.searchError.set(
-            err?.error?.message || 'Error al buscar rubros en el catálogo',
-          );
+          this.searchError.set(err?.error?.message || 'Error al buscar rubros en el catálogo');
         },
       });
   }

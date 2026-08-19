@@ -11,7 +11,10 @@
         <!-- Header -->
         <div class="modal-header border-bottom-0 pb-2">
           <div>
-            <h5 id="picker-rubro-title" class="modal-title fw-bold text-dark d-flex align-items-center gap-2">
+            <h5
+              id="picker-rubro-title"
+              class="modal-title fw-bold text-dark d-flex align-items-center gap-2"
+            >
               <i class="bi bi-tags text-primary"></i>
               {{ title }}
             </h5>
@@ -55,11 +58,7 @@
           @if (isSearching()) {
             <!-- Skeleton Loader preserving table geometry & height -->
             <div class="border rounded-3 overflow-hidden p-2">
-              <app-table-skeleton
-                [rows]="6"
-                [cols]="5"
-                [showHeaders]="true"
-              />
+              <app-table-skeleton [rows]="6" [cols]="5" [showHeaders]="true" />
             </div>
           } @else if (searchError()) {
             <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0" role="alert">
@@ -72,8 +71,14 @@
               <span>No se encontraron rubros con ese criterio de búsqueda.</span>
             </div>
           } @else {
-            <div class="picker-table-wrapper border rounded-3 overflow-auto" style="max-height: 380px;">
-              <table class="table table-hover table-sm align-middle mb-0" style="font-size: 0.84rem">
+            <div
+              class="picker-table-wrapper border rounded-3 overflow-auto"
+              style="max-height: 380px"
+            >
+              <table
+                class="table table-hover table-sm align-middle mb-0"
+                style="font-size: 0.84rem"
+              >
                 <thead class="table-light sticky-top">
                   <tr>
                     <th class="fw-semibold text-muted text-uppercase px-3">Rubro / Concepto</th>
@@ -89,7 +94,10 @@
                       <td class="px-3">
                         <div class="fw-bold text-dark">{{ r.nombre }}</div>
                         @if (r.descripcion) {
-                          <div class="text-muted text-truncate" style="font-size: 0.75rem; max-width: 320px;">
+                          <div
+                            class="text-muted text-truncate"
+                            style="font-size: 0.75rem; max-width: 320px"
+                          >
                             {{ r.descripcion }}
                           </div>
                         }
@@ -99,7 +107,9 @@
                       </td>
                       <td class="text-center">
                         @if (r.tarifaImpuesto && r.tarifaImpuesto.porcentaje > 0) {
-                          <span class="badge badge-soft-info">{{ r.tarifaImpuesto.porcentaje }}% IVA</span>
+                          <span class="badge badge-soft-info"
+                            >{{ r.tarifaImpuesto.porcentaje }}% IVA</span
+                          >
                         } @else {
                           <span class="badge badge-soft-secondary">0% IVA</span>
                         }
@@ -142,7 +152,9 @@
         </div>
 
         <!-- Footer -->
-        <div class="modal-footer border-top px-4 py-2 bg-light d-flex justify-content-end align-items-center">
+        <div
+          class="modal-footer border-top px-4 py-2 bg-light d-flex justify-content-end align-items-center"
+        >
           <button type="button" class="btn btn-outline-secondary px-4" (click)="cerrar()">
             Cerrar
           </button>

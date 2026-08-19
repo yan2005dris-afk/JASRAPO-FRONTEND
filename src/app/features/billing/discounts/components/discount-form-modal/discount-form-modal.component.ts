@@ -13,6 +13,7 @@ import { DiscountsService } from '../../services/discounts.service';
 import {
   ICreateDiscountDto,
   IDiscount,
+  IRubroDescuento,
   IUpdateDiscountDto,
   TipoDescuento,
 } from '../../interfaces/idiscount.interface';
@@ -44,7 +45,7 @@ export class DiscountFormModalComponent implements OnInit {
   aplicaAutomatico = false;
   activo = true;
   isLoading = false;
-  rubros: { rubroId: number; nombre: string; tipoRubro: string; precioUnitario: any }[] = [];
+  rubros: IRubroDescuento[] = [];
 
   readonly tipoOptions: { value: TipoDescuento; label: string }[] = [
     { value: 'TERCERA_EDAD', label: 'Tercera Edad' },

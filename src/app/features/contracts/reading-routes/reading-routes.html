@@ -26,76 +26,72 @@
       </button>
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
-          <!-- Filter Estado -->
-          <select
-            class="form-select shadow-none"
-            style="width: 190px"
-            [(ngModel)]="filterEstado"
-            (change)="loadRoutes()"
-          >
-            <option value="">Todos los estados</option>
-            <option value="PENDIENTE">Pendiente</option>
-            <option value="EN_PROGRESO">En Progreso</option>
-            <option value="COMPLETADA">Completada</option>
-            <option value="CANCELADA">Cancelada</option>
-          </select>
+        <!-- Filter Estado -->
+        <select
+          class="form-select shadow-none"
+          style="width: 190px"
+          [(ngModel)]="filterEstado"
+          (change)="loadRoutes()"
+        >
+          <option value="">Todos los estados</option>
+          <option value="PENDIENTE">Pendiente</option>
+          <option value="EN_PROGRESO">En Progreso</option>
+          <option value="COMPLETADA">Completada</option>
+          <option value="CANCELADA">Cancelada</option>
+        </select>
 
-          <!-- Filter Operario -->
-          <select
-            class="form-select shadow-none"
-            style="width: 200px"
-            [(ngModel)]="filterOperarioId"
-            (change)="loadRoutes()"
-          >
-            <option [ngValue]="null">Todos los operarios</option>
-            @for (op of operarios; track op.usuarioId) {
-              <option [ngValue]="op.usuarioId">{{ op.nombres }} {{ op.apellidos }}</option>
-            }
-          </select>
+        <!-- Filter Operario -->
+        <select
+          class="form-select shadow-none"
+          style="width: 200px"
+          [(ngModel)]="filterOperarioId"
+          (change)="loadRoutes()"
+        >
+          <option [ngValue]="null">Todos los operarios</option>
+          @for (op of operarios; track op.usuarioId) {
+            <option [ngValue]="op.usuarioId">{{ op.nombres }} {{ op.apellidos }}</option>
+          }
+        </select>
 
-          <!-- Filter Comunidad -->
-          <select
-            class="form-select shadow-none"
-            style="width: 200px"
-            [(ngModel)]="filterComunidadId"
-            (change)="loadRoutes()"
-          >
-            <option [ngValue]="null">Todas las comunidades</option>
-            @for (com of comunidades; track com.id) {
-              <option [ngValue]="com.id">{{ com.nombre }}</option>
-            }
-          </select>
+        <!-- Filter Comunidad -->
+        <select
+          class="form-select shadow-none"
+          style="width: 200px"
+          [(ngModel)]="filterComunidadId"
+          (change)="loadRoutes()"
+        >
+          <option [ngValue]="null">Todas las comunidades</option>
+          @for (com of comunidades; track com.id) {
+            <option [ngValue]="com.id">{{ com.nombre }}</option>
+          }
+        </select>
 
-          <!-- Buscar -->
-          <button
-            class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
-            (click)="loadRoutes()"
-            [disabled]="isLoading"
-          >
-            @if (isLoading) {
-              <span
-                class="spinner-border spinner-border-sm"
-                role="status"
-                aria-hidden="true"
-              ></span>
-            }
-            @if (!isLoading) {
-              <i class="bi bi-search"></i>
-            }
-            Buscar
-          </button>
+        <!-- Buscar -->
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="loadRoutes()"
+          [disabled]="isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+          @if (!isLoading) {
+            <i class="bi bi-search"></i>
+          }
+          Buscar
+        </button>
 
-          <!-- Limpiar -->
-          <button
-            class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
-            (click)="limpiarFiltros()"
-            [disabled]="isLoading"
-          >
-            <i class="bi bi-x-circle"></i>
-            Limpiar
-          </button>
-        </div>
+        <!-- Limpiar -->
+        <button
+          class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="limpiarFiltros()"
+          [disabled]="isLoading"
+        >
+          <i class="bi bi-x-circle"></i>
+          Limpiar
+        </button>
       </div>
+    </div>
 
     <!-- Table -->
     <div class="pt-2">
@@ -187,7 +183,7 @@
                         <li>
                           <button
                             class="dropdown-item d-flex align-items-center gap-2"
-                            (click)="openDetailModal(route, 'info')"
+                            (click)="openDetailModal(route)"
                           >
                             <i class="bi bi-eye text-secondary" style="font-size: 0.85rem"></i>
                             Ver detalle

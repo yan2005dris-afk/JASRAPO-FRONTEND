@@ -15,12 +15,7 @@ import { AnnulPaymentModalComponent } from '../../components/annul-payment-modal
 @Component({
   selector: 'app-payment-detail-page',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterLink,
-    StatusBadgeComponent,
-    AnnulPaymentModalComponent,
-  ],
+  imports: [CommonModule, RouterLink, StatusBadgeComponent, AnnulPaymentModalComponent],
   templateUrl: './payment-detail.component.html',
   styleUrl: './payment-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -139,7 +134,9 @@ export class PaymentDetailComponent implements OnInit {
   isImageComprobante(): boolean {
     if (!this.payment?.comprobanteUrl) return false;
     const url = this.payment.comprobanteUrl.toLowerCase();
-    return url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png') || url.endsWith('.webp');
+    return (
+      url.endsWith('.jpg') || url.endsWith('.jpeg') || url.endsWith('.png') || url.endsWith('.webp')
+    );
   }
 
   isPdfComprobante(): boolean {

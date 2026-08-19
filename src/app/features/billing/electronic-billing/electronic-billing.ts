@@ -223,10 +223,7 @@ export class ElectronicBillingComponent implements OnInit {
         this.cargarComprobantes();
       },
       error: (err) => {
-        this.toast.error(
-          this.getErrorMessage(err, 'No se pudo emitir el comprobante'),
-          'Error',
-        );
+        this.toast.error(this.getErrorMessage(err, 'No se pudo emitir el comprobante'), 'Error');
         this.actionInProgress.set(null);
       },
     });

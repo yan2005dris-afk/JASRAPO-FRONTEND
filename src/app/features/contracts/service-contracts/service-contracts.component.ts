@@ -12,7 +12,6 @@ import {
 import { ServiceContractFormComponent } from './components/service-contract-form/service-contract-form.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 
 @Component({
   selector: 'app-service-contracts',

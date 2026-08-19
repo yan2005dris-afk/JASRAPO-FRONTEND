@@ -1,6 +1,19 @@
-<div class="modal-backdrop fade show" (click)="close()"></div>
+<div
+  class="modal-backdrop fade show"
+  role="button"
+  tabindex="0"
+  aria-label="Cerrar modal"
+  (click)="close()"
+  (keydown.enter)="close()"
+  (keydown.space)="close(); $event.preventDefault()"
+></div>
 <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg" (click)="$event.stopPropagation()">
+  <div
+    class="modal-dialog modal-dialog-centered modal-lg"
+    tabindex="-1"
+    (click)="$event.stopPropagation()"
+    (keydown.enter)="$event.stopPropagation()"
+  >
     <div class="modal-content border-0 shadow-lg rounded-4">
       <!-- Header -->
       <div class="modal-header border-bottom px-4 py-3 bg-light rounded-top-4">
@@ -39,10 +52,11 @@
           <div class="row g-3">
             <!-- Nombre del Rubro -->
             <div class="col-md-8">
-              <label class="form-label fw-semibold small text-dark">
+              <label for="rubroNombreInput" class="form-label fw-semibold small text-dark">
                 Nombre del Rubro <span class="text-danger">*</span>
               </label>
               <input
+                id="rubroNombreInput"
                 type="text"
                 class="form-control"
                 placeholder="Ej. Consumo Agua Potable"
@@ -55,10 +69,11 @@
 
             <!-- Código SRI -->
             <div class="col-md-4">
-              <label class="form-label fw-semibold small text-dark">
+              <label for="rubroCodigoSriInput" class="form-label fw-semibold small text-dark">
                 Código SRI / Identificador
               </label>
               <input
+                id="rubroCodigoSriInput"
                 type="text"
                 class="form-control"
                 placeholder="Ej. 001"
@@ -70,10 +85,11 @@
 
             <!-- Descripción -->
             <div class="col-12">
-              <label class="form-label fw-semibold small text-dark">
+              <label for="rubroDescripcionTextarea" class="form-label fw-semibold small text-dark">
                 Descripción <span class="text-danger">*</span>
               </label>
               <textarea
+                id="rubroDescripcionTextarea"
                 class="form-control"
                 rows="2"
                 placeholder="Descripción detallada para la factura o comprobante..."
@@ -86,10 +102,11 @@
 
             <!-- Tipo de Rubro -->
             <div class="col-md-6">
-              <label class="form-label fw-semibold small text-dark">
+              <label for="rubroTipoSelect" class="form-label fw-semibold small text-dark">
                 Tipo de Rubro <span class="text-danger">*</span>
               </label>
               <select
+                id="rubroTipoSelect"
                 class="form-select"
                 [(ngModel)]="tipoRubro"
                 name="tipoRubro"
@@ -104,10 +121,11 @@
 
             <!-- Tarifa Impuesto IVA -->
             <div class="col-md-6">
-              <label class="form-label fw-semibold small text-dark">
+              <label for="rubroTarifaIvaSelect" class="form-label fw-semibold small text-dark">
                 Tarifa Impuesto IVA <span class="text-danger">*</span>
               </label>
               <select
+                id="rubroTarifaIvaSelect"
                 class="form-select"
                 [(ngModel)]="tarifaImpuestoId"
                 name="tarifaImpuestoId"
@@ -123,12 +141,13 @@
 
             <!-- Precio Unitario -->
             <div class="col-md-6">
-              <label class="form-label fw-semibold small text-dark">
+              <label for="rubroPrecioInput" class="form-label fw-semibold small text-dark">
                 Precio Unitario (USD) <span class="text-danger">*</span>
               </label>
               <div class="input-group">
                 <span class="input-group-text bg-light fw-medium">$</span>
                 <input
+                  id="rubroPrecioInput"
                   type="number"
                   class="form-control"
                   step="0.01"

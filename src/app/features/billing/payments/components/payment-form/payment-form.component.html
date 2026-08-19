@@ -33,7 +33,7 @@
         <!-- TOP LEFT: Cliente / Contrato -->
         <div class="col-lg-6">
           <div class="mb-3">
-            <label class="form-label fw-semibold text-dark small mb-1">
+            <label for="contractDisplayInput" class="form-label fw-semibold text-dark small mb-1">
               Cliente / Contrato <span class="text-danger">*</span>
             </label>
 
@@ -268,12 +268,17 @@
             <!-- Adjuntar Comprobante -->
             <div class="mb-3 p-2 bg-light-subtle rounded-3 border">
               <div class="d-flex align-items-center justify-content-between mb-1">
-                <label class="form-label fw-semibold text-dark small mb-0 d-flex align-items-center gap-1">
+                <label
+                  for="comprobanteFileInput"
+                  class="form-label fw-semibold text-dark small mb-0 d-flex align-items-center gap-1"
+                >
                   <i class="bi bi-paperclip text-primary"></i>
                   Comprobante de Transferencia
                 </label>
                 @if (comprobanteKey) {
-                  <span class="badge bg-success-subtle text-success border border-success-subtle d-flex align-items-center gap-1">
+                  <span
+                    class="badge bg-success-subtle text-success border border-success-subtle d-flex align-items-center gap-1"
+                  >
                     <i class="bi bi-cloud-check-fill"></i> Adjuntado con éxito
                   </span>
                 }
@@ -281,6 +286,7 @@
 
               <input
                 #fileInput
+                id="comprobanteFileInput"
                 type="file"
                 class="d-none"
                 accept="image/jpeg,image/png,image/webp,application/pdf"
@@ -299,24 +305,37 @@
               }
 
               @if (isUploadingComprobante) {
-                <div class="d-flex align-items-center justify-content-center gap-2 py-2 text-primary small">
-                  <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <div
+                  class="d-flex align-items-center justify-content-center gap-2 py-2 text-primary small"
+                >
+                  <span
+                    class="spinner-border spinner-border-sm"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
                   <span>Subiendo comprobante a RustFS...</span>
                 </div>
               }
 
               @if (comprobanteFile && !isUploadingComprobante) {
-                <div class="d-flex align-items-center justify-content-between p-2 bg-white rounded border mt-1">
+                <div
+                  class="d-flex align-items-center justify-content-between p-2 bg-white rounded border mt-1"
+                >
                   <div class="d-flex align-items-center gap-2 overflow-hidden">
                     @if (comprobantePreviewUrl) {
-                      <img [src]="comprobantePreviewUrl" alt="Preview" class="rounded object-fit-cover" style="width: 32px; height: 32px;" />
+                      <img
+                        [src]="comprobantePreviewUrl"
+                        alt="Preview"
+                        class="rounded object-fit-cover"
+                        style="width: 32px; height: 32px"
+                      />
                     } @else {
                       <div class="p-1 rounded bg-danger-subtle text-danger">
                         <i class="bi bi-file-earmark-pdf fs-5"></i>
                       </div>
                     }
                     <div class="overflow-hidden">
-                      <div class="small fw-medium text-dark text-truncate" style="max-width: 220px;">
+                      <div class="small fw-medium text-dark text-truncate" style="max-width: 220px">
                         {{ comprobanteFile.name }}
                       </div>
                       <div class="text-muted" style="font-size: 0.72rem">
@@ -375,7 +394,7 @@
           <!-- Fecha de Pago y Monto -->
           <div class="row g-2 mb-3">
             <div class="col-6">
-              <label class="form-label fw-semibold text-dark small mb-1">
+              <label for="fechaPagoPicker" class="form-label fw-semibold text-dark small mb-1">
                 Fecha de Pago <span class="text-danger">*</span>
               </label>
               <app-date-picker
@@ -541,7 +560,11 @@
                           <div class="fw-bold text-dark d-flex align-items-center gap-1">
                             <span>{{ getPeriodLabel(pre) }}</span>
                           </div>
-                          <div class="text-muted" style="font-size: 0.76rem" [title]="getPreInvoiceConceptos(pre)">
+                          <div
+                            class="text-muted"
+                            style="font-size: 0.76rem"
+                            [title]="getPreInvoiceConceptos(pre)"
+                          >
                             <i class="bi bi-droplet-half me-1 text-primary"></i>
                             {{ getPreInvoiceConceptos(pre) }}
                           </div>
@@ -641,11 +664,19 @@
 
             <!-- Tabla de Items seleccionados para cobro puntual -->
             <div class="border rounded-3 overflow-hidden mb-2">
-              <table class="table table-sm table-hover mb-0 align-middle" style="font-size: 0.84rem">
+              <table
+                class="table table-sm table-hover mb-0 align-middle"
+                style="font-size: 0.84rem"
+              >
                 <thead class="table-light">
                   <tr>
                     <th class="fw-semibold text-muted text-uppercase px-3">Rubro</th>
-                    <th class="fw-semibold text-muted text-uppercase text-center" style="width: 100px">Cant.</th>
+                    <th
+                      class="fw-semibold text-muted text-uppercase text-center"
+                      style="width: 100px"
+                    >
+                      Cant.
+                    </th>
                     <th class="fw-semibold text-muted text-uppercase text-end">P. Unit</th>
                     <th class="fw-semibold text-muted text-uppercase text-end">IVA</th>
                     <th class="fw-semibold text-muted text-uppercase text-end">Total</th>
@@ -701,7 +732,8 @@
                     <tr>
                       <td colspan="6" class="text-center py-4 text-muted bg-light">
                         <i class="bi bi-cart-x fs-4 d-block mb-1"></i>
-                        Haga clic en <strong>Buscar Rubro</strong> para agregar ítems al cobro puntual.
+                        Haga clic en <strong>Buscar Rubro</strong> para agregar ítems al cobro
+                        puntual.
                       </td>
                     </tr>
                   }
@@ -711,11 +743,14 @@
 
             <!-- Resumen de Totales Puntual -->
             @if (puntualItems.length > 0) {
-              <div class="statement-total-banner mt-3 p-3 rounded-3 d-flex align-items-center justify-content-between gap-2">
+              <div
+                class="statement-total-banner mt-3 p-3 rounded-3 d-flex align-items-center justify-content-between gap-2"
+              >
                 <div>
                   <div class="text-uppercase fw-bold small text-primary">Total a Cobrar</div>
                   <div class="text-muted" style="font-size: 0.78rem">
-                    Subtotal: {{ puntualSubtotal | currency: 'USD' : 'symbol' : '1.2-2' }} | IVA: {{ puntualIva | currency: 'USD' : 'symbol' : '1.2-2' }}
+                    Subtotal: {{ puntualSubtotal | currency: 'USD' : 'symbol' : '1.2-2' }} | IVA:
+                    {{ puntualIva | currency: 'USD' : 'symbol' : '1.2-2' }}
                   </div>
                 </div>
                 <div class="fs-3 fw-bold text-dark tabular-nums">
@@ -764,7 +799,13 @@
           @if (!isLoading) {
             <i class="bi bi-check-circle"></i>
           }
-          {{ isLoading ? 'Registrando...' : (pagoMode === 'PUNTUAL' ? 'Registrar Cobro' : 'Registrar Pago') }}
+          {{
+            isLoading
+              ? 'Registrando...'
+              : pagoMode === 'PUNTUAL'
+                ? 'Registrar Cobro'
+                : 'Registrar Pago'
+          }}
         </button>
       </div>
     </div>

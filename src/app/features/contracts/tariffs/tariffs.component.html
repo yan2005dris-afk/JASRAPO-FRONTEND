@@ -80,7 +80,8 @@
         <div class="alert alert-info m-4">
           <i class="bi bi-info-circle me-2"></i>
           @if (searchNombre) {
-            No se encontraron tarifas que coincidan con "<strong>{{ searchNombre }}</strong>".
+            No se encontraron tarifas que coincidan con "<strong>{{ searchNombre }}</strong
+            >".
           } @else {
             No hay tarifas registradas.
           }
@@ -135,7 +136,10 @@
                               class="dropdown-item d-flex align-items-center gap-2"
                               (click)="openEditModal(tariff)"
                             >
-                              <i class="bi bi-pencil-fill text-primary" style="font-size: 0.8rem"></i>
+                              <i
+                                class="bi bi-pencil-fill text-primary"
+                                style="font-size: 0.8rem"
+                              ></i>
                               Editar
                             </button>
                           </li>

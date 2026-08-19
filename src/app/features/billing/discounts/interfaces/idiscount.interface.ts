@@ -6,6 +6,13 @@ export type TipoDescuento =
   | 'CONVENIO'
   | 'OTROS';
 
+export interface IRubroDescuento {
+  rubroId: number;
+  nombre: string;
+  tipoRubro: string;
+  precioUnitario: number;
+}
+
 export interface IDiscount {
   id: number;
   nombre: string;
@@ -14,7 +21,7 @@ export interface IDiscount {
   valor: number;
   esPorcentaje: boolean;
   rubroId?: number | null;
-  rubro?: { rubroId: number; nombre: string; tipoRubro: string; precioUnitario: any } | null;
+  rubro?: IRubroDescuento | null;
   activo: boolean;
   aplicaAutomatico: boolean;
 }

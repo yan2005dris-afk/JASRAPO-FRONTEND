@@ -46,7 +46,10 @@
     </div>
   } @else if (errorMessage) {
     <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4 bg-white">
-      <div class="header-icon-tile danger-tile mx-auto mb-3" style="width: 48px; height: 48px; font-size: 1.5rem;">
+      <div
+        class="header-icon-tile danger-tile mx-auto mb-3"
+        style="width: 48px; height: 48px; font-size: 1.5rem"
+      >
         <i class="bi bi-exclamation-triangle"></i>
       </div>
       <h5 class="fw-bold text-dark">Error al cargar pago</h5>
@@ -61,7 +64,9 @@
       <div class="card-header bg-white border-bottom p-4">
         <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
           <div class="d-flex align-items-center gap-3">
-            <div class="payment-header-icon rounded-3 bg-primary bg-opacity-10 text-primary p-3 d-flex align-items-center justify-content-center">
+            <div
+              class="payment-header-icon rounded-3 bg-primary bg-opacity-10 text-primary p-3 d-flex align-items-center justify-content-center"
+            >
               <i class="bi bi-receipt fs-3"></i>
             </div>
             <div>
@@ -70,14 +75,18 @@
                 <app-status-badge [status]="payment.estadoPago" />
               </div>
               <p class="text-muted small mb-0">
-                Registrado el <strong>{{ payment.fechaPago }}</strong> por <strong>{{ payment.creadoPor }}</strong>
+                Registrado el <strong>{{ payment.fechaPago }}</strong> por
+                <strong>{{ payment.creadoPor }}</strong>
               </p>
             </div>
           </div>
 
           <!-- Total Recibido Highlight -->
           <div class="total-badge text-end p-3 rounded-3 bg-light border">
-            <div class="text-muted text-uppercase fw-semibold" style="font-size: 0.72rem; letter-spacing: 0.5px">
+            <div
+              class="text-muted text-uppercase fw-semibold"
+              style="font-size: 0.72rem; letter-spacing: 0.5px"
+            >
               Total Recibido
             </div>
             <div class="fs-3 fw-bold text-dark tabular-nums">
@@ -89,11 +98,14 @@
 
       <!-- Banner si está anulado -->
       @if (payment.estadoPago === 'ANULADO') {
-        <div class="p-3 px-4 bg-danger bg-opacity-10 border-bottom border-danger-subtle text-danger d-flex align-items-center justify-content-between flex-wrap gap-2">
+        <div
+          class="p-3 px-4 bg-danger bg-opacity-10 border-bottom border-danger-subtle text-danger d-flex align-items-center justify-content-between flex-wrap gap-2"
+        >
           <div class="d-flex align-items-center gap-2">
             <i class="bi bi-x-octagon-fill fs-5"></i>
             <div>
-              <strong>Pago Anulado:</strong> {{ payment.motivoAnulacion || 'Sin motivo especificado' }}
+              <strong>Pago Anulado:</strong>
+              {{ payment.motivoAnulacion || 'Sin motivo especificado' }}
               <span class="text-muted small ms-2">
                 (Por {{ payment.anuladoPor || 'Sistema' }} el {{ payment.fechaAnulacion || '—' }})
               </span>
@@ -120,7 +132,12 @@
             <div>
               <h5 class="fw-bold text-dark mb-1">{{ getClientDisplayName() }}</h5>
               <div class="text-muted small">
-                C.I. / RUC: <strong>{{ payment.cliente?.identificacion || payment.clienteIdentificacion || payment.clienteId }}</strong>
+                C.I. / RUC:
+                <strong>{{
+                  payment.cliente?.identificacion ||
+                    payment.clienteIdentificacion ||
+                    payment.clienteId
+                }}</strong>
               </div>
             </div>
           </div>
@@ -140,7 +157,9 @@
             </div>
             <div class="col-6">
               <span class="text-muted d-block">Dirección Domiciliaria</span>
-              <span class="fw-semibold text-dark">{{ payment.cliente?.direccionDomicilio || '—' }}</span>
+              <span class="fw-semibold text-dark">{{
+                payment.cliente?.direccionDomicilio || '—'
+              }}</span>
             </div>
           </div>
         </div>
@@ -181,7 +200,9 @@
 
             <div class="col-6">
               <span class="text-muted d-block">Fecha de Creación</span>
-              <span class="fw-semibold text-dark">{{ payment.fechaCreacion || payment.fechaPago }}</span>
+              <span class="fw-semibold text-dark">{{
+                payment.fechaCreacion || payment.fechaPago
+              }}</span>
             </div>
 
             <div class="col-6">
@@ -205,7 +226,9 @@
     <!-- Comprobante Adjunto (si existe) -->
     @if (payment.comprobanteUrl) {
       <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
-        <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom flex-wrap gap-2">
+        <div
+          class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom flex-wrap gap-2"
+        >
           <div class="d-flex align-items-center gap-2">
             <i class="bi bi-paperclip text-primary fs-5"></i>
             <h6 class="fw-bold text-dark mb-0">Comprobante de Transferencia Adjunto</h6>
@@ -234,11 +257,13 @@
                 [src]="comprobanteSignedUrl"
                 alt="Comprobante de Transferencia"
                 class="img-fluid rounded shadow-sm"
-                style="max-height: 450px; object-fit: contain;"
+                style="max-height: 450px; object-fit: contain"
               />
             </div>
           } @else if (isPdfComprobante()) {
-            <div class="p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between">
+            <div
+              class="p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between"
+            >
               <div class="d-flex align-items-center gap-3">
                 <i class="bi bi-file-earmark-pdf-fill text-danger fs-1"></i>
                 <div>
@@ -255,9 +280,15 @@
               </a>
             </div>
           } @else {
-            <div class="p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between">
+            <div
+              class="p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between"
+            >
               <span class="text-muted small">Archivo de respaldo adjuntado</span>
-              <a [href]="comprobanteSignedUrl" target="_blank" class="btn btn-outline-primary btn-sm">
+              <a
+                [href]="comprobanteSignedUrl"
+                target="_blank"
+                class="btn btn-outline-primary btn-sm"
+              >
                 Ver Comprobante
               </a>
             </div>
@@ -268,7 +299,9 @@
 
     <!-- Desglose de Aplicación del Pago (Tabla) -->
     <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden bg-white">
-      <div class="card-header bg-white border-bottom p-4 d-flex align-items-center justify-content-between">
+      <div
+        class="card-header bg-white border-bottom p-4 d-flex align-items-center justify-content-between"
+      >
         <div class="d-flex align-items-center gap-2">
           <i class="bi bi-list-check text-primary fs-5"></i>
           <h6 class="fw-bold text-dark mb-0">Desglose de Aplicación del Cobro</h6>
@@ -290,7 +323,7 @@
                   <th scope="col">Fecha Transacción</th>
                   <th scope="col" class="text-end">Total Factura</th>
                   <th scope="col" class="text-end pe-4">Monto Abonado</th>
-                  <th scope="col" class="text-center pe-4" style="width: 130px;">Acción</th>
+                  <th scope="col" class="text-center pe-4" style="width: 130px">Acción</th>
                 </tr>
               </thead>
               <tbody>
@@ -307,10 +340,15 @@
                           <i class="bi bi-file-earmark-text text-primary"></i>
                           <div>
                             <span class="fw-bold text-dark">
-                              {{ item.comprobante.tipoComprobante }} #{{ item.comprobante.secuencial || item.comprobante.comprobanteId }}
+                              {{ item.comprobante.tipoComprobante }} #{{
+                                item.comprobante.secuencial || item.comprobante.comprobanteId
+                              }}
                             </span>
                             <span class="text-muted small d-block">
-                              Estado: <span class="badge bg-light text-secondary border">{{ item.comprobante.estado }}</span>
+                              Estado:
+                              <span class="badge bg-light text-secondary border">{{
+                                item.comprobante.estado
+                              }}</span>
                             </span>
                           </div>
                         </div>
@@ -322,7 +360,9 @@
                           </span>
                         </div>
                       } @else {
-                        <span class="text-muted">{{ item.referencia || 'Cobro directo / Rubro puntual' }}</span>
+                        <span class="text-muted">{{
+                          item.referencia || 'Cobro directo / Rubro puntual'
+                        }}</span>
                       }
                     </td>
                     <td class="small">
@@ -349,15 +389,23 @@
                         —
                       }
                     </td>
-                    <td class="text-end pe-4 fw-bold text-dark tabular-nums" style="font-size: 0.95rem">
+                    <td
+                      class="text-end pe-4 fw-bold text-dark tabular-nums"
+                      style="font-size: 0.95rem"
+                    >
                       ${{ item.montoAbonado | number: '1.2-2' }}
                     </td>
                     <td class="text-center pe-4">
                       @if (item.comprobante?.prefactura?.prefacturaId) {
                         <a
-                          [routerLink]="['/app', 'Facturacion', 'GeneracionPlanilla', item.comprobante?.prefactura?.prefacturaId]"
+                          [routerLink]="[
+                            '/app',
+                            'Facturacion',
+                            'GeneracionPlanilla',
+                            item.comprobante?.prefactura?.prefacturaId,
+                          ]"
                           class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 shadow-none py-1 px-2"
-                          style="font-size: 0.78rem;"
+                          style="font-size: 0.78rem"
                           title="Ver detalle completo de la prefactura"
                         >
                           <i class="bi bi-box-arrow-up-right"></i>

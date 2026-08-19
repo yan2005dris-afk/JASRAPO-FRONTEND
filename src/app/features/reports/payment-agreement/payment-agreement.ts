@@ -90,9 +90,7 @@ export class PaymentAgreementComponent {
 
     const cliente = c.cliente;
     const nombre = cliente
-      ? [cliente.nombres, cliente.apellidos].filter(Boolean).join(' ') ||
-        cliente.razonSocial ||
-        '—'
+      ? [cliente.nombres, cliente.apellidos].filter(Boolean).join(' ') || cliente.razonSocial || '—'
       : '—';
 
     return {
@@ -103,9 +101,7 @@ export class PaymentAgreementComponent {
       abonoInicial: Number(c.abonoInicial || 0).toFixed(2),
       numeroCuotas: c.numeroCuotas || 0,
       cuotaMensual: Number(c.cuotaMensual || 0).toFixed(2),
-      fechaInicio: c.fechaInicio
-        ? new Date(c.fechaInicio).toLocaleDateString('es-EC')
-        : '—',
+      fechaInicio: c.fechaInicio ? new Date(c.fechaInicio).toLocaleDateString('es-EC') : '—',
       fechaPrimerPago: c.fechaPrimerPago
         ? new Date(c.fechaPrimerPago).toLocaleDateString('es-EC')
         : '—',

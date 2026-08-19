@@ -65,7 +65,8 @@
   body * {
     visibility: hidden;
   }
-  .payment-detail-page, .payment-detail-page * {
+  .payment-detail-page,
+  .payment-detail-page * {
     visibility: visible;
   }
   .payment-detail-page {
@@ -74,7 +75,9 @@
     top: 0;
     width: 100%;
   }
-  .btn, .breadcrumb, a {
+  .btn,
+  .breadcrumb,
+  a {
     display: none !important;
   }
 }

@@ -42,7 +42,7 @@ export interface IPaginationMeta {
   limit?: number;
 }
 
-export interface IPaginatedResult<T, K = any> {
+export interface IPaginatedResult<T, K = unknown> {
   data: T[];
   meta?: IPaginationMeta;
   kpis?: K;

@@ -189,11 +189,11 @@ export class CashSessionDetailComponent implements OnInit {
 
   // Cálculos de Arqueo Físico
   get totalBilletes(): number {
-    return this.billetes.reduce((acc, b) => acc + (b.def.valor * (b.cantidad || 0)), 0);
+    return this.billetes.reduce((acc, b) => acc + b.def.valor * (b.cantidad || 0), 0);
   }
 
   get totalMonedas(): number {
-    return this.monedas.reduce((acc, m) => acc + (m.def.valor * (m.cantidad || 0)), 0);
+    return this.monedas.reduce((acc, m) => acc + m.def.valor * (m.cantidad || 0), 0);
   }
 
   get totalFisicoContado(): number {
@@ -214,9 +214,17 @@ export class CashSessionDetailComponent implements OnInit {
       return { label: 'CAJA CUADRADA', tone: 'success', icon: 'bi-check-circle-fill' };
     }
     if (diff < 0) {
-      return { label: `FALTANTE (-$${Math.abs(diff).toFixed(2)})`, tone: 'danger', icon: 'bi-exclamation-triangle-fill' };
+      return {
+        label: `FALTANTE (-$${Math.abs(diff).toFixed(2)})`,
+        tone: 'danger',
+        icon: 'bi-exclamation-triangle-fill',
+      };
     }
-    return { label: `SOBRANTE (+$${diff.toFixed(2)})`, tone: 'primary', icon: 'bi-info-circle-fill' };
+    return {
+      label: `SOBRANTE (+$${diff.toFixed(2)})`,
+      tone: 'primary',
+      icon: 'bi-info-circle-fill',
+    };
   }
 
   // Cierre de Caja

@@ -26,71 +26,73 @@
       </button>
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
-          <!-- Contrato seleccionado (modal buscador) -->
-          <div class="input-group search-group" style="width: 290px">
-            <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
-              <i class="bi bi-file-text"></i>
-            </span>
-            <input
-              type="text"
-              class="form-control border-start-0 ps-0 shadow-none text-truncate"
-              placeholder="Buscar contrato / cliente..."
-              [value]="selectedContractNumber ? (selectedContractNumber + ' - ' + selectedContractName) : ''"
-              readonly
+        <!-- Contrato seleccionado (modal buscador) -->
+        <div class="input-group search-group" style="width: 290px">
+          <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+            <i class="bi bi-file-text"></i>
+          </span>
+          <input
+            type="text"
+            class="form-control border-start-0 ps-0 shadow-none text-truncate"
+            placeholder="Buscar contrato / cliente..."
+            [value]="
+              selectedContractNumber ? selectedContractNumber + ' - ' + selectedContractName : ''
+            "
+            readonly
+            (click)="abrirBuscadorContratos()"
+            [title]="
+              selectedContractName
+                ? selectedContractNumber + ' - ' + selectedContractName
+                : 'Seleccione un contrato'
+            "
+          />
+          @if (selectedContractNumber) {
+            <button
+              type="button"
+              class="btn btn-outline-secondary border-start-0 shadow-none px-2"
+              title="Quitar filtro de contrato"
+              (click)="limpiarFiltros(); $event.stopPropagation()"
+            >
+              <i class="bi bi-x"></i>
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="btn btn-outline-primary shadow-none"
+              title="Buscar contrato"
               (click)="abrirBuscadorContratos()"
-              [title]="selectedContractName ? (selectedContractNumber + ' - ' + selectedContractName) : 'Seleccione un contrato'"
-            />
-            @if (selectedContractNumber) {
-              <button
-                type="button"
-                class="btn btn-outline-secondary border-start-0 shadow-none px-2"
-                title="Quitar filtro de contrato"
-                (click)="limpiarFiltros(); $event.stopPropagation()"
-              >
-                <i class="bi bi-x"></i>
-              </button>
-            } @else {
-              <button
-                type="button"
-                class="btn btn-outline-primary shadow-none"
-                title="Buscar contrato"
-                (click)="abrirBuscadorContratos()"
-              >
-                <i class="bi bi-search"></i>
-              </button>
-            }
-          </div>
-
-          <!-- Buscar -->
-          <button
-            class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
-            (click)="loadReadings()"
-            [disabled]="isLoading"
-          >
-            @if (isLoading) {
-              <span
-                class="spinner-border spinner-border-sm"
-                role="status"
-                aria-hidden="true"
-              ></span>
-            }
-            @if (!isLoading) {
+            >
               <i class="bi bi-search"></i>
-            }
-            Buscar
-          </button>
-
-          <!-- Limpiar -->
-          <button
-            class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
-            (click)="limpiarFiltros()"
-            [disabled]="isLoading"
-          >
-            <i class="bi bi-x-circle"></i>
-            Limpiar
-          </button>
+            </button>
+          }
         </div>
+
+        <!-- Buscar -->
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="loadReadings()"
+          [disabled]="isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+          @if (!isLoading) {
+            <i class="bi bi-search"></i>
+          }
+          Buscar
+        </button>
+
+        <!-- Limpiar -->
+        <button
+          class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="limpiarFiltros()"
+          [disabled]="isLoading"
+        >
+          <i class="bi bi-x-circle"></i>
+          Limpiar
+        </button>
       </div>
+    </div>
 
     <!-- Table -->
     <div class="pt-2">
@@ -126,16 +128,16 @@
         />
       }
 
-        <!-- Pagination -->
-        <div class="px-4 py-3 border-top bg-white">
-          <app-pagination
-            [currentPage]="currentPage"
-            [pageSize]="pageSize"
-            [totalItems]="totalItems"
-            (pageChange)="onPageChange($event)"
-            (pageSizeChange)="onPageSizeChange($event)"
-          />
-        </div>
+      <!-- Pagination -->
+      <div class="px-4 py-3 border-top bg-white">
+        <app-pagination
+          [currentPage]="currentPage"
+          [pageSize]="pageSize"
+          [totalItems]="totalItems"
+          (pageChange)="onPageChange($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
+        />
+      </div>
     </div>
   </div>
 

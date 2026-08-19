@@ -8,6 +8,7 @@ import {
   ICreateDiscountDto,
   IDiscount,
   IDiscountFilterParams,
+  IRubroDescuento,
   IUpdateDiscountDto,
 } from '../interfaces/idiscount.interface';
 
@@ -46,12 +47,8 @@ export class DiscountsService {
     });
   }
 
-  getRubros(): Observable<
-    { rubroId: number; nombre: string; tipoRubro: string; precioUnitario: any }[]
-  > {
-    return this.http.get<
-      { rubroId: number; nombre: string; tipoRubro: string; precioUnitario: any }[]
-    >(`${this.endpoint}/rubros`);
+  getRubros(): Observable<IRubroDescuento[]> {
+    return this.http.get<IRubroDescuento[]>(`${this.endpoint}/rubros`);
   }
 
   getDiscountById(id: number): Observable<IDiscount> {

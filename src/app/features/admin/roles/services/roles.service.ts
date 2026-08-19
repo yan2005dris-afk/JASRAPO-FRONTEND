@@ -25,7 +25,9 @@ export class RolesService {
       .get<RoleDetail | { data: RoleDetail }>(`${this.rolesUrl}/${id}`, { withCredentials: true })
       .pipe(
         map((res) => {
-          const detail = (res && typeof res === 'object' && 'data' in res ? res.data : res) as RoleDetail;
+          const detail = (
+            res && typeof res === 'object' && 'data' in res ? res.data : res
+          ) as RoleDetail;
           return {
             ...detail,
             permisos: Array.isArray(detail?.permisos) ? detail.permisos : [],
@@ -40,10 +42,10 @@ export class RolesService {
       const fetchPage = (page: number) => {
         const params = new HttpParams().set('page', String(page)).set('limit', '100');
         this.http
-          .get<PermissionItem[] | { data: PermissionItem[]; meta?: { ultimaPagina?: number; total?: number } }>(
-            this.permissionsUrl,
-            { params, withCredentials: true },
-          )
+          .get<
+            | PermissionItem[]
+            | { data: PermissionItem[]; meta?: { ultimaPagina?: number; total?: number } }
+          >(this.permissionsUrl, { params, withCredentials: true })
           .subscribe({
             next: (res) => {
               let items: PermissionItem[] = [];

@@ -77,7 +77,11 @@ import type {
                       @for (rubro of rubros(); track rubro.rubroId) {
                         <div
                           class="card mb-2 rubro-card cursor-pointer border shadow-sm"
+                          role="button"
+                          tabindex="0"
                           (click)="addRubro(rubro)"
+                          (keydown.enter)="addRubro(rubro)"
+                          (keydown.space)="addRubro(rubro); $event.preventDefault()"
                         >
                           <div
                             class="card-body p-3 d-flex justify-content-between align-items-center"

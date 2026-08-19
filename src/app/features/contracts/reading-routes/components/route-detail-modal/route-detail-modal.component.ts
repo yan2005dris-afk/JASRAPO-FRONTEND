@@ -107,7 +107,7 @@ export class RouteDetailModalComponent implements OnInit {
         sectorId: currentRoute.sectorId || undefined,
         periodoId: currentRoute.periodoId || undefined,
         fechaPlanificada: currentRoute.fechaPlanificada || undefined,
-        tipoRuta: currentRoute.tipoRuta as any,
+        tipoRuta: currentRoute.tipoRuta,
         page: 1,
         limit: 100,
       })

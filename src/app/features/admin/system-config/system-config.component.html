@@ -259,10 +259,11 @@
           <div class="modal-body p-4">
             <!-- Clave -->
             <div class="mb-3">
-              <label class="form-label fw-semibold text-dark small mb-1">
+              <label for="configClaveInput" class="form-label fw-semibold text-dark small mb-1">
                 Clave de Configuración <span class="text-danger">*</span>
               </label>
               <input
+                id="configClaveInput"
                 type="text"
                 class="form-control"
                 placeholder="ej: reporte.estilo, NOTIFICACIONES_ENABLED"
@@ -280,10 +281,11 @@
 
             <!-- Valor -->
             <div class="mb-3">
-              <label class="form-label fw-semibold text-dark small mb-1">
+              <label for="configValorInput" class="form-label fw-semibold text-dark small mb-1">
                 Valor <span class="text-danger">*</span>
               </label>
               <input
+                id="configValorInput"
                 type="text"
                 class="form-control"
                 placeholder="ej: modern, 3600000, true"
@@ -299,8 +301,14 @@
 
             <!-- Descripción -->
             <div class="mb-3">
-              <label class="form-label fw-semibold text-dark small mb-1"> Descripción </label>
+              <label
+                for="configDescripcionTextarea"
+                class="form-label fw-semibold text-dark small mb-1"
+              >
+                Descripción
+              </label>
               <textarea
+                id="configDescripcionTextarea"
                 class="form-control"
                 rows="3"
                 placeholder="Explica qué controla esta variable y sus posibles valores..."

@@ -8,6 +8,8 @@ import {
   ICreateEstablecimientoDto,
   ICreatePuntoEmisionDto,
   IActivePuntoEmision,
+  IEstablecimiento,
+  IPuntoEmision,
 } from '../interfaces/icompany.interface';
 
 @Injectable({
@@ -23,22 +25,32 @@ export class CompanyService {
     });
   }
 
-  updateCompany(id: number, dto: IUpdateCompanyDto): Observable<any> {
-    return this.http.put(`${this.apiUrl}/${id}`, dto, {
+  updateCompany(id: number, dto: IUpdateCompanyDto): Observable<ICompany> {
+    return this.http.put<ICompany>(`${this.apiUrl}/${id}`, dto, {
       withCredentials: true,
     });
   }
 
-  createEstablecimiento(emisorId: number, dto: ICreateEstablecimientoDto): Observable<any> {
-    return this.http.post(`${this.apiUrl}/${emisorId}/establecimientos`, dto, {
+  createEstablecimiento(
+    emisorId: number,
+    dto: ICreateEstablecimientoDto,
+  ): Observable<IEstablecimiento> {
+    return this.http.post<IEstablecimiento>(`${this.apiUrl}/${emisorId}/establecimientos`, dto, {
       withCredentials: true,
     });
   }
 
-  createPuntoEmision(establecimientoId: number, dto: ICreatePuntoEmisionDto): Observable<any> {
-    return this.http.post(`${this.apiUrl}/establecimientos/${establecimientoId}/puntos-emision`, dto, {
-      withCredentials: true,
-    });
+  createPuntoEmision(
+    establecimientoId: number,
+    dto: ICreatePuntoEmisionDto,
+  ): Observable<IPuntoEmision> {
+    return this.http.post<IPuntoEmision>(
+      `${this.apiUrl}/establecimientos/${establecimientoId}/puntos-emision`,
+      dto,
+      {
+        withCredentials: true,
+      },
+    );
   }
 
   getActivePuntosEmision(): Observable<IActivePuntoEmision[]> {
@@ -47,17 +59,21 @@ export class CompanyService {
     });
   }
 
-  uploadCertificado(emisorId: number, file: File, password: string): Observable<any> {
+  uploadCertificado(
+    emisorId: number,
+    file: File,
+    password: string,
+  ): Observable<{ message: string }> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('password', password);
-    return this.http.post(`${this.apiUrl}/${emisorId}/certificado`, formData, {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/${emisorId}/certificado`, formData, {
       withCredentials: true,
     });
   }
 
-  deleteCertificado(emisorId: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/${emisorId}/certificado`, {
+  deleteCertificado(emisorId: number): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/${emisorId}/certificado`, {
       withCredentials: true,
     });
   }

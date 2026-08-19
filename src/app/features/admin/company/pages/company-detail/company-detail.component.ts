@@ -123,7 +123,10 @@ export class CompanyDetailComponent implements OnInit {
   saveEstablecimiento(): void {
     if (!this.company) return;
     if (!this.establecimientoDto.codigo.trim() || this.establecimientoDto.codigo.length !== 3) {
-      this.toastService.show('El código de establecimiento debe tener 3 dígitos (ej: 001)', 'error');
+      this.toastService.show(
+        'El código de establecimiento debe tener 3 dígitos (ej: 001)',
+        'error',
+      );
       return;
     }
     if (!this.establecimientoDto.direccion.trim()) {
@@ -164,24 +167,29 @@ export class CompanyDetailComponent implements OnInit {
   savePuntoEmision(): void {
     if (!this.selectedEstablecimientoForPunto) return;
     if (!this.puntoDto.codigo.trim() || this.puntoDto.codigo.length !== 3) {
-      this.toastService.show('El código de caja / punto de emisión debe tener 3 dígitos (ej: 001)', 'error');
+      this.toastService.show(
+        'El código de caja / punto de emisión debe tener 3 dígitos (ej: 001)',
+        'error',
+      );
       return;
     }
 
     this.isSaving = true;
-    this.companyService.createPuntoEmision(this.selectedEstablecimientoForPunto.id, this.puntoDto).subscribe({
-      next: () => {
-        this.isSaving = false;
-        this.showPuntoModal = false;
-        this.toastService.show('Caja / Punto de Emisión registrado exitosamente', 'success');
-        this.loadCompany();
-      },
-      error: (err) => {
-        this.isSaving = false;
-        this.toastService.show(err?.error?.message || 'Error al registrar la caja', 'error');
-        this.cdr.markForCheck();
-      },
-    });
+    this.companyService
+      .createPuntoEmision(this.selectedEstablecimientoForPunto.id, this.puntoDto)
+      .subscribe({
+        next: () => {
+          this.isSaving = false;
+          this.showPuntoModal = false;
+          this.toastService.show('Caja / Punto de Emisión registrado exitosamente', 'success');
+          this.loadCompany();
+        },
+        error: (err) => {
+          this.isSaving = false;
+          this.toastService.show(err?.error?.message || 'Error al registrar la caja', 'error');
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   // Certificado Digital
@@ -230,7 +238,8 @@ export class CompanyDetailComponent implements OnInit {
         error: (err) => {
           this.isUploadingCert = false;
           this.toastService.show(
-            err?.error?.message || 'Error al procesar el certificado digital. Verifique la contraseña.',
+            err?.error?.message ||
+              'Error al procesar el certificado digital. Verifique la contraseña.',
             'error',
           );
           this.cdr.markForCheck();

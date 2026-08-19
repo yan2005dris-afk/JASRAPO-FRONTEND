@@ -203,7 +203,10 @@ export class PaymentsComponent implements OnInit {
   onContractFilterSelected(contract: IContract): void {
     this.isContractPickerOpen = false;
     this.selectedFilterContract = contract;
-    const clientId = contract.cliente?.clienteId ?? (contract.cliente as any)?.id ?? contract.clienteId;
+    const clientId =
+      contract.cliente?.clienteId ??
+      (contract.cliente as { id?: string | number }).id ??
+      contract.clienteId;
     this.filterClienteId = clientId ? String(clientId) : '';
     this.currentPage = 1;
     this.loadPayments();
@@ -220,7 +223,9 @@ export class PaymentsComponent implements OnInit {
 
   // Row selection helpers
   get allPaymentsSelected(): boolean {
-    return this.payments.length > 0 && this.payments.every((p) => this.selectedPaymentIds.has(p.pagoId));
+    return (
+      this.payments.length > 0 && this.payments.every((p) => this.selectedPaymentIds.has(p.pagoId))
+    );
   }
 
   toggleSelectAll(): void {
@@ -250,7 +255,10 @@ export class PaymentsComponent implements OnInit {
 
   getClientDisplayName(payment: IPayment): string {
     if (payment.cliente) {
-      const names = [payment.cliente.nombres, payment.cliente.apellidos].filter(Boolean).join(' ').trim();
+      const names = [payment.cliente.nombres, payment.cliente.apellidos]
+        .filter(Boolean)
+        .join(' ')
+        .trim();
       return names || payment.cliente.razonSocial || `Cliente #${payment.clienteId}`;
     }
     return payment.clienteNombre || `Cliente #${payment.clienteId}`;

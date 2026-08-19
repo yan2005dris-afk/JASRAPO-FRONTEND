@@ -262,7 +262,7 @@ export class ReadingRoutesComponent implements OnInit {
     this.loadRoutes();
   }
 
-  openDetailModal(route: IReadingRoute, tab: 'info' | 'readings' = 'info'): void {
+  openDetailModal(route: IReadingRoute): void {
     this.openDropdownId = null;
     this.router.navigate(['/app/Contratos/RutasDeLectura', route.rutaId]);
   }
@@ -302,7 +302,7 @@ export class ReadingRoutesComponent implements OnInit {
     nuevoEstado: 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA' | 'PENDIENTE',
   ): void {
     this.openDropdownId = null;
-    this.routesService.updateRoute(route.rutaId, { estado: nuevoEstado } as any).subscribe({
+    this.routesService.updateRoute(route.rutaId, { estado: nuevoEstado }).subscribe({
       next: (updated) => {
         route.estado = updated.estado;
         if (this.selectedRouteForDetail && this.selectedRouteForDetail.rutaId === route.rutaId) {

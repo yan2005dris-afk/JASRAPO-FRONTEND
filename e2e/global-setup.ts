@@ -1,4 +1,4 @@
-import { request, FullConfig } from '@playwright/test';
+import { request } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 
@@ -49,7 +49,7 @@ async function loginWithRetry(
   throw new Error(`[globalSetup] could not log in after retries: ${String(lastError)}`);
 }
 
-export default async function globalSetup(_config: FullConfig): Promise<void> {
+export default async function globalSetup(): Promise<void> {
   const apiBase = process.env.API_URL || 'http://localhost:3000';
   const email = process.env.TEST_ADMIN_EMAIL || 'admin@jasrapo.com';
   const password = process.env.TEST_ADMIN_PASSWORD || 'Admin123#';

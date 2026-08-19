@@ -173,7 +173,7 @@ export class ReadingRouteDetailComponent implements OnInit {
         sectorId: this.readingRoute.sectorId || undefined,
         periodoId: this.readingRoute.periodoId || undefined,
         fechaPlanificada: this.readingRoute.fechaPlanificada || undefined,
-        tipoRuta: this.readingRoute.tipoRuta as any,
+        tipoRuta: this.readingRoute.tipoRuta,
         search: this.searchQuery.trim() || undefined,
         page: this.currentPage,
         limit: this.pageSize,
@@ -394,7 +394,7 @@ export class ReadingRouteDetailComponent implements OnInit {
         this.cdr.markForCheck();
 
         this.routesService
-          .updateRoute(this.readingRoute!.rutaId, { estado: nuevoEstado as any })
+          .updateRoute(this.readingRoute!.rutaId, { estado: nuevoEstado })
           .subscribe({
             next: (updated) => {
               this.readingRoute = { ...this.readingRoute!, ...updated };

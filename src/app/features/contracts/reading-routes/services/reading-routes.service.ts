@@ -76,7 +76,7 @@ export class ReadingRoutesService {
 
   getEligibleReadings(
     params?: IFilterReadingsParams,
-  ): Observable<IPaginatedResult<IReadingForRoute>> {
+  ): Observable<IPaginatedResult<IReadingForRoute, { aprobadas?: number }>> {
     let httpParams = new HttpParams();
 
     if (params?.page !== undefined) {
@@ -104,15 +104,18 @@ export class ReadingRoutesService {
       httpParams = httpParams.set('search', params.search);
     }
 
-    return this.http.get<IPaginatedResult<IReadingForRoute>>(`${this.endpoint}/eligible-readings`, {
-      params: httpParams,
-    });
+    return this.http.get<IPaginatedResult<IReadingForRoute, { aprobadas?: number }>>(
+      `${this.endpoint}/eligible-readings`,
+      {
+        params: httpParams,
+      },
+    );
   }
 
   updateReadingStatus(
     lecturaId: string | number,
     estado: 'APROBADA' | 'CON_NOVEDAD' | 'RECHAZADA_VERIFICACION' | 'PENDIENTE' | 'POR_REVISION',
-  ): Observable<any> {
+  ): Observable<unknown> {
     return this.http.patch(`${this.baseUrl}/readings/${lecturaId}`, {
       estado,
     });
