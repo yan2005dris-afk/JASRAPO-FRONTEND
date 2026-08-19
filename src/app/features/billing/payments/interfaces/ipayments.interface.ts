@@ -1,11 +1,7 @@
 export type EstadoPago = 'PENDIENTE' | 'REGISTRADO' | 'ANULADO';
 
 export type TipoDetallePago =
-  | 'COMPROBANTE'
-  | 'CUOTA_CONVENIO'
-  | 'SALDO_FAVOR'
-  | 'PAGO_LIBRE'
-  | 'OTRO';
+  'COMPROBANTE' | 'CUOTA_CONVENIO' | 'SALDO_FAVOR' | 'PAGO_LIBRE' | 'OTRO';
 
 export type Banco =
   | 'PICHINCHA'
@@ -23,13 +19,7 @@ export type Banco =
   | 'OTRO';
 
 export type TarjetaCredito =
-  | 'VISA'
-  | 'MASTERCARD'
-  | 'DINERS'
-  | 'DISCOVER'
-  | 'AMERICAN_EXPRESS'
-  | 'ALIA'
-  | 'OTRO';
+  'VISA' | 'MASTERCARD' | 'DINERS' | 'DISCOVER' | 'AMERICAN_EXPRESS' | 'ALIA' | 'OTRO';
 
 export interface IPaginationMeta {
   totalItems?: number;

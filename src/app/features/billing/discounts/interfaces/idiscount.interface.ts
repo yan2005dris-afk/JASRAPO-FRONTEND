@@ -1,10 +1,5 @@
 export type TipoDescuento =
-  | 'TERCERA_EDAD'
-  | 'DISCAPACIDAD'
-  | 'INTERES_MORA'
-  | 'EXENCION_TASA'
-  | 'CONVENIO'
-  | 'OTROS';
+  'TERCERA_EDAD' | 'DISCAPACIDAD' | 'INTERES_MORA' | 'EXENCION_TASA' | 'CONVENIO' | 'OTROS';
 
 export interface IRubroDescuento {
   rubroId: number;
