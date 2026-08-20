@@ -23,11 +23,12 @@ import {
 import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
 import { ReadingRoutesService } from '../../../reading-routes/services/reading-routes.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { MeterTableComponent } from '../../../../../shared/components/meter-table/meter-table.component';
 
 @Component({
   selector: 'app-replace-meter-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, MeterTableComponent],
   templateUrl: './replace-meter-modal.component.html',
   styleUrl: './replace-meter-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -46,11 +47,13 @@ export class ReplaceMeterModalComponent implements OnInit {
   // Wizard state
   readonly currentStep = signal<1 | 2 | 3>(1);
 
-  // Search in Step 2
+  // Search & Pagination in Step 2
   readonly meterSearchQuery = signal<string>('');
   readonly availableMeters = signal<IMeter[]>([]);
   readonly isLoadingMeters = signal<boolean>(false);
   readonly selectedNewMeter = signal<IMeter | null>(null);
+  readonly currentPage = signal<number>(1);
+  readonly pageSize = signal<number>(5);
 
   readonly periodos = signal<{ periodoId: number; nombre?: string; estado: string }[]>([]);
   readonly isSaving = signal<boolean>(false);
@@ -92,6 +95,14 @@ export class ReplaceMeterModalComponent implements OnInit {
         m.marca.toLowerCase().includes(query) ||
         m.modelo.toLowerCase().includes(query),
     );
+  });
+
+  readonly paginatedMeters = computed(() => {
+    const list = this.filteredMeters();
+    const page = this.currentPage();
+    const size = this.pageSize();
+    const start = (page - 1) * size;
+    return list.slice(start, start + size);
   });
 
   step1Valid(): boolean {
@@ -145,6 +156,20 @@ export class ReplaceMeterModalComponent implements OnInit {
     });
   }
 
+  onSearchQueryChange(query: string): void {
+    this.meterSearchQuery.set(query);
+    this.currentPage.set(1);
+  }
+
+  onPageChange(page: number): void {
+    this.currentPage.set(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.currentPage.set(1);
+  }
+
   selectMeter(meter: IMeter): void {
     this.selectedNewMeter.set(meter);
     this.form.controls.nuevoMedidorId.setValue(String(meter.medidorId));
@@ -171,10 +196,6 @@ export class ReplaceMeterModalComponent implements OnInit {
 
     this.errorMessage.set('');
     this.currentStep.set(step);
-  }
-
-  isMeterSelected(meter: IMeter): boolean {
-    return this.form.controls.nuevoMedidorId.value === String(meter.medidorId);
   }
 
   goBack(): void {

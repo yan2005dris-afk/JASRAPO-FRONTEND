@@ -253,14 +253,14 @@
                     class="form-control shadow-none"
                     placeholder="Filtrar por serie, marca o modelo..."
                     [ngModel]="meterSearchQuery()"
-                    (ngModelChange)="meterSearchQuery.set($event)"
+                    (ngModelChange)="onSearchQueryChange($event)"
                     [ngModelOptions]="{ standalone: true }"
                   />
                   @if (meterSearchQuery()) {
                     <button
                       type="button"
                       class="btn btn-outline-secondary"
-                      (click)="meterSearchQuery.set('')"
+                      (click)="onSearchQueryChange('')"
                     >
                       <i class="bi bi-x"></i>
                     </button>
@@ -268,69 +268,22 @@
                 </div>
               </div>
 
-              <!-- Tabla de selección de medidores -->
-              <div
-                class="table-responsive border rounded-3 overflow-hidden"
-                style="max-height: 230px"
-              >
-                <table class="table table-hover align-middle mb-0 extra-small">
-                  <thead class="table-light text-muted">
-                    <tr>
-                      <th class="ps-3" style="width: 40px"></th>
-                      <th>Serie</th>
-                      <th>Marca / Modelo</th>
-                      <th class="text-center">Estado</th>
-                      <th class="text-end pe-3">Acción</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (m of filteredMeters(); track m.medidorId) {
-                      <tr [class.table-primary]="isMeterSelected(m)">
-                        <td class="ps-3 text-center">
-                          <input
-                            type="radio"
-                            name="selectedMeterRadio"
-                            class="form-check-input mt-0"
-                            [checked]="isMeterSelected(m)"
-                            (change)="selectMeter(m)"
-                          />
-                        </td>
-                        <td class="fw-semibold text-dark">{{ m.serie }}</td>
-                        <td>
-                          {{ m.marca }} <span class="text-muted">{{ m.modelo }}</span>
-                        </td>
-                        <td class="text-center">
-                          <span
-                            class="badge rounded-pill text-bg-success-subtle text-success border border-success-subtle px-2"
-                          >
-                            Bodega
-                          </span>
-                        </td>
-                        <td class="text-end pe-3">
-                          <button
-                            type="button"
-                            class="btn btn-xs btn-outline-primary py-0 px-2"
-                            [class.btn-primary]="isMeterSelected(m)"
-                            [class.text-white]="isMeterSelected(m)"
-                            (click)="selectMeter(m); $event.stopPropagation()"
-                          >
-                            {{ isMeterSelected(m) ? 'Seleccionado' : 'Elegir' }}
-                          </button>
-                        </td>
-                      </tr>
-                    }
-
-                    @if (filteredMeters().length === 0 && !isLoadingMeters()) {
-                      <tr>
-                        <td colspan="5" class="text-center py-4 text-muted">
-                          <i class="bi bi-inbox fs-4 d-block mb-1 opacity-50"></i>
-                          No se encontraron medidores disponibles en bodega.
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
+              <!-- Tabla de selección de medidores con paginación compartida -->
+              <app-meter-table
+                [meters]="paginatedMeters()"
+                [isLoading]="isLoadingMeters()"
+                [selectionMode]="true"
+                [selectedMeterId]="form.controls.nuevoMedidorId.value"
+                [totalItems]="filteredMeters().length"
+                [currentPage]="currentPage()"
+                [pageSize]="pageSize()"
+                [pageSizeOptions]="[5, 10, 20]"
+                [compact]="true"
+                emptyMessage="No se encontraron medidores disponibles en bodega."
+                (meterSelected)="selectMeter($event)"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)"
+              />
 
               <!-- Medidor seleccionado & Lectura Inicial -->
               <div class="card border-0 bg-primary-subtle bg-opacity-25 rounded-3 p-3">

@@ -241,4 +241,19 @@ describe('ReplaceMeterModalComponent', () => {
     expect(component.errorMessage()).toBe('El medidor ya está asignado');
     expect(component.isSaving()).toBeFalsy();
   });
+
+  it('should handle pagination and search query changes', () => {
+    component.onPageSizeChange(1);
+    expect(component.pageSize()).toBe(1);
+    expect(component.currentPage()).toBe(1);
+    expect(component.paginatedMeters().length).toBe(1);
+
+    component.onPageChange(2);
+    expect(component.currentPage()).toBe(2);
+    expect(component.paginatedMeters().length).toBe(1);
+
+    component.onSearchQueryChange('Siemens');
+    expect(component.meterSearchQuery()).toBe('Siemens');
+    expect(component.currentPage()).toBe(1);
+  });
 });
