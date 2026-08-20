@@ -70,14 +70,12 @@ describe('MetersService', () => {
     };
 
     const mockResponse: IPaginatedMetersResponse = {
-      data: [],
-      meta: {
+      datos: [],
+      paginacion: {
         total: 0,
-        page: 1,
-        limit: 10,
-        ultimaPagina: 1,
         paginaActual: 1,
         porPagina: 10,
+        ultimaPagina: 1,
         anterior: null,
         siguiente: null,
       },

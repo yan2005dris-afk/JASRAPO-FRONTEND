@@ -9,11 +9,13 @@ import { test, expect } from '@playwright/test';
  * that uses the persisted session.
  */
 test.describe('Sesión autenticada (storageState)', () => {
-  test('Abre el dashboard sin volver a loguearse',
+  test(
+    'Abre el dashboard sin volver a loguearse',
     { tag: ['@high', '@auth', '@AUTH-E2E-003'] },
     async ({ page }) => {
       await page.goto('/app/dashboard', { waitUntil: 'domcontentloaded' });
       await expect(page).toHaveURL(/\/app\/dashboard/, { timeout: 15000 });
       await expect(page.locator('header, app-header, .navbar').first()).toBeVisible();
-    });
+    },
+  );
 });

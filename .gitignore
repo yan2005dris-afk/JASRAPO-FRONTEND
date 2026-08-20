@@ -63,3 +63,6 @@ e2e/.auth/
 .codegraph/
 .impeccable/
 .ignore
+/.github/skills/impeccable
+/.github/agents
+/.github/hooks

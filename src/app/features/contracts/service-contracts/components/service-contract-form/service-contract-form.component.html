@@ -30,39 +30,111 @@
         <div class="row g-3">
           <!-- Cliente -->
           <div class="col-md-6">
-            <button type="button" class="option-box w-100" (click)="openClientPicker()">
-              <i class="bi bi-search"></i>
-              <span class="fw-semibold">Seleccionar Cliente</span>
-              <span class="text-muted x-small">Explorar el listado de clientes activos</span>
-            </button>
-
             @if (selectedClient(); as client) {
-              <div class="selected-chip mt-2">
-                <i class="bi bi-person-check-fill text-primary"></i>
-                <span class="fw-medium text-dark">{{ clientName() }}</span>
-                <span class="text-muted small">({{ client.identificacion }})</span>
+              <div class="selected-card">
+                <div class="selected-card-header">
+                  <div class="selected-avatar">
+                    <i class="bi bi-person-fill"></i>
+                  </div>
+                  <div class="selected-card-title">
+                    <h6 class="fw-bold mb-0 text-dark">{{ clientName() }}</h6>
+                    <span class="text-muted small">C.I. {{ client.identificacion }}</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary rounded-pill selected-change-btn"
+                    (click)="openClientPicker()"
+                  >
+                    <i class="bi bi-arrow-repeat"></i> Cambiar
+                  </button>
+                </div>
+                <div class="row g-2 mt-2">
+                  <div class="col-sm-6 detail-item">
+                    <i class="bi bi-telephone"></i>
+                    <div>
+                      <small class="text-muted d-block">Teléfono</small>
+                      <span class="text-dark">{{ client.telefono || '—' }}</span>
+                    </div>
+                  </div>
+                  <div class="col-sm-6 detail-item">
+                    <i class="bi bi-envelope"></i>
+                    <div>
+                      <small class="text-muted d-block">Correo</small>
+                      <span class="text-dark">{{ client.email || '—' }}</span>
+                    </div>
+                  </div>
+                  <div class="col-12 detail-item">
+                    <i class="bi bi-geo-alt"></i>
+                    <div>
+                      <small class="text-muted d-block">Dirección</small>
+                      <span class="text-dark">{{ client.direccionDomicilio || '—' }}</span>
+                    </div>
+                  </div>
+                </div>
+                @if (client.aplicaTerceraEdad || client.aplicaDiscapacidad) {
+                  <div class="d-flex gap-1 mt-2">
+                    @if (client.aplicaTerceraEdad) {
+                      <span class="badge text-bg-info">Tercera edad</span>
+                    }
+                    @if (client.aplicaDiscapacidad) {
+                      <span class="badge text-bg-info">Discapacidad</span>
+                    }
+                  </div>
+                }
               </div>
-            } @else if (submitted()) {
-              <span class="text-danger x-small d-block mt-1">Seleccione un cliente.</span>
+            } @else {
+              <button type="button" class="option-box w-100" (click)="openClientPicker()">
+                <i class="bi bi-search"></i>
+                <span class="fw-semibold">Seleccionar Cliente</span>
+                <span class="text-muted x-small">Explorar el listado de clientes activos</span>
+              </button>
+
+              @if (submitted()) {
+                <span class="text-danger x-small d-block mt-1">Seleccione un cliente.</span>
+              }
             }
           </div>
 
           <!-- Comunidad -->
           <div class="col-md-6">
-            <button type="button" class="option-box w-100" (click)="openComunidadPicker()">
-              <i class="bi bi-geo-alt"></i>
-              <span class="fw-semibold">Seleccionar Comunidad</span>
-              <span class="text-muted x-small">Elegir la comunidad del listado</span>
-            </button>
-
             @if (selectedComunidad(); as comunidad) {
-              <div class="selected-chip mt-2">
-                <i class="bi bi-check-circle-fill text-primary"></i>
-                <span class="fw-medium text-dark">{{ comunidad.nombre }}</span>
-                <span class="text-muted small">({{ comunidad.codigo }})</span>
+              <div class="selected-card">
+                <div class="selected-card-header">
+                  <div class="selected-avatar">
+                    <i class="bi bi-geo-alt-fill"></i>
+                  </div>
+                  <div class="selected-card-title">
+                    <h6 class="fw-bold mb-0 text-dark">{{ comunidad.nombre }}</h6>
+                    <span class="text-muted small">Código {{ comunidad.codigo }}</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary rounded-pill selected-change-btn"
+                    (click)="openComunidadPicker()"
+                  >
+                    <i class="bi bi-arrow-repeat"></i> Cambiar
+                  </button>
+                </div>
+                <div class="row g-2 mt-2">
+                  <div class="col-12 detail-item">
+                    <i class="bi bi-shield-check"></i>
+                    <div>
+                      <small class="text-muted d-block">Tasa de seguridad</small>
+                      <span class="text-dark">{{ comunidad.porcentajeTasaSeguridad }}%</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            } @else if (submitted()) {
-              <span class="text-danger x-small d-block mt-1">Seleccione una comunidad.</span>
+            } @else {
+              <button type="button" class="option-box w-100" (click)="openComunidadPicker()">
+                <i class="bi bi-geo-alt"></i>
+                <span class="fw-semibold">Seleccionar Comunidad</span>
+                <span class="text-muted x-small">Elegir la comunidad del listado</span>
+              </button>
+
+              @if (submitted()) {
+                <span class="text-danger x-small d-block mt-1">Seleccione una comunidad.</span>
+              }
             }
           </div>
         </div>
@@ -82,23 +154,53 @@
               </div>
             </div>
 
-            <button type="button" class="option-box w-100" (click)="openMeterPicker()">
-              <i class="bi bi-search"></i>
-              <span class="fw-semibold">Seleccionar Medidor</span>
-              <span class="text-muted x-small">Explorar el catálogo de medidores activos</span>
-            </button>
-
             @if (selectedMeter(); as meter) {
-              <div class="selected-chip mt-2">
-                <i class="bi bi-check-circle-fill text-primary"></i>
-                <span class="fw-medium text-dark">{{ meter.serie }}</span>
-                <span class="text-muted small">({{ meter.marca }} {{ meter.modelo }})</span>
-                <span class="badge rounded-pill text-bg-success ms-1">{{
-                  meterStatusLabel()
-                }}</span>
+              <div class="selected-card">
+                <div class="selected-card-header">
+                  <div class="selected-avatar">
+                    <i class="bi bi-speedometer2"></i>
+                  </div>
+                  <div class="selected-card-title">
+                    <h6 class="fw-bold mb-0 text-dark">Serie {{ meter.serie }}</h6>
+                    <span class="text-muted small">{{ meter.marca }} {{ meter.modelo }}</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary rounded-pill selected-change-btn"
+                    (click)="openMeterPicker()"
+                  >
+                    <i class="bi bi-arrow-repeat"></i> Cambiar
+                  </button>
+                </div>
+                <div class="row g-2 mt-2">
+                  <div class="col-sm-6 detail-item">
+                    <i class="bi bi-info-circle"></i>
+                    <div>
+                      <small class="text-muted d-block">Estado</small>
+                      <span class="badge rounded-pill text-bg-success">{{
+                        meterStatusLabel()
+                      }}</span>
+                    </div>
+                  </div>
+                  <div class="col-sm-6 detail-item">
+                    <i class="bi bi-calendar-check"></i>
+                    <div>
+                      <small class="text-muted d-block">Fecha de instalación</small>
+                      <span class="text-dark">{{ meterInstalacionLabel() }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            } @else if (submitted()) {
-              <span class="text-danger x-small d-block mt-1">Seleccione un medidor.</span>
+            } @else {
+              <button type="button" class="option-box w-100" (click)="openMeterPicker()">
+                <i class="bi bi-search"></i>
+                <span class="fw-semibold">Seleccionar Medidor</span>
+                <span class="text-muted x-small">Explorar el catálogo de medidores activos</span>
+              </button>
+
+              @if (submitted()) {
+                <span class="text-danger x-small d-block mt-1">Seleccione un medidor.</span>
+              }
             }
           </div>
         </div>
@@ -116,22 +218,60 @@
               </div>
             </div>
 
-            <button type="button" class="option-box w-100" (click)="openTariffPicker()">
-              <i class="bi bi-search"></i>
-              <span class="fw-semibold">Seleccionar Tarifa</span>
-              <span class="text-muted x-small">Explorar el plan de tarifas disponible</span>
-            </button>
-
             @if (selectedTariff(); as tariff) {
-              <div class="selected-chip mt-2">
-                <i class="bi bi-info-circle text-primary"></i>
-                <span class="fw-medium text-dark">{{ tariff.nombre }}</span>
-                <span class="text-muted small">
-                  (Costo fijo ${{ tariff.valorBase }} + ${{ tariff.valorExcedenteM3 }} por m³)
-                </span>
+              <div class="selected-card">
+                <div class="selected-card-header">
+                  <div class="selected-avatar">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                  </div>
+                  <div class="selected-card-title">
+                    <h6 class="fw-bold mb-0 text-dark">{{ tariff.nombre }}</h6>
+                    <span class="text-muted small">{{
+                      tariff.descripcion || 'Plan de tarifa'
+                    }}</span>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary rounded-pill selected-change-btn"
+                    (click)="openTariffPicker()"
+                  >
+                    <i class="bi bi-arrow-repeat"></i> Cambiar
+                  </button>
+                </div>
+                <div class="row g-2 mt-2">
+                  <div class="col-sm-6 detail-item">
+                    <i class="bi bi-cash-coin"></i>
+                    <div>
+                      <small class="text-muted d-block">Costo fijo</small>
+                      <span class="text-dark">${{ tariff.valorBase }}</span>
+                    </div>
+                  </div>
+                  <div class="col-sm-6 detail-item">
+                    <i class="bi bi-graph-up"></i>
+                    <div>
+                      <small class="text-muted d-block">Excedente por m³</small>
+                      <span class="text-dark">${{ tariff.valorExcedenteM3 }}</span>
+                    </div>
+                  </div>
+                  <div class="col-12 detail-item">
+                    <i class="bi bi-droplet"></i>
+                    <div>
+                      <small class="text-muted d-block">Consumo mínimo mensual</small>
+                      <span class="text-dark">{{ tariff.consumoMinimoMensual }} m³</span>
+                    </div>
+                  </div>
+                </div>
               </div>
-            } @else if (submitted()) {
-              <span class="text-danger x-small d-block mt-2">Seleccione una tarifa.</span>
+            } @else {
+              <button type="button" class="option-box w-100" (click)="openTariffPicker()">
+                <i class="bi bi-search"></i>
+                <span class="fw-semibold">Seleccionar Tarifa</span>
+                <span class="text-muted x-small">Explorar el plan de tarifas disponible</span>
+              </button>
+
+              @if (submitted()) {
+                <span class="text-danger x-small d-block mt-2">Seleccione una tarifa.</span>
+              }
             }
           </div>
         </div>

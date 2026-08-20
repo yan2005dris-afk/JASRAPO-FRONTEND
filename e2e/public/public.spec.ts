@@ -2,18 +2,21 @@ import { test, expect } from '@playwright/test';
 import { ROUTES } from '../helpers';
 
 test.describe('Acceso público — Consulta de planilla', () => {
-  test('La consulta pública carga sin autenticación',
+  test(
+    'La consulta pública carga sin autenticación',
     { tag: ['@high', '@public', '@PUBLIC-E2E-001'] },
     async ({ page }) => {
       await page.goto(ROUTES.billInquiry, { waitUntil: 'domcontentloaded' });
       await expect(page).toHaveURL(/\/consulta-planilla/);
       // La página debe mostrar un formulario de consulta (cédula/RUC o similar)
       await expect(page.locator('form, input').first()).toBeVisible({ timeout: 15000 });
-    });
+    },
+  );
 });
 
 test.describe('Guard de autenticación', () => {
-  test('Redirige a /login cuando se intenta acceder a /app sin sesión',
+  test(
+    'Redirige a /login cuando se intenta acceder a /app sin sesión',
     { tag: ['@critical', '@auth', '@AUTH-E2E-001'] },
     async ({ page }) => {
       // Limpiar storage para garantizar sesión ausente
@@ -23,11 +26,13 @@ test.describe('Guard de autenticación', () => {
 
       // authGuard debe redirigir al login
       await expect(page).toHaveURL(/\/login/, { timeout: 15000 });
-    });
+    },
+  );
 });
 
 test.describe('Sesión — Logout', () => {
-  test('Logout desde el header vuelve al login',
+  test(
+    'Logout desde el header vuelve al login',
     { tag: ['@high', '@auth', '@AUTH-E2E-002'] },
     async ({ page }) => {
       // Usa su propia sesión para no revocar el storageState compartido.
@@ -42,5 +47,6 @@ test.describe('Sesión — Logout', () => {
       await page.getByRole('button', { name: /Cerrar Sesión/i }).click();
 
       await expect(page).toHaveURL(/\/login/, { timeout: 15000 });
-    });
+    },
+  );
 });
