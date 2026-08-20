@@ -21,11 +21,12 @@ import type { IContract } from '../../../service-contracts/interfaces/icontract.
 import { ReadingsService } from '../../../readings/services/readings.service';
 import type { IReading } from '../../../readings/interfaces/ireading.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
 
 @Component({
   selector: 'app-anomaly-form-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LocalDatePipe],
   templateUrl: './anomaly-form-modal.component.html',
   styleUrl: './anomaly-form-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
