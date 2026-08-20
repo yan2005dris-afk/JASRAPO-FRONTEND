@@ -195,18 +195,37 @@
                         <ul
                           class="dropdown-menu dropdown-menu-end shadow-sm border-0"
                           [class.show]="openDropdownId() === tariff.categoriaTarifaId"
-                          style="min-width: 130px"
+                          style="min-width: 170px"
                         >
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2 text-primary"
+                              (click)="openCreateRubroForTariff(tariff)"
+                            >
+                              <i class="bi bi-plus-circle-fill" style="font-size: 0.8rem"></i>
+                              Crear Rubro
+                            </button>
+                          </li>
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2 text-dark"
+                              (click)="openAssignRubroModal(tariff)"
+                            >
+                              <i class="bi bi-link-45deg" style="font-size: 0.9rem"></i>
+                              Asignar Existente
+                            </button>
+                          </li>
+                          <li><hr class="dropdown-divider my-1" /></li>
                           <li>
                             <button
                               class="dropdown-item d-flex align-items-center gap-2"
                               (click)="openEditModal(tariff)"
                             >
                               <i
-                                class="bi bi-pencil-fill text-primary"
+                                class="bi bi-pencil-fill text-secondary"
                                 style="font-size: 0.8rem"
                               ></i>
-                              Editar
+                              Editar Tarifa
                             </button>
                           </li>
                           <li><hr class="dropdown-divider my-1" /></li>
@@ -230,20 +249,54 @@
                   <tr class="expanded-rubros-row bg-light">
                     <td colspan="6" class="p-0">
                       <div class="p-3 ps-5 border-start border-3 border-primary bg-light">
-                        <div class="d-flex align-items-center justify-content-between mb-2">
+                        <div class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2">
                           <h6 class="mb-0 fw-bold text-secondary d-flex align-items-center gap-2">
                             <i class="bi bi-tags text-primary"></i>
                             Rubros asignados a "{{ tariff.nombre }}"
+                            <span class="badge bg-secondary-subtle text-secondary small ms-1">
+                              {{ tariff.rubros?.length ?? 0 }}
+                            </span>
                           </h6>
-                          <small class="text-muted">
-                            Total: {{ tariff.rubros?.length ?? 0 }} rubros
-                          </small>
+                          @if (!selectionMode()) {
+                            <div class="d-flex align-items-center gap-2">
+                              <button
+                                type="button"
+                                class="btn btn-xs btn-outline-primary rounded-pill px-2 py-1 d-flex align-items-center gap-1 small"
+                                style="font-size: 0.78rem"
+                                (click)="openCreateRubroForTariff(tariff)"
+                              >
+                                <i class="bi bi-plus-lg"></i>
+                                Nuevo Rubro
+                              </button>
+                              <button
+                                type="button"
+                                class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 d-flex align-items-center gap-1 small"
+                                style="font-size: 0.78rem"
+                                (click)="openAssignRubroModal(tariff)"
+                              >
+                                <i class="bi bi-link-45deg"></i>
+                                Asignar
+                              </button>
+                            </div>
+                          }
                         </div>
 
                         @if (!tariff.rubros || tariff.rubros.length === 0) {
-                          <div class="alert alert-light border mb-0 py-2 px-3 text-muted small">
-                            <i class="bi bi-info-circle me-1"></i>
-                            Esta categoría no tiene rubros asociados todavía.
+                          <div class="alert alert-light border mb-0 py-3 px-3 text-muted small d-flex align-items-center justify-content-between">
+                            <div>
+                              <i class="bi bi-info-circle me-1 text-primary"></i>
+                              Esta categoría no tiene rubros asociados todavía.
+                            </div>
+                            @if (!selectionMode()) {
+                              <button
+                                type="button"
+                                class="btn btn-sm btn-primary rounded-pill px-3 py-1"
+                                (click)="openCreateRubroForTariff(tariff)"
+                              >
+                                <i class="bi bi-plus-lg me-1"></i>
+                                Crear Primer Rubro
+                              </button>
+                            }
                           </div>
                         } @else {
                           <div class="table-responsive bg-white rounded-3 border shadow-sm">
@@ -252,8 +305,12 @@
                                 <tr class="text-secondary small">
                                   <th class="ps-3">Nombre del Rubro</th>
                                   <th>Descripción</th>
+                                  <th>Código SRI</th>
                                   <th>Tipo</th>
-                                  <th class="text-end pe-3">Precio Unitario</th>
+                                  <th class="text-end">Precio Unitario</th>
+                                  @if (!selectionMode()) {
+                                    <th class="text-center pe-3" style="width: 60px">Acción</th>
+                                  }
                                 </tr>
                               </thead>
                               <tbody>
@@ -266,13 +323,30 @@
                                       {{ rubro.descripcion || '—' }}
                                     </td>
                                     <td>
+                                      <span class="badge bg-light text-muted border font-monospace">
+                                        {{ rubro.codigoSri || '—' }}
+                                      </span>
+                                    </td>
+                                    <td>
                                       <span class="badge bg-secondary-subtle text-secondary small">
                                         {{ rubro.tipoRubro }}
                                       </span>
                                     </td>
-                                    <td class="text-end pe-3 font-monospace fw-bold text-primary">
+                                    <td class="text-end font-monospace fw-bold text-primary">
                                       ${{ rubro.precioUnitario | number: '1.2-2' }}
                                     </td>
+                                    @if (!selectionMode()) {
+                                      <td class="text-center pe-3">
+                                        <button
+                                          type="button"
+                                          class="btn btn-link btn-sm text-danger p-0 shadow-none"
+                                          title="Desvincular rubro de esta categoría"
+                                          (click)="unassignRubroFromTariff(rubro, tariff)"
+                                        >
+                                          <i class="bi bi-x-circle fs-6"></i>
+                                        </button>
+                                      </td>
+                                    }
                                   </tr>
                                 }
                               </tbody>
@@ -307,7 +381,7 @@
   </div>
 </div>
 
-<!-- Modal -->
+<!-- Modal Tarifa Form -->
 @if (isModalOpen()) {
   <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5)">
     <div class="modal-dialog modal-dialog-centered">
@@ -321,3 +395,121 @@
     </div>
   </div>
 }
+
+<!-- Modal Reutilizado: Crear Rubro para Tarifa -->
+@if (isRubroModalOpen()) {
+  <app-rubro-form-modal
+    [initialCategoriaTarifaId]="targetTariffForRubro()?.categoriaTarifaId ?? null"
+    (saved)="onRubroSaved()"
+    (closed)="closeRubroModals()"
+  ></app-rubro-form-modal>
+}
+
+<!-- Modal: Asignar Rubro Existente a Tarifa -->
+@if (isAssignRubroModalOpen()) {
+  <div
+    class="modal-backdrop fade show"
+    role="button"
+    tabindex="0"
+    aria-label="Cerrar modal"
+    (click)="closeRubroModals()"
+    (keydown.enter)="closeRubroModals()"
+  ></div>
+  <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+    <div
+      class="modal-dialog modal-dialog-centered"
+      tabindex="-1"
+      (click)="$event.stopPropagation()"
+      (keydown.enter)="$event.stopPropagation()"
+    >
+      <div class="modal-content border-0 shadow-lg rounded-4">
+        <div class="modal-header border-bottom px-4 py-3 bg-light rounded-top-4">
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-link-45deg text-primary fs-4"></i>
+            <h5 class="modal-title fw-bold text-dark mb-0">
+              Asignar Rubro a "{{ targetTariffForRubro()?.nombre }}"
+            </h5>
+          </div>
+          <button
+            type="button"
+            class="btn-close"
+            aria-label="Close"
+            (click)="closeRubroModals()"
+          ></button>
+        </div>
+
+        <div class="modal-body px-4 py-4">
+          <p class="text-muted small mb-3">
+            Seleccioná un rubro existente para vincularlo directamente a esta categoría tarifaria.
+          </p>
+
+          @if (isLoadingUnassignedRubros()) {
+            <div class="text-center py-4">
+              <div class="spinner-border text-primary spinner-border-sm" role="status"></div>
+              <span class="ms-2 small text-muted">Cargando rubros disponibles...</span>
+            </div>
+          } @else if (unassignedRubros().length === 0) {
+            <div class="alert alert-warning small mb-0">
+              <i class="bi bi-exclamation-triangle me-1"></i>
+              No hay rubros adicionales disponibles para asignar.
+              <button
+                type="button"
+                class="btn btn-link btn-sm p-0 d-block mt-2 text-primary"
+                (click)="openCreateRubroForTariff(targetTariffForRubro()!)"
+              >
+                ¿Desea crear un nuevo rubro ahora?
+              </button>
+            </div>
+          } @else {
+            <div class="mb-3">
+              <label for="rubroSelect" class="form-label fw-semibold small text-dark">
+                Rubro a Asignar <span class="text-danger">*</span>
+              </label>
+              <select
+                id="rubroSelect"
+                class="form-select"
+                [ngModel]="selectedRubroToAssign()"
+                (ngModelChange)="selectedRubroToAssign.set($event)"
+              >
+                <option [ngValue]="null" disabled>-- Seleccione un rubro --</option>
+                @for (r of unassignedRubros(); track r.rubroId) {
+                  <option [ngValue]="r.rubroId">
+                    {{ r.nombre }} — ${{ r.precioUnitario | number: '1.2-2' }} ({{ r.tipoRubro }})
+                  </option>
+                }
+              </select>
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer border-top px-4 py-3 bg-light rounded-bottom-4 d-flex justify-content-between">
+          <button
+            type="button"
+            class="btn btn-link text-primary btn-sm p-0 text-decoration-none"
+            (click)="openCreateRubroForTariff(targetTariffForRubro()!)"
+          >
+            <i class="bi bi-plus-circle me-1"></i> Crear nuevo en vez de asignar
+          </button>
+          <div class="d-flex gap-2">
+            <button
+              type="button"
+              class="btn btn-outline-secondary rounded-pill px-3"
+              (click)="closeRubroModals()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary rounded-pill px-4"
+              [disabled]="!selectedRubroToAssign()"
+              (click)="confirmAssignRubro()"
+            >
+              Asignar Rubro
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+

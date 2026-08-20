@@ -33,6 +33,7 @@ export class RubroFormModalComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly rubro = input<IRubro | null>(null);
+  readonly initialCategoriaTarifaId = input<number | null>(null);
   readonly saved = output<void>();
   readonly closed = output<void>();
 
@@ -42,6 +43,7 @@ export class RubroFormModalComponent implements OnInit {
   precioUnitario = 0;
   tipoRubro: TipoRubro = 'FIJO';
   tarifaImpuestoId: number | null = null;
+  categoriaTarifaId: number | null = null;
   activo = true;
   esAutomatico = false;
   isLoading = false;
@@ -66,8 +68,11 @@ export class RubroFormModalComponent implements OnInit {
       this.precioUnitario = Number(r.precioUnitario);
       this.tipoRubro = r.tipoRubro;
       this.tarifaImpuestoId = r.tarifaImpuestoId;
+      this.categoriaTarifaId = r.categoriaTarifaId ?? null;
       this.activo = r.activo;
       this.esAutomatico = r.esAutomatico ?? false;
+    } else {
+      this.categoriaTarifaId = this.initialCategoriaTarifaId();
     }
   }
 
@@ -113,6 +118,7 @@ export class RubroFormModalComponent implements OnInit {
         precioUnitario: Number(this.precioUnitario),
         tipoRubro: this.tipoRubro,
         tarifaImpuestoId: Number(this.tarifaImpuestoId),
+        categoriaTarifaId: this.categoriaTarifaId,
         activo: this.activo,
         esAutomatico: this.esAutomatico,
       };
@@ -138,6 +144,7 @@ export class RubroFormModalComponent implements OnInit {
         precioUnitario: Number(this.precioUnitario),
         tipoRubro: this.tipoRubro,
         tarifaImpuestoId: Number(this.tarifaImpuestoId),
+        categoriaTarifaId: this.categoriaTarifaId,
         activo: this.activo,
         esAutomatico: false,
       };

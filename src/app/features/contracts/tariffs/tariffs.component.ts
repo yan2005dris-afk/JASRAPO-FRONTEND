@@ -15,13 +15,22 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TariffsService } from './services/tariffs.service';
 import { ITariffCategory } from './interfaces/itariff.interface';
 import { TariffsFormComponent } from './components/tariffs-form/tariffs-form.component';
+import { RubroFormModalComponent } from '../../billing/rubros/components/rubro-form-modal/rubro-form-modal.component';
+import { RubrosService } from '../../billing/rubros/services/rubros.service';
+import { IRubro } from '../../billing/rubros/interfaces/irubro.interface';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-tariffs',
-  imports: [CommonModule, FormsModule, TariffsFormComponent, PaginationComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    TariffsFormComponent,
+    RubroFormModalComponent,
+    PaginationComponent,
+  ],
   templateUrl: './tariffs.component.html',
   styleUrl: './tariffs.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,6 +40,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 })
 export class TariffsComponent implements OnInit {
   private readonly tariffsService = inject(TariffsService);
+  private readonly rubrosService = inject(RubrosService);
   private readonly toast = inject(ToastService);
   private readonly confirmDialog = inject(ConfirmDialogService);
 
@@ -52,6 +62,14 @@ export class TariffsComponent implements OnInit {
   readonly selectedTariff = signal<ITariffCategory | null>(null);
   readonly openDropdownId = signal<number | null>(null);
   readonly expandedTariffs = signal<Set<number>>(new Set());
+
+  // Modal para Crear / Asignar Rubro a la Tarifa
+  readonly isRubroModalOpen = signal(false);
+  readonly targetTariffForRubro = signal<ITariffCategory | null>(null);
+  readonly isAssignRubroModalOpen = signal(false);
+  readonly unassignedRubros = signal<IRubro[]>([]);
+  readonly isLoadingUnassignedRubros = signal(false);
+  readonly selectedRubroToAssign = signal<number | null>(null);
 
   toggleExpansion(id: number): void {
     this.expandedTariffs.update((set) => {
@@ -190,6 +208,96 @@ export class TariffsComponent implements OnInit {
 
   onFormSubmitted(): void {
     this.closeModal();
+    this.loadTariffs();
+  }
+
+  // Métodos de gestión de Rubros por Tarifa
+  openCreateRubroForTariff(tariff: ITariffCategory): void {
+    this.closeDropdowns();
+    this.targetTariffForRubro.set(tariff);
+    this.isAssignRubroModalOpen.set(false);
+    this.isRubroModalOpen.set(true);
+  }
+
+  openAssignRubroModal(tariff: ITariffCategory): void {
+    this.closeDropdowns();
+    this.targetTariffForRubro.set(tariff);
+    this.selectedRubroToAssign.set(null);
+    this.isLoadingUnassignedRubros.set(true);
+    this.isAssignRubroModalOpen.set(true);
+
+    this.rubrosService.getRubros({ limit: 100 }).subscribe({
+      next: (res) => {
+        // Filtrar rubros que no estén ya asociados a esta categoría
+        const existingIds = new Set((tariff.rubros ?? []).map((r) => r.rubroId));
+        const available = res.data.filter((r) => !existingIds.has(r.rubroId));
+        this.unassignedRubros.set(available);
+        this.isLoadingUnassignedRubros.set(false);
+      },
+      error: () => {
+        this.toast.error('Error al cargar rubros disponibles', 'Error');
+        this.isLoadingUnassignedRubros.set(false);
+      },
+    });
+  }
+
+  confirmAssignRubro(): void {
+    const rubroId = this.selectedRubroToAssign();
+    const tariff = this.targetTariffForRubro();
+    if (!rubroId || !tariff || tariff.categoriaTarifaId === undefined) return;
+
+    this.rubrosService
+      .updateRubro(rubroId, { categoriaTarifaId: tariff.categoriaTarifaId })
+      .subscribe({
+        next: () => {
+          this.toast.success('Rubro asignado a la tarifa exitosamente', 'Éxito');
+          this.closeRubroModals();
+          // Asegurar que la categoría quede expandida para visualizar el nuevo rubro
+          this.expandedTariffs.update((set) => new Set([...set, tariff.categoriaTarifaId!]));
+          this.loadTariffs();
+        },
+        error: (err: HttpErrorResponse) => {
+          this.toast.error(err.error?.message ?? 'No se pudo asignar el rubro', 'Error');
+        },
+      });
+  }
+
+  unassignRubroFromTariff(rubro: IRubro, tariff: ITariffCategory): void {
+    this.confirmDialog
+      .confirm({
+        title: 'Desvincular Rubro',
+        message: `¿Desea desvincular el rubro "${rubro.nombre}" de la tarifa "${tariff.nombre}"?`,
+        confirmText: 'Desvincular',
+        isDanger: true,
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.rubrosService.updateRubro(rubro.rubroId, { categoriaTarifaId: null }).subscribe({
+            next: () => {
+              this.toast.success('Rubro desvinculado de la tarifa', 'Éxito');
+              this.loadTariffs();
+            },
+            error: (err: HttpErrorResponse) => {
+              this.toast.error(err.error?.message ?? 'No se pudo desvincular el rubro', 'Error');
+            },
+          });
+        }
+      });
+  }
+
+  closeRubroModals(): void {
+    this.isRubroModalOpen.set(false);
+    this.isAssignRubroModalOpen.set(false);
+    this.targetTariffForRubro.set(null);
+    this.selectedRubroToAssign.set(null);
+  }
+
+  onRubroSaved(): void {
+    const tariffId = this.targetTariffForRubro()?.categoriaTarifaId;
+    if (tariffId !== undefined) {
+      this.expandedTariffs.update((set) => new Set([...set, tariffId]));
+    }
+    this.closeRubroModals();
     this.loadTariffs();
   }
 }
