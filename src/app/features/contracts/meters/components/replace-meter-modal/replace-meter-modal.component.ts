@@ -185,8 +185,11 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
     const finalSaliente = Number(this.form.controls.lecturaFinalSaliente.value);
     const motivo = this.form.controls.motivo.value;
     const detalle = this.form.controls.detalleMotivo.value;
+    const resp = this.form.controls.responsabilidadDano.value;
+
     if (finalSaliente < this.baseReading()) return false;
     if (motivo === 'OTRO' && !detalle?.trim()) return false;
+    if (motivo === 'DANO' && (!resp || resp === 'NO_APLICA')) return false;
     return !!motivo;
   }
 
@@ -282,6 +285,17 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
   }
 
   private setupReactiveValidators(): void {
+    this.form.controls.motivo.valueChanges.subscribe((m) => {
+      if (m === 'DANO') {
+        this.form.controls.responsabilidadDano.setValue('JUNTA');
+        this.form.controls.responsabilidadDano.setValidators([Validators.required]);
+      } else {
+        this.form.controls.responsabilidadDano.setValue('NO_APLICA');
+        this.form.controls.responsabilidadDano.clearValidators();
+      }
+      this.form.controls.responsabilidadDano.updateValueAndValidity();
+    });
+
     this.form.controls.tratamientoSaliente.valueChanges.subscribe((t) => {
       if (t === 'COBRO_PARCIAL') {
         this.form.controls.porcentajeCobro.setValidators([

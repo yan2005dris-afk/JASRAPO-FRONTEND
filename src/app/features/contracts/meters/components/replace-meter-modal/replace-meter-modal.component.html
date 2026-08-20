@@ -204,7 +204,7 @@
                 </h6>
 
                 <div class="row g-3">
-                  <div class="col-md-6">
+                  <div [class.col-md-6]="form.controls.motivo.value === 'DANO'" [class.col-md-12]="form.controls.motivo.value !== 'DANO'">
                     <label for="motivo" class="form-label fw-semibold extra-small text-dark mb-1">
                       Motivo del Reemplazo <span class="text-danger">*</span>
                     </label>
@@ -222,25 +222,26 @@
                     </select>
                   </div>
 
-                  <div class="col-md-6">
-                    <label
-                      for="responsabilidadDano"
-                      class="form-label fw-semibold extra-small text-dark mb-1"
-                    >
-                      Responsabilidad del Daño
-                    </label>
-                    <select
-                      id="responsabilidadDano"
-                      class="form-select form-select-sm shadow-none"
-                      formControlName="responsabilidadDano"
-                    >
-                      <option value="NO_APLICA">No aplica</option>
-                      <option value="JUNTA">Junta / Operativa (Fuga o falla técnica)</option>
-                      <option value="USUARIO">Usuario (Golpe, manipulación indebida)</option>
-                      <option value="TERCERO">Tercero</option>
-                      <option value="NO_DETERMINADA">No determinada</option>
-                    </select>
-                  </div>
+                  @if (form.controls.motivo.value === 'DANO') {
+                    <div class="col-md-6">
+                      <label
+                        for="responsabilidadDano"
+                        class="form-label fw-semibold extra-small text-dark mb-1"
+                      >
+                        Responsabilidad del Daño <span class="text-danger">*</span>
+                      </label>
+                      <select
+                        id="responsabilidadDano"
+                        class="form-select form-select-sm shadow-none"
+                        formControlName="responsabilidadDano"
+                      >
+                        <option value="JUNTA">Junta / Operativa (Falla técnica o red)</option>
+                        <option value="USUARIO">Usuario (Golpe, manipulación indebida)</option>
+                        <option value="TERCERO">Tercero (Accidente o vandalismo)</option>
+                        <option value="NO_DETERMINADA">No determinada (Pendiente inspección)</option>
+                      </select>
+                    </div>
+                  }
 
                   @if (form.controls.motivo.value === 'OTRO') {
                     <div class="col-12">
