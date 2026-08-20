@@ -17,7 +17,7 @@ import {
   ICreatePuntoEmisionDto,
 } from '../../interfaces/icompany.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
-import { LocalDatePipe } from '../../../../../../shared/pipes/local-date.pipe';
+import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
 
 @Component({
   selector: 'app-company-detail',
