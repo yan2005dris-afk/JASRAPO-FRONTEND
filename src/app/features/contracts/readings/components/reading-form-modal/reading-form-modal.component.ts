@@ -306,6 +306,12 @@ export class ReadingFormModalComponent implements OnInit {
     const isEdit = !!this.reading();
 
     if (isEdit) {
+      const currentStatus = this.reading()?.estado;
+      const newStatus =
+        currentStatus === 'PENDIENTE' && Number(this.lecturaActual) > 0
+          ? 'POR_REVISION'
+          : currentStatus;
+
       const updateDto: IUpdateReadingDto = {
         fecha: this.fecha,
         lecturaAnterior: Number(this.lecturaAnterior),
@@ -314,6 +320,7 @@ export class ReadingFormModalComponent implements OnInit {
         descripcionAnomalia: this.descripcionAnomalia.trim() || undefined,
         lecturaInicial: this.lecturaInicial,
         periodoId: Number(this.periodoId),
+        estado: newStatus,
       };
 
       this.readingsService

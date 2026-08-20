@@ -579,58 +579,82 @@ export class ReadingRouteDetailComponent implements OnInit {
 
   onViewLecturaDetail(reading: IReadingRowItem): void {
     this.openDropdownId.set(null);
-    // Mapear IReadingRowItem → IReading para el modal de detalle
-    const detail: IReading = {
-      lecturaId: String(reading.lecturaId),
-      fecha: (reading.fecha as string | Date) ?? new Date().toISOString(),
-      lecturaAnterior: reading.lecturaAnterior ?? 0,
-      lecturaActual: reading.lecturaActual ?? 0,
-      consumoCalculado: reading.consumoCalculado ?? 0,
-      contratoId: String(reading.contratoId ?? ''),
-      descripcionAnomalia: null,
-      fechaValidacion: null,
-      fotoUrl: null,
-      isValidada: false,
-      lecturaInicial: false,
-      periodoId: 0,
-      tieneAnomalia: reading.tieneAnomalia ?? false,
-      estado: reading.estado,
-      contrato: reading.clienteNombre
-        ? {
-            contratoId: String(reading.contratoId ?? ''),
-            numeroGuia: reading.guia ?? '',
-            direccionSuministro: reading.direccion ?? '',
-            estado: '',
-            cliente: { clienteId: '', nombres: reading.clienteNombre ?? '', apellidos: '', identificacion: '' },
-            sector: reading.sector ? { nombre: reading.sector } : null,
-          }
-        : null,
-      medidor: reading.medidorSerie
-        ? { medidorId: '', serie: reading.medidorSerie, marca: '', modelo: '' }
-        : null,
-      periodoRel: null,
-    };
-    this.selectedReadingForDetail.set(detail);
+    this.readingsService.getReadingById(String(reading.lecturaId)).subscribe({
+      next: (full) => {
+        this.selectedReadingForDetail.set(full);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        // Fallback básico con los datos de la fila
+        const detail: IReading = {
+          lecturaId: String(reading.lecturaId),
+          fecha: (reading.fecha as string | Date) ?? new Date().toISOString(),
+          lecturaAnterior: reading.lecturaAnterior ?? 0,
+          lecturaActual: reading.lecturaActual ?? 0,
+          consumoCalculado: reading.consumoCalculado ?? 0,
+          contratoId: String(reading.contratoId ?? ''),
+          descripcionAnomalia: null,
+          fechaValidacion: null,
+          fotoUrl: null,
+          isValidada: false,
+          lecturaInicial: false,
+          periodoId: 0,
+          tieneAnomalia: reading.tieneAnomalia ?? false,
+          estado: reading.estado,
+          contrato: reading.clienteNombre
+            ? {
+                contratoId: String(reading.contratoId ?? ''),
+                numeroGuia: reading.guia ?? '',
+                direccionSuministro: reading.direccion ?? '',
+                estado: '',
+                cliente: { clienteId: '', nombres: reading.clienteNombre ?? '', apellidos: '', identificacion: '' },
+                sector: reading.sector ? { nombre: reading.sector } : null,
+              }
+            : null,
+          medidor: reading.medidorSerie
+            ? { medidorId: '', serie: reading.medidorSerie, marca: '', modelo: '' }
+            : null,
+          periodoRel: null,
+        };
+        this.selectedReadingForDetail.set(detail);
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   onEditLectura(reading: ReadingSource): void {
     this.openDropdownId.set(null);
     this.selectedReadingForDetail.set(null);
-    const row = reading as IReadingRowItem;
-    const full = reading as IReading;
-    const medidorSerie = row.medidorSerie ?? full.medidor?.serie;
     const lecturaId = String(reading.lecturaId);
-    const nuevaLectura = window.prompt(
-      `Registrar lectura para medidor ${medidorSerie ?? lecturaId}\n\nIngresá el valor de lectura actual:`,
-    );
-    if (!nuevaLectura) return;
-    const valor = parseFloat(nuevaLectura);
-    if (isNaN(valor) || valor < 0) {
-      this.toastService.error('Valor de lectura inválido');
-      return;
-    }
-    // TODO: implementar registro de lectura (PATCH con lecturaActual)
-    this.toastService.info('Registro de lectura aún no conectado al backend');
+
+    this.readingsService.getReadingById(lecturaId).subscribe({
+      next: (full) => {
+        this.selectedReadingForEdit.set(full);
+        this.isFormModalOpen.set(true);
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.toastService.error('No se pudo obtener la información de la lectura');
+      },
+    });
+  }
+
+  onEditLecturaFromDetail(reading: IReading): void {
+    this.selectedReadingForDetail.set(null);
+    this.selectedReadingForEdit.set(reading);
+    this.isFormModalOpen.set(true);
+    this.cdr.markForCheck();
+  }
+
+  closeFormModal(): void {
+    this.isFormModalOpen.set(false);
+    this.selectedReadingForEdit.set(null);
+    this.cdr.markForCheck();
+  }
+
+  onReadingSaved(): void {
+    this.closeFormModal();
+    this.loadReadings();
   }
 
   onApproveLectura(reading: IReadingRowItem): void {
@@ -667,20 +691,11 @@ export class ReadingRouteDetailComponent implements OnInit {
 
   onReportAnomalyLectura(reading: IReadingRowItem): void {
     this.openDropdownId.set(null);
-    const observacion = window.prompt(
-      `Reportar anomalía para lectura #${reading.lecturaId}\n\nIngresá la descripción de la anomalía:`,
-    );
-    if (!observacion?.trim()) return;
-    this.routesService.updateReadingStatus(reading.lecturaId, 'CON_NOVEDAD').subscribe({
-      next: () => {
-        this.readings.update((list) =>
-          list.map((r) =>
-            r.lecturaId === reading.lecturaId ? { ...r, estado: 'CON_NOVEDAD' } : r,
-          ),
-        );
-        this.toastService.warning('Anomalía reportada');
+    this.router.navigate(['/app/Contratos/AnomaliasDeLectura'], {
+      queryParams: {
+        lecturaId: reading.lecturaId,
+        report: 'true',
       },
-      error: () => this.toastService.error('Error al reportar anomalía'),
     });
   }
 

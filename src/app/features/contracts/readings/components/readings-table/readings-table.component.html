@@ -114,7 +114,11 @@
                         <i class="bi bi-eye text-primary"></i> Ver Detalle
                       </button>
                     </li>
-                    @if (r.estado === 'PENDIENTE' || r.estado === 'EN_REVISION') {
+                    @if (
+                      r.estado === 'PENDIENTE' ||
+                      r.estado === 'POR_REVISION' ||
+                      r.estado === 'EN_REVISION'
+                    ) {
                       <li>
                         <button
                           class="dropdown-item d-flex align-items-center gap-2 py-2"
@@ -123,7 +127,12 @@
                           <i class="bi bi-pencil text-secondary"></i> Registrar / Editar Lectura
                         </button>
                       </li>
-                      @if (allowValidation && r.estado === 'EN_REVISION') {
+                      @if (
+                        allowValidation &&
+                        (r.estado === 'POR_REVISION' ||
+                          r.estado === 'EN_REVISION' ||
+                          r.estado === 'PENDIENTE')
+                      ) {
                         <li>
                           <button
                             class="dropdown-item d-flex align-items-center gap-2 py-2 text-success"

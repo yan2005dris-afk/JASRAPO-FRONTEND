@@ -443,13 +443,94 @@
       }
     }
   }
+
+  <!-- MODALS -->
+
+  <!-- Modal Detalle de Lectura -->
+  @if (selectedReadingForDetail(); as detail) {
+    <app-reading-detail-modal
+      [reading]="detail"
+      (editRequested)="onEditLecturaFromDetail($event)"
+      (closed)="onCloseReadingDetail()"
+    />
+  }
+
+  <!-- Modal Registrar / Editar Lectura -->
+  @if (isFormModalOpen()) {
+    <app-reading-form-modal
+      [reading]="selectedReadingForEdit()"
+      (saved)="onReadingSaved()"
+      (closed)="closeFormModal()"
+    />
+  }
+
+  <!-- Modal Reportar Novedad para Orden de Trabajo -->
+  @if (selectedOrdenForNovedad(); as ordenNovedad) {
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+          <div class="modal-header border-bottom px-4 py-3 bg-white">
+            <div class="d-flex align-items-center gap-2">
+              <div
+                class="rounded-3 bg-danger bg-opacity-10 text-danger p-2 d-flex align-items-center justify-content-center"
+              >
+                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+              </div>
+              <h5 class="modal-title fw-bold text-dark mb-0 fs-5">
+                Reportar Novedad — Orden #{{ ordenNovedad.ordenVisita }}
+              </h5>
+            </div>
+            <button
+              type="button"
+              class="btn-close shadow-none"
+              aria-label="Cerrar"
+              (click)="closeNovedadModal()"
+            ></button>
+          </div>
+          <div class="modal-body p-4 bg-white">
+            <p class="text-muted small mb-3">
+              Ingresá el motivo o detalle de la novedad para el contrato
+              <strong>{{ ordenNovedad.contrato.numeroContrato }}</strong> ({{
+                ordenNovedad.contrato.clienteNombre
+              }}).
+            </p>
+            <div class="mb-3">
+              <label for="novedadText" class="form-label fw-semibold small text-dark">
+                Observación / Motivo <span class="text-danger">*</span>
+              </label>
+              <textarea
+                id="novedadText"
+                class="form-control"
+                rows="4"
+                placeholder="Describí la novedad encontrada en campo..."
+                [(ngModel)]="novedadObservacionText"
+              ></textarea>
+            </div>
+          </div>
+          <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-outline-secondary" (click)="closeNovedadModal()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger d-flex align-items-center gap-1"
+              [disabled]="
+                !novedadObservacionText.trim() ||
+                processingOrdenId() === ordenNovedad.ordenTrabajoId
+              "
+              (click)="confirmarReportarNovedad()"
+            >
+              @if (processingOrdenId() === ordenNovedad.ordenTrabajoId) {
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+              }
+              <i class="bi bi-exclamation-triangle"></i>
+              Reportar Novedad
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop fade show"></div>
+  }
 </div>
 
-<!-- Modal: Detalle de Lectura -->
-@if (selectedReadingForDetail()) {
-  <app-reading-detail-modal
-    [reading]="selectedReadingForDetail()!"
-    (closed)="onCloseReadingDetail()"
-    (editRequested)="onEditLectura($event)"
-  />
-}
