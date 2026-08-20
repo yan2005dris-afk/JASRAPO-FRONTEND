@@ -14,6 +14,7 @@ import { ReadingRoutesService } from '../../services/reading-routes.service';
 import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
 import {
   IReadingRoute,
+  IOrdenKpis,
   OrderWork,
   EstadoOrden,
   TipoActividad,
@@ -85,6 +86,8 @@ export class ReadingRouteDetailComponent implements OnInit {
   ordenes = signal<OrderWork[]>([]);
   isLoadingOrdenes = signal(false);
   totalOrdenes = signal(0);
+  // KPIs agregados del backend (sobre el set completo filtrado, no la página).
+  ordenesKpis = signal<IOrdenKpis | null>(null);
   currentPage = signal(1);
   pageSize = signal(10);
   selectedFilter = signal<FilterOrdenTab>('TODAS');
@@ -192,20 +195,19 @@ export class ReadingRouteDetailComponent implements OnInit {
 
   // --- KPI metrics para órdenes (solo rutas no-Lectura) ---
   get kpiTotal(): number {
-    return this.totalOrdenes();
+    return this.ordenesKpis()?.total ?? 0;
   }
 
   get kpiCompletadas(): number {
-    return this.ordenes().filter((o) => o.estado === 'COMPLETADA').length;
+    return this.ordenesKpis()?.completadas ?? 0;
   }
 
   get kpiPendientes(): number {
-    return this.ordenes().filter((o) => o.estado === 'PENDIENTE' || o.estado === 'EN_PROGRESO')
-      .length;
+    return this.ordenesKpis()?.pendientes ?? 0;
   }
 
   get kpiConNovedad(): number {
-    return this.ordenes().filter((o) => o.estado === 'FALLIDA' || !!o.resultadoObservacion).length;
+    return this.ordenesKpis()?.conNovedad ?? 0;
   }
 
   get kpiProgresoPorcentaje(): number {
@@ -242,11 +244,13 @@ export class ReadingRouteDetailComponent implements OnInit {
         next: (res) => {
           this.ordenes.set(res.data);
           this.totalOrdenes.set(res.meta?.totalItems ?? res.meta?.total ?? res.data.length);
+          this.ordenesKpis.set(res.kpis ?? null);
           this.isLoadingOrdenes.set(false);
         },
         error: () => {
           this.ordenes.set([]);
           this.totalOrdenes.set(0);
+          this.ordenesKpis.set(null);
           this.isLoadingOrdenes.set(false);
         },
       });

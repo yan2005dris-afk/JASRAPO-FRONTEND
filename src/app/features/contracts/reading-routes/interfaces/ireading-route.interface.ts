@@ -112,9 +112,22 @@ export interface IOrdenPaginationMeta {
   limit?: number;
 }
 
+/**
+ * Conteos agregados sobre el set completo filtrado de órdenes
+ * (no solo la página actual). Devueltos por el backend en `kpis`.
+ */
+export interface IOrdenKpis {
+  total: number;
+  completadas: number;
+  pendientes: number;
+  conNovedad: number;
+  canceladas: number;
+}
+
 export interface PaginatedOrdenResponse {
   data: OrderWork[];
   meta?: IOrdenPaginationMeta;
+  kpis?: IOrdenKpis;
 }
 
 export interface IFilterOrdenParams {
