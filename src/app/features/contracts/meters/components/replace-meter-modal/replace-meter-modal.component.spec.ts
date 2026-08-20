@@ -164,7 +164,7 @@ describe('ReplaceMeterModalComponent', () => {
     component.goToStep(2);
 
     expect(component.currentStep()).toBe(1);
-    expect(component.errorMessage()).toContain('no puede ser menor a la lectura base previa');
+    expect(component.errorMessage()).toContain('no puede ser menor a la lectura base');
   });
 
   it('should apply reactive validations for partial charge and deferred treatment', () => {
@@ -215,6 +215,11 @@ describe('ReplaceMeterModalComponent', () => {
         mesOrigen: 8,
       }),
     );
+    // La clave de idempotencia se genera por operación y se envía siempre
+    expect(
+      (mockMetersService.replaceMeter.mock.calls[0][0] as { claveIdempotencia: string })
+        .claveIdempotencia,
+    ).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i);
     expect(component.saved.emit).toHaveBeenCalled();
   });
 
@@ -240,6 +245,38 @@ describe('ReplaceMeterModalComponent', () => {
     expect(component.isSaving()).toBeFalsy();
   });
 
+  it('should surface backend validation details from errors[] instead of the generic message', () => {
+    mockMetersService.replaceMeter.mockReturnValue(
+      throwError(() => ({
+        error: {
+          message: 'Error de validación',
+          errors: [
+            'La clave de idempotencia debe ser un UUID v4',
+            'El detalle del motivo es obligatorio cuando el motivo es OTRO',
+          ],
+        },
+      })),
+    );
+
+    component.form.patchValue({
+      nuevoMedidorId: '200',
+      lecturaFinalSaliente: 530,
+      lecturaInicialEntrante: 0,
+      motivo: 'OTRO',
+      detalleMotivo: 'Fuga visible',
+      tratamientoSaliente: 'COBRO_REAL',
+      tratamientoEntrante: 'FACTURAR_PERIODO_ACTUAL',
+      periodoOrigenId: 1,
+    });
+    component.selectMeter(component.availableMeters()[0]);
+
+    component.onSubmit();
+
+    expect(component.errorMessage()).toContain('La clave de idempotencia debe ser un UUID v4');
+    expect(component.errorMessage()).not.toBe('Error de validación');
+    expect(component.isSaving()).toBeFalsy();
+  });
+
   it('should handle server search and pagination triggers', () => {
     component.onPageSizeChange(10);
     expect(component.pageSize()).toBe(10);
@@ -251,6 +288,46 @@ describe('ReplaceMeterModalComponent', () => {
     component.onSearchQueryChange('Siemens');
     expect(component.meterSearchQuery()).toBe('Siemens');
     expect(component.currentPage()).toBe(1);
+  });
+
+  it('should advance to step 4 (Resumen) when all previous steps are valid', () => {
+    component.form.controls.lecturaFinalSaliente.setValue(530);
+    component.form.controls.motivo.setValue('DANO');
+    component.form.controls.responsabilidadDano.setValue('JUNTA');
+    component.goToStep(2);
+    component.selectMeter(component.availableMeters()[0]);
+    component.goToStep(3);
+    expect(component.currentStep()).toBe(3);
+
+    component.goToStep(4);
+    expect(component.currentStep()).toBe(4);
+    expect(component.getStepErrors().length).toBe(0);
+  });
+
+  it('should not advance to step 4 and expose stepErrors when step 3 has validation errors', () => {
+    component.form.controls.lecturaFinalSaliente.setValue(530);
+    component.form.controls.motivo.setValue('DANO');
+    component.form.controls.responsabilidadDano.setValue('JUNTA');
+    component.goToStep(2);
+    component.selectMeter(component.availableMeters()[0]);
+    component.goToStep(3);
+
+    // Break step 3: missing billing period
+    component.form.controls.periodoOrigenId.setValue(null);
+
+    component.goToStep(4);
+    expect(component.currentStep()).toBe(3);
+    expect(component.getStepErrors().some((e) => e.step === 3)).toBe(true);
+    expect(mockMetersService.replaceMeter).not.toHaveBeenCalled();
+  });
+
+  it('should mark attempted steps so per-field errors become visible', () => {
+    component.form.controls.lecturaFinalSaliente.setValue(450); // below base 500
+    component.goToStep(2);
+
+    expect(component.currentStep()).toBe(1);
+    expect(component.stepAttempted(1)).toBe(true);
+    expect(component.readingBelowBase()).toBe(true);
   });
 
   it('should close on escape key when not saving', () => {

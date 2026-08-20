@@ -104,6 +104,8 @@ export type TratamientoSaliente =
 export type TratamientoEntrante = 'FACTURAR_PERIODO_ACTUAL' | 'DIFERIR_SIGUIENTE_PERIODO';
 
 export interface IReplaceMeterRequest {
+  /** UUID v4 generado por el cliente para deduplicar reenvíos idempotentes */
+  claveIdempotencia: string;
   contratoId: string;
   nuevoMedidorId: string;
   lecturaFinalSaliente: number;
