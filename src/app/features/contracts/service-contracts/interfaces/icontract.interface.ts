@@ -70,6 +70,7 @@ export interface IApprovedReading {
   lecturaId: string;
   fecha: string;
   lecturaActual: number;
+  lecturaAnterior?: number;
 }
 
 // Historial de medidores: el medidor actual es el que tiene fechaHasta === null

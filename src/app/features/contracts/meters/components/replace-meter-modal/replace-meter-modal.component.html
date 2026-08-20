@@ -136,13 +136,24 @@
                     <span class="text-muted extra-small d-block mb-1">
                       {{
                         currentHistorial()?.ultimaLecturaAprobada
-                          ? 'Última Lectura Aprobada'
+                          ? 'Última Lectura Aprobada (Base)'
                           : 'Lectura Base Inicial'
                       }}
                     </span>
                     <div class="fw-bold text-primary fs-5 tabular-nums">
                       {{ baseReading() }} <span class="text-muted fw-normal extra-small">m³</span>
                     </div>
+                    @if (currentHistorial()?.ultimaLecturaAprobada; as ul) {
+                      <div class="extra-small text-muted mt-1">
+                        @if (ul.lecturaAnterior !== undefined && ul.lecturaAnterior !== null) {
+                          <span>Anterior: <strong>{{ ul.lecturaAnterior }} m³</strong> · </span>
+                        }
+                        <span>Actual: <strong>{{ ul.lecturaActual }} m³</strong></span>
+                        @if (ul.fecha) {
+                          <span> ({{ ul.fecha }})</span>
+                        }
+                      </div>
+                    }
                   </div>
 
                   <div class="col-md-12">
