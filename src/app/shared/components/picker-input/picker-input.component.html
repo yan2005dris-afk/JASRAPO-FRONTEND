@@ -1,8 +1,4 @@
-<div
-  class="picker-input-container position-relative"
-  appClickOutside
-  (appClickOutside)="onClickOutside()"
->
+<div class="picker-input-container position-relative">
   @if (label()) {
     <label [for]="inputId()" class="form-label fw-semibold text-dark small mb-1">
       {{ label() }}
@@ -27,7 +23,6 @@
       [value]="query()"
       [disabled]="disabled()"
       (input)="onInputChange($any($event.target).value)"
-      (focus)="onFocus()"
       (click)="onInputClick()"
       autocomplete="off"
     />

@@ -15,7 +15,7 @@ import { ClickOutsideDirective } from '../../directives/click-outside.directive'
 @Component({
   selector: 'app-picker-input',
   standalone: true,
-  imports: [CommonModule, FormsModule, ClickOutsideDirective],
+  imports: [CommonModule, FormsModule],
   templateUrl: './picker-input.component.html',
   styleUrl: './picker-input.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -57,18 +57,6 @@ export class PickerInputComponent {
     this.queryChange.emit(val);
     if (!this.isOpen()) {
       this.openChange.emit(true);
-    }
-  }
-
-  onFocus(): void {
-    if (!this.disabled() && !this.isOpen()) {
-      this.openChange.emit(true);
-    }
-  }
-
-  onClickOutside(): void {
-    if (this.isOpen()) {
-      this.openChange.emit(false);
     }
   }
 
