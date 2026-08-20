@@ -98,23 +98,23 @@
               </app-picker-input>
             </div>
 
-            <!-- 2. Código SRI (Automático / No modificable a la derecha) -->
+            <!-- 2. Código SRI (Autocompletado con concepto o editable libremente) -->
             <div class="col-md-4">
-              <label for="rubroCodigoSriReadonly" class="form-label fw-semibold small text-dark">
-                Código SRI
+              <label for="rubroCodigoSriInput" class="form-label fw-semibold small text-dark">
+                Código SRI / SKU
               </label>
               <div class="input-group">
                 <span class="input-group-text bg-light text-muted">
                   <i class="bi bi-upc-scan"></i>
                 </span>
                 <input
-                  id="rubroCodigoSriReadonly"
+                  id="rubroCodigoSriInput"
                   type="text"
-                  class="form-control bg-light font-monospace fw-bold text-dark"
-                  [value]="codigoSri || 'Sin código'"
-                  readonly
-                  tabindex="-1"
-                  placeholder="---"
+                  class="form-control font-monospace fw-semibold text-dark"
+                  [(ngModel)]="codigoSri"
+                  name="codigoSri"
+                  [disabled]="isLoading"
+                  placeholder="Ej. SERV-01"
                 />
               </div>
             </div>
