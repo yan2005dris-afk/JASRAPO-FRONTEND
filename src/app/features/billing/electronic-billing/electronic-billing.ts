@@ -19,11 +19,12 @@ import {
   IQueryComprobantesParams,
   TipoComprobante,
 } from './interfaces/ielectronic-billing.interface';
+import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
 
 @Component({
   selector: 'app-electronic-billing',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePickerComponent, PaginationComponent],
+  imports: [CommonModule, FormsModule, DatePickerComponent, PaginationComponent, LocalDatePipe],
   templateUrl: './electronic-billing.html',
   styleUrl: './electronic-billing.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
