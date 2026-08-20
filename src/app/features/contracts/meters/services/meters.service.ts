@@ -8,9 +8,11 @@ import {
   IUpdateMeterStatusBody,
   IPaginatedMetersResponse,
   ISearchMetersParams,
+  IExportMetersParams,
 } from '../interfaces/imeter.interface';
 import { environment } from '../../../../../environments/environment';
 
+/** Formatos en los que el backend puede emitir el inventario de medidores. */
 export type MeterExportFormat = 'pdf' | 'csv';
 
 @Injectable({
@@ -48,10 +50,18 @@ export class MetersService {
     return this.http.get<IPaginatedMetersResponse>(this.endpoint, { params: httpParams });
   }
 
-  exportMeters(format: MeterExportFormat, params: ISearchMetersParams): Observable<Blob> {
+  /**
+   * Descarga el inventario de medidores respetando los filtros activos.
+   *
+   * Se emite solo `estado` y `search`: el backend valida la query con
+   * `forbidNonWhitelisted`, así que cualquier otro parámetro devuelve 400.
+   * La respuesta es binaria (`responseType: 'blob'`), porque la autenticación
+   * viaja como Bearer token y un enlace directo no la incluiría.
+   */
+  exportMeters(format: MeterExportFormat, params: IExportMetersParams): Observable<Blob> {
     let httpParams = new HttpParams();
 
-    if (params.estado !== undefined) {
+    if (params.estado) {
       httpParams = httpParams.set('estado', params.estado);
     }
     const search = params.search?.trim();

@@ -1,13 +1,25 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MetersIndexComponent } from './meters-index.component';
 import { MetersService } from '../../services/meters.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
-import { of, Subject } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { vi, Mock } from 'vitest';
+
+// jsdom no implementa Blob.prototype.text(); los navegadores soportados sí.
+if (typeof Blob.prototype.text !== 'function') {
+  Blob.prototype.text = function (this: Blob): Promise<string> {
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result ?? ''));
+      reader.onerror = () => reject(reader.error ?? new Error('No se pudo leer el Blob'));
+      reader.readAsText(this);
+    });
+  };
+}
 
 describe('MetersIndexComponent', () => {
   let component: MetersIndexComponent;
@@ -20,6 +32,7 @@ describe('MetersIndexComponent', () => {
     updateMeter: Mock;
     deleteMeter: Mock;
   };
+  let toastSpy: { success: Mock; error: Mock };
 
   beforeEach(async () => {
     metersServiceSpy = {
@@ -31,7 +44,7 @@ describe('MetersIndexComponent', () => {
       deleteMeter: vi.fn(),
     };
 
-    const toastSpy = {
+    toastSpy = {
       success: vi.fn(),
       error: vi.fn(),
     };
@@ -144,5 +157,76 @@ describe('MetersIndexComponent', () => {
       estado: undefined,
       search: undefined,
     });
+  });
+
+  it('debería ignorar acciones del menú que no sean un formato válido', () => {
+    component.handleExportAction('xlsx');
+
+    expect(metersServiceSpy.exportMeters).not.toHaveBeenCalled();
+  });
+
+  it('debería descargar con el nombre de archivo del backend y avisar del éxito', () => {
+    const anchor = document.createElement('a');
+    const clickSpy = vi.spyOn(anchor, 'click').mockImplementation(() => undefined);
+    const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(anchor);
+    const createObjectURL = vi.fn().mockReturnValue('blob:medidores');
+    const revokeObjectURL = vi.fn();
+    URL.createObjectURL = createObjectURL;
+    URL.revokeObjectURL = revokeObjectURL;
+
+    metersServiceSpy.exportMeters.mockReturnValue(
+      of(new Blob(['pdf'], { type: 'application/pdf' })),
+    );
+
+    component.exportMeters('pdf');
+
+    const fecha = new Date().toISOString().slice(0, 10);
+    expect(anchor.download).toBe(`inventario-medidores-${fecha}.pdf`);
+    expect(clickSpy).toHaveBeenCalled();
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:medidores');
+    expect(toastSpy.success).toHaveBeenCalled();
+
+    createElementSpy.mockRestore();
+  });
+
+  it('debería leer el mensaje del backend cuando el error llega como Blob', async () => {
+    const errorBody = new Blob([JSON.stringify({ message: 'estado must be one of...' })], {
+      type: 'application/json',
+    });
+    metersServiceSpy.exportMeters.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ error: errorBody, status: 400 })),
+    );
+
+    component.exportMeters('csv');
+
+    await vi.waitFor(() =>
+      expect(toastSpy.error).toHaveBeenCalledWith('estado must be one of...', 'Error'),
+    );
+    expect(component.isExporting).toBe(false);
+  });
+
+  it('debería usar un mensaje genérico si el cuerpo del error no es JSON', async () => {
+    const errorBody = new Blob(['<html>502</html>'], { type: 'text/html' });
+    metersServiceSpy.exportMeters.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ error: errorBody, status: 502 })),
+    );
+
+    component.exportMeters('pdf');
+
+    await vi.waitFor(() =>
+      expect(toastSpy.error).toHaveBeenCalledWith(
+        'Error al exportar el inventario de medidores.',
+        'Error',
+      ),
+    );
+  });
+
+  it('no debería lanzar una segunda exportación mientras hay una en curso', () => {
+    metersServiceSpy.exportMeters.mockReturnValue(new Subject<Blob>());
+
+    component.exportMeters('pdf');
+    component.exportMeters('csv');
+
+    expect(metersServiceSpy.exportMeters).toHaveBeenCalledTimes(1);
   });
 });
