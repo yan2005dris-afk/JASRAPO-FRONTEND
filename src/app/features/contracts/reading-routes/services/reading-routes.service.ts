@@ -5,12 +5,14 @@ import { environment } from '../../../../../environments/environment';
 import { IPaginatedResult } from '../../../billing/payments/interfaces/ipayments.interface';
 import {
   ICreateRouteDto,
+  IFilterOrdenParams,
   IFilterReadingsParams,
   IFindAllRoutesParams,
   IReadingForRoute,
   IReadingRoute,
   IReassignRouteDto,
   IUpdateRouteDto,
+  PaginatedOrdenResponse,
 } from '../interfaces/ireading-route.interface';
 
 @Injectable({
@@ -112,12 +114,61 @@ export class ReadingRoutesService {
     );
   }
 
+  getReadingsByRuta(
+    rutaId: string | number,
+    params?: { page?: number; limit?: number },
+  ): Observable<IPaginatedResult<IReadingForRoute, { aprobadas?: number }>> {
+    let httpParams = new HttpParams();
+    if (params?.page !== undefined) {
+      httpParams = httpParams.set('page', String(params.page));
+    }
+    if (params?.limit !== undefined) {
+      httpParams = httpParams.set('limit', String(params.limit));
+    }
+    return this.http.get<IPaginatedResult<IReadingForRoute, { aprobadas?: number }>>(
+      `${this.endpoint}/${rutaId}/readings`,
+      { params: httpParams },
+    );
+  }
+
   updateReadingStatus(
     lecturaId: string | number,
     estado: 'APROBADA' | 'CON_NOVEDAD' | 'RECHAZADA_VERIFICACION' | 'PENDIENTE' | 'POR_REVISION',
   ): Observable<unknown> {
     return this.http.patch(`${this.baseUrl}/readings/${lecturaId}`, {
       estado,
+    });
+  }
+
+  getOrdenesByRuta(
+    routeId: string | number,
+    params?: IFilterOrdenParams,
+  ): Observable<PaginatedOrdenResponse> {
+    let httpParams = new HttpParams();
+
+    if (params?.estado) {
+      httpParams = httpParams.set('estado', params.estado);
+    }
+    if (params?.page !== undefined) {
+      httpParams = httpParams.set('page', String(params.page));
+    }
+    if (params?.limit !== undefined) {
+      httpParams = httpParams.set('limit', String(params.limit));
+    }
+
+    return this.http.get<PaginatedOrdenResponse>(`${this.endpoint}/${routeId}/ordenes`, {
+      params: httpParams,
+    });
+  }
+
+  updateOrdenEstado(
+    ordenId: string,
+    estado: string,
+    resultadoObservacion?: string,
+  ): Observable<unknown> {
+    return this.http.patch(`${this.baseUrl}/ordenes/${ordenId}/estado`, {
+      estado,
+      resultadoObservacion,
     });
   }
 }

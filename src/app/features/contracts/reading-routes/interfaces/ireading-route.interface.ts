@@ -78,3 +78,47 @@ export interface IFilterReadingsParams {
   tipoRuta?: TipoRuta | string;
   search?: string;
 }
+
+// --- Ordenes de Trabajo ---
+export type TipoActividad = 'INSTALACION' | 'LECTURA' | 'RECONEXION' | 'INSPECCION';
+export type EstadoOrden = 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA' | 'FALLIDA';
+
+export interface OrderWork {
+  ordenTrabajoId: string;
+  rutaId: string;
+  tipoActividad: TipoActividad;
+  estado: EstadoOrden;
+  ordenVisita: number;
+  resultadoObservacion?: string;
+  evidenciaFotoUrl?: string;
+  completadoEn?: string;
+  lecturaId?: string;
+  contrato: {
+    numeroContrato: string;
+    clienteNombre: string;
+    direccion: string;
+  };
+  medidor?: { numeroSerie: string } | null;
+}
+
+export interface IOrdenPaginationMeta {
+  totalItems?: number;
+  itemCount?: number;
+  itemsPerPage?: number;
+  totalPages?: number;
+  currentPage?: number;
+  total?: number;
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedOrdenResponse {
+  data: OrderWork[];
+  meta?: IOrdenPaginationMeta;
+}
+
+export interface IFilterOrdenParams {
+  estado?: string;
+  page?: number;
+  limit?: number;
+}

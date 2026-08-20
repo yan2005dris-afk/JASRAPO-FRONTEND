@@ -4,15 +4,18 @@ import {
   Component,
   OnInit,
   inject,
+  signal,
+  computed,
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ReadingRoutesService } from '../../services/reading-routes.service';
 import {
   IReadingRoute,
-  IReadingForRoute,
-  TipoRuta,
+  OrderWork,
+  EstadoOrden,
+  TipoActividad,
 } from '../../interfaces/ireading-route.interface';
 import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
 import { UsersService } from '../../../../users/services/users.service';
@@ -24,14 +27,9 @@ import { TableSkeletonComponent } from '../../../../../shared/components/table-s
 import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
-import { AnomalyFormModalComponent } from '../../../reading-anomalies/components/anomaly-form-modal/anomaly-form-modal.component';
-import { ReadingDetailModalComponent } from '../../../readings/components/reading-detail-modal/reading-detail-modal.component';
-import { ReadingsService } from '../../../readings/services/readings.service';
-import { IReading } from '../../../readings/interfaces/ireading.interface';
-import {
-  ReadingsTableComponent,
-  IReadingRowItem,
-} from '../../../readings/components/readings-table/readings-table.component';
+import { ReadingsTableComponent, IReadingRowItem } from '../../../readings/components/readings-table/readings-table.component';
+
+type FilterOrdenTab = 'TODAS' | 'PENDIENTES' | 'COMPLETADAS' | 'NOVEDAD';
 
 @Component({
   selector: 'app-reading-route-detail',
@@ -44,22 +42,17 @@ import {
     EmptyStateComponent,
     TableSkeletonComponent,
     PaginationComponent,
-    AnomalyFormModalComponent,
-    ReadingDetailModalComponent,
+    DatePipe,
     ReadingsTableComponent,
   ],
   templateUrl: './reading-route-detail.component.html',
   styleUrl: './reading-route-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: {
-    '(document:click)': 'closeDropdowns()',
-  },
 })
 export class ReadingRouteDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly routesService = inject(ReadingRoutesService);
-  private readonly readingsService = inject(ReadingsService);
   private readonly comunidadesService = inject(ComunidadesService);
   private readonly usersService = inject(UsersService);
   private readonly toastService = inject(ToastService);
@@ -67,29 +60,38 @@ export class ReadingRouteDetailComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   routeId!: number;
-  readingRoute: IReadingRoute | null = null;
-  isLoadingRoute = true;
-
-  // Selected reading for detail modal
-  selectedReadingForDetail: IReading | null = null;
+  readingRoute = signal<IReadingRoute | null>(null);
+  isLoadingRoute = signal(true);
 
   // Catalogs
   comunidades: Comunidad[] = [];
   operarios: User[] = [];
   periodos: { periodoId: number; nombre?: string; estado: string }[] = [];
 
-  // Readings Table
-  readings: IReadingForRoute[] = [];
-  isLoadingReadings = false;
-  totalReadings = 0;
-  currentPage = 1;
-  pageSize = 10;
-  searchQuery = '';
+  // Ordenes Table — solo para tipos INSTALACION/RECONEXION/INSPECCION
+  ordenes = signal<OrderWork[]>([]);
+  isLoadingOrdenes = signal(false);
+  totalOrdenes = signal(0);
+  currentPage = signal(1);
+  pageSize = signal(10);
+  selectedFilter = signal<FilterOrdenTab>('TODAS');
+
+  // Readings Table — solo para tipo TOMA_LECTURA
+  readings = signal<IReadingRowItem[]>([]);
+  isLoadingReadings = signal(false);
+  totalReadings = signal(0);
+  currentReadingPage = signal(1);
+  pageSizeReadings = signal(10);
+  openDropdownId = signal<string | null>(null);
 
   // Processing state
-  processingReadingId: string | number | null = null;
-  isBulkApproving = false;
-  isChangingStatus = false;
+  isChangingStatus = signal(false);
+  processingOrdenId = signal<string | null>(null);
+
+  // Result observation modal
+  selectedOrdenForResult = signal<OrderWork | null>(null);
+
+  readonly isLecturaRoute = computed(() => this.readingRoute()?.tipoRuta === 'TOMA_LECTURA');
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
@@ -148,301 +150,338 @@ export class ReadingRouteDetailComponent implements OnInit {
   }
 
   loadRouteDetail(): void {
-    this.isLoadingRoute = true;
-    this.cdr.markForCheck();
+    this.isLoadingRoute.set(true);
 
     this.routesService.getRouteById(this.routeId).subscribe({
       next: (data) => {
-        this.readingRoute = data;
-        this.isLoadingRoute = false;
-        this.cdr.markForCheck();
-        this.loadReadings();
+        this.readingRoute.set(data);
+        this.isLoadingRoute.set(false);
+        // Bifurcar según tipo de ruta
+        if (this.isLecturaRoute()) {
+          this.loadReadings();
+        } else {
+          this.loadOrdenes();
+        }
       },
       error: () => {
-        this.isLoadingRoute = false;
+        this.isLoadingRoute.set(false);
         this.toastService.error('No se pudo cargar la información de la ruta');
-        this.cdr.markForCheck();
       },
     });
   }
 
-  // Progress metrics from backend KPIs
-  totalApprovedReadings = 0;
+  // --- KPI metrics para órdenes (solo rutas no-Lectura) ---
+  get kpiTotal(): number {
+    return this.totalOrdenes();
+  }
 
-  loadReadings(): void {
-    if (!this.readingRoute?.comunidadId) return;
+  get kpiCompletadas(): number {
+    return this.ordenes().filter((o) => o.estado === 'COMPLETADA').length;
+  }
 
-    this.isLoadingReadings = true;
-    this.cdr.markForCheck();
+  get kpiPendientes(): number {
+    return this.ordenes().filter((o) => o.estado === 'PENDIENTE' || o.estado === 'EN_PROGRESO')
+      .length;
+  }
+
+  get kpiConNovedad(): number {
+    return this.ordenes().filter((o) => o.estado === 'FALLIDA' || !!o.resultadoObservacion).length;
+  }
+
+  get kpiProgresoPorcentaje(): number {
+    const total = this.kpiTotal;
+    if (total === 0) return 0;
+    return Math.round((this.kpiCompletadas / total) * 100);
+  }
+
+  loadOrdenes(): void {
+    this.isLoadingOrdenes.set(true);
+
+    let estadoFilter: string | undefined;
+    switch (this.selectedFilter()) {
+      case 'PENDIENTES':
+        estadoFilter = 'PENDIENTE,EN_PROGRESO';
+        break;
+      case 'COMPLETADAS':
+        estadoFilter = 'COMPLETADA';
+        break;
+      case 'NOVEDAD':
+        estadoFilter = 'FALLIDA';
+        break;
+      default:
+        estadoFilter = undefined;
+    }
 
     this.routesService
-      .getEligibleReadings({
-        comunidadId: this.readingRoute.comunidadId,
-        sectorId: this.readingRoute.sectorId || undefined,
-        periodoId: this.readingRoute.periodoId || undefined,
-        fechaPlanificada: this.readingRoute.fechaPlanificada || undefined,
-        tipoRuta: this.readingRoute.tipoRuta,
-        search: this.searchQuery.trim() || undefined,
-        page: this.currentPage,
-        limit: this.pageSize,
+      .getOrdenesByRuta(this.routeId, {
+        estado: estadoFilter,
+        page: this.currentPage(),
+        limit: this.pageSize(),
       })
       .subscribe({
         next: (res) => {
-          this.readings = res.data;
-          this.totalReadings = res.meta?.total ?? res.meta?.totalItems ?? res.data.length;
-          if (res.kpis) {
-            this.totalApprovedReadings = res.kpis.aprobadas ?? 0;
-          }
-          this.isLoadingReadings = false;
-          this.cdr.markForCheck();
+          this.ordenes.set(res.data);
+          this.totalOrdenes.set(res.meta?.totalItems ?? res.meta?.total ?? res.data.length);
+          this.isLoadingOrdenes.set(false);
         },
         error: () => {
-          this.readings = [];
-          this.totalReadings = 0;
-          this.totalApprovedReadings = 0;
-          this.isLoadingReadings = false;
-          this.cdr.markForCheck();
+          this.ordenes.set([]);
+          this.totalOrdenes.set(0);
+          this.isLoadingOrdenes.set(false);
         },
       });
   }
 
-  onSearch(): void {
-    this.currentPage = 1;
-    this.loadReadings();
+  /** Carga lecturas para rutas de tipo TOMA_LECTURA */
+  loadReadings(): void {
+    this.isLoadingReadings.set(true);
+    this.routesService
+      .getReadingsByRuta(this.routeId, {
+        page: this.currentReadingPage(),
+        limit: this.pageSizeReadings(),
+      })
+      .subscribe({
+        next: (res) => {
+          // Transformar IReadingForRoute → IReadingRowItem (mapea estadoLectura → estado)
+          const rows: IReadingRowItem[] = res.data.map((r) => ({
+            lecturaId: r.lecturaId,
+            guia: r.guia,
+            clienteNombre: r.clienteNombre,
+            direccion: r.direccion,
+            sector: r.sector,
+            medidorSerie: r.medidorSerie,
+            lecturaAnterior: r.lecturaAnterior,
+            lecturaActual: r.lecturaActual,
+            consumoCalculado: r.consumoCalculado,
+            estado: r.estadoLectura ?? 'PENDIENTE',
+          }));
+          this.readings.set(rows);
+          this.totalReadings.set(res.meta?.totalItems ?? res.data.length);
+          this.isLoadingReadings.set(false);
+        },
+        error: () => {
+          this.readings.set([]);
+          this.totalReadings.set(0);
+          this.isLoadingReadings.set(false);
+        },
+      });
   }
 
-  clearSearch(): void {
-    this.searchQuery = '';
-    this.currentPage = 1;
-    this.loadReadings();
+  onFilterChange(tab: FilterOrdenTab): void {
+    this.selectedFilter.set(tab);
+    this.currentPage.set(1);
+    this.loadOrdenes();
   }
 
   onPageChange(page: number): void {
-    this.currentPage = page;
-    this.loadReadings();
+    this.currentPage.set(page);
+    this.loadOrdenes();
   }
 
   onPageSizeChange(size: number): void {
-    this.pageSize = size;
-    this.currentPage = 1;
-    this.loadReadings();
+    this.pageSize.set(size);
+    this.currentPage.set(1);
+    this.loadOrdenes();
   }
 
-  get pendingReviewCount(): number {
-    return this.readings.filter(
-      (r) => r.estadoLectura === 'PENDIENTE' || r.estadoLectura === 'POR_REVISION',
-    ).length;
-  }
+  // --- Actions ---
 
-  get approvedCount(): number {
-    return this.totalApprovedReadings;
-  }
-
-  // Actions & Dropdown
-  openDropdownId: string | null = null;
-  isAnomalyModalOpen = false;
-  selectedLecturaIdForAnomaly: string | null = null;
-
-  toggleDropdown(id: string | number, event: MouseEvent): void {
-    event.stopPropagation();
-    const strId = String(id);
-    this.openDropdownId = this.openDropdownId === strId ? null : strId;
-    this.cdr.markForCheck();
-  }
-
-  closeDropdowns(): void {
-    if (this.openDropdownId !== null) {
-      this.openDropdownId = null;
-      this.cdr.markForCheck();
+  /**
+   * Returns the CSS class for the estado badge.
+   */
+  getOrdenEstadoCssClass(estado: EstadoOrden | string): string {
+    switch (estado) {
+      case 'COMPLETADA':
+        return 'bg-success';
+      case 'EN_PROGRESO':
+        return 'bg-warning text-dark';
+      case 'PENDIENTE':
+        return 'bg-secondary';
+      case 'FALLIDA':
+      case 'CANCELADA':
+        return 'bg-danger';
+      default:
+        return 'bg-secondary';
     }
   }
 
-  get tableReadings(): IReadingRowItem[] {
-    return this.readings.map((r) => ({
-      lecturaId: r.lecturaId,
-      guia: r.guia,
-      clienteNombre: r.clienteNombre,
-      direccion: r.direccion,
-      sector: r.sector,
-      medidorSerie: r.medidorSerie,
-      lecturaAnterior: r.lecturaAnterior,
-      lecturaActual: r.lecturaActual,
-      consumoCalculado: r.consumoCalculado,
-      estado: r.estadoLectura || 'PENDIENTE',
-    }));
+  /**
+   * Returns the CSS class for the tipoActividad badge.
+   */
+  getOrdenTipoCssClass(tipo: TipoActividad | string): string {
+    switch (tipo) {
+      case 'LECTURA':
+        return 'bg-primary';
+      case 'INSTALACION':
+        return 'bg-success';
+      case 'RECONEXION':
+        return 'bg-warning text-dark';
+      case 'INSPECCION':
+        return 'bg-purple';
+      default:
+        return 'bg-secondary';
+    }
   }
 
-  openDetailModal(reading: IReadingRowItem | IReadingForRoute): void {
-    this.openDropdownId = null;
-    this.readingsService.getReadingById(String(reading.lecturaId)).subscribe({
-      next: (full) => {
-        this.selectedReadingForDetail = full;
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        const found = this.readings.find((r) => String(r.lecturaId) === String(reading.lecturaId));
-        if (found) {
-          this.selectedReadingForDetail = {
-            lecturaId: String(found.lecturaId),
-            fecha: new Date(),
-            lecturaAnterior: found.lecturaAnterior ?? 0,
-            lecturaActual: found.lecturaActual ?? 0,
-            consumoCalculado: found.consumoCalculado ?? 0,
-            contratoId: '',
-            isValidada: false,
-            lecturaInicial: false,
-            periodoId: this.readingRoute?.periodoId ?? 0,
-            tieneAnomalia: false,
-            estado: found.estadoLectura ?? 'PENDIENTE',
-            contrato: {
-              contratoId: '',
-              numeroGuia: found.guia ?? '',
-              direccionSuministro: found.direccion ?? '',
-              estado: found.estadoContrato ?? 'ACTIVO',
-              sector: found.sector ? { nombre: found.sector } : null,
-              cliente: found.clienteNombre
-                ? {
-                    clienteId: 0,
-                    nombres: found.clienteNombre,
-                    apellidos: '',
-                    identificacion: '',
-                  }
-                : null,
-            },
-            medidor: found.medidorSerie
-              ? {
-                  medidorId: '0',
-                  serie: found.medidorSerie,
-                  marca: '',
-                  modelo: '',
-                }
-              : null,
-          };
-        }
-        this.cdr.markForCheck();
-      },
-    });
+  /**
+   * Returns human label for tipoActividad.
+   */
+  getTipoActividadLabel(tipo: TipoActividad | string): string {
+    switch (tipo) {
+      case 'LECTURA':
+        return 'Lectura';
+      case 'INSTALACION':
+        return 'Instalación';
+      case 'RECONEXION':
+        return 'Reconexión';
+      case 'INSPECCION':
+        return 'Inspección';
+      default:
+        return String(tipo);
+    }
   }
 
-  closeDetailModal(): void {
-    this.selectedReadingForDetail = null;
-    this.cdr.markForCheck();
+  /**
+   * Format completadoEn ISO string to dd/MM/yyyy HH:mm
+   */
+  formatCompletadoEn(isoString?: string): string {
+    if (!isoString) return '—';
+    try {
+      const date = new Date(isoString);
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${day}/${month}/${year} ${hours}:${minutes}`;
+    } catch {
+      return isoString;
+    }
   }
 
-  openAnomalyModal(lectura: IReadingForRoute | IReadingRowItem): void {
-    this.openDropdownId = null;
-    this.selectedLecturaIdForAnomaly = String(lectura.lecturaId);
-    this.isAnomalyModalOpen = true;
-    this.cdr.markForCheck();
-  }
+  // Start orden (PENDIENTE -> EN_PROGRESO)
+  iniciarOrden(orden: OrderWork): void {
+    this.processingOrdenId.set(orden.ordenTrabajoId);
 
-  closeAnomalyModal(): void {
-    this.isAnomalyModalOpen = false;
-    this.selectedLecturaIdForAnomaly = null;
-    this.cdr.markForCheck();
-  }
-
-  onAnomalySaved(): void {
-    this.isAnomalyModalOpen = false;
-    this.selectedLecturaIdForAnomaly = null;
-    this.loadReadings();
-  }
-
-  requestReReading(lectura: IReadingForRoute): void {
-    this.openDropdownId = null;
-    this.dialogService
-      .confirm({
-        title: 'Solicitar Relectura / Rechazo',
-        message: `¿Rechazar la toma actual y solicitar relectura en campo para el contrato con Guía #${lectura.guia}?`,
-        confirmText: 'Solicitar Relectura',
-        cancelText: 'Cancelar',
-        isDanger: true,
-      })
-      .subscribe((confirmed) => {
-        if (confirmed) {
-          this.changeReadingStatus(lectura, 'RECHAZADA_VERIFICACION');
-        }
-      });
-  }
-
-  changeReadingStatus(
-    lectura: IReadingForRoute,
-    nuevoEstado: 'APROBADA' | 'CON_NOVEDAD' | 'RECHAZADA_VERIFICACION' | 'PENDIENTE',
-  ): void {
-    this.openDropdownId = null;
-    this.processingReadingId = lectura.lecturaId;
-    this.cdr.markForCheck();
-
-    this.routesService.updateReadingStatus(lectura.lecturaId, nuevoEstado).subscribe({
+    this.routesService.updateOrdenEstado(orden.ordenTrabajoId, 'EN_PROGRESO').subscribe({
       next: () => {
-        lectura.estadoLectura = nuevoEstado;
-        this.processingReadingId = null;
-        this.toastService.success(
-          nuevoEstado === 'APROBADA'
-            ? 'Lectura aprobada'
-            : nuevoEstado === 'RECHAZADA_VERIFICACION'
-              ? 'Lectura rechazada: se ha solicitado relectura'
-              : nuevoEstado === 'CON_NOVEDAD'
-                ? 'Lectura marcada con novedad'
-                : 'Lectura en pendiente',
+        this.ordenes.update((list) =>
+          list.map((o) =>
+            o.ordenTrabajoId === orden.ordenTrabajoId
+              ? { ...o, estado: 'EN_PROGRESO' as const }
+              : o,
+          ),
         );
-        this.cdr.markForCheck();
+        this.processingOrdenId.set(null);
+        this.toastService.success('Orden iniciada');
       },
       error: () => {
-        this.processingReadingId = null;
-        this.toastService.error('Error al actualizar el estado de la lectura');
-        this.cdr.markForCheck();
+        this.processingOrdenId.set(null);
+        this.toastService.error('Error al iniciar la orden');
       },
     });
   }
 
-  async approveAllPending(): Promise<void> {
-    const pendings = this.readings.filter(
-      (r) => r.estadoLectura === 'PENDIENTE' || r.estadoLectura === 'POR_REVISION',
-    );
-    if (pendings.length === 0) return;
-
+  // Mark orden as completed
+  marcarCompletada(orden: OrderWork): void {
     this.dialogService
       .confirm({
-        title: 'Aprobar todas las lecturas',
-        message: `¿Deseas aprobar ${pendings.length} lecturas pendientes en esta página?`,
-        confirmText: 'Sí, aprobar todas',
+        title: 'Marcar como completada',
+        message: `¿Deseas marcar como completada la orden #${orden.ordenVisita} para el contrato ${orden.contrato.numeroContrato}?`,
+        confirmText: 'Sí, completar',
         cancelText: 'Cancelar',
         isDanger: false,
       })
-      .subscribe(async (confirmed) => {
+      .subscribe((confirmed) => {
         if (!confirmed) return;
 
-        this.isBulkApproving = true;
-        this.cdr.markForCheck();
+        this.processingOrdenId.set(orden.ordenTrabajoId);
 
-        let completed = 0;
-        let errors = 0;
-
-        for (const item of pendings) {
-          try {
-            await this.routesService.updateReadingStatus(item.lecturaId, 'APROBADA').toPromise();
-            item.estadoLectura = 'APROBADA';
-            completed++;
-          } catch {
-            errors++;
-          }
-        }
-
-        this.isBulkApproving = false;
-        if (errors === 0) {
-          this.toastService.success(`Se aprobaron ${completed} lecturas correctamente`);
-        } else {
-          this.toastService.warning(`Se aprobaron ${completed} lecturas. Hubo ${errors} errores.`);
-        }
-        this.cdr.markForCheck();
+        this.routesService.updateOrdenEstado(orden.ordenTrabajoId, 'COMPLETADA').subscribe({
+          next: () => {
+            this.ordenes.update((list) =>
+              list.map((o) =>
+                o.ordenTrabajoId === orden.ordenTrabajoId
+                  ? { ...o, estado: 'COMPLETADA' as const, completadoEn: new Date().toISOString() }
+                  : o,
+              ),
+            );
+            this.processingOrdenId.set(null);
+            this.toastService.success('Orden marcada como completada');
+          },
+          error: () => {
+            this.processingOrdenId.set(null);
+            this.toastService.error('Error al completar la orden');
+          },
+        });
       });
   }
 
+  // Report novelty (FALLIDA with resultadoObservacion)
+  reportarNovedad(orden: OrderWork): void {
+    const observacion = window.prompt(
+      `Reportar novedad para orden #${orden.ordenVisita}\n\nIngresá la observación (motivo de la novedad):`,
+    );
+    if (!observacion || !observacion.trim()) return;
+
+    this.processingOrdenId.set(orden.ordenTrabajoId);
+
+    this.routesService
+      .updateOrdenEstado(orden.ordenTrabajoId, 'FALLIDA', observacion.trim())
+      .subscribe({
+        next: () => {
+          this.ordenes.update((list) =>
+            list.map((o) =>
+              o.ordenTrabajoId === orden.ordenTrabajoId
+                ? { ...o, estado: 'FALLIDA' as const, resultadoObservacion: observacion.trim() }
+                : o,
+            ),
+          );
+          this.processingOrdenId.set(null);
+          this.toastService.warning('Novedad reportada para la orden');
+        },
+        error: () => {
+          this.processingOrdenId.set(null);
+          this.toastService.error('Error al reportar la novedad');
+        },
+      });
+  }
+
+  // View result observation inline
+  verResultado(orden: OrderWork): void {
+    this.selectedOrdenForResult.set(orden);
+  }
+
+  closeResultado(): void {
+    this.selectedOrdenForResult.set(null);
+  }
+
+  // Route status transitions
   async updateRouteStatus(
     nuevoEstado: 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA',
   ): Promise<void> {
-    if (!this.readingRoute) return;
+    const route = this.readingRoute();
+    if (!route) return;
+
+    if (nuevoEstado === 'COMPLETADA') {
+      const pendientes = this.ordenes().filter(
+        (o) => o.estado === 'PENDIENTE' || o.estado === 'EN_PROGRESO',
+      );
+      if (pendientes.length > 0) {
+        const confirmed = await new Promise<boolean>((resolve) => {
+          this.dialogService
+            .confirm({
+              title: 'Ruta con órdenes pendientes',
+              message: `Esta ruta tiene ${pendientes.length} órdenes pendientes. ¿Deseas completarla de todas formas?`,
+              confirmText: 'Sí, completar',
+              cancelText: 'Cancelar',
+              isDanger: true,
+            })
+            .subscribe((c) => resolve(c));
+        });
+        if (!confirmed) return;
+      }
+    }
 
     this.dialogService
       .confirm({
@@ -455,28 +494,23 @@ export class ReadingRouteDetailComponent implements OnInit {
       .subscribe((confirmed) => {
         if (!confirmed) return;
 
-        this.isChangingStatus = true;
-        this.cdr.markForCheck();
+        this.isChangingStatus.set(true);
 
-        this.routesService
-          .updateRoute(this.readingRoute!.rutaId, { estado: nuevoEstado })
-          .subscribe({
-            next: (updated) => {
-              this.readingRoute = { ...this.readingRoute!, ...updated };
-              this.isChangingStatus = false;
-              this.toastService.success(`Ruta actualizada a ${nuevoEstado}`);
-              this.cdr.markForCheck();
-            },
-            error: () => {
-              this.isChangingStatus = false;
-              this.toastService.error('No se pudo actualizar el estado de la ruta');
-              this.cdr.markForCheck();
-            },
-          });
+        this.routesService.updateRoute(route.rutaId, { estado: nuevoEstado }).subscribe({
+          next: (updated) => {
+            this.readingRoute.set({ ...route, ...updated });
+            this.isChangingStatus.set(false);
+            this.toastService.success(`Ruta actualizada a ${nuevoEstado}`);
+          },
+          error: () => {
+            this.isChangingStatus.set(false);
+            this.toastService.error('No se pudo actualizar el estado de la ruta');
+          },
+        });
       });
   }
 
-  getTipoLabel(tipo?: TipoRuta | string): string {
+  getTipoLabel(tipo?: string): string {
     if (!tipo) return '—';
     switch (tipo) {
       case 'TOMA_LECTURA':
@@ -490,5 +524,115 @@ export class ReadingRouteDetailComponent implements OnInit {
       default:
         return String(tipo).replace(/_/g, ' ');
     }
+  }
+
+  onReadingPageChange(page: number): void {
+    this.currentReadingPage.set(page);
+    this.loadReadings();
+  }
+
+  onReadingPageSizeChange(size: number): void {
+    this.pageSizeReadings.set(size);
+    this.currentReadingPage.set(1);
+    this.loadReadings();
+  }
+
+  // --- Reading Actions ---
+
+  onToggleReadingDropdown(event: { id: string; event: MouseEvent }): void {
+    if (this.openDropdownId() === event.id) {
+      this.openDropdownId.set(null);
+    } else {
+      this.openDropdownId.set(event.id);
+    }
+  }
+
+  onViewLecturaDetail(reading: IReadingRowItem): void {
+    this.openDropdownId.set(null);
+    this.toastService.info(`Ver detalle de lectura #${reading.lecturaId}`);
+    // TODO: abrir modal de detalle de lectura
+  }
+
+  onEditLectura(reading: IReadingRowItem): void {
+    this.openDropdownId.set(null);
+    const nuevaLectura = window.prompt(
+      `Registrar lectura para medidor ${reading.medidorSerie ?? reading.lecturaId}\n\nIngresá el valor de lectura actual:`,
+    );
+    if (!nuevaLectura) return;
+    const valor = parseFloat(nuevaLectura);
+    if (isNaN(valor) || valor < 0) {
+      this.toastService.error('Valor de lectura inválido');
+      return;
+    }
+    // TODO: implementar registro de lectura (PATCH con lecturaActual)
+    this.toastService.info('Registro de lectura aún no conectado al backend');
+  }
+
+  onApproveLectura(reading: IReadingRowItem): void {
+    this.openDropdownId.set(null);
+    this.routesService.updateReadingStatus(reading.lecturaId, 'APROBADA').subscribe({
+      next: () => {
+        this.readings.update((list) =>
+          list.map((r) =>
+            r.lecturaId === reading.lecturaId ? { ...r, estado: 'APROBADA' } : r,
+          ),
+        );
+        this.toastService.success('Lectura aprobada');
+      },
+      error: () => this.toastService.error('Error al aprobar la lectura'),
+    });
+  }
+
+  onRejectLectura(reading: IReadingRowItem): void {
+    this.openDropdownId.set(null);
+    this.routesService.updateReadingStatus(reading.lecturaId, 'RECHAZADA_VERIFICACION').subscribe({
+      next: () => {
+        this.readings.update((list) =>
+          list.map((r) =>
+            r.lecturaId === reading.lecturaId
+              ? { ...r, estado: 'RECHAZADA_VERIFICACION' }
+              : r,
+          ),
+        );
+        this.toastService.warning('Lectura rechazada');
+      },
+      error: () => this.toastService.error('Error al rechazar la lectura'),
+    });
+  }
+
+  onReportAnomalyLectura(reading: IReadingRowItem): void {
+    this.openDropdownId.set(null);
+    const observacion = window.prompt(
+      `Reportar anomalía para lectura #${reading.lecturaId}\n\nIngresá la descripción de la anomalía:`,
+    );
+    if (!observacion?.trim()) return;
+    this.routesService.updateReadingStatus(reading.lecturaId, 'CON_NOVEDAD').subscribe({
+      next: () => {
+        this.readings.update((list) =>
+          list.map((r) =>
+            r.lecturaId === reading.lecturaId ? { ...r, estado: 'CON_NOVEDAD' } : r,
+          ),
+        );
+        this.toastService.warning('Anomalía reportada');
+      },
+      error: () => this.toastService.error('Error al reportar anomalía'),
+    });
+  }
+
+  onRequestReLectura(reading: IReadingRowItem): void {
+    this.openDropdownId.set(null);
+    this.dialogService
+      .confirm({
+        title: 'Solicitar relectura',
+        message: `¿Solicitar relectura para el medidor ${reading.medidorSerie ?? reading.lecturaId}?`,
+        confirmText: 'Sí, solicitar',
+        cancelText: 'Cancelar',
+        isDanger: false,
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        // TODO: implementar relectura
+        this.toastService.info('Solicitud de relectura aún no conectada al backend');
+      });
   }
 }
