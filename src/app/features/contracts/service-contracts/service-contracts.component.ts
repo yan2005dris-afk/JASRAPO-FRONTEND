@@ -11,6 +11,7 @@ import {
 } from './interfaces/icontract.interface';
 import { ServiceContractFormComponent } from './components/service-contract-form/service-contract-form.component';
 import { ReplaceMeterModalComponent } from '../meters/components/replace-meter-modal/replace-meter-modal.component';
+import { AssignInstallationRouteModalComponent } from './components/assign-installation-route-modal/assign-installation-route-modal.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
 
@@ -20,6 +21,7 @@ import { TableSkeletonComponent } from '../../../shared/components/table-skeleto
     FormsModule,
     ServiceContractFormComponent,
     ReplaceMeterModalComponent,
+    AssignInstallationRouteModalComponent,
     PaginationComponent,
     TableSkeletonComponent,
   ],
@@ -41,6 +43,9 @@ export class ServiceContractsComponent implements OnInit {
 
   // Contrato en reemplazo de medidor
   readonly replacingMeterContract = signal<IContract | null>(null);
+
+  // Contrato en asignación de ruta de instalación (SC-174)
+  readonly assigningContract = signal<IContract | null>(null);
 
   toggleDropdown(contratoId: string, event: MouseEvent): void {
     event.stopPropagation();
@@ -209,6 +214,22 @@ export class ServiceContractsComponent implements OnInit {
   onContractSaved(): void {
     this.closeForm();
     this.currentPage.set(1);
+    this.loadContracts();
+  }
+
+  // ---------- Asignar contrato a ruta de instalación (SC-174) ----------
+
+  openAssignInstallationModal(contract: IContract): void {
+    this.closeDropdowns();
+    this.assigningContract.set(contract);
+  }
+
+  closeAssignInstallationModal(): void {
+    this.assigningContract.set(null);
+  }
+
+  onRouteAssigned(): void {
+    this.closeAssignInstallationModal();
     this.loadContracts();
   }
 }
