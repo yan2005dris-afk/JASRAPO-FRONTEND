@@ -1,5 +1,11 @@
 <div class="modal-backdrop fade show"></div>
-<div class="modal fade show d-block picker-modal" tabindex="-1" role="dialog" aria-modal="true">
+<div
+  class="modal fade show d-block picker-modal"
+  tabindex="-1"
+  role="dialog"
+  aria-modal="true"
+  aria-labelledby="replaceMeterModalTitle"
+>
   <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 720px">
     <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
       <!-- Header con Stepper -->
@@ -12,7 +18,9 @@
               <i class="bi bi-arrow-repeat"></i>
             </div>
             <div>
-              <h5 class="modal-title fw-bold text-dark mb-0 fs-5">Reemplazo de Medidor</h5>
+              <h5 id="replaceMeterModalTitle" class="modal-title fw-bold text-dark mb-0 fs-5">
+                Reemplazo de Medidor
+              </h5>
               <p class="text-muted extra-small mb-0">
                 Contrato #{{ contract().numeroGuia || contract().contratoId }} —
                 {{ contract().cliente.nombres }} {{ contract().cliente.apellidos }}
@@ -140,6 +148,7 @@
                         class="form-control shadow-none tabular-nums"
                         formControlName="lecturaFinalSaliente"
                         [min]="baseReading()"
+                        step="0.01"
                         placeholder="Ej: 530"
                         [class.is-invalid]="
                           form.controls.lecturaFinalSaliente.invalid &&
@@ -268,13 +277,13 @@
                 </div>
               </div>
 
-              <!-- Tabla de selección de medidores con paginación compartida -->
+              <!-- Tabla de selección de medidores con paginación server-side -->
               <app-meter-table
-                [meters]="paginatedMeters()"
+                [meters]="availableMeters()"
                 [isLoading]="isLoadingMeters()"
                 [selectionMode]="true"
                 [selectedMeterId]="form.controls.nuevoMedidorId.value"
-                [totalItems]="filteredMeters().length"
+                [totalItems]="totalMeters()"
                 [currentPage]="currentPage()"
                 [pageSize]="pageSize()"
                 [pageSizeOptions]="[5, 10, 20]"
@@ -318,6 +327,7 @@
                         class="form-control shadow-none tabular-nums"
                         formControlName="lecturaInicialEntrante"
                         min="0"
+                        step="0.01"
                         placeholder="0"
                       />
                       <span class="input-group-text bg-white text-muted">m³</span>

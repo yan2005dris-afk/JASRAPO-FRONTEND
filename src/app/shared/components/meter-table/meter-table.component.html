@@ -31,6 +31,7 @@
                     name="sharedMeterSelection"
                     class="form-check-input mt-0"
                     [checked]="isSelected(m)"
+                    [attr.aria-label]="'Seleccionar medidor serie ' + m.serie"
                     (change)="select(m)"
                   />
                 </td>

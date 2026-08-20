@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  HostListener,
   OnInit,
   computed,
   inject,
@@ -47,9 +48,10 @@ export class ReplaceMeterModalComponent implements OnInit {
   // Wizard state
   readonly currentStep = signal<1 | 2 | 3>(1);
 
-  // Search & Pagination in Step 2
+  // Search & Pagination in Step 2 (Server-side)
   readonly meterSearchQuery = signal<string>('');
   readonly availableMeters = signal<IMeter[]>([]);
+  readonly totalMeters = signal<number>(0);
   readonly isLoadingMeters = signal<boolean>(false);
   readonly selectedNewMeter = signal<IMeter | null>(null);
   readonly currentPage = signal<number>(1);
@@ -68,11 +70,16 @@ export class ReplaceMeterModalComponent implements OnInit {
     detalleMotivo: [''],
     tratamientoSaliente: ['COBRO_REAL' as TratamientoSaliente, [Validators.required]],
     tratamientoEntrante: ['FACTURAR_PERIODO_ACTUAL' as TratamientoEntrante, [Validators.required]],
-    porcentajeCobro: [100],
-    ventanaPromedio: [3],
+    porcentajeCobro: [100 as number | null],
+    ventanaPromedio: [3 as number | null],
     periodoOrigenId: [null as number | null, [Validators.required]],
     periodoDestinoId: [null as number | null],
   });
+
+  @HostListener('document:keydown.escape')
+  handleEscape(): void {
+    this.onClose();
+  }
 
   readonly currentHistorial = computed(() => {
     const c = this.contract();
@@ -83,26 +90,6 @@ export class ReplaceMeterModalComponent implements OnInit {
   readonly baseReading = computed(() => {
     const h = this.currentHistorial();
     return h?.lecturaInicial !== undefined ? Number(h.lecturaInicial) : 0;
-  });
-
-  readonly filteredMeters = computed(() => {
-    const query = this.meterSearchQuery().trim().toLowerCase();
-    const list = this.availableMeters();
-    if (!query) return list;
-    return list.filter(
-      (m) =>
-        m.serie.toLowerCase().includes(query) ||
-        m.marca.toLowerCase().includes(query) ||
-        m.modelo.toLowerCase().includes(query),
-    );
-  });
-
-  readonly paginatedMeters = computed(() => {
-    const list = this.filteredMeters();
-    const page = this.currentPage();
-    const size = this.pageSize();
-    const start = (page - 1) * size;
-    return list.slice(start, start + size);
   });
 
   step1Valid(): boolean {
@@ -121,23 +108,59 @@ export class ReplaceMeterModalComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.setupReactiveValidators();
     this.loadAvailableMeters();
     this.loadPeriods();
   }
 
+  private setupReactiveValidators(): void {
+    this.form.controls.tratamientoSaliente.valueChanges.subscribe((t) => {
+      if (t === 'COBRO_PARCIAL') {
+        this.form.controls.porcentajeCobro.setValidators([
+          Validators.required,
+          Validators.min(1),
+          Validators.max(100),
+        ]);
+      } else {
+        this.form.controls.porcentajeCobro.clearValidators();
+      }
+      this.form.controls.porcentajeCobro.updateValueAndValidity();
+    });
+
+    this.form.controls.tratamientoEntrante.valueChanges.subscribe((t) => {
+      if (t === 'DIFERIR_SIGUIENTE_PERIODO') {
+        this.form.controls.periodoDestinoId.setValidators([Validators.required]);
+      } else {
+        this.form.controls.periodoDestinoId.clearValidators();
+      }
+      this.form.controls.periodoDestinoId.updateValueAndValidity();
+    });
+  }
+
   loadAvailableMeters(): void {
     this.isLoadingMeters.set(true);
-    this.metersService.getMeters({ estado: 'BODEGA', limit: 100 }).subscribe({
-      next: (res) => {
-        this.availableMeters.set((res.datos || res.data || []) as IMeter[]);
-        this.isLoadingMeters.set(false);
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.isLoadingMeters.set(false);
-        this.toastService.show('Error al cargar medidores en bodega', 'error');
-      },
-    });
+    const query = this.meterSearchQuery().trim();
+    this.metersService
+      .getMeters({
+        estado: 'BODEGA',
+        search: query || undefined,
+        page: this.currentPage(),
+        limit: this.pageSize(),
+      })
+      .subscribe({
+        next: (res) => {
+          const list = (res.datos || res.data || []) as IMeter[];
+          this.availableMeters.set(list);
+          const total = res.meta?.total ?? res.paginacion?.total ?? list.length;
+          this.totalMeters.set(total);
+          this.isLoadingMeters.set(false);
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.isLoadingMeters.set(false);
+          this.toastService.show('Error al cargar medidores en bodega', 'error');
+        },
+      });
   }
 
   private loadPeriods(): void {
@@ -159,15 +182,18 @@ export class ReplaceMeterModalComponent implements OnInit {
   onSearchQueryChange(query: string): void {
     this.meterSearchQuery.set(query);
     this.currentPage.set(1);
+    this.loadAvailableMeters();
   }
 
   onPageChange(page: number): void {
     this.currentPage.set(page);
+    this.loadAvailableMeters();
   }
 
   onPageSizeChange(size: number): void {
     this.pageSize.set(size);
     this.currentPage.set(1);
+    this.loadAvailableMeters();
   }
 
   selectMeter(meter: IMeter): void {

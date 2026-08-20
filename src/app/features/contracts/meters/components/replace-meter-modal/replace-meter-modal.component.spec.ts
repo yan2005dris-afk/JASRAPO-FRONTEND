@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { ReplaceMeterModalComponent } from './replace-meter-modal.component';
@@ -6,129 +7,118 @@ import { MetersService } from '../../services/meters.service';
 import { ReadingRoutesService } from '../../../reading-routes/services/reading-routes.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
-import { IReplaceMeterResponse } from '../../interfaces/imeter.interface';
+import { IMeter, IReplaceMeterResponse } from '../../interfaces/imeter.interface';
 
 describe('ReplaceMeterModalComponent', () => {
   let component: ReplaceMeterModalComponent;
   let fixture: ComponentFixture<ReplaceMeterModalComponent>;
 
+  const mockAvailableMeters: IMeter[] = [
+    {
+      medidorId: 200,
+      serie: 'MED-NEW-1',
+      marca: 'Siemens',
+      modelo: 'CX200',
+      estado: { codigo: 'BODEGA', nombre: 'Bodega', orden: 1 },
+      fechaInstalacion: null,
+      contratoId: null,
+      latitud: null,
+      longitud: null,
+    },
+    {
+      medidorId: 201,
+      serie: 'MED-NEW-2',
+      marca: 'Itron',
+      modelo: 'Smart',
+      estado: { codigo: 'BODEGA', nombre: 'Bodega', orden: 1 },
+      fechaInstalacion: null,
+      contratoId: null,
+      latitud: null,
+      longitud: null,
+    },
+  ];
+
+  const mockContract: IContract = {
+    contratoId: '1',
+    clienteId: '10',
+    sectorId: 1,
+    categoriaTarifaId: 1,
+    numeroGuia: 'GUI-001',
+    fechaInicio: '2026-01-01',
+    direccionSuministro: 'Av Principal 123',
+    estado: 'ACTIVO',
+    comunidadId: 1,
+    categoriaTarifa: {
+      categoriaTarifaId: 1,
+      nombre: 'Residencial',
+      descripcion: 'Tarifa básica',
+      valorBase: 5,
+      consumoMinimoMensual: 10,
+      valorExcedenteM3: 0.5,
+    },
+    cliente: {
+      clienteId: '10',
+      identificacion: '1234567890',
+      nombres: 'Juan',
+      apellidos: 'Pérez',
+      razonSocial: null,
+      email: 'juan@test.com',
+      telefono: '0999999999',
+      direccionDomicilio: 'Calle 1',
+    },
+    comunidad: {
+      comunidadId: 1,
+      codigo: 'COM-01',
+      nombre: 'Comunidad Central',
+    },
+    sector: {
+      sectorId: 1,
+      codigo: 'SEC-01',
+      nombre: 'Sector Norte',
+    },
+    historialMedidores: [
+      {
+        historialId: '100',
+        medidorId: '50',
+        fechaDesde: '2026-01-01',
+        fechaHasta: null,
+        lecturaInicial: 500,
+        lecturaFinal: null,
+        medidor: {
+          medidorId: '50',
+          serie: 'MED-OLD-1',
+          marca: 'Actaris',
+          modelo: 'A100',
+        },
+      },
+    ],
+  };
+
+  const mockPeriods = [
+    { periodoId: 1, nombre: 'Enero 2026', estado: 'ABIERTO' },
+    { periodoId: 2, nombre: 'Febrero 2026', estado: 'CERRADO' },
+  ];
+
   const mockMetersService = {
-    getMeters: vi.fn(),
+    getMeters: vi.fn().mockReturnValue(of({ datos: mockAvailableMeters, total: 2 })),
     replaceMeter: vi.fn(),
   };
 
   const mockRoutesService = {
-    getPeriods: vi.fn(),
+    getPeriods: vi.fn().mockReturnValue(of(mockPeriods)),
   };
 
   const mockToastService = {
     show: vi.fn(),
   };
 
-  const mockContract: IContract = {
-    contratoId: '1',
-    numeroGuia: '101',
-    clienteId: '1',
-    sectorId: null,
-    categoriaTarifaId: 1,
-    fechaInicio: '2026-01-01',
-    direccionSuministro: 'Av Principal',
-    comunidadId: 1,
-    cliente: {
-      clienteId: '1',
-      identificacion: '0102030405',
-      nombres: 'Juan',
-      apellidos: 'Pérez',
-      razonSocial: null,
-      email: null,
-      telefono: null,
-      direccionDomicilio: null,
-    },
-    comunidad: {
-      comunidadId: 1,
-      codigo: 'COM-01',
-      nombre: 'Centro',
-    },
-    categoriaTarifa: {
-      categoriaTarifaId: 1,
-      nombre: 'Residencial',
-      descripcion: 'Tarifa Residencial',
-      valorBase: 5,
-      consumoMinimoMensual: 10,
-      valorExcedenteM3: 0.5,
-    },
-    sector: null,
-    estado: 'ACTIVO',
-    historialMedidores: [
-      {
-        historialId: '10',
-        medidorId: '100',
-        fechaDesde: '2026-01-01',
-        fechaHasta: null,
-        lecturaInicial: 500,
-        lecturaFinal: null,
-        medidor: {
-          medidorId: '100',
-          marca: 'Itron',
-          modelo: 'CX1000',
-          serie: 'MED-500',
-        },
-      },
-    ],
-  };
-
   beforeEach(async () => {
     vi.clearAllMocks();
-
-    mockMetersService.getMeters.mockReturnValue(
-      of({
-        datos: [
-          {
-            medidorId: 200,
-            marca: 'Siemens',
-            modelo: 'Digital',
-            serie: 'MED-NEW-1',
-            fechaInstalacion: null,
-            contratoId: null,
-            latitud: null,
-            longitud: null,
-          },
-          {
-            medidorId: 201,
-            marca: 'Itron',
-            modelo: 'Smart',
-            serie: 'MED-NEW-2',
-            fechaInstalacion: null,
-            contratoId: null,
-            latitud: null,
-            longitud: null,
-          },
-        ],
-        paginacion: {
-          total: 2,
-          paginaActual: 1,
-          porPagina: 10,
-          ultimaPagina: 1,
-          anterior: null,
-          siguiente: null,
-        },
-        kpis: { enBodega: 2, instalados: 0, danados: 0, total: 2 },
-      }),
-    );
-
-    mockRoutesService.getPeriods.mockReturnValue(
-      of([
-        {
-          periodoId: 1,
-          nombre: 'Enero 2026',
-          estado: 'ABIERTO',
-        },
-      ]),
-    );
 
     await TestBed.configureTestingModule({
       imports: [ReplaceMeterModalComponent],
       providers: [
+        FormBuilder,
         { provide: MetersService, useValue: mockMetersService },
         { provide: ReadingRoutesService, useValue: mockRoutesService },
         { provide: ToastService, useValue: mockToastService },
@@ -144,20 +134,10 @@ describe('ReplaceMeterModalComponent', () => {
   it('should create and populate available meters and active period', () => {
     expect(component).toBeTruthy();
     expect(component.availableMeters().length).toBe(2);
-    expect(component.periodos().length).toBe(1);
+    expect(component.periodos().length).toBe(2);
     expect(component.baseReading()).toBe(500);
     expect(component.currentStep()).toBe(1);
     expect(component.form.controls.periodoOrigenId.value).toBe(1);
-  });
-
-  it('should filter meters in step 2 by search query', () => {
-    component.meterSearchQuery.set('Siemens');
-    expect(component.filteredMeters().length).toBe(1);
-    expect(component.filteredMeters()[0].serie).toBe('MED-NEW-1');
-
-    component.meterSearchQuery.set('Smart');
-    expect(component.filteredMeters().length).toBe(1);
-    expect(component.filteredMeters()[0].serie).toBe('MED-NEW-2');
   });
 
   it('should select meter and advance through wizard steps', () => {
@@ -185,6 +165,20 @@ describe('ReplaceMeterModalComponent', () => {
 
     expect(component.currentStep()).toBe(1);
     expect(component.errorMessage()).toContain('no puede ser menor a la lectura base previa');
+  });
+
+  it('should apply reactive validations for partial charge and deferred treatment', () => {
+    component.form.controls.tratamientoSaliente.setValue('COBRO_PARCIAL');
+    expect(component.form.controls.porcentajeCobro.validator).toBeTruthy();
+
+    component.form.controls.tratamientoSaliente.setValue('COBRO_REAL');
+    expect(component.form.controls.porcentajeCobro.validator).toBeNull();
+
+    component.form.controls.tratamientoEntrante.setValue('DIFERIR_SIGUIENTE_PERIODO');
+    expect(component.form.controls.periodoDestinoId.validator).toBeTruthy();
+
+    component.form.controls.tratamientoEntrante.setValue('FACTURAR_PERIODO_ACTUAL');
+    expect(component.form.controls.periodoDestinoId.validator).toBeNull();
   });
 
   it('should submit replace meter request when confirmed on step 3', () => {
@@ -242,18 +236,31 @@ describe('ReplaceMeterModalComponent', () => {
     expect(component.isSaving()).toBeFalsy();
   });
 
-  it('should handle pagination and search query changes', () => {
-    component.onPageSizeChange(1);
-    expect(component.pageSize()).toBe(1);
+  it('should handle server search and pagination triggers', () => {
+    component.onPageSizeChange(10);
+    expect(component.pageSize()).toBe(10);
     expect(component.currentPage()).toBe(1);
-    expect(component.paginatedMeters().length).toBe(1);
+    expect(mockMetersService.getMeters).toHaveBeenCalledWith(
+      expect.objectContaining({ limit: 10, page: 1 }),
+    );
 
     component.onPageChange(2);
     expect(component.currentPage()).toBe(2);
-    expect(component.paginatedMeters().length).toBe(1);
+    expect(mockMetersService.getMeters).toHaveBeenCalledWith(
+      expect.objectContaining({ limit: 10, page: 2 }),
+    );
 
     component.onSearchQueryChange('Siemens');
     expect(component.meterSearchQuery()).toBe('Siemens');
     expect(component.currentPage()).toBe(1);
+    expect(mockMetersService.getMeters).toHaveBeenCalledWith(
+      expect.objectContaining({ search: 'Siemens', page: 1 }),
+    );
+  });
+
+  it('should close on escape key', () => {
+    vi.spyOn(component.cancelled, 'emit');
+    component.handleEscape();
+    expect(component.cancelled.emit).toHaveBeenCalled();
   });
 });
