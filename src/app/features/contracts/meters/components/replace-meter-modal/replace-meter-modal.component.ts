@@ -294,6 +294,13 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
         this.form.controls.responsabilidadDano.clearValidators();
       }
       this.form.controls.responsabilidadDano.updateValueAndValidity();
+
+      if (m === 'OTRO') {
+        this.form.controls.detalleMotivo.setValidators([Validators.required]);
+      } else {
+        this.form.controls.detalleMotivo.clearValidators();
+      }
+      this.form.controls.detalleMotivo.updateValueAndValidity();
     });
 
     this.form.controls.tratamientoSaliente.valueChanges.subscribe((t) => {

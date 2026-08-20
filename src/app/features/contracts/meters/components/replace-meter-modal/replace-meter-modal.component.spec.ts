@@ -297,4 +297,120 @@ describe('ReplaceMeterModalComponent', () => {
 
     expect(component.baseReading()).toBe(700);
   });
+
+  describe('Step 3 — All Economic Treatments & Invalid Edge Cases', () => {
+    beforeEach(() => {
+      // Advance to step 3 cleanly
+      component.form.controls.lecturaFinalSaliente.setValue(530);
+      component.form.controls.motivo.setValue('DANO');
+      component.form.controls.responsabilidadDano.setValue('JUNTA');
+      component.goToStep(2);
+      component.selectMeter(component.availableMeters()[0]);
+      component.goToStep(3);
+    });
+
+    it('Tratamiento Válido 1: EXONERADO (0 m³ cobrados)', () => {
+      mockMetersService.replaceMeter.mockReturnValue(of({} as IReplaceMeterResponse));
+
+      component.form.controls.tratamientoSaliente.setValue('EXONERADO');
+      component.form.controls.tratamientoEntrante.setValue('FACTURAR_PERIODO_ACTUAL');
+
+      component.onSubmit();
+
+      expect(mockMetersService.replaceMeter).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tratamientoSaliente: 'EXONERADO',
+          tratamientoEntrante: 'FACTURAR_PERIODO_ACTUAL',
+        }),
+      );
+    });
+
+    it('Tratamiento Válido 2: PROMEDIO_HISTORICO con ventana de 6 meses', () => {
+      mockMetersService.replaceMeter.mockReturnValue(of({} as IReplaceMeterResponse));
+
+      component.form.controls.tratamientoSaliente.setValue('PROMEDIO_HISTORICO');
+      component.form.controls.ventanaPromedio.setValue(6);
+
+      component.onSubmit();
+
+      expect(mockMetersService.replaceMeter).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tratamientoSaliente: 'PROMEDIO_HISTORICO',
+          ventanaPromedio: 6,
+        }),
+      );
+    });
+
+    it('Tratamiento Válido 3: DIFERIR_SIGUIENTE_PERIODO con mes y período destino válidos', () => {
+      mockMetersService.replaceMeter.mockReturnValue(of({} as IReplaceMeterResponse));
+
+      component.form.controls.tratamientoEntrante.setValue('DIFERIR_SIGUIENTE_PERIODO');
+      component.form.controls.periodoDestinoId.setValue(2);
+      component.form.controls.mesDestino.setValue(9);
+
+      component.onSubmit();
+
+      expect(mockMetersService.replaceMeter).toHaveBeenCalledWith(
+        expect.objectContaining({
+          tratamientoEntrante: 'DIFERIR_SIGUIENTE_PERIODO',
+          periodoDestinoId: 2,
+          mesDestino: 9,
+        }),
+      );
+    });
+
+    it('Caso Inválido 1: COBRO_PARCIAL sin especificar porcentaje', () => {
+      component.form.controls.tratamientoSaliente.setValue('COBRO_PARCIAL');
+      component.form.controls.porcentajeCobro.setValue(null);
+
+      component.onSubmit();
+
+      expect(component.form.invalid).toBe(true);
+      expect(component.form.controls.porcentajeCobro.valid).toBe(false);
+      expect(mockMetersService.replaceMeter).not.toHaveBeenCalled();
+    });
+
+    it('Caso Inválido 2: COBRO_PARCIAL con porcentaje fuera de rango (>100 o <=0)', () => {
+      component.form.controls.tratamientoSaliente.setValue('COBRO_PARCIAL');
+      component.form.controls.porcentajeCobro.setValue(150);
+
+      expect(component.form.controls.porcentajeCobro.valid).toBe(false);
+
+      component.form.controls.porcentajeCobro.setValue(0);
+      expect(component.form.controls.porcentajeCobro.valid).toBe(false);
+    });
+
+    it('Caso Inválido 3: DIFERIR_SIGUIENTE_PERIODO sin período ni mes destino', () => {
+      component.form.controls.tratamientoEntrante.setValue('DIFERIR_SIGUIENTE_PERIODO');
+      component.form.controls.periodoDestinoId.setValue(null);
+      component.form.controls.mesDestino.setValue(null);
+
+      component.onSubmit();
+
+      expect(component.form.invalid).toBe(true);
+      expect(component.form.controls.periodoDestinoId.valid).toBe(false);
+      expect(component.form.controls.mesDestino.valid).toBe(false);
+      expect(mockMetersService.replaceMeter).not.toHaveBeenCalled();
+    });
+
+    it('Caso Inválido 4: Motivo OTRO sin detalle explicativo', () => {
+      component.form.controls.motivo.setValue('OTRO');
+      component.form.controls.detalleMotivo.setValue('');
+
+      component.onSubmit();
+
+      expect(component.form.invalid).toBe(true);
+      expect(component.form.controls.detalleMotivo.valid).toBe(false);
+      expect(mockMetersService.replaceMeter).not.toHaveBeenCalled();
+    });
+
+    it('Caso Inválido 5: Falta de período de facturación origen', () => {
+      component.form.controls.periodoOrigenId.setValue(null);
+
+      component.onSubmit();
+
+      expect(component.form.invalid).toBe(true);
+      expect(mockMetersService.replaceMeter).not.toHaveBeenCalled();
+    });
+  });
 });
