@@ -17,6 +17,7 @@ export interface IRubro {
   precioUnitario: number;
   tipoRubro: TipoRubro;
   tarifaImpuestoId: number;
+  categoriaTarifaId?: number | null;
   tarifaImpuesto?: {
     id: number;
     codigoPorcentaje: string;
@@ -37,6 +38,7 @@ export interface ICreateRubroDto {
   precioUnitario: number;
   tipoRubro: TipoRubro;
   tarifaImpuestoId: number;
+  categoriaTarifaId?: number | null;
   activo?: boolean;
   esAutomatico?: boolean;
 }
@@ -48,6 +50,7 @@ export interface IUpdateRubroDto {
   precioUnitario?: number;
   tipoRubro?: TipoRubro;
   tarifaImpuestoId?: number;
+  categoriaTarifaId?: number | null;
   activo?: boolean;
   esAutomatico?: boolean;
 }
@@ -58,6 +61,7 @@ export interface IRubroFilterParams {
   nombre?: string;
   tipoRubro?: TipoRubro | string;
   tarifaImpuestoId?: number;
+  categoriaTarifaId?: number;
   activo?: boolean;
   esAutomatico?: boolean;
 }

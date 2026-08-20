@@ -1,3 +1,5 @@
+import type { IRubro } from '../../../billing/rubros/interfaces/irubro.interface';
+
 export interface ITariffCategory {
   categoriaTarifaId?: number;
   nombre: string;
@@ -6,6 +8,7 @@ export interface ITariffCategory {
   consumoMinimoMensual: number;
   valorExcedenteM3: number;
   activo?: boolean;
+  rubros?: IRubro[];
 }
 
 export interface CreateTariffRequest {
