@@ -51,6 +51,9 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
   private triggerElement: HTMLElement | null = null;
   private readonly searchSubject$ = new Subject<{ query: string; page: number; limit: number }>();
   private searchSubscription?: Subscription;
+  /** Clave de idempotencia de la operación: se genera una vez por apertura del modal
+   *  y se reutiliza en reintentos para que el backend deduplique reenvíos. */
+  private idempotencyKey = '';
 
   readonly modalContainer = viewChild<ElementRef<HTMLElement>>('modalContainer');
   readonly firstInput = viewChild<ElementRef<HTMLInputElement>>('firstInput');
@@ -61,7 +64,9 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
   readonly cancelled = output<void>();
 
   // Wizard state
-  readonly currentStep = signal<1 | 2 | 3>(1);
+  readonly currentStep = signal<1 | 2 | 3 | 4>(1);
+  // Steps the user has tried to advance past (drives per-field error visibility)
+  private readonly attemptedSteps = signal<Set<number>>(new Set());
 
   // Search & Pagination in Step 2 (Server-side)
   readonly meterSearchQuery = signal<string>('');
@@ -181,6 +186,158 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
     return true;
   }
 
+  stepAttempted(step: number): boolean {
+    return this.attemptedSteps().has(step);
+  }
+
+  private markStepAttempted(step: number): void {
+    const next = new Set(this.attemptedSteps());
+    next.add(step);
+    this.attemptedSteps.set(next);
+  }
+
+  // Per-field validation helpers (used by the template to show messages under each input)
+  readingBelowBase(): boolean {
+    return Number(this.form.controls.lecturaFinalSaliente.value) < this.baseReading();
+  }
+
+  missingMotivo(): boolean {
+    return !this.form.controls.motivo.value;
+  }
+
+  missingResponsabilidad(): boolean {
+    const motivo = this.form.controls.motivo.value;
+    if (motivo !== 'DANO') return false;
+    const resp = this.form.controls.responsabilidadDano.value;
+    return !resp || resp === 'NO_APLICA';
+  }
+
+  missingDetalleMotivo(): boolean {
+    return (
+      this.form.controls.motivo.value === 'OTRO' && !this.form.controls.detalleMotivo.value?.trim()
+    );
+  }
+
+  missingMeter(): boolean {
+    return !this.form.controls.nuevoMedidorId.value;
+  }
+
+  negativeInitialReading(): boolean {
+    return Number(this.form.controls.lecturaInicialEntrante.value) < 0;
+  }
+
+  missingPeriodoOrigen(): boolean {
+    return !this.form.controls.periodoOrigenId.value;
+  }
+
+  invalidMesOrigen(): boolean {
+    const m = Number(this.form.controls.mesOrigen.value);
+    return !m || m < 1 || m > 12;
+  }
+
+  missingPeriodoDestino(): boolean {
+    return (
+      this.form.controls.tratamientoEntrante.value === 'DIFERIR_SIGUIENTE_PERIODO' &&
+      !this.form.controls.periodoDestinoId.value
+    );
+  }
+
+  missingMesDestino(): boolean {
+    return (
+      this.form.controls.tratamientoEntrante.value === 'DIFERIR_SIGUIENTE_PERIODO' &&
+      !this.form.controls.mesDestino.value
+    );
+  }
+
+  invalidPorcentaje(): boolean {
+    if (this.form.controls.tratamientoSaliente.value !== 'COBRO_PARCIAL') return false;
+    const pct = Number(this.form.controls.porcentajeCobro.value);
+    return !pct || pct < 1 || pct > 100;
+  }
+
+  missingVentana(): boolean {
+    return (
+      this.form.controls.tratamientoSaliente.value === 'PROMEDIO_HISTORICO' &&
+      !this.form.controls.ventanaPromedio.value
+    );
+  }
+
+  // Centralized full-transaction validation, used by step 4 summary and onSubmit guard
+  getStepErrors(): { step: number; message: string }[] {
+    const errors: { step: number; message: string }[] = [];
+    const controls = this.form.controls;
+    const base = this.baseReading();
+    const finalSaliente = Number(controls.lecturaFinalSaliente.value);
+    const motivo = controls.motivo.value as MotivoReemplazoMedidor | null;
+    const detalle = controls.detalleMotivo.value;
+    const resp = controls.responsabilidadDano.value;
+    const meterId = controls.nuevoMedidorId.value;
+    const initialReading = Number(controls.lecturaInicialEntrante.value);
+    const ts = controls.tratamientoSaliente.value as TratamientoSaliente | null;
+    const te = controls.tratamientoEntrante.value as TratamientoEntrante | null;
+    const pct = Number(controls.porcentajeCobro.value);
+    const ventana = Number(controls.ventanaPromedio.value);
+
+    // Paso 1
+    if (!motivo) {
+      errors.push({ step: 1, message: 'Seleccione el motivo del reemplazo.' });
+    }
+    if (finalSaliente < base) {
+      errors.push({
+        step: 1,
+        message: `La lectura final (${finalSaliente}) no puede ser menor a la lectura base (${base}).`,
+      });
+    }
+    if (motivo === 'DANO' && (!resp || resp === 'NO_APLICA')) {
+      errors.push({ step: 1, message: 'Seleccione la responsabilidad del daño.' });
+    }
+    if (motivo === 'OTRO' && !detalle?.trim()) {
+      errors.push({ step: 1, message: 'Especifique el detalle del motivo.' });
+    }
+
+    // Paso 2
+    if (!meterId) {
+      errors.push({ step: 2, message: 'Seleccione un medidor entrante de la lista.' });
+    }
+    if (initialReading < 0) {
+      errors.push({ step: 2, message: 'La lectura inicial no puede ser negativa.' });
+    }
+
+    // Paso 3
+    if (!controls.periodoOrigenId.value) {
+      errors.push({ step: 3, message: 'Seleccione el período de facturación (origen).' });
+    }
+    const mOrig = Number(controls.mesOrigen.value);
+    if (!mOrig || mOrig < 1 || mOrig > 12) {
+      errors.push({ step: 3, message: 'Seleccione el mes de origen.' });
+    }
+    if (te === 'DIFERIR_SIGUIENTE_PERIODO') {
+      if (!controls.periodoDestinoId.value) {
+        errors.push({ step: 3, message: 'Seleccione el período destino (diferimiento).' });
+      }
+      if (!controls.mesDestino.value) {
+        errors.push({ step: 3, message: 'Seleccione el mes destino (diferimiento).' });
+      }
+      if (!this.isDestinationCycleValid()) {
+        errors.push({
+          step: 3,
+          message: 'El ciclo destino debe ser posterior al ciclo de origen.',
+        });
+      }
+    }
+    if (ts === 'COBRO_PARCIAL' && (!pct || pct < 1 || pct > 100)) {
+      errors.push({
+        step: 3,
+        message: 'El porcentaje a cobrar debe estar entre 1 y 100.',
+      });
+    }
+    if (ts === 'PROMEDIO_HISTORICO' && !ventana) {
+      errors.push({ step: 3, message: 'Seleccione la ventana de cálculo del promedio.' });
+    }
+
+    return errors;
+  }
+
   step1Valid(): boolean {
     const finalSaliente = Number(this.form.controls.lecturaFinalSaliente.value);
     const motivo = this.form.controls.motivo.value;
@@ -200,6 +357,7 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
   }
 
   ngOnInit(): void {
+    this.idempotencyKey = crypto.randomUUID();
     if (typeof document !== 'undefined') {
       this.triggerElement = document.activeElement as HTMLElement;
     }
@@ -418,22 +576,16 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
     this.errorMessage.set('');
   }
 
-  goToStep(step: 1 | 2 | 3): void {
-    if (step === 2 && !this.step1Valid()) {
-      const finalSaliente = Number(this.form.controls.lecturaFinalSaliente.value);
-      if (finalSaliente < this.baseReading()) {
-        this.errorMessage.set(
-          `La lectura final (${finalSaliente}) no puede ser menor a la lectura base previa (${this.baseReading()}).`,
-        );
-      } else {
-        this.errorMessage.set('Complete los campos requeridos del Paso 1.');
+  goToStep(step: 1 | 2 | 3 | 4): void {
+    const current = this.currentStep();
+    // Only enforce validation when moving FORWARD (back navigation is always allowed)
+    if (step > current) {
+      const currentErrors = this.getStepErrors().filter((e) => e.step === current);
+      if (currentErrors.length > 0) {
+        this.markStepAttempted(current);
+        this.errorMessage.set(currentErrors[0].message);
+        return;
       }
-      return;
-    }
-
-    if (step === 3 && !this.step2Valid()) {
-      this.errorMessage.set('Debe seleccionar un medidor de la lista en el Paso 2.');
-      return;
     }
 
     this.errorMessage.set('');
@@ -447,65 +599,42 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
     const step = this.currentStep();
     if (step === 2) this.currentStep.set(1);
     if (step === 3) this.currentStep.set(2);
+    if (step === 4) this.currentStep.set(3);
     this.errorMessage.set('');
     setTimeout(() => {
       this.stepHeading()?.nativeElement?.focus();
     }, 50);
   }
 
+  goToErrorStep(step: number): void {
+    this.goToStep(Math.min(4, Math.max(1, step)) as 1 | 2 | 3 | 4);
+  }
+
   readonly Number = Number;
 
   onSubmit(): void {
     const raw = this.form.getRawValue();
-    const finalSaliente = Number(raw.lecturaFinalSaliente);
-    const base = this.baseReading();
 
-    if (finalSaliente < base) {
-      this.errorMessage.set(
-        `La lectura final (${finalSaliente}) no puede ser menor a la lectura inicial registrada (${base}).`,
-      );
-      this.currentStep.set(1);
-      setTimeout(() => {
-        this.stepHeading()?.nativeElement?.focus();
-      }, 50);
-      return;
-    }
-
-    if (!raw.nuevoMedidorId) {
-      this.errorMessage.set('Debe seleccionar un medidor entrante.');
-      this.currentStep.set(2);
-      setTimeout(() => {
-        this.stepHeading()?.nativeElement?.focus();
-      }, 50);
-      return;
-    }
-
-    if (this.form.invalid || !raw.periodoOrigenId) {
+    const errors = this.getStepErrors();
+    if (errors.length > 0) {
       this.form.markAllAsTouched();
-      this.errorMessage.set('Por favor complete todos los campos obligatorios.');
-      return;
-    }
-
-    if (!this.isDestinationCycleValid()) {
-      this.errorMessage.set(
-        'El ciclo de facturación destino (período y mes) debe ser estrictamente posterior al ciclo de origen.',
-      );
-      return;
-    }
-
-    if (raw.motivo === 'OTRO' && !raw.detalleMotivo?.trim()) {
-      this.errorMessage.set('Debe especificar un detalle cuando el motivo es OTRO.');
-      this.currentStep.set(1);
+      errors.forEach((e) => this.markStepAttempted(e.step));
+      const first = errors[0];
+      this.currentStep.set(first.step as 1 | 2 | 3);
+      this.errorMessage.set(first.message);
       setTimeout(() => {
         this.stepHeading()?.nativeElement?.focus();
       }, 50);
       return;
     }
+
+    const finalSaliente = Number(raw.lecturaFinalSaliente);
 
     this.errorMessage.set('');
     this.isSaving.set(true);
 
     const payload: IReplaceMeterRequest = {
+      claveIdempotencia: this.idempotencyKey,
       contratoId: this.contract().contratoId,
       nuevoMedidorId: String(raw.nuevoMedidorId),
       lecturaFinalSaliente: finalSaliente,
@@ -534,7 +663,7 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
       },
       error: (err) => {
         this.isSaving.set(false);
-        const msg = err?.error?.message || 'Error al procesar el reemplazo del medidor';
+        const msg = this.formatServerError(err);
         this.errorMessage.set(msg);
         this.toastService.show(msg, 'error');
         this.cdr.markForCheck();
@@ -545,5 +674,32 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
   onClose(): void {
     if (this.isSaving()) return;
     this.cancelled.emit();
+  }
+
+  /**
+   * El GlobalExceptionFilter del backend responde 400 con
+   * { message: 'Error de validación', errors: [...] } donde errors[] lleva el detalle
+   * por campo. Aquí se prefiere ese detalle sobre el mensaje genérico.
+   */
+  private formatServerError(err: unknown): string {
+    const errorBody = (err as { error?: { message?: string; errors?: unknown } })?.error;
+    const fallback = 'Error al procesar el reemplazo del medidor';
+    if (!errorBody) return fallback;
+
+    const rawErrors = errorBody.errors;
+    if (Array.isArray(rawErrors) && rawErrors.length > 0) {
+      const details = rawErrors
+        .map((e) => {
+          if (typeof e === 'string') return e;
+          const field = (e as { field?: string })?.field;
+          const message = (e as { message?: string })?.message;
+          if (message) return field ? `${field}: ${message}` : message;
+          return undefined;
+        })
+        .filter((m): m is string => !!m);
+      if (details.length > 0) return details.join(' · ');
+    }
+
+    return errorBody.message || fallback;
   }
 }

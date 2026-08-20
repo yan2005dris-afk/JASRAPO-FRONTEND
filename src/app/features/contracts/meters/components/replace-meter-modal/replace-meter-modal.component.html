@@ -81,10 +81,29 @@
             type="button"
             class="step-item btn p-0 border-0 bg-transparent d-flex align-items-center gap-2"
             [class.active]="currentStep() === 3"
+            [class.completed]="currentStep() > 3"
             (click)="goToStep(3)"
           >
-            <span class="step-badge">3</span>
+            <span class="step-badge">
+              @if (currentStep() > 3) {
+                <i class="bi bi-check-lg"></i>
+              } @else {
+                3
+              }
+            </span>
             <span class="step-label small fw-medium"> Facturación & Cierre</span>
+          </button>
+
+          <div class="step-divider flex-grow-1 mx-2" [class.completed]="currentStep() > 3"></div>
+
+          <button
+            type="button"
+            class="step-item btn p-0 border-0 bg-transparent d-flex align-items-center gap-2"
+            [class.active]="currentStep() === 4"
+            (click)="goToStep(4)"
+          >
+            <span class="step-badge">4</span>
+            <span class="step-label small fw-medium"> Resumen & Confirmar</span>
           </button>
         </div>
       </div>
@@ -192,12 +211,20 @@
                         step="0.01"
                         placeholder="Ej: 530"
                         [class.is-invalid]="
-                          form.controls.lecturaFinalSaliente.invalid &&
-                          form.controls.lecturaFinalSaliente.touched
+                          (form.controls.lecturaFinalSaliente.invalid &&
+                            form.controls.lecturaFinalSaliente.touched) ||
+                          (stepAttempted(1) && readingBelowBase())
                         "
                       />
                       <span class="input-group-text bg-white text-muted">m³</span>
                     </div>
+                    @if (stepAttempted(1) && readingBelowBase()) {
+                      <div class="text-danger x-small mt-1">
+                        <i class="bi bi-exclamation-circle me-1"></i>
+                        La lectura final no puede ser menor a la lectura base ({{ baseReading() }}
+                        m³).
+                      </div>
+                    }
                     <div class="form-text extra-small text-muted">
                       Debe ser mayor o igual a la lectura base ({{ baseReading() }} m³). Consumo
                       físico registrado:
@@ -232,6 +259,7 @@
                     <select
                       id="motivo"
                       class="form-select form-select-sm shadow-none"
+                      [class.is-invalid]="stepAttempted(1) && missingMotivo()"
                       formControlName="motivo"
                     >
                       <option value="DANO">Daño / Avería</option>
@@ -241,6 +269,12 @@
                       <option value="FIN_VIDA_UTIL">Fin de Vida Útil</option>
                       <option value="OTRO">Otro motivo</option>
                     </select>
+                    @if (stepAttempted(1) && missingMotivo()) {
+                      <div class="text-danger x-small mt-1">
+                        <i class="bi bi-exclamation-circle me-1"></i>
+                        Seleccione el motivo del reemplazo.
+                      </div>
+                    }
                   </div>
 
                   @if (form.controls.motivo.value === 'DANO') {
@@ -254,6 +288,7 @@
                       <select
                         id="responsabilidadDano"
                         class="form-select form-select-sm shadow-none"
+                        [class.is-invalid]="stepAttempted(1) && missingResponsabilidad()"
                         formControlName="responsabilidadDano"
                       >
                         <option value="JUNTA">Junta / Operativa (Falla técnica o red)</option>
@@ -263,6 +298,12 @@
                           No determinada (Pendiente inspección)
                         </option>
                       </select>
+                      @if (stepAttempted(1) && missingResponsabilidad()) {
+                        <div class="text-danger x-small mt-1">
+                          <i class="bi bi-exclamation-circle me-1"></i>
+                          Seleccione la responsabilidad del daño.
+                        </div>
+                      }
                     </div>
                   }
 
@@ -278,9 +319,16 @@
                         type="text"
                         id="detalleMotivo"
                         class="form-control form-control-sm shadow-none"
+                        [class.is-invalid]="stepAttempted(1) && missingDetalleMotivo()"
                         formControlName="detalleMotivo"
                         placeholder="Especifique la justificación técnica..."
                       />
+                      @if (stepAttempted(1) && missingDetalleMotivo()) {
+                        <div class="text-danger x-small mt-1">
+                          <i class="bi bi-exclamation-circle me-1"></i>
+                          Especifique el detalle del motivo.
+                        </div>
+                      }
                     </div>
                   }
                 </div>
@@ -355,6 +403,11 @@
                         <i class="bi bi-check-circle-fill text-success"></i>
                         {{ sm.serie }} — {{ sm.marca }} {{ sm.modelo }}
                       </div>
+                    } @else if (stepAttempted(2) && missingMeter()) {
+                      <span class="text-danger small fst-italic">
+                        <i class="bi bi-exclamation-circle me-1"></i>
+                        Seleccione un medidor de la lista antes de continuar.
+                      </span>
                     } @else {
                       <span class="text-danger small fst-italic"
                         >Ningún medidor seleccionado en la tabla.</span
@@ -378,9 +431,16 @@
                         min="0"
                         step="0.01"
                         placeholder="0"
+                        [class.is-invalid]="stepAttempted(2) && negativeInitialReading()"
                       />
                       <span class="input-group-text bg-white text-muted">m³</span>
                     </div>
+                    @if (stepAttempted(2) && negativeInitialReading()) {
+                      <div class="text-danger x-small mt-1">
+                        <i class="bi bi-exclamation-circle me-1"></i>
+                        La lectura inicial no puede ser negativa.
+                      </div>
+                    }
                   </div>
                 </div>
               </div>
@@ -453,11 +513,18 @@
                       <select
                         id="ventanaPromedio"
                         class="form-select form-select-sm shadow-none"
+                        [class.is-invalid]="stepAttempted(3) && missingVentana()"
                         formControlName="ventanaPromedio"
                       >
                         <option [value]="3">Promedio de últimos 3 meses</option>
                         <option [value]="6">Promedio de últimos 6 meses</option>
                       </select>
+                      @if (stepAttempted(3) && missingVentana()) {
+                        <div class="text-danger x-small mt-1">
+                          <i class="bi bi-exclamation-circle me-1"></i>
+                          Seleccione la ventana de cálculo del promedio.
+                        </div>
+                      }
                     </div>
                   }
 
@@ -477,9 +544,16 @@
                           formControlName="porcentajeCobro"
                           min="1"
                           max="100"
+                          [class.is-invalid]="stepAttempted(3) && invalidPorcentaje()"
                         />
                         <span class="input-group-text bg-white text-muted">%</span>
                       </div>
+                      @if (stepAttempted(3) && invalidPorcentaje()) {
+                        <div class="text-danger x-small mt-1">
+                          <i class="bi bi-exclamation-circle me-1"></i>
+                          El porcentaje a cobrar debe estar entre 1 y 100.
+                        </div>
+                      }
                     </div>
                   }
 
@@ -493,6 +567,7 @@
                     <select
                       id="periodoOrigenId"
                       class="form-select form-select-sm shadow-none"
+                      [class.is-invalid]="stepAttempted(3) && missingPeriodoOrigen()"
                       formControlName="periodoOrigenId"
                     >
                       @for (p of periodos(); track p.periodoId) {
@@ -501,6 +576,12 @@
                         </option>
                       }
                     </select>
+                    @if (stepAttempted(3) && missingPeriodoOrigen()) {
+                      <div class="text-danger x-small mt-1">
+                        <i class="bi bi-exclamation-circle me-1"></i>
+                        Seleccione el período de facturación (origen).
+                      </div>
+                    }
                   </div>
 
                   <div class="col-md-6">
@@ -513,12 +594,19 @@
                     <select
                       id="mesOrigen"
                       class="form-select form-select-sm shadow-none"
+                      [class.is-invalid]="stepAttempted(3) && invalidMesOrigen()"
                       formControlName="mesOrigen"
                     >
                       @for (m of meses; track m.id) {
                         <option [value]="m.id">{{ m.nombre }}</option>
                       }
                     </select>
+                    @if (stepAttempted(3) && invalidMesOrigen()) {
+                      <div class="text-danger x-small mt-1">
+                        <i class="bi bi-exclamation-circle me-1"></i>
+                        Seleccione el mes de origen.
+                      </div>
+                    }
                   </div>
 
                   @if (form.controls.tratamientoEntrante.value === 'DIFERIR_SIGUIENTE_PERIODO') {
@@ -532,6 +620,7 @@
                       <select
                         id="periodoDestinoId"
                         class="form-select form-select-sm shadow-none"
+                        [class.is-invalid]="stepAttempted(3) && missingPeriodoDestino()"
                         formControlName="periodoDestinoId"
                       >
                         @for (p of periodos(); track p.periodoId) {
@@ -540,6 +629,12 @@
                           </option>
                         }
                       </select>
+                      @if (stepAttempted(3) && missingPeriodoDestino()) {
+                        <div class="text-danger x-small mt-1">
+                          <i class="bi bi-exclamation-circle me-1"></i>
+                          Seleccione el período destino (diferimiento).
+                        </div>
+                      }
                     </div>
 
                     <div class="col-md-6">
@@ -552,20 +647,32 @@
                       <select
                         id="mesDestino"
                         class="form-select form-select-sm shadow-none"
+                        [class.is-invalid]="stepAttempted(3) && missingMesDestino()"
                         formControlName="mesDestino"
                       >
                         @for (m of meses; track m.id) {
                           <option [value]="m.id">{{ m.nombre }}</option>
                         }
                       </select>
+                      @if (stepAttempted(3) && missingMesDestino()) {
+                        <div class="text-danger x-small mt-1">
+                          <i class="bi bi-exclamation-circle me-1"></i>
+                          Seleccione el mes destino (diferimiento).
+                        </div>
+                      }
                     </div>
                   }
                 </div>
               </div>
+            </div>
+          }
 
-              <!-- Resumen Ejecutivo antes de Confirmar -->
+          <!-- PASO 4: RESUMEN Y CONFIRMAR -->
+          @if (currentStep() === 4) {
+            <div class="d-flex flex-column gap-3">
+              <!-- Resumen Completo de la Transacción -->
               <div class="card border border-primary-subtle bg-white rounded-3 p-3">
-                <h6 class="fw-semibold text-dark mb-2 small">
+                <h6 #stepHeading tabindex="-1" class="fw-semibold text-dark mb-2 small">
                   <i class="bi bi-clipboard-check text-success me-1"></i>
                   Resumen de la Transacción
                 </h6>
@@ -584,6 +691,37 @@
                         form.controls.tratamientoSaliente.value
                       }}</span>
                     </div>
+                    @if (form.controls.tratamientoSaliente.value === 'COBRO_PARCIAL') {
+                      <div>
+                        Porcentaje a cobrar:
+                        <strong>{{ form.controls.porcentajeCobro.value }}%</strong>
+                      </div>
+                    }
+                    @if (form.controls.tratamientoSaliente.value === 'PROMEDIO_HISTORICO') {
+                      <div>
+                        Ventana promedio:
+                        <strong>{{ form.controls.ventanaPromedio.value }} meses</strong>
+                      </div>
+                    }
+                    <div class="mt-1">
+                      Motivo:
+                      <span class="badge text-bg-light border">{{
+                        form.controls.motivo.value
+                      }}</span>
+                    </div>
+                    @if (form.controls.motivo.value === 'DANO') {
+                      <div>
+                        Responsabilidad:
+                        <span class="badge text-bg-light border">{{
+                          form.controls.responsabilidadDano.value
+                        }}</span>
+                      </div>
+                    }
+                    @if (form.controls.motivo.value === 'OTRO') {
+                      <div class="mt-1">
+                        Detalle: <strong>{{ form.controls.detalleMotivo.value }}</strong>
+                      </div>
+                    }
                   </div>
 
                   <div class="col-6 ps-3">
@@ -596,9 +734,58 @@
                         form.controls.tratamientoEntrante.value
                       }}</span>
                     </div>
+                    <div class="mt-1">
+                      Período: {{ form.controls.periodoOrigenId.value }} · Mes:
+                      {{ form.controls.mesOrigen.value }}
+                    </div>
+                    @if (form.controls.tratamientoEntrante.value === 'DIFERIR_SIGUIENTE_PERIODO') {
+                      <div>
+                        Diferido a: Período {{ form.controls.periodoDestinoId.value }} · Mes
+                        {{ form.controls.mesDestino.value }}
+                      </div>
+                    }
                   </div>
                 </div>
               </div>
+
+              <!-- Errores de validación pendientes -->
+              @if (getStepErrors().length > 0) {
+                <div
+                  class="alert alert-danger d-flex align-items-start mb-0 py-2 px-3 rounded-3"
+                  role="alert"
+                >
+                  <i class="bi bi-exclamation-triangle-fill me-2 mt-1 fs-6"></i>
+                  <div>
+                    <div class="small fw-semibold">
+                      Revise los siguientes campos antes de confirmar:
+                    </div>
+                    <ul class="mb-0 mt-1 ps-3 small">
+                      @for (err of getStepErrors(); track $index) {
+                        <li class="d-flex align-items-start gap-2">
+                          <span>Paso {{ err.step }} — {{ err.message }}</span>
+                          <button
+                            type="button"
+                            class="btn btn-link btn-sm p-0 ms-auto text-decoration-none"
+                            (click)="goToErrorStep(err.step)"
+                          >
+                            Ir al paso
+                          </button>
+                        </li>
+                      }
+                    </ul>
+                  </div>
+                </div>
+              } @else {
+                <div
+                  class="alert alert-success d-flex align-items-center mb-0 py-2 px-3 rounded-3"
+                  role="alert"
+                >
+                  <i class="bi bi-check-circle-fill me-2 fs-6"></i>
+                  <span class="small fw-semibold"
+                    >Todos los datos son válidos. Puede confirmar el reemplazo.</span
+                  >
+                </div>
+              }
             </div>
           }
         </form>
@@ -634,7 +821,7 @@
             <button
               type="button"
               class="btn btn-primary px-4 shadow-sm fw-semibold"
-              [disabled]="!step1Valid()"
+              [disabled]="isSaving()"
               (click)="goToStep(2)"
             >
               Siguiente: Medidor Entrante
@@ -646,7 +833,7 @@
             <button
               type="button"
               class="btn btn-primary px-4 shadow-sm fw-semibold"
-              [disabled]="!step2Valid()"
+              [disabled]="isSaving()"
               (click)="goToStep(3)"
             >
               Siguiente: Facturación
@@ -656,10 +843,22 @@
 
           @if (currentStep() === 3) {
             <button
+              type="button"
+              class="btn btn-primary px-4 shadow-sm fw-semibold"
+              [disabled]="isSaving()"
+              (click)="goToStep(4)"
+            >
+              Siguiente: Resumen
+              <i class="bi bi-chevron-right ms-1"></i>
+            </button>
+          }
+
+          @if (currentStep() === 4) {
+            <button
               type="submit"
               form="replaceMeterForm"
               class="btn btn-primary px-4 shadow-sm fw-semibold"
-              [disabled]="isSaving() || form.invalid || !selectedNewMeter()"
+              [disabled]="isSaving() || getStepErrors().length > 0"
             >
               @if (isSaving()) {
                 <span class="spinner-border spinner-border-sm me-2" role="status"></span>
