@@ -50,14 +50,14 @@
       <div class="modal-body px-4 py-4">
         <form (ngSubmit)="submit()">
           <div class="row g-3">
-            <!-- 1. Código SRI / Catálogo con Picker (Primero para autocompletar) -->
-            <div class="col-md-6">
+            <!-- 1. Concepto Estándar con Picker (Limpio y legible) -->
+            <div class="col-md-8">
               <app-picker-input
-                inputId="rubroCodigoSriInput"
-                label="Código SRI / Concepto Estándar"
-                placeholder="Buscar concepto SRI..."
-                icon="bi-upc-scan"
-                [query]="sriSearchQuery || selectedCodigoSriLabel"
+                inputId="rubroConceptoInput"
+                label="Concepto Estándar (Catálogo SRI)"
+                placeholder="Seleccionar o buscar concepto..."
+                icon="bi-bookmark-check"
+                [query]="sriSearchQuery || selectedConceptoLabel"
                 [disabled]="isLoading"
                 [isOpen]="isSriPickerOpen"
                 [hasValue]="!!codigoSri"
@@ -78,14 +78,19 @@
                         (click)="onCodigoSriSelected(c.codigo); isSriPickerOpen = false; sriSearchQuery = ''"
                       >
                         <div>
-                          <div class="small fw-semibold text-dark">{{ c.label }}</div>
+                          <div class="small fw-semibold text-dark">{{ c.nombreSugerido }}</div>
                           <div class="text-muted extra-small" style="font-size: 0.75rem">
                             {{ c.descripcionSugerida }}
                           </div>
                         </div>
-                        <span class="badge bg-light text-dark border font-monospace ms-2">
-                          {{ c.codigo }}
-                        </span>
+                        <div class="d-flex align-items-center gap-1 ms-2">
+                          <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.72rem">
+                            Cód: {{ c.codigo }}
+                          </span>
+                          <span class="badge bg-light text-primary border" style="font-size: 0.72rem">
+                            IVA {{ c.ivaSugeridoPct }}%
+                          </span>
+                        </div>
                       </button>
                     }
                   }
@@ -93,7 +98,28 @@
               </app-picker-input>
             </div>
 
-            <!-- 2. Tipo de Rubro con Picker -->
+            <!-- 2. Código SRI (Automático / No modificable a la derecha) -->
+            <div class="col-md-4">
+              <label for="rubroCodigoSriReadonly" class="form-label fw-semibold small text-dark">
+                Código SRI
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted">
+                  <i class="bi bi-upc-scan"></i>
+                </span>
+                <input
+                  id="rubroCodigoSriReadonly"
+                  type="text"
+                  class="form-control bg-light font-monospace fw-bold text-dark"
+                  [value]="codigoSri || 'Sin código'"
+                  readonly
+                  tabindex="-1"
+                  placeholder="---"
+                />
+              </div>
+            </div>
+
+            <!-- 3. Tipo de Rubro con Picker -->
             <div class="col-md-6">
               <app-picker-input
                 inputId="rubroTipoInput"

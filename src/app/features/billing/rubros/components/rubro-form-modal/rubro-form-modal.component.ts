@@ -80,6 +80,11 @@ export class RubroFormModalComponent implements OnInit {
     );
   }
 
+  get selectedConceptoLabel(): string {
+    const match = this.catalogoCodigosSri.find((c: ICodigoSriInfo) => c.codigo === this.codigoSri);
+    return match ? match.nombreSugerido : this.codigoSri ? `Concepto (${this.codigoSri})` : '';
+  }
+
   get selectedCodigoSriLabel(): string {
     const match = this.catalogoCodigosSri.find((c: ICodigoSriInfo) => c.codigo === this.codigoSri);
     return match ? match.label : this.codigoSri ? `Código ${this.codigoSri}` : '';
