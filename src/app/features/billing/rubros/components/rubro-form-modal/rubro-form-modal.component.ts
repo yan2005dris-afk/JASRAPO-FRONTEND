@@ -115,6 +115,33 @@ export class RubroFormModalComponent implements OnInit {
     return base + this.valorIva;
   }
 
+  setSriPickerOpen(open: boolean): void {
+    this.isSriPickerOpen = open;
+    if (open) {
+      this.isTipoPickerOpen = false;
+      this.isTarifaPickerOpen = false;
+    }
+    this.cdr.markForCheck();
+  }
+
+  setTipoPickerOpen(open: boolean): void {
+    this.isTipoPickerOpen = open;
+    if (open) {
+      this.isSriPickerOpen = false;
+      this.isTarifaPickerOpen = false;
+    }
+    this.cdr.markForCheck();
+  }
+
+  setTarifaPickerOpen(open: boolean): void {
+    this.isTarifaPickerOpen = open;
+    if (open) {
+      this.isSriPickerOpen = false;
+      this.isTipoPickerOpen = false;
+    }
+    this.cdr.markForCheck();
+  }
+
   selectTipoRubro(opt: { value: TipoRubro; label: string }): void {
     this.tipoRubro = opt.value;
     this.isTipoPickerOpen = false;

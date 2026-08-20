@@ -62,7 +62,7 @@
                 [isOpen]="isSriPickerOpen"
                 [hasValue]="!!codigoSri"
                 (queryChange)="sriSearchQuery = $event"
-                (openChange)="isSriPickerOpen = $event"
+                (openChange)="setSriPickerOpen($event)"
               >
                 <div picker-items>
                   @if (filteredCodigosSri.length === 0) {
@@ -131,7 +131,7 @@
                 [required]="true"
                 [isOpen]="isTipoPickerOpen"
                 [hasValue]="!!tipoRubro"
-                (openChange)="isTipoPickerOpen = $event"
+                (openChange)="setTipoPickerOpen($event)"
               >
                 <div picker-items>
                   @for (opt of tipoRubroOptions; track opt.value) {
@@ -151,7 +151,7 @@
               </app-picker-input>
             </div>
 
-            <!-- 3. Nombre del Rubro -->
+            <!-- 4. Nombre del Rubro -->
             <div class="col-12">
               <label for="rubroNombreInput" class="form-label fw-semibold small text-dark">
                 Nombre del Rubro <span class="text-danger">*</span>
@@ -168,7 +168,7 @@
               />
             </div>
 
-            <!-- 4. Descripción -->
+            <!-- 5. Descripción -->
             <div class="col-12">
               <label for="rubroDescripcionTextarea" class="form-label fw-semibold small text-dark">
                 Descripción <span class="text-danger">*</span>
@@ -185,7 +185,7 @@
               ></textarea>
             </div>
 
-            <!-- 5. Tarifa Impuesto IVA con Picker -->
+            <!-- 6. Tarifa Impuesto IVA con Picker -->
             <div class="col-md-6">
               <app-picker-input
                 inputId="rubroTarifaIvaInput"
@@ -197,7 +197,7 @@
                 [required]="true"
                 [isOpen]="isTarifaPickerOpen"
                 [hasValue]="!!tarifaImpuestoId"
-                (openChange)="isTarifaPickerOpen = $event"
+                (openChange)="setTarifaPickerOpen($event)"
               >
                 <div picker-items>
                   @for (t of tarifasImpuesto; track t.id) {
