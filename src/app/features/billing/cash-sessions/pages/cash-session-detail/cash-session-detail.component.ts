@@ -17,6 +17,7 @@ import {
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { CompanyService } from '../../../../admin/company/services/company.service';
 import { IActivePuntoEmision } from '../../../../admin/company/interfaces/icompany.interface';
+import { LocalDatePipe } from '../../../../../../shared/pipes/local-date.pipe';
 
 interface DenominacionDef {
   label: string;
@@ -27,7 +28,7 @@ interface DenominacionDef {
 @Component({
   selector: 'app-cash-session-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LocalDatePipe],
   templateUrl: './cash-session-detail.component.html',
   styleUrl: './cash-session-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
