@@ -111,10 +111,17 @@ export class ServiceContractFormComponent implements OnInit {
     });
 
     // Medidor vigente (el del historial sin fecha de fin)
-    const historial = contract.historialMedidores?.find((h) => h.fechaHasta === null);
+    const historial =
+      contract.historialMedidores?.find((h) => h.fechaHasta === null) ||
+      contract.historialMedidores?.[0];
     if (historial) {
       this.selectedMeter.set(historial.medidor as unknown as IMeter);
       this.originalMeterId = String(historial.medidorId);
+      if (historial.lecturaInicial !== undefined && historial.lecturaInicial !== null) {
+        this.form.patchValue({
+          lecturaInicial: String(historial.lecturaInicial),
+        });
+      }
     }
   }
 
