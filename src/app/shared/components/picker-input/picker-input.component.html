@@ -1,7 +1,7 @@
 <div
   class="picker-input-container position-relative"
   appClickOutside
-  (clickOutside)="onClickOutside()"
+  (appClickOutside)="onClickOutside()"
 >
   @if (label()) {
     <label [for]="inputId()" class="form-label fw-semibold text-dark small mb-1">
@@ -35,17 +35,6 @@
       <span class="input-group-text bg-white text-muted">
         <span class="spinner-border spinner-border-sm" role="status"></span>
       </span>
-    }
-
-    @if ((hasValue() || query()) && !disabled() && !isLoading()) {
-      <button
-        type="button"
-        class="btn btn-outline-secondary"
-        (click)="onClearClick($event)"
-        title="Limpiar"
-      >
-        <i class="bi bi-x-lg"></i>
-      </button>
     }
   </div>
 
