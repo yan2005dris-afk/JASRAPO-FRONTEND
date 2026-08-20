@@ -5,11 +5,12 @@ import { ReadingAnomaliesService } from '../../services/reading-anomalies.servic
 import { IReadingAnomaly } from '../../interfaces/ianomaly.interface';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
 
 @Component({
   selector: 'app-anomaly-resolve-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, StatusBadgeComponent],
+  imports: [CommonModule, FormsModule, StatusBadgeComponent, LocalDatePipe],
   templateUrl: './anomaly-resolve-modal.component.html',
   styleUrl: './anomaly-resolve-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
