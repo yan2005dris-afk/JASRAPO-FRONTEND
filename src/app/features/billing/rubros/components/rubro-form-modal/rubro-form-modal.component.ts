@@ -136,6 +136,16 @@ export class RubroFormModalComponent implements OnInit {
       this.nombre = info.nombreSugerido;
       this.descripcion = info.descripcionSugerida;
       this.tipoRubro = info.tipoRubroSugerido;
+
+      // Autoseleccionar la tarifa de IVA sugerida (0% vs 15%)
+      if (this.tarifasImpuesto.length > 0) {
+        const matchingTarifa = this.tarifasImpuesto.find(
+          (t) => Number(t.porcentaje) === info.ivaSugeridoPct,
+        );
+        if (matchingTarifa) {
+          this.tarifaImpuestoId = matchingTarifa.id;
+        }
+      }
     }
   }
 
