@@ -20,6 +20,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { RubroFormModalComponent } from './components/rubro-form-modal/rubro-form-modal.component';
+import { RubroTableComponent } from './components/rubro-table/rubro-table.component';
 
 @Component({
   selector: 'app-rubros',
@@ -27,8 +28,7 @@ import { RubroFormModalComponent } from './components/rubro-form-modal/rubro-for
   imports: [
     CommonModule,
     FormsModule,
-    StatusBadgeComponent,
-    EmptyStateComponent,
+    RubroTableComponent,
     PaginationComponent,
     RubroFormModalComponent,
   ],

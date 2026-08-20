@@ -16,8 +16,9 @@ import { TariffsService } from './services/tariffs.service';
 import { ITariffCategory } from './interfaces/itariff.interface';
 import { TariffsFormComponent } from './components/tariffs-form/tariffs-form.component';
 import { RubroFormModalComponent } from '../../billing/rubros/components/rubro-form-modal/rubro-form-modal.component';
+import { RubroTableComponent } from '../../billing/rubros/components/rubro-table/rubro-table.component';
 import { RubrosService } from '../../billing/rubros/services/rubros.service';
-import { IRubro } from '../../billing/rubros/interfaces/irubro.interface';
+import { IRubro, TipoRubro } from '../../billing/rubros/interfaces/irubro.interface';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
@@ -29,6 +30,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
     FormsModule,
     TariffsFormComponent,
     RubroFormModalComponent,
+    RubroTableComponent,
     PaginationComponent,
   ],
   templateUrl: './tariffs.component.html',
@@ -70,6 +72,22 @@ export class TariffsComponent implements OnInit {
   readonly unassignedRubros = signal<IRubro[]>([]);
   readonly isLoadingUnassignedRubros = signal(false);
   readonly selectedRubroToAssign = signal<number | null>(null);
+  readonly searchRubroTerm = signal('');
+  readonly filterRubroTipo = signal<string>('');
+
+  readonly filteredUnassignedRubros = computed(() => {
+    const term = this.searchRubroTerm().toLowerCase().trim();
+    const tipo = this.filterRubroTipo();
+    return this.unassignedRubros().filter((r) => {
+      const matchName =
+        !term ||
+        r.nombre.toLowerCase().includes(term) ||
+        (r.codigoSri && r.codigoSri.toLowerCase().includes(term)) ||
+        (r.descripcion && r.descripcion.toLowerCase().includes(term));
+      const matchTipo = !tipo || r.tipoRubro === tipo;
+      return matchName && matchTipo;
+    });
+  });
 
   toggleExpansion(id: number): void {
     this.expandedTariffs.update((set) => {
