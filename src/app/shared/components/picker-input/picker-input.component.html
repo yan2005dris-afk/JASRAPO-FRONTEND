@@ -28,6 +28,7 @@
       [disabled]="disabled()"
       (input)="onInputChange($any($event.target).value)"
       (focus)="onFocus()"
+      (click)="onInputClick()"
       autocomplete="off"
     />
 

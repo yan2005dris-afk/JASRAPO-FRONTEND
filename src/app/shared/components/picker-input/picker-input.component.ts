@@ -39,6 +39,20 @@ export class PickerInputComponent {
   readonly openChange = output<boolean>();
   readonly clear = output<void>();
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as Node;
+    if (this.isOpen() && target && !this.elementRef.nativeElement.contains(target)) {
+      this.openChange.emit(false);
+    }
+  }
+
+  onInputClick(): void {
+    if (!this.disabled()) {
+      this.openChange.emit(!this.isOpen());
+    }
+  }
+
   onInputChange(val: string): void {
     this.queryChange.emit(val);
     if (!this.isOpen()) {
@@ -47,7 +61,7 @@ export class PickerInputComponent {
   }
 
   onFocus(): void {
-    if (!this.disabled()) {
+    if (!this.disabled() && !this.isOpen()) {
       this.openChange.emit(true);
     }
   }
