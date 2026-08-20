@@ -66,6 +66,27 @@
           <i class="bi bi-x-circle"></i>
           Limpiar
         </button>
+
+        <div class="btn-group btn-group-sm ms-auto">
+          <button
+            type="button"
+            class="btn btn-outline-secondary d-flex align-items-center gap-1"
+            (click)="expandAll()"
+            title="Expandir todas las categorías"
+          >
+            <i class="bi bi-arrows-expand"></i>
+            <span class="d-none d-sm-inline">Expandir todo</span>
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary d-flex align-items-center gap-1"
+            (click)="collapseAll()"
+            title="Colapsar todas las categorías"
+          >
+            <i class="bi bi-arrows-collapse"></i>
+            <span class="d-none d-sm-inline">Colapsar todo</span>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -92,11 +113,13 @@
           <table class="table table-hover align-middle mb-0 custom-table">
             <thead>
               <tr>
+                <th style="width: 48px" class="text-center">#</th>
                 <th>Nombre</th>
                 <th>Descripción</th>
                 <th>Valor Base ($)</th>
                 <th>Consumo mínimo (m³)</th>
                 <th>Valor por excedente ($)</th>
+                <th class="text-center">Rubros Asignados</th>
                 @if (!selectionMode()) {
                   <th class="text-end">Acciones</th>
                 }
@@ -104,7 +127,10 @@
             </thead>
             <tbody>
               @for (tariff of pagedTariffs(); track tariff.categoriaTarifaId) {
+                <!-- Fila Principal de la Categoría -->
                 <tr
+                  class="tariff-row"
+                  [class.table-active]="expandedTariffs().has(tariff.categoriaTarifaId!)"
                   [class.selectable-row]="selectionMode()"
                   [attr.role]="selectionMode() ? 'button' : null"
                   [attr.tabindex]="selectionMode() ? 0 : null"
@@ -112,11 +138,49 @@
                   (dblclick)="selectTariff(tariff)"
                   (keydown.enter)="selectionMode() && selectTariff(tariff)"
                 >
-                  <td class="fw-medium text-dark">{{ tariff.nombre }}</td>
+                  <!-- Botón expandir/colapsar -->
+                  <td
+                    class="text-center"
+                    (click)="toggleExpansion(tariff.categoriaTarifaId!); $event.stopPropagation()"
+                    style="cursor: pointer"
+                  >
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-link p-0 text-dark shadow-none"
+                      aria-label="Alternar expansión de rubros"
+                    >
+                      <i
+                        class="bi fs-6 text-primary"
+                        [class.bi-chevron-down]="expandedTariffs().has(tariff.categoriaTarifaId!)"
+                        [class.bi-chevron-right]="!expandedTariffs().has(tariff.categoriaTarifaId!)"
+                      ></i>
+                    </button>
+                  </td>
+                  <td
+                    class="fw-bold text-dark"
+                    (click)="toggleExpansion(tariff.categoriaTarifaId!)"
+                    style="cursor: pointer"
+                  >
+                    {{ tariff.nombre }}
+                  </td>
                   <td class="text-muted">{{ tariff.descripcion || '—' }}</td>
-                  <td>${{ tariff.valorBase | number: '1.2-2' }}</td>
+                  <td class="fw-medium">${{ tariff.valorBase | number: '1.2-2' }}</td>
                   <td>{{ tariff.consumoMinimoMensual }} m³</td>
                   <td>${{ tariff.valorExcedenteM3 | number: '1.2-2' }}</td>
+                  <td class="text-center">
+                    <span
+                      class="badge"
+                      [class.bg-primary-subtle]="(tariff.rubros?.length ?? 0) > 0"
+                      [class.text-primary]="(tariff.rubros?.length ?? 0) > 0"
+                      [class.bg-light]="(tariff.rubros?.length ?? 0) === 0"
+                      [class.text-muted]="(tariff.rubros?.length ?? 0) === 0"
+                      [class.border]="(tariff.rubros?.length ?? 0) === 0"
+                    >
+                      <i class="bi bi-tags me-1"></i>
+                      {{ tariff.rubros?.length ?? 0 }}
+                      {{ (tariff.rubros?.length ?? 0) === 1 ? 'rubro' : 'rubros' }}
+                    </span>
+                  </td>
                   @if (!selectionMode()) {
                     <td class="text-end">
                       <div class="dropdown">
@@ -159,6 +223,65 @@
                     </td>
                   }
                 </tr>
+
+                <!-- Fila Desplegable con Detalle de Rubros -->
+                @if (expandedTariffs().has(tariff.categoriaTarifaId!)) {
+                  <tr class="expanded-rubros-row bg-light">
+                    <td colspan="8" class="p-0">
+                      <div class="p-3 ps-5 border-start border-3 border-primary bg-light">
+                        <div class="d-flex align-items-center justify-content-between mb-2">
+                          <h6 class="mb-0 fw-bold text-secondary d-flex align-items-center gap-2">
+                            <i class="bi bi-tags text-primary"></i>
+                            Rubros asignados a "{{ tariff.nombre }}"
+                          </h6>
+                          <small class="text-muted">
+                            Total: {{ tariff.rubros?.length ?? 0 }} rubros
+                          </small>
+                        </div>
+
+                        @if (!tariff.rubros || tariff.rubros.length === 0) {
+                          <div class="alert alert-light border mb-0 py-2 px-3 text-muted small">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Esta categoría no tiene rubros asociados todavía.
+                          </div>
+                        } @else {
+                          <div class="table-responsive bg-white rounded-3 border shadow-sm">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                              <thead class="table-light">
+                                <tr class="text-secondary small">
+                                  <th class="ps-3">Nombre del Rubro</th>
+                                  <th>Descripción</th>
+                                  <th>Tipo</th>
+                                  <th class="text-end pe-3">Precio Unitario</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                @for (rubro of tariff.rubros; track rubro.rubroId) {
+                                  <tr>
+                                    <td class="ps-3 fw-medium text-dark">
+                                      {{ rubro.nombre }}
+                                    </td>
+                                    <td class="text-muted small">
+                                      {{ rubro.descripcion || '—' }}
+                                    </td>
+                                    <td>
+                                      <span class="badge bg-secondary-subtle text-secondary small">
+                                        {{ rubro.tipoRubro }}
+                                      </span>
+                                    </td>
+                                    <td class="text-end pe-3 font-monospace fw-bold text-primary">
+                                      ${{ rubro.precioUnitario | number: '1.2-2' }}
+                                    </td>
+                                  </tr>
+                                }
+                              </tbody>
+                            </table>
+                          </div>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
               }
             </tbody>
           </table>

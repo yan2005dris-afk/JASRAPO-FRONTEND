@@ -51,6 +51,30 @@ export class TariffsComponent implements OnInit {
   readonly isModalOpen = signal(false);
   readonly selectedTariff = signal<ITariffCategory | null>(null);
   readonly openDropdownId = signal<number | null>(null);
+  readonly expandedTariffs = signal<Set<number>>(new Set());
+
+  toggleExpansion(id: number): void {
+    this.expandedTariffs.update((set) => {
+      const next = new Set(set);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }
+
+  expandAll(): void {
+    const ids = this.filteredTariffs()
+      .map((t) => t.categoriaTarifaId)
+      .filter((id): id is number => id !== undefined);
+    this.expandedTariffs.set(new Set(ids));
+  }
+
+  collapseAll(): void {
+    this.expandedTariffs.set(new Set());
+  }
 
   // Paginación
   readonly pageSizeOptions = [5, 10, 15, 20];
