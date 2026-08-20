@@ -125,7 +125,7 @@
                 Planificación
               </div>
               <div class="fw-semibold text-dark">
-                {{ route.fechaPlanificada | date: 'dd/MM/yyyy' }}
+                {{ route.fechaPlanificada | localDate: 'dd/MM/yyyy' }}
               </div>
               <div class="text-muted" style="font-size: 0.75rem">
                 Período: {{ getPeriodoNombre(route.periodoId) }}

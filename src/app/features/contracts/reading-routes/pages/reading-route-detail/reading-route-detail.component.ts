@@ -7,10 +7,11 @@ import {
   signal,
   computed,
 } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ReadingRoutesService } from '../../services/reading-routes.service';
+import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
 import {
   IReadingRoute,
   OrderWork,
@@ -51,7 +52,7 @@ type FilterOrdenTab = 'TODAS' | 'PENDIENTES' | 'COMPLETADAS' | 'NOVEDAD';
     EmptyStateComponent,
     TableSkeletonComponent,
     PaginationComponent,
-    DatePipe,
+    LocalDatePipe,
     ReadingsTableComponent,
     ReadingDetailModalComponent,
     ReadingFormModalComponent,
