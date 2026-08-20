@@ -63,15 +63,10 @@ export class RubroFormModalComponent implements OnInit {
 
   onCodigoSriSelected(codigo: string): void {
     this.codigoSri = codigo;
-    const info = this.catalogoCodigosSri.find((c) => c.codigo === codigo);
-    if (info && !this.rubro()) {
-      // Auto-completar solo si es nuevo registro o si el usuario no ha ingresado nombres
-      if (!this.nombre.trim()) {
-        this.nombre = info.nombreSugerido;
-      }
-      if (!this.descripcion.trim()) {
-        this.descripcion = info.descripcionSugerida;
-      }
+    const info = this.catalogoCodigosSri.find((c: ICodigoSriInfo) => c.codigo === codigo);
+    if (info) {
+      this.nombre = info.nombreSugerido;
+      this.descripcion = info.descripcionSugerida;
       this.tipoRubro = info.tipoRubroSugerido;
     }
   }
