@@ -28,6 +28,12 @@ import { PaginationComponent } from '../../../../../shared/components/pagination
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { ReadingsTableComponent, IReadingRowItem } from '../../../readings/components/readings-table/readings-table.component';
+import { ReadingDetailModalComponent } from '../../../readings/components/reading-detail-modal/reading-detail-modal.component';
+import { ReadingFormModalComponent } from '../../../readings/components/reading-form-modal/reading-form-modal.component';
+import { ReadingsService } from '../../../readings/services/readings.service';
+import { IReading } from '../../../readings/interfaces/ireading.interface';
+
+type ReadingSource = IReadingRowItem | IReading;
 
 type FilterOrdenTab = 'TODAS' | 'PENDIENTES' | 'COMPLETADAS' | 'NOVEDAD';
 
@@ -44,6 +50,8 @@ type FilterOrdenTab = 'TODAS' | 'PENDIENTES' | 'COMPLETADAS' | 'NOVEDAD';
     PaginationComponent,
     DatePipe,
     ReadingsTableComponent,
+    ReadingDetailModalComponent,
+    ReadingFormModalComponent,
   ],
   templateUrl: './reading-route-detail.component.html',
   styleUrl: './reading-route-detail.component.scss',
@@ -53,6 +61,7 @@ export class ReadingRouteDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly routesService = inject(ReadingRoutesService);
+  private readonly readingsService = inject(ReadingsService);
   private readonly comunidadesService = inject(ComunidadesService);
   private readonly usersService = inject(UsersService);
   private readonly toastService = inject(ToastService);
@@ -83,6 +92,13 @@ export class ReadingRouteDetailComponent implements OnInit {
   currentReadingPage = signal(1);
   pageSizeReadings = signal(10);
   openDropdownId = signal<string | null>(null);
+  selectedReadingForDetail = signal<IReading | null>(null);
+  selectedReadingForEdit = signal<IReading | null>(null);
+  isFormModalOpen = signal(false);
+
+  // Modal Novedad de Orden de Trabajo
+  selectedOrdenForNovedad = signal<OrderWork | null>(null);
+  novedadObservacionText = '';
 
   // Processing state
   isChangingStatus = signal(false);
@@ -417,27 +433,37 @@ export class ReadingRouteDetailComponent implements OnInit {
       });
   }
 
-  // Report novelty (FALLIDA with resultadoObservacion)
+  // Open modal to report novelty (FALLIDA with resultadoObservacion)
   reportarNovedad(orden: OrderWork): void {
-    const observacion = window.prompt(
-      `Reportar novedad para orden #${orden.ordenVisita}\n\nIngresá la observación (motivo de la novedad):`,
-    );
-    if (!observacion || !observacion.trim()) return;
+    this.selectedOrdenForNovedad.set(orden);
+    this.novedadObservacionText = '';
+  }
+
+  closeNovedadModal(): void {
+    this.selectedOrdenForNovedad.set(null);
+    this.novedadObservacionText = '';
+  }
+
+  confirmarReportarNovedad(): void {
+    const orden = this.selectedOrdenForNovedad();
+    const observacion = this.novedadObservacionText.trim();
+    if (!orden || !observacion) return;
 
     this.processingOrdenId.set(orden.ordenTrabajoId);
 
     this.routesService
-      .updateOrdenEstado(orden.ordenTrabajoId, 'FALLIDA', observacion.trim())
+      .updateOrdenEstado(orden.ordenTrabajoId, 'FALLIDA', observacion)
       .subscribe({
         next: () => {
           this.ordenes.update((list) =>
             list.map((o) =>
               o.ordenTrabajoId === orden.ordenTrabajoId
-                ? { ...o, estado: 'FALLIDA' as const, resultadoObservacion: observacion.trim() }
+                ? { ...o, estado: 'FALLIDA' as const, resultadoObservacion: observacion }
                 : o,
             ),
           );
           this.processingOrdenId.set(null);
+          this.closeNovedadModal();
           this.toastService.warning('Novedad reportada para la orden');
         },
         error: () => {
@@ -547,16 +573,55 @@ export class ReadingRouteDetailComponent implements OnInit {
     }
   }
 
-  onViewLecturaDetail(reading: IReadingRowItem): void {
-    this.openDropdownId.set(null);
-    this.toastService.info(`Ver detalle de lectura #${reading.lecturaId}`);
-    // TODO: abrir modal de detalle de lectura
+  onCloseReadingDetail(): void {
+    this.selectedReadingForDetail.set(null);
   }
 
-  onEditLectura(reading: IReadingRowItem): void {
+  onViewLecturaDetail(reading: IReadingRowItem): void {
     this.openDropdownId.set(null);
+    // Mapear IReadingRowItem → IReading para el modal de detalle
+    const detail: IReading = {
+      lecturaId: String(reading.lecturaId),
+      fecha: (reading.fecha as string | Date) ?? new Date().toISOString(),
+      lecturaAnterior: reading.lecturaAnterior ?? 0,
+      lecturaActual: reading.lecturaActual ?? 0,
+      consumoCalculado: reading.consumoCalculado ?? 0,
+      contratoId: String(reading.contratoId ?? ''),
+      descripcionAnomalia: null,
+      fechaValidacion: null,
+      fotoUrl: null,
+      isValidada: false,
+      lecturaInicial: false,
+      periodoId: 0,
+      tieneAnomalia: reading.tieneAnomalia ?? false,
+      estado: reading.estado,
+      contrato: reading.clienteNombre
+        ? {
+            contratoId: String(reading.contratoId ?? ''),
+            numeroGuia: reading.guia ?? '',
+            direccionSuministro: reading.direccion ?? '',
+            estado: '',
+            cliente: { clienteId: '', nombres: reading.clienteNombre ?? '', apellidos: '', identificacion: '' },
+            sector: reading.sector ? { nombre: reading.sector } : null,
+          }
+        : null,
+      medidor: reading.medidorSerie
+        ? { medidorId: '', serie: reading.medidorSerie, marca: '', modelo: '' }
+        : null,
+      periodoRel: null,
+    };
+    this.selectedReadingForDetail.set(detail);
+  }
+
+  onEditLectura(reading: ReadingSource): void {
+    this.openDropdownId.set(null);
+    this.selectedReadingForDetail.set(null);
+    const row = reading as IReadingRowItem;
+    const full = reading as IReading;
+    const medidorSerie = row.medidorSerie ?? full.medidor?.serie;
+    const lecturaId = String(reading.lecturaId);
     const nuevaLectura = window.prompt(
-      `Registrar lectura para medidor ${reading.medidorSerie ?? reading.lecturaId}\n\nIngresá el valor de lectura actual:`,
+      `Registrar lectura para medidor ${medidorSerie ?? lecturaId}\n\nIngresá el valor de lectura actual:`,
     );
     if (!nuevaLectura) return;
     const valor = parseFloat(nuevaLectura);

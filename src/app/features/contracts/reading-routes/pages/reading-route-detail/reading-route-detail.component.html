@@ -444,3 +444,12 @@
     }
   }
 </div>
+
+<!-- Modal: Detalle de Lectura -->
+@if (selectedReadingForDetail()) {
+  <app-reading-detail-modal
+    [reading]="selectedReadingForDetail()!"
+    (closed)="onCloseReadingDetail()"
+    (editRequested)="onEditLectura($event)"
+  />
+}
