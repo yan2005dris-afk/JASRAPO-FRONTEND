@@ -23,7 +23,7 @@
       [value]="query()"
       [disabled]="disabled()"
       (input)="onInputChange($any($event.target).value)"
-      (click)="onInputClick()"
+      (click)="onInputClick($event)"
       autocomplete="off"
     />
 

@@ -47,7 +47,8 @@ export class PickerInputComponent {
     }
   }
 
-  onInputClick(): void {
+  onInputClick(event: MouseEvent): void {
+    event.stopPropagation();
     if (!this.disabled()) {
       this.openChange.emit(!this.isOpen());
     }
