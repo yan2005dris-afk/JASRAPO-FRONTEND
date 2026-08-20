@@ -16,6 +16,8 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
 import { MetersService } from '../../services/meters.service';
 import {
   IMeter,
@@ -47,8 +49,12 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
   private readonly elementRef = inject(ElementRef);
 
   private triggerElement: HTMLElement | null = null;
+  private readonly searchSubject$ = new Subject<{ query: string; page: number; limit: number }>();
+  private searchSubscription?: Subscription;
+
   readonly modalContainer = viewChild<ElementRef<HTMLElement>>('modalContainer');
   readonly firstInput = viewChild<ElementRef<HTMLInputElement>>('firstInput');
+  readonly stepHeading = viewChild<ElementRef<HTMLElement>>('stepHeading');
 
   readonly contract = input.required<IContract>();
   readonly saved = output<void>();
@@ -97,10 +103,7 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
     porcentajeCobro: [100 as number | null],
     ventanaPromedio: [3 as number | null],
     periodoOrigenId: [null as number | null, [Validators.required]],
-    mesOrigen: [
-      new Date().getMonth() + 1,
-      [Validators.required, Validators.min(1), Validators.max(12)],
-    ],
+    mesOrigen: [new Date().getMonth() + 1, [Validators.required, Validators.min(1), Validators.max(12)]],
     periodoDestinoId: [null as number | null],
     mesDestino: [null as number | null],
   });
@@ -148,6 +151,21 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
     return h?.lecturaInicial !== undefined ? Number(h.lecturaInicial) : 0;
   });
 
+  isDestinationCycleValid(): boolean {
+    if (this.form.controls.tratamientoEntrante.value !== 'DIFERIR_SIGUIENTE_PERIODO') {
+      return true;
+    }
+    const pOrig = Number(this.form.controls.periodoOrigenId.value);
+    const pDest = Number(this.form.controls.periodoDestinoId.value);
+    const mOrig = Number(this.form.controls.mesOrigen.value);
+    const mDest = Number(this.form.controls.mesDestino.value);
+
+    if (!pDest || !mDest) return false;
+    if (pDest < pOrig) return false;
+    if (pDest === pOrig && mDest <= mOrig) return false;
+    return true;
+  }
+
   step1Valid(): boolean {
     const finalSaliente = Number(this.form.controls.lecturaFinalSaliente.value);
     const motivo = this.form.controls.motivo.value;
@@ -167,8 +185,9 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
     if (typeof document !== 'undefined') {
       this.triggerElement = document.activeElement as HTMLElement;
     }
+    this.setupSearchPipeline();
     this.setupReactiveValidators();
-    this.loadAvailableMeters();
+    this.loadAvailableMeters(true);
     this.loadPeriods();
   }
 
@@ -179,8 +198,61 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
   }
 
   ngOnDestroy(): void {
+    this.searchSubscription?.unsubscribe();
     if (this.triggerElement && typeof this.triggerElement.focus === 'function') {
       this.triggerElement.focus();
+    }
+  }
+
+  private setupSearchPipeline(): void {
+    this.searchSubscription = this.searchSubject$
+      .pipe(
+        debounceTime(250),
+        distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
+        tap(() => this.isLoadingMeters.set(true)),
+        switchMap(({ query, page, limit }) =>
+          this.metersService.getMeters({
+            estado: 'BODEGA',
+            search: query || undefined,
+            page,
+            limit,
+          }),
+        ),
+      )
+      .subscribe({
+        next: (res) => {
+          const list = (res.datos || res.data || []) as IMeter[];
+          this.availableMeters.set(list);
+          const total = res.meta?.total ?? res.paginacion?.total ?? list.length;
+          this.totalMeters.set(total);
+          this.isLoadingMeters.set(false);
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.isLoadingMeters.set(false);
+          this.toastService.show('Error al cargar medidores en bodega', 'error');
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  private recalculateDeferredCycle(): void {
+    if (this.form.controls.tratamientoEntrante.value !== 'DIFERIR_SIGUIENTE_PERIODO') return;
+    const currentMonth = Number(this.form.controls.mesOrigen.value) || new Date().getMonth() + 1;
+    const currentPeriodId = Number(this.form.controls.periodoOrigenId.value);
+    const allPeriods = this.periodos();
+
+    if (currentMonth === 12) {
+      this.form.controls.mesDestino.setValue(1);
+      const nextPeriod = allPeriods.find((p) => p.periodoId > currentPeriodId);
+      if (nextPeriod) {
+        this.form.controls.periodoDestinoId.setValue(nextPeriod.periodoId);
+      } else {
+        this.form.controls.periodoDestinoId.setValue(currentPeriodId);
+      }
+    } else {
+      this.form.controls.mesDestino.setValue(currentMonth + 1);
+      this.form.controls.periodoDestinoId.setValue(currentPeriodId);
     }
   }
 
@@ -198,6 +270,14 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
       this.form.controls.porcentajeCobro.updateValueAndValidity();
     });
 
+    this.form.controls.mesOrigen.valueChanges.subscribe(() => {
+      this.recalculateDeferredCycle();
+    });
+
+    this.form.controls.periodoOrigenId.valueChanges.subscribe(() => {
+      this.recalculateDeferredCycle();
+    });
+
     this.form.controls.tratamientoEntrante.valueChanges.subscribe((t) => {
       if (t === 'DIFERIR_SIGUIENTE_PERIODO') {
         this.form.controls.periodoDestinoId.setValidators([Validators.required]);
@@ -206,13 +286,7 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
           Validators.min(1),
           Validators.max(12),
         ]);
-        const currentMonth =
-          Number(this.form.controls.mesOrigen.value) || new Date().getMonth() + 1;
-        const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
-        this.form.controls.mesDestino.setValue(nextMonth);
-        if (!this.form.controls.periodoDestinoId.value) {
-          this.form.controls.periodoDestinoId.setValue(this.form.controls.periodoOrigenId.value);
-        }
+        this.recalculateDeferredCycle();
       } else {
         this.form.controls.periodoDestinoId.clearValidators();
         this.form.controls.mesDestino.clearValidators();
@@ -222,17 +296,17 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
     });
   }
 
-  loadAvailableMeters(): void {
-    this.isLoadingMeters.set(true);
-    const query = this.meterSearchQuery().trim();
-    this.metersService
-      .getMeters({
-        estado: 'BODEGA',
-        search: query || undefined,
-        page: this.currentPage(),
-        limit: this.pageSize(),
-      })
-      .subscribe({
+  loadAvailableMeters(immediate = false): void {
+    const params = {
+      estado: 'BODEGA' as const,
+      search: this.meterSearchQuery().trim() || undefined,
+      page: this.currentPage(),
+      limit: this.pageSize(),
+    };
+
+    if (immediate) {
+      this.isLoadingMeters.set(true);
+      this.metersService.getMeters(params).subscribe({
         next: (res) => {
           const list = (res.datos || res.data || []) as IMeter[];
           this.availableMeters.set(list);
@@ -244,8 +318,16 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
         error: () => {
           this.isLoadingMeters.set(false);
           this.toastService.show('Error al cargar medidores en bodega', 'error');
+          this.cdr.markForCheck();
         },
       });
+    } else {
+      this.searchSubject$.next({
+        query: this.meterSearchQuery().trim(),
+        page: this.currentPage(),
+        limit: this.pageSize(),
+      });
+    }
   }
 
   private loadPeriods(): void {
@@ -267,21 +349,22 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
   onSearchQueryChange(query: string): void {
     this.meterSearchQuery.set(query);
     this.currentPage.set(1);
-    this.loadAvailableMeters();
+    this.loadAvailableMeters(false);
   }
 
   onPageChange(page: number): void {
     this.currentPage.set(page);
-    this.loadAvailableMeters();
+    this.loadAvailableMeters(true);
   }
 
   onPageSizeChange(size: number): void {
     this.pageSize.set(size);
     this.currentPage.set(1);
-    this.loadAvailableMeters();
+    this.loadAvailableMeters(true);
   }
 
   selectMeter(meter: IMeter): void {
+    if (!meter) return;
     this.selectedNewMeter.set(meter);
     this.form.controls.nuevoMedidorId.setValue(String(meter.medidorId));
     this.errorMessage.set('');
@@ -307,6 +390,9 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
 
     this.errorMessage.set('');
     this.currentStep.set(step);
+    setTimeout(() => {
+      this.stepHeading()?.nativeElement?.focus();
+    }, 50);
   }
 
   goBack(): void {
@@ -343,6 +429,13 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
       return;
     }
 
+    if (!this.isDestinationCycleValid()) {
+      this.errorMessage.set(
+        'El ciclo de facturación destino (período y mes) debe ser estrictamente posterior al ciclo de origen.',
+      );
+      return;
+    }
+
     if (raw.motivo === 'OTRO' && !raw.detalleMotivo?.trim()) {
       this.errorMessage.set('Debe especificar un detalle cuando el motivo es OTRO.');
       this.currentStep.set(1);
@@ -361,12 +454,9 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
       responsabilidadDano: (raw.responsabilidadDano || 'NO_APLICA') as ResponsabilidadDano,
       detalleMotivo: raw.detalleMotivo || undefined,
       tratamientoSaliente: (raw.tratamientoSaliente || 'COBRO_REAL') as TratamientoSaliente,
-      tratamientoEntrante: (raw.tratamientoEntrante ||
-        'FACTURAR_PERIODO_ACTUAL') as TratamientoEntrante,
-      porcentajeCobro:
-        raw.tratamientoSaliente === 'COBRO_PARCIAL' ? Number(raw.porcentajeCobro) : undefined,
-      ventanaPromedio:
-        raw.tratamientoSaliente === 'PROMEDIO_HISTORICO' ? Number(raw.ventanaPromedio) : undefined,
+      tratamientoEntrante: (raw.tratamientoEntrante || 'FACTURAR_PERIODO_ACTUAL') as TratamientoEntrante,
+      porcentajeCobro: raw.tratamientoSaliente === 'COBRO_PARCIAL' ? Number(raw.porcentajeCobro) : undefined,
+      ventanaPromedio: raw.tratamientoSaliente === 'PROMEDIO_HISTORICO' ? Number(raw.ventanaPromedio) : undefined,
       periodoOrigenId: Number(raw.periodoOrigenId),
       mesOrigen: Number(raw.mesOrigen) || undefined,
       periodoDestinoId: raw.periodoDestinoId ? Number(raw.periodoDestinoId) : undefined,

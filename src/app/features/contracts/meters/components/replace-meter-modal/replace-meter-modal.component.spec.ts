@@ -257,6 +257,7 @@ describe('ReplaceMeterModalComponent', () => {
     component.onSearchQueryChange('Siemens');
     expect(component.meterSearchQuery()).toBe('Siemens');
     expect(component.currentPage()).toBe(1);
+    component.loadAvailableMeters(true);
     expect(mockMetersService.getMeters).toHaveBeenCalledWith(
       expect.objectContaining({ search: 'Siemens', page: 1 }),
     );
