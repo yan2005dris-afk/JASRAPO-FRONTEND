@@ -27,7 +27,10 @@ import { TableSkeletonComponent } from '../../../../../shared/components/table-s
 import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
-import { ReadingsTableComponent, IReadingRowItem } from '../../../readings/components/readings-table/readings-table.component';
+import {
+  ReadingsTableComponent,
+  IReadingRowItem,
+} from '../../../readings/components/readings-table/readings-table.component';
 import { ReadingDetailModalComponent } from '../../../readings/components/reading-detail-modal/reading-detail-modal.component';
 import { ReadingFormModalComponent } from '../../../readings/components/reading-form-modal/reading-form-modal.component';
 import { ReadingsService } from '../../../readings/services/readings.service';
@@ -358,21 +361,22 @@ export class ReadingRouteDetailComponent implements OnInit {
   }
 
   /**
-   * Format completadoEn ISO string to dd/MM/yyyy HH:mm
+   * Format completadoEn to dd/MM/yyyy (date only).
+   * The backend emits a `YYYY-MM-DDT00:00:00` string for date-only fields to
+   * avoid UTC-midnight shifts; we strip the time component here so the UI
+   * shows just the date. If the input ever carries a meaningful time, switch
+   * the return format to `dd/MM/yyyy HH:mm`.
    */
   formatCompletadoEn(isoString?: string): string {
     if (!isoString) return '—';
-    try {
-      const date = new Date(isoString);
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      const hours = String(date.getHours()).padStart(2, '0');
-      const minutes = String(date.getMinutes()).padStart(2, '0');
-      return `${day}/${month}/${year} ${hours}:${minutes}`;
-    } catch {
-      return isoString;
-    }
+    // The backend already sends a date-only ISO string (T00:00:00 local).
+    // Split on 'T' to avoid the UTC-midnight shift that `new Date('YYYY-MM-DD')`
+    // would introduce in negative-UTC-offset zones.
+    const datePart = isoString.split('T')[0];
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(datePart);
+    if (!match) return '—';
+    const [, year, month, day] = match;
+    return `${day}/${month}/${year}`;
   }
 
   // Start orden (PENDIENTE -> EN_PROGRESO)
@@ -451,26 +455,24 @@ export class ReadingRouteDetailComponent implements OnInit {
 
     this.processingOrdenId.set(orden.ordenTrabajoId);
 
-    this.routesService
-      .updateOrdenEstado(orden.ordenTrabajoId, 'FALLIDA', observacion)
-      .subscribe({
-        next: () => {
-          this.ordenes.update((list) =>
-            list.map((o) =>
-              o.ordenTrabajoId === orden.ordenTrabajoId
-                ? { ...o, estado: 'FALLIDA' as const, resultadoObservacion: observacion }
-                : o,
-            ),
-          );
-          this.processingOrdenId.set(null);
-          this.closeNovedadModal();
-          this.toastService.warning('Novedad reportada para la orden');
-        },
-        error: () => {
-          this.processingOrdenId.set(null);
-          this.toastService.error('Error al reportar la novedad');
-        },
-      });
+    this.routesService.updateOrdenEstado(orden.ordenTrabajoId, 'FALLIDA', observacion).subscribe({
+      next: () => {
+        this.ordenes.update((list) =>
+          list.map((o) =>
+            o.ordenTrabajoId === orden.ordenTrabajoId
+              ? { ...o, estado: 'FALLIDA' as const, resultadoObservacion: observacion }
+              : o,
+          ),
+        );
+        this.processingOrdenId.set(null);
+        this.closeNovedadModal();
+        this.toastService.warning('Novedad reportada para la orden');
+      },
+      error: () => {
+        this.processingOrdenId.set(null);
+        this.toastService.error('Error al reportar la novedad');
+      },
+    });
   }
 
   // View result observation inline
@@ -607,7 +609,12 @@ export class ReadingRouteDetailComponent implements OnInit {
                 numeroGuia: reading.guia ?? '',
                 direccionSuministro: reading.direccion ?? '',
                 estado: '',
-                cliente: { clienteId: '', nombres: reading.clienteNombre ?? '', apellidos: '', identificacion: '' },
+                cliente: {
+                  clienteId: '',
+                  nombres: reading.clienteNombre ?? '',
+                  apellidos: '',
+                  identificacion: '',
+                },
                 sector: reading.sector ? { nombre: reading.sector } : null,
               }
             : null,
@@ -662,9 +669,7 @@ export class ReadingRouteDetailComponent implements OnInit {
     this.routesService.updateReadingStatus(reading.lecturaId, 'APROBADA').subscribe({
       next: () => {
         this.readings.update((list) =>
-          list.map((r) =>
-            r.lecturaId === reading.lecturaId ? { ...r, estado: 'APROBADA' } : r,
-          ),
+          list.map((r) => (r.lecturaId === reading.lecturaId ? { ...r, estado: 'APROBADA' } : r)),
         );
         this.toastService.success('Lectura aprobada');
       },
@@ -678,9 +683,7 @@ export class ReadingRouteDetailComponent implements OnInit {
       next: () => {
         this.readings.update((list) =>
           list.map((r) =>
-            r.lecturaId === reading.lecturaId
-              ? { ...r, estado: 'RECHAZADA_VERIFICACION' }
-              : r,
+            r.lecturaId === reading.lecturaId ? { ...r, estado: 'RECHAZADA_VERIFICACION' } : r,
           ),
         );
         this.toastService.warning('Lectura rechazada');
