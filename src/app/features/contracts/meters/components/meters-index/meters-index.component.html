@@ -100,6 +100,16 @@
             [items]="dropdownItems"
             (actionSelected)="handleMassAction($event)"
           ></app-dropdown>
+
+          <!-- Exportar inventario: respeta el estado y la búsqueda activos -->
+          <app-dropdown
+            [label]="isExporting ? 'Exportando...' : 'Exportar'"
+            [icon]="isExporting ? 'spinner-border spinner-border-sm' : 'bi bi-box-arrow-down'"
+            [items]="exportItems"
+            [disabled]="isExporting"
+            buttonClass="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium"
+            (actionSelected)="handleExportAction($event)"
+          ></app-dropdown>
         }
       </div>
     </div>

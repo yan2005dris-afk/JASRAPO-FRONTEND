@@ -1,5 +1,5 @@
 <div class="dropdown position-relative">
-  <button type="button" [class]="buttonClass()" (click)="toggleDropdown()">
+  <button type="button" [class]="buttonClass()" [disabled]="disabled()" (click)="toggleDropdown()">
     @if (icon()) {
       <i [class]="icon()"></i>
     }

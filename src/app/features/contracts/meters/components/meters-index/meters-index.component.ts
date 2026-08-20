@@ -22,8 +22,9 @@ import {
   IMeterKpis,
   MeterStatusFilter,
   MeterStatusCode,
+  IExportMetersParams,
 } from '../../interfaces/imeter.interface';
-import { MetersService } from '../../services/meters.service';
+import { MeterExportFormat, MetersService } from '../../services/meters.service';
 import { finalize } from 'rxjs';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
@@ -80,6 +81,7 @@ export class MetersIndexComponent implements OnInit {
   isLoading = false;
   hasFetched = false;
   isSaving = false;
+  isExporting = false;
   errorMessage = '';
   modalErrorMessage = '';
 
@@ -93,6 +95,11 @@ export class MetersIndexComponent implements OnInit {
   dropdownItems: DropdownItem[] = [
     { label: 'Borrar todo', action: 'deleteAll', isDanger: true, icon: 'bi bi-trash' },
     { label: 'Importar', action: 'import', icon: 'bi bi-download' },
+  ];
+
+  exportItems: DropdownItem[] = [
+    { label: 'Descargar PDF', action: 'pdf', icon: 'bi bi-file-earmark-pdf' },
+    { label: 'Descargar CSV', action: 'csv', icon: 'bi bi-filetype-csv' },
   ];
 
   toggleDropdown(meterId: number, event: MouseEvent): void {
@@ -249,6 +256,99 @@ export class MetersIndexComponent implements OnInit {
   handleMassAction(action: string) {
     console.log('Acción masiva seleccionada:', action);
     // TODO: Implementar lógica de la acción seleccionada
+  }
+
+  /**
+   * Exporta el inventario en el formato indicado usando los filtros en pantalla.
+   * La descarga se resuelve vía Blob porque la API exige Bearer token.
+   */
+  exportMeters(format: MeterExportFormat): void {
+    if (this.isExporting) return;
+
+    this.isExporting = true;
+    this.cdr.markForCheck();
+
+    this.metersService
+      .exportMeters(format, this.buildExportFilters())
+      .pipe(
+        finalize(() => {
+          this.isExporting = false;
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (blob) => {
+          this.downloadExport(blob, format);
+          this.toastService.success(
+            `Inventario exportado en ${format.toUpperCase()} correctamente`,
+            'Éxito',
+          );
+        },
+        error: (err: HttpErrorResponse) => void this.notifyExportError(err),
+      });
+  }
+
+  handleExportAction(action: string): void {
+    if (action === 'pdf' || action === 'csv') {
+      this.exportMeters(action);
+    }
+  }
+
+  /**
+   * Solo `estado` y `search`: enviar los filtros de la tabla (page, limit...)
+   * haría que el backend responda 400 por su validación con whitelist.
+   */
+  private buildExportFilters(): IExportMetersParams {
+    const selectedStatus = this.statusCatalog.find((status) => status.codigo === this.statusFilter);
+    return {
+      estado: selectedStatus?.codigo as MeterStatusCode | undefined,
+      search: this.searchQuery.trim() || undefined,
+    };
+  }
+
+  /**
+   * El nombre se arma en el cliente: CORS no expone `Content-Disposition`,
+   * así que se replica el formato que usa el backend.
+   */
+  private buildExportFileName(format: MeterExportFormat): string {
+    const fecha = new Date().toISOString().slice(0, 10);
+    return `inventario-medidores-${fecha}.${format}`;
+  }
+
+  private downloadExport(blob: Blob, format: MeterExportFormat): void {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = this.buildExportFileName(format);
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Con `responseType: 'blob'` el cuerpo de un 400/403 también llega como Blob,
+   * por lo que hay que leerlo para poder mostrar el mensaje real del backend.
+   */
+  private async notifyExportError(err: HttpErrorResponse): Promise<void> {
+    const fallback = 'Error al exportar el inventario de medidores.';
+    let message = fallback;
+
+    if (err.error instanceof Blob) {
+      try {
+        const body = JSON.parse(await err.error.text()) as { message?: string | string[] };
+        const detail = Array.isArray(body.message) ? body.message.join(' ') : body.message;
+        message = detail?.trim() || fallback;
+      } catch {
+        // El cuerpo no era JSON (p. ej. una respuesta HTML): se usa el mensaje genérico.
+      }
+    } else {
+      message = this.getBackendErrorMessage(err, fallback);
+    }
+
+    this.toastService.error(message, 'Error');
+    this.cdr.markForCheck();
   }
 
   // Gestión de modales

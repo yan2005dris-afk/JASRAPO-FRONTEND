@@ -52,11 +52,19 @@ export interface IMeterKpis {
   total: number;
 }
 
-export interface ISearchMetersParams {
-  page?: number;
-  limit?: number;
+/**
+ * Filtros aceptados por los endpoints de exportación (`/meters/export/pdf` y
+ * `/meters/export/csv`). El backend valida con `forbidNonWhitelisted`, por lo
+ * que enviar cualquier otro parámetro (page, limit, marca...) responde 400.
+ */
+export interface IExportMetersParams {
   estado?: MeterStatusCode;
   search?: string;
+}
+
+export interface ISearchMetersParams extends IExportMetersParams {
+  page?: number;
+  limit?: number;
 }
 
 export interface IPaginatedMetersMeta {
