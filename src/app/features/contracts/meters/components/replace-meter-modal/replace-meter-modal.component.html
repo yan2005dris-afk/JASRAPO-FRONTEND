@@ -136,25 +136,37 @@
                     <span class="text-muted extra-small d-block mb-1">
                       {{
                         currentHistorial()?.ultimaLecturaAprobada
-                          ? 'Última Lectura Aprobada (Base)'
-                          : 'Lectura Base Inicial'
+                          ? 'Lectura Base de Retiro (Última Aprobada)'
+                          : 'Lectura Base Inicial (Instalación)'
                       }}
                     </span>
                     <div class="fw-bold text-primary fs-5 tabular-nums">
                       {{ baseReading() }} <span class="text-muted fw-normal extra-small">m³</span>
                     </div>
-                    @if (currentHistorial()?.ultimaLecturaAprobada; as ul) {
-                      <div class="extra-small text-muted mt-1">
-                        @if (ul.lecturaAnterior !== undefined && ul.lecturaAnterior !== null) {
-                          <span>Anterior: <strong>{{ ul.lecturaAnterior }} m³</strong> · </span>
-                        }
-                        <span>Actual: <strong>{{ ul.lecturaActual }} m³</strong></span>
-                        @if (ul.fecha) {
-                          <span> ({{ ul.fecha }})</span>
-                        }
-                      </div>
-                    }
                   </div>
+
+                  @if (currentHistorial()?.ultimaLecturaAprobada; as ul) {
+                    <div class="col-12">
+                      <div class="p-2 rounded-2 bg-white border border-secondary-subtle d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center gap-2">
+                          <i class="bi bi-clock-history text-muted"></i>
+                          <span class="extra-small text-muted">Último ciclo registrado:</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                          <span class="extra-small">
+                            Lectura Anterior: <strong class="text-secondary">{{ ul.lecturaAnterior ?? 0 }} m³</strong>
+                          </span>
+                          <span class="text-muted extra-small">→</span>
+                          <span class="extra-small">
+                            Lectura Actual: <strong class="text-success">{{ ul.lecturaActual }} m³</strong>
+                          </span>
+                          @if (ul.fecha) {
+                            <span class="badge bg-light text-dark border extra-small">{{ ul.fecha }}</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
 
                   <div class="col-md-12">
                     <label
