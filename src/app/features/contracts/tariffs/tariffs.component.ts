@@ -65,8 +65,9 @@ export class TariffsComponent implements OnInit {
   readonly openDropdownId = signal<number | null>(null);
   readonly expandedTariffs = signal<Set<number>>(new Set());
 
-  // Modal para Crear / Asignar Rubro a la Tarifa
+  // Modal para Crear / Editar / Asignar Rubro a la Tarifa
   readonly isRubroModalOpen = signal(false);
+  readonly selectedRubroForEdit = signal<IRubro | null>(null);
   readonly targetTariffForRubro = signal<ITariffCategory | null>(null);
   readonly isAssignRubroModalOpen = signal(false);
   readonly unassignedRubros = signal<IRubro[]>([]);
@@ -233,6 +234,15 @@ export class TariffsComponent implements OnInit {
   openCreateRubroForTariff(tariff: ITariffCategory): void {
     this.closeDropdowns();
     this.targetTariffForRubro.set(tariff);
+    this.selectedRubroForEdit.set(null);
+    this.isAssignRubroModalOpen.set(false);
+    this.isRubroModalOpen.set(true);
+  }
+
+  openEditRubroForTariff(rubro: IRubro, tariff: ITariffCategory): void {
+    this.closeDropdowns();
+    this.targetTariffForRubro.set(tariff);
+    this.selectedRubroForEdit.set(rubro);
     this.isAssignRubroModalOpen.set(false);
     this.isRubroModalOpen.set(true);
   }
@@ -305,6 +315,7 @@ export class TariffsComponent implements OnInit {
 
   closeRubroModals(): void {
     this.isRubroModalOpen.set(false);
+    this.selectedRubroForEdit.set(null);
     this.isAssignRubroModalOpen.set(false);
     this.targetTariffForRubro.set(null);
     this.selectedRubroToAssign.set(null);

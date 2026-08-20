@@ -336,15 +336,25 @@
                                       ${{ rubro.precioUnitario | number: '1.2-2' }}
                                     </td>
                                     @if (!selectionMode()) {
-                                      <td class="text-center pe-3">
-                                        <button
-                                          type="button"
-                                          class="btn btn-link btn-sm text-danger p-0 shadow-none"
-                                          title="Desvincular rubro de esta categoría"
-                                          (click)="unassignRubroFromTariff(rubro, tariff)"
-                                        >
-                                          <i class="bi bi-x-circle fs-6"></i>
-                                        </button>
+                                      <td class="text-end pe-3">
+                                        <div class="d-flex justify-content-end gap-2">
+                                          <button
+                                            type="button"
+                                            class="btn btn-link btn-sm text-primary p-0 shadow-none"
+                                            title="Editar rubro"
+                                            (click)="openEditRubroForTariff(rubro, tariff)"
+                                          >
+                                            <i class="bi bi-pencil-square fs-6"></i>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            class="btn btn-link btn-sm text-danger p-0 shadow-none"
+                                            title="Desvincular rubro de esta categoría"
+                                            (click)="unassignRubroFromTariff(rubro, tariff)"
+                                          >
+                                            <i class="bi bi-x-circle fs-6"></i>
+                                          </button>
+                                        </div>
                                       </td>
                                     }
                                   </tr>
@@ -396,9 +406,10 @@
   </div>
 }
 
-<!-- Modal Reutilizado: Crear Rubro para Tarifa -->
+<!-- Modal Reutilizado: Crear / Editar Rubro para Tarifa -->
 @if (isRubroModalOpen()) {
   <app-rubro-form-modal
+    [rubro]="selectedRubroForEdit()"
     [initialCategoriaTarifaId]="targetTariffForRubro()?.categoriaTarifaId ?? null"
     (saved)="onRubroSaved()"
     (closed)="closeRubroModals()"

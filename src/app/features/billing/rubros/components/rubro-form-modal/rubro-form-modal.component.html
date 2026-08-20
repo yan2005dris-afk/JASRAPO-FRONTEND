@@ -50,8 +50,31 @@
       <div class="modal-body px-4 py-4">
         <form (ngSubmit)="submit()">
           <div class="row g-3">
+            <!-- Código SRI con Catálogo Asistido -->
+            <div class="col-md-5">
+              <label for="rubroCodigoSriSelect" class="form-label fw-semibold small text-dark d-flex justify-content-between">
+                <span>Código SRI / Tipo Estándar</span>
+                <span class="text-muted fw-normal" style="font-size: 0.75rem">Catálogo SRI</span>
+              </label>
+              <div class="input-group">
+                <select
+                  id="rubroCodigoSriSelect"
+                  class="form-select"
+                  [ngModel]="codigoSri"
+                  (ngModelChange)="onCodigoSriSelected($event)"
+                  name="codigoSriSelect"
+                  [disabled]="isLoading"
+                >
+                  <option value="">-- Personalizado / Sin código --</option>
+                  @for (c of catalogoCodigosSri; track c.codigo) {
+                    <option [value]="c.codigo">{{ c.label }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
             <!-- Nombre del Rubro -->
-            <div class="col-md-8">
+            <div class="col-md-7">
               <label for="rubroNombreInput" class="form-label fw-semibold small text-dark">
                 Nombre del Rubro <span class="text-danger">*</span>
               </label>
@@ -63,22 +86,6 @@
                 [(ngModel)]="nombre"
                 name="nombre"
                 required
-                [disabled]="isLoading"
-              />
-            </div>
-
-            <!-- Código SRI -->
-            <div class="col-md-4">
-              <label for="rubroCodigoSriInput" class="form-label fw-semibold small text-dark">
-                Código SRI / Identificador
-              </label>
-              <input
-                id="rubroCodigoSriInput"
-                type="text"
-                class="form-control"
-                placeholder="Ej. 001"
-                [(ngModel)]="codigoSri"
-                name="codigoSri"
                 [disabled]="isLoading"
               />
             </div>

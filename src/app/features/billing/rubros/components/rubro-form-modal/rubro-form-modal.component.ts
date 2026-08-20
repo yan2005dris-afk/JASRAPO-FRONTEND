@@ -11,6 +11,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RubrosService } from '../../services/rubros.service';
 import {
+  CATALOGO_CODIGOS_SRI,
+  ICodigoSriInfo,
   ICreateRubroDto,
   IRubro,
   ITarifaImpuesto,
@@ -48,6 +50,7 @@ export class RubroFormModalComponent implements OnInit {
   esAutomatico = false;
   isLoading = false;
   tarifasImpuesto: ITarifaImpuesto[] = [];
+  readonly catalogoCodigosSri = CATALOGO_CODIGOS_SRI;
 
   readonly tipoRubroOptions: { value: TipoRubro; label: string }[] = [
     { value: 'FIJO', label: 'Fijo (Cargo Fijo / Tasa)' },
@@ -57,6 +60,21 @@ export class RubroFormModalComponent implements OnInit {
     { value: 'SERVICIO', label: 'Servicio / Instalación' },
     { value: 'OTRO', label: 'Otro' },
   ];
+
+  onCodigoSriSelected(codigo: string): void {
+    this.codigoSri = codigo;
+    const info = this.catalogoCodigosSri.find((c) => c.codigo === codigo);
+    if (info && !this.rubro()) {
+      // Auto-completar solo si es nuevo registro o si el usuario no ha ingresado nombres
+      if (!this.nombre.trim()) {
+        this.nombre = info.nombreSugerido;
+      }
+      if (!this.descripcion.trim()) {
+        this.descripcion = info.descripcionSugerida;
+      }
+      this.tipoRubro = info.tipoRubroSugerido;
+    }
+  }
 
   ngOnInit(): void {
     this.loadTarifasImpuesto();
