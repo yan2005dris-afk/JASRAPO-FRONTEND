@@ -14,7 +14,7 @@ import { ReadingRoutesService } from '../../services/reading-routes.service';
 import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
 import {
   IReadingRoute,
-  IOrdenKpis,
+  IRouteKpis,
   OrderWork,
   EstadoOrden,
   TipoActividad,
@@ -87,7 +87,8 @@ export class ReadingRouteDetailComponent implements OnInit {
   isLoadingOrdenes = signal(false);
   totalOrdenes = signal(0);
   // KPIs agregados del backend (sobre el set completo filtrado, no la página).
-  ordenesKpis = signal<IOrdenKpis | null>(null);
+  // Lo setea tanto loadOrdenes() como loadReadings() según el tipo de ruta.
+  routeKpis = signal<IRouteKpis | null>(null);
   currentPage = signal(1);
   pageSize = signal(10);
   selectedFilter = signal<FilterOrdenTab>('TODAS');
@@ -195,19 +196,19 @@ export class ReadingRouteDetailComponent implements OnInit {
 
   // --- KPI metrics para órdenes (solo rutas no-Lectura) ---
   get kpiTotal(): number {
-    return this.ordenesKpis()?.total ?? 0;
+    return this.routeKpis()?.total ?? 0;
   }
 
   get kpiCompletadas(): number {
-    return this.ordenesKpis()?.completadas ?? 0;
+    return this.routeKpis()?.completadas ?? 0;
   }
 
   get kpiPendientes(): number {
-    return this.ordenesKpis()?.pendientes ?? 0;
+    return this.routeKpis()?.pendientes ?? 0;
   }
 
   get kpiConNovedad(): number {
-    return this.ordenesKpis()?.conNovedad ?? 0;
+    return this.routeKpis()?.conNovedad ?? 0;
   }
 
   get kpiProgresoPorcentaje(): number {
@@ -244,13 +245,13 @@ export class ReadingRouteDetailComponent implements OnInit {
         next: (res) => {
           this.ordenes.set(res.data);
           this.totalOrdenes.set(res.meta?.totalItems ?? res.meta?.total ?? res.data.length);
-          this.ordenesKpis.set(res.kpis ?? null);
+          this.routeKpis.set(res.kpis ?? null);
           this.isLoadingOrdenes.set(false);
         },
         error: () => {
           this.ordenes.set([]);
           this.totalOrdenes.set(0);
-          this.ordenesKpis.set(null);
+          this.routeKpis.set(null);
           this.isLoadingOrdenes.set(false);
         },
       });
@@ -281,11 +282,26 @@ export class ReadingRouteDetailComponent implements OnInit {
           }));
           this.readings.set(rows);
           this.totalReadings.set(res.meta?.totalItems ?? res.data.length);
+          // Mapear kpis de lecturas (aprobadas/rechazadas) al shape unificado
+          // que consumen los getters (completadas/canceladas).
+          const k = res.kpis;
+          this.routeKpis.set(
+            k
+              ? {
+                  total: k.total,
+                  completadas: k.aprobadas ?? 0,
+                  pendientes: k.pendientes ?? 0,
+                  conNovedad: k.conNovedad ?? 0,
+                  canceladas: k.rechazadas ?? 0,
+                }
+              : null,
+          );
           this.isLoadingReadings.set(false);
         },
         error: () => {
           this.readings.set([]);
           this.totalReadings.set(0);
+          this.routeKpis.set(null);
           this.isLoadingReadings.set(false);
         },
       });

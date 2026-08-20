@@ -113,10 +113,13 @@ export interface IOrdenPaginationMeta {
 }
 
 /**
- * Conteos agregados sobre el set completo filtrado de órdenes
- * (no solo la página actual). Devueltos por el backend en `kpis`.
+ * Conteos agregados sobre el set completo filtrado (no solo la página
+ * actual). El backend devuelve estos campos con nombres distintos en los
+ * endpoints de lecturas (`aprobadas`, `rechazadas`) y de órdenes
+ * (`completadas`, `canceladas`), pero acá los unificamos para que el
+ * component los consuma igual. El mapeo vive en `loadReadings()`.
  */
-export interface IOrdenKpis {
+export interface IRouteKpis {
   total: number;
   completadas: number;
   pendientes: number;
@@ -124,10 +127,24 @@ export interface IOrdenKpis {
   canceladas: number;
 }
 
+/**
+ * Shape REAL del backend para los kpis de lecturas (antes de unificar).
+ * La diferencia con `IRouteKpis` es semántica:
+ *   - lecturas usan `aprobadas` y `rechazadas`
+ *   - órdenes usan `completadas` y `canceladas`
+ */
+export interface ILecturaKpis {
+  total: number;
+  aprobadas: number;
+  pendientes: number;
+  conNovedad: number;
+  rechazadas: number;
+}
+
 export interface PaginatedOrdenResponse {
   data: OrderWork[];
   meta?: IOrdenPaginationMeta;
-  kpis?: IOrdenKpis;
+  kpis?: IRouteKpis;
 }
 
 export interface IFilterOrdenParams {

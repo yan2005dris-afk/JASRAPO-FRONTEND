@@ -133,15 +133,15 @@
             </div>
           </div>
 
-          <!-- KPI: Progreso de Órdenes -->
+          <!-- KPI: Progreso -->
           <div class="col-12 col-sm-6 col-md-3">
             <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
               <div class="text-muted small d-flex align-items-center gap-1 mb-1">
                 <i class="bi bi-speedometer2 text-success"></i>
-                Progreso de Órdenes
+                {{ isLecturaRoute() ? 'Progreso de Lecturas' : 'Progreso de Órdenes' }}
               </div>
               <div class="fw-semibold text-dark">
-                {{ kpiCompletadas }} / {{ kpiTotal }} Completadas
+                {{ kpiCompletadas }} / {{ kpiTotal }} {{ isLecturaRoute() ? 'Aprobadas' : 'Completadas' }}
               </div>
               <div class="progress mt-2" style="height: 6px">
                 <div
@@ -158,19 +158,25 @@
         <div class="row g-3 mt-1">
           <div class="col-4">
             <div class="bg-white p-3 rounded-3 border shadow-sm text-center">
-              <div class="text-muted small mb-1">Total Actividades</div>
+              <div class="text-muted small mb-1">
+                {{ isLecturaRoute() ? 'Total Lecturas' : 'Total Órdenes' }}
+              </div>
               <div class="fw-bold fs-5 text-dark">{{ kpiTotal }}</div>
             </div>
           </div>
           <div class="col-4">
             <div class="bg-white p-3 rounded-3 border shadow-sm text-center">
-              <div class="text-muted small mb-1">Pendientes</div>
+              <div class="text-muted small mb-1">
+                {{ isLecturaRoute() ? 'Pendientes de Toma' : 'Pendientes' }}
+              </div>
               <div class="fw-bold fs-5 text-warning">{{ kpiPendientes }}</div>
             </div>
           </div>
           <div class="col-4">
             <div class="bg-white p-3 rounded-3 border shadow-sm text-center">
-              <div class="text-muted small mb-1">Con Novedad</div>
+              <div class="text-muted small mb-1">
+                {{ isLecturaRoute() ? 'Con Anomalía' : 'Con Novedad' }}
+              </div>
               <div class="fw-bold fs-5 text-danger">{{ kpiConNovedad }}</div>
             </div>
           </div>

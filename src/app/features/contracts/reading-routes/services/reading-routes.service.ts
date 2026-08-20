@@ -8,6 +8,7 @@ import {
   IFilterOrdenParams,
   IFilterReadingsParams,
   IFindAllRoutesParams,
+  ILecturaKpis,
   IReadingForRoute,
   IReadingRoute,
   IReassignRouteDto,
@@ -78,7 +79,7 @@ export class ReadingRoutesService {
 
   getEligibleReadings(
     params?: IFilterReadingsParams,
-  ): Observable<IPaginatedResult<IReadingForRoute, { aprobadas?: number }>> {
+  ): Observable<IPaginatedResult<IReadingForRoute, ILecturaKpis>> {
     let httpParams = new HttpParams();
 
     if (params?.page !== undefined) {
@@ -106,7 +107,7 @@ export class ReadingRoutesService {
       httpParams = httpParams.set('search', params.search);
     }
 
-    return this.http.get<IPaginatedResult<IReadingForRoute, { aprobadas?: number }>>(
+    return this.http.get<IPaginatedResult<IReadingForRoute, ILecturaKpis>>(
       `${this.endpoint}/eligible-readings`,
       {
         params: httpParams,
@@ -117,7 +118,7 @@ export class ReadingRoutesService {
   getReadingsByRuta(
     rutaId: string | number,
     params?: { page?: number; limit?: number },
-  ): Observable<IPaginatedResult<IReadingForRoute, { aprobadas?: number }>> {
+  ): Observable<IPaginatedResult<IReadingForRoute, ILecturaKpis>> {
     let httpParams = new HttpParams();
     if (params?.page !== undefined) {
       httpParams = httpParams.set('page', String(params.page));
@@ -125,7 +126,7 @@ export class ReadingRoutesService {
     if (params?.limit !== undefined) {
       httpParams = httpParams.set('limit', String(params.limit));
     }
-    return this.http.get<IPaginatedResult<IReadingForRoute, { aprobadas?: number }>>(
+    return this.http.get<IPaginatedResult<IReadingForRoute, ILecturaKpis>>(
       `${this.endpoint}/${rutaId}/readings`,
       { params: httpParams },
     );
