@@ -80,8 +80,8 @@ import type {
                         @for (rubro of rubros(); track rubro.rubroId) {
                           <div
                             class="card border p-3 cursor-pointer rubro-card"
-                            (click)="addItem(rubro)"
-                            (keydown.enter)="addItem(rubro)"
+                            (click)="addRubro(rubro)"
+                            (keydown.enter)="addRubro(rubro)"
                             tabindex="0"
                             role="button"
                           >
@@ -93,11 +93,6 @@ import type {
                                   <span class="badge badge-soft-secondary me-1">{{
                                     rubro.tipoRubro
                                   }}</span>
-                                  @if (rubro.codigoSri) {
-                                    <span class="badge bg-light text-secondary border"
-                                      >SRI: {{ rubro.codigoSri }}</span
-                                    >
-                                  }
                                 </div>
                               </div>
                               <div class="text-end">
