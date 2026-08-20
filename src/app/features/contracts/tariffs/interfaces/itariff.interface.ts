@@ -4,6 +4,7 @@ export interface ITariffCategory {
   categoriaTarifaId?: number;
   nombre: string;
   descripcion?: string;
+  consumoMinimoMensual?: number;
   activo?: boolean;
   rubros?: IRubro[];
 }
@@ -11,10 +12,12 @@ export interface ITariffCategory {
 export interface CreateTariffRequest {
   nombre: string;
   descripcion?: string;
+  consumoMinimoMensual?: number;
 }
 
 export interface UpdateTariffRequest {
   nombre?: string;
   descripcion?: string;
+  consumoMinimoMensual?: number;
   activo?: boolean;
 }

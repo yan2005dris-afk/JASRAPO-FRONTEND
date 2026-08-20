@@ -39,6 +39,7 @@ export class TariffsFormComponent implements OnInit {
   tariffForm: FormGroup = this.fb.group({
     nombre: ['', Validators.required],
     descripcion: [''],
+    consumoMinimoMensual: [10, [Validators.required, Validators.min(0)]],
   });
 
   ngOnInit(): void {
@@ -47,6 +48,7 @@ export class TariffsFormComponent implements OnInit {
       this.tariffForm.patchValue({
         nombre: tariff.nombre,
         descripcion: tariff.descripcion ?? '',
+        consumoMinimoMensual: tariff.consumoMinimoMensual ?? 10,
       });
     }
   }

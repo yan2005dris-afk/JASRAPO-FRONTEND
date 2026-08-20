@@ -116,6 +116,7 @@
                 <th style="width: 48px" class="text-center">#</th>
                 <th>Nombre</th>
                 <th>Descripción</th>
+                <th>Consumo base (m³)</th>
                 <th class="text-center">Rubros Asignados</th>
                 @if (!selectionMode()) {
                   <th class="text-end">Acciones</th>
@@ -161,6 +162,12 @@
                     {{ tariff.nombre }}
                   </td>
                   <td class="text-muted">{{ tariff.descripcion || '—' }}</td>
+                  <td>
+                    <span class="badge bg-light text-dark border">
+                      <i class="bi bi-droplet-half text-primary me-1"></i>
+                      {{ tariff.consumoMinimoMensual ?? 10 }} m³
+                    </span>
+                  </td>
                   <td class="text-center">
                     <span
                       class="badge"
@@ -221,7 +228,7 @@
                 <!-- Fila Desplegable con Detalle de Rubros -->
                 @if (expandedTariffs().has(tariff.categoriaTarifaId!)) {
                   <tr class="expanded-rubros-row bg-light">
-                    <td colspan="5" class="p-0">
+                    <td colspan="6" class="p-0">
                       <div class="p-3 ps-5 border-start border-3 border-primary bg-light">
                         <div class="d-flex align-items-center justify-content-between mb-2">
                           <h6 class="mb-0 fw-bold text-secondary d-flex align-items-center gap-2">

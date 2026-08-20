@@ -246,7 +246,14 @@
                       <span class="text-dark">{{ tariff.descripcion || 'Sin descripción' }}</span>
                     </div>
                   </div>
-                  <div class="col-12 detail-item">
+                  <div class="col-sm-6 detail-item">
+                    <i class="bi bi-droplet-half"></i>
+                    <div>
+                      <small class="text-muted d-block">Consumo base incluido</small>
+                      <span class="text-dark">{{ tariff.consumoMinimoMensual ?? 10 }} m³</span>
+                    </div>
+                  </div>
+                  <div class="col-sm-6 detail-item">
                     <i class="bi bi-tags"></i>
                     <div>
                       <small class="text-muted d-block">Rubros asociados</small>
