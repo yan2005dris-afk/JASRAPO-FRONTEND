@@ -109,6 +109,8 @@ export interface IReplaceMeterRequest {
   ventanaPromedio?: number;
   periodoOrigenId: number;
   periodoDestinoId?: number;
+  mesOrigen?: number;
+  mesDestino?: number;
   ordenTrabajoId?: string;
   fechaReemplazo?: string;
 }
@@ -123,6 +125,8 @@ export interface IReplaceMeterResponse {
   ordenTrabajoId?: string | null;
   periodoOrigenId: number;
   periodoDestinoId?: number | null;
+  mesOrigen: number;
+  mesDestino?: number | null;
   motivo: MotivoReemplazoMedidor;
   responsabilidadDano: ResponsabilidadDano;
   detalleMotivo?: string | null;

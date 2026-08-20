@@ -1,14 +1,18 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  ElementRef,
   HostListener,
+  OnDestroy,
   OnInit,
   computed,
   inject,
   input,
   output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -34,12 +38,17 @@ import { MeterTableComponent } from '../../../../../shared/components/meter-tabl
   styleUrl: './replace-meter-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ReplaceMeterModalComponent implements OnInit {
+export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly metersService = inject(MetersService);
   private readonly routesService = inject(ReadingRoutesService);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly elementRef = inject(ElementRef);
+
+  private triggerElement: HTMLElement | null = null;
+  readonly modalContainer = viewChild<ElementRef<HTMLElement>>('modalContainer');
+  readonly firstInput = viewChild<ElementRef<HTMLInputElement>>('firstInput');
 
   readonly contract = input.required<IContract>();
   readonly saved = output<void>();
@@ -58,6 +67,21 @@ export class ReplaceMeterModalComponent implements OnInit {
   readonly pageSize = signal<number>(5);
 
   readonly periodos = signal<{ periodoId: number; nombre?: string; estado: string }[]>([]);
+  readonly meses = [
+    { id: 1, nombre: 'Enero' },
+    { id: 2, nombre: 'Febrero' },
+    { id: 3, nombre: 'Marzo' },
+    { id: 4, nombre: 'Abril' },
+    { id: 5, nombre: 'Mayo' },
+    { id: 6, nombre: 'Junio' },
+    { id: 7, nombre: 'Julio' },
+    { id: 8, nombre: 'Agosto' },
+    { id: 9, nombre: 'Septiembre' },
+    { id: 10, nombre: 'Octubre' },
+    { id: 11, nombre: 'Noviembre' },
+    { id: 12, nombre: 'Diciembre' },
+  ];
+
   readonly isSaving = signal<boolean>(false);
   readonly errorMessage = signal<string>('');
 
@@ -73,12 +97,44 @@ export class ReplaceMeterModalComponent implements OnInit {
     porcentajeCobro: [100 as number | null],
     ventanaPromedio: [3 as number | null],
     periodoOrigenId: [null as number | null, [Validators.required]],
+    mesOrigen: [
+      new Date().getMonth() + 1,
+      [Validators.required, Validators.min(1), Validators.max(12)],
+    ],
     periodoDestinoId: [null as number | null],
+    mesDestino: [null as number | null],
   });
 
   @HostListener('document:keydown.escape')
   handleEscape(): void {
+    if (this.isSaving()) return;
     this.onClose();
+  }
+
+  @HostListener('keydown', ['$event'])
+  handleFocusTrap(event: KeyboardEvent): void {
+    if (event.key !== 'Tab') return;
+
+    const focusable = this.elementRef.nativeElement.querySelectorAll(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ) as NodeListOf<HTMLElement>;
+
+    if (focusable.length === 0) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    if (event.shiftKey) {
+      if (document.activeElement === first) {
+        last.focus();
+        event.preventDefault();
+      }
+    } else {
+      if (document.activeElement === last) {
+        first.focus();
+        event.preventDefault();
+      }
+    }
   }
 
   readonly currentHistorial = computed(() => {
@@ -108,9 +164,24 @@ export class ReplaceMeterModalComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    if (typeof document !== 'undefined') {
+      this.triggerElement = document.activeElement as HTMLElement;
+    }
     this.setupReactiveValidators();
     this.loadAvailableMeters();
     this.loadPeriods();
+  }
+
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      this.firstInput()?.nativeElement?.focus();
+    }, 50);
+  }
+
+  ngOnDestroy(): void {
+    if (this.triggerElement && typeof this.triggerElement.focus === 'function') {
+      this.triggerElement.focus();
+    }
   }
 
   private setupReactiveValidators(): void {
@@ -130,10 +201,24 @@ export class ReplaceMeterModalComponent implements OnInit {
     this.form.controls.tratamientoEntrante.valueChanges.subscribe((t) => {
       if (t === 'DIFERIR_SIGUIENTE_PERIODO') {
         this.form.controls.periodoDestinoId.setValidators([Validators.required]);
+        this.form.controls.mesDestino.setValidators([
+          Validators.required,
+          Validators.min(1),
+          Validators.max(12),
+        ]);
+        const currentMonth =
+          Number(this.form.controls.mesOrigen.value) || new Date().getMonth() + 1;
+        const nextMonth = currentMonth === 12 ? 1 : currentMonth + 1;
+        this.form.controls.mesDestino.setValue(nextMonth);
+        if (!this.form.controls.periodoDestinoId.value) {
+          this.form.controls.periodoDestinoId.setValue(this.form.controls.periodoOrigenId.value);
+        }
       } else {
         this.form.controls.periodoDestinoId.clearValidators();
+        this.form.controls.mesDestino.clearValidators();
       }
       this.form.controls.periodoDestinoId.updateValueAndValidity();
+      this.form.controls.mesDestino.updateValueAndValidity();
     });
   }
 
@@ -283,7 +368,9 @@ export class ReplaceMeterModalComponent implements OnInit {
       ventanaPromedio:
         raw.tratamientoSaliente === 'PROMEDIO_HISTORICO' ? Number(raw.ventanaPromedio) : undefined,
       periodoOrigenId: Number(raw.periodoOrigenId),
+      mesOrigen: Number(raw.mesOrigen) || undefined,
       periodoDestinoId: raw.periodoDestinoId ? Number(raw.periodoDestinoId) : undefined,
+      mesDestino: raw.mesDestino ? Number(raw.mesDestino) : undefined,
     };
 
     this.metersService.replaceMeter(payload).subscribe({
@@ -303,6 +390,7 @@ export class ReplaceMeterModalComponent implements OnInit {
   }
 
   onClose(): void {
+    if (this.isSaving()) return;
     this.cancelled.emit();
   }
 }

@@ -1,5 +1,6 @@
 <div class="modal-backdrop fade show"></div>
 <div
+  #modalContainer
   class="modal fade show d-block picker-modal"
   tabindex="-1"
   role="dialog"
@@ -7,7 +8,7 @@
   aria-labelledby="replaceMeterModalTitle"
 >
   <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 720px">
-    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+    <div class="modal-content border-0 shadow rounded-4">
       <!-- Header con Stepper -->
       <div
         class="modal-header border-bottom px-4 py-3 bg-white d-flex flex-column align-items-stretch gap-3"
@@ -143,6 +144,7 @@
                     </label>
                     <div class="input-group">
                       <input
+                        #firstInput
                         type="number"
                         id="lecturaFinalSaliente"
                         class="form-control shadow-none tabular-nums"
@@ -449,6 +451,64 @@
                       }
                     </select>
                   </div>
+
+                  <div class="col-md-6">
+                    <label
+                      for="mesOrigen"
+                      class="form-label fw-semibold extra-small text-dark mb-1"
+                    >
+                      Mes de Origen <span class="text-danger">*</span>
+                    </label>
+                    <select
+                      id="mesOrigen"
+                      class="form-select form-select-sm shadow-none"
+                      formControlName="mesOrigen"
+                    >
+                      @for (m of meses; track m.id) {
+                        <option [value]="m.id">{{ m.nombre }}</option>
+                      }
+                    </select>
+                  </div>
+
+                  @if (form.controls.tratamientoEntrante.value === 'DIFERIR_SIGUIENTE_PERIODO') {
+                    <div class="col-md-6">
+                      <label
+                        for="periodoDestinoId"
+                        class="form-label fw-semibold extra-small text-dark mb-1"
+                      >
+                        Período Destino (Diferimiento) <span class="text-danger">*</span>
+                      </label>
+                      <select
+                        id="periodoDestinoId"
+                        class="form-select form-select-sm shadow-none"
+                        formControlName="periodoDestinoId"
+                      >
+                        @for (p of periodos(); track p.periodoId) {
+                          <option [value]="p.periodoId">
+                            {{ p.nombre || 'Período #' + p.periodoId }} ({{ p.estado }})
+                          </option>
+                        }
+                      </select>
+                    </div>
+
+                    <div class="col-md-6">
+                      <label
+                        for="mesDestino"
+                        class="form-label fw-semibold extra-small text-dark mb-1"
+                      >
+                        Mes Destino (Diferimiento) <span class="text-danger">*</span>
+                      </label>
+                      <select
+                        id="mesDestino"
+                        class="form-select form-select-sm shadow-none"
+                        formControlName="mesDestino"
+                      >
+                        @for (m of meses; track m.id) {
+                          <option [value]="m.id">{{ m.nombre }}</option>
+                        }
+                      </select>
+                    </div>
+                  }
                 </div>
               </div>
 

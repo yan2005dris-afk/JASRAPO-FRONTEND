@@ -100,7 +100,7 @@ describe('ReplaceMeterModalComponent', () => {
   ];
 
   const mockMetersService = {
-    getMeters: vi.fn().mockReturnValue(of({ datos: mockAvailableMeters, total: 2 })),
+    getMeters: vi.fn().mockReturnValue(of({ datos: mockAvailableMeters, meta: { total: 2 } })),
     replaceMeter: vi.fn(),
   };
 
@@ -176,9 +176,11 @@ describe('ReplaceMeterModalComponent', () => {
 
     component.form.controls.tratamientoEntrante.setValue('DIFERIR_SIGUIENTE_PERIODO');
     expect(component.form.controls.periodoDestinoId.validator).toBeTruthy();
+    expect(component.form.controls.mesDestino.validator).toBeTruthy();
 
     component.form.controls.tratamientoEntrante.setValue('FACTURAR_PERIODO_ACTUAL');
     expect(component.form.controls.periodoDestinoId.validator).toBeNull();
+    expect(component.form.controls.mesDestino.validator).toBeNull();
   });
 
   it('should submit replace meter request when confirmed on step 3', () => {
@@ -193,6 +195,7 @@ describe('ReplaceMeterModalComponent', () => {
       tratamientoSaliente: 'COBRO_REAL',
       tratamientoEntrante: 'FACTURAR_PERIODO_ACTUAL',
       periodoOrigenId: 1,
+      mesOrigen: 8,
     });
     component.selectMeter(component.availableMeters()[0]);
 
@@ -209,6 +212,7 @@ describe('ReplaceMeterModalComponent', () => {
         motivo: 'DANO',
         responsabilidadDano: 'JUNTA',
         tratamientoSaliente: 'COBRO_REAL',
+        mesOrigen: 8,
       }),
     );
     expect(component.saved.emit).toHaveBeenCalled();
@@ -258,9 +262,16 @@ describe('ReplaceMeterModalComponent', () => {
     );
   });
 
-  it('should close on escape key', () => {
+  it('should close on escape key when not saving', () => {
     vi.spyOn(component.cancelled, 'emit');
     component.handleEscape();
     expect(component.cancelled.emit).toHaveBeenCalled();
+  });
+
+  it('should not close on escape key while saving', () => {
+    vi.spyOn(component.cancelled, 'emit');
+    component.isSaving.set(true);
+    component.handleEscape();
+    expect(component.cancelled.emit).not.toHaveBeenCalled();
   });
 });
