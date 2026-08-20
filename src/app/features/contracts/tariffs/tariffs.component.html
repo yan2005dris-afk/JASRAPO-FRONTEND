@@ -36,7 +36,8 @@
             type="text"
             class="form-control border-start-0 ps-0 shadow-none"
             placeholder="Buscar tarifa..."
-            [(ngModel)]="searchNombre"
+            [ngModel]="searchNombre()"
+            (ngModelChange)="searchNombre.set($event)"
             (keyup.enter)="goToPage(1)"
           />
         </div>
@@ -45,22 +46,22 @@
         <button
           class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="goToPage(1)"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         >
-          @if (isLoading) {
+          @if (isLoading()) {
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
           }
-          @if (!isLoading) {
+          @if (!isLoading()) {
             <i class="bi bi-search"></i>
           }
-          {{ isLoading ? 'Buscando...' : 'Buscar' }}
+          {{ isLoading() ? 'Buscando...' : 'Buscar' }}
         </button>
 
         <!-- Botón Limpiar -->
         <button
           class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="clearFilters()"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         >
           <i class="bi bi-x-circle"></i>
           Limpiar
@@ -70,17 +71,17 @@
 
     <!-- Table Body -->
     <div class="card-body p-0">
-      @if (isLoading) {
+      @if (isLoading()) {
         <div class="d-flex justify-content-center py-5">
           <div class="spinner-border text-primary" role="status">
             <span class="visually-hidden">Cargando...</span>
           </div>
         </div>
-      } @else if (filteredTariffs.length === 0) {
+      } @else if (filteredTariffs().length === 0) {
         <div class="alert alert-info m-4">
           <i class="bi bi-info-circle me-2"></i>
-          @if (searchNombre) {
-            No se encontraron tarifas que coincidan con "<strong>{{ searchNombre }}</strong
+          @if (searchNombre()) {
+            No se encontraron tarifas que coincidan con "<strong>{{ searchNombre() }}</strong
             >".
           } @else {
             No hay tarifas registradas.
@@ -102,7 +103,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (tariff of pagedTariffs; track tariff.categoriaTarifaId) {
+              @for (tariff of pagedTariffs(); track tariff.categoriaTarifaId) {
                 <tr
                   [class.selectable-row]="selectionMode()"
                   [attr.role]="selectionMode() ? 'button' : null"
@@ -128,7 +129,7 @@
                         </button>
                         <ul
                           class="dropdown-menu dropdown-menu-end shadow-sm border-0"
-                          [class.show]="openDropdownId === tariff.categoriaTarifaId"
+                          [class.show]="openDropdownId() === tariff.categoriaTarifaId"
                           style="min-width: 130px"
                         >
                           <li>
@@ -165,12 +166,12 @@
       }
     </div>
 
-    @if (!isLoading && filteredTariffs.length > 0) {
+    @if (!isLoading() && filteredTariffs().length > 0) {
       <footer class="card-footer bg-white border-top px-4 py-3">
         <app-pagination
-          [totalItems]="filteredTariffs.length"
-          [currentPage]="currentPage"
-          [pageSize]="pageSize"
+          [totalItems]="filteredTariffs().length"
+          [currentPage]="currentPage()"
+          [pageSize]="pageSize()"
           [pageSizeOptions]="pageSizeOptions"
           itemNameSingular="tarifa"
           itemNamePlural="tarifas"
@@ -183,12 +184,12 @@
 </div>
 
 <!-- Modal -->
-@if (isModalOpen) {
+@if (isModalOpen()) {
   <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5)">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
         <app-tariffs-form
-          [tariffToEdit]="selectedTariff"
+          [tariffToEdit]="selectedTariff()"
           (formClosed)="closeModal()"
           (formSubmitted)="onFormSubmitted()"
         ></app-tariffs-form>

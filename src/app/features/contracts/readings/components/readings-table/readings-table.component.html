@@ -11,7 +11,7 @@
         </th>
         <th scope="col">Contrato / Guía</th>
         <th scope="col">Cliente / Ubicación</th>
-        @if (showSector) {
+        @if (showSector()) {
           <th scope="col">Sector</th>
         }
         <th scope="col">Serie Medidor</th>
@@ -19,13 +19,13 @@
         <th scope="col" class="text-end">Lect. Act</th>
         <th scope="col" class="text-end">Consumo</th>
         <th scope="col" class="text-center">Estado</th>
-        @if (showActions) {
+        @if (showActions()) {
           <th scope="col" class="text-center pe-4">Acciones</th>
         }
       </tr>
     </thead>
     <tbody>
-      @for (r of readings; track r.lecturaId) {
+      @for (r of readings(); track r.lecturaId) {
         <tr>
           <td class="ps-4">
             <input
@@ -54,7 +54,7 @@
               </div>
             }
           </td>
-          @if (showSector) {
+          @if (showSector()) {
             <td class="small text-muted">
               {{ r.sector || '—' }}
             </td>
@@ -92,19 +92,19 @@
           <td class="text-center">
             <app-status-badge [status]="r.estado" />
           </td>
-          @if (showActions) {
+          @if (showActions()) {
             <td class="text-center pe-4">
               <div class="dropdown">
                 <button
                   class="btn btn-icon btn-sm rounded-circle shadow-none border-0"
                   type="button"
                   (click)="onToggleDropdown(r.lecturaId, $event)"
-                  [class.active]="openDropdownId === '' + r.lecturaId"
+                  [class.active]="openDropdownId() === '' + r.lecturaId"
                   aria-label="Opciones"
                 >
                   <i class="bi bi-three-dots-vertical text-muted"></i>
                 </button>
-                @if (openDropdownId === '' + r.lecturaId) {
+                @if (openDropdownId() === '' + r.lecturaId) {
                   <ul class="dropdown-menu dropdown-menu-end show shadow-sm border-0 py-2 mt-1">
                     <li>
                       <button
@@ -128,7 +128,7 @@
                         </button>
                       </li>
                       @if (
-                        allowValidation &&
+                        allowValidation() &&
                         (r.estado === 'POR_REVISION' ||
                           r.estado === 'EN_REVISION' ||
                           r.estado === 'PENDIENTE')
@@ -152,7 +152,7 @@
                       </button>
                     </li>
                     @if (
-                      allowReReading &&
+                      allowReReading() &&
                       r.estado !== 'APROBADA' &&
                       r.estado !== 'RECHAZADA_VERIFICACION'
                     ) {

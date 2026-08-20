@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
@@ -28,19 +28,19 @@ export interface IReadingRowItem {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReadingsTableComponent {
-  @Input() readings: IReadingRowItem[] = [];
-  @Input() showSector = true;
-  @Input() showActions = true;
-  @Input() allowValidation = false;
-  @Input() allowReReading = true;
-  @Input() openDropdownId: string | null = null;
+  readonly readings = input<IReadingRowItem[]>([]);
+  readonly showSector = input(true);
+  readonly showActions = input(true);
+  readonly allowValidation = input(false);
+  readonly allowReReading = input(true);
+  readonly openDropdownId = input<string | null>(null);
 
-  @Output() viewDetail = new EventEmitter<IReadingRowItem>();
-  @Output() editReading = new EventEmitter<IReadingRowItem>();
-  @Output() approveReading = new EventEmitter<IReadingRowItem>();
-  @Output() reportAnomaly = new EventEmitter<IReadingRowItem>();
-  @Output() requestReReading = new EventEmitter<IReadingRowItem>();
-  @Output() toggleDropdown = new EventEmitter<{ id: string; event: MouseEvent }>();
+  readonly viewDetail = output<IReadingRowItem>();
+  readonly editReading = output<IReadingRowItem>();
+  readonly approveReading = output<IReadingRowItem>();
+  readonly reportAnomaly = output<IReadingRowItem>();
+  readonly requestReReading = output<IReadingRowItem>();
+  readonly toggleDropdown = output<{ id: string; event: MouseEvent }>();
 
   onToggleDropdown(id: string | number, event: MouseEvent): void {
     event.stopPropagation();

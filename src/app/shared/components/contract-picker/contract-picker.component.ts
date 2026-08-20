@@ -2,12 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  EventEmitter,
-  Input,
-  Output,
-  ViewChild,
+  effect,
   inject,
+  input,
+  output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -29,28 +29,14 @@ import type {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ContractPickerComponent {
-  @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
+  readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
-  @Input() set open(value: boolean) {
-    this._open = value;
-    if (value) {
-      this.searchTerm.set('');
-      this.searchError.set('');
-      this.currentPage.set(1);
-      this.buscarContratos();
-      setTimeout(() => this.searchInput?.nativeElement.focus(), 150);
-    }
-  }
-  get open(): boolean {
-    return this._open;
-  }
-  private _open = false;
+  readonly open = input(false);
+  readonly title = input('Buscar Contrato Activo');
+  readonly estado = input<string | undefined>(undefined);
 
-  @Input() title = 'Buscar Contrato Activo';
-  @Input() estado?: string;
-
-  @Output() contractSelected = new EventEmitter<IContract>();
-  @Output() closed = new EventEmitter<void>();
+  readonly contractSelected = output<IContract>();
+  readonly closed = output<void>();
 
   private readonly contractsService = inject(ContractsService);
 
@@ -58,6 +44,18 @@ export class ContractPickerComponent {
   readonly searchTerm = signal('');
   readonly searchResults = signal<IContract[]>([]);
   readonly isSearching = signal(false);
+
+  constructor() {
+    effect(() => {
+      if (this.open()) {
+        this.searchTerm.set('');
+        this.searchError.set('');
+        this.currentPage.set(1);
+        this.buscarContratos();
+        setTimeout(() => this.searchInput()?.nativeElement.focus(), 150);
+      }
+    });
+  }
   readonly searchError = signal('');
   readonly searchPerformed = signal(false);
 
@@ -103,8 +101,9 @@ export class ContractPickerComponent {
       page: this.currentPage(),
       limit: this.pageSize(),
     };
-    if (this.estado) {
-      params.estado = this.estado;
+    const estadoVal = this.estado();
+    if (estadoVal) {
+      params.estado = estadoVal;
     }
     this.contractsService.getContracts(params).subscribe({
       next: (res) => {
