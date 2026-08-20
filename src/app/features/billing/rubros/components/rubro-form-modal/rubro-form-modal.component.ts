@@ -21,10 +21,12 @@ import {
 } from '../../interfaces/irubro.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 
+import { PickerInputComponent } from '../../../../../shared/components/picker-input/picker-input.component';
+
 @Component({
   selector: 'app-rubro-form-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PickerInputComponent],
   templateUrl: './rubro-form-modal.component.html',
   styleUrl: './rubro-form-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,6 +54,12 @@ export class RubroFormModalComponent implements OnInit {
   tarifasImpuesto: ITarifaImpuesto[] = [];
   readonly catalogoCodigosSri = CATALOGO_CODIGOS_SRI;
 
+  // Picker States
+  isSriPickerOpen = false;
+  sriSearchQuery = '';
+  isTipoPickerOpen = false;
+  isTarifaPickerOpen = false;
+
   readonly tipoRubroOptions: { value: TipoRubro; label: string }[] = [
     { value: 'FIJO', label: 'Fijo (Cargo Fijo / Tasa)' },
     { value: 'VARIABLE', label: 'Variable (Consumo m³)' },
@@ -60,6 +68,51 @@ export class RubroFormModalComponent implements OnInit {
     { value: 'SERVICIO', label: 'Servicio / Instalación' },
     { value: 'OTRO', label: 'Otro' },
   ];
+
+  get filteredCodigosSri(): readonly ICodigoSriInfo[] {
+    const q = this.sriSearchQuery.toLowerCase().trim();
+    if (!q) return this.catalogoCodigosSri;
+    return this.catalogoCodigosSri.filter(
+      (c: ICodigoSriInfo) =>
+        c.codigo.toLowerCase().includes(q) ||
+        c.label.toLowerCase().includes(q) ||
+        c.nombreSugerido.toLowerCase().includes(q),
+    );
+  }
+
+  get selectedCodigoSriLabel(): string {
+    const match = this.catalogoCodigosSri.find((c: ICodigoSriInfo) => c.codigo === this.codigoSri);
+    return match ? match.label : this.codigoSri ? `Código ${this.codigoSri}` : '';
+  }
+
+  get selectedTipoLabel(): string {
+    const match = this.tipoRubroOptions.find((t) => t.value === this.tipoRubro);
+    return match ? match.label : this.tipoRubro;
+  }
+
+  get selectedTarifaLabel(): string {
+    const match = this.tarifasImpuesto.find((t) => t.id === this.tarifaImpuestoId);
+    return match ? `${match.descripcion} (${match.porcentaje}%)` : '';
+  }
+
+  selectTipoRubro(opt: { value: TipoRubro; label: string }): void {
+    this.tipoRubro = opt.value;
+    this.isTipoPickerOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  selectTarifaImpuesto(t: ITarifaImpuesto): void {
+    this.tarifaImpuestoId = t.id;
+    this.isTarifaPickerOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  clearCodigoSri(): void {
+    this.codigoSri = '';
+    this.sriSearchQuery = '';
+    this.isSriPickerOpen = false;
+    this.cdr.markForCheck();
+  }
 
   onCodigoSriSelected(codigo: string): void {
     this.codigoSri = codigo;

@@ -50,31 +50,84 @@
       <div class="modal-body px-4 py-4">
         <form (ngSubmit)="submit()">
           <div class="row g-3">
-            <!-- Código SRI con Catálogo Asistido -->
-            <div class="col-md-5">
-              <label for="rubroCodigoSriSelect" class="form-label fw-semibold small text-dark d-flex justify-content-between">
-                <span>Código SRI / Tipo Estándar</span>
-                <span class="text-muted fw-normal" style="font-size: 0.75rem">Catálogo SRI</span>
-              </label>
-              <div class="input-group">
-                <select
-                  id="rubroCodigoSriSelect"
-                  class="form-select"
-                  [ngModel]="codigoSri"
-                  (ngModelChange)="onCodigoSriSelected($event)"
-                  name="codigoSriSelect"
-                  [disabled]="isLoading"
-                >
-                  <option value="">-- Personalizado / Sin código --</option>
-                  @for (c of catalogoCodigosSri; track c.codigo) {
-                    <option [value]="c.codigo">{{ c.label }}</option>
+            <!-- 1. Tipo de Rubro con Picker -->
+            <div class="col-md-6">
+              <app-picker-input
+                inputId="rubroTipoInput"
+                label="Tipo de Rubro"
+                placeholder="Seleccionar tipo de rubro..."
+                icon="bi-tags"
+                [query]="selectedTipoLabel"
+                [disabled]="isLoading"
+                [required]="true"
+                [isOpen]="isTipoPickerOpen"
+                [hasValue]="!!tipoRubro"
+                (openChange)="isTipoPickerOpen = $event"
+              >
+                <div picker-items>
+                  @for (opt of tipoRubroOptions; track opt.value) {
+                    <button
+                      type="button"
+                      class="dropdown-item px-3 py-2 text-start d-flex justify-content-between align-items-center"
+                      [class.active]="tipoRubro === opt.value"
+                      (click)="selectTipoRubro(opt)"
+                    >
+                      <span class="small fw-semibold">{{ opt.label }}</span>
+                      @if (tipoRubro === opt.value) {
+                        <i class="bi bi-check-lg text-primary"></i>
+                      }
+                    </button>
                   }
-                </select>
-              </div>
+                </div>
+              </app-picker-input>
             </div>
 
-            <!-- Nombre del Rubro -->
-            <div class="col-md-7">
+            <!-- 2. Código SRI / Catálogo con Picker -->
+            <div class="col-md-6">
+              <app-picker-input
+                inputId="rubroCodigoSriInput"
+                label="Código SRI / Concepto Estándar"
+                placeholder="Buscar concepto SRI..."
+                icon="bi-upc-scan"
+                [query]="sriSearchQuery || selectedCodigoSriLabel"
+                [disabled]="isLoading"
+                [isOpen]="isSriPickerOpen"
+                [hasValue]="!!codigoSri"
+                (queryChange)="sriSearchQuery = $event"
+                (openChange)="isSriPickerOpen = $event"
+                (clear)="clearCodigoSri()"
+              >
+                <div picker-items>
+                  @if (filteredCodigosSri.length === 0) {
+                    <div class="px-3 py-2 text-muted small text-center">
+                      No se encontraron conceptos para "{{ sriSearchQuery }}".
+                    </div>
+                  } @else {
+                    @for (c of filteredCodigosSri; track c.codigo) {
+                      <button
+                        type="button"
+                        class="dropdown-item px-3 py-2 text-start d-flex justify-content-between align-items-center"
+                        [class.active]="codigoSri === c.codigo"
+                        (click)="onCodigoSriSelected(c.codigo); isSriPickerOpen = false; sriSearchQuery = ''"
+                      >
+                        <div>
+                          <div class="small fw-semibold text-dark">{{ c.label }}</div>
+                          <div class="text-muted extra-small" style="font-size: 0.75rem">
+                            {{ c.descripcionSugerida }}
+                          </div>
+                        </div>
+                        <span class="badge bg-light text-dark border font-monospace ms-2">
+                          {{ c.codigo }}
+                        </span>
+                      </button>
+                    }
+                  }
+                </div>
+              </app-picker-input>
+            </div>
+
+            <!-- 3. Nombre del Rubro -->
+            <div class="col-12">
               <label for="rubroNombreInput" class="form-label fw-semibold small text-dark">
                 Nombre del Rubro <span class="text-danger">*</span>
               </label>
@@ -90,7 +143,7 @@
               />
             </div>
 
-            <!-- Descripción -->
+            <!-- 4. Descripción -->
             <div class="col-12">
               <label for="rubroDescripcionTextarea" class="form-label fw-semibold small text-dark">
                 Descripción <span class="text-danger">*</span>
@@ -107,43 +160,36 @@
               ></textarea>
             </div>
 
-            <!-- Tipo de Rubro -->
+            <!-- 5. Tarifa Impuesto IVA con Picker -->
             <div class="col-md-6">
-              <label for="rubroTipoSelect" class="form-label fw-semibold small text-dark">
-                Tipo de Rubro <span class="text-danger">*</span>
-              </label>
-              <select
-                id="rubroTipoSelect"
-                class="form-select"
-                [(ngModel)]="tipoRubro"
-                name="tipoRubro"
-                required
+              <app-picker-input
+                inputId="rubroTarifaIvaInput"
+                label="Tarifa Impuesto IVA"
+                placeholder="Seleccionar tarifa de impuesto..."
+                icon="bi-percent"
+                [query]="selectedTarifaLabel"
                 [disabled]="isLoading"
+                [required]="true"
+                [isOpen]="isTarifaPickerOpen"
+                [hasValue]="!!tarifaImpuestoId"
+                (openChange)="isTarifaPickerOpen = $event"
               >
-                @for (opt of tipoRubroOptions; track opt.value) {
-                  <option [value]="opt.value">{{ opt.label }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Tarifa Impuesto IVA -->
-            <div class="col-md-6">
-              <label for="rubroTarifaIvaSelect" class="form-label fw-semibold small text-dark">
-                Tarifa Impuesto IVA <span class="text-danger">*</span>
-              </label>
-              <select
-                id="rubroTarifaIvaSelect"
-                class="form-select"
-                [(ngModel)]="tarifaImpuestoId"
-                name="tarifaImpuestoId"
-                required
-                [disabled]="isLoading"
-              >
-                <option [ngValue]="null" disabled>Seleccionar tarifa de impuesto...</option>
-                @for (t of tarifasImpuesto; track t.id) {
-                  <option [ngValue]="t.id">{{ t.descripcion }} ({{ t.porcentaje }}%)</option>
-                }
-              </select>
+                <div picker-items>
+                  @for (t of tarifasImpuesto; track t.id) {
+                    <button
+                      type="button"
+                      class="dropdown-item px-3 py-2 text-start d-flex justify-content-between align-items-center"
+                      [class.active]="tarifaImpuestoId === t.id"
+                      (click)="selectTarifaImpuesto(t)"
+                    >
+                      <span class="small fw-semibold">{{ t.descripcion }} ({{ t.porcentaje }}%)</span>
+                      @if (tarifaImpuestoId === t.id) {
+                        <i class="bi bi-check-lg text-primary"></i>
+                      }
+                    </button>
+                  }
+                </div>
+              </app-picker-input>
             </div>
 
             <!-- Precio Unitario -->
