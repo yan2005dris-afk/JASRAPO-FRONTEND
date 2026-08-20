@@ -52,11 +52,8 @@ export class RubroFormModalComponent implements OnInit {
   esAutomatico = false;
   isLoading = false;
   tarifasImpuesto: ITarifaImpuesto[] = [];
-  readonly catalogoCodigosSri = CATALOGO_CODIGOS_SRI;
 
   // Picker States
-  isSriPickerOpen = false;
-  sriSearchQuery = '';
   isTipoPickerOpen = false;
   isTarifaPickerOpen = false;
 
@@ -68,27 +65,6 @@ export class RubroFormModalComponent implements OnInit {
     { value: 'SERVICIO', label: 'Servicio / Instalación' },
     { value: 'OTRO', label: 'Otro' },
   ];
-
-  get filteredCodigosSri(): readonly ICodigoSriInfo[] {
-    const q = this.sriSearchQuery.toLowerCase().trim();
-    if (!q) return this.catalogoCodigosSri;
-    return this.catalogoCodigosSri.filter(
-      (c: ICodigoSriInfo) =>
-        c.codigo.toLowerCase().includes(q) ||
-        c.label.toLowerCase().includes(q) ||
-        c.nombreSugerido.toLowerCase().includes(q),
-    );
-  }
-
-  get selectedConceptoLabel(): string {
-    const match = this.catalogoCodigosSri.find((c: ICodigoSriInfo) => c.codigo === this.codigoSri);
-    return match ? match.nombreSugerido : this.codigoSri ? `Concepto (${this.codigoSri})` : '';
-  }
-
-  get selectedCodigoSriLabel(): string {
-    const match = this.catalogoCodigosSri.find((c: ICodigoSriInfo) => c.codigo === this.codigoSri);
-    return match ? match.label : this.codigoSri ? `Código ${this.codigoSri}` : '';
-  }
 
   get selectedTipoLabel(): string {
     const match = this.tipoRubroOptions.find((t) => t.value === this.tipoRubro);
@@ -115,19 +91,9 @@ export class RubroFormModalComponent implements OnInit {
     return base + this.valorIva;
   }
 
-  setSriPickerOpen(open: boolean): void {
-    this.isSriPickerOpen = open;
-    if (open) {
-      this.isTipoPickerOpen = false;
-      this.isTarifaPickerOpen = false;
-    }
-    this.cdr.markForCheck();
-  }
-
   setTipoPickerOpen(open: boolean): void {
     this.isTipoPickerOpen = open;
     if (open) {
-      this.isSriPickerOpen = false;
       this.isTarifaPickerOpen = false;
     }
     this.cdr.markForCheck();
@@ -136,7 +102,6 @@ export class RubroFormModalComponent implements OnInit {
   setTarifaPickerOpen(open: boolean): void {
     this.isTarifaPickerOpen = open;
     if (open) {
-      this.isSriPickerOpen = false;
       this.isTipoPickerOpen = false;
     }
     this.cdr.markForCheck();
@@ -145,6 +110,20 @@ export class RubroFormModalComponent implements OnInit {
   selectTipoRubro(opt: { value: TipoRubro; label: string }): void {
     this.tipoRubro = opt.value;
     this.isTipoPickerOpen = false;
+
+    // Autoselección inteligente de IVA según la naturaleza del tipo de rubro:
+    // - BIEN y SERVICIO gravan IVA (15%)
+    // - FIJO, VARIABLE, MULTA son tarifa 0%
+    if (this.tarifasImpuesto.length > 0) {
+      const targetPct = (this.tipoRubro === 'BIEN' || this.tipoRubro === 'SERVICIO' || this.tipoRubro === 'OTRO') ? 15 : 0;
+      const matchingTarifa = this.tarifasImpuesto.find(
+        (t) => Number(t.porcentaje) === targetPct,
+      );
+      if (matchingTarifa) {
+        this.tarifaImpuestoId = matchingTarifa.id;
+      }
+    }
+
     this.cdr.markForCheck();
   }
 
@@ -152,33 +131,6 @@ export class RubroFormModalComponent implements OnInit {
     this.tarifaImpuestoId = t.id;
     this.isTarifaPickerOpen = false;
     this.cdr.markForCheck();
-  }
-
-  clearCodigoSri(): void {
-    this.codigoSri = '';
-    this.sriSearchQuery = '';
-    this.isSriPickerOpen = false;
-    this.cdr.markForCheck();
-  }
-
-  onCodigoSriSelected(codigo: string): void {
-    this.codigoSri = codigo;
-    const info = this.catalogoCodigosSri.find((c: ICodigoSriInfo) => c.codigo === codigo);
-    if (info) {
-      this.nombre = info.nombreSugerido;
-      this.descripcion = info.descripcionSugerida;
-      this.tipoRubro = info.tipoRubroSugerido;
-
-      // Autoseleccionar la tarifa de IVA sugerida (0% vs 15%)
-      if (this.tarifasImpuesto.length > 0) {
-        const matchingTarifa = this.tarifasImpuesto.find(
-          (t) => Number(t.porcentaje) === info.ivaSugeridoPct,
-        );
-        if (matchingTarifa) {
-          this.tarifaImpuestoId = matchingTarifa.id;
-        }
-      }
-    }
   }
 
   ngOnInit(): void {

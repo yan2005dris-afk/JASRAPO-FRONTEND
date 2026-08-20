@@ -50,77 +50,8 @@
       <div class="modal-body px-4 py-4">
         <form (ngSubmit)="submit()">
           <div class="row g-3">
-            <!-- 1. Concepto Estándar con Picker (Limpio y legible) -->
-            <div class="col-md-8">
-              <app-picker-input
-                inputId="rubroConceptoInput"
-                label="Concepto Estándar (Catálogo SRI)"
-                placeholder="Seleccionar o buscar concepto..."
-                icon="bi-bookmark-check"
-                [query]="sriSearchQuery || selectedConceptoLabel"
-                [disabled]="isLoading"
-                [isOpen]="isSriPickerOpen"
-                [hasValue]="!!codigoSri"
-                (queryChange)="sriSearchQuery = $event"
-                (openChange)="setSriPickerOpen($event)"
-              >
-                <div picker-items>
-                  @if (filteredCodigosSri.length === 0) {
-                    <div class="px-3 py-2 text-muted small text-center">
-                      No se encontraron conceptos para "{{ sriSearchQuery }}".
-                    </div>
-                  } @else {
-                    @for (c of filteredCodigosSri; track c.codigo) {
-                      <button
-                        type="button"
-                        class="dropdown-item px-3 py-2 text-start d-flex justify-content-between align-items-center"
-                        [class.active]="codigoSri === c.codigo"
-                        (click)="onCodigoSriSelected(c.codigo); isSriPickerOpen = false; sriSearchQuery = ''"
-                      >
-                        <div>
-                          <div class="small fw-semibold text-dark">{{ c.nombreSugerido }}</div>
-                          <div class="text-muted extra-small" style="font-size: 0.75rem">
-                            {{ c.descripcionSugerida }}
-                          </div>
-                        </div>
-                        <div class="d-flex align-items-center gap-1 ms-2">
-                          <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.72rem">
-                            Cód: {{ c.codigo }}
-                          </span>
-                          <span class="badge bg-light text-primary border" style="font-size: 0.72rem">
-                            IVA {{ c.ivaSugeridoPct }}%
-                          </span>
-                        </div>
-                      </button>
-                    }
-                  }
-                </div>
-              </app-picker-input>
-            </div>
-
-            <!-- 2. Código SRI (Autocompletado con concepto o editable libremente) -->
-            <div class="col-md-4">
-              <label for="rubroCodigoSriInput" class="form-label fw-semibold small text-dark">
-                Código SRI / SKU
-              </label>
-              <div class="input-group">
-                <span class="input-group-text bg-light text-muted">
-                  <i class="bi bi-upc-scan"></i>
-                </span>
-                <input
-                  id="rubroCodigoSriInput"
-                  type="text"
-                  class="form-control font-monospace fw-semibold text-dark"
-                  [(ngModel)]="codigoSri"
-                  name="codigoSri"
-                  [disabled]="isLoading"
-                  placeholder="Ej. SERV-01"
-                />
-              </div>
-            </div>
-
-            <!-- 3. Tipo de Rubro con Picker -->
-            <div class="col-md-6">
+            <!-- 1. Tipo de Rubro con Picker (Define la naturaleza del rubro) -->
+            <div class="col-md-7">
               <app-picker-input
                 inputId="rubroTipoInput"
                 label="Tipo de Rubro"
@@ -151,7 +82,31 @@
               </app-picker-input>
             </div>
 
-            <!-- 4. Nombre del Rubro -->
+            <!-- 2. Código SRI / SKU (Código único identificador) -->
+            <div class="col-md-5">
+              <label for="rubroCodigoSriInput" class="form-label fw-semibold small text-dark">
+                Código / SKU (Único)
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted">
+                  <i class="bi bi-upc-scan"></i>
+                </span>
+                <input
+                  id="rubroCodigoSriInput"
+                  type="text"
+                  class="form-control font-monospace fw-semibold text-dark"
+                  [(ngModel)]="codigoSri"
+                  name="codigoSri"
+                  [disabled]="isLoading"
+                  placeholder="Ej. SERV-01, MED-01"
+                />
+              </div>
+              <div class="form-text extra-small" style="font-size: 0.72rem">
+                Código para comprobante electrónico.
+              </div>
+            </div>
+
+            <!-- 3. Nombre del Rubro -->
             <div class="col-12">
               <label for="rubroNombreInput" class="form-label fw-semibold small text-dark">
                 Nombre del Rubro <span class="text-danger">*</span>
@@ -160,7 +115,7 @@
                 id="rubroNombreInput"
                 type="text"
                 class="form-control"
-                placeholder="Ej. Consumo Agua Potable"
+                placeholder="Ej. Servicio de Reconexión, Medidor 1/2 pulgada"
                 [(ngModel)]="nombre"
                 name="nombre"
                 required
@@ -168,16 +123,16 @@
               />
             </div>
 
-            <!-- 5. Descripción -->
+            <!-- 4. Descripción -->
             <div class="col-12">
               <label for="rubroDescripcionTextarea" class="form-label fw-semibold small text-dark">
-                Descripción <span class="text-danger">*</span>
+                Descripción para Factura <span class="text-danger">*</span>
               </label>
               <textarea
                 id="rubroDescripcionTextarea"
                 class="form-control"
                 rows="2"
-                placeholder="Descripción detallada para la factura o comprobante..."
+                placeholder="Descripción detallada que aparecerá en el comprobante..."
                 [(ngModel)]="descripcion"
                 name="descripcion"
                 required
@@ -185,7 +140,7 @@
               ></textarea>
             </div>
 
-            <!-- 6. Tarifa Impuesto IVA con Picker -->
+            <!-- 5. Tarifa Impuesto IVA con Picker -->
             <div class="col-md-6">
               <app-picker-input
                 inputId="rubroTarifaIvaInput"
