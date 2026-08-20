@@ -53,7 +53,7 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
   private searchSubscription?: Subscription;
   /** Clave de idempotencia de la operación: se genera una vez por apertura del modal
    *  y se reutiliza en reintentos para que el backend deduplique reenvíos. */
-  private idempotencyKey: string = '';
+  private idempotencyKey = '';
 
   readonly modalContainer = viewChild<ElementRef<HTMLElement>>('modalContainer');
   readonly firstInput = viewChild<ElementRef<HTMLInputElement>>('firstInput');
@@ -214,8 +214,7 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
 
   missingDetalleMotivo(): boolean {
     return (
-      this.form.controls.motivo.value === 'OTRO' &&
-      !this.form.controls.detalleMotivo.value?.trim()
+      this.form.controls.motivo.value === 'OTRO' && !this.form.controls.detalleMotivo.value?.trim()
     );
   }
 

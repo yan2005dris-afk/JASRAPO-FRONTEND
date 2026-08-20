@@ -221,8 +221,8 @@
                     @if (stepAttempted(1) && readingBelowBase()) {
                       <div class="text-danger x-small mt-1">
                         <i class="bi bi-exclamation-circle me-1"></i>
-                        La lectura final no puede ser menor a la lectura base
-                        ({{ baseReading() }} m³).
+                        La lectura final no puede ser menor a la lectura base ({{ baseReading() }}
+                        m³).
                       </div>
                     }
                     <div class="form-text extra-small text-muted">
@@ -431,9 +431,7 @@
                         min="0"
                         step="0.01"
                         placeholder="0"
-                        [class.is-invalid]="
-                          stepAttempted(2) && negativeInitialReading()
-                        "
+                        [class.is-invalid]="stepAttempted(2) && negativeInitialReading()"
                       />
                       <span class="input-group-text bg-white text-muted">m³</span>
                     </div>
@@ -513,20 +511,20 @@
                         Ventana de Cálculo
                       </label>
                       <select
-                      id="ventanaPromedio"
-                      class="form-select form-select-sm shadow-none"
-                      [class.is-invalid]="stepAttempted(3) && missingVentana()"
-                      formControlName="ventanaPromedio"
-                    >
-                      <option [value]="3">Promedio de últimos 3 meses</option>
-                      <option [value]="6">Promedio de últimos 6 meses</option>
-                    </select>
-                    @if (stepAttempted(3) && missingVentana()) {
-                      <div class="text-danger x-small mt-1">
-                        <i class="bi bi-exclamation-circle me-1"></i>
-                        Seleccione la ventana de cálculo del promedio.
-                      </div>
-                    }
+                        id="ventanaPromedio"
+                        class="form-select form-select-sm shadow-none"
+                        [class.is-invalid]="stepAttempted(3) && missingVentana()"
+                        formControlName="ventanaPromedio"
+                      >
+                        <option [value]="3">Promedio de últimos 3 meses</option>
+                        <option [value]="6">Promedio de últimos 6 meses</option>
+                      </select>
+                      @if (stepAttempted(3) && missingVentana()) {
+                        <div class="text-danger x-small mt-1">
+                          <i class="bi bi-exclamation-circle me-1"></i>
+                          Seleccione la ventana de cálculo del promedio.
+                        </div>
+                      }
                     </div>
                   }
 
@@ -674,11 +672,7 @@
             <div class="d-flex flex-column gap-3">
               <!-- Resumen Completo de la Transacción -->
               <div class="card border border-primary-subtle bg-white rounded-3 p-3">
-                <h6
-                  #stepHeading
-                  tabindex="-1"
-                  class="fw-semibold text-dark mb-2 small"
-                >
+                <h6 #stepHeading tabindex="-1" class="fw-semibold text-dark mb-2 small">
                   <i class="bi bi-clipboard-check text-success me-1"></i>
                   Resumen de la Transacción
                 </h6>
@@ -733,9 +727,7 @@
                   <div class="col-6 ps-3">
                     <span class="text-success fw-semibold d-block">Instalación:</span>
                     <div>Serie: {{ selectedNewMeter()?.serie }}</div>
-                    <div>
-                      Lectura Inicial: {{ form.controls.lecturaInicialEntrante.value }} m³
-                    </div>
+                    <div>Lectura Inicial: {{ form.controls.lecturaInicialEntrante.value }} m³</div>
                     <div>
                       Tratamiento:
                       <span class="badge text-bg-light border">{{
@@ -764,7 +756,9 @@
                 >
                   <i class="bi bi-exclamation-triangle-fill me-2 mt-1 fs-6"></i>
                   <div>
-                    <div class="small fw-semibold">Revise los siguientes campos antes de confirmar:</div>
+                    <div class="small fw-semibold">
+                      Revise los siguientes campos antes de confirmar:
+                    </div>
                     <ul class="mb-0 mt-1 ps-3 small">
                       @for (err of getStepErrors(); track $index) {
                         <li class="d-flex align-items-start gap-2">
