@@ -225,7 +225,9 @@
                       <strong>{{ company.certificadoSujeto || 'Certificado Vigente' }}</strong>
                       @if (company.certificadoValidoHasta) {
                         · Vence:
-                        <strong>{{ company.certificadoValidoHasta | date: 'mediumDate' }}</strong>
+                        <strong>{{
+                          company.certificadoValidoHasta | localDate: 'dd/MM/yyyy'
+                        }}</strong>
                       }
                     </p>
                   } @else {
