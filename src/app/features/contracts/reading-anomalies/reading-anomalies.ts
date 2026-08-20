@@ -24,6 +24,7 @@ import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/
 import { AnomalyFormModalComponent } from './components/anomaly-form-modal/anomaly-form-modal.component';
 import { AnomalyResolveModalComponent } from './components/anomaly-resolve-modal/anomaly-resolve-modal.component';
 import type { IContract } from '../service-contracts/interfaces/icontract.interface';
+import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
 
 @Component({
   selector: 'app-reading-anomalies',
@@ -38,6 +39,7 @@ import type { IContract } from '../service-contracts/interfaces/icontract.interf
     ContractPickerComponent,
     AnomalyFormModalComponent,
     AnomalyResolveModalComponent,
+    LocalDatePipe,
   ],
   templateUrl: './reading-anomalies.html',
   styleUrl: './reading-anomalies.scss',

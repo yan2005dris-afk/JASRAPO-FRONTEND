@@ -241,7 +241,7 @@
                     {{ item.razonSocialComprador || 'CONSUMIDOR FINAL' }}
                   </td>
                   <td class="font-monospace text-muted">{{ item.identificacionComprador }}</td>
-                  <td>{{ item.fechaEmision | date: 'dd/MM/yyyy' }}</td>
+                  <td>{{ item.fechaEmision | localDate: 'dd/MM/yyyy' }}</td>
                   <td class="text-center">
                     <span class="badge rounded-pill" [ngClass]="getEstadoBadgeClass(item.estado)">
                       {{ item.estado }}

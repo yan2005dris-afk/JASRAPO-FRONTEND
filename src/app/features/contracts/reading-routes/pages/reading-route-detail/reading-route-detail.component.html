@@ -14,36 +14,36 @@
     </div>
 
     <!-- Status Action Controls -->
-    @if (readingRoute) {
+    @if (readingRoute(); as route) {
       <div class="d-flex align-items-center gap-2">
-        @if (readingRoute.estado === 'PENDIENTE') {
+        @if (route.estado === 'PENDIENTE') {
           <button
             type="button"
             class="btn btn-sm btn-success d-flex align-items-center gap-1 shadow-sm"
             (click)="updateRouteStatus('EN_PROGRESO')"
-            [disabled]="isChangingStatus"
+            [disabled]="isChangingStatus()"
           >
             <i class="bi bi-play-circle-fill"></i>
             Iniciar Ruta (Enviar a Campo)
           </button>
         }
-        @if (readingRoute.estado === 'EN_PROGRESO') {
+        @if (route.estado === 'EN_PROGRESO') {
           <button
             type="button"
             class="btn btn-sm btn-primary d-flex align-items-center gap-1 shadow-sm"
             (click)="updateRouteStatus('COMPLETADA')"
-            [disabled]="isChangingStatus"
+            [disabled]="isChangingStatus()"
           >
             <i class="bi bi-check-circle-fill"></i>
             Marcar como Completada
           </button>
         }
-        @if (readingRoute.estado !== 'CANCELADA' && readingRoute.estado !== 'COMPLETADA') {
+        @if (route.estado !== 'CANCELADA' && route.estado !== 'COMPLETADA') {
           <button
             type="button"
             class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1"
             (click)="updateRouteStatus('CANCELADA')"
-            [disabled]="isChangingStatus"
+            [disabled]="isChangingStatus()"
           >
             <i class="bi bi-x-circle"></i>
             Cancelar Ruta
@@ -53,12 +53,12 @@
     }
   </div>
 
-  @if (isLoadingRoute) {
+  @if (isLoadingRoute()) {
     <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4">
       <div class="spinner-border text-primary mx-auto mb-3" role="status"></div>
       <p class="text-muted small mb-0">Cargando detalles de la ruta de trabajo...</p>
     </div>
-  } @else if (readingRoute) {
+  } @else if (readingRoute(); as route) {
     <!-- Main Info Header Card -->
     <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
       <div class="card-header bg-white border-bottom p-4">
@@ -71,21 +71,21 @@
             </div>
             <div>
               <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
-                <h4 class="fw-bold mb-0 text-dark">{{ readingRoute.nombre }}</h4>
+                <h4 class="fw-bold mb-0 text-dark">{{ route.nombre }}</h4>
                 <span class="badge badge-soft-primary px-3 py-1">
-                  {{ getTipoLabel(readingRoute.tipoRuta) }}
+                  {{ getTipoLabel(route.tipoRuta) }}
                 </span>
-                <app-status-badge [status]="readingRoute.estado" />
+                <app-status-badge [status]="route.estado" />
               </div>
               <p class="text-muted small mb-0">
-                {{ readingRoute.descripcion || 'Sin instrucciones adicionales para el operador' }}
+                {{ route.descripcion || 'Sin instrucciones adicionales para el operador' }}
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Quick Metrics Grid -->
+      <!-- KPI Cards Grid -->
       <div class="card-body bg-light p-4 border-bottom">
         <div class="row g-3">
           <div class="col-12 col-sm-6 col-md-3">
@@ -95,12 +95,10 @@
                 Comunidad / Sector
               </div>
               <div class="fw-semibold text-dark">
-                {{ getComunidadNombre(readingRoute.comunidadId) }}
+                {{ getComunidadNombre(route.comunidadId) }}
               </div>
               <div class="text-muted" style="font-size: 0.75rem">
-                {{
-                  readingRoute.sectorId ? 'Sector #' + readingRoute.sectorId : 'Toda la comunidad'
-                }}
+                {{ route.sectorId ? 'Sector #' + route.sectorId : 'Toda la comunidad' }}
               </div>
             </div>
           </div>
@@ -112,10 +110,10 @@
                 Operario Asignado
               </div>
               <div class="fw-semibold text-dark">
-                {{ getOperarioNombre(readingRoute.operarioId) }}
+                {{ getOperarioNombre(route.operarioId) }}
               </div>
               <div class="text-muted" style="font-size: 0.75rem">
-                {{ 'Operario ID: ' + (readingRoute.operarioId || '—') }}
+                {{ 'Operario ID: ' + (route.operarioId || '—') }}
               </div>
             </div>
           </div>
@@ -127,153 +125,418 @@
                 Planificación
               </div>
               <div class="fw-semibold text-dark">
-                {{ readingRoute.fechaPlanificada | date: 'dd/MM/yyyy' }}
+                {{ route.fechaPlanificada | localDate: 'dd/MM/yyyy' }}
               </div>
               <div class="text-muted" style="font-size: 0.75rem">
-                Período: {{ getPeriodoNombre(readingRoute.periodoId) }}
+                Período: {{ getPeriodoNombre(route.periodoId) }}
               </div>
             </div>
           </div>
 
+          <!-- KPI: Progreso -->
           <div class="col-12 col-sm-6 col-md-3">
             <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
               <div class="text-muted small d-flex align-items-center gap-1 mb-1">
                 <i class="bi bi-speedometer2 text-success"></i>
-                Progreso de Lecturas
+                {{ isLecturaRoute() ? 'Progreso de Lecturas' : 'Progreso de Órdenes' }}
               </div>
               <div class="fw-semibold text-dark">
-                {{ approvedCount }} / {{ totalReadings }} Aprobadas
+                {{ kpiCompletadas }} / {{ kpiTotal }}
+                {{ isLecturaRoute() ? 'Aprobadas' : 'Completadas' }}
               </div>
               <div class="progress mt-2" style="height: 6px">
                 <div
                   class="progress-bar bg-success"
                   role="progressbar"
-                  [style.width.%]="totalReadings > 0 ? (approvedCount / totalReadings) * 100 : 0"
+                  [style.width.%]="kpiProgresoPorcentaje"
                 ></div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Readings Table Card (Full Width) -->
-    <div class="card border-0 shadow-sm rounded-4 mb-4">
-      <!-- Toolbar -->
-      <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
-        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-          <div>
-            <h5 class="fw-bold text-dark mb-0">Lecturas y Medidores de la Ruta</h5>
-            <p class="text-muted small mb-0">
-              Listado completo de medidores para la toma de lectura en el mes planificado.
-            </p>
-          </div>
-
-          <div class="d-flex align-items-center gap-2 flex-wrap">
-            <!-- Search Input -->
-            <div class="input-group search-group" style="min-width: 260px">
-              <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
-                <i class="bi bi-search"></i>
-              </span>
-              <input
-                type="text"
-                class="form-control border-start-0 ps-0 shadow-none"
-                placeholder="Buscar guía o cliente..."
-                [(ngModel)]="searchQuery"
-                (keyup.enter)="onSearch()"
-              />
-              @if (searchQuery) {
-                <button
-                  class="btn btn-link text-muted pe-3 ps-1"
-                  type="button"
-                  (click)="clearSearch()"
-                >
-                  <i class="bi bi-x-circle-fill"></i>
-                </button>
-              }
+        <!-- KPI Row: Total / Pendientes / Con Novedad -->
+        <div class="row g-3 mt-1">
+          <div class="col-4">
+            <div class="bg-white p-3 rounded-3 border shadow-sm text-center">
+              <div class="text-muted small mb-1">
+                {{ isLecturaRoute() ? 'Total Lecturas' : 'Total Órdenes' }}
+              </div>
+              <div class="fw-bold fs-5 text-dark">{{ kpiTotal }}</div>
             </div>
-
-            <!-- Bulk Approve Button -->
-            @if (pendingReviewCount > 0) {
-              <button
-                type="button"
-                class="btn btn-outline-success d-flex align-items-center gap-1 shadow-sm px-3"
-                (click)="approveAllPending()"
-                [disabled]="isBulkApproving"
-              >
-                @if (isBulkApproving) {
-                  <span
-                    class="spinner-border spinner-border-sm"
-                    role="status"
-                    aria-hidden="true"
-                  ></span>
-                } @else {
-                  <i class="bi bi-check-all fs-5"></i>
-                }
-                Aprobar Todas ({{ pendingReviewCount }})
-              </button>
-            }
+          </div>
+          <div class="col-4">
+            <div class="bg-white p-3 rounded-3 border shadow-sm text-center">
+              <div class="text-muted small mb-1">
+                {{ isLecturaRoute() ? 'Pendientes de Toma' : 'Pendientes' }}
+              </div>
+              <div class="fw-bold fs-5 text-warning">{{ kpiPendientes }}</div>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="bg-white p-3 rounded-3 border shadow-sm text-center">
+              <div class="text-muted small mb-1">
+                {{ isLecturaRoute() ? 'Con Anomalía' : 'Con Novedad' }}
+              </div>
+              <div class="fw-bold fs-5 text-danger">{{ kpiConNovedad }}</div>
+            </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Table Body -->
-      <div class="pt-1">
-        @if (isLoadingReadings) {
-          <div class="p-3">
-            <app-table-skeleton [rows]="5" [cols]="9" />
+    <!-- Bifurcación: TOMA_LECTURA usa tabla de lecturas, el resto tabla de órdenes -->
+    @if (isLecturaRoute(); as isLectura) {
+      <!-- Tabla de Lecturas (TOMA_LECTURA) -->
+      <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
+          <div>
+            <h5 class="fw-bold text-dark mb-0">Lecturas de la Ruta</h5>
+            <p class="text-muted small mb-0">
+              Registro de lecturas tomadas en campo para esta ruta.
+            </p>
           </div>
-        } @else if (readings.length === 0) {
-          <app-empty-state
-            icon="bi bi-speedometer2"
-            title="No se encontraron lecturas"
-            description="No hay lecturas generadas para esta comunidad y período con los filtros aplicados."
-          />
-        } @else {
-          <app-readings-table
-            [readings]="tableReadings"
-            [showSector]="!readingRoute.sectorId"
-            [showActions]="true"
-            [allowValidation]="true"
-            [allowReReading]="true"
-            [openDropdownId]="openDropdownId"
-            (viewDetail)="openDetailModal($event)"
-            (editReading)="openAnomalyModal($event)"
-            (approveReading)="changeReadingStatus($any($event), 'APROBADA')"
-            (reportAnomaly)="openAnomalyModal($event)"
-            (requestReReading)="requestReReading($any($event))"
-            (toggleDropdown)="toggleDropdown($event.id, $event.event)"
-          />
-
-          <!-- Shared Pagination Component -->
-          <div class="px-4 py-3 border-top bg-white">
-            <app-pagination
-              [currentPage]="currentPage"
-              [pageSize]="pageSize"
-              [totalItems]="totalReadings"
-              [pageSizeOptions]="[5, 10, 15, 20]"
-              itemNameSingular="lectura"
-              itemNamePlural="lecturas"
-              (pageChange)="onPageChange($event)"
-              (pageSizeChange)="onPageSizeChange($event)"
+        </div>
+        <div class="pt-1">
+          @if (isLoadingReadings()) {
+            <div class="p-3">
+              <app-table-skeleton [rows]="5" [cols]="8" />
+            </div>
+          } @else if (readings().length === 0) {
+            <app-empty-state
+              icon="bi bi-clipboard2-x"
+              title="Sin lecturas registradas"
+              description="No hay lecturas asignadas a esta ruta de tipo TOMA_LECTURA."
             />
+          } @else {
+            <app-readings-table
+              [readings]="readings()"
+              [showSector]="false"
+              [showActions]="true"
+              [allowValidation]="true"
+              [allowReReading]="true"
+              [openDropdownId]="openDropdownId()"
+              (toggleDropdown)="onToggleReadingDropdown($event)"
+              (viewDetail)="onViewLecturaDetail($event)"
+              (editReading)="onEditLectura($event)"
+              (approveReading)="onApproveLectura($event)"
+              (reportAnomaly)="onReportAnomalyLectura($event)"
+              (requestReReading)="onRequestReLectura($event)"
+            />
+            <div class="px-4 py-3 border-top bg-white">
+              <app-pagination
+                [currentPage]="currentReadingPage()"
+                [pageSize]="pageSizeReadings()"
+                [totalItems]="totalReadings()"
+                [pageSizeOptions]="[5, 10, 15, 20]"
+                itemNameSingular="lectura"
+                itemNamePlural="lecturas"
+                (pageChange)="onReadingPageChange($event)"
+                (pageSizeChange)="onReadingPageSizeChange($event)"
+              />
+            </div>
+          }
+        </div>
+      </div>
+    } @else {
+      <!-- Tabla de Órdenes de Trabajo (INSTALACION / RECONEXION / INSPECCION) -->
+      <div class="card border-0 shadow-sm rounded-4 mb-4">
+        <!-- Toolbar -->
+        <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+            <div>
+              <h5 class="fw-bold text-dark mb-0">Órdenes de Trabajo</h5>
+              <p class="text-muted small mb-0">
+                Listado de actividades asignadas a esta ruta de trabajo.
+              </p>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="d-flex align-items-center gap-1 flex-wrap">
+              <button
+                type="button"
+                class="btn btn-sm"
+                [class.btn-primary]="selectedFilter() === 'TODAS'"
+                [class.btn-outline-secondary]="selectedFilter() !== 'TODAS'"
+                (click)="onFilterChange('TODAS')"
+              >
+                Todas
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm"
+                [class.btn-primary]="selectedFilter() === 'PENDIENTES'"
+                [class.btn-outline-secondary]="selectedFilter() !== 'PENDIENTES'"
+                (click)="onFilterChange('PENDIENTES')"
+              >
+                Pendientes
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm"
+                [class.btn-primary]="selectedFilter() === 'COMPLETADAS'"
+                [class.btn-outline-secondary]="selectedFilter() !== 'COMPLETADAS'"
+                (click)="onFilterChange('COMPLETADAS')"
+              >
+                Completadas
+              </button>
+              <button
+                type="button"
+                class="btn btn-sm"
+                [class.btn-primary]="selectedFilter() === 'NOVEDAD'"
+                [class.btn-outline-secondary]="selectedFilter() !== 'NOVEDAD'"
+                (click)="onFilterChange('NOVEDAD')"
+              >
+                Con Novedad
+              </button>
+            </div>
           </div>
-        }
+        </div>
+
+        <!-- Table Body -->
+        <div class="pt-1">
+          @if (isLoadingOrdenes()) {
+            <div class="p-3">
+              <app-table-skeleton [rows]="5" [cols]="8" />
+            </div>
+          } @else if (ordenes().length === 0) {
+            <app-empty-state
+              icon="bi bi-clipboard2-x"
+              title="No se encontraron órdenes"
+              description="No hay órdenes de trabajo para esta ruta con los filtros aplicados."
+            />
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover align-middle custom-route-table mb-0">
+                <thead>
+                  <tr>
+                    <th class="text-uppercase" style="font-size: 0.75rem">#</th>
+                    <th class="text-uppercase" style="font-size: 0.75rem">Contrato</th>
+                    <th class="text-uppercase" style="font-size: 0.75rem">Cliente</th>
+                    <th class="text-uppercase" style="font-size: 0.75rem">Dirección</th>
+                    <th class="text-uppercase" style="font-size: 0.75rem">Medidor</th>
+                    <th class="text-uppercase" style="font-size: 0.75rem">Tipo</th>
+                    <th class="text-uppercase" style="font-size: 0.75rem">Estado</th>
+                    <th class="text-uppercase" style="font-size: 0.75rem">Completado</th>
+                    <th class="text-uppercase text-center" style="font-size: 0.75rem">Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (orden of ordenes(); track orden.ordenTrabajoId) {
+                    <tr>
+                      <td class="ps-4 text-muted fw-medium">{{ orden.ordenVisita }}</td>
+                      <td>
+                        <span class="badge bg-light text-dark border font-monospace">
+                          {{ orden.contrato.numeroContrato }}
+                        </span>
+                      </td>
+                      <td class="fw-medium text-dark">{{ orden.contrato.clienteNombre }}</td>
+                      <td class="text-secondary small">{{ orden.contrato.direccion }}</td>
+                      <td>
+                        @if (orden.medidor?.numeroSerie) {
+                          <span class="badge badge-soft-secondary font-monospace">
+                            {{ orden.medidor?.numeroSerie }}
+                          </span>
+                        } @else {
+                          <span class="text-muted small">—</span>
+                        }
+                      </td>
+                      <td>
+                        <span class="badge {{ getOrdenTipoCssClass(orden.tipoActividad) }}">
+                          {{ getTipoActividadLabel(orden.tipoActividad) }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="badge {{ getOrdenEstadoCssClass(orden.estado) }}">
+                          {{ orden.estado }}
+                        </span>
+                      </td>
+                      <td class="small text-muted">
+                        {{ formatCompletadoEn(orden.completadoEn) }}
+                      </td>
+                      <td class="text-center">
+                        @if (processingOrdenId() === orden.ordenTrabajoId) {
+                          <span
+                            class="spinner-border spinner-border-sm text-primary"
+                            role="status"
+                          ></span>
+                        } @else if (orden.estado === 'PENDIENTE') {
+                          <button
+                            class="btn btn-sm btn-outline-success rounded-pill px-2 py-1"
+                            title="Iniciar orden"
+                            (click)="iniciarOrden(orden)"
+                          >
+                            <i class="bi bi-play-fill"></i>
+                            <span class="ms-1">Iniciar</span>
+                          </button>
+                        } @else if (orden.estado === 'EN_PROGRESO') {
+                          <div class="d-flex gap-1 justify-content-center">
+                            <button
+                              class="btn btn-sm btn-success rounded-pill px-2 py-1"
+                              title="Marcar como completada"
+                              (click)="marcarCompletada(orden)"
+                            >
+                              <i class="bi bi-check-lg"></i>
+                              <span class="ms-1">Completar</span>
+                            </button>
+                            <button
+                              class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1"
+                              title="Reportar novedad"
+                              (click)="reportarNovedad(orden)"
+                            >
+                              <i class="bi bi-exclamation-triangle"></i>
+                              <span class="ms-1">Novedad</span>
+                            </button>
+                          </div>
+                        } @else if (orden.estado === 'COMPLETADA') {
+                          <button
+                            class="btn btn-sm btn-link text-decoration-none p-0"
+                            title="Ver resultado"
+                            (click)="verResultado(orden)"
+                          >
+                            <i class="bi bi-eye"></i>
+                            <span class="ms-1">Ver resultado</span>
+                          </button>
+                        } @else if (orden.estado === 'FALLIDA') {
+                          <button
+                            class="btn btn-sm btn-link text-decoration-none p-0"
+                            title="Ver observación"
+                            (click)="verResultado(orden)"
+                          >
+                            <i class="bi bi-eye"></i>
+                            <span class="ms-1">Ver novedad</span>
+                          </button>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="px-4 py-3 border-top bg-white">
+              <app-pagination
+                [currentPage]="currentPage()"
+                [pageSize]="pageSize()"
+                [totalItems]="totalOrdenes()"
+                [pageSizeOptions]="[5, 10, 15, 20]"
+                itemNameSingular="orden"
+                itemNamePlural="órdenes"
+                (pageChange)="onPageChange($event)"
+                (pageSizeChange)="onPageSizeChange($event)"
+              />
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Result Observation Inline Display -->
+      @if (selectedOrdenForResult(); as ordenResult) {
+        <div
+          class="alert alert-secondary d-flex align-items-center justify-content-between gap-3 mb-4"
+          role="alert"
+        >
+          <div>
+            <strong class="text-dark">Observación — Orden #{{ ordenResult.ordenVisita }}:</strong>
+            <span class="text-muted ms-2">
+              {{ ordenResult.resultadoObservacion || 'Sin observaciones registradas.' }}
+            </span>
+          </div>
+          <button class="btn btn-sm btn-outline-secondary rounded-pill" (click)="closeResultado()">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </div>
+      }
+    }
+  }
+
+  <!-- MODALS -->
+
+  <!-- Modal Detalle de Lectura -->
+  @if (selectedReadingForDetail(); as detail) {
+    <app-reading-detail-modal
+      [reading]="detail"
+      (editRequested)="onEditLecturaFromDetail($event)"
+      (closed)="onCloseReadingDetail()"
+    />
+  }
+
+  <!-- Modal Registrar / Editar Lectura -->
+  @if (isFormModalOpen()) {
+    <app-reading-form-modal
+      [reading]="selectedReadingForEdit()"
+      (saved)="onReadingSaved()"
+      (closed)="closeFormModal()"
+    />
+  }
+
+  <!-- Modal Reportar Novedad para Orden de Trabajo -->
+  @if (selectedOrdenForNovedad(); as ordenNovedad) {
+    <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+          <div class="modal-header border-bottom px-4 py-3 bg-white">
+            <div class="d-flex align-items-center gap-2">
+              <div
+                class="rounded-3 bg-danger bg-opacity-10 text-danger p-2 d-flex align-items-center justify-content-center"
+              >
+                <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+              </div>
+              <h5 class="modal-title fw-bold text-dark mb-0 fs-5">
+                Reportar Novedad — Orden #{{ ordenNovedad.ordenVisita }}
+              </h5>
+            </div>
+            <button
+              type="button"
+              class="btn-close shadow-none"
+              aria-label="Cerrar"
+              (click)="closeNovedadModal()"
+            ></button>
+          </div>
+          <div class="modal-body p-4 bg-white">
+            <p class="text-muted small mb-3">
+              Ingresá el motivo o detalle de la novedad para el contrato
+              <strong>{{ ordenNovedad.contrato.numeroContrato }}</strong> ({{
+                ordenNovedad.contrato.clienteNombre
+              }}).
+            </p>
+            <div class="mb-3">
+              <label for="novedadText" class="form-label fw-semibold small text-dark">
+                Observación / Motivo <span class="text-danger">*</span>
+              </label>
+              <textarea
+                id="novedadText"
+                class="form-control"
+                rows="4"
+                placeholder="Describí la novedad encontrada en campo..."
+                [(ngModel)]="novedadObservacionText"
+              ></textarea>
+            </div>
+          </div>
+          <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-end gap-2">
+            <button type="button" class="btn btn-outline-secondary" (click)="closeNovedadModal()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn btn-danger d-flex align-items-center gap-1"
+              [disabled]="
+                !novedadObservacionText.trim() ||
+                processingOrdenId() === ordenNovedad.ordenTrabajoId
+              "
+              (click)="confirmarReportarNovedad()"
+            >
+              @if (processingOrdenId() === ordenNovedad.ordenTrabajoId) {
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+              }
+              <i class="bi bi-exclamation-triangle"></i>
+              Reportar Novedad
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-  }
-
-  <!-- Reading Detail Modal (Reutilizado) -->
-  @if (selectedReadingForDetail) {
-    <app-reading-detail-modal [reading]="selectedReadingForDetail" (closed)="closeDetailModal()" />
-  }
-
-  <!-- Anomaly Form Modal -->
-  @if (isAnomalyModalOpen) {
-    <app-anomaly-form-modal
-      [initialLecturaId]="selectedLecturaIdForAnomaly"
-      (saved)="onAnomalySaved()"
-      (closed)="closeAnomalyModal()"
-    />
+    <div class="modal-backdrop fade show"></div>
   }
 </div>

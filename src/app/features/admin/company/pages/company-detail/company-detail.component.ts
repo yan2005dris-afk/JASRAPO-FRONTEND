@@ -17,11 +17,12 @@ import {
   ICreatePuntoEmisionDto,
 } from '../../interfaces/icompany.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
 
 @Component({
   selector: 'app-company-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, LocalDatePipe],
   templateUrl: './company-detail.component.html',
   styleUrl: './company-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

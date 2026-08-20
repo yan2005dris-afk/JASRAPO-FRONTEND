@@ -134,7 +134,7 @@
                 </span>
               </div>
               <p class="text-muted small mb-0">
-                Apertura: <strong>{{ session.fechaApertura | date: 'medium' }}</strong> ·
+                Apertura: <strong>{{ session.fechaApertura | localDate: 'dd/MM/yyyy' }}</strong> ·
                 Responsable: <strong>{{ session.creadoPor }}</strong>
               </p>
             </div>

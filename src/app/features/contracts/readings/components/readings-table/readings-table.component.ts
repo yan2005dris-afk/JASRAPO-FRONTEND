@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
+import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
 
 export interface IReadingRowItem {
   lecturaId: string | number;
@@ -21,7 +22,7 @@ export interface IReadingRowItem {
 @Component({
   selector: 'app-readings-table',
   standalone: true,
-  imports: [CommonModule, StatusBadgeComponent],
+  imports: [CommonModule, StatusBadgeComponent, LocalDatePipe],
   templateUrl: './readings-table.component.html',
   styleUrl: './readings-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -140,7 +140,7 @@
               >
                 @for (r of contractReadings; track r.lecturaId) {
                   <option [value]="r.lecturaId">
-                    {{ r.fecha | date: 'dd/MM/yyyy' }} · {{ r.consumoCalculado }} m³ [{{
+                    {{ r.fecha | localDate: 'dd/MM/yyyy' }} · {{ r.consumoCalculado }} m³ [{{
                       r.estado
                     }}]
                   </option>
