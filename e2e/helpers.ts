@@ -34,9 +34,7 @@ export async function login(page: Page, email = ADMIN_USER.email, password = ADM
 /** Wait for the app shell after login: URL under /app and sidebar visible. */
 export async function expectAuthenticated(page: Page) {
   await expect(page).toHaveURL(/\/app(\/|$)/, { timeout: 15000 });
-  await expect(
-    page.locator('.sidebar-nav, app-sidebar, nav.navbar').first(),
-  ).toBeVisible({
+  await expect(page.locator('.sidebar-nav, app-sidebar, nav.navbar').first()).toBeVisible({
     timeout: 10000,
   });
 }

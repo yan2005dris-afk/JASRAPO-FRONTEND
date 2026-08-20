@@ -147,21 +147,27 @@
 
                   @if (currentHistorial()?.ultimaLecturaAprobada; as ul) {
                     <div class="col-12">
-                      <div class="p-2 rounded-2 bg-white border border-secondary-subtle d-flex align-items-center justify-content-between">
+                      <div
+                        class="p-2 rounded-2 bg-white border border-secondary-subtle d-flex align-items-center justify-content-between"
+                      >
                         <div class="d-flex align-items-center gap-2">
                           <i class="bi bi-clock-history text-muted"></i>
                           <span class="extra-small text-muted">Último ciclo registrado:</span>
                         </div>
                         <div class="d-flex align-items-center gap-3">
                           <span class="extra-small">
-                            Lectura Anterior: <strong class="text-secondary">{{ ul.lecturaAnterior ?? 0 }} m³</strong>
+                            Lectura Anterior:
+                            <strong class="text-secondary">{{ ul.lecturaAnterior ?? 0 }} m³</strong>
                           </span>
                           <span class="text-muted extra-small">→</span>
                           <span class="extra-small">
-                            Lectura Actual: <strong class="text-success">{{ ul.lecturaActual }} m³</strong>
+                            Lectura Actual:
+                            <strong class="text-success">{{ ul.lecturaActual }} m³</strong>
                           </span>
                           @if (ul.fecha) {
-                            <span class="badge bg-light text-dark border extra-small">{{ ul.fecha }}</span>
+                            <span class="badge bg-light text-dark border extra-small">{{
+                              ul.fecha
+                            }}</span>
                           }
                         </div>
                       </div>
@@ -216,7 +222,10 @@
                 </h6>
 
                 <div class="row g-3">
-                  <div [class.col-md-6]="form.controls.motivo.value === 'DANO'" [class.col-md-12]="form.controls.motivo.value !== 'DANO'">
+                  <div
+                    [class.col-md-6]="form.controls.motivo.value === 'DANO'"
+                    [class.col-md-12]="form.controls.motivo.value !== 'DANO'"
+                  >
                     <label for="motivo" class="form-label fw-semibold extra-small text-dark mb-1">
                       Motivo del Reemplazo <span class="text-danger">*</span>
                     </label>
@@ -250,7 +259,9 @@
                         <option value="JUNTA">Junta / Operativa (Falla técnica o red)</option>
                         <option value="USUARIO">Usuario (Golpe, manipulación indebida)</option>
                         <option value="TERCERO">Tercero (Accidente o vandalismo)</option>
-                        <option value="NO_DETERMINADA">No determinada (Pendiente inspección)</option>
+                        <option value="NO_DETERMINADA">
+                          No determinada (Pendiente inspección)
+                        </option>
                       </select>
                     </div>
                   }
