@@ -35,7 +35,12 @@
           }
           <th scope="col" class="text-end">Precio Unitario</th>
           <th scope="col" class="text-center">Estado</th>
-          <th scope="col" [class.text-center]="selectionMode()" [class.text-end]="!selectionMode()" class="pe-3">
+          <th
+            scope="col"
+            [class.text-center]="selectionMode()"
+            [class.text-end]="!selectionMode()"
+            class="pe-3"
+          >
             {{ selectionMode() ? 'Seleccionar' : 'Acciones' }}
           </th>
         </tr>
@@ -83,11 +88,15 @@
             @if (!selectionMode()) {
               <td>
                 @if (rubro.esAutomatico) {
-                  <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-1">
+                  <span
+                    class="badge bg-info-subtle text-info-emphasis border border-info-subtle px-2 py-1"
+                  >
                     <i class="bi bi-gear-fill me-1"></i>Automático
                   </span>
                 } @else {
-                  <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle px-2 py-1">
+                  <span
+                    class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle px-2 py-1"
+                  >
                     <i class="bi bi-person me-1"></i>Manual
                   </span>
                 }
@@ -109,7 +118,13 @@
                 <div class="fw-bold text-dark">${{ rubro.precioUnitario | number: '1.2-2' }}</div>
                 @if (rubro.tarifaImpuesto && rubro.tarifaImpuesto.porcentaje > 0) {
                   <div class="text-muted extra-small" style="font-size: 0.73rem">
-                    Total c/IVA: <span class="text-primary fw-medium">${{ (rubro.precioUnitario * (1 + rubro.tarifaImpuesto.porcentaje / 100)) | number: '1.2-2' }}</span>
+                    Total c/IVA:
+                    <span class="text-primary fw-medium"
+                      >${{
+                        rubro.precioUnitario * (1 + rubro.tarifaImpuesto.porcentaje / 100)
+                          | number: '1.2-2'
+                      }}</span
+                    >
                   </div>
                 }
               }
@@ -117,7 +132,11 @@
             <td class="text-center">
               <app-status-badge [status]="rubro.activo ? 'ACTIVO' : 'INACTIVO'" />
             </td>
-            <td [class.text-center]="selectionMode()" [class.text-end]="!selectionMode()" class="pe-3">
+            <td
+              [class.text-center]="selectionMode()"
+              [class.text-end]="!selectionMode()"
+              class="pe-3"
+            >
               @if (selectionMode()) {
                 <button
                   type="button"
@@ -126,7 +145,11 @@
                   [class.btn-outline-primary]="selectedRubroId() !== rubro.rubroId"
                   (click)="select(rubro)"
                 >
-                  <i class="bi" [class.bi-check-lg]="selectedRubroId() === rubro.rubroId" [class.bi-plus-lg]="selectedRubroId() !== rubro.rubroId"></i>
+                  <i
+                    class="bi"
+                    [class.bi-check-lg]="selectedRubroId() === rubro.rubroId"
+                    [class.bi-plus-lg]="selectedRubroId() !== rubro.rubroId"
+                  ></i>
                   {{ selectedRubroId() === rubro.rubroId ? 'Seleccionado' : 'Elegir' }}
                 </button>
               } @else {
@@ -159,7 +182,9 @@
                         (click)="toggleStatus.emit(rubro)"
                       >
                         <i
-                          [class]="rubro.activo ? 'bi bi-pause-circle-fill' : 'bi bi-play-circle-fill'"
+                          [class]="
+                            rubro.activo ? 'bi bi-pause-circle-fill' : 'bi bi-play-circle-fill'
+                          "
                           style="font-size: 0.85rem"
                         ></i>
                         {{ rubro.activo ? 'Desactivar' : 'Activar' }}

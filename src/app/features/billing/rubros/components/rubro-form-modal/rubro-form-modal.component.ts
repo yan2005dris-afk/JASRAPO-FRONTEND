@@ -11,8 +11,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RubrosService } from '../../services/rubros.service';
 import {
-  CATALOGO_CODIGOS_SRI,
-  ICodigoSriInfo,
   ICreateRubroDto,
   IRubro,
   ITarifaImpuesto,
@@ -115,10 +113,11 @@ export class RubroFormModalComponent implements OnInit {
     // - BIEN y SERVICIO gravan IVA (15%)
     // - FIJO, VARIABLE, MULTA son tarifa 0%
     if (this.tarifasImpuesto.length > 0) {
-      const targetPct = (this.tipoRubro === 'BIEN' || this.tipoRubro === 'SERVICIO' || this.tipoRubro === 'OTRO') ? 15 : 0;
-      const matchingTarifa = this.tarifasImpuesto.find(
-        (t) => Number(t.porcentaje) === targetPct,
-      );
+      const targetPct =
+        this.tipoRubro === 'BIEN' || this.tipoRubro === 'SERVICIO' || this.tipoRubro === 'OTRO'
+          ? 15
+          : 0;
+      const matchingTarifa = this.tarifasImpuesto.find((t) => Number(t.porcentaje) === targetPct);
       if (matchingTarifa) {
         this.tarifaImpuestoId = matchingTarifa.id;
       }

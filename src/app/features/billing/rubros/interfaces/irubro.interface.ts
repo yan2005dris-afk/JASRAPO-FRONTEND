@@ -29,7 +29,8 @@ export const CATALOGO_CODIGOS_SRI: readonly ICodigoSriInfo[] = [
   {
     codigo: 'SERV-INST-01',
     nombreSugerido: 'Instalación y Acometida Tipo 1 (Básica)',
-    descripcionSugerida: 'Mano de obra y servicio técnico de instalación de acometida corta (hasta 10m)',
+    descripcionSugerida:
+      'Mano de obra y servicio técnico de instalación de acometida corta (hasta 10m)',
     tipoRubroSugerido: 'SERVICIO',
     ivaSugeridoPct: 15,
     label: 'SERV-INST-01 - Instalación Acometida Básica (Servicio - IVA 15%)',
@@ -37,7 +38,8 @@ export const CATALOGO_CODIGOS_SRI: readonly ICodigoSriInfo[] = [
   {
     codigo: 'SERV-INST-02',
     nombreSugerido: 'Instalación y Acometida Tipo 2 (Extendida)',
-    descripcionSugerida: 'Mano de obra y servicio técnico de instalación de acometida larga / cruce de vía',
+    descripcionSugerida:
+      'Mano de obra y servicio técnico de instalación de acometida larga / cruce de vía',
     tipoRubroSugerido: 'SERVICIO',
     ivaSugeridoPct: 15,
     label: 'SERV-INST-02 - Instalación Acometida Extendida (Servicio - IVA 15%)',
@@ -69,7 +71,8 @@ export const CATALOGO_CODIGOS_SRI: readonly ICodigoSriInfo[] = [
   {
     codigo: 'SERV-GUIA-02',
     nombreSugerido: 'Emisión de Guía de Remisión Tipo 2 (Interprovincial)',
-    descripcionSugerida: 'Tasa administrativa por emisión de guía de remisión para transporte de materiales',
+    descripcionSugerida:
+      'Tasa administrativa por emisión de guía de remisión para transporte de materiales',
     tipoRubroSugerido: 'SERVICIO',
     ivaSugeridoPct: 15,
     label: 'SERV-GUIA-02 - Guía de Remisión Interprovincial (Servicio - IVA 15%)',

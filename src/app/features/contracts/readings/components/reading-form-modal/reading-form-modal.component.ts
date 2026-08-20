@@ -252,7 +252,9 @@ export class ReadingFormModalComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  onPeriodSelectedFromPicker(period: { periodoId: number; nombre?: string; estado: string } | null): void {
+  onPeriodSelectedFromPicker(
+    period: { periodoId: number; nombre?: string; estado: string } | null,
+  ): void {
     if (period) {
       this.selectedPeriod = period;
       this.periodoId = period.periodoId;

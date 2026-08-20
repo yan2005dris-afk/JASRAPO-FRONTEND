@@ -18,7 +18,7 @@ import { TariffsFormComponent } from './components/tariffs-form/tariffs-form.com
 import { RubroFormModalComponent } from '../../billing/rubros/components/rubro-form-modal/rubro-form-modal.component';
 import { RubroTableComponent } from '../../billing/rubros/components/rubro-table/rubro-table.component';
 import { RubrosService } from '../../billing/rubros/services/rubros.service';
-import { IRubro, TipoRubro } from '../../billing/rubros/interfaces/irubro.interface';
+import { IRubro } from '../../billing/rubros/interfaces/irubro.interface';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';

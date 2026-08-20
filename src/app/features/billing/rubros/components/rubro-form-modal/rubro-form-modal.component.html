@@ -162,7 +162,9 @@
                       [class.active]="tarifaImpuestoId === t.id"
                       (click)="selectTarifaImpuesto(t)"
                     >
-                      <span class="small fw-semibold">{{ t.descripcion }} ({{ t.porcentaje }}%)</span>
+                      <span class="small fw-semibold"
+                        >{{ t.descripcion }} ({{ t.porcentaje }}%)</span
+                      >
                       @if (tarifaImpuestoId === t.id) {
                         <i class="bi bi-check-lg text-primary"></i>
                       }
@@ -192,9 +194,7 @@
                   [disabled]="isLoading"
                 />
               </div>
-              <div class="form-text small">
-                Precio neto antes de impuestos.
-              </div>
+              <div class="form-text small">Precio neto antes de impuestos.</div>
             </div>
 
             <!-- Preview Card de Cálculo con IVA -->
@@ -213,18 +213,32 @@
 
                   <div class="d-flex align-items-center gap-3">
                     <div class="text-end">
-                      <span class="text-muted extra-small d-block" style="font-size: 0.72rem">Subtotal Base</span>
-                      <span class="fw-semibold text-dark">${{ precioUnitario | number: '1.2-2' }}</span>
+                      <span class="text-muted extra-small d-block" style="font-size: 0.72rem"
+                        >Subtotal Base</span
+                      >
+                      <span class="fw-semibold text-dark"
+                        >${{ precioUnitario | number: '1.2-2' }}</span
+                      >
                     </div>
                     <span class="text-muted">+</span>
                     <div class="text-end">
-                      <span class="text-muted extra-small d-block" style="font-size: 0.72rem">IVA ({{ currentPorcentajeIva }}%)</span>
-                      <span class="fw-semibold text-secondary">${{ valorIva | number: '1.2-2' }}</span>
+                      <span class="text-muted extra-small d-block" style="font-size: 0.72rem"
+                        >IVA ({{ currentPorcentajeIva }}%)</span
+                      >
+                      <span class="fw-semibold text-secondary"
+                        >${{ valorIva | number: '1.2-2' }}</span
+                      >
                     </div>
                     <span class="text-muted">=</span>
                     <div class="text-end bg-white px-3 py-1 rounded-2 border shadow-sm">
-                      <span class="text-muted extra-small d-block fw-semibold text-dark" style="font-size: 0.72rem">Total Final con IVA</span>
-                      <span class="fw-bold text-dark fs-6">${{ precioTotalConIva | number: '1.2-2' }}</span>
+                      <span
+                        class="text-muted extra-small d-block fw-semibold text-dark"
+                        style="font-size: 0.72rem"
+                        >Total Final con IVA</span
+                      >
+                      <span class="fw-bold text-dark fs-6"
+                        >${{ precioTotalConIva | number: '1.2-2' }}</span
+                      >
                     </div>
                   </div>
                 </div>

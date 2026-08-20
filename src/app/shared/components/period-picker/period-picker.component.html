@@ -32,10 +32,7 @@
               {{ period.nombre || 'Período #' + period.periodoId }}
             </div>
           </div>
-          <span
-            class="badge border extra-small"
-            [ngClass]="getEstadoBadgeClass(period.estado)"
-          >
+          <span class="badge border extra-small" [ngClass]="getEstadoBadgeClass(period.estado)">
             {{ period.estado }}
           </span>
         </button>

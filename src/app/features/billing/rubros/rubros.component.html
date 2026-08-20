@@ -138,16 +138,16 @@
         (createClicked)="openCreateModal()"
       />
 
-        <!-- Pagination -->
-        <div class="px-4 py-3 border-top bg-white">
-          <app-pagination
-            [currentPage]="currentPage"
-            [pageSize]="pageSize"
-            [totalItems]="totalItems"
-            (pageChange)="onPageChange($event)"
-            (pageSizeChange)="onPageSizeChange($event)"
-          />
-        </div>
+      <!-- Pagination -->
+      <div class="px-4 py-3 border-top bg-white">
+        <app-pagination
+          [currentPage]="currentPage"
+          [pageSize]="pageSize"
+          [totalItems]="totalItems"
+          (pageChange)="onPageChange($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
+        />
+      </div>
     </div>
   </div>
 
