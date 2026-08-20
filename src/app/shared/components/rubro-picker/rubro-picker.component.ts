@@ -2,12 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
-  EventEmitter,
-  Input,
-  Output,
-  ViewChild,
+  effect,
   inject,
+  input,
+  output,
   signal,
+  viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -27,32 +27,30 @@ import type { IRubro } from '../../../features/billing/payments/interfaces/ipaym
 export class RubroPickerComponent {
   private readonly paymentsService = inject(PaymentsService);
 
-  @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
+  readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 
-  @Input() set open(value: boolean) {
-    this._open = value;
-    if (value) {
-      this.searchTerm.set('');
-      this.searchError.set('');
-      this.currentPage.set(1);
-      this.buscarRubros();
-      setTimeout(() => this.searchInput?.nativeElement.focus(), 150);
-    }
-  }
-  get open(): boolean {
-    return this._open;
-  }
-  private _open = false;
+  readonly open = input(false);
+  readonly title = input('Buscar Rubro del Catálogo');
 
-  @Input() title = 'Buscar Rubro del Catálogo';
-
-  @Output() rubroSelected = new EventEmitter<IRubro>();
-  @Output() closed = new EventEmitter<void>();
+  readonly rubroSelected = output<IRubro>();
+  readonly closed = output<void>();
 
   readonly searchTerm = signal('');
   readonly rubros = signal<IRubro[]>([]);
   readonly isSearching = signal(false);
   readonly searchError = signal('');
+
+  constructor() {
+    effect(() => {
+      if (this.open()) {
+        this.searchTerm.set('');
+        this.searchError.set('');
+        this.currentPage.set(1);
+        this.buscarRubros();
+        setTimeout(() => this.searchInput()?.nativeElement.focus(), 150);
+      }
+    });
+  }
 
   // Paginación
   readonly currentPage = signal(1);

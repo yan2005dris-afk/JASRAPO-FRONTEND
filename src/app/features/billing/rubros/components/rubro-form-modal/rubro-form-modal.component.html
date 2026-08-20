@@ -50,8 +50,64 @@
       <div class="modal-body px-4 py-4">
         <form (ngSubmit)="submit()">
           <div class="row g-3">
-            <!-- Nombre del Rubro -->
-            <div class="col-md-8">
+            <!-- 1. Tipo de Rubro con Picker (Define la naturaleza del rubro) -->
+            <div class="col-md-7">
+              <app-picker-input
+                inputId="rubroTipoInput"
+                label="Tipo de Rubro"
+                placeholder="Seleccionar tipo de rubro..."
+                icon="bi-tags"
+                [query]="selectedTipoLabel"
+                [disabled]="isLoading"
+                [required]="true"
+                [isOpen]="isTipoPickerOpen"
+                [hasValue]="!!tipoRubro"
+                (openChange)="setTipoPickerOpen($event)"
+              >
+                <div picker-items>
+                  @for (opt of tipoRubroOptions; track opt.value) {
+                    <button
+                      type="button"
+                      class="dropdown-item px-3 py-2 text-start d-flex justify-content-between align-items-center"
+                      [class.active]="tipoRubro === opt.value"
+                      (click)="selectTipoRubro(opt)"
+                    >
+                      <span class="small fw-semibold">{{ opt.label }}</span>
+                      @if (tipoRubro === opt.value) {
+                        <i class="bi bi-check-lg text-primary"></i>
+                      }
+                    </button>
+                  }
+                </div>
+              </app-picker-input>
+            </div>
+
+            <!-- 2. Código SRI / SKU (Código único identificador) -->
+            <div class="col-md-5">
+              <label for="rubroCodigoSriInput" class="form-label fw-semibold small text-dark">
+                Código / SKU (Único)
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted">
+                  <i class="bi bi-upc-scan"></i>
+                </span>
+                <input
+                  id="rubroCodigoSriInput"
+                  type="text"
+                  class="form-control font-monospace text-dark"
+                  [(ngModel)]="codigoSri"
+                  name="codigoSri"
+                  [disabled]="isLoading"
+                  placeholder="Ej. SERV-01, MED-01"
+                />
+              </div>
+              <div class="form-text extra-small" style="font-size: 0.72rem">
+                Código para comprobante electrónico.
+              </div>
+            </div>
+
+            <!-- 3. Nombre del Rubro -->
+            <div class="col-12">
               <label for="rubroNombreInput" class="form-label fw-semibold small text-dark">
                 Nombre del Rubro <span class="text-danger">*</span>
               </label>
@@ -59,7 +115,7 @@
                 id="rubroNombreInput"
                 type="text"
                 class="form-control"
-                placeholder="Ej. Consumo Agua Potable"
+                placeholder="Ej. Servicio de Reconexión, Medidor 1/2 pulgada"
                 [(ngModel)]="nombre"
                 name="nombre"
                 required
@@ -67,32 +123,16 @@
               />
             </div>
 
-            <!-- Código SRI -->
-            <div class="col-md-4">
-              <label for="rubroCodigoSriInput" class="form-label fw-semibold small text-dark">
-                Código SRI / Identificador
-              </label>
-              <input
-                id="rubroCodigoSriInput"
-                type="text"
-                class="form-control"
-                placeholder="Ej. 001"
-                [(ngModel)]="codigoSri"
-                name="codigoSri"
-                [disabled]="isLoading"
-              />
-            </div>
-
-            <!-- Descripción -->
+            <!-- 4. Descripción -->
             <div class="col-12">
               <label for="rubroDescripcionTextarea" class="form-label fw-semibold small text-dark">
-                Descripción <span class="text-danger">*</span>
+                Descripción para Factura <span class="text-danger">*</span>
               </label>
               <textarea
                 id="rubroDescripcionTextarea"
                 class="form-control"
                 rows="2"
-                placeholder="Descripción detallada para la factura o comprobante..."
+                placeholder="Descripción detallada que aparecerá en el comprobante..."
                 [(ngModel)]="descripcion"
                 name="descripcion"
                 required
@@ -100,49 +140,44 @@
               ></textarea>
             </div>
 
-            <!-- Tipo de Rubro -->
+            <!-- 5. Tarifa Impuesto IVA con Picker -->
             <div class="col-md-6">
-              <label for="rubroTipoSelect" class="form-label fw-semibold small text-dark">
-                Tipo de Rubro <span class="text-danger">*</span>
-              </label>
-              <select
-                id="rubroTipoSelect"
-                class="form-select"
-                [(ngModel)]="tipoRubro"
-                name="tipoRubro"
-                required
+              <app-picker-input
+                inputId="rubroTarifaIvaInput"
+                label="Tarifa Impuesto IVA"
+                placeholder="Seleccionar tarifa de impuesto..."
+                icon="bi-percent"
+                [query]="selectedTarifaLabel"
                 [disabled]="isLoading"
+                [required]="true"
+                [isOpen]="isTarifaPickerOpen"
+                [hasValue]="!!tarifaImpuestoId"
+                (openChange)="setTarifaPickerOpen($event)"
               >
-                @for (opt of tipoRubroOptions; track opt.value) {
-                  <option [value]="opt.value">{{ opt.label }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Tarifa Impuesto IVA -->
-            <div class="col-md-6">
-              <label for="rubroTarifaIvaSelect" class="form-label fw-semibold small text-dark">
-                Tarifa Impuesto IVA <span class="text-danger">*</span>
-              </label>
-              <select
-                id="rubroTarifaIvaSelect"
-                class="form-select"
-                [(ngModel)]="tarifaImpuestoId"
-                name="tarifaImpuestoId"
-                required
-                [disabled]="isLoading"
-              >
-                <option [ngValue]="null" disabled>Seleccionar tarifa de impuesto...</option>
-                @for (t of tarifasImpuesto; track t.id) {
-                  <option [ngValue]="t.id">{{ t.descripcion }} ({{ t.porcentaje }}%)</option>
-                }
-              </select>
+                <div picker-items>
+                  @for (t of tarifasImpuesto; track t.id) {
+                    <button
+                      type="button"
+                      class="dropdown-item px-3 py-2 text-start d-flex justify-content-between align-items-center"
+                      [class.active]="tarifaImpuestoId === t.id"
+                      (click)="selectTarifaImpuesto(t)"
+                    >
+                      <span class="small fw-semibold"
+                        >{{ t.descripcion }} ({{ t.porcentaje }}%)</span
+                      >
+                      @if (tarifaImpuestoId === t.id) {
+                        <i class="bi bi-check-lg text-primary"></i>
+                      }
+                    </button>
+                  }
+                </div>
+              </app-picker-input>
             </div>
 
             <!-- Precio Unitario -->
             <div class="col-md-6">
               <label for="rubroPrecioInput" class="form-label fw-semibold small text-dark">
-                Precio Unitario (USD) <span class="text-danger">*</span>
+                Precio Unitario Base (USD) <span class="text-danger">*</span>
               </label>
               <div class="input-group">
                 <span class="input-group-text bg-light fw-medium">$</span>
@@ -159,8 +194,54 @@
                   [disabled]="isLoading"
                 />
               </div>
-              <div class="form-text small">
-                Precio base sin impuestos. Para rubros variables, es el valor por metro cúbico.
+              <div class="form-text small">Precio neto antes de impuestos.</div>
+            </div>
+
+            <!-- Preview Card de Cálculo con IVA -->
+            <div class="col-12">
+              <div class="card border bg-light-subtle rounded-3 p-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-calculator text-secondary fs-5"></i>
+                    <div>
+                      <div class="fw-bold text-dark small">Desglose de Precio Estimado</div>
+                      <div class="text-muted extra-small" style="font-size: 0.75rem">
+                        Cálculo automático según la tarifa de impuesto seleccionada
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="text-end">
+                      <span class="text-muted extra-small d-block" style="font-size: 0.72rem"
+                        >Subtotal Base</span
+                      >
+                      <span class="fw-semibold text-dark"
+                        >${{ precioUnitario | number: '1.2-2' }}</span
+                      >
+                    </div>
+                    <span class="text-muted">+</span>
+                    <div class="text-end">
+                      <span class="text-muted extra-small d-block" style="font-size: 0.72rem"
+                        >IVA ({{ currentPorcentajeIva }}%)</span
+                      >
+                      <span class="fw-semibold text-secondary"
+                        >${{ valorIva | number: '1.2-2' }}</span
+                      >
+                    </div>
+                    <span class="text-muted">=</span>
+                    <div class="text-end bg-white px-3 py-1 rounded-2 border shadow-sm">
+                      <span
+                        class="text-muted extra-small d-block fw-semibold text-dark"
+                        style="font-size: 0.72rem"
+                        >Total Final con IVA</span
+                      >
+                      <span class="fw-bold text-dark fs-6"
+                        >${{ precioTotalConIva | number: '1.2-2' }}</span
+                      >
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 

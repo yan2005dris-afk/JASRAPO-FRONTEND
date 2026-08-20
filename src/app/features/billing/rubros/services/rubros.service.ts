@@ -37,6 +37,9 @@ export class RubrosService {
     if (params?.tarifaImpuestoId !== undefined) {
       httpParams = httpParams.set('tarifaImpuestoId', String(params.tarifaImpuestoId));
     }
+    if (params?.categoriaTarifaId !== undefined) {
+      httpParams = httpParams.set('categoriaTarifaId', String(params.categoriaTarifaId));
+    }
     if (params?.activo !== undefined) {
       httpParams = httpParams.set('activo', String(params.activo));
     }

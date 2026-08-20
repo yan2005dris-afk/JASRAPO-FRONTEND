@@ -1,0 +1,21 @@
+.picker-input-container {
+  width: 100%;
+}
+
+.picker-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1060;
+  max-height: 240px;
+  overflow-y: auto;
+  border-color: #dee2e6;
+}
+
+.input-group {
+  .form-control:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+  }
+}
