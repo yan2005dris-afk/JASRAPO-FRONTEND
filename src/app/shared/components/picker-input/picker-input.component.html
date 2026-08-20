@@ -1,0 +1,60 @@
+<div
+  class="picker-input-container position-relative"
+  appClickOutside
+  (clickOutside)="onClickOutside()"
+>
+  @if (label()) {
+    <label [for]="inputId()" class="form-label fw-semibold text-dark small mb-1">
+      {{ label() }}
+      @if (required()) {
+        <span class="text-danger">*</span>
+      }
+    </label>
+  }
+
+  <div class="input-group">
+    @if (icon()) {
+      <span class="input-group-text bg-white text-muted">
+        <i class="bi" [ngClass]="icon()"></i>
+      </span>
+    }
+
+    <input
+      [id]="inputId()"
+      type="text"
+      class="form-control shadow-none"
+      [placeholder]="placeholder()"
+      [value]="query()"
+      [disabled]="disabled()"
+      (input)="onInputChange($any($event.target).value)"
+      (focus)="onFocus()"
+      autocomplete="off"
+    />
+
+    @if (isLoading()) {
+      <span class="input-group-text bg-white text-muted">
+        <span class="spinner-border spinner-border-sm" role="status"></span>
+      </span>
+    }
+
+    @if ((hasValue() || query()) && !disabled() && !isLoading()) {
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        (click)="onClearClick($event)"
+        title="Limpiar"
+      >
+        <i class="bi bi-x-lg"></i>
+      </button>
+    }
+  </div>
+
+  <!-- Dropdown Container -->
+  @if (isOpen()) {
+    <div class="picker-dropdown shadow-lg rounded-3 border bg-white mt-1 py-1">
+      <ng-content select="[picker-items]"></ng-content>
+      
+      <ng-content select="[picker-empty]"></ng-content>
+    </div>
+  }
+</div>

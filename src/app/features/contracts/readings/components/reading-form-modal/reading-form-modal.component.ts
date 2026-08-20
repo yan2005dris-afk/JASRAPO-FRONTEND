@@ -16,6 +16,7 @@ import {
   IUpdateReadingDto,
 } from '../../interfaces/ireading.interface';
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
+import { PeriodPickerComponent } from '../../../../../shared/components/period-picker/period-picker.component';
 import { ContractsService } from '../../../service-contracts/services/contracts.service';
 import type {
   IContract,
@@ -28,7 +29,7 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
 @Component({
   selector: 'app-reading-form-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePickerComponent],
+  imports: [CommonModule, FormsModule, DatePickerComponent, PeriodPickerComponent],
   templateUrl: './reading-form-modal.component.html',
   styleUrl: './reading-form-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -248,6 +249,17 @@ export class ReadingFormModalComponent implements OnInit {
       );
     }
     this.isPeriodAutocompleteOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  onPeriodSelectedFromPicker(period: { periodoId: number; nombre?: string; estado: string } | null): void {
+    if (period) {
+      this.selectedPeriod = period;
+      this.periodoId = period.periodoId;
+    } else {
+      this.selectedPeriod = null;
+      this.periodoId = null;
+    }
     this.cdr.markForCheck();
   }
 
