@@ -53,7 +53,7 @@
                 1
               }
             </span>
-            <span class="step-label small fw-medium">1. Medidor Saliente</span>
+            <span class="step-label small fw-medium"> Medidor Saliente</span>
           </button>
 
           <div class="step-divider flex-grow-1 mx-2" [class.completed]="currentStep() > 1"></div>
@@ -72,7 +72,7 @@
                 2
               }
             </span>
-            <span class="step-label small fw-medium">2. Selección de Nuevo</span>
+            <span class="step-label small fw-medium"> Selección de Nuevo</span>
           </button>
 
           <div class="step-divider flex-grow-1 mx-2" [class.completed]="currentStep() > 2"></div>
@@ -84,7 +84,7 @@
             (click)="goToStep(3)"
           >
             <span class="step-badge">3</span>
-            <span class="step-label small fw-medium">3. Facturación & Cierre</span>
+            <span class="step-label small fw-medium"> Facturación & Cierre</span>
           </button>
         </div>
       </div>
@@ -133,7 +133,13 @@
                   </div>
 
                   <div class="col-md-6">
-                    <span class="text-muted extra-small d-block mb-1">Lectura Base Inicial</span>
+                    <span class="text-muted extra-small d-block mb-1">
+                      {{
+                        currentHistorial()?.ultimaLecturaAprobada
+                          ? 'Última Lectura Aprobada'
+                          : 'Lectura Base Inicial'
+                      }}
+                    </span>
                     <div class="fw-bold text-primary fs-5 tabular-nums">
                       {{ baseReading() }} <span class="text-muted fw-normal extra-small">m³</span>
                     </div>

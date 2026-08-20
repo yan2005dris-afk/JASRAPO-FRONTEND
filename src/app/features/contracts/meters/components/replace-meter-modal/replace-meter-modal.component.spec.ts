@@ -265,4 +265,36 @@ describe('ReplaceMeterModalComponent', () => {
     component.handleEscape();
     expect(component.cancelled.emit).not.toHaveBeenCalled();
   });
+
+  it('should prioritize ultimaLecturaAprobada over lecturaInicial in baseReading', () => {
+    const contractWithApprovedReading: IContract = {
+      ...mockContract,
+      historialMedidores: [
+        {
+          historialId: '100',
+          medidorId: '50',
+          fechaDesde: '2026-01-01',
+          fechaHasta: null,
+          lecturaInicial: 500,
+          lecturaFinal: null,
+          ultimaLecturaAprobada: {
+            lecturaId: '999',
+            fecha: '2026-08-01',
+            lecturaActual: 700,
+          },
+          medidor: {
+            medidorId: '50',
+            serie: 'MED-OLD-1',
+            marca: 'Actaris',
+            modelo: 'A100',
+          },
+        },
+      ],
+    };
+
+    fixture.componentRef.setInput('contract', contractWithApprovedReading);
+    fixture.detectChanges();
+
+    expect(component.baseReading()).toBe(700);
+  });
 });

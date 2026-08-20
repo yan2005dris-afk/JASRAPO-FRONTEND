@@ -151,6 +151,12 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
 
   readonly baseReading = computed(() => {
     const h = this.currentHistorial();
+    if (
+      h?.ultimaLecturaAprobada?.lecturaActual !== null &&
+      h?.ultimaLecturaAprobada?.lecturaActual !== undefined
+    ) {
+      return Number(h.ultimaLecturaAprobada.lecturaActual);
+    }
     if (h?.lecturaFinal !== null && h?.lecturaFinal !== undefined) {
       return Number(h.lecturaFinal);
     }
