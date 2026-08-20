@@ -102,11 +102,16 @@
                 }
               </td>
             }
-            <td class="text-end fw-bold text-dark tabular-nums" style="font-size: 0.95rem">
+            <td class="text-end tabular-nums" style="font-size: 0.92rem">
               @if (rubro.esAutomatico && rubro.precioUnitario === 0) {
                 <span class="text-muted small fw-normal fst-italic">Dinámico (Tarifa)</span>
               } @else {
-                ${{ rubro.precioUnitario | number: '1.2-2' }}
+                <div class="fw-bold text-dark">${{ rubro.precioUnitario | number: '1.2-2' }}</div>
+                @if (rubro.tarifaImpuesto && rubro.tarifaImpuesto.porcentaje > 0) {
+                  <div class="text-muted extra-small" style="font-size: 0.73rem">
+                    Total c/IVA: <span class="text-primary fw-medium">${{ (rubro.precioUnitario * (1 + rubro.tarifaImpuesto.porcentaje / 100)) | number: '1.2-2' }}</span>
+                  </div>
+                }
               }
             </td>
             <td class="text-center">

@@ -95,6 +95,21 @@ export class RubroFormModalComponent implements OnInit {
     return match ? `${match.descripcion} (${match.porcentaje}%)` : '';
   }
 
+  get currentPorcentajeIva(): number {
+    const match = this.tarifasImpuesto.find((t) => t.id === this.tarifaImpuestoId);
+    return match ? Number(match.porcentaje) : 0;
+  }
+
+  get valorIva(): number {
+    const base = Number(this.precioUnitario) || 0;
+    return (base * this.currentPorcentajeIva) / 100;
+  }
+
+  get precioTotalConIva(): number {
+    const base = Number(this.precioUnitario) || 0;
+    return base + this.valorIva;
+  }
+
   selectTipoRubro(opt: { value: TipoRubro; label: string }): void {
     this.tipoRubro = opt.value;
     this.isTipoPickerOpen = false;

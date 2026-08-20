@@ -194,7 +194,7 @@
             <!-- Precio Unitario -->
             <div class="col-md-6">
               <label for="rubroPrecioInput" class="form-label fw-semibold small text-dark">
-                Precio Unitario (USD) <span class="text-danger">*</span>
+                Precio Unitario Base (USD) <span class="text-danger">*</span>
               </label>
               <div class="input-group">
                 <span class="input-group-text bg-light fw-medium">$</span>
@@ -212,7 +212,41 @@
                 />
               </div>
               <div class="form-text small">
-                Precio base sin impuestos. Para rubros variables, es el valor por metro cúbico.
+                Precio neto antes de impuestos.
+              </div>
+            </div>
+
+            <!-- Preview Card de Cálculo con IVA -->
+            <div class="col-12">
+              <div class="card border border-primary-subtle bg-primary-subtle bg-opacity-10 rounded-3 p-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-calculator text-primary fs-5"></i>
+                    <div>
+                      <div class="fw-bold text-dark small">Desglose de Precio Estimado</div>
+                      <div class="text-muted extra-small" style="font-size: 0.75rem">
+                        Cálculo automático según la tarifa de impuesto seleccionada
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="text-end">
+                      <span class="text-muted extra-small d-block" style="font-size: 0.72rem">Subtotal Base</span>
+                      <span class="fw-semibold text-dark">${{ precioUnitario | number: '1.2-2' }}</span>
+                    </div>
+                    <span class="text-muted">+</span>
+                    <div class="text-end">
+                      <span class="text-muted extra-small d-block" style="font-size: 0.72rem">IVA ({{ currentPorcentajeIva }}%)</span>
+                      <span class="fw-semibold text-primary">${{ valorIva | number: '1.2-2' }}</span>
+                    </div>
+                    <span class="text-muted">=</span>
+                    <div class="text-end bg-white px-3 py-1 rounded-2 border border-primary-subtle shadow-sm">
+                      <span class="text-muted extra-small d-block fw-semibold text-primary" style="font-size: 0.72rem">Total Final con IVA</span>
+                      <span class="fw-bold text-dark fs-6">${{ precioTotalConIva | number: '1.2-2' }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
