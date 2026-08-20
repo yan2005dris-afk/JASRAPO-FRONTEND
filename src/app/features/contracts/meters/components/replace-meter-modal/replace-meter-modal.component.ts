@@ -218,7 +218,10 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
       .pipe(
         debounceTime(250),
         distinctUntilChanged((prev, curr) => JSON.stringify(prev) === JSON.stringify(curr)),
-        tap(() => this.isLoadingMeters.set(true)),
+        tap(() => {
+          this.isLoadingMeters.set(true);
+          this.cdr.markForCheck();
+        }),
         switchMap(({ query, page, limit }) =>
           this.metersService
             .getMeters({
@@ -232,14 +235,15 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
                 this.isLoadingMeters.set(false);
                 this.toastService.show('Error al cargar medidores en bodega', 'error');
                 this.cdr.markForCheck();
-                return of({ datos: [], meta: { total: 0 } });
+                return of({ data: [], datos: [], meta: { total: 0 } });
               }),
             ),
         ),
       )
       .subscribe({
         next: (res) => {
-          const list = (res.datos || []) as IMeter[];
+          const rawList = res.data || res.datos || [];
+          const list = rawList as IMeter[];
           this.availableMeters.set(list);
           const total = res.meta?.total ?? list.length;
           this.totalMeters.set(total);
@@ -312,30 +316,32 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
   }
 
   loadAvailableMeters(immediate = false): void {
-    const params = {
-      estado: 'BODEGA' as const,
-      search: this.meterSearchQuery().trim() || undefined,
-      page: this.currentPage(),
-      limit: this.pageSize(),
-    };
-
     if (immediate) {
       this.isLoadingMeters.set(true);
-      this.metersService.getMeters(params).subscribe({
-        next: (res) => {
-          const list = (res.datos || []) as IMeter[];
+      this.metersService
+        .getMeters({
+          estado: 'BODEGA' as const,
+          search: this.meterSearchQuery().trim() || undefined,
+          page: this.currentPage(),
+          limit: this.pageSize(),
+        })
+        .pipe(
+          catchError(() => {
+            this.isLoadingMeters.set(false);
+            this.toastService.show('Error al cargar medidores en bodega', 'error');
+            this.cdr.markForCheck();
+            return of({ data: [], datos: [], meta: { total: 0 } });
+          }),
+        )
+        .subscribe((res) => {
+          const rawList = res.data || res.datos || [];
+          const list = rawList as IMeter[];
           this.availableMeters.set(list);
           const total = res.meta?.total ?? list.length;
           this.totalMeters.set(total);
           this.isLoadingMeters.set(false);
           this.cdr.markForCheck();
-        },
-        error: () => {
-          this.isLoadingMeters.set(false);
-          this.toastService.show('Error al cargar medidores en bodega', 'error');
-          this.cdr.markForCheck();
-        },
-      });
+        });
     } else {
       this.searchSubject$.next({
         query: this.meterSearchQuery().trim(),
@@ -364,7 +370,7 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
   onSearchQueryChange(query: string): void {
     this.meterSearchQuery.set(query);
     this.currentPage.set(1);
-    this.loadAvailableMeters(false);
+    this.loadAvailableMeters();
   }
 
   onPageChange(page: number): void {
