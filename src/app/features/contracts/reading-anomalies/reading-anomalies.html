@@ -196,7 +196,7 @@
                     <div class="fw-semibold text-dark small">Lectura #{{ anomaly.lecturaId }}</div>
                     @if (anomaly.lectura?.fecha) {
                       <div class="text-muted" style="font-size: 0.75rem">
-                        {{ anomaly.lectura!.fecha | date: 'dd/MM/yyyy' }}
+                        {{ anomaly.lectura!.fecha | localDate: 'dd/MM/yyyy' }}
                       </div>
                     }
                   </td>
