@@ -57,4 +57,13 @@ export class MetersService {
   deleteMeter(id: number): Observable<void> {
     return this.http.delete<void>(`${this.endpoint}/${id}`);
   }
+
+  replaceMeter(
+    payload: import('../interfaces/imeter.interface').IReplaceMeterRequest,
+  ): Observable<import('../interfaces/imeter.interface').IReplaceMeterResponse> {
+    return this.http.post<import('../interfaces/imeter.interface').IReplaceMeterResponse>(
+      `${this.endpoint}/replace`,
+      payload,
+    );
+  }
 }

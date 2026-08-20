@@ -66,6 +66,13 @@ export interface IMedidorResumen {
   modelo: string;
 }
 
+export interface IApprovedReading {
+  lecturaId: string;
+  fecha: string;
+  lecturaActual: number;
+  lecturaAnterior?: number;
+}
+
 // Historial de medidores: el medidor actual es el que tiene fechaHasta === null
 export interface IHistorialMedidor {
   historialId: string;
@@ -74,6 +81,7 @@ export interface IHistorialMedidor {
   fechaHasta: string | null;
   lecturaInicial?: number;
   lecturaFinal?: number | null;
+  ultimaLecturaAprobada?: IApprovedReading | null;
   medidor: IMedidorResumen;
 }
 

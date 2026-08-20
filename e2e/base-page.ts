@@ -21,7 +21,12 @@ export class BasePage {
 
   /** Open the user dropdown in the header and click "Cerrar Sesión". */
   async logout(): Promise<void> {
-    await this.page.locator('header, .navbar, app-header').first().getByRole('button').last().click();
+    await this.page
+      .locator('header, .navbar, app-header')
+      .first()
+      .getByRole('button')
+      .last()
+      .click();
     await this.page.getByRole('button', { name: /Cerrar Sesión/i }).click();
     await expect(this.page).toHaveURL(/\/login/, { timeout: 15000 });
   }

@@ -68,4 +68,3 @@ jobs:
         if: always()
         run: |
           docker rm -f test-frontend || true
-

@@ -60,7 +60,8 @@ export default async function globalSetup(): Promise<void> {
   const sid = String(body.sid);
   const accessTokenInfo = (body.accessTokenInfo ?? {}) as Record<string, unknown>;
   const createdAt = (accessTokenInfo.iatDate as string) || new Date().toISOString();
-  const expiresAt = (accessTokenInfo.expDate as string) || new Date(Date.now() + 15 * 60 * 1000).toISOString();
+  const expiresAt =
+    (accessTokenInfo.expDate as string) || new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
   const user = {
     id: String(body.sub),

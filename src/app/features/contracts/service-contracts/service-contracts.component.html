@@ -218,6 +218,17 @@
                               Editar
                             </button>
                           </li>
+                          @if (getCurrentMeter(contract)) {
+                            <li>
+                              <button
+                                class="dropdown-item d-flex align-items-center gap-2 text-warning-emphasis"
+                                (click)="openReplaceMeterModal(contract)"
+                              >
+                                <i class="bi bi-arrow-repeat text-warning"></i>
+                                Reemplazar Medidor
+                              </button>
+                            </li>
+                          }
                         </ul>
                       </div>
                     </td>
@@ -255,4 +266,12 @@
       }
     </div>
   </div>
+}
+
+@if (replacingMeterContract(); as contract) {
+  <app-replace-meter-modal
+    [contract]="contract"
+    (saved)="onMeterReplaced()"
+    (cancelled)="closeReplaceMeterModal()"
+  />
 }

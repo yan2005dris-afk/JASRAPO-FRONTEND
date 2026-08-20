@@ -200,6 +200,15 @@ export class ServiceContractFormComponent implements OnInit {
 
   readonly meterStatusLabel = computed(() => this.selectedMeter()?.estado?.nombre ?? '');
 
+  readonly meterInstalacionLabel = computed(() => {
+    const fecha = this.selectedMeter()?.fechaInstalacion;
+    if (!fecha) {
+      return '—';
+    }
+    const d = new Date(fecha);
+    return Number.isNaN(d.getTime()) ? fecha : d.toLocaleDateString('es-EC');
+  });
+
   private getClientId(client: IClient): string | number | undefined {
     return client.clienteId ?? client.id ?? client.clientId ?? client._id;
   }

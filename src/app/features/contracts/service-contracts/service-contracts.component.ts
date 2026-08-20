@@ -10,12 +10,19 @@ import {
   SearchContractField,
 } from './interfaces/icontract.interface';
 import { ServiceContractFormComponent } from './components/service-contract-form/service-contract-form.component';
+import { ReplaceMeterModalComponent } from '../meters/components/replace-meter-modal/replace-meter-modal.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
 
 @Component({
   selector: 'app-service-contracts',
-  imports: [FormsModule, ServiceContractFormComponent, PaginationComponent, TableSkeletonComponent],
+  imports: [
+    FormsModule,
+    ServiceContractFormComponent,
+    ReplaceMeterModalComponent,
+    PaginationComponent,
+    TableSkeletonComponent,
+  ],
   templateUrl: './service-contracts.component.html',
   styleUrl: './service-contracts.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,6 +39,9 @@ export class ServiceContractsComponent implements OnInit {
   // Contrato en edición (null = formulario en modo creación)
   readonly editingContract = signal<IContract | null>(null);
 
+  // Contrato en reemplazo de medidor
+  readonly replacingMeterContract = signal<IContract | null>(null);
+
   toggleDropdown(contratoId: string, event: MouseEvent): void {
     event.stopPropagation();
     this.openDropdownId.update((id) => (id === contratoId ? null : contratoId));
@@ -46,6 +56,21 @@ export class ServiceContractsComponent implements OnInit {
     this.closeDropdowns();
     this.editingContract.set(contract);
     this.isFormOpen.set(true);
+  }
+
+  /** Abre el modal de reemplazo de medidor. */
+  openReplaceMeterModal(contract: IContract): void {
+    this.closeDropdowns();
+    this.replacingMeterContract.set(contract);
+  }
+
+  closeReplaceMeterModal(): void {
+    this.replacingMeterContract.set(null);
+  }
+
+  onMeterReplaced(): void {
+    this.closeReplaceMeterModal();
+    this.loadContracts();
   }
 
   // Estado del listado
