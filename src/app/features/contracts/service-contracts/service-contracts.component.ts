@@ -96,8 +96,8 @@ export class ServiceContractsComponent implements OnInit {
   readonly isFormOpen = signal(false);
 
   ngOnInit(): void {
-    // No se carga la tabla al entrar: el usuario debe presionar "Buscar".
     this.loadContractStates();
+    this.loadContracts();
   }
 
   /** Carga el catálogo de estados de contrato desde el backend. */

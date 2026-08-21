@@ -354,6 +354,9 @@ export class PaymentFormComponent implements OnInit {
   }
 
   getPeriodLabel(pre: IPreInvoice): string {
+    if (pre.mes === 0) {
+      return 'Cargo Único — Instalación';
+    }
     if (pre.periodoNombre && pre.periodoNombre.trim()) {
       return pre.periodoNombre;
     }
