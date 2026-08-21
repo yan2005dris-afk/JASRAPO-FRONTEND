@@ -6,6 +6,7 @@ import {
   inject,
   input,
   output,
+  untracked,
   signal,
   viewChild,
 } from '@angular/core';
@@ -47,12 +48,15 @@ export class ContractPickerComponent {
 
   constructor() {
     effect(() => {
-      if (this.open()) {
-        this.searchTerm.set('');
-        this.searchError.set('');
-        this.currentPage.set(1);
-        this.buscarContratos();
-        setTimeout(() => this.searchInput()?.nativeElement.focus(), 150);
+      const isOpen = this.open();
+      if (isOpen) {
+        untracked(() => {
+          this.searchTerm.set('');
+          this.searchError.set('');
+          this.currentPage.set(1);
+          this.buscarContratos();
+          setTimeout(() => this.searchInput()?.nativeElement.focus(), 150);
+        });
       }
     });
   }
