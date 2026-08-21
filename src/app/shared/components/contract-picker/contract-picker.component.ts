@@ -6,6 +6,7 @@ import {
   inject,
   input,
   output,
+  untracked,
   signal,
   untracked,
   viewChild,
