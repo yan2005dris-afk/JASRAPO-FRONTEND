@@ -45,6 +45,9 @@ export class ReadingRoutesService {
     if (params?.periodoId) {
       httpParams = httpParams.set('periodoId', String(params.periodoId));
     }
+    if (params?.tipoRuta) {
+      httpParams = httpParams.set('tipoRuta', params.tipoRuta);
+    }
 
     return this.http.get<IPaginatedResult<IReadingRoute>>(this.endpoint, {
       params: httpParams,

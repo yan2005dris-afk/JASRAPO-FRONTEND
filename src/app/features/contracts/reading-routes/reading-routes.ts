@@ -286,6 +286,15 @@ export class ReadingRoutesComponent implements OnInit {
     nuevoEstado: 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA' | 'PENDIENTE',
   ): void {
     this.openDropdownId = null;
+
+    if (nuevoEstado === 'EN_PROGRESO' && !route.operarioId) {
+      this.toastService.show(
+        'No se puede iniciar la ruta: debe asignar un operario responsable primero.',
+        'error',
+      );
+      return;
+    }
+
     this.routesService.updateRoute(route.rutaId, { estado: nuevoEstado }).subscribe({
       next: (updated) => {
         route.estado = updated.estado;
