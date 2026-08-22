@@ -54,32 +54,40 @@
 
         <!-- Tab: Crear nueva -->
         @if (mode() === 'new') {
-          <div class="mb-3">
-            <label for="comunidadInput" class="form-label fw-semibold small text-dark">
-              Comunidad
-            </label>
-            <input
-              id="comunidadInput"
-              type="text"
-              class="form-control"
-              [value]="'Comunidad #' + contract().comunidadId"
-              disabled
-            />
-          </div>
-          <div class="mb-3">
-            <label for="fechaPlanificadaInput" class="form-label fw-semibold small text-dark">
-              Fecha planificada
-            </label>
-            <input
-              id="fechaPlanificadaInput"
-              type="date"
-              class="form-control"
-              [ngModel]="fechaPlanificada()"
-              (ngModelChange)="fechaPlanificada.set($event)"
-            />
-            <small class="text-muted"
-              >Ruta sin operario asignado. La secretaría la despacha después.</small
-            >
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label for="comunidadInput" class="form-label fw-semibold small text-dark mb-1">
+                Comunidad
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted">
+                  <i class="bi bi-geo-alt"></i>
+                </span>
+                <input
+                  id="comunidadInput"
+                  type="text"
+                  class="form-control bg-light border-start-0 text-dark fw-medium"
+                  [value]="contract().comunidad.nombre || ('Comunidad #' + contract().comunidadId)"
+                  disabled
+                />
+              </div>
+              <small class="text-muted">Tomada automáticamente del contrato.</small>
+            </div>
+
+            <div class="col-md-6">
+              <label for="fechaPlanificadaInput" class="form-label fw-semibold small text-dark mb-1">
+                Fecha planificada <span class="text-danger">*</span>
+              </label>
+              <app-date-picker
+                inputId="fechaPlanificadaInput"
+                [value]="fechaPlanificada()"
+                (valueChange)="fechaPlanificada.set($event)"
+                placeholder="Seleccione la fecha"
+              ></app-date-picker>
+              <small class="text-muted">
+                Ruta sin operario. La secretaría la despacha después.
+              </small>
+            </div>
           </div>
         }
 

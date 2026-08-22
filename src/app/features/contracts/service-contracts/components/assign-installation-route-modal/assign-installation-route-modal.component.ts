@@ -18,13 +18,14 @@ import {
 } from '../../../reading-routes/interfaces/ireading-route.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
+import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 
 type Mode = 'new' | 'existing';
 
 @Component({
   selector: 'app-assign-installation-route-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, StatusBadgeComponent],
+  imports: [CommonModule, FormsModule, StatusBadgeComponent, DatePickerComponent],
   templateUrl: './assign-installation-route-modal.component.html',
   styleUrl: './assign-installation-route-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
