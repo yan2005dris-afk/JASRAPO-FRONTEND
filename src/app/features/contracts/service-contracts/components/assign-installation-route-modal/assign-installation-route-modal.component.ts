@@ -17,13 +17,14 @@ import {
   IReadingRoute,
 } from '../../../reading-routes/interfaces/ireading-route.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 
 type Mode = 'new' | 'existing';
 
 @Component({
   selector: 'app-assign-installation-route-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, StatusBadgeComponent],
   templateUrl: './assign-installation-route-modal.component.html',
   styleUrl: './assign-installation-route-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,11 +42,19 @@ export class AssignInstallationRouteModalComponent {
   readonly closed = output<void>();
 
   readonly mode = signal<Mode>('new');
-  readonly selectedRouteId = signal<number | null>(null);
+  readonly selectedRouteId = signal<string | number | null>(null);
   readonly fechaPlanificada = signal<string>(new Date().toISOString().split('T')[0]);
   readonly availableRoutes = signal<IReadingRoute[]>([]);
   readonly isLoading = signal(false);
   readonly isLoadingRoutes = signal(false);
+
+  selectRoute(r: IReadingRoute): void {
+    if (this.selectedRouteId() === r.rutaId) {
+      this.selectedRouteId.set(null);
+    } else {
+      this.selectedRouteId.set(r.rutaId);
+    }
+  }
 
   readonly isValid = computed(() => {
     if (this.mode() === 'new') {
@@ -91,7 +100,7 @@ export class AssignInstallationRouteModalComponent {
     const payload =
       this.mode() === 'new'
         ? { fechaPlanificada: this.fechaPlanificada() }
-        : { routeId: this.selectedRouteId()! };
+        : { routeId: Number(this.selectedRouteId()) };
 
     this.isLoading.set(true);
     this.contractsService
