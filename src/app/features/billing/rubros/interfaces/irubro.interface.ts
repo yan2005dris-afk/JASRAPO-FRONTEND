@@ -144,9 +144,12 @@ export interface ITarifaImpuesto {
   activo: boolean;
 }
 
+export type CodigoSistemaRubro = 'INSTALACION' | 'RECONEXION' | 'INSPECCION';
+
 export interface IRubro {
   rubroId: number;
   codigoSri?: string | null;
+  codigoSistemaRubro?: CodigoSistemaRubro | null;
   nombre: string;
   descripcion: string;
   precioUnitario: number;
@@ -168,6 +171,7 @@ export interface IRubro {
 
 export interface ICreateRubroDto {
   codigoSri?: string | null;
+  codigoSistemaRubro?: CodigoSistemaRubro | null;
   nombre: string;
   descripcion: string;
   precioUnitario: number;
@@ -180,6 +184,7 @@ export interface ICreateRubroDto {
 
 export interface IUpdateRubroDto {
   codigoSri?: string | null;
+  codigoSistemaRubro?: CodigoSistemaRubro | null;
   nombre?: string;
   descripcion?: string;
   precioUnitario?: number;

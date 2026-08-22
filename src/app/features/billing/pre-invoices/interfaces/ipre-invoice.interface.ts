@@ -18,6 +18,7 @@ export interface IPreInvoiceDetail {
   iva: number;
   total: number;
   codigoImpuestoSri?: string | null;
+  codigoSistemaRubro?: string | null;
   descuento?: number;
 }
 
