@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, input } from '@angular/core';
 import { NgxExtendedPdfViewerModule } from 'ngx-extended-pdf-viewer';
 import { CommonModule } from '@angular/common';
 
@@ -8,24 +8,24 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule, NgxExtendedPdfViewerModule],
   template: `
     <div class="pdf-container">
-      @if (base64Src) {
+      @if (base64Src()) {
         <ngx-extended-pdf-viewer
-          [base64Src]="base64Src"
-          [height]="height"
+          [base64Src]="base64Src()!"
+          [height]="height()"
           [textLayer]="true"
           [showHandToolButton]="true"
         ></ngx-extended-pdf-viewer>
       }
-      @if (src && !base64Src) {
+      @if (src() && !base64Src()) {
         <ngx-extended-pdf-viewer
-          [src]="src"
-          [height]="height"
+          [src]="src()!"
+          [height]="height()"
           [textLayer]="true"
           [showHandToolButton]="true"
         ></ngx-extended-pdf-viewer>
       }
     </div>
-    @if (!src && !base64Src) {
+    @if (!src() && !base64Src()) {
       <div class="alert alert-info">Esperando documento para previsualización...</div>
     }
   `,
@@ -40,14 +40,8 @@ import { CommonModule } from '@angular/common';
     `,
   ],
 })
-export class PdfPreviewerComponent implements OnChanges {
-  @Input() src?: Blob | string | Uint8Array;
-  @Input() base64Src?: string;
-  @Input() height = '700px';
-
-  ngOnChanges(changes: SimpleChanges): void {
-    if ((changes['src'] && this.src) || (changes['base64Src'] && this.base64Src)) {
-      console.log('PDF source updated');
-    }
-  }
+export class PdfPreviewerComponent {
+  readonly src = input<Blob | string | Uint8Array | undefined>(undefined);
+  readonly base64Src = input<string | undefined>(undefined);
+  readonly height = input('700px');
 }

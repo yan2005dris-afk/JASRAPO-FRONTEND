@@ -46,9 +46,10 @@ describe('RubroPickerComponent', () => {
 
   describe('Valid Data Scenarios', () => {
     it('should open modal and load active rubros successfully', () => {
-      component.open = true;
+      fixture.componentRef.setInput('open', true);
+      fixture.detectChanges();
 
-      expect(component.open).toBe(true);
+      expect(component.open()).toBe(true);
       expect(paymentsServiceMock.getRubros).toHaveBeenCalledWith(
         expect.objectContaining({ activo: true, page: 1, limit: 10 }),
       );
@@ -63,7 +64,8 @@ describe('RubroPickerComponent', () => {
       component.rubroSelected.subscribe(selectedSpy);
       component.closed.subscribe(closedSpy);
 
-      component.open = true;
+      fixture.componentRef.setInput('open', true);
+      fixture.detectChanges();
       component.seleccionar(mockRubro);
 
       expect(selectedSpy).toHaveBeenCalledWith(mockRubro);
@@ -85,7 +87,8 @@ describe('RubroPickerComponent', () => {
         throwError(() => ({ error: { message: 'Error de servidor' } })),
       );
 
-      component.open = true;
+      fixture.componentRef.setInput('open', true);
+      fixture.detectChanges();
 
       expect(component.isSearching()).toBe(false);
       expect(component.rubros().length).toBe(0);

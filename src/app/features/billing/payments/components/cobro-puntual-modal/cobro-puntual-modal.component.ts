@@ -1,12 +1,12 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  EventEmitter,
-  Input,
-  Output,
   inject,
   signal,
   computed,
+  input,
+  output,
+  effect,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -22,7 +22,7 @@ import type {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    @if (open) {
+    @if (open()) {
       <div class="modal-backdrop fade show"></div>
       <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
@@ -60,139 +60,150 @@ import type {
                     ></span>
                     <input
                       type="text"
-                      class="form-control shadow-none"
-                      placeholder="Buscar rubro por nombre..."
+                      class="form-control"
+                      placeholder="Buscar por nombre o código..."
                       [ngModel]="searchTerm()"
                       (ngModelChange)="onSearchInput($event)"
                     />
                   </div>
 
-                  @if (isSearching()) {
-                    <div class="text-center py-4 text-muted">
-                      <div class="spinner-border spinner-border-sm text-primary"></div>
-                      <span class="small ms-2">Buscando...</span>
-                    </div>
-                  } @else {
-                    <div class="rubros-list flex-grow-1 overflow-auto" style="max-height: 400px;">
-                      @for (rubro of rubros(); track rubro.rubroId) {
-                        <div
-                          class="card mb-2 rubro-card cursor-pointer border shadow-sm"
-                          role="button"
-                          tabindex="0"
-                          (click)="addRubro(rubro)"
-                          (keydown.enter)="addRubro(rubro)"
-                          (keydown.space)="addRubro(rubro); $event.preventDefault()"
-                        >
+                  <div class="overflow-y-auto flex-grow-1 pe-2" style="max-height: 450px;">
+                    @if (isSearching()) {
+                      <div class="text-center py-4 text-muted">
+                        <span class="spinner-border spinner-border-sm" role="status"></span>
+                        Cargando catálogo...
+                      </div>
+                    } @else if (rubros().length === 0) {
+                      <div class="text-center py-4 text-muted">No se encontraron rubros.</div>
+                    } @else {
+                      <div class="d-flex flex-column gap-2">
+                        @for (rubro of rubros(); track rubro.rubroId) {
                           <div
-                            class="card-body p-3 d-flex justify-content-between align-items-center"
+                            class="card border p-3 cursor-pointer rubro-card"
+                            (click)="addRubro(rubro)"
+                            (keydown.enter)="addRubro(rubro)"
+                            tabindex="0"
+                            role="button"
                           >
-                            <div>
-                              <div class="fw-bold text-dark small mb-1">{{ rubro.nombre }}</div>
-                              <div class="text-muted" style="font-size: 0.75rem;">
-                                {{ rubro.descripcion }}
+                            <div class="d-flex justify-content-between align-items-start">
+                              <div>
+                                <span class="fw-bold text-dark d-block">{{ rubro.nombre }}</span>
+                                <small class="text-muted">{{ rubro.descripcion }}</small>
+                                <div class="mt-1">
+                                  <span class="badge badge-soft-secondary me-1">{{
+                                    rubro.tipoRubro
+                                  }}</span>
+                                </div>
                               </div>
-                            </div>
-                            <div class="text-end ms-2">
-                              <div class="fw-bold text-primary">
-                                {{ rubro.precioUnitario | currency }}
+                              <div class="text-end">
+                                <span class="fw-bold text-primary fs-6">{{
+                                  rubro.precioUnitario | currency
+                                }}</span>
+                                @if (rubro.tarifaImpuesto) {
+                                  <small class="text-muted d-block"
+                                    >IVA {{ rubro.tarifaImpuesto.porcentaje }}%</small
+                                  >
+                                }
                               </div>
-                              <span class="badge badge-soft-secondary" style="font-size: 0.65rem">
-                                {{
-                                  rubro.tarifaImpuesto
-                                    ? rubro.tarifaImpuesto.porcentaje + '% IVA'
-                                    : 'Sin IVA'
-                                }}
-                              </span>
                             </div>
                           </div>
-                        </div>
-                      }
-
-                      @if (rubros().length === 0) {
-                        <div class="text-center py-4 text-muted small bg-light rounded">
-                          No se encontraron rubros.
-                        </div>
-                      }
-                    </div>
-                  }
+                        }
+                      </div>
+                    }
+                  </div>
                 </div>
 
                 <!-- Right: Selected Items -->
                 <div class="col-md-7 d-flex flex-column h-100">
-                  <h6 class="fw-bold mb-3 text-secondary">Items a Cobrar</h6>
+                  <h6 class="fw-bold mb-3 text-secondary">Conceptos Seleccionados</h6>
 
-                  <div class="table-responsive flex-grow-1" style="max-height: 400px;">
-                    <table class="table table-sm align-middle" style="font-size: 0.85rem">
-                      <thead class="table-light">
-                        <tr>
-                          <th>Rubro</th>
-                          <th style="width: 80px" class="text-center">Cant.</th>
-                          <th class="text-end">P.Unit</th>
-                          <th class="text-end">IVA</th>
-                          <th class="text-end">Total</th>
-                          <th style="width: 40px"></th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        @for (item of items(); track item.rubroId; let idx = $index) {
+                  <div class="overflow-y-auto flex-grow-1 pe-2" style="max-height: 380px;">
+                    @if (items().length === 0) {
+                      <div
+                        class="d-flex flex-column align-items-center justify-content-center h-100 text-muted py-5"
+                      >
+                        <i class="bi bi-basket3 fs-1 mb-2"></i>
+                        <span>No hay rubros seleccionados.</span>
+                        <small>Haga clic en un rubro de la izquierda para agregarlo.</small>
+                      </div>
+                    } @else {
+                      <table class="table align-middle">
+                        <thead class="table-light">
                           <tr>
-                            <td>
-                              <div class="fw-bold text-dark">{{ item.rubroNombre }}</div>
-                              <input
-                                type="text"
-                                class="form-control form-control-sm mt-1 shadow-none"
-                                placeholder="Descripción..."
-                                [ngModel]="item.descripcion"
-                                (ngModelChange)="updateDescripcion(idx, $event)"
-                              />
-                            </td>
-                            <td>
-                              <input
-                                type="number"
-                                min="1"
-                                class="form-control form-control-sm text-center shadow-none"
-                                [ngModel]="item.cantidad"
-                                (ngModelChange)="updateCantidad(idx, $event)"
-                              />
-                            </td>
-                            <td class="text-end">{{ item.precioUnitario | currency }}</td>
-                            <td class="text-end">{{ item.iva | currency }}</td>
-                            <td class="text-end fw-bold">{{ item.total | currency }}</td>
-                            <td class="text-center">
-                              <button
-                                class="btn btn-sm text-danger shadow-none p-1"
-                                (click)="removeItem(idx)"
-                              >
-                                <i class="bi bi-trash"></i>
-                              </button>
-                            </td>
+                            <th>Rubro</th>
+                            <th style="width: 100px;">Cant.</th>
+                            <th class="text-end" style="width: 110px;">P. Unit.</th>
+                            <th class="text-end" style="width: 110px;">Total</th>
+                            <th style="width: 40px;"></th>
                           </tr>
-                        }
-                        @if (items().length === 0) {
-                          <tr>
-                            <td colspan="6" class="text-center py-5 text-muted bg-light">
-                              <i class="bi bi-cart-x fs-3 d-block mb-2"></i>
-                              Seleccione rubros del catálogo a la izquierda.
-                            </td>
-                          </tr>
-                        }
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody>
+                          @for (item of items(); track item.rubroId; let idx = $index) {
+                            <tr>
+                              <td>
+                                <span class="fw-medium text-dark d-block">{{
+                                  item.rubroNombre
+                                }}</span>
+                                <input
+                                  type="text"
+                                  class="form-control form-control-sm mt-1"
+                                  placeholder="Nota/Descripción personalizada..."
+                                  [ngModel]="item.descripcion"
+                                  (ngModelChange)="updateDescripcion(idx, $event)"
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  class="form-control form-control-sm text-center"
+                                  min="1"
+                                  [ngModel]="item.cantidad"
+                                  (ngModelChange)="updateCantidad(idx, $event)"
+                                />
+                              </td>
+                              <td class="text-end">
+                                {{ item.precioUnitario | currency }}
+                                @if (item.porcentajeIva > 0) {
+                                  <small class="text-muted d-block"
+                                    >+{{ item.porcentajeIva }}% IVA</small
+                                  >
+                                }
+                              </td>
+                              <td class="text-end fw-bold">
+                                {{ item.total | currency }}
+                              </td>
+                              <td>
+                                <button
+                                  type="button"
+                                  class="btn btn-sm btn-link text-danger p-0"
+                                  (click)="removeItem(idx)"
+                                  title="Quitar"
+                                >
+                                  <i class="bi bi-trash"></i>
+                                </button>
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    }
                   </div>
 
-                  <!-- Totals -->
-                  <div class="mt-3 bg-light p-3 rounded border">
-                    <div class="d-flex justify-content-between mb-1 small">
-                      <span class="text-muted">Subtotal:</span>
-                      <span class="fw-medium">{{ subtotal() | currency }}</span>
+                  <!-- Summary Section -->
+                  <div class="border-top pt-3 mt-auto">
+                    <div class="d-flex justify-content-between mb-1 text-muted">
+                      <span>Subtotal:</span>
+                      <span>{{ subtotal() | currency }}</span>
                     </div>
-                    <div class="d-flex justify-content-between mb-2 small">
-                      <span class="text-muted">IVA:</span>
-                      <span class="fw-medium">{{ iva() | currency }}</span>
+                    <div class="d-flex justify-content-between mb-2 text-muted">
+                      <span>IVA:</span>
+                      <span>{{ iva() | currency }}</span>
                     </div>
-                    <div class="d-flex justify-content-between pt-2 border-top">
-                      <span class="fw-bold">Total a Cobrar:</span>
-                      <span class="fw-bold fs-5 text-primary">{{ total() | currency }}</span>
+                    <div
+                      class="d-flex justify-content-between fs-5 fw-bold text-dark border-top pt-2"
+                    >
+                      <span>Total a Cobrar:</span>
+                      <span class="text-primary">{{ total() | currency }}</span>
                     </div>
                   </div>
                 </div>
@@ -254,29 +265,18 @@ import type {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CobroPuntualModalComponent {
-  @Input({ required: true }) set open(value: boolean) {
-    this._open = value;
-    if (value) {
-      this.loadRubros();
-      this.items.set([]);
-      this.error.set('');
-    }
-  }
-  get open(): boolean {
-    return this._open;
-  }
-  private _open = false;
+  readonly open = input<boolean>(false);
 
-  @Input() contratoId!: string;
-  @Input() clienteId!: string;
-  @Input() fechaPago!: string;
-  @Input() banco?: string;
-  @Input() tarjetaCredito?: string;
-  @Input() numeroOperacion?: string;
-  @Input() observaciones?: string;
+  readonly contratoId = input.required<string>();
+  readonly clienteId = input.required<string>();
+  readonly fechaPago = input.required<string>();
+  readonly banco = input<string | undefined>(undefined);
+  readonly tarjetaCredito = input<string | undefined>(undefined);
+  readonly numeroOperacion = input<string | undefined>(undefined);
+  readonly observaciones = input<string | undefined>(undefined);
 
-  @Output() cobroPuntualCreated = new EventEmitter<{ pagoId: number }>();
-  @Output() closed = new EventEmitter<void>();
+  readonly cobroPuntualCreated = output<{ pagoId: number }>();
+  readonly closed = output<void>();
 
   private readonly paymentsService = inject(PaymentsService);
 
@@ -286,6 +286,16 @@ export class CobroPuntualModalComponent {
   readonly isSearching = signal(false);
   readonly isSubmitting = signal(false);
   readonly error = signal('');
+
+  constructor() {
+    effect(() => {
+      if (this.open()) {
+        this.loadRubros();
+        this.items.set([]);
+        this.error.set('');
+      }
+    });
+  }
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -380,19 +390,19 @@ export class CobroPuntualModalComponent {
     this.error.set('');
 
     const dto: ICreateCobroPuntualDto = {
-      clienteId: this.clienteId,
-      contratoId: this.contratoId,
-      fechaPago: this.fechaPago,
+      clienteId: this.clienteId(),
+      contratoId: this.contratoId(),
+      fechaPago: this.fechaPago(),
       items: this.items().map((i) => ({
         rubroId: i.rubroId,
         cantidad: i.cantidad,
         ...(i.descripcion ? { descripcion: i.descripcion } : {}),
       })),
       montoTotalRecibido: this.total(),
-      banco: this.banco,
-      tarjetaCredito: this.tarjetaCredito,
-      numeroOperacion: this.numeroOperacion,
-      observaciones: this.observaciones,
+      banco: this.banco(),
+      tarjetaCredito: this.tarjetaCredito(),
+      numeroOperacion: this.numeroOperacion(),
+      observaciones: this.observaciones(),
     };
 
     this.paymentsService.createCobroPuntual(dto).subscribe({

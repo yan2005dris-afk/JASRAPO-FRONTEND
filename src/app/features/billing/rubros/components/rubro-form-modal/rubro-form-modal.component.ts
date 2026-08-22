@@ -19,10 +19,12 @@ import {
 } from '../../interfaces/irubro.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 
+import { PickerInputComponent } from '../../../../../shared/components/picker-input/picker-input.component';
+
 @Component({
   selector: 'app-rubro-form-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PickerInputComponent],
   templateUrl: './rubro-form-modal.component.html',
   styleUrl: './rubro-form-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,6 +35,7 @@ export class RubroFormModalComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly rubro = input<IRubro | null>(null);
+  readonly initialCategoriaTarifaId = input<number | null>(null);
   readonly saved = output<void>();
   readonly closed = output<void>();
 
@@ -42,10 +45,15 @@ export class RubroFormModalComponent implements OnInit {
   precioUnitario = 0;
   tipoRubro: TipoRubro = 'FIJO';
   tarifaImpuestoId: number | null = null;
+  categoriaTarifaId: number | null = null;
   activo = true;
   esAutomatico = false;
   isLoading = false;
   tarifasImpuesto: ITarifaImpuesto[] = [];
+
+  // Picker States
+  isTipoPickerOpen = false;
+  isTarifaPickerOpen = false;
 
   readonly tipoRubroOptions: { value: TipoRubro; label: string }[] = [
     { value: 'FIJO', label: 'Fijo (Cargo Fijo / Tasa)' },
@@ -55,6 +63,74 @@ export class RubroFormModalComponent implements OnInit {
     { value: 'SERVICIO', label: 'Servicio / Instalación' },
     { value: 'OTRO', label: 'Otro' },
   ];
+
+  get selectedTipoLabel(): string {
+    const match = this.tipoRubroOptions.find((t) => t.value === this.tipoRubro);
+    return match ? match.label : this.tipoRubro;
+  }
+
+  get selectedTarifaLabel(): string {
+    const match = this.tarifasImpuesto.find((t) => t.id === this.tarifaImpuestoId);
+    return match ? `${match.descripcion} (${match.porcentaje}%)` : '';
+  }
+
+  get currentPorcentajeIva(): number {
+    const match = this.tarifasImpuesto.find((t) => t.id === this.tarifaImpuestoId);
+    return match ? Number(match.porcentaje) : 0;
+  }
+
+  get valorIva(): number {
+    const base = Number(this.precioUnitario) || 0;
+    return (base * this.currentPorcentajeIva) / 100;
+  }
+
+  get precioTotalConIva(): number {
+    const base = Number(this.precioUnitario) || 0;
+    return base + this.valorIva;
+  }
+
+  setTipoPickerOpen(open: boolean): void {
+    this.isTipoPickerOpen = open;
+    if (open) {
+      this.isTarifaPickerOpen = false;
+    }
+    this.cdr.markForCheck();
+  }
+
+  setTarifaPickerOpen(open: boolean): void {
+    this.isTarifaPickerOpen = open;
+    if (open) {
+      this.isTipoPickerOpen = false;
+    }
+    this.cdr.markForCheck();
+  }
+
+  selectTipoRubro(opt: { value: TipoRubro; label: string }): void {
+    this.tipoRubro = opt.value;
+    this.isTipoPickerOpen = false;
+
+    // Autoselección inteligente de IVA según la naturaleza del tipo de rubro:
+    // - BIEN y SERVICIO gravan IVA (15%)
+    // - FIJO, VARIABLE, MULTA son tarifa 0%
+    if (this.tarifasImpuesto.length > 0) {
+      const targetPct =
+        this.tipoRubro === 'BIEN' || this.tipoRubro === 'SERVICIO' || this.tipoRubro === 'OTRO'
+          ? 15
+          : 0;
+      const matchingTarifa = this.tarifasImpuesto.find((t) => Number(t.porcentaje) === targetPct);
+      if (matchingTarifa) {
+        this.tarifaImpuestoId = matchingTarifa.id;
+      }
+    }
+
+    this.cdr.markForCheck();
+  }
+
+  selectTarifaImpuesto(t: ITarifaImpuesto): void {
+    this.tarifaImpuestoId = t.id;
+    this.isTarifaPickerOpen = false;
+    this.cdr.markForCheck();
+  }
 
   ngOnInit(): void {
     this.loadTarifasImpuesto();
@@ -66,8 +142,11 @@ export class RubroFormModalComponent implements OnInit {
       this.precioUnitario = Number(r.precioUnitario);
       this.tipoRubro = r.tipoRubro;
       this.tarifaImpuestoId = r.tarifaImpuestoId;
+      this.categoriaTarifaId = r.categoriaTarifaId ?? null;
       this.activo = r.activo;
       this.esAutomatico = r.esAutomatico ?? false;
+    } else {
+      this.categoriaTarifaId = this.initialCategoriaTarifaId();
     }
   }
 
@@ -113,6 +192,7 @@ export class RubroFormModalComponent implements OnInit {
         precioUnitario: Number(this.precioUnitario),
         tipoRubro: this.tipoRubro,
         tarifaImpuestoId: Number(this.tarifaImpuestoId),
+        categoriaTarifaId: this.categoriaTarifaId,
         activo: this.activo,
         esAutomatico: this.esAutomatico,
       };
@@ -138,6 +218,7 @@ export class RubroFormModalComponent implements OnInit {
         precioUnitario: Number(this.precioUnitario),
         tipoRubro: this.tipoRubro,
         tarifaImpuestoId: Number(this.tarifaImpuestoId),
+        categoriaTarifaId: this.categoriaTarifaId,
         activo: this.activo,
         esAutomatico: false,
       };

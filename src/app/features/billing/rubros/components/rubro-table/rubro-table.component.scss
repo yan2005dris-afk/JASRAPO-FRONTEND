@@ -1,0 +1,25 @@
+.custom-table {
+  th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    color: #6c757d;
+    padding: 0.85rem 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  td {
+    padding: 0.85rem 0.75rem;
+    border-bottom: 1px solid #f1f3f5;
+  }
+}
+
+.selectable-row {
+  cursor: pointer;
+  transition: background-color 0.15s ease-in-out;
+
+  &:hover {
+    background-color: rgba(13, 110, 253, 0.04);
+  }
+}

@@ -38,15 +38,15 @@ describe('ReadingsTableComponent', () => {
 
   it('should create the component with default inputs', () => {
     expect(component).toBeTruthy();
-    expect(component.readings).toEqual([]);
-    expect(component.showSector).toBe(true);
-    expect(component.showActions).toBe(true);
-    expect(component.allowReReading).toBe(true);
+    expect(component.readings()).toEqual([]);
+    expect(component.showSector()).toBe(true);
+    expect(component.showActions()).toBe(true);
+    expect(component.allowReReading()).toBe(true);
   });
 
   describe('Valid Data Scenarios', () => {
     it('should render readings and emit viewDetail event when requested', () => {
-      component.readings = [validReading];
+      fixture.componentRef.setInput('readings', [validReading]);
       fixture.detectChanges();
 
       const spy = vi.fn();
@@ -89,20 +89,20 @@ describe('ReadingsTableComponent', () => {
 
   describe('Invalid / Partial Data Scenarios', () => {
     it('should safely handle reading items without optional fields', () => {
-      component.readings = [emptyOrInvalidReading];
+      fixture.componentRef.setInput('readings', [emptyOrInvalidReading]);
       fixture.detectChanges();
 
-      expect(component.readings[0].lecturaId).toBe('2');
-      expect(component.readings[0].guia).toBeUndefined();
-      expect(component.readings[0].clienteNombre).toBeUndefined();
-      expect(component.readings[0].consumoCalculado).toBeUndefined();
+      expect(component.readings()[0].lecturaId).toBe('2');
+      expect(component.readings()[0].guia).toBeUndefined();
+      expect(component.readings()[0].clienteNombre).toBeUndefined();
+      expect(component.readings()[0].consumoCalculado).toBeUndefined();
     });
 
     it('should handle empty readings array gracefully', () => {
-      component.readings = [];
+      fixture.componentRef.setInput('readings', []);
       fixture.detectChanges();
 
-      expect(component.readings.length).toBe(0);
+      expect(component.readings().length).toBe(0);
     });
   });
 });

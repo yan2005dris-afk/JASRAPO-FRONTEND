@@ -18,6 +18,7 @@ export interface IPreInvoiceDetail {
   iva: number;
   total: number;
   codigoImpuestoSri?: string | null;
+  codigoSistemaRubro?: string | null;
   descuento?: number;
 }
 
@@ -45,6 +46,7 @@ export interface IPreInvoice {
   periodoNombre?: string | null;
   periodoFechaInicio?: string | Date | null;
   periodoFechaFin?: string | Date | null;
+  mes?: number;
   createdAt: string | Date;
   updatedAt: string | Date;
   detalles?: IPreInvoiceDetail[];

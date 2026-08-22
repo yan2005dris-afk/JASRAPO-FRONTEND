@@ -239,25 +239,28 @@
                   </button>
                 </div>
                 <div class="row g-2 mt-2">
-                  <div class="col-sm-6 detail-item">
-                    <i class="bi bi-cash-coin"></i>
-                    <div>
-                      <small class="text-muted d-block">Costo fijo</small>
-                      <span class="text-dark">${{ tariff.valorBase }}</span>
-                    </div>
-                  </div>
-                  <div class="col-sm-6 detail-item">
-                    <i class="bi bi-graph-up"></i>
-                    <div>
-                      <small class="text-muted d-block">Excedente por m³</small>
-                      <span class="text-dark">${{ tariff.valorExcedenteM3 }}</span>
-                    </div>
-                  </div>
                   <div class="col-12 detail-item">
-                    <i class="bi bi-droplet"></i>
+                    <i class="bi bi-info-circle"></i>
                     <div>
-                      <small class="text-muted d-block">Consumo mínimo mensual</small>
-                      <span class="text-dark">{{ tariff.consumoMinimoMensual }} m³</span>
+                      <small class="text-muted d-block">Descripción</small>
+                      <span class="text-dark">{{ tariff.descripcion || 'Sin descripción' }}</span>
+                    </div>
+                  </div>
+                  <div class="col-sm-6 detail-item">
+                    <i class="bi bi-droplet-half"></i>
+                    <div>
+                      <small class="text-muted d-block">Consumo base incluido</small>
+                      <span class="text-dark">{{ tariff.consumoMinimoMensual ?? 10 }} m³</span>
+                    </div>
+                  </div>
+                  <div class="col-sm-6 detail-item">
+                    <i class="bi bi-tags"></i>
+                    <div>
+                      <small class="text-muted d-block">Rubros asociados</small>
+                      <span class="text-dark"
+                        >{{ tariff.rubros?.length ?? 0 }}
+                        {{ (tariff.rubros?.length ?? 0) === 1 ? 'rubro' : 'rubros' }}</span
+                      >
                     </div>
                   </div>
                 </div>

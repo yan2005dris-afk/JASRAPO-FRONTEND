@@ -142,64 +142,14 @@
             />
           </div>
 
-          <!-- 3. Período Contable (Autocomplete) -->
-          <div class="col-md-6 position-relative">
-            <label for="inputPeriodoSearch" class="form-label fw-semibold text-dark small mb-1">
-              Período Contable
-            </label>
-            <div class="input-group">
-              <span class="input-group-text bg-white text-muted">
-                <i class="bi bi-calendar-event"></i>
-              </span>
-              <input
-                id="inputPeriodoSearch"
-                type="text"
-                class="form-control shadow-none"
-                placeholder="Buscar período (ej. Enero 2026)..."
-                [value]="periodSearchQuery"
-                [disabled]="isLoading || isLoadingPeriods"
-                (input)="onPeriodSearchInput($any($event.target).value)"
-                (focus)="filteredPeriods.length > 0 ? (isPeriodAutocompleteOpen = true) : null"
-                autocomplete="off"
-              />
-              @if (selectedPeriod || periodSearchQuery) {
-                <button
-                  type="button"
-                  class="btn btn-outline-secondary"
-                  (click)="clearSelectedPeriod()"
-                  [disabled]="isLoading"
-                  title="Limpiar período"
-                >
-                  <i class="bi bi-x-lg"></i>
-                </button>
-              }
-            </div>
-
-            <!-- Autocomplete Dropdown Períodos -->
-            @if (isPeriodAutocompleteOpen) {
-              <div class="autocomplete-dropdown shadow-lg rounded-3 border bg-white mt-1 py-1">
-                @if (filteredPeriods.length === 0) {
-                  <div class="px-3 py-2 text-muted small">
-                    No se encontraron períodos para "{{ periodSearchQuery }}".
-                  </div>
-                } @else {
-                  @for (p of filteredPeriods; track p.periodoId) {
-                    <button
-                      type="button"
-                      class="dropdown-item px-3 py-2 text-start d-flex justify-content-between align-items-center"
-                      (click)="selectPeriod(p)"
-                    >
-                      <div class="fw-semibold text-dark small">
-                        {{ p.nombre || 'Período #' + p.periodoId }}
-                      </div>
-                      <span class="badge bg-light text-secondary border extra-small">
-                        {{ p.estado }}
-                      </span>
-                    </button>
-                  }
-                }
-              </div>
-            }
+          <!-- 3. Período Contable (Componente Compartido) -->
+          <div class="col-md-6">
+            <app-period-picker
+              inputId="inputPeriodoSearch"
+              [selectedPeriodId]="periodoId"
+              [disabled]="isLoading"
+              (periodSelected)="onPeriodSelectedFromPicker($event)"
+            />
           </div>
 
           <!-- Lectura Anterior -->
