@@ -1,5 +1,8 @@
 <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg" style="max-width: 720px">
+  <div
+    class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg"
+    style="max-width: 720px"
+  >
     <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
       <div class="modal-header border-bottom px-4 py-3 bg-white">
         <div class="d-flex align-items-center gap-3">
@@ -67,7 +70,7 @@
                   id="comunidadInput"
                   type="text"
                   class="form-control bg-light border-start-0 text-dark fw-medium"
-                  [value]="contract().comunidad.nombre || ('Comunidad #' + contract().comunidadId)"
+                  [value]="contract().comunidad.nombre || 'Comunidad #' + contract().comunidadId"
                   disabled
                 />
               </div>
@@ -75,7 +78,10 @@
             </div>
 
             <div class="col-md-6">
-              <label for="fechaPlanificadaInput" class="form-label fw-semibold small text-dark mb-1">
+              <label
+                for="fechaPlanificadaInput"
+                class="form-label fw-semibold small text-dark mb-1"
+              >
                 Fecha planificada <span class="text-danger">*</span>
               </label>
               <app-date-picker
@@ -95,10 +101,12 @@
         @if (mode() === 'existing') {
           <div class="mb-3">
             <div class="d-flex justify-content-between align-items-center mb-2">
-              <label class="form-label fw-semibold small text-dark mb-0 d-flex align-items-center gap-2">
+              <span
+                class="form-label fw-semibold small text-dark mb-0 d-flex align-items-center gap-2"
+              >
                 <i class="bi bi-map text-primary"></i>
                 Rutas de Instalación Disponibles (PENDIENTE)
-              </label>
+              </span>
               @if (isLoadingRoutes()) {
                 <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
               }
@@ -112,12 +120,16 @@
               <div class="alert alert-warning small mb-0 d-flex align-items-center gap-2">
                 <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
                 <div>
-                  No hay rutas de <strong>INSTALACION</strong> en estado <strong>PENDIENTE</strong>. Crea una nueva en la pestaña anterior.
+                  No hay rutas de <strong>INSTALACION</strong> en estado <strong>PENDIENTE</strong>.
+                  Crea una nueva en la pestaña anterior.
                 </div>
               </div>
             } @else {
               <div class="table-responsive bg-white rounded-3 border">
-                <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.825rem">
+                <table
+                  class="table table-sm table-hover align-middle mb-0"
+                  style="font-size: 0.825rem"
+                >
                   <thead class="table-light">
                     <tr>
                       <th class="text-center py-2" style="width: 40px">Sel.</th>
@@ -147,7 +159,11 @@
                           <span class="text-muted ms-1 small">#{{ r.rutaId }}</span>
                         </td>
                         <td class="py-2 text-muted">
-                          {{ r.fechaPlanificada ? (r.fechaPlanificada | date: 'dd/MM/yyyy') : 'Sin fecha' }}
+                          {{
+                            r.fechaPlanificada
+                              ? (r.fechaPlanificada | date: 'dd/MM/yyyy')
+                              : 'Sin fecha'
+                          }}
                         </td>
                         <td class="py-2 text-center">
                           <app-status-badge [status]="r.estado"></app-status-badge>

@@ -15,7 +15,9 @@
     "e2e:ui": "playwright test --ui",
     "e2e:headed": "playwright test --headed",
     "gen:api": "tsx scripts/gen-api.ts",
-    "gen:api:smoke": "tsx scripts/gen-api-smoke.ts"
+    "gen:api:smoke": "tsx scripts/gen-api-smoke.ts",
+    "ci": "pnpm run format:check && pnpm run lint && pnpm run build && pnpm test",
+    "ci:fix": "pnpm run format:fix && pnpm run lint:fix && pnpm run build && pnpm test"
   },
   "prettier": {
     "printWidth": 100,
