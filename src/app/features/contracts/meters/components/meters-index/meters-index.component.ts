@@ -12,6 +12,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { MetersFormComponent } from '../meters-form/meters-form.component';
+import { MeterHistoryModalComponent } from '../meter-history-modal/meter-history-modal.component';
 import {
   IMeter,
   ICreateMeterPayload,
@@ -41,6 +42,7 @@ import {
     CommonModule,
     FormsModule,
     MetersFormComponent,
+    MeterHistoryModalComponent,
     PaginationComponent,
     DropdownComponent,
     TableSkeletonComponent,
@@ -88,6 +90,10 @@ export class MetersIndexComponent implements OnInit {
   // Control de modales
   showModal = false;
   isEditMode = false;
+
+  // Modal de historial
+  showHistoryModal = false;
+  historyMeter: IMeter | null = null;
 
   // Control de dropdown de fila
   openDropdownId: number | null = null;
@@ -372,6 +378,19 @@ export class MetersIndexComponent implements OnInit {
     this.isEditMode = true;
     this.showModal = true;
     this.modalErrorMessage = '';
+    this.cdr.detectChanges();
+  }
+
+  openHistory(meter: IMeter): void {
+    this.historyMeter = meter;
+    this.showHistoryModal = true;
+    this.openDropdownId = null;
+    this.cdr.detectChanges();
+  }
+
+  closeHistory(): void {
+    this.showHistoryModal = false;
+    this.historyMeter = null;
     this.cdr.detectChanges();
   }
 
