@@ -42,12 +42,12 @@ async function fetchSpec(): Promise<unknown> {
   return res.json();
 }
 
-type OpenApiOperation = { tags?: string[] };
+interface OpenApiOperation { tags?: string[] }
 type OpenApiPathItem = Record<string, OpenApiOperation | undefined>;
-type OpenApiSpec = {
+interface OpenApiSpec {
   paths?: Record<string, OpenApiPathItem>;
-  tags?: Array<{ name: string; description?: string }>;
-};
+  tags?: { name: string; description?: string }[];
+}
 
 function filterSpec(raw: unknown): OpenApiSpec {
   const spec = raw as OpenApiSpec;
@@ -56,7 +56,7 @@ function filterSpec(raw: unknown): OpenApiSpec {
   const filteredPaths: Record<string, OpenApiPathItem> = {};
   for (const [path, item] of Object.entries(spec.paths ?? {})) {
     if (!item || typeof item !== 'object') continue;
-    const ops = Object.values(item) as Array<OpenApiOperation | undefined>;
+    const ops = Object.values(item) as (OpenApiOperation | undefined)[];
     const hit = ops.some(
       (op) => Array.isArray(op?.tags) && op!.tags.some((t) => ALLOWED_TAGS.has(t)),
     );
