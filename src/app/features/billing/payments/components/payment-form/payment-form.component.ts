@@ -353,8 +353,21 @@ export class PaymentFormComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
+  isInstalacionPreInvoice(pre: IPreInvoice): boolean {
+    if (pre.mes === 0) return true;
+    if (pre.detalles && pre.detalles.length > 0) {
+      return pre.detalles.some(
+        (d) =>
+          d.codigoImpuestoSri?.startsWith('SERV-GUIA-') ||
+          d.descripcion?.toLowerCase().includes('instalación') ||
+          d.descripcion?.toLowerCase().includes('guía de remisión'),
+      );
+    }
+    return false;
+  }
+
   getPeriodLabel(pre: IPreInvoice): string {
-    if (pre.mes === 0) {
+    if (this.isInstalacionPreInvoice(pre)) {
       return 'Cargo Único — Instalación';
     }
     if (pre.periodoNombre && pre.periodoNombre.trim()) {
