@@ -356,12 +356,7 @@ export class PaymentFormComponent implements OnInit {
   isInstalacionPreInvoice(pre: IPreInvoice): boolean {
     if (pre.mes === 0) return true;
     if (pre.detalles && pre.detalles.length > 0) {
-      return pre.detalles.some(
-        (d) =>
-          d.codigoImpuestoSri?.startsWith('SERV-GUIA-') ||
-          d.descripcion?.toLowerCase().includes('instalación') ||
-          d.descripcion?.toLowerCase().includes('guía de remisión'),
-      );
+      return pre.detalles.some((d) => d.codigoSistemaRubro === 'INSTALACION');
     }
     return false;
   }
