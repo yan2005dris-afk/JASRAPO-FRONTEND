@@ -15,9 +15,8 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 11.22.0
+        uses: pnpm/action-setup@v4
+
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
@@ -28,7 +27,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Verificar Formato (Prettier)
-        run: pnpm run format:check || pnpm exec prettier --check .
+        run: pnpm run format:check
 
       - name: Ejecutar Linter (ESLint)
         run: pnpm run lint
