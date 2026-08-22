@@ -558,7 +558,7 @@
                         <td>
                           <div class="fw-bold text-dark d-flex align-items-center gap-1">
                             <span>{{ getPeriodLabel(pre) }}</span>
-                            @if (pre.mes === 0) {
+                            @if (isInstalacionPreInvoice(pre)) {
                               <span
                                 class="badge bg-primary-subtle text-primary border border-primary-subtle"
                                 style="font-size: 0.68rem"
