@@ -13,10 +13,12 @@ import { finalize } from 'rxjs';
 import { IMeter, IMeterHistory, IReplaceMeterResponse } from '../../interfaces/imeter.interface';
 import { MetersService } from '../../services/meters.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { EmptyStateComponent } from '../../../../../shared/components/empty-state/empty-state.component';
+import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 
 @Component({
   selector: 'app-meter-history-modal',
-  imports: [CommonModule],
+  imports: [CommonModule, EmptyStateComponent, StatusBadgeComponent],
   templateUrl: './meter-history-modal.component.html',
   styleUrl: './meter-history-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

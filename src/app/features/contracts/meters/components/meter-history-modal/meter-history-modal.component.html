@@ -23,13 +23,14 @@
     } @else if (errorMessage()) {
       <div class="alert alert-danger small mb-0">{{ errorMessage() }}</div>
     } @else if (history().length === 0) {
-      <div class="text-center py-4 text-muted">
-        <i class="bi bi-clock-history fs-2 d-block mb-2 opacity-50"></i>
-        <span class="small">Este medidor no tiene historial registrado.</span>
-      </div>
+      <app-empty-state
+        icon="bi bi-clock-history"
+        title="Sin historial"
+        description="Este medidor no tiene historial registrado."
+      />
     } @else {
       <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0 small">
+        <table class="table table-hover align-middle mb-0 small custom-table">
           <thead>
             <tr>
               <th class="text-muted fw-semibold">Contrato</th>
@@ -104,9 +105,15 @@
         <dt class="col-sm-6 text-muted fw-semibold">Período destino</dt>
         <dd class="col-sm-6">{{ d.periodoDestinoId ?? '—' }}</dd>
         <dt class="col-sm-6 text-muted fw-semibold">Estado de resolución</dt>
-        <dd class="col-sm-6">{{ d.estado }}</dd>
+        <dd class="col-sm-6"><app-status-badge [status]="d.estado" /></dd>
         <dt class="col-sm-6 text-muted fw-semibold">Estado de aprobación</dt>
-        <dd class="col-sm-6">{{ d.estadoAprobacion ?? '—' }}</dd>
+        <dd class="col-sm-6">
+          @if (d.estadoAprobacion) {
+            <app-status-badge [status]="d.estadoAprobacion" />
+          } @else {
+            —
+          }
+        </dd>
         <dt class="col-sm-6 text-muted fw-semibold">Autorizado en</dt>
         <dd class="col-sm-6">{{ d.autorizadoEn ?? '—' }}</dd>
       </dl>
