@@ -13,7 +13,9 @@
     "format:fix": "prettier --write \"src/**/*.{ts,html,scss,json}\"",
     "e2e": "playwright test",
     "e2e:ui": "playwright test --ui",
-    "e2e:headed": "playwright test --headed"
+    "e2e:headed": "playwright test --headed",
+    "gen:api": "tsx scripts/gen-api.ts",
+    "gen:api:smoke": "tsx scripts/gen-api-smoke.ts"
   },
   "prettier": {
     "printWidth": 100,
@@ -68,7 +70,10 @@
     "prettier": "^3.8.1",
     "typescript": "~5.9.2",
     "typescript-eslint": "8.56.1",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.0",
+    "orval": "^7.0.0",
+    "@orval/angular": "^7.0.0",
+    "tsx": "^4.21.0"
   },
   "overrides": {
     "tar": ">=7.5.3",
