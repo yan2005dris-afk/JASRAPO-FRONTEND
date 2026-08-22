@@ -135,8 +135,8 @@ export class ConnectionHistoryComponent {
 
   readonly saldoFinal = computed(() => {
     const pfs = this.reportData()?.prefacturas ?? [];
-    if (pfs.length === 0) return '0.00';
-    return Number(pfs[pfs.length - 1]?.saldoActual ?? 0).toFixed(2);
+    const sum = pfs.reduce((s, pf) => s + Number(pf.saldoActual ?? 0), 0);
+    return sum.toFixed(2);
   });
 
   private buildFilters(): IConnectionHistoryFilters | null {
