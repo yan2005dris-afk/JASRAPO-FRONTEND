@@ -58,6 +58,8 @@
     "@angular/cli": "^21.1.4",
     "@angular/compiler-cli": "^21.1.0",
     "@eslint/js": "^10.0.1",
+    "@orval/angular": "^7.0.0",
+    "@orval/core": "^8.25.0",
     "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.1.12",
     "@types/pdfmake": "^0.3.2",
@@ -66,14 +68,13 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "jsdom": "^27.1.0",
+    "orval": "^7.0.0",
     "postcss": "^8.5.3",
     "prettier": "^3.8.1",
+    "tsx": "^4.21.0",
     "typescript": "~5.9.2",
     "typescript-eslint": "8.56.1",
-    "vitest": "^4.1.0",
-    "orval": "^7.0.0",
-    "@orval/angular": "^7.0.0",
-    "tsx": "^4.21.0"
+    "vitest": "^4.1.0"
   },
   "overrides": {
     "tar": ">=7.5.3",
