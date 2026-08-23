@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import type { TaskResponse, ReadingWithAnomaly } from '../models/operator.models';
+import type { OperatorRouteResponse, ReadingWithAnomaly } from '../models/operator.models';
 
 /** Respuesta del endpoint GET /operator/readings */
 export interface OperatorReadingResponse {
@@ -31,20 +31,33 @@ export class OperatorService {
   }
 
   /** GET /api/v1/operator/routes — Listar rutas asignadas al operario */
-  getTasks(tipoRuta?: string): Observable<TaskResponse[]> {
+  getRoutes(tipoRuta?: string): Observable<OperatorRouteResponse[]> {
     let params = new HttpParams();
     if (tipoRuta) {
       params = params.set('tipoRuta', tipoRuta);
     }
-    return this.http.get<TaskResponse[]>(`${this.endpoint}/routes`, { params });
+    return this.http.get<OperatorRouteResponse[]>(`${this.endpoint}/routes`, { params });
+  }
+
+  /** Alias de compatibilidad */
+  getTasks(tipoRuta?: string): Observable<OperatorRouteResponse[]> {
+    return this.getRoutes(tipoRuta);
   }
 
   /** PATCH /api/v1/operator/routes/{id}/state — Actualizar estado de una ruta */
-  updateTaskState(
+  updateRouteState(
     rutaId: string,
     dto: { estado: string; observacion?: string },
   ): Observable<unknown> {
     return this.http.patch<unknown>(`${this.endpoint}/routes/${rutaId}/state`, dto);
+  }
+
+  /** Alias de compatibilidad */
+  updateTaskState(
+    rutaId: string,
+    dto: { estado: string; observacion?: string },
+  ): Observable<unknown> {
+    return this.updateRouteState(rutaId, dto);
   }
 
   /** GET /api/v1/operator/readings — Listar lecturas del operario (período actual) */
