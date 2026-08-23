@@ -273,11 +273,12 @@ export class LecturasComponent implements OnInit {
   private async loadCachedMeters(): Promise<void> {
     try {
       await this.meterCache.load();
-      if (this.metersList().length === 0 && this.networkService.isOnline()) {
+      if (this.networkService.isOnline()) {
         await this.fetchAndCacheMeters();
+      } else {
+        const cachedReadings = await this.dbService.getRegisteredReadingsCache();
+        this.registeredReadings.set(cachedReadings);
       }
-      const cachedReadings = await this.dbService.getRegisteredReadingsCache();
-      this.registeredReadings.set(cachedReadings);
       this.autoSelectFromQueryParam();
     } catch (e) {
       console.error('Error al cargar caché offline:', e);

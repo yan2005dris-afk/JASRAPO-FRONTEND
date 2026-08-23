@@ -68,7 +68,7 @@
             minBufferPx="200"
             maxBufferPx="400"
           >
-            <div *cdkVirtualItem="let item of virtualMeterItems()" class="virtual-meter-row">
+            <div *cdkVirtualFor="let item of virtualMeterItems()" class="virtual-meter-row">
               <app-meter-card
                 [meter]="item.meter"
                 [status]="item.status"
