@@ -36,12 +36,15 @@ interface ReadingRecord {
   [key: string]: unknown;
 }
 
+import { ScrollingModule } from '@angular/cdk/scrolling';
+
 @Component({
   selector: 'app-operator-readings',
   standalone: true,
   imports: [
     CommonModule,
     ReactiveFormsModule,
+    ScrollingModule,
     PhotoCaptureComponent,
     MeterSearchBoxComponent,
     MeterCardComponent,
@@ -169,6 +172,22 @@ export class LecturasComponent implements OnInit {
           };
       return { estado: key, info, meters: groups.get(key)! };
     });
+  });
+
+  /** Lista aplanada de medidores con su estado para el viewport de Virtual Scrolling */
+  readonly virtualMeterItems = computed<
+    { meter: IMeterDto; status: { label: string; icon: string; cssClass: string | null } }[]
+  >(() => {
+    const items: {
+      meter: IMeterDto;
+      status: { label: string; icon: string; cssClass: string | null };
+    }[] = [];
+    for (const group of this.metersByEstado()) {
+      for (const meter of group.meters) {
+        items.push({ meter, status: group.info });
+      }
+    }
+    return items;
   });
 
   // Previsualización de la foto capturada en Base64

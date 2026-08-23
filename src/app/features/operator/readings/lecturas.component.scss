@@ -147,6 +147,18 @@
   gap: 0.35rem;
 }
 
+.meters-virtual-viewport {
+  height: 60vh;
+  min-height: 380px;
+  width: 100%;
+  overflow-y: auto;
+  border-radius: 12px;
+}
+
+.virtual-meter-row {
+  padding-bottom: 0.35rem;
+}
+
 .loading-state {
   display: flex;
   align-items: center;

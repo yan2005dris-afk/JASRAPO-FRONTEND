@@ -61,24 +61,21 @@
           </div>
         }
 
-        @for (group of metersByEstado(); track group.estado) {
-          <div class="meters-section-header">
-            <span
-              class="section-label"
-              [class.pending-label]="!group.info.cssClass"
-              [class.done-label]="!!group.info.cssClass"
-            >
-              <i [class]="'bi ' + group.info.icon"></i> {{ group.info.label }}
-            </span>
-            <span class="section-count">{{ group.meters.length }}</span>
-          </div>
-          @for (meter of group.meters; track meter.medidorId) {
-            <app-meter-card
-              [meter]="meter"
-              [status]="group.info"
-              (meterSelect)="selectMeter($event)"
-            />
-          }
+        @if (virtualMeterItems().length > 0) {
+          <cdk-virtual-scroll-viewport
+            itemSize="86"
+            class="meters-virtual-viewport"
+            minBufferPx="200"
+            maxBufferPx="400"
+          >
+            <div *cdkVirtualItem="let item of virtualMeterItems()" class="virtual-meter-row">
+              <app-meter-card
+                [meter]="item.meter"
+                [status]="item.status"
+                (meterSelect)="selectMeter($event)"
+              />
+            </div>
+          </cdk-virtual-scroll-viewport>
         }
       </div>
     </div>
