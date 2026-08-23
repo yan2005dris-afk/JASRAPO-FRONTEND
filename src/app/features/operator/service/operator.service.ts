@@ -30,21 +30,21 @@ export class OperatorService {
     return this.http.get<unknown[]>(`${this.endpoint}/sync`);
   }
 
-  /** GET /api/v1/operator/tasks — Listar tareas/rutas asignadas al operario */
+  /** GET /api/v1/operator/routes — Listar rutas asignadas al operario */
   getTasks(tipoRuta?: string): Observable<TaskResponse[]> {
     let params = new HttpParams();
     if (tipoRuta) {
       params = params.set('tipoRuta', tipoRuta);
     }
-    return this.http.get<TaskResponse[]>(`${this.endpoint}/tasks`, { params });
+    return this.http.get<TaskResponse[]>(`${this.endpoint}/routes`, { params });
   }
 
-  /** PATCH /api/v1/operator/tasks/{id} — Actualizar estado de una tarea */
+  /** PATCH /api/v1/operator/routes/{id}/state — Actualizar estado de una ruta */
   updateTaskState(
     rutaId: string,
     dto: { estado: string; observacion?: string },
   ): Observable<unknown> {
-    return this.http.patch<unknown>(`${this.endpoint}/tasks/${rutaId}`, dto);
+    return this.http.patch<unknown>(`${this.endpoint}/routes/${rutaId}/state`, dto);
   }
 
   /** GET /api/v1/operator/readings — Listar lecturas del operario (período actual) */

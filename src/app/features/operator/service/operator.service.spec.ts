@@ -45,7 +45,7 @@ describe('OperatorService', () => {
   });
 
   describe('getTasks', () => {
-    it('calls GET /api/v1/operator/tasks and returns tasks array', () => {
+    it('calls GET /api/v1/operator/routes and returns tasks array', () => {
       httpGetSpy.mockReturnValue(of([mockTask]));
 
       let result: TaskResponse[] = [];
@@ -53,7 +53,7 @@ describe('OperatorService', () => {
 
       expect(httpGetSpy).toHaveBeenCalledOnce();
       const [url] = httpGetSpy.mock.calls[0] as [string, unknown];
-      expect(url).toBe('/api/v1/operator/tasks');
+      expect(url).toBe('/api/v1/operator/routes');
       expect(result.length).toBe(1);
       expect(result[0].rutaId).toBe('r-001');
     });
@@ -64,13 +64,13 @@ describe('OperatorService', () => {
       service.getTasks('TOMA_LECTURA').subscribe();
 
       const [url, options] = httpGetSpy.mock.calls[0] as [string, { params: HttpParams }];
-      expect(url).toBe('/api/v1/operator/tasks');
+      expect(url).toBe('/api/v1/operator/routes');
       expect(options?.params.get('tipoRuta')).toBe('TOMA_LECTURA');
     });
   });
 
   describe('updateTaskState', () => {
-    it('calls PATCH /api/v1/operator/tasks/:id/state with the dto payload', () => {
+    it('calls PATCH /api/v1/operator/routes/:id/state with the dto payload', () => {
       httpPatchSpy.mockReturnValue(of({ success: true }));
 
       let result: unknown;
@@ -78,7 +78,7 @@ describe('OperatorService', () => {
 
       expect(httpPatchSpy).toHaveBeenCalledOnce();
       const [url, body] = httpPatchSpy.mock.calls[0] as [string, { estado: string }];
-      expect(url).toBe('/api/v1/operator/tasks/r-001/state');
+      expect(url).toBe('/api/v1/operator/routes/r-001/state');
       expect(body).toEqual({ estado: 'COMPLETADA' });
       expect(result).toEqual({ success: true });
     });
