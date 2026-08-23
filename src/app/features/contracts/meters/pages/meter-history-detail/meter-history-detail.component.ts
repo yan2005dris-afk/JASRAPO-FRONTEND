@@ -1,13 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { MetersService } from '../../services/meters.service';
 import { IMeter, IMeterHistory, IReplaceMeterResponse } from '../../interfaces/imeter.interface';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../../../shared/components/empty-state/empty-state.component';
 import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
-
-type ActiveTab = 'timeline' | 'reemplazo';
 
 @Component({
   selector: 'app-meter-history-detail',
@@ -18,21 +16,21 @@ type ActiveTab = 'timeline' | 'reemplazo';
 })
 export class MeterHistoryDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly metersService = inject(MetersService);
 
   readonly meterId = signal<number>(0);
   readonly meter = signal<IMeter | null>(null);
   readonly history = signal<IMeterHistory[]>([]);
-  readonly activeTab = signal<ActiveTab>('timeline');
 
-  // Detalle de reemplazo
-  readonly selectedReplacementId = signal<string | null>(null);
-  readonly replacementDetail = signal<IReplaceMeterResponse | null>(null);
+  // Mapa de detalles de reemplazos cargados por ID de reemplazo
+  readonly replacementDetails = signal<Record<string, IReplaceMeterResponse>>({});
+  // Set de IDs de reemplazos expandidos en la tabla
+  readonly expandedReplacements = signal<Set<string>>(new Set());
+  // Set de IDs de reemplazos cargando
+  readonly loadingReplacements = signal<Set<string>>(new Set());
 
-  // Estados de carga y error
+  // Estados generales
   readonly isLoading = signal<boolean>(true);
-  readonly isLoadingReplacement = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);
 
   ngOnInit(): void {
@@ -62,17 +60,6 @@ export class MeterHistoryDetailComponent implements OnInit {
       next: (data) => {
         this.history.set(data);
         this.isLoading.set(false);
-
-        // Si hay algún reemplazo, pre-cargar el primero para conveniencia del usuario
-        const firstReplacement = data.find(
-          (item) => item.reemplazoSalienteId || item.reemplazoEntranteId,
-        );
-        if (firstReplacement) {
-          const rId = firstReplacement.reemplazoSalienteId ?? firstReplacement.reemplazoEntranteId;
-          if (rId) {
-            this.loadReplacementDetail(rId);
-          }
-        }
       },
       error: (err) => {
         this.errorMessage.set(
@@ -83,31 +70,57 @@ export class MeterHistoryDetailComponent implements OnInit {
     });
   }
 
-  setTab(tab: ActiveTab): void {
-    this.activeTab.set(tab);
-  }
-
-  viewReplacement(reemplazoId: string | null): void {
+  toggleReplacement(reemplazoId: string | null): void {
     if (!reemplazoId) return;
-    this.selectedReplacementId.set(reemplazoId);
-    this.activeTab.set('reemplazo');
-    this.loadReplacementDetail(reemplazoId);
+
+    const currentExpanded = new Set(this.expandedReplacements());
+
+    if (currentExpanded.has(reemplazoId)) {
+      currentExpanded.delete(reemplazoId);
+      this.expandedReplacements.set(currentExpanded);
+      return;
+    }
+
+    currentExpanded.add(reemplazoId);
+    this.expandedReplacements.set(currentExpanded);
+
+    // Si aún no hemos cargado los datos de este reemplazo, los solicitamos
+    if (!this.replacementDetails()[reemplazoId]) {
+      const currentLoading = new Set(this.loadingReplacements());
+      currentLoading.add(reemplazoId);
+      this.loadingReplacements.set(currentLoading);
+
+      this.metersService.getReplacementDetail(reemplazoId).subscribe({
+        next: (detail) => {
+          this.replacementDetails.update((prev) => ({
+            ...prev,
+            [reemplazoId]: detail,
+          }));
+          this.loadingReplacements.update((prev) => {
+            const next = new Set(prev);
+            next.delete(reemplazoId);
+            return next;
+          });
+        },
+        error: () => {
+          this.loadingReplacements.update((prev) => {
+            const next = new Set(prev);
+            next.delete(reemplazoId);
+            return next;
+          });
+        },
+      });
+    }
   }
 
-  loadReplacementDetail(reemplazoId: string): void {
-    this.selectedReplacementId.set(reemplazoId);
-    this.isLoadingReplacement.set(true);
+  isExpanded(reemplazoId: string | null): boolean {
+    if (!reemplazoId) return false;
+    return this.expandedReplacements().has(reemplazoId);
+  }
 
-    this.metersService.getReplacementDetail(reemplazoId).subscribe({
-      next: (data) => {
-        this.replacementDetail.set(data);
-        this.isLoadingReplacement.set(false);
-      },
-      error: () => {
-        this.replacementDetail.set(null);
-        this.isLoadingReplacement.set(false);
-      },
-    });
+  isLoadingReplacement(reemplazoId: string | null): boolean {
+    if (!reemplazoId) return false;
+    return this.loadingReplacements().has(reemplazoId);
   }
 
   getMotivoLabel(motivo: string | null | undefined): string {
