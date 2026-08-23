@@ -21,10 +21,15 @@
             type="button"
             class="btn btn-sm btn-success d-flex align-items-center gap-1 shadow-sm"
             (click)="updateRouteStatus('EN_PROGRESO')"
-            [disabled]="isChangingStatus()"
+            [disabled]="isChangingStatus() || !route.operarioId"
+            [title]="!route.operarioId ? 'Debe asignar un operario antes de iniciar la ruta' : ''"
           >
             <i class="bi bi-play-circle-fill"></i>
-            Iniciar Ruta (Enviar a Campo)
+            {{
+              !route.operarioId
+                ? 'Iniciar Ruta (Requiere operario)'
+                : 'Iniciar Ruta (Enviar a Campo)'
+            }}
           </button>
         }
         @if (route.estado === 'EN_PROGRESO') {
@@ -110,10 +115,14 @@
                 Operario Asignado
               </div>
               <div class="fw-semibold text-dark">
-                {{ getOperarioNombre(route.operarioId) }}
+                {{
+                  route.operarioId ? getOperarioNombre(route.operarioId) : 'Sin operario asignado'
+                }}
               </div>
               <div class="text-muted" style="font-size: 0.75rem">
-                {{ 'Operario ID: ' + (route.operarioId || '—') }}
+                {{
+                  route.operarioId ? 'Operario ID: ' + route.operarioId : 'Pendiente de asignación'
+                }}
               </div>
             </div>
           </div>

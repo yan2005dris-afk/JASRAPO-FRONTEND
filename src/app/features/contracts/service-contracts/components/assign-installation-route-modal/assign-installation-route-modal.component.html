@@ -1,0 +1,199 @@
+<div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+  <div
+    class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg"
+    style="max-width: 720px"
+  >
+    <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+      <div class="modal-header border-bottom px-4 py-3 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div
+            class="rounded-3 bg-primary bg-opacity-10 text-primary p-2 d-flex align-items-center justify-content-center shadow-xs"
+            style="width: 42px; height: 42px"
+          >
+            <i class="bi bi-truck fs-5"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-dark mb-0 fs-5">Asignar a ruta de instalación</h5>
+            <p class="text-muted small mb-0">
+              Contrato <span class="fw-semibold text-dark">#{{ contract().contratoId }}</span> ·
+              <span class="text-primary">{{ contract().numeroGuia || 'Sin guía' }}</span>
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close shadow-none"
+          aria-label="Cerrar"
+          (click)="close()"
+        ></button>
+      </div>
+
+      <div class="modal-body p-4 bg-white">
+        <!-- Tabs -->
+        <ul class="nav nav-pills nav-fill mb-4 p-1 bg-light rounded-3 gap-1">
+          <li class="nav-item">
+            <button
+              type="button"
+              class="nav-link py-2 rounded-2 fw-medium small"
+              [class.active]="mode() === 'new'"
+              (click)="setMode('new')"
+            >
+              <i class="bi bi-plus-circle me-1"></i>
+              Crear nueva ruta
+            </button>
+          </li>
+          <li class="nav-item">
+            <button
+              type="button"
+              class="nav-link py-2 rounded-2 fw-medium small"
+              [class.active]="mode() === 'existing'"
+              (click)="setMode('existing')"
+            >
+              <i class="bi bi-link-45deg me-1"></i>
+              Agregar a ruta existente
+            </button>
+          </li>
+        </ul>
+
+        <!-- Tab: Crear nueva -->
+        @if (mode() === 'new') {
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label for="comunidadInput" class="form-label fw-semibold small text-dark mb-1">
+                Comunidad
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light border-end-0 text-muted">
+                  <i class="bi bi-geo-alt"></i>
+                </span>
+                <input
+                  id="comunidadInput"
+                  type="text"
+                  class="form-control bg-light border-start-0 text-dark fw-medium"
+                  [value]="contract().comunidad.nombre || 'Comunidad #' + contract().comunidadId"
+                  disabled
+                />
+              </div>
+              <small class="text-muted">Tomada automáticamente del contrato.</small>
+            </div>
+
+            <div class="col-md-6">
+              <label
+                for="fechaPlanificadaInput"
+                class="form-label fw-semibold small text-dark mb-1"
+              >
+                Fecha planificada <span class="text-danger">*</span>
+              </label>
+              <app-date-picker
+                inputId="fechaPlanificadaInput"
+                [value]="fechaPlanificada()"
+                (valueChange)="fechaPlanificada.set($event)"
+                placeholder="Seleccione la fecha"
+              ></app-date-picker>
+              <small class="text-muted">
+                Ruta sin operario. La secretaría la despacha después.
+              </small>
+            </div>
+          </div>
+        }
+
+        <!-- Tab: Agregar a ruta existente -->
+        @if (mode() === 'existing') {
+          <div class="mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span
+                class="form-label fw-semibold small text-dark mb-0 d-flex align-items-center gap-2"
+              >
+                <i class="bi bi-map text-primary"></i>
+                Rutas de Instalación Disponibles (PENDIENTE)
+              </span>
+              @if (isLoadingRoutes()) {
+                <span class="spinner-border spinner-border-sm text-primary" role="status"></span>
+              }
+            </div>
+
+            @if (isLoadingRoutes()) {
+              <div class="text-center py-3 text-muted small bg-light rounded-3 border">
+                Cargando rutas disponibles…
+              </div>
+            } @else if (availableRoutes().length === 0) {
+              <div class="alert alert-warning small mb-0 d-flex align-items-center gap-2">
+                <i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+                <div>
+                  No hay rutas de <strong>INSTALACION</strong> en estado <strong>PENDIENTE</strong>.
+                  Crea una nueva en la pestaña anterior.
+                </div>
+              </div>
+            } @else {
+              <div class="table-responsive bg-white rounded-3 border">
+                <table
+                  class="table table-sm table-hover align-middle mb-0"
+                  style="font-size: 0.825rem"
+                >
+                  <thead class="table-light">
+                    <tr>
+                      <th class="text-center py-2" style="width: 40px">Sel.</th>
+                      <th class="ps-2 py-2 text-muted fw-semibold">Ruta</th>
+                      <th class="py-2 text-muted fw-semibold">Fecha Planificada</th>
+                      <th class="py-2 text-muted fw-semibold text-center">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (r of availableRoutes(); track r.rutaId) {
+                      <tr
+                        [class.table-primary]="selectedRouteId() === r.rutaId"
+                        style="cursor: pointer"
+                        (click)="selectRoute(r)"
+                      >
+                        <td class="text-center py-2">
+                          <input
+                            type="radio"
+                            name="routeSelection"
+                            class="form-check-input mt-0"
+                            [checked]="selectedRouteId() === r.rutaId"
+                            (click)="$event.stopPropagation(); selectRoute(r)"
+                          />
+                        </td>
+                        <td class="ps-2 py-2">
+                          <span class="fw-semibold text-dark">{{ r.nombre }}</span>
+                          <span class="text-muted ms-1 small">#{{ r.rutaId }}</span>
+                        </td>
+                        <td class="py-2 text-muted">
+                          {{
+                            r.fechaPlanificada
+                              ? (r.fechaPlanificada | date: 'dd/MM/yyyy')
+                              : 'Sin fecha'
+                          }}
+                        </td>
+                        <td class="py-2 text-center">
+                          <app-status-badge [status]="r.estado"></app-status-badge>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline-secondary" (click)="close()">Cancelar</button>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="!isValid() || isLoading()"
+          (click)="submit()"
+        >
+          @if (isLoading()) {
+            <span class="spinner-border spinner-border-sm me-2"></span>
+          }
+          <i class="bi bi-check2 me-1"></i>
+          Confirmar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>

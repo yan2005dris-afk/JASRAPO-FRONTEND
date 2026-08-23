@@ -33,23 +33,23 @@
         <!-- TOP LEFT: Cliente / Contrato -->
         <div class="col-lg-6">
           <div class="mb-3">
-            <label for="contractDisplayInput" class="form-label fw-semibold text-dark small mb-1">
+            <label for="contractDisplayInput" class="form-label fw-semibold text-dark medium mb-1">
               Cliente / Contrato <span class="text-danger">*</span>
             </label>
 
             @if (!selectedClient) {
               <div class="input-group">
-                <input
+                <div
                   id="contractDisplayInput"
-                  type="text"
-                  class="form-control border-end-0 shadow-none text-muted fst-italic"
-                  placeholder="Seleccione un contrato activo..."
-                  readonly
-                />
+                  class="form-control border-end-0 shadow-none text-muted fst-italic bg-light d-flex align-items-center"
+                  style="cursor: default; user-select: none"
+                >
+                  Presione "Buscar" para seleccionar un contrato...
+                </div>
                 <button
                   id="btnOpenContractPicker"
                   type="button"
-                  class="btn btn-outline-primary border-start-0 px-3 d-flex align-items-center gap-2"
+                  class="btn btn-outline-primary border px-3 d-flex align-items-center gap-2"
                   (click)="openPicker()"
                 >
                   <i class="bi bi-search"></i>
@@ -105,12 +105,13 @@
               <!-- Alerta de datos de facturación -->
               @if (hasIncompleteBillingData && !usarConsumidorFinal) {
                 <div
-                  class="billing-warning-alert mt-2 p-3 rounded-3 d-flex align-items-start justify-content-between gap-3"
+                  class="billing-warning-alert mt-2 p-3 rounded-3"
+                  style="background-color: #fffbeb; border: 1px solid #fde68a"
                 >
-                  <div class="d-flex align-items-start gap-2">
-                    <i class="bi bi-triangle-exclamation mt-1" style="color: #b45309"></i>
+                  <div class="d-flex align-items-center gap-3 mb-2">
+                    <i class="fs-2 bi bi-exclamation-triangle" style="color: #b45309"></i>
                     <div>
-                      <div class="small fw-semibold text-dark">
+                      <div class="small fw-semibold text-dark mb-1">
                         Datos de facturación incompletos
                       </div>
                       <div class="text-muted" style="font-size: 0.78rem">
@@ -119,13 +120,15 @@
                       </div>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-warning fw-medium text-dark rounded-pill px-3 flex-shrink-0"
-                    (click)="setUsarConsumidorFinal(true)"
-                  >
-                    Usar CONSUMIDOR FINAL
-                  </button>
+                  <div class="d-flex justify-content-end">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-warning fw-medium text-dark px-3"
+                      (click)="setUsarConsumidorFinal(true)"
+                    >
+                      Usar CONSUMIDOR FINAL
+                    </button>
+                  </div>
                 </div>
               }
 
@@ -152,33 +155,6 @@
             }
           </div>
 
-          @if (selectedClient) {
-            <!-- Mode toggle -->
-            <div
-              class="mode-toggle mb-2 d-flex p-1 bg-light rounded-pill border"
-              style="width: fit-content"
-            >
-              <button
-                type="button"
-                class="btn rounded-pill px-4 py-1 border-0 fw-medium"
-                [class.btn-primary]="pagoMode === 'DEUDA'"
-                [class.text-muted]="pagoMode !== 'DEUDA'"
-                (click)="setPagoMode('DEUDA')"
-              >
-                Cobrar deuda
-              </button>
-              <button
-                type="button"
-                class="btn rounded-pill px-4 py-1 border-0 fw-medium"
-                [class.btn-primary]="pagoMode === 'PUNTUAL'"
-                [class.text-muted]="pagoMode !== 'PUNTUAL'"
-                (click)="setPagoMode('PUNTUAL')"
-              >
-                Cobro puntual
-              </button>
-            </div>
-          }
-
           <!-- Contract Picker Modal -->
           <app-contract-picker
             [open]="isPickerOpen"
@@ -192,7 +168,7 @@
         <div class="col-lg-6">
           <!-- Método de Pago -->
           <div class="mb-3">
-            <span class="form-label d-block fw-semibold text-dark small mb-2">
+            <span class="form-label d-block fw-semibold text-dark medium mb-2">
               Método de Pago <span class="text-danger">*</span>
             </span>
             <div class="row g-2">
@@ -446,13 +422,43 @@
 
       <hr class="my-0 text-muted opacity-25" />
 
+      @if (selectedClient) {
+        <div>
+          <span class="form-label d-block fw-semibold text-dark medium mb-2"> Modo de cobro </span>
+          <div
+            class="mode-toggle mb-2 d-flex p-1 bg-light rounded-pill border"
+            style="width: fit-content"
+          >
+            <!-- Mode toggle -->
+            <button
+              type="button"
+              class="btn rounded-pill px-4 py-1 border-0 fw-medium"
+              [class.btn-primary]="pagoMode === 'DEUDA'"
+              [class.text-muted]="pagoMode !== 'DEUDA'"
+              (click)="setPagoMode('DEUDA')"
+            >
+              Cobrar deuda
+            </button>
+            <button
+              type="button"
+              class="btn rounded-pill px-4 py-1 border-0 fw-medium"
+              [class.btn-primary]="pagoMode === 'PUNTUAL'"
+              [class.text-muted]="pagoMode !== 'PUNTUAL'"
+              (click)="setPagoMode('PUNTUAL')"
+            >
+              Cobro puntual
+            </button>
+          </div>
+        </div>
+      }
+
       <!-- BOTTOM SECTION: Full-Width Tables (Estado de Cuenta / Cobro Puntual) -->
       <div class="w-100">
         <!-- 2. Estado de Cuenta Pendiente (Solo modo DEUDA) -->
         @if (pagoMode === 'DEUDA') {
           <div>
             <div class="d-flex align-items-center justify-content-between mb-2">
-              <span class="form-label d-block fw-semibold text-dark small mb-0 fs-6">
+              <span class="form-label d-block fw-semibold text-dark medium mb-0">
                 <i class="bi bi-receipt me-1 text-primary"></i>
                 Estado de Cuenta Pendiente
               </span>
@@ -642,7 +648,7 @@
           <!-- Cobro Puntual Full-Width -->
           <div class="puntual-inline-section">
             <div class="d-flex align-items-center justify-content-between mb-2">
-              <span class="form-label d-block fw-semibold text-dark small mb-0 fs-6">
+              <span class="form-label d-block fw-semibold text-dark medium mb-0">
                 <i class="bi bi-bag-plus me-1 text-primary"></i>
                 Rubros a Cobrar
               </span>
@@ -650,7 +656,7 @@
                 <span class="badge badge-soft-primary">{{ puntualItems.length }} item(s)</span>
                 <button
                   type="button"
-                  class="btn btn-sm btn-primary d-flex align-items-center gap-1 py-1 px-3 rounded-pill fw-medium"
+                  class="btn btn-sm btn-primary d-flex align-items-center gap-1 py-1 px-3 fw-medium"
                   style="font-size: 0.82rem"
                   (click)="openRubroPicker()"
                 >
@@ -696,7 +702,7 @@
                         <div class="fw-semibold text-dark">{{ item.rubroNombre }}</div>
                         <input
                           type="text"
-                          class="form-control form-control-sm border-0 bg-transparent p-0 text-muted"
+                          class="form-control form-control-sm border-0 border-bottom rounded-0 border-secondary-subtle bg-transparent p-0 text-muted shadow-none"
                           style="font-size: 0.76rem"
                           placeholder="Nota opcional..."
                           [ngModel]="item.descripcion"
@@ -789,7 +795,19 @@
             (click)="requestAgreement()"
             [disabled]="isLoading"
           >
-            <i class="bi bi-handshake"></i>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="1.3em"
+              height="1.3em"
+              viewBox="0 0 24 24"
+            >
+              <path d="M0 0h24v24H0z" fill="none" />
+              <path
+                fill="currentColor"
+                d="M12.1 21q-.425 0-.712-.288T11.1 20q0-.175.075-.363t.225-.337l4.625-4.625l-.725-.725l-4.6 4.625q-.15.15-.325.225t-.375.075q-.425 0-.712-.287T9 17.875q0-.25.075-.413t.2-.287L13.9 12.55l-.7-.7l-4.625 4.6q-.15.15-.325.225t-.4.075q-.4 0-.7-.3t-.3-.7q0-.2.075-.375t.225-.325l4.625-4.625l-.725-.7l-4.6 4.625q-.125.125-.3.2t-.425.075q-.425 0-.713-.288t-.287-.712q0-.2.075-.375t.225-.325L10.6 7.35l3.75 3.775q.275.275.65.438t.75.162q.8 0 1.4-.562t.6-1.438q0-.35-.125-.725t-.45-.7L12.7 3.825q.425-.4.95-.612T14.7 3q.65 0 1.2.213t1 .662l4.225 4.25q.45.45.663 1T22 10.4q0 .5-.225 1.013t-.65.937L12.8 20.7q-.2.2-.35.25t-.35.05m-8.575-8l-.65-.65q-.425-.4-.65-.95T2 10.25q0-.65.25-1.2t.625-.925L7.1 3.875q.4-.4.95-.638T9.125 3q.675 0 1.2.188t1.025.687L16.475 9q.15.15.225.325t.075.375q0 .4-.3.7t-.7.3q-.225 0-.375-.062t-.325-.238l-4.5-4.45z"
+              />
+            </svg>
+
             Solicitar Convenio
           </button>
         }
