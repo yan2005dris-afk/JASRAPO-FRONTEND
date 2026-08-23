@@ -93,6 +93,13 @@ export class GenerateBatchModalComponent implements OnInit {
       if (r.comunidadId && this.comunidadId() !== r.comunidadId) {
         this.comunidadId.set(r.comunidadId);
       }
+      const fechaRef = r.fechaPlanificada || r.fechaInicio;
+      if (fechaRef) {
+        const d = new Date(fechaRef);
+        if (!isNaN(d.getTime())) {
+          this.mes.set(d.getUTCMonth() + 1);
+        }
+      }
     }
   }
 
