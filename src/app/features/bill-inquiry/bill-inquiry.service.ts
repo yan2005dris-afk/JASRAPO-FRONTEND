@@ -66,6 +66,11 @@ export interface PlanillaPdfData {
   lecturaAnterior?: string;
   lecturaActual?: string;
   consumo?: string;
+  total?: string;
+  resumenConsumo?: string;
+  resumenAtrasados?: string;
+  resumenDescuentos?: string;
+  correoCliente?: string;
   detalles: PlanillaDetalleItem[];
 }
 
