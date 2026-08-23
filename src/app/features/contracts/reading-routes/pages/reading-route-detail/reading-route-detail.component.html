@@ -13,9 +13,26 @@
       <span class="text-dark fw-semibold small"> Detalle de Ruta #{{ routeId }} </span>
     </div>
 
-    <!-- Status Action Controls -->
+    <!-- Status Action Controls & PDF Export -->
     @if (readingRoute(); as route) {
       <div class="d-flex align-items-center gap-2">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-dark d-flex align-items-center gap-1 shadow-sm"
+          id="btn-export-pdf"
+          (click)="exportFieldSheetPdf()"
+          [disabled]="isExportingPdf()"
+          title="Descargar Hoja de Campo en PDF para imprimir"
+        >
+          @if (!isExportingPdf()) {
+            <i class="bi bi-file-earmark-pdf-fill text-danger"></i>
+            <span>Exportar Hoja de Campo PDF</span>
+          } @else {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span>Generando PDF...</span>
+          }
+        </button>
+
         @if (route.estado === 'PENDIENTE') {
           <button
             type="button"

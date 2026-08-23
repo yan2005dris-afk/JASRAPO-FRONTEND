@@ -10,8 +10,11 @@ import {
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { ReadingRoutesService } from '../../services/reading-routes.service';
 import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
+import { PdfGeneratorService } from '../../../../../shared/services/pdf-generator.service';
+import { TDocumentDefinitions } from 'pdfmake/interfaces';
 import {
   IReadingRoute,
   IRouteKpis,
@@ -71,11 +74,13 @@ export class ReadingRouteDetailComponent implements OnInit {
   private readonly usersService = inject(UsersService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
+  private readonly pdfGenerator = inject(PdfGeneratorService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   routeId!: number;
   readingRoute = signal<IReadingRoute | null>(null);
   isLoadingRoute = signal(true);
+  isExportingPdf = signal(false);
 
   // Catalogs
   comunidades: Comunidad[] = [];
@@ -738,5 +743,187 @@ export class ReadingRouteDetailComponent implements OnInit {
         // TODO: implementar relectura
         this.toastService.info('Solicitud de relectura aún no conectada al backend');
       });
+  }
+
+  // ── Generación de Hoja de Campo PDF (SC-236) ──────────────────────────────
+  async exportFieldSheetPdf(): Promise<void> {
+    const route = this.readingRoute();
+    if (!route) return;
+
+    this.isExportingPdf.set(true);
+
+    try {
+      const comunidad = this.getComunidadNombre(route.comunidadId);
+      const operario = this.getOperarioNombre(route.operarioId);
+      const periodo = this.getPeriodoNombre(route.periodoId);
+      const fechaPlanificada = route.fechaPlanificada
+        ? new Date(route.fechaPlanificada).toLocaleDateString('es-EC')
+        : '—';
+      const fechaGeneracion = new Date().toLocaleString('es-EC');
+
+      type TableRowCell = string | { text: string; bold?: boolean; fillColor?: string };
+      let tableBody: TableRowCell[][] = [];
+      let totalRows = 0;
+      let pendientes = 0;
+      let conNovedad = 0;
+
+      if (this.isLecturaRoute()) {
+        // Obtener la totalidad de lecturas de la ruta
+        const res = await firstValueFrom(
+          this.routesService.getReadingsByRuta(route.rutaId, { page: 1, limit: 1000 }),
+        );
+        const data = res.data;
+        totalRows = data.length;
+        pendientes = data.filter((r) => r.estado === 'PENDIENTE').length;
+        conNovedad = data.filter((r) => r.estado === 'CON_NOVEDAD').length;
+
+        tableBody = [
+          [
+            { text: '#', bold: true, fillColor: '#f3f4f6' },
+            { text: 'N° Guía', bold: true, fillColor: '#f3f4f6' },
+            { text: 'Cliente', bold: true, fillColor: '#f3f4f6' },
+            { text: 'Dirección', bold: true, fillColor: '#f3f4f6' },
+            { text: 'N° Serie', bold: true, fillColor: '#f3f4f6' },
+            { text: 'Lect. Ant.', bold: true, fillColor: '#f3f4f6' },
+            { text: 'Lect. Actual', bold: true, fillColor: '#f3f4f6' },
+            { text: 'Estado', bold: true, fillColor: '#f3f4f6' },
+          ],
+          ...data.map((r, idx) => [
+            String(idx + 1),
+            r.numeroGuia ?? '—',
+            r.clienteNombre ?? '—',
+            r.direccionSuministro ?? '—',
+            r.medidorSerie ?? '—',
+            r.lecturaAnterior != null ? String(r.lecturaAnterior) : '—',
+            r.lecturaActual != null ? String(r.lecturaActual) : '_______',
+            r.estado ?? 'PENDIENTE',
+          ]),
+        ];
+      } else {
+        // Obtener la totalidad de órdenes de trabajo de la ruta
+        const res = await firstValueFrom(
+          this.routesService.getOrdenesByRuta(route.rutaId, { page: 1, limit: 1000 }),
+        );
+        const data = res.data;
+        totalRows = data.length;
+        pendientes = data.filter((o) => o.estado === 'PENDIENTE').length;
+        conNovedad = data.filter((o) => o.estado === 'CON_NOVEDAD').length;
+
+        tableBody = [
+          [
+            { text: '#', bold: true, fillColor: '#f3f4f6' },
+            { text: 'N° Guía', bold: true, fillColor: '#f3f4f6' },
+            { text: 'Cliente', bold: true, fillColor: '#f3f4f6' },
+            { text: 'Dirección', bold: true, fillColor: '#f3f4f6' },
+            { text: 'N° Serie', bold: true, fillColor: '#f3f4f6' },
+            { text: 'Tipo Actividad', bold: true, fillColor: '#f3f4f6' },
+            { text: 'Estado', bold: true, fillColor: '#f3f4f6' },
+            { text: 'Firma / Obs.', bold: true, fillColor: '#f3f4f6' },
+          ],
+          ...data.map((o, idx) => [
+            String(o.ordenVisita || idx + 1),
+            o.contrato?.numeroGuia ?? '—',
+            o.contrato?.clienteNombre ?? '—',
+            o.contrato?.direccionSuministro ?? '—',
+            o.medidor?.serie ?? '—',
+            o.tipoActividad ?? route.tipoRuta,
+            o.estado ?? 'PENDIENTE',
+            '________________',
+          ]),
+        ];
+      }
+
+      const docDefinition: TDocumentDefinitions = {
+        pageSize: 'A4',
+        pageOrientation: 'portrait',
+        pageMargins: [30, 30, 30, 30],
+        content: [
+          {
+            columns: [
+              {
+                width: '*',
+                stack: [
+                  { text: 'JASRAPO - JUNTA DE AGUA POTABLE', style: 'mainHeader' },
+                  { text: `HOJA DE CAMPO - ${route.nombre.toUpperCase()}`, style: 'subHeader' },
+                ],
+              },
+              {
+                width: 'auto',
+                stack: [
+                  { text: `Ruta #${route.rutaId}`, bold: true, alignment: 'right', color: '#0c9ea1' },
+                  { text: `Tipo: ${route.tipoRuta}`, fontSize: 9, alignment: 'right' },
+                ],
+              },
+            ],
+            marginBottom: 12,
+          },
+          {
+            canvas: [{ type: 'line', x1: 0, y1: 0, x2: 535, y2: 0, lineWidth: 1.5, lineColor: '#0c9ea1' }],
+            marginBottom: 12,
+          },
+          {
+            columns: [
+              {
+                width: '50%',
+                stack: [
+                  { text: [{ text: 'Comunidad: ', bold: true }, comunidad], fontSize: 9, marginBottom: 2 },
+                  { text: [{ text: 'Operario Asignado: ', bold: true }, operario], fontSize: 9, marginBottom: 2 },
+                ],
+              },
+              {
+                width: '50%',
+                stack: [
+                  { text: [{ text: 'Período: ', bold: true }, periodo], fontSize: 9, marginBottom: 2 },
+                  { text: [{ text: 'Fecha Planificada: ', bold: true }, fechaPlanificada], fontSize: 9, marginBottom: 2 },
+                ],
+              },
+            ],
+            marginBottom: 14,
+          },
+          {
+            table: {
+              headerRows: 1,
+              widths: this.isLecturaRoute()
+                ? [20, 55, 105, 115, 60, 50, 60, 50]
+                : [20, 60, 115, 120, 60, 65, 50, 75],
+              body: tableBody,
+            },
+            layout: 'lightHorizontalLines',
+            fontSize: 8,
+          },
+          {
+            marginTop: 15,
+            columns: [
+              {
+                text: `Resumen de Hoja: Total: ${totalRows} | Pendientes: ${pendientes} | Con Novedad: ${conNovedad}`,
+                fontSize: 8,
+                bold: true,
+                color: '#374151',
+              },
+              {
+                text: `Generado el: ${fechaGeneracion}`,
+                fontSize: 8,
+                alignment: 'right',
+                color: '#6b7280',
+              },
+            ],
+          },
+        ],
+        styles: {
+          mainHeader: { fontSize: 13, bold: true, color: '#0c9ea1' },
+          subHeader: { fontSize: 10, bold: true, color: '#1f2937', marginTop: 2 },
+        },
+      };
+
+      const fileName = `Hoja_Campo_Ruta_${route.rutaId}_${route.tipoRuta}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      this.pdfGenerator.downloadPdf(docDefinition, fileName);
+      this.toastService.success('Hoja de campo en PDF generada exitosamente');
+    } catch (err) {
+      console.error('Error al exportar PDF:', err);
+      this.toastService.error('Ocurrió un error al generar la hoja de campo en PDF');
+    } finally {
+      this.isExportingPdf.set(false);
+      this.cdr.markForCheck();
+    }
   }
 }
