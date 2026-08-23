@@ -254,6 +254,9 @@ export class LecturasComponent implements OnInit {
   private async loadCachedMeters(): Promise<void> {
     try {
       await this.meterCache.load();
+      if (this.metersList().length === 0 && this.networkService.isOnline()) {
+        await this.fetchAndCacheMeters();
+      }
       const cachedReadings = await this.dbService.getRegisteredReadingsCache();
       this.registeredReadings.set(cachedReadings);
       this.autoSelectFromQueryParam();
