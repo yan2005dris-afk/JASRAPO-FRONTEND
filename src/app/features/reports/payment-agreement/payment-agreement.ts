@@ -13,9 +13,11 @@ type ReportView = 'table' | 'pdf';
 interface PaymentAgreementData {
   convenio?: {
     createdAt?: string;
+    periodoInicio?: string;
     fechaInicio?: string;
     fechaPrimerPago?: string;
     cuotaMensual?: number | string;
+    primeraCuota?: number | string;
     deudaTotal?: number | string;
     abonoInicial?: number | string;
     numeroCuotas?: number;
@@ -93,6 +95,7 @@ export class PaymentAgreementComponent {
       ? [cliente.nombres, cliente.apellidos].filter(Boolean).join(' ') || cliente.razonSocial || '—'
       : '—';
 
+    const fechaInicioRaw = c.periodoInicio || c.fechaInicio;
     return {
       clienteNombre: nombre,
       identificacion: cliente?.identificacion || '—',
@@ -101,7 +104,7 @@ export class PaymentAgreementComponent {
       abonoInicial: Number(c.abonoInicial || 0).toFixed(2),
       numeroCuotas: c.numeroCuotas || 0,
       cuotaMensual: Number(c.cuotaMensual || 0).toFixed(2),
-      fechaInicio: c.fechaInicio ? new Date(c.fechaInicio).toLocaleDateString('es-EC') : '—',
+      fechaInicio: fechaInicioRaw ? new Date(fechaInicioRaw).toLocaleDateString('es-EC') : '—',
       fechaPrimerPago: c.fechaPrimerPago
         ? new Date(c.fechaPrimerPago).toLocaleDateString('es-EC')
         : '—',
