@@ -2,7 +2,11 @@ import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@a
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { ConsultaPlanillaService, PlanillaMockResponse } from './bill-inquiry.service';
+import {
+  ConsultaPlanillaService,
+  DeudaPublicaResponse,
+  SearchType,
+} from './bill-inquiry.service';
 
 @Component({
   selector: 'app-bill-inquiry',
@@ -13,28 +17,31 @@ import { ConsultaPlanillaService, PlanillaMockResponse } from './bill-inquiry.se
 })
 export class BillInquiryComponent {
   readonly terminoBusqueda = signal('');
-  readonly searchType = signal('medidor');
+  readonly searchType = signal<SearchType>('identificacion');
 
   readonly loading = signal(false);
   readonly searchClicked = signal(false);
   readonly noResults = signal(false);
-  readonly results = signal<PlanillaMockResponse | null>(null);
+  readonly errorMessage = signal<string | null>(null);
+  readonly results = signal<DeudaPublicaResponse | null>(null);
 
   readonly searchOptions = [
-    { value: 'medidor', label: 'Número de medidor' },
-    { value: 'guia', label: 'Guía de remisión' },
+    { value: 'identificacion', label: 'Cédula / RUC / Pasaporte' },
+    { value: 'numeroGuia', label: 'Número de Guía / Contrato' },
   ];
 
   private readonly consultaPlanillaService = inject(ConsultaPlanillaService);
 
   readonly inputLabel = computed(() => {
-    return this.searchType() === 'medidor' ? 'Número de medidor' : 'Guía de remisión';
+    return this.searchType() === 'identificacion'
+      ? 'Cédula / RUC'
+      : 'Número de Guía / Contrato';
   });
 
   consultar(): void {
     this.searchClicked.set(true);
     const term = this.terminoBusqueda().trim();
-    if (term === '') {
+    if (term.length < 2) {
       this.noResults.set(false);
       this.results.set(null);
       return;
@@ -42,6 +49,7 @@ export class BillInquiryComponent {
 
     this.loading.set(true);
     this.noResults.set(false);
+    this.errorMessage.set(null);
     this.results.set(null);
 
     this.consultaPlanillaService.consultar(term, this.searchType()).subscribe({
@@ -49,15 +57,21 @@ export class BillInquiryComponent {
         this.loading.set(false);
         if (data) {
           this.results.set(data);
-          this.consultaPlanillaService.currentPlanilla.set(data);
+          this.consultaPlanillaService.currentDeuda.set(data);
         } else {
           this.noResults.set(true);
         }
       },
       error: (error) => {
         this.loading.set(false);
-        this.noResults.set(true);
-        console.error('Error during consultation:', error);
+        if (error.status === 404) {
+          this.noResults.set(true);
+        } else if (error.status === 429) {
+          this.errorMessage.set('Demasiadas consultas. Por favor, intente nuevamente en unos minutos.');
+        } else {
+          this.errorMessage.set('Ocurrió un error al consultar la deuda. Intente más tarde.');
+        }
+        console.error('Error during debt consultation:', error);
       },
     });
   }

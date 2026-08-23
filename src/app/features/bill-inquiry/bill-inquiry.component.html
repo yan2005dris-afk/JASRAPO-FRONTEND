@@ -61,43 +61,79 @@
             }
           </button>
 
-          @if (searchClicked() && terminoBusqueda().trim() === '') {
-            <div class="alert alert-danger mt-3">El campo es obligatorio.</div>
+          @if (errorMessage()) {
+            <div class="alert alert-danger mt-3">{{ errorMessage() }}</div>
           }
 
           @if (noResults()) {
             <div class="alert alert-warning mt-3">
-              No se encontraron resultados para la búsqueda.
+              No se encontraron registros de deuda pendientes para el parámetro ingresado.
             </div>
           }
 
           @if (results()) {
-            <div class="card mt-4 text-start border-success">
-              <div class="card-header bg-success text-white">
-                <h5 class="mb-0"><i class="bi bi-person-check me-2"></i>Cliente Encontrado</h5>
+            <div class="card mt-4 text-start border-primary shadow-sm">
+              <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fs-6"><i class="bi bi-person-check me-2"></i>Información del Cliente</h5>
+                <span class="badge bg-light text-primary fw-bold">JASRAPO</span>
               </div>
               <div class="card-body">
-                <h6 class="card-title fw-bold">{{ results()?.clienteNombre }}</h6>
-                <p class="card-text mb-1"><strong>Medidor:</strong> {{ results()?.medidor }}</p>
-                <p class="card-text mb-1">
-                  <strong>Mes Facturado:</strong> {{ results()?.mes }} {{ results()?.anio }}
-                </p>
-                <p class="card-text mb-1">
-                  <strong>Vencimiento:</strong>
-                  <span class="text-danger fw-bold">{{ results()?.fechaVencimiento }}</span>
-                </p>
-                <p class="card-text mb-3">
-                  <strong>Total a Pagar:</strong>
-                  <span class="fs-5 fw-bold text-success">${{ results()?.total }}</span>
-                </p>
+                <h6 class="card-title fw-bold text-dark fs-5 mb-1">{{ results()?.cliente?.nombre }}</h6>
+                @if (results()?.cliente?.identificacion) {
+                  <p class="text-muted small mb-3">
+                    <strong>Identificación:</strong> {{ results()?.cliente?.identificacion }}
+                  </p>
+                }
 
-                <button
-                  class="btn btn-outline-success btn-sm w-100 d-flex align-items-center justify-content-center gap-2"
-                  routerLink="/consulta-planilla/preview"
-                >
-                  <i class="bi bi-file-earmark-pdf"></i>
-                  Ver Planilla Digital
-                </button>
+                <div class="table-responsive mb-3">
+                  <table class="table table-sm table-hover align-middle border">
+                    <thead class="table-light">
+                      <tr class="small text-muted">
+                        <th>N° Guía / Contrato</th>
+                        <th>Estado</th>
+                        <th class="text-center">Meses Atraso</th>
+                        <th class="text-end">Saldo Vencido</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (contrato of results()?.contratos; track contrato.contratoId) {
+                        <tr>
+                          <td class="fw-semibold text-primary font-monospace">{{ contrato.numeroGuia }}</td>
+                          <td>
+                            <span class="badge bg-secondary-subtle text-secondary border">
+                              {{ contrato.estado }}
+                            </span>
+                          </td>
+                          <td class="text-center">
+                            @if (contrato.mesesAtrasado > 0) {
+                              <span class="badge bg-warning text-dark">{{ contrato.mesesAtrasado }}</span>
+                            } @else {
+                              <span class="badge bg-success-subtle text-success">Al día</span>
+                            }
+                          </td>
+                          <td class="text-end fw-bold text-danger">
+                            ${{ contrato.saldoVencido | number: '1.2-2' }}
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="bg-light p-3 rounded-3 border d-flex justify-content-between align-items-center mb-2">
+                  <div>
+                    <span class="text-muted small d-block">Monto Total Acumulado</span>
+                    <span class="fw-semibold text-dark">Total a Cancelar</span>
+                  </div>
+                  <div class="text-end">
+                    <span class="fs-4 fw-bold text-danger">${{ results()?.totalDeuda | number: '1.2-2' }}</span>
+                  </div>
+                </div>
+
+                <p class="text-muted small text-center mt-2 mb-0">
+                  <i class="bi bi-info-circle me-1"></i>
+                  Acérquese a las oficinas de la Junta de Agua para realizar su pago.
+                </p>
               </div>
             </div>
           }
