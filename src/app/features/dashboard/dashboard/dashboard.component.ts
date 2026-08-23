@@ -1,8 +1,6 @@
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
-
+import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
-// import { SpinnerService } from '../../../core/services/spinner.service';
-// import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-dashboard',
@@ -13,6 +11,14 @@ import { AuthService } from '../../../core/services/auth.service';
 })
 export class DashboardComponent {
   readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+
+  constructor() {
+    const defaultRoute = this.authService.getDefaultRoute();
+    if (defaultRoute !== '/app/dashboard') {
+      void this.router.navigate([defaultRoute]);
+    }
+  }
 
   // Probar el spinner de forma manual ("estatica")
   // readonly spinnerService = inject(SpinnerService);

@@ -1,4 +1,4 @@
-<section class="vh-100 d-flex m-0 p-0 overflow-hidden" @fadeAnimation>
+<section class="vh-100 d-flex m-0 p-0 overflow-hidden anim-fade-in">
   <!-- Left Side: Full Bleed Image / Illustration -->
   <!-- Muestra la imagen a la izquierda al 50% en escritorio y 60% en pantallas grandes -->
   <div class="image-side col-lg-6 col-xl-7 d-none d-lg-block p-0 m-0" style="height: 100vh">
@@ -13,8 +13,7 @@
 
   <!-- Right Side: Form Container -->
   <div
-    class="form-side col-12 col-lg-6 col-xl-5 d-flex flex-column justify-content-center px-4 px-md-5 bg-white h-100"
-    @slideUpAnimation
+    class="form-side col-12 col-lg-6 col-xl-5 d-flex flex-column justify-content-center px-4 px-md-5 bg-white h-100 anim-slide-up"
   >
     <div class="w-100 mx-auto" style="max-width: 320px">
       <!-- Opcional: Logo Corporativo para mantener la identidad del proyecto -->
@@ -26,7 +25,7 @@
         />
       </div>
 
-      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" @staggerFormElements>
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="anim-stagger-children">
         <!-- Mensaje de error general -->
         @if (errorMessage()) {
           <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">

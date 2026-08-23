@@ -23,7 +23,33 @@ interface PaymentRow {
   valorNum?: number;
 }
 
-interface PaymentsReportData {
+export interface PaymentGroupFila {
+  emision: string;
+  valor: string;
+}
+
+export interface PaymentsReportGroup {
+  factura: string;
+  fecha: string;
+  clienteNombre: string;
+  cuenta: string;
+  medidor: string;
+  filas: PaymentGroupFila[];
+  subtotal: string;
+}
+
+export interface PaymentsReportDocumentModel {
+  titulo?: string;
+  fechaDesde?: string;
+  fechaHasta?: string;
+  fechaEmision?: string;
+  grupos: PaymentsReportGroup[];
+  totalGeneral: string;
+  totalRegistros: number;
+}
+
+export interface PaymentsReportData {
+  reporte?: PaymentsReportDocumentModel;
   pagos?: PaymentRow[];
   fechaDesde?: string | null;
   fechaHasta?: string | null;
@@ -91,12 +117,32 @@ export class PaymentsReportComponent {
   });
 
   readonly tableRows = computed(() => {
-    return this.reportData()?.pagos ?? [];
+    const data = this.reportData();
+    if (data?.reporte?.grupos) {
+      const flattened: PaymentRow[] = [];
+      for (const grupo of data.reporte.grupos) {
+        for (const fila of grupo.filas ?? []) {
+          flattened.push({
+            factura: grupo.factura,
+            fecha: grupo.fecha,
+            clienteNombre: grupo.clienteNombre,
+            cuenta: grupo.cuenta,
+            medidor: grupo.medidor,
+            emision: fila.emision,
+            valor: fila.valor,
+            valorNum: Number(fila.valor || 0),
+          });
+        }
+      }
+      return flattened;
+    }
+    return data?.pagos ?? [];
   });
 
   readonly totalRecaudado = computed(() => {
     const data = this.reportData();
     if (!data) return '0.00';
+    if (data.reporte?.totalGeneral !== undefined) return String(data.reporte.totalGeneral);
     if (data.totalGeneral !== undefined) return String(data.totalGeneral);
     const sum = (data.pagos ?? []).reduce((acc, r) => acc + Number(r.valor || 0), 0);
     return sum.toFixed(2);
@@ -105,6 +151,7 @@ export class PaymentsReportComponent {
   readonly totalRegistros = computed(() => {
     const data = this.reportData();
     if (!data) return 0;
+    if (data.reporte?.totalRegistros !== undefined) return data.reporte.totalRegistros;
     return data.totalRegistros ?? data.pagos?.length ?? 0;
   });
 
