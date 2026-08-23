@@ -1,0 +1,166 @@
+@if (open()) {
+  <div
+    class="modal fade show d-block picker-modal"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="picker-rubro-title"
+  >
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow rounded-4">
+        <!-- Header -->
+        <div class="modal-header border-bottom-0 pb-2">
+          <div>
+            <h5
+              id="picker-rubro-title"
+              class="modal-title fw-bold text-dark d-flex align-items-center gap-2"
+            >
+              <i class="bi bi-tags text-primary"></i>
+              {{ title() }}
+            </h5>
+            <p class="text-muted mb-0 small">
+              Busque por nombre de rubro (instalación, medidores, inspección, reconexión, etc.).
+            </p>
+          </div>
+          <button
+            type="button"
+            class="btn-close shadow-none"
+            aria-label="Cerrar"
+            (click)="cerrar()"
+          ></button>
+        </div>
+
+        <!-- Body -->
+        <div class="modal-body pt-2">
+          <div class="input-group mb-3">
+            <span class="input-group-text bg-white">
+              <i class="bi bi-search text-muted"></i>
+            </span>
+            <input
+              #searchInput
+              type="text"
+              class="form-control shadow-none"
+              placeholder="Ej: Instalación, Reconexión, Medidor, Inspección..."
+              [ngModel]="searchTerm()"
+              (ngModelChange)="onSearchInput($event)"
+              (keyup.enter)="buscarRubros()"
+            />
+            <button
+              type="button"
+              class="btn btn-primary px-4"
+              (click)="buscarRubros()"
+              [disabled]="isSearching()"
+            >
+              Buscar
+            </button>
+          </div>
+
+          @if (isSearching()) {
+            <!-- Skeleton Loader preserving table geometry & height -->
+            <div class="border rounded-3 overflow-hidden p-2">
+              <app-table-skeleton [rows]="6" [cols]="5" [showHeaders]="true" />
+            </div>
+          } @else if (searchError()) {
+            <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0" role="alert">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <span>{{ searchError() }}</span>
+            </div>
+          } @else if (rubros().length === 0) {
+            <div class="text-center py-5 text-muted">
+              <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
+              <span>No se encontraron rubros con ese criterio de búsqueda.</span>
+            </div>
+          } @else {
+            <div
+              class="picker-table-wrapper border rounded-3 overflow-auto"
+              style="max-height: 380px"
+            >
+              <table
+                class="table table-hover table-sm align-middle mb-0"
+                style="font-size: 0.84rem"
+              >
+                <thead class="table-light sticky-top">
+                  <tr>
+                    <th class="fw-semibold text-muted text-uppercase px-3">Rubro / Concepto</th>
+                    <th class="fw-semibold text-muted text-uppercase text-center">Tipo</th>
+                    <th class="fw-semibold text-muted text-uppercase text-center">Impuesto</th>
+                    <th class="fw-semibold text-muted text-uppercase text-end">Precio Unit.</th>
+                    <th class="text-center" style="width: 90px">Acción</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (r of rubros(); track r.rubroId) {
+                    <tr class="rubro-row" (click)="seleccionar(r)" style="cursor: pointer">
+                      <td class="px-3">
+                        <div class="fw-bold text-dark">{{ r.nombre }}</div>
+                        @if (r.descripcion) {
+                          <div
+                            class="text-muted text-truncate"
+                            style="font-size: 0.75rem; max-width: 320px"
+                          >
+                            {{ r.descripcion }}
+                          </div>
+                        }
+                      </td>
+                      <td class="text-center">
+                        <span class="badge badge-soft-secondary">{{ r.tipoRubro }}</span>
+                      </td>
+                      <td class="text-center">
+                        @if (r.tarifaImpuesto && r.tarifaImpuesto.porcentaje > 0) {
+                          <span class="badge badge-soft-info"
+                            >{{ r.tarifaImpuesto.porcentaje }}% IVA</span
+                          >
+                        } @else {
+                          <span class="badge badge-soft-secondary">0% IVA</span>
+                        }
+                      </td>
+                      <td class="text-end tabular-nums fw-bold text-primary">
+                        {{ r.precioUnitario | currency: 'USD' : 'symbol' : '1.2-2' }}
+                      </td>
+                      <td class="text-center" (click)="$event.stopPropagation()">
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-medium"
+                          style="font-size: 0.75rem"
+                          (click)="seleccionar(r)"
+                        >
+                          <i class="bi bi-plus-lg me-1"></i>Elegir
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pagination block -->
+            @if (totalItems() > 0) {
+              <div class="picker-pagination-box pt-2 border-top">
+                <app-pagination
+                  [totalItems]="totalItems()"
+                  [currentPage]="currentPage()"
+                  [pageSize]="pageSize()"
+                  [pageSizeOptions]="[5, 10, 20]"
+                  itemNameSingular="rubro"
+                  itemNamePlural="rubros"
+                  (pageChange)="onPageChange($event)"
+                  (pageSizeChange)="onPageSizeChange($event)"
+                />
+              </div>
+            }
+          }
+        </div>
+
+        <!-- Footer -->
+        <div
+          class="modal-footer border-top px-4 py-2 bg-light d-flex justify-content-end align-items-center"
+        >
+          <button type="button" class="btn btn-outline-secondary px-4" (click)="cerrar()">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-backdrop fade show"></div>
+}

@@ -10,6 +10,7 @@
 /node_modules
 npm-debug.log
 yarn-error.log
+pnpm-debug.log
 
 # IDEs and editors
 .idea/
@@ -44,3 +45,28 @@ __screenshots__/
 Thumbs.db
 
 /generated/prisma
+
+# OpenAPI spec cache + generated client (regenerable via `pnpm gen:api`).
+.openapi/
+src/app/generated/
+
+# -- foglamp local scan --
+.foglamp/
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+graft/
+
+# playwright artifacts (local only)
+test-results/
+playwright-report/
+e2e/.auth/
+
+# local tool caches and generated artifacts (regenerable)
+.atl/
+.codebase-memory/
+.codegraph/
+.impeccable/
+.ignore
+/.github/skills/impeccable
+/.github/agents
+/.github/hooks

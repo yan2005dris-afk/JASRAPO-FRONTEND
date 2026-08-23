@@ -1,0 +1,528 @@
+<div class="reports-container">
+  <!-- Encabezado -->
+  <div class="page-header mb-4">
+    <h3 class="fw-bold mb-0 text-dark fs-4">Reporte de Abonos</h3>
+    <p class="text-muted small mb-0">
+      Consulte los abonos realizados. Puede filtrar por cliente (nombre o identificación) y por
+      rango de fechas.
+    </p>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold mb-1" for="clienteId">Cliente</label>
+          <div class="input-group">
+            <input
+              id="clienteId"
+              type="text"
+              class="form-control shadow-none contract-input text-truncate"
+              placeholder="Todos los clientes"
+              [value]="
+                selectedClientLabel()
+                  ? selectedClientLabel() +
+                    (selectedClientName() ? ' - ' + selectedClientName() : '')
+                  : ''
+              "
+              readonly
+              (click)="abrirBuscadorClientes()"
+              [title]="
+                selectedClientName()
+                  ? selectedClientLabel() + ' - ' + selectedClientName()
+                  : 'Todos los clientes'
+              "
+            />
+            @if (selectedClientLabel()) {
+              <button
+                type="button"
+                class="btn btn-outline-secondary border-start-0 shadow-none px-2"
+                title="Quitar cliente seleccionado"
+                (click)="limpiar(); $event.stopPropagation()"
+              >
+                <i class="bi bi-x"></i>
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="btn btn-outline-primary shadow-none"
+                title="Buscar cliente"
+                (click)="abrirBuscadorClientes()"
+              >
+                <i class="bi bi-search"></i>
+              </button>
+            }
+          </div>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold mb-1" for="fechaDesde">Fecha desde</label>
+          <app-date-picker
+            [inputId]="'fechaDesde'"
+            [value]="fechaDesde()"
+            (valueChange)="fechaDesde.set($event)"
+          />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold mb-1" for="fechaHasta">Fecha hasta</label>
+          <app-date-picker
+            [inputId]="'fechaHasta'"
+            [value]="fechaHasta()"
+            (valueChange)="fechaHasta.set($event)"
+          />
+        </div>
+        <div class="col-md-3 d-flex gap-2 flex-wrap">
+          <button
+            type="button"
+            class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+            (click)="consultar()"
+            [disabled]="isLoadingData() || rangoFechaInvalido()"
+          >
+            @if (isLoadingData()) {
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
+            } @else {
+              <i class="bi bi-search"></i>
+            }
+            {{ isLoadingData() ? 'Consultando...' : 'Consultar' }}
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
+            (click)="limpiar()"
+            [disabled]="isLoadingData()"
+          >
+            <i class="bi bi-x-circle"></i>
+            Limpiar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Presets rápidos de rango + validación cruzada -->
+  <div class="quick-range-bar mb-2 d-flex flex-wrap gap-2 align-items-center">
+    <span class="small text-muted me-1">Rango rápido:</span>
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary"
+      (click)="aplicarPreset('currentMonth')"
+    >
+      Este mes
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary"
+      (click)="aplicarPreset('lastMonth')"
+    >
+      Mes pasado
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary"
+      (click)="aplicarPreset('last3Months')"
+    >
+      Últimos 3 meses
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary"
+      (click)="aplicarPreset('lastYear')"
+    >
+      Último año
+    </button>
+
+    @if (rangoFechaInvalido()) {
+      <span class="text-danger small d-flex align-items-center gap-1 ms-auto">
+        <i class="bi bi-exclamation-circle"></i>
+        La fecha "desde" no puede ser mayor que la fecha "hasta".
+      </span>
+    }
+  </div>
+
+  <!-- Panel de resultados (aparece sólo cuando hay datos) -->
+  @if (reportData()) {
+    <!-- Resumen de abonos -->
+    <div class="summary-bar card border-0 shadow-sm rounded-3 mb-3">
+      <div class="summary-bar-inner">
+        <div class="stat-item">
+          <span class="stat-label">Cliente</span>
+          <span class="stat-value">
+            {{ selectedClientName() || 'Todos los clientes' }}
+          </span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-label">Total Registros</span>
+          <span class="stat-value font-monospace">
+            {{ totalRegistros() }}
+          </span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item">
+          <span class="stat-label">Período</span>
+          <span class="stat-value">
+            {{ fechaDesde() || 'Inicio' }} a {{ fechaHasta() || 'Hoy' }}
+          </span>
+        </div>
+        <div class="stat-deuda ms-auto deuda-ok">
+          <span class="stat-label">Total Abonos</span>
+          <span class="stat-deuda-value">${{ totalRecaudado() }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de toggle + acciones -->
+    <div class="view-toolbar d-flex align-items-center gap-3 mb-3 flex-wrap">
+      <!-- Toggle Tabla / PDF -->
+      <div class="view-toggle btn-group" role="group" aria-label="Modo de visualización">
+        <button
+          type="button"
+          class="btn btn-sm fw-medium"
+          [class.btn-primary]="activeView() === 'table'"
+          [class.btn-outline-primary]="activeView() !== 'table'"
+          (click)="setView('table')"
+        >
+          <i class="bi bi-table me-1"></i>Tabla
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm fw-medium"
+          [class.btn-primary]="activeView() === 'pdf'"
+          [class.btn-outline-primary]="activeView() !== 'pdf'"
+          [disabled]="isLoadingPdf()"
+          (click)="setView('pdf')"
+        >
+          @if (isLoadingPdf()) {
+            <span
+              class="spinner-border spinner-border-sm me-1"
+              role="status"
+              aria-hidden="true"
+            ></span>
+          } @else {
+            <i class="bi bi-file-earmark-pdf me-1"></i>
+          }
+          PDF
+        </button>
+      </div>
+
+      <!-- Acciones -->
+      <div class="d-flex gap-2 ms-auto flex-wrap">
+        @if (pdfBlob()) {
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 fw-medium"
+            (click)="descargarPdf()"
+          >
+            <i class="bi bi-download"></i>
+            Descargar PDF
+          </button>
+        }
+        @if (clienteId()) {
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 fw-medium"
+            (click)="abrirModalEmail()"
+          >
+            <i class="bi bi-envelope"></i>
+            Enviar por email
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Vista: TABLA -->
+    @if (activeView() === 'table') {
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-sm table-hover mb-0 align-middle report-table">
+              <thead>
+                <tr>
+                  <th>Factura</th>
+                  <th>Fecha Pago</th>
+                  <th>Cliente</th>
+                  <th class="text-center">Cuenta</th>
+                  <th class="text-center">Medidor</th>
+                  <th class="text-center">Emisión</th>
+                  <th class="text-end fw-semibold">Valor</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (pago of tableRows(); track pago.factura + pago.fecha) {
+                  <tr>
+                    <td class="font-monospace fw-semibold">{{ pago.factura }}</td>
+                    <td>{{ pago.fecha }}</td>
+                    <td>{{ pago.clienteNombre }}</td>
+                    <td class="text-center font-monospace">{{ pago.cuenta }}</td>
+                    <td class="text-center font-monospace">{{ pago.medidor }}</td>
+                    <td class="text-center">{{ pago.emision }}</td>
+                    <td class="text-end font-monospace fw-semibold text-success">
+                      ${{ pago.valor }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot>
+                <tr class="year-total-row">
+                  <td colspan="6" class="fw-semibold text-end small text-muted">Total General</td>
+                  <td class="text-end font-monospace fw-bold text-success">
+                    ${{ totalRecaudado() }}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          @if (tableRows().length === 0) {
+            <div class="empty-state py-5">
+              <div class="empty-state-icon">
+                <i class="bi bi-inbox"></i>
+              </div>
+              <p class="fw-semibold mb-1 text-dark">Sin abonos en el período</p>
+              <p class="text-muted small mb-0">
+                No se encontraron abonos para los filtros seleccionados.
+              </p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Vista: PDF -->
+    @if (activeView() === 'pdf') {
+      <div class="card border-0 shadow-sm rounded-3 mb-4">
+        <div class="card-body p-0">
+          @if (isLoadingPdf()) {
+            <div class="empty-state py-5">
+              <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Generando PDF...</span>
+              </div>
+              <p class="text-muted small mb-0">Generando PDF, por favor espere...</p>
+            </div>
+          } @else if (pdfBlob(); as pdf) {
+            <app-pdf-previewer [src]="pdf" height="700px" />
+          }
+        </div>
+      </div>
+    }
+  } @else if (!isLoadingData()) {
+    <!-- Estado inicial -->
+    <div class="card border-0 shadow-sm rounded-3 mb-4">
+      <div class="card-body">
+        <div class="empty-state">
+          <div class="empty-state-icon">
+            <i class="bi bi-file-earmark-text"></i>
+          </div>
+          <p class="fw-semibold mb-1 text-dark">Sin reporte cargado</p>
+          <p class="text-muted small mb-0">
+            Ajuste los filtros y presione <strong>Consultar</strong> para ver el reporte de abonos.
+          </p>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Modal buscador de clientes -->
+@if (isClientPickerOpen()) {
+  <div
+    class="modal fade show d-block picker-modal"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="picker-cliente-title"
+  >
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow rounded-4">
+        <div class="modal-header border-bottom-0 pb-2">
+          <div>
+            <h5 id="picker-cliente-title" class="modal-title fw-bold">Buscar Cliente</h5>
+            <p class="text-muted mb-0 small">
+              Busque por nombre, razón social o identificación del cliente.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="btn-close shadow-none"
+            aria-label="Cerrar"
+            (click)="cerrarBuscadorClientes()"
+          ></button>
+        </div>
+        <div class="modal-body pt-2">
+          <div class="input-group mb-3">
+            <span class="input-group-text bg-white">
+              <i class="bi bi-search"></i>
+            </span>
+            <input
+              type="text"
+              class="form-control shadow-none"
+              placeholder="Ej: María, 1105123..."
+              [ngModel]="searchTerm()"
+              (ngModelChange)="onSearchInput($event)"
+              (keyup.enter)="buscarClientes()"
+            />
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="buscarClientes()"
+              [disabled]="isSearching()"
+            >
+              Buscar
+            </button>
+          </div>
+
+          @if (isSearching()) {
+            <div class="text-center py-4 text-muted">
+              <span
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              Buscando clientes...
+            </div>
+          } @else if (searchError()) {
+            <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0" role="alert">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <span>{{ searchError() }}</span>
+            </div>
+          } @else if (searchPerformed() && searchResults().length === 0) {
+            <div class="empty-state py-4">
+              <div class="empty-state-icon">
+                <i class="bi bi-search"></i>
+              </div>
+              <p class="fw-semibold mb-1 text-dark">Sin resultados</p>
+              <p class="text-muted small mb-0">
+                No se encontraron clientes para el término buscado.
+              </p>
+            </div>
+          } @else if (searchResults().length > 0) {
+            <ul class="list-group list-group-flush contract-results">
+              @for (cliente of searchResults(); track cliente.clienteId ?? cliente.id) {
+                <li
+                  class="list-group-item px-0 d-flex justify-content-between align-items-center gap-2"
+                >
+                  <div class="flex-grow-1">
+                    <div class="fw-semibold text-dark">
+                      <i class="bi bi-person me-1 text-primary"></i>
+                      {{ formatClientName(cliente) }}
+                    </div>
+                    <div class="small text-muted">
+                      {{ cliente.identificacion }}
+                      @if (cliente.email) {
+                        · {{ cliente.email }}
+                      }
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary text-nowrap"
+                    (click)="seleccionarCliente(cliente)"
+                  >
+                    <i class="bi bi-check2 me-1"></i>Seleccionar
+                  </button>
+                </li>
+              }
+            </ul>
+          } @else {
+            <div class="text-center py-4 text-muted">
+              <i class="bi bi-info-circle me-1"></i>
+              Escriba un término y presione <strong>Buscar</strong>.
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal envío por email -->
+@if (isEmailModalOpen()) {
+  <div
+    class="modal fade show d-block picker-modal"
+    tabindex="-1"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="email-modal-title"
+  >
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow rounded-4">
+        <div class="modal-header border-bottom-0 pb-2">
+          <div>
+            <h5 id="email-modal-title" class="modal-title fw-bold">
+              Enviar reporte de abonos por email
+            </h5>
+            <p class="text-muted mb-0 small">
+              El reporte se generará y enviará al destinatario indicado.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="btn-close shadow-none"
+            aria-label="Cerrar"
+            (click)="cerrarModalEmail()"
+          ></button>
+        </div>
+        <div class="modal-body pt-2">
+          <div class="mb-3">
+            <label class="form-label small fw-semibold mb-1" for="destinatario">Destinatario</label>
+            <input
+              id="destinatario"
+              type="email"
+              class="form-control shadow-none"
+              placeholder="correo@ejemplo.com"
+              [ngModel]="destinatario()"
+              (ngModelChange)="destinatario.set($event)"
+            />
+            @if (destinatario() && esEmailInvalido()) {
+              <span class="text-danger x-small d-block mt-1">
+                Ingrese un correo electrónico válido.
+              </span>
+            }
+          </div>
+          <div class="mb-1">
+            <label class="form-label small fw-semibold mb-1" for="subject">Asunto</label>
+            <input
+              id="subject"
+              type="text"
+              class="form-control shadow-none"
+              placeholder="Asunto opcional"
+              [ngModel]="subject()"
+              (ngModelChange)="subject.set($event)"
+            />
+          </div>
+        </div>
+        <div class="modal-footer border-top-0 pt-2 pb-4 px-4">
+          <button
+            type="button"
+            class="btn btn-light"
+            (click)="cerrarModalEmail()"
+            [disabled]="isSendingEmail()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary d-flex align-items-center gap-2"
+            (click)="enviarEmail()"
+            [disabled]="isSendingEmail() || esEmailInvalido()"
+          >
+            @if (isSendingEmail()) {
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
+            } @else {
+              <i class="bi bi-envelope"></i>
+            }
+            {{ isSendingEmail() ? 'Enviando...' : 'Enviar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

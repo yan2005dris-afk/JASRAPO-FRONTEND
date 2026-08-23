@@ -1,0 +1,327 @@
+<!--
+  Componente de Inventario de Medidores
+  Maneja la visualización de métricas, listado paginado y gestión de estados.
+-->
+<div class="container-xl py-4">
+  <!-- Encabezado y KPIs: ocultos en modo selección (no aplican al elegir un medidor) -->
+  @if (!selectionMode()) {
+    <!-- Page header -->
+    <div class="page-header mb-4">
+      <div>
+        <h3 class="fw-bold mb-0 text-dark fs-4">Inventario de Medidores</h3>
+        <p class="text-muted small mb-0">Registrá, editá y consultá la información de medidores.</p>
+      </div>
+    </div>
+
+    <!-- Rejilla de indicadores principales -->
+    <section class="metrics-grid mb-4">
+      <div class="card metric-card card-bodega shadow-sm">
+        <span class="metric-label">[EN BODEGA]</span>
+        <h3 class="metric-value fw-bold mt-2">{{ warehouseMeters }}</h3>
+      </div>
+
+      <div class="card metric-card card-instalados shadow-sm">
+        <span class="metric-label">[INSTALADOS]</span>
+        <h3 class="metric-value fw-bold mt-2">{{ installedMeters }}</h3>
+        <i class="bi bi-link-45deg metric-icon icon-blue"></i>
+      </div>
+
+      <div class="card metric-card card-danados shadow-sm">
+        <span class="metric-label">[DAÑADOS]</span>
+        <h3 class="metric-value fw-bold mt-2">{{ damagedMeters }}</h3>
+        <i class="bi bi-exclamation-triangle metric-icon text-danger"></i>
+      </div>
+    </section>
+  }
+
+  <!-- Contenedor principal de la tabla -->
+  <div class="card border-0 shadow-sm rounded-3">
+    <!-- Header: Buscar y acciones -->
+    <div
+      class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
+      <!-- Botón Agregar (oculto en modo selección) -->
+      @if (!selectionMode()) {
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="openRegister()"
+        >
+          <i class="bi bi-plus-lg"></i>
+          Agregar
+        </button>
+      }
+
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- Search -->
+        <div class="input-group search-group" style="width: 280px">
+          <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+            <i class="bi bi-search"></i>
+          </span>
+          <input
+            type="text"
+            class="form-control border-start-0 ps-0 shadow-none"
+            placeholder="Buscar medidor..."
+            [(ngModel)]="searchQuery"
+            (keyup.enter)="searchMeters()"
+          />
+        </div>
+
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="searchMeters()"
+          [disabled]="isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+          @if (!isLoading) {
+            <i class="bi bi-search"></i>
+          }
+          {{ isLoading ? 'Buscando...' : 'Buscar' }}
+        </button>
+
+        <!-- Estado -->
+        <select
+          class="form-select shadow-none"
+          style="width: 190px"
+          [(ngModel)]="statusFilter"
+          (change)="filterByStatus()"
+        >
+          <option value="todos">Todos los estados</option>
+          @for (estado of statusCatalog; track estado.codigo) {
+            <option [value]="estado.codigo">{{ estado.nombre }}</option>
+          }
+        </select>
+
+        <!-- Dropdown (oculto en modo selección) -->
+        @if (!selectionMode()) {
+          <app-dropdown
+            label="Acciones Masivas"
+            [items]="dropdownItems"
+            (actionSelected)="handleMassAction($event)"
+          ></app-dropdown>
+
+          <!-- Exportar inventario: respeta el estado y la búsqueda activos -->
+          <app-dropdown
+            [label]="isExporting ? 'Exportando...' : 'Exportar'"
+            [icon]="isExporting ? 'spinner-border spinner-border-sm' : 'bi bi-box-arrow-down'"
+            [items]="exportItems"
+            [disabled]="isExporting"
+            buttonClass="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium"
+            (actionSelected)="handleExportAction($event)"
+          ></app-dropdown>
+        }
+      </div>
+    </div>
+
+    <!-- Tabla -->
+    <div class="px-4 pt-3">
+      <!-- Estado inicial: no se ha buscado nada todavía -->
+      @if (!hasFetched && !isLoading) {
+        <div class="text-center py-5 text-muted">
+          <i class="bi bi-search fs-1 d-block mb-2 opacity-25"></i>
+          <p class="mb-0">
+            Realiza una <strong>búsqueda</strong> para visualizar los medidores registrados.
+          </p>
+        </div>
+      }
+
+      <!-- Estado de carga -->
+      @if (isLoading) {
+        <div class="p-3">
+          <app-table-skeleton [rows]="5" [cols]="selectionMode() ? 4 : 6" />
+        </div>
+      }
+
+      <!-- Estado de error -->
+      @if (errorMessage && !isLoading) {
+        <div
+          class="alert alert-danger d-flex justify-content-between align-items-center shadow-sm"
+          role="alert"
+        >
+          <div class="d-flex align-items-center gap-3">
+            <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+            <div>
+              <h6 class="alert-heading mb-1 fw-bold">Error al cargar la información</h6>
+              <p class="mb-0 small">{{ errorMessage }}</p>
+            </div>
+          </div>
+          <button class="btn btn-outline-danger btn-sm px-3" (click)="loadMeters()">
+            <i class="bi bi-x me-1"></i> Cerrar
+          </button>
+        </div>
+      }
+
+      <!-- Contenido de datos -->
+      @if (hasFetched && !isLoading) {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 custom-table">
+            <thead>
+              <tr>
+                @if (!selectionMode()) {
+                  <th scope="col" style="width: 40px">
+                    <input class="form-check-input table-checkbox" type="checkbox" />
+                  </th>
+                }
+                <th scope="col" class="text-muted fw-semibold small">N° Serie</th>
+                <th scope="col" class="text-muted fw-semibold small">Marca</th>
+                <th scope="col" class="text-muted fw-semibold small">Fecha Ingreso</th>
+                <th scope="col" class="text-muted fw-semibold small">Estado</th>
+                @if (!selectionMode()) {
+                  <th scope="col" class="text-muted fw-semibold small text-center">Acciones</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (meter of pagedMetersComponent; track meter.medidorId) {
+                <tr
+                  [class.selectable-row]="selectionMode()"
+                  [attr.role]="selectionMode() ? 'button' : null"
+                  [attr.tabindex]="selectionMode() ? 0 : null"
+                  [title]="selectionMode() ? 'Doble clic o Enter para seleccionar' : ''"
+                  (dblclick)="selectMeter(meter)"
+                  (keydown.enter)="selectionMode() && selectMeter(meter)"
+                >
+                  @if (!selectionMode()) {
+                    <td>
+                      <input class="form-check-input table-checkbox" type="checkbox" />
+                    </td>
+                  }
+                  <td class="fw-medium text-dark" style="font-size: 0.95rem">
+                    {{ meter.serie }}
+                  </td>
+                  <td class="text-muted small">
+                    {{ meter.marca }}
+                  </td>
+                  <td class="text-muted small">
+                    {{ meter.fechaInstalacion ?? '—' }}
+                  </td>
+                  <td class="small">
+                    <span
+                      class="badge rounded-pill {{ getStatusBadgeClass(meter.estado?.codigo) }}"
+                    >
+                      @if (getStatusIcon(meter.estado?.codigo)) {
+                        <i class="bi {{ getStatusIcon(meter.estado?.codigo) }} me-1"></i>
+                      }
+                      {{ getStatusName(meter) }}
+                    </span>
+                  </td>
+                  @if (!selectionMode()) {
+                    <td class="text-center">
+                      <div class="dropdown">
+                        <button
+                          class="btn btn-link text-muted p-0 shadow-none"
+                          (click)="toggleDropdown(meter.medidorId!, $event)"
+                          aria-label="Menú de acciones"
+                        >
+                          <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul
+                          class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                          [class.show]="openDropdownId === meter.medidorId"
+                          style="min-width: 130px"
+                        >
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2"
+                              (click)="openEdit(meter)"
+                            >
+                              <i
+                                class="bi bi-pencil-fill text-primary"
+                                style="font-size: 0.8rem"
+                              ></i>
+                              Editar estado
+                            </button>
+                          </li>
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2"
+                              (click)="openHistory(meter)"
+                            >
+                              <i
+                                class="bi bi-clock-history text-secondary"
+                                style="font-size: 0.8rem"
+                              ></i>
+                              Historial
+                            </button>
+                          </li>
+                          <li>
+                            <hr class="dropdown-divider" />
+                          </li>
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                              (click)="deleteMeter(meter)"
+                            >
+                              <i class="bi bi-trash-fill" style="font-size: 0.8rem"></i>
+                              Eliminar
+                            </button>
+                          </li>
+                        </ul>
+                      </div>
+                    </td>
+                  }
+                </tr>
+              }
+              @if (pagedMetersComponent.length === 0) {
+                <tr>
+                  <td colspan="6" class="text-center py-5">
+                    <i class="bi bi-box fs-2 d-block mb-2 text-muted opacity-50"></i>
+                    <span class="text-muted small"
+                      >No se encontraron medidores con esos criterios.</span
+                    >
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <!-- Paginación y Controles -->
+    <footer class="card-footer bg-white border-top px-4 py-3">
+      <app-pagination
+        [totalItems]="totalItems()"
+        [currentPage]="currentPage()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="pageSizeOptions()"
+        itemNameSingular="medidor"
+        itemNamePlural="medidores"
+        (pageChange)="goToPage($event)"
+        (pageSizeChange)="setPageSize($event)"
+      />
+    </footer>
+  </div>
+</div>
+
+<!-- Modales de Gestión -->
+@if (showModal) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5)">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow">
+        <app-meters-form
+          [isEdit]="isEditMode"
+          [meter]="editingMeter"
+          [statuses]="statusCatalog"
+          [isSaving]="isSaving"
+          [errorMessage]="modalErrorMessage"
+          (saveCreate)="saveMeter($event)"
+          (saveEdit)="updateMeterStatus($event)"
+          (cancelForm)="closeModal()"
+        >
+        </app-meters-form>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showHistoryModal) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5)">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow">
+        <app-meter-history-modal [meter]="historyMeter" (closeModal)="closeHistory()" />
+      </div>
+    </div>
+  </div>
+}

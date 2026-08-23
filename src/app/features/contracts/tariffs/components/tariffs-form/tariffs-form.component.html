@@ -1,6 +1,6 @@
 <form [formGroup]="tariffForm" (ngSubmit)="onSubmit()">
   <div class="modal-header">
-    <h5 class="modal-title fw-bold">Editar Tarifa</h5>
+    <h5 class="modal-title fw-bold">{{ tariffToEdit() ? 'Editar Tarifa' : 'Nueva Tarifa' }}</h5>
     <button
       type="button"
       class="btn-close shadow-none"
@@ -24,51 +24,31 @@
       </div>
 
       <div class="col-12">
-        <label for="descripcion" class="form-label"
-          >Descripción <span class="text-danger">*</span></label
-        >
-        <input id="descripcion" type="text" class="form-control" formControlName="descripcion" />
-        @if (isFieldInvalid('descripcion')) {
-          <small class="text-danger">La descripción es obligatoria.</small>
-        }
+        <label for="descripcion" class="form-label">Descripción</label>
+        <textarea
+          id="descripcion"
+          class="form-control"
+          formControlName="descripcion"
+          rows="2"
+          placeholder="Descripción opcional de la categoría"
+        ></textarea>
       </div>
 
-      <div class="col-md-4">
-        <label for="valorBase" class="form-label"
-          >Valor Base ($) <span class="text-danger">*</span></label
-        >
-        <input id="valorBase" type="number" class="form-control" formControlName="valorBase" />
-        @if (isFieldInvalid('valorBase')) {
-          <small class="text-danger">Debe ser un número mayor o igual a 0.</small>
-        }
-      </div>
-
-      <div class="col-md-4">
+      <div class="col-12">
         <label for="consumoMinimoMensual" class="form-label"
-          >Consumo mínimo (m³) <span class="text-danger">*</span></label
+          >Consumo base incluido (m³) <span class="text-danger">*</span></label
         >
         <input
           id="consumoMinimoMensual"
           type="number"
           class="form-control"
           formControlName="consumoMinimoMensual"
+          placeholder="10"
         />
-        @if (isFieldInvalid('consumoMinimoMensual')) {
-          <small class="text-danger">Debe ser un número mayor o igual a 0.</small>
-        }
-      </div>
-
-      <div class="col-md-4">
-        <label for="valorExcedenteM3" class="form-label"
-          >Valor por excedente ($) <span class="text-danger">*</span></label
+        <small class="text-muted d-block mt-1"
+          >Tope de m³ cubiertos por el cargo fijo mensual antes de cobrar excedente.</small
         >
-        <input
-          id="valorExcedenteM3"
-          type="number"
-          class="form-control"
-          formControlName="valorExcedenteM3"
-        />
-        @if (isFieldInvalid('valorExcedenteM3')) {
+        @if (isFieldInvalid('consumoMinimoMensual')) {
           <small class="text-danger">Debe ser un número mayor o igual a 0.</small>
         }
       </div>

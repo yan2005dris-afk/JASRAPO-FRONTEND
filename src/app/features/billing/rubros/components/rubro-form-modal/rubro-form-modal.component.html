@@ -1,0 +1,307 @@
+<div
+  class="modal-backdrop fade show"
+  role="button"
+  tabindex="0"
+  aria-label="Cerrar modal"
+  (click)="close()"
+  (keydown.enter)="close()"
+  (keydown.space)="close(); $event.preventDefault()"
+></div>
+<div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+  <div
+    class="modal-dialog modal-dialog-centered modal-lg"
+    tabindex="-1"
+    (click)="$event.stopPropagation()"
+    (keydown.enter)="$event.stopPropagation()"
+  >
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <!-- Header -->
+      <div class="modal-header border-bottom px-4 py-3 bg-light rounded-top-4">
+        <div class="d-flex align-items-center gap-3">
+          <div
+            class="modal-header-icon rounded-circle d-flex align-items-center justify-content-center bg-primary-subtle text-primary"
+            style="width: 40px; height: 40px"
+          >
+            <i class="bi bi-box-seam fs-5"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-dark mb-0">
+              {{ rubro() ? 'Editar Rubro' : 'Nuevo Rubro' }}
+            </h5>
+            <p class="text-muted small mb-0">
+              {{
+                rubro()
+                  ? 'Modificá las especificaciones y valores del rubro'
+                  : 'Registrá un nuevo concepto facturable en el sistema'
+              }}
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close"
+          aria-label="Close"
+          (click)="close()"
+          [disabled]="isLoading"
+        ></button>
+      </div>
+
+      <!-- Body Form -->
+      <div class="modal-body px-4 py-4">
+        <form (ngSubmit)="submit()">
+          <div class="row g-3">
+            <!-- 1. Tipo de Rubro con Picker (Define la naturaleza del rubro) -->
+            <div class="col-md-7">
+              <app-picker-input
+                inputId="rubroTipoInput"
+                label="Tipo de Rubro"
+                placeholder="Seleccionar tipo de rubro..."
+                icon="bi-tags"
+                [query]="selectedTipoLabel"
+                [disabled]="isLoading"
+                [required]="true"
+                [isOpen]="isTipoPickerOpen"
+                [hasValue]="!!tipoRubro"
+                (openChange)="setTipoPickerOpen($event)"
+              >
+                <div picker-items>
+                  @for (opt of tipoRubroOptions; track opt.value) {
+                    <button
+                      type="button"
+                      class="dropdown-item px-3 py-2 text-start d-flex justify-content-between align-items-center"
+                      [class.active]="tipoRubro === opt.value"
+                      (click)="selectTipoRubro(opt)"
+                    >
+                      <span class="small fw-semibold">{{ opt.label }}</span>
+                      @if (tipoRubro === opt.value) {
+                        <i class="bi bi-check-lg text-primary"></i>
+                      }
+                    </button>
+                  }
+                </div>
+              </app-picker-input>
+            </div>
+
+            <!-- 2. Código SRI / SKU (Código único identificador) -->
+            <div class="col-md-5">
+              <label for="rubroCodigoSriInput" class="form-label fw-semibold small text-dark">
+                Código / SKU (Único)
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light text-muted">
+                  <i class="bi bi-upc-scan"></i>
+                </span>
+                <input
+                  id="rubroCodigoSriInput"
+                  type="text"
+                  class="form-control font-monospace text-dark"
+                  [(ngModel)]="codigoSri"
+                  name="codigoSri"
+                  [disabled]="isLoading"
+                  placeholder="Ej. SERV-01, MED-01"
+                />
+              </div>
+              <div class="form-text extra-small" style="font-size: 0.72rem">
+                Código para comprobante electrónico.
+              </div>
+            </div>
+
+            <!-- 3. Nombre del Rubro -->
+            <div class="col-12">
+              <label for="rubroNombreInput" class="form-label fw-semibold small text-dark">
+                Nombre del Rubro <span class="text-danger">*</span>
+              </label>
+              <input
+                id="rubroNombreInput"
+                type="text"
+                class="form-control"
+                placeholder="Ej. Servicio de Reconexión, Medidor 1/2 pulgada"
+                [(ngModel)]="nombre"
+                name="nombre"
+                required
+                [disabled]="isLoading"
+              />
+            </div>
+
+            <!-- 4. Descripción -->
+            <div class="col-12">
+              <label for="rubroDescripcionTextarea" class="form-label fw-semibold small text-dark">
+                Descripción para Factura <span class="text-danger">*</span>
+              </label>
+              <textarea
+                id="rubroDescripcionTextarea"
+                class="form-control"
+                rows="2"
+                placeholder="Descripción detallada que aparecerá en el comprobante..."
+                [(ngModel)]="descripcion"
+                name="descripcion"
+                required
+                [disabled]="isLoading"
+              ></textarea>
+            </div>
+
+            <!-- 5. Tarifa Impuesto IVA con Picker -->
+            <div class="col-md-6">
+              <app-picker-input
+                inputId="rubroTarifaIvaInput"
+                label="Tarifa Impuesto IVA"
+                placeholder="Seleccionar tarifa de impuesto..."
+                icon="bi-percent"
+                [query]="selectedTarifaLabel"
+                [disabled]="isLoading"
+                [required]="true"
+                [isOpen]="isTarifaPickerOpen"
+                [hasValue]="!!tarifaImpuestoId"
+                (openChange)="setTarifaPickerOpen($event)"
+              >
+                <div picker-items>
+                  @for (t of tarifasImpuesto; track t.id) {
+                    <button
+                      type="button"
+                      class="dropdown-item px-3 py-2 text-start d-flex justify-content-between align-items-center"
+                      [class.active]="tarifaImpuestoId === t.id"
+                      (click)="selectTarifaImpuesto(t)"
+                    >
+                      <span class="small fw-semibold"
+                        >{{ t.descripcion }} ({{ t.porcentaje }}%)</span
+                      >
+                      @if (tarifaImpuestoId === t.id) {
+                        <i class="bi bi-check-lg text-primary"></i>
+                      }
+                    </button>
+                  }
+                </div>
+              </app-picker-input>
+            </div>
+
+            <!-- Precio Unitario -->
+            <div class="col-md-6">
+              <label for="rubroPrecioInput" class="form-label fw-semibold small text-dark">
+                Precio Unitario Base (USD) <span class="text-danger">*</span>
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-light fw-medium">$</span>
+                <input
+                  id="rubroPrecioInput"
+                  type="number"
+                  class="form-control"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  [(ngModel)]="precioUnitario"
+                  name="precioUnitario"
+                  required
+                  [disabled]="isLoading"
+                />
+              </div>
+              <div class="form-text small">Precio neto antes de impuestos.</div>
+            </div>
+
+            <!-- Preview Card de Cálculo con IVA -->
+            <div class="col-12">
+              <div class="card border bg-light-subtle rounded-3 p-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-calculator text-secondary fs-5"></i>
+                    <div>
+                      <div class="fw-bold text-dark small">Desglose de Precio Estimado</div>
+                      <div class="text-muted extra-small" style="font-size: 0.75rem">
+                        Cálculo automático según la tarifa de impuesto seleccionada
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="d-flex align-items-center gap-3">
+                    <div class="text-end">
+                      <span class="text-muted extra-small d-block" style="font-size: 0.72rem"
+                        >Subtotal Base</span
+                      >
+                      <span class="fw-semibold text-dark"
+                        >${{ precioUnitario | number: '1.2-2' }}</span
+                      >
+                    </div>
+                    <span class="text-muted">+</span>
+                    <div class="text-end">
+                      <span class="text-muted extra-small d-block" style="font-size: 0.72rem"
+                        >IVA ({{ currentPorcentajeIva }}%)</span
+                      >
+                      <span class="fw-semibold text-secondary"
+                        >${{ valorIva | number: '1.2-2' }}</span
+                      >
+                    </div>
+                    <span class="text-muted">=</span>
+                    <div class="text-end bg-white px-3 py-1 rounded-2 border shadow-sm">
+                      <span
+                        class="text-muted extra-small d-block fw-semibold text-dark"
+                        style="font-size: 0.72rem"
+                        >Total Final con IVA</span
+                      >
+                      <span class="fw-bold text-dark fs-6"
+                        >${{ precioTotalConIva | number: '1.2-2' }}</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Estado Activo Toggle -->
+            <div class="col-md-6 d-flex align-items-center">
+              <div class="form-check form-switch pt-2">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  id="rubroActivoSwitch"
+                  [(ngModel)]="activo"
+                  name="activo"
+                  [disabled]="isLoading"
+                />
+                <label
+                  class="form-check-label fw-semibold small text-dark ms-2"
+                  for="rubroActivoSwitch"
+                >
+                  Rubro Activo (Disponible para facturación)
+                </label>
+              </div>
+            </div>
+
+            @if (esAutomatico) {
+              <div class="col-12">
+                <div class="alert alert-info py-2 px-3 d-flex align-items-center gap-2 mb-0 small">
+                  <i class="bi bi-info-circle-fill text-info"></i>
+                  <span
+                    >Este rubro es del sistema (autogenerado dinámicamente en facturación).</span
+                  >
+                </div>
+              </div>
+            }
+          </div>
+        </form>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="modal-footer border-top px-4 py-3 bg-light rounded-bottom-4">
+        <button
+          type="button"
+          class="btn btn-outline-secondary px-4 fw-medium"
+          (click)="close()"
+          [disabled]="isLoading"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary px-4 fw-medium d-flex align-items-center gap-2"
+          (click)="submit()"
+          [disabled]="!isFormValid || isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+          {{ rubro() ? 'Guardar Cambios' : 'Crear Rubro' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -2,6 +2,15 @@
   width: 100%;
 }
 
+/* Filas seleccionables (modo selección): el doble clic elige la comunidad */
+.selectable-row {
+  cursor: pointer;
+}
+
+.selectable-row:hover td {
+  background-color: rgba(var(--bs-primary-rgb), 0.06) !important;
+}
+
 .table-responsive {
   min-height: 220px;
 }

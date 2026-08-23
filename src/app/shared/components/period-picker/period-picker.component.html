@@ -1,0 +1,42 @@
+<app-picker-input
+  [inputId]="inputId()"
+  [label]="label()"
+  [placeholder]="placeholder()"
+  icon="bi-calendar-event"
+  [query]="searchQuery()"
+  [disabled]="disabled()"
+  [required]="required()"
+  [isLoading]="isLoading()"
+  [isOpen]="isOpen()"
+  [hasValue]="!!currentSelected()"
+  (queryChange)="onQueryChange($event)"
+  (openChange)="onOpenChange($event)"
+  (clear)="clearSelection()"
+>
+  <!-- List of Items -->
+  <div picker-items>
+    @if (filteredPeriods().length === 0) {
+      <div class="px-3 py-2 text-muted small text-center">
+        No se encontraron períodos para "{{ searchQuery() }}".
+      </div>
+    } @else {
+      @for (period of filteredPeriods(); track period.periodoId) {
+        <button
+          type="button"
+          class="dropdown-item px-3 py-2 text-start d-flex justify-content-between align-items-center"
+          [class.active]="currentSelected()?.periodoId === period.periodoId"
+          (click)="selectPeriod(period)"
+        >
+          <div>
+            <div class="fw-semibold text-dark small">
+              {{ period.nombre || 'Período #' + period.periodoId }}
+            </div>
+          </div>
+          <span class="badge border extra-small" [ngClass]="getEstadoBadgeClass(period.estado)">
+            {{ period.estado }}
+          </span>
+        </button>
+      }
+    }
+  </div>
+</app-picker-input>

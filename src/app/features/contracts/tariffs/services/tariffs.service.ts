@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../../../environments/environment';
 import { map, Observable } from 'rxjs';
 import {
@@ -7,6 +7,16 @@ import {
   CreateTariffRequest,
   UpdateTariffRequest,
 } from '../interfaces/itariff.interface';
+
+export interface ITariffResponse {
+  data: ITariffCategory[];
+  meta?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
 
 @Injectable({
   providedIn: 'root',
@@ -17,15 +27,25 @@ export class TariffsService {
   private readonly baseUrl = environment.apiUrl;
   private readonly endpoint = `${this.baseUrl}/tariff-categories`;
 
-  getTariffs(): Observable<ITariffCategory[]> {
-    return this.http.get<{ data: ITariffCategory[] }>(this.endpoint).pipe(map((res) => res.data));
+  getTariffs(params?: {
+    page?: number;
+    limit?: number;
+    nombre?: string;
+  }): Observable<ITariffCategory[]> {
+    let httpParams = new HttpParams();
+    if (params?.page) httpParams = httpParams.set('page', params.page.toString());
+    if (params?.limit) httpParams = httpParams.set('limit', params.limit.toString());
+    if (params?.nombre) httpParams = httpParams.set('nombre', params.nombre);
+
+    return this.http
+      .get<ITariffResponse>(this.endpoint, { params: httpParams })
+      .pipe(map((res) => res.data));
   }
 
   getTariffById(id: number): Observable<ITariffCategory> {
     return this.http.get<ITariffCategory>(`${this.endpoint}/${id}`);
   }
 
-  // Deshabilitado por ahora: tabla quemada (pocos registros fijos). Ver ticket #61.
   createTariff(tariff: CreateTariffRequest): Observable<ITariffCategory> {
     return this.http.post<ITariffCategory>(this.endpoint, tariff);
   }

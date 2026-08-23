@@ -1,0 +1,90 @@
+<div class="modal fade show d-block picker-modal" tabindex="-1" role="dialog" aria-modal="true">
+  <div class="modal-dialog modal-dialog-centered" style="max-width: 480px">
+    <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+      <!-- Header -->
+      <div class="modal-header border-bottom px-4 py-3 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="header-icon-tile">
+            <i class="bi bi-send-check"></i>
+          </div>
+          <div>
+            <h5 class="modal-title fw-bold text-dark mb-0 fs-5">Envío Masivo de Planillas</h5>
+            <p class="text-muted small mb-0">Lote #{{ batch().loteId }}</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn-close shadow-none"
+          aria-label="Cerrar"
+          (click)="close()"
+          [disabled]="isLoading"
+        ></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body p-4 bg-white">
+        <div class="p-3 bg-light rounded-3 mb-3 border">
+          <div class="d-flex justify-content-between small mb-1">
+            <span class="text-muted">Período:</span>
+            <span class="fw-bold text-dark">{{
+              batch().periodoRel?.nombre || 'Período #' + batch().periodoId
+            }}</span>
+          </div>
+          <div class="d-flex justify-content-between small mb-1">
+            <span class="text-muted">Comunidad:</span>
+            <span class="text-dark">{{
+              batch().comunidad?.nombre || 'Todas las comunidades'
+            }}</span>
+          </div>
+          <div class="d-flex justify-content-between small mb-1">
+            <span class="text-muted">Total Emisiones:</span>
+            <span class="fw-bold text-dark">{{ batch().totalEmisiones }} planillas</span>
+          </div>
+          <div class="d-flex justify-content-between small">
+            <span class="text-muted">Monto Lote:</span>
+            <span class="fw-bold text-dark">${{ batch().totalMonto | number: '1.2-2' }}</span>
+          </div>
+        </div>
+
+        <p class="small text-muted mb-0">
+          Se generarán los PDFs correspondientes y se enviarán automáticamente a los correos
+          registrados de cada cliente.
+        </p>
+
+        @if (isLoading) {
+          <div class="p-3 rounded-3 bg-light border text-center my-3">
+            <div class="spinner-border text-primary spinner-border-sm mb-2" role="status"></div>
+            <div class="small fw-semibold text-dark">Encolando tareas de envío de correos...</div>
+          </div>
+        }
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between">
+        <button
+          type="button"
+          class="btn btn-outline-secondary fw-medium px-3"
+          (click)="close()"
+          [disabled]="isLoading"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-4"
+          (click)="submitSendEmails()"
+          [disabled]="isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+          @if (!isLoading) {
+            <i class="bi bi-send-fill"></i>
+          }
+          {{ isLoading ? 'Enviando...' : 'Iniciar Envío' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>

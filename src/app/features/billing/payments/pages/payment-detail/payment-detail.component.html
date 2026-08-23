@@ -1,0 +1,488 @@
+<div class="payment-detail-page container-fluid px-4 py-4">
+  <!-- Back Button & Breadcrumbs -->
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a
+        routerLink="/app/Facturacion/RecaudacionYPagos"
+        class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 shadow-none bg-white"
+      >
+        <i class="bi bi-arrow-left"></i>
+        <span>Volver a Recaudación</span>
+      </a>
+      <span class="text-muted">/</span>
+      <span class="text-dark fw-semibold small">Detalle del Pago #{{ pagoId }}</span>
+    </div>
+
+    <!-- Header Actions -->
+    @if (payment) {
+      <div class="d-flex align-items-center gap-2">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 shadow-none bg-white"
+          (click)="imprimirRecibo()"
+        >
+          <i class="bi bi-printer"></i>
+          Imprimir Comprobante
+        </button>
+
+        @if (payment.estadoPago !== 'ANULADO') {
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1 shadow-none"
+            (click)="openAnnulModal()"
+          >
+            <i class="bi bi-x-octagon"></i>
+            Anular Pago
+          </button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (isLoading) {
+    <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4 bg-white">
+      <div class="spinner-border text-primary mx-auto mb-3" role="status"></div>
+      <p class="text-muted small mb-0">Cargando detalles completos del pago...</p>
+    </div>
+  } @else if (errorMessage) {
+    <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4 bg-white">
+      <div
+        class="header-icon-tile danger-tile mx-auto mb-3"
+        style="width: 48px; height: 48px; font-size: 1.5rem"
+      >
+        <i class="bi bi-exclamation-triangle"></i>
+      </div>
+      <h5 class="fw-bold text-dark">Error al cargar pago</h5>
+      <p class="text-muted small">{{ errorMessage }}</p>
+      <a routerLink="/app/Facturacion/RecaudacionYPagos" class="btn btn-primary btn-sm mx-auto">
+        Volver a la lista
+      </a>
+    </div>
+  } @else if (payment) {
+    <!-- Main Info Header Card -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden bg-white">
+      <div class="card-header bg-white border-bottom p-4">
+        <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <div
+              class="payment-header-icon rounded-3 bg-primary bg-opacity-10 text-primary p-3 d-flex align-items-center justify-content-center"
+            >
+              <i class="bi bi-receipt fs-3"></i>
+            </div>
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                <h4 class="fw-bold mb-0 text-dark">Pago #{{ payment.pagoId }}</h4>
+                <app-status-badge [status]="payment.estadoPago" />
+              </div>
+              <p class="text-muted small mb-0">
+                Registrado el <strong>{{ payment.fechaPago }}</strong> por
+                <strong>{{ payment.creadoPor }}</strong>
+              </p>
+            </div>
+          </div>
+
+          <!-- Total Recibido Highlight -->
+          <div class="total-badge text-end p-3 rounded-3 bg-light border">
+            <div
+              class="text-muted text-uppercase fw-semibold"
+              style="font-size: 0.72rem; letter-spacing: 0.5px"
+            >
+              Total Recibido
+            </div>
+            <div class="fs-3 fw-bold text-dark tabular-nums">
+              ${{ payment.montoTotalRecibido | number: '1.2-2' }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Banner si está anulado -->
+      @if (payment.estadoPago === 'ANULADO') {
+        <div
+          class="p-3 px-4 bg-danger bg-opacity-10 border-bottom border-danger-subtle text-danger d-flex align-items-center justify-content-between flex-wrap gap-2"
+        >
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-x-octagon-fill fs-5"></i>
+            <div>
+              <strong>Pago Anulado:</strong>
+              {{ payment.motivoAnulacion || 'Sin motivo especificado' }}
+              <span class="text-muted small ms-2">
+                (Por {{ payment.anuladoPor || 'Sistema' }} el {{ payment.fechaAnulacion || '—' }})
+              </span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Grid 2 Columnas: Datos del Cliente y Datos Financieros -->
+    <div class="row g-4 mb-4">
+      <!-- Columna 1: Información del Cliente -->
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+          <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+            <i class="bi bi-person-badge text-primary fs-5"></i>
+            <h6 class="fw-bold text-dark mb-0">Información del Cliente</h6>
+          </div>
+
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="client-avatar-lg">
+              {{ getClientInitials() }}
+            </div>
+            <div>
+              <h5 class="fw-bold text-dark mb-1">{{ getClientDisplayName() }}</h5>
+              <div class="text-muted small">
+                C.I. / RUC:
+                <strong>{{
+                  payment.cliente?.identificacion ||
+                    payment.clienteIdentificacion ||
+                    payment.clienteId
+                }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3 small">
+            <div class="col-6">
+              <span class="text-muted d-block">ID de Cliente</span>
+              <span class="fw-semibold text-dark">{{ payment.clienteId }}</span>
+            </div>
+            <div class="col-6">
+              <span class="text-muted d-block">Teléfono / Contacto</span>
+              <span class="fw-semibold text-dark">{{ payment.cliente?.telefono || '—' }}</span>
+            </div>
+            <div class="col-6">
+              <span class="text-muted d-block">Correo Electrónico</span>
+              <span class="fw-semibold text-dark">{{ payment.cliente?.email || '—' }}</span>
+            </div>
+            <div class="col-6">
+              <span class="text-muted d-block">Dirección Domiciliaria</span>
+              <span class="fw-semibold text-dark">{{
+                payment.cliente?.direccionDomicilio || '—'
+              }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna 2: Método de Pago y Transacción -->
+      <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4 bg-white h-100">
+          <div class="d-flex align-items-center gap-2 mb-3 pb-2 border-bottom">
+            <i class="bi bi-credit-card-2-front text-primary fs-5"></i>
+            <h6 class="fw-bold text-dark mb-0">Detalles de la Transacción</h6>
+          </div>
+
+          <div class="row g-3 small">
+            <div class="col-6">
+              <span class="text-muted d-block">Forma de Pago</span>
+              <span class="badge mt-1" [ngClass]="getPaymentMethodBadgeClass()">
+                {{ getPaymentMethodLabel() }}
+              </span>
+            </div>
+
+            <div class="col-6">
+              <span class="text-muted d-block">Sesión de Caja</span>
+              <span class="fw-semibold text-dark">
+                {{ payment.cajaId ? 'Caja #' + payment.cajaId : 'Ventanilla General' }}
+              </span>
+            </div>
+
+            <div class="col-6">
+              <span class="text-muted d-block">Nº Operación / Transacción</span>
+              <span class="fw-semibold text-dark">{{ payment.numeroOperacion || '—' }}</span>
+            </div>
+
+            <div class="col-6">
+              <span class="text-muted d-block">Referencia Bancaria</span>
+              <span class="fw-semibold text-dark">{{ payment.referenciaBanco || '—' }}</span>
+            </div>
+
+            <div class="col-6">
+              <span class="text-muted d-block">Fecha de Creación</span>
+              <span class="fw-semibold text-dark">{{
+                payment.fechaCreacion || payment.fechaPago
+              }}</span>
+            </div>
+
+            <div class="col-6">
+              <span class="text-muted d-block">Última Modificación</span>
+              <span class="fw-semibold text-dark">{{ payment.fechaActualizacion || '—' }}</span>
+            </div>
+
+            @if (payment.observaciones) {
+              <div class="col-12 mt-3">
+                <span class="text-muted d-block mb-1">Observaciones / Notas</span>
+                <div class="p-2 px-3 bg-light rounded-3 border text-dark">
+                  {{ payment.observaciones }}
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comprobante Adjunto (si existe) -->
+    @if (payment.comprobanteUrl) {
+      <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
+        <div
+          class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom flex-wrap gap-2"
+        >
+          <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-paperclip text-primary fs-5"></i>
+            <h6 class="fw-bold text-dark mb-0">Comprobante de Transferencia Adjunto</h6>
+          </div>
+          @if (comprobanteSignedUrl) {
+            <a
+              [href]="comprobanteSignedUrl"
+              target="_blank"
+              class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1 shadow-none"
+            >
+              <i class="bi bi-box-arrow-up-right"></i>
+              Abrir archivo original
+            </a>
+          }
+        </div>
+
+        @if (isLoadingComprobanteUrl) {
+          <div class="text-center py-4 text-muted">
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            Cargando visor de comprobante...
+          </div>
+        } @else if (comprobanteSignedUrl) {
+          @if (isImageComprobante()) {
+            <div class="text-center p-3 bg-light rounded-3 border">
+              <img
+                [src]="comprobanteSignedUrl"
+                alt="Comprobante de Transferencia"
+                class="img-fluid rounded shadow-sm"
+                style="max-height: 450px; object-fit: contain"
+              />
+            </div>
+          } @else if (isPdfComprobante()) {
+            <div
+              class="p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between"
+            >
+              <div class="d-flex align-items-center gap-3">
+                <i class="bi bi-file-earmark-pdf-fill text-danger fs-1"></i>
+                <div>
+                  <div class="fw-bold text-dark">Documento PDF Adjunto</div>
+                  <div class="text-muted small">Comprobante de respaldo de la transacción</div>
+                </div>
+              </div>
+              <a
+                [href]="comprobanteSignedUrl"
+                target="_blank"
+                class="btn btn-primary btn-sm d-flex align-items-center gap-1"
+              >
+                <i class="bi bi-download"></i> Descargar / Ver PDF
+              </a>
+            </div>
+          } @else {
+            <div
+              class="p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between"
+            >
+              <span class="text-muted small">Archivo de respaldo adjuntado</span>
+              <a
+                [href]="comprobanteSignedUrl"
+                target="_blank"
+                class="btn btn-outline-primary btn-sm"
+              >
+                Ver Comprobante
+              </a>
+            </div>
+          }
+        }
+      </div>
+    }
+
+    <!-- Desglose de Aplicación del Pago (Tabla) -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden bg-white">
+      <div
+        class="card-header bg-white border-bottom p-4 d-flex align-items-center justify-content-between"
+      >
+        <div class="d-flex align-items-center gap-2">
+          <i class="bi bi-list-check text-primary fs-5"></i>
+          <h6 class="fw-bold text-dark mb-0">Desglose de Aplicación del Cobro</h6>
+        </div>
+        <span class="badge bg-light text-muted border">
+          {{ payment.detallePago?.length || 0 }} registro(s)
+        </span>
+      </div>
+
+      <div class="p-0">
+        @if (payment.detallePago && payment.detallePago.length > 0) {
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 custom-table">
+              <thead class="bg-light">
+                <tr>
+                  <th scope="col" class="ps-4">Tipo de Aplicación</th>
+                  <th scope="col">Referencia / Comprobante</th>
+                  <th scope="col">Período / Mes</th>
+                  <th scope="col">Fecha Transacción</th>
+                  <th scope="col" class="text-end">Total Factura</th>
+                  <th scope="col" class="text-end pe-4">Monto Abonado</th>
+                  <th scope="col" class="text-center pe-4" style="width: 130px">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of payment.detallePago; track item.detallePagoId) {
+                  <tr>
+                    <td class="ps-4">
+                      <span class="badge badge-soft-primary fw-medium">
+                        {{ item.tipoPago }}
+                      </span>
+                    </td>
+                    <td>
+                      @if (item.comprobante) {
+                        <div class="d-flex align-items-center gap-2">
+                          <i class="bi bi-file-earmark-text text-primary"></i>
+                          <div>
+                            <span class="fw-bold text-dark">
+                              {{ item.comprobante.tipoComprobante }} #{{
+                                item.comprobante.secuencial || item.comprobante.comprobanteId
+                              }}
+                            </span>
+                            <span class="text-muted small d-block">
+                              Estado:
+                              <span class="badge bg-light text-secondary border">{{
+                                item.comprobante.estado
+                              }}</span>
+                            </span>
+                          </div>
+                        </div>
+                      } @else if (item.cuotaConvenioId) {
+                        <div class="d-flex align-items-center gap-2">
+                          <i class="bi bi-journal-text text-success"></i>
+                          <span class="text-dark fw-semibold">
+                            Cuota de Convenio #{{ item.cuotaConvenioId }}
+                          </span>
+                        </div>
+                      } @else {
+                        <span class="text-muted">{{
+                          item.referencia || 'Cobro directo / Rubro puntual'
+                        }}</span>
+                      }
+                    </td>
+                    <td class="small">
+                      @if (item.comprobante?.prefactura?.periodoNombre) {
+                        <span class="badge bg-light text-dark border">
+                          {{ item.comprobante?.prefactura?.periodoNombre }}
+                          @if (item.comprobante?.prefactura?.mes) {
+                            · Mes {{ item.comprobante?.prefactura?.mes }}
+                          }
+                        </span>
+                      } @else {
+                        <span class="text-muted">—</span>
+                      }
+                    </td>
+                    <td class="small text-muted">
+                      {{ item.fechaTransaccion || item.fechaCreacion || '—' }}
+                    </td>
+                    <td class="text-end small text-muted tabular-nums">
+                      @if (item.comprobante?.importeTotal) {
+                        ${{ item.comprobante?.importeTotal | number: '1.2-2' }}
+                      } @else if (item.comprobante?.prefactura?.totalPagar) {
+                        ${{ item.comprobante?.prefactura?.totalPagar | number: '1.2-2' }}
+                      } @else {
+                        —
+                      }
+                    </td>
+                    <td
+                      class="text-end pe-4 fw-bold text-dark tabular-nums"
+                      style="font-size: 0.95rem"
+                    >
+                      ${{ item.montoAbonado | number: '1.2-2' }}
+                    </td>
+                    <td class="text-center pe-4">
+                      @if (item.comprobante?.prefactura?.prefacturaId) {
+                        <a
+                          [routerLink]="[
+                            '/app',
+                            'Facturacion',
+                            'GeneracionPlanilla',
+                            item.comprobante?.prefactura?.prefacturaId,
+                          ]"
+                          class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 shadow-none py-1 px-2"
+                          style="font-size: 0.78rem"
+                          title="Ver detalle completo de la prefactura"
+                        >
+                          <i class="bi bi-box-arrow-up-right"></i>
+                          <span>Ver Prefactura</span>
+                        </a>
+                      } @else {
+                        <span class="text-muted small">—</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+              <tfoot class="bg-light">
+                <tr>
+                  <td colspan="5" class="ps-4 fw-bold text-dark text-end">Total Aplicado:</td>
+                  <td class="text-end pe-4 fw-bold text-primary fs-6 tabular-nums">
+                    ${{ payment.montoTotalRecibido | number: '1.2-2' }}
+                  </td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        } @else {
+          <div class="p-4 text-center text-muted">
+            <i class="bi bi-info-circle fs-3 d-block mb-2"></i>
+            No se registraron líneas de desglose adicionales para este pago.
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Saldos a Favor Generados (si existieran) -->
+    @if (payment.saldosFavor && payment.saldosFavor.length > 0) {
+      <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden bg-white">
+        <div class="card-header bg-white border-bottom p-4 d-flex align-items-center gap-2">
+          <i class="bi bi-wallet2 text-success fs-5"></i>
+          <h6 class="fw-bold text-dark mb-0">Saldos a Favor Generados</h6>
+        </div>
+        <div class="p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 custom-table">
+              <thead class="bg-light">
+                <tr>
+                  <th scope="col" class="ps-4">ID Saldo</th>
+                  <th scope="col">Monto Generado</th>
+                  <th scope="col">Estado</th>
+                  <th scope="col" class="text-end pe-4">Fecha Creación</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (sf of payment.saldosFavor; track sf.saldoFavorId) {
+                  <tr>
+                    <td class="ps-4 fw-semibold text-dark">#{{ sf.saldoFavorId }}</td>
+                    <td class="fw-bold text-success tabular-nums">
+                      ${{ sf.montoOriginal | number: '1.2-2' }}
+                    </td>
+                    <td>
+                      <span class="badge badge-soft-success">Disponible</span>
+                    </td>
+                    <td class="text-end pe-4 small text-muted">{{ sf.fechaCreacion }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+  }
+
+  <!-- Annul Modal -->
+  @if (isAnnulModalOpen && payment) {
+    <app-annul-payment-modal
+      [payment]="payment"
+      (confirmed)="onPaymentAnnulled()"
+      (closed)="closeAnnulModal()"
+    />
+  }
+</div>

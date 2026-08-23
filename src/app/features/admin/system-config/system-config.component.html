@@ -1,0 +1,347 @@
+<div class="system-config-container container-fluid p-4">
+  <!-- Page Header -->
+  <div class="page-header mb-4">
+    <div>
+      <h3 class="fw-bold mb-0 text-dark fs-4">Configuraciones del Sistema</h3>
+      <p class="text-muted small mb-0">
+        Variables globales del sistema, opciones de formato de reportes y parámetros de caché.
+      </p>
+    </div>
+  </div>
+
+  <!-- Main Card Table -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <!-- Toolbar: Acción a la izquierda y buscador/acciones a la derecha -->
+    <div
+      class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
+      <div class="d-flex align-items-center gap-2">
+        <button
+          type="button"
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="openCreateModal()"
+        >
+          <i class="bi bi-plus-lg"></i>
+          Nueva Configuración
+        </button>
+      </div>
+
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- Search Input -->
+        <div class="input-group search-group" style="width: 320px">
+          <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+            <i class="bi bi-search"></i>
+          </span>
+          <input
+            type="text"
+            class="form-control border-start-0 ps-0 shadow-none"
+            placeholder="Buscar por clave, valor o descripción..."
+            [(ngModel)]="searchQuery"
+          />
+          @if (searchQuery) {
+            <button
+              class="btn btn-link text-muted pe-3 ps-1"
+              type="button"
+              (click)="searchQuery = ''"
+            >
+              <i class="bi bi-x-circle-fill"></i>
+            </button>
+          }
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="loadConfigs()"
+          [disabled]="isLoading"
+        >
+          <i class="bi bi-arrow-clockwise" [class.spin]="isLoading"></i>
+          Refrescar
+        </button>
+
+        @if (selectedClaves.size > 0) {
+          <span class="badge bg-primary-subtle text-primary px-3 py-2 rounded-pill">
+            {{ selectedClaves.size }} seleccionado(s)
+          </span>
+        }
+
+        <div class="text-muted small">
+          Total: <strong class="text-dark">{{ configs.length }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Body -->
+    <div class="pt-1">
+      @if (isLoading) {
+        <div class="p-3">
+          <app-table-skeleton [rows]="4" [cols]="6" />
+        </div>
+      } @else if (filteredConfigs.length === 0) {
+        <app-empty-state
+          icon="bi bi-sliders"
+          title="No se encontraron configuraciones"
+          description="No existen variables registradas o ninguna coincide con la búsqueda."
+        />
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 custom-config-table">
+            <thead class="table-light">
+              <tr>
+                <th scope="col" class="ps-4" style="width: 48px">
+                  <input
+                    class="form-check-input table-checkbox"
+                    type="checkbox"
+                    [checked]="isAllSelected"
+                    [indeterminate]="isIndeterminate"
+                    (change)="toggleSelectAll()"
+                    aria-label="Seleccionar todas las configuraciones"
+                  />
+                </th>
+                <th class="py-3 fw-semibold text-muted" style="min-width: 200px">Clave</th>
+                <th class="py-3 fw-semibold text-muted" style="min-width: 220px">Valor Actual</th>
+                <th class="py-3 fw-semibold text-muted">Descripción</th>
+                <th class="py-3 fw-semibold text-muted text-nowrap">Última Actualización</th>
+                <th class="py-3 fw-semibold text-muted text-center pe-4" style="width: 80px">
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of filteredConfigs; track c.clave) {
+                <tr [class.table-active]="isSelected(c.clave)">
+                  <td class="ps-4">
+                    <input
+                      class="form-check-input table-checkbox"
+                      type="checkbox"
+                      [checked]="isSelected(c.clave)"
+                      (change)="toggleSelect(c.clave, $event)"
+                      aria-label="Seleccionar configuración"
+                    />
+                  </td>
+                  <td>
+                    <div class="d-flex align-items-center gap-2">
+                      <span class="badge bg-light text-dark font-monospace border px-2 py-1">
+                        {{ c.clave }}
+                      </span>
+                    </div>
+                  </td>
+                  <td>
+                    @if (isReportStyleConfig(c)) {
+                      <div class="d-flex align-items-center gap-2">
+                        <span
+                          class="badge"
+                          [ngClass]="
+                            c.valor === 'modern' ? 'badge-soft-success' : 'badge-soft-secondary'
+                          "
+                        >
+                          <i
+                            class="bi me-1"
+                            [ngClass]="c.valor === 'modern' ? 'bi-stars' : 'bi-clock-history'"
+                          ></i>
+                          {{ c.valor | uppercase }}
+                        </span>
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-primary py-0 px-2"
+                          style="font-size: 0.75rem"
+                          (click)="toggleReportStyle(c)"
+                          title="Alternar estilo entre Modern y Legacy"
+                        >
+                          Cambiar a {{ c.valor === 'modern' ? 'legacy' : 'modern' }}
+                        </button>
+                      </div>
+                    } @else {
+                      <span
+                        class="font-monospace text-primary fw-semibold bg-light px-2 py-1 rounded border"
+                      >
+                        {{ c.valor }}
+                      </span>
+                    }
+                  </td>
+                  <td>
+                    <span class="text-muted small">
+                      {{ c.descripcion || '—' }}
+                    </span>
+                  </td>
+                  <td class="text-nowrap small text-muted">
+                    {{ c.updatedAt | date: 'dd/MM/yyyy HH:mm' }}
+                  </td>
+                  <td class="text-center pe-4">
+                    <div class="dropdown">
+                      <button
+                        class="btn btn-link text-muted p-0 shadow-none"
+                        type="button"
+                        (click)="toggleDropdown(c.clave, $event)"
+                        aria-label="Menú de opciones"
+                      >
+                        <i class="bi bi-three-dots-vertical fs-6"></i>
+                      </button>
+                      <ul
+                        class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                        [class.show]="openDropdownClave === c.clave"
+                        style="min-width: 155px"
+                      >
+                        @if (isReportStyleConfig(c)) {
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2 text-primary"
+                              type="button"
+                              (click)="toggleReportStyle(c)"
+                            >
+                              <i class="bi bi-arrow-repeat" style="font-size: 0.85rem"></i>
+                              Alternar estilo
+                            </button>
+                          </li>
+                        }
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            type="button"
+                            (click)="openEditModal(c)"
+                          >
+                            <i class="bi bi-pencil text-secondary" style="font-size: 0.85rem"></i>
+                            Editar
+                          </button>
+                        </li>
+                        <li>
+                          <hr class="dropdown-divider my-1" />
+                        </li>
+                        <li>
+                          <button
+                            class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                            type="button"
+                            (click)="deleteConfig(c)"
+                          >
+                            <i class="bi bi-trash" style="font-size: 0.85rem"></i>
+                            Eliminar
+                          </button>
+                        </li>
+                      </ul>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</div>
+
+<!-- Modal Formulario Configuración -->
+@if (isModalOpen) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.45)">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+        <!-- Modal Header -->
+        <div class="modal-header border-bottom px-4 py-3 bg-light">
+          <h5 class="modal-title fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+            <i
+              class="bi"
+              [ngClass]="
+                isEditing ? 'bi-pencil-square text-primary' : 'bi-plus-circle text-primary'
+              "
+            ></i>
+            {{ isEditing ? 'Editar Configuración' : 'Nueva Configuración' }}
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            (click)="closeModal()"
+            aria-label="Close"
+          ></button>
+        </div>
+
+        <!-- Modal Body -->
+        <form [formGroup]="configForm" (ngSubmit)="saveConfig()">
+          <div class="modal-body p-4">
+            <!-- Clave -->
+            <div class="mb-3">
+              <label for="configClaveInput" class="form-label fw-semibold text-dark small mb-1">
+                Clave de Configuración <span class="text-danger">*</span>
+              </label>
+              <input
+                id="configClaveInput"
+                type="text"
+                class="form-control"
+                placeholder="ej: reporte.estilo, NOTIFICACIONES_ENABLED"
+                formControlName="clave"
+                [class.is-invalid]="
+                  configForm.get('clave')?.invalid && configForm.get('clave')?.touched
+                "
+              />
+              @if (configForm.get('clave')?.invalid && configForm.get('clave')?.touched) {
+                <div class="invalid-feedback">
+                  Clave obligatoria (letras, números, puntos o guiones).
+                </div>
+              }
+            </div>
+
+            <!-- Valor -->
+            <div class="mb-3">
+              <label for="configValorInput" class="form-label fw-semibold text-dark small mb-1">
+                Valor <span class="text-danger">*</span>
+              </label>
+              <input
+                id="configValorInput"
+                type="text"
+                class="form-control"
+                placeholder="ej: modern, 3600000, true"
+                formControlName="valor"
+                [class.is-invalid]="
+                  configForm.get('valor')?.invalid && configForm.get('valor')?.touched
+                "
+              />
+              @if (configForm.get('valor')?.invalid && configForm.get('valor')?.touched) {
+                <div class="invalid-feedback">El valor es requerido.</div>
+              }
+            </div>
+
+            <!-- Descripción -->
+            <div class="mb-3">
+              <label
+                for="configDescripcionTextarea"
+                class="form-label fw-semibold text-dark small mb-1"
+              >
+                Descripción
+              </label>
+              <textarea
+                id="configDescripcionTextarea"
+                class="form-control"
+                rows="3"
+                placeholder="Explica qué controla esta variable y sus posibles valores..."
+                formControlName="descripcion"
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-end gap-2">
+            <button
+              type="button"
+              class="btn btn-outline-secondary px-3"
+              (click)="closeModal()"
+              [disabled]="isSaving"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              class="btn btn-primary d-flex align-items-center gap-2 px-4 shadow-sm"
+              [disabled]="isSaving"
+            >
+              @if (isSaving) {
+                <span class="spinner-border spinner-border-sm" role="status"></span>
+              } @else {
+                <i class="bi bi-check-lg"></i>
+              }
+              Guardar
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,587 @@
+<div class="tariffs-container">
+  <!-- Page header -->
+  @if (!selectionMode()) {
+    <div class="page-header mb-4">
+      <div>
+        <h3 class="fw-bold mb-0 text-dark fs-4">Tabla de Tarifas</h3>
+        <p class="text-muted small mb-0">Categorías de tarifas registradas en el sistema</p>
+      </div>
+    </div>
+  }
+
+  <div class="card border-0 shadow-sm rounded-3">
+    <!-- Header: Buscar y acciones (estilo clientes) -->
+    <div
+      class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
+      <!-- Botón Agregar (oculto en modo selección) -->
+      @if (!selectionMode()) {
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="openCreateModal()"
+        >
+          <i class="bi bi-plus-lg"></i>
+          Agregar
+        </button>
+      }
+
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- Input de búsqueda -->
+        <div class="input-group search-group" style="width: 250px">
+          <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+            <i class="bi bi-search"></i>
+          </span>
+
+          <input
+            type="text"
+            class="form-control border-start-0 ps-0 shadow-none"
+            placeholder="Buscar tarifa..."
+            [ngModel]="searchNombre()"
+            (ngModelChange)="searchNombre.set($event)"
+            (keyup.enter)="goToPage(1)"
+          />
+        </div>
+
+        <!-- Botón Buscar -->
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="goToPage(1)"
+          [disabled]="isLoading()"
+        >
+          @if (isLoading()) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+          @if (!isLoading()) {
+            <i class="bi bi-search"></i>
+          }
+          {{ isLoading() ? 'Buscando...' : 'Buscar' }}
+        </button>
+
+        <!-- Botón Limpiar -->
+        <button
+          class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="clearFilters()"
+          [disabled]="isLoading()"
+        >
+          <i class="bi bi-x-circle"></i>
+          Limpiar
+        </button>
+
+        <div class="btn-group btn-group-sm ms-auto">
+          <button
+            type="button"
+            class="btn btn-outline-secondary d-flex align-items-center gap-1"
+            (click)="expandAll()"
+            title="Expandir todas las categorías"
+          >
+            <i class="bi bi-arrows-expand"></i>
+            <span class="d-none d-sm-inline">Expandir todo</span>
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary d-flex align-items-center gap-1"
+            (click)="collapseAll()"
+            title="Colapsar todas las categorías"
+          >
+            <i class="bi bi-arrows-collapse"></i>
+            <span class="d-none d-sm-inline">Colapsar todo</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table Body -->
+    <div class="card-body p-0">
+      @if (isLoading()) {
+        <div class="d-flex justify-content-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+        </div>
+      } @else if (filteredTariffs().length === 0) {
+        <div class="alert alert-info m-4">
+          <i class="bi bi-info-circle me-2"></i>
+          @if (searchNombre()) {
+            No se encontraron tarifas que coincidan con "<strong>{{ searchNombre() }}</strong
+            >".
+          } @else {
+            No hay tarifas registradas.
+          }
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 custom-table">
+            <thead>
+              <tr>
+                <th style="width: 48px" class="text-center">#</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Consumo base (m³)</th>
+                <th class="text-center">Rubros Asignados</th>
+                @if (!selectionMode()) {
+                  <th class="text-end">Acciones</th>
+                }
+              </tr>
+            </thead>
+            <tbody>
+              @for (tariff of pagedTariffs(); track tariff.categoriaTarifaId) {
+                <!-- Fila Principal de la Categoría -->
+                <tr
+                  class="tariff-row"
+                  [class.table-active]="expandedTariffs().has(tariff.categoriaTarifaId!)"
+                  [class.selectable-row]="selectionMode()"
+                  [attr.role]="selectionMode() ? 'button' : null"
+                  [attr.tabindex]="selectionMode() ? 0 : null"
+                  [title]="selectionMode() ? 'Doble clic o Enter para seleccionar' : ''"
+                  (dblclick)="selectTariff(tariff)"
+                  (keydown.enter)="selectionMode() && selectTariff(tariff)"
+                >
+                  <!-- Botón expandir/colapsar -->
+                  <td
+                    class="text-center"
+                    (click)="toggleExpansion(tariff.categoriaTarifaId!); $event.stopPropagation()"
+                    style="cursor: pointer"
+                  >
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-link p-0 text-dark shadow-none"
+                      aria-label="Alternar expansión de rubros"
+                    >
+                      <i
+                        class="bi fs-6 text-primary"
+                        [class.bi-chevron-down]="expandedTariffs().has(tariff.categoriaTarifaId!)"
+                        [class.bi-chevron-right]="!expandedTariffs().has(tariff.categoriaTarifaId!)"
+                      ></i>
+                    </button>
+                  </td>
+                  <td
+                    class="fw-bold text-dark"
+                    (click)="toggleExpansion(tariff.categoriaTarifaId!)"
+                    style="cursor: pointer"
+                  >
+                    {{ tariff.nombre }}
+                  </td>
+                  <td class="text-muted">{{ tariff.descripcion || '—' }}</td>
+                  <td>
+                    <span class="badge bg-light text-dark border">
+                      <i class="bi bi-droplet-half text-primary me-1"></i>
+                      {{ tariff.consumoMinimoMensual ?? 10 }} m³
+                    </span>
+                  </td>
+                  <td class="text-center">
+                    <span
+                      class="badge"
+                      [class.bg-primary-subtle]="(tariff.rubros?.length ?? 0) > 0"
+                      [class.text-primary]="(tariff.rubros?.length ?? 0) > 0"
+                      [class.bg-light]="(tariff.rubros?.length ?? 0) === 0"
+                      [class.text-muted]="(tariff.rubros?.length ?? 0) === 0"
+                      [class.border]="(tariff.rubros?.length ?? 0) === 0"
+                    >
+                      <i class="bi bi-tags me-1"></i>
+                      {{ tariff.rubros?.length ?? 0 }}
+                      {{ (tariff.rubros?.length ?? 0) === 1 ? 'rubro' : 'rubros' }}
+                    </span>
+                  </td>
+                  @if (!selectionMode()) {
+                    <td class="text-end">
+                      <div class="dropdown">
+                        <button
+                          class="btn btn-link text-muted p-0 shadow-none"
+                          (click)="toggleDropdown(tariff.categoriaTarifaId!, $event)"
+                          aria-label="Menú de acciones"
+                        >
+                          <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul
+                          class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                          [class.show]="openDropdownId() === tariff.categoriaTarifaId"
+                          style="min-width: 170px"
+                        >
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2 text-primary"
+                              (click)="openCreateRubroForTariff(tariff)"
+                            >
+                              <i class="bi bi-plus-circle-fill" style="font-size: 0.8rem"></i>
+                              Crear Rubro
+                            </button>
+                          </li>
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2 text-dark"
+                              (click)="openAssignRubroModal(tariff)"
+                            >
+                              <i class="bi bi-link-45deg" style="font-size: 0.9rem"></i>
+                              Asignar Existente
+                            </button>
+                          </li>
+                          <li><hr class="dropdown-divider my-1" /></li>
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2"
+                              (click)="openEditModal(tariff)"
+                            >
+                              <i
+                                class="bi bi-pencil-fill text-secondary"
+                                style="font-size: 0.8rem"
+                              ></i>
+                              Editar Tarifa
+                            </button>
+                          </li>
+                          <li><hr class="dropdown-divider my-1" /></li>
+                          <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                              (click)="deleteTariff(tariff)"
+                            >
+                              <i class="bi bi-trash-fill" style="font-size: 0.8rem"></i>
+                              Eliminar
+                            </button>
+                          </li>
+                        </ul>
+                      </div>
+                    </td>
+                  }
+                </tr>
+
+                <!-- Fila Desplegable con Detalle de Rubros -->
+                @if (expandedTariffs().has(tariff.categoriaTarifaId!)) {
+                  <tr class="expanded-rubros-row bg-light">
+                    <td colspan="6" class="p-0">
+                      <div class="p-3 ps-5 border-start border-3 border-primary bg-light">
+                        <div
+                          class="d-flex align-items-center justify-content-between mb-2 flex-wrap gap-2"
+                        >
+                          <h6 class="mb-0 fw-bold text-secondary d-flex align-items-center gap-2">
+                            <i class="bi bi-tags text-primary"></i>
+                            Rubros asignados a "{{ tariff.nombre }}"
+                            <span class="badge bg-secondary-subtle text-secondary small ms-1">
+                              {{ tariff.rubros?.length ?? 0 }}
+                            </span>
+                          </h6>
+                          @if (!selectionMode()) {
+                            <div class="d-flex align-items-center gap-2">
+                              <button
+                                type="button"
+                                class="btn btn-xs btn-outline-primary rounded-pill px-2 py-1 d-flex align-items-center gap-1 small"
+                                style="font-size: 0.78rem"
+                                (click)="openCreateRubroForTariff(tariff)"
+                              >
+                                <i class="bi bi-plus-lg"></i>
+                                Nuevo Rubro
+                              </button>
+                              <button
+                                type="button"
+                                class="btn btn-xs btn-outline-secondary rounded-pill px-2 py-1 d-flex align-items-center gap-1 small"
+                                style="font-size: 0.78rem"
+                                (click)="openAssignRubroModal(tariff)"
+                              >
+                                <i class="bi bi-link-45deg"></i>
+                                Asignar
+                              </button>
+                            </div>
+                          }
+                        </div>
+
+                        @if (!tariff.rubros || tariff.rubros.length === 0) {
+                          <div
+                            class="alert alert-light border mb-0 py-3 px-3 text-muted small d-flex align-items-center justify-content-between"
+                          >
+                            <div>
+                              <i class="bi bi-info-circle me-1 text-primary"></i>
+                              Esta categoría no tiene rubros asociados todavía.
+                            </div>
+                            @if (!selectionMode()) {
+                              <button
+                                type="button"
+                                class="btn btn-sm btn-primary rounded-pill px-3 py-1"
+                                (click)="openCreateRubroForTariff(tariff)"
+                              >
+                                <i class="bi bi-plus-lg me-1"></i>
+                                Crear Primer Rubro
+                              </button>
+                            }
+                          </div>
+                        } @else {
+                          <div class="table-responsive bg-white rounded-3 border shadow-sm">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                              <thead class="table-light">
+                                <tr class="text-secondary small">
+                                  <th class="ps-3">Nombre del Rubro</th>
+                                  <th>Descripción</th>
+                                  <th>Código SRI</th>
+                                  <th>Tipo</th>
+                                  <th class="text-end">Precio Unitario</th>
+                                  @if (!selectionMode()) {
+                                    <th class="text-center pe-3" style="width: 60px">Acción</th>
+                                  }
+                                </tr>
+                              </thead>
+                              <tbody>
+                                @for (rubro of tariff.rubros; track rubro.rubroId) {
+                                  <tr>
+                                    <td class="ps-3 fw-medium text-dark">
+                                      {{ rubro.nombre }}
+                                    </td>
+                                    <td class="text-muted small">
+                                      {{ rubro.descripcion || '—' }}
+                                    </td>
+                                    <td>
+                                      <span class="badge bg-light text-muted border font-monospace">
+                                        {{ rubro.codigoSri || '—' }}
+                                      </span>
+                                    </td>
+                                    <td>
+                                      <span class="badge bg-secondary-subtle text-secondary small">
+                                        {{ rubro.tipoRubro }}
+                                      </span>
+                                    </td>
+                                    <td class="text-end font-monospace">
+                                      <div class="fw-bold text-primary">
+                                        ${{ rubro.precioUnitario | number: '1.2-2' }}
+                                      </div>
+                                      @if (
+                                        rubro.tarifaImpuesto && rubro.tarifaImpuesto.porcentaje > 0
+                                      ) {
+                                        <div
+                                          class="text-muted extra-small"
+                                          style="font-size: 0.72rem"
+                                        >
+                                          Total c/IVA: ${{
+                                            rubro.precioUnitario *
+                                              (1 + rubro.tarifaImpuesto.porcentaje / 100)
+                                              | number: '1.2-2'
+                                          }}
+                                        </div>
+                                      }
+                                    </td>
+                                    @if (!selectionMode()) {
+                                      <td class="text-end pe-3">
+                                        <div class="d-flex justify-content-end gap-2">
+                                          <button
+                                            type="button"
+                                            class="btn btn-link btn-sm text-primary p-0 shadow-none"
+                                            title="Editar rubro"
+                                            (click)="openEditRubroForTariff(rubro, tariff)"
+                                          >
+                                            <i class="bi bi-pencil-square fs-6"></i>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            class="btn btn-link btn-sm text-danger p-0 shadow-none"
+                                            title="Desvincular rubro de esta categoría"
+                                            (click)="unassignRubroFromTariff(rubro, tariff)"
+                                          >
+                                            <i class="bi bi-x-circle fs-6"></i>
+                                          </button>
+                                        </div>
+                                      </td>
+                                    }
+                                  </tr>
+                                }
+                              </tbody>
+                            </table>
+                          </div>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    @if (!isLoading() && filteredTariffs().length > 0) {
+      <footer class="card-footer bg-white border-top px-4 py-3">
+        <app-pagination
+          [totalItems]="filteredTariffs().length"
+          [currentPage]="currentPage()"
+          [pageSize]="pageSize()"
+          [pageSizeOptions]="pageSizeOptions"
+          itemNameSingular="tarifa"
+          itemNamePlural="tarifas"
+          (pageChange)="goToPage($event)"
+          (pageSizeChange)="setPageSize($event)"
+        />
+      </footer>
+    }
+  </div>
+</div>
+
+<!-- Modal Tarifa Form -->
+@if (isModalOpen()) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.5)">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+        <app-tariffs-form
+          [tariffToEdit]="selectedTariff()"
+          (formClosed)="closeModal()"
+          (formSubmitted)="onFormSubmitted()"
+        ></app-tariffs-form>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- Modal Reutilizado: Crear / Editar Rubro para Tarifa -->
+@if (isRubroModalOpen()) {
+  <app-rubro-form-modal
+    [rubro]="selectedRubroForEdit()"
+    [initialCategoriaTarifaId]="targetTariffForRubro()?.categoriaTarifaId ?? null"
+    (saved)="onRubroSaved()"
+    (closed)="closeRubroModals()"
+  ></app-rubro-form-modal>
+}
+
+<!-- Modal: Asignar Rubro Existente a Tarifa con Tabla Completa -->
+@if (isAssignRubroModalOpen()) {
+  <div
+    class="modal-backdrop fade show"
+    role="button"
+    tabindex="0"
+    aria-label="Cerrar modal"
+    (click)="closeRubroModals()"
+    (keydown.enter)="closeRubroModals()"
+  ></div>
+  <div class="modal fade show d-block" tabindex="-1" role="dialog" aria-modal="true">
+    <div
+      class="modal-dialog modal-dialog-centered modal-xl"
+      tabindex="-1"
+      (click)="$event.stopPropagation()"
+      (keydown.enter)="$event.stopPropagation()"
+    >
+      <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+        <!-- Header -->
+        <div class="modal-header border-bottom px-4 py-3 bg-light">
+          <div class="d-flex align-items-center gap-2">
+            <div
+              class="rounded-circle d-flex align-items-center justify-content-center bg-primary-subtle text-primary"
+              style="width: 38px; height: 38px"
+            >
+              <i class="bi bi-link-45deg fs-4"></i>
+            </div>
+            <div>
+              <h5 class="modal-title fw-bold text-dark mb-0">
+                Asignar Rubro a "{{ targetTariffForRubro()?.nombre }}"
+              </h5>
+              <p class="text-muted small mb-0">
+                Buscá y seleccioná un rubro del catálogo para vincularlo a esta categoría
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="btn-close"
+            aria-label="Close"
+            (click)="closeRubroModals()"
+          ></button>
+        </div>
+
+        <!-- Body with Search & Shared Table -->
+        <div class="modal-body p-4">
+          <!-- Filter Toolbar inside modal -->
+          <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+            <div class="d-flex align-items-center gap-2 flex-wrap flex-grow-1">
+              <div class="input-group search-group" style="max-width: 280px">
+                <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+                  <i class="bi bi-search"></i>
+                </span>
+                <input
+                  type="text"
+                  class="form-control border-start-0 ps-0 shadow-none"
+                  placeholder="Buscar por código SRI, nombre..."
+                  [ngModel]="searchRubroTerm()"
+                  (ngModelChange)="searchRubroTerm.set($event)"
+                />
+              </div>
+
+              <select
+                class="form-select shadow-none"
+                style="width: 170px"
+                [ngModel]="filterRubroTipo()"
+                (ngModelChange)="filterRubroTipo.set($event)"
+              >
+                <option value="">Todos los tipos</option>
+                <option value="FIJO">Fijo</option>
+                <option value="VARIABLE">Variable (m³)</option>
+                <option value="MULTA">Multa / Recargo</option>
+                <option value="BIEN">Bien</option>
+                <option value="SERVICIO">Servicio</option>
+                <option value="OTRO">Otro</option>
+              </select>
+
+              @if (searchRubroTerm() || filterRubroTipo()) {
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm"
+                  (click)="searchRubroTerm.set(''); filterRubroTipo.set('')"
+                >
+                  <i class="bi bi-x-circle me-1"></i>Limpiar
+                </button>
+              }
+            </div>
+
+            <button
+              type="button"
+              class="btn btn-outline-primary btn-sm rounded-pill px-3"
+              (click)="openCreateRubroForTariff(targetTariffForRubro()!)"
+            >
+              <i class="bi bi-plus-circle me-1"></i>Crear Nuevo Rubro
+            </button>
+          </div>
+
+          <!-- Reusable Shared Table in Selection Mode -->
+          <div class="border rounded-3 overflow-hidden">
+            <app-rubro-table
+              [rubros]="filteredUnassignedRubros()"
+              [isLoading]="isLoadingUnassignedRubros()"
+              [selectionMode]="true"
+              [selectedRubroId]="selectedRubroToAssign()"
+              (rubroSelected)="selectedRubroToAssign.set($event.rubroId)"
+              (createClicked)="openCreateRubroForTariff(targetTariffForRubro()!)"
+            />
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between">
+          <div>
+            @if (selectedRubroToAssign()) {
+              <span
+                class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2"
+              >
+                <i class="bi bi-check-circle me-1"></i> Rubro seleccionado #{{
+                  selectedRubroToAssign()
+                }}
+              </span>
+            } @else {
+              <span class="text-muted small"
+                >Seleccioná un rubro en la tabla para habilitar la asignación</span
+              >
+            }
+          </div>
+          <div class="d-flex gap-2">
+            <button
+              type="button"
+              class="btn btn-outline-secondary rounded-pill px-4"
+              (click)="closeRubroModals()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary rounded-pill px-4"
+              [disabled]="!selectedRubroToAssign()"
+              (click)="confirmAssignRubro()"
+            >
+              <i class="bi bi-link-45deg me-1"></i> Asignar Rubro
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}

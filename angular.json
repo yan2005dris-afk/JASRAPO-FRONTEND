@@ -2,7 +2,7 @@
   "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
   "version": 1,
   "cli": {
-    "packageManager": "npm",
+    "packageManager": "pnpm",
     "analytics": "52fce9f6-a35f-4edd-baba-8f9e81d304a5",
     "schematicCollections": ["angular-eslint"]
   },

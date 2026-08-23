@@ -1,0 +1,131 @@
+<div class="modal-header">
+  <div>
+    <h5 class="modal-title fw-bold">
+      Historial del medidor
+      <span class="text-primary">[{{ meter()?.serie || 'S/N' }}]</span>
+    </h5>
+    <p class="text-muted mb-0 small">Asignaciones del medidor y detalle de cambios.</p>
+  </div>
+  <button
+    type="button"
+    class="btn-close shadow-none"
+    aria-label="Cerrar"
+    (click)="onClose()"
+  ></button>
+</div>
+
+<div class="modal-body">
+  @if (view() === 'lista') {
+    @if (isLoading()) {
+      <div class="text-center py-4 text-muted">
+        <span class="spinner-border spinner-border-sm me-2"></span> Cargando historial...
+      </div>
+    } @else if (errorMessage()) {
+      <div class="alert alert-danger small mb-0">{{ errorMessage() }}</div>
+    } @else if (history().length === 0) {
+      <app-empty-state
+        icon="bi bi-clock-history"
+        title="Sin historial"
+        description="Este medidor no tiene historial registrado."
+      />
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 small custom-table">
+          <thead>
+            <tr>
+              <th class="text-muted fw-semibold">Contrato</th>
+              <th class="text-muted fw-semibold">Cliente</th>
+              <th class="text-muted fw-semibold">Desde</th>
+              <th class="text-muted fw-semibold">Hasta</th>
+              <th class="text-muted fw-semibold text-end">L. inicial</th>
+              <th class="text-muted fw-semibold text-end">L. final</th>
+              <th class="text-muted fw-semibold">Motivo</th>
+              <th class="text-muted fw-semibold text-end">Saldo pend.</th>
+              <th class="text-muted fw-semibold text-center">Cambio</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of history(); track item.historialId) {
+              <tr>
+                <td>{{ item.contratoId }}</td>
+                <td>{{ item.clienteNombre ?? '—' }}</td>
+                <td>{{ item.fechaDesde }}</td>
+                <td>{{ item.fechaHasta ?? '—' }}</td>
+                <td class="text-end">{{ item.lecturaInicial }}</td>
+                <td class="text-end">{{ item.lecturaFinal ?? '—' }}</td>
+                <td>{{ item.motivo ?? '—' }}</td>
+                <td class="text-end">{{ item.saldoPendienteCambio ?? '—' }}</td>
+                <td class="text-center">
+                  @if (item.esReemplazo) {
+                    <button
+                      class="btn btn-sm btn-outline-primary"
+                      (click)="openDetail(item.reemplazoSalienteId ?? item.reemplazoEntranteId)"
+                    >
+                      Ver detalle
+                    </button>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  } @else {
+    @if (isLoadingDetail()) {
+      <div class="text-center py-4 text-muted">
+        <span class="spinner-border spinner-border-sm me-2"></span> Cargando detalle...
+      </div>
+    } @else if (detail(); as d) {
+      <dl class="row mb-0 small">
+        <dt class="col-sm-6 text-muted fw-semibold">Motivo</dt>
+        <dd class="col-sm-6">{{ d.motivo }}</dd>
+        <dt class="col-sm-6 text-muted fw-semibold">Detalle del motivo</dt>
+        <dd class="col-sm-6">{{ d.detalleMotivo ?? '—' }}</dd>
+        <dt class="col-sm-6 text-muted fw-semibold">Responsabilidad del daño</dt>
+        <dd class="col-sm-6">{{ d.responsabilidadDano }}</dd>
+        <dt class="col-sm-6 text-muted fw-semibold">Tratamiento saliente</dt>
+        <dd class="col-sm-6">{{ d.tratamientoSaliente }}</dd>
+        <dt class="col-sm-6 text-muted fw-semibold">Tratamiento entrante</dt>
+        <dd class="col-sm-6">{{ d.tratamientoEntrante }}</dd>
+        <dt class="col-sm-6 text-muted fw-semibold">Consumo medido saliente</dt>
+        <dd class="col-sm-6">{{ d.consumoMedidoSaliente }}</dd>
+        <dt class="col-sm-6 text-muted fw-semibold">Consumo facturable saliente</dt>
+        <dd class="col-sm-6">{{ d.consumoFacturableSaliente }}</dd>
+        <dt class="col-sm-6 text-muted fw-semibold">Consumo medido entrante</dt>
+        <dd class="col-sm-6">{{ d.consumoMedidoEntrante }}</dd>
+        <dt class="col-sm-6 text-muted fw-semibold">Consumo facturable entrante</dt>
+        <dd class="col-sm-6">{{ d.consumoFacturableEntrante }}</dd>
+        <dt class="col-sm-6 text-muted fw-semibold">Consumo diferido entrante</dt>
+        <dd class="col-sm-6">{{ d.consumoDiferidoEntrante }}</dd>
+        <dt class="col-sm-6 text-muted fw-semibold">Período origen</dt>
+        <dd class="col-sm-6">{{ d.periodoOrigenId }} · mes {{ d.mesOrigen }}</dd>
+        <dt class="col-sm-6 text-muted fw-semibold">Período destino</dt>
+        <dd class="col-sm-6">{{ d.periodoDestinoId ?? '—' }}</dd>
+        <dt class="col-sm-6 text-muted fw-semibold">Estado de resolución</dt>
+        <dd class="col-sm-6"><app-status-badge [status]="d.estado" /></dd>
+        <dt class="col-sm-6 text-muted fw-semibold">Estado de aprobación</dt>
+        <dd class="col-sm-6">
+          @if (d.estadoAprobacion) {
+            <app-status-badge [status]="d.estadoAprobacion" />
+          } @else {
+            —
+          }
+        </dd>
+        <dt class="col-sm-6 text-muted fw-semibold">Autorizado en</dt>
+        <dd class="col-sm-6">{{ d.autorizadoEn ?? '—' }}</dd>
+      </dl>
+    } @else {
+      <div class="alert alert-warning small mb-0">No se pudo cargar el detalle.</div>
+    }
+  }
+</div>
+
+<div class="modal-footer">
+  @if (view() === 'detalle') {
+    <button type="button" class="btn btn-outline-secondary" (click)="backToList()">Volver</button>
+  }
+  <button type="button" class="btn btn-secondary" (click)="onClose()">Cerrar</button>
+</div>

@@ -34,4 +34,4 @@ services:
 
 networks:
   jasrapo-network:
-    name: jasrapo-network
+    external: true

@@ -1,129 +1,168 @@
-<div class="readings-admin-screen">
-  <div class="page-header">
+<div class="readings-container">
+  <!-- Page Header -->
+  <div class="page-header mb-4">
     <div>
-      <h1 class="page-title">Lectura de Consumo</h1>
-      <p class="page-subtitle">Gestión de lecturas del período actual</p>
+      <h3 class="fw-bold mb-0 text-dark fs-4">Lecturas de Consumo</h3>
+      <p class="text-muted small mb-0">
+        Control de mediciones, índices de consumo por contrato y evidencia fotográfica.
+      </p>
     </div>
-    <button
-      class="btn-refresh"
-      (click)="loadReadings()"
-      [disabled]="isLoading()"
-      id="btn-refresh-readings"
-      title="Recargar"
+  </div>
+
+  <!-- Card with Filters & Table -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <!-- Header: Buscar y acciones -->
+    <div
+      class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3"
     >
-      <i class="bi bi-arrow-clockwise" [class.spin]="isLoading()"></i>
-      Actualizar
-    </button>
-  </div>
+      <!-- Botón Agregar (a la izquierda) -->
+      <button
+        type="button"
+        class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+        (click)="openCreateModal()"
+      >
+        <i class="bi bi-plus-lg"></i>
+        Registrar Lectura
+      </button>
 
-  <!-- Resumen por estado -->
-  @if (readings().length > 0) {
-    <div class="summary-chips">
-      @for (opt of filterOptions; track opt.value) {
-        @if (opt.value !== 'TODOS' && totalByEstado()[opt.value]) {
-          <span
-            class="summary-chip"
-            [style.border-color]="getEstadoColor(opt.value)"
-            [style.color]="getEstadoColor(opt.value)"
-          >
-            {{ opt.label }}: <strong>{{ totalByEstado()[opt.value] }}</strong>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <!-- Contrato seleccionado (modal buscador) -->
+        <div class="input-group search-group" style="width: 290px">
+          <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+            <i class="bi bi-file-text"></i>
           </span>
-        }
-      }
-    </div>
-  }
+          <input
+            type="text"
+            class="form-control border-start-0 ps-0 shadow-none text-truncate"
+            placeholder="Buscar contrato / cliente..."
+            [value]="
+              selectedContractNumber ? selectedContractNumber + ' - ' + selectedContractName : ''
+            "
+            readonly
+            (click)="abrirBuscadorContratos()"
+            [title]="
+              selectedContractName
+                ? selectedContractNumber + ' - ' + selectedContractName
+                : 'Seleccione un contrato'
+            "
+          />
+          @if (selectedContractNumber) {
+            <button
+              type="button"
+              class="btn btn-outline-secondary border-start-0 shadow-none px-2"
+              title="Quitar filtro de contrato"
+              (click)="limpiarFiltros(); $event.stopPropagation()"
+            >
+              <i class="bi bi-x"></i>
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="btn btn-outline-primary shadow-none"
+              title="Buscar contrato"
+              (click)="abrirBuscadorContratos()"
+            >
+              <i class="bi bi-search"></i>
+            </button>
+          }
+        </div>
 
-  <!-- Filtros y búsqueda -->
-  <div class="controls-bar">
-    <div class="search-wrapper">
-      <i class="bi bi-search search-icon"></i>
-      <input
-        type="search"
-        class="search-input"
-        placeholder="Buscar por serie, cliente..."
-        [(ngModel)]="searchQuery"
-        id="input-search-readings"
-      />
-    </div>
-    <div class="filter-chips" role="group" aria-label="Filtrar por estado">
-      @for (opt of filterOptions; track opt.value) {
+        <!-- Buscar -->
         <button
-          class="filter-chip"
-          [class.active]="activeFilter() === opt.value"
-          (click)="setFilter(opt.value)"
-          type="button"
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="loadReadings()"
+          [disabled]="isLoading"
         >
-          {{ opt.label }}
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+          @if (!isLoading) {
+            <i class="bi bi-search"></i>
+          }
+          Buscar
         </button>
+
+        <!-- Limpiar -->
+        <button
+          class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="limpiarFiltros()"
+          [disabled]="isLoading"
+        >
+          <i class="bi bi-x-circle"></i>
+          Limpiar
+        </button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="pt-2">
+      @if (isLoading) {
+        <div class="p-3">
+          <app-table-skeleton [rows]="5" [cols]="8" />
+        </div>
       }
+
+      @if (!isLoading && readings.length === 0) {
+        <app-empty-state
+          icon="bi bi-speedometer2"
+          title="No hay lecturas registradas"
+          description="No se encontraron lecturas de consumo con los criterios seleccionados."
+          actionLabel="Registrar primera lectura"
+          actionIcon="bi bi-plus-lg"
+          (actionClicked)="openCreateModal()"
+        />
+      }
+
+      @if (!isLoading && readings.length > 0) {
+        <app-readings-table
+          [readings]="tableReadings"
+          [showSector]="true"
+          [showActions]="true"
+          [allowValidation]="true"
+          [openDropdownId]="openDropdownId"
+          (viewDetail)="openDetailModal($event)"
+          (editReading)="openEditModal($event)"
+          (approveReading)="approveReading($any($event))"
+          (reportAnomaly)="reportAnomaly($event)"
+          (toggleDropdown)="toggleDropdown($event.id, $event.event)"
+        />
+      }
+
+      <!-- Pagination -->
+      <div class="px-4 py-3 border-top bg-white">
+        <app-pagination
+          [currentPage]="currentPage"
+          [pageSize]="pageSize"
+          [totalItems]="totalItems"
+          (pageChange)="onPageChange($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
+        />
+      </div>
     </div>
   </div>
 
-  <!-- Error -->
-  @if (error()) {
-    <div class="error-banner" role="alert">
-      <i class="bi bi-exclamation-triangle-fill"></i>
-      {{ error() }}
-    </div>
+  <!-- MODALS -->
+  @if (isFormModalOpen) {
+    <app-reading-form-modal
+      [reading]="selectedReadingForEdit"
+      (saved)="onReadingSaved()"
+      (closed)="closeFormModal()"
+    />
   }
 
-  <!-- Loading skeleton -->
-  @if (isLoading()) {
-    <div class="skeleton-table" aria-busy="true">
-      @for (i of [1,2,3,4,5]; track i) {
-        <div class="skeleton-row"></div>
-      }
-    </div>
-  } @else {
-    <!-- Tabla de lecturas -->
-    @if (filteredReadings().length > 0) {
-      <div class="table-wrapper">
-        <table class="readings-table" aria-label="Tabla de lecturas de consumo">
-          <thead>
-            <tr>
-              <th>Serie Medidor</th>
-              <th>Cliente</th>
-              <th>Lectura Ant.</th>
-              <th>Lectura Act.</th>
-              <th>Consumo (m³)</th>
-              <th>Fecha</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (reading of filteredReadings(); track reading.lecturaId) {
-              <tr class="reading-row">
-                <td class="col-serie">
-                  <i class="bi bi-speedometer2"></i>
-                  {{ reading.medidorSerie }}
-                </td>
-                <td class="col-cliente">{{ reading.clienteNombre ?? '—' }}</td>
-                <td class="col-number">{{ reading.lecturaAnterior | number: '1.0-2' }}</td>
-                <td class="col-number">{{ reading.lecturaActual | number: '1.0-2' }}</td>
-                <td class="col-number col-consumo">
-                  {{ (reading.consumoCalculado ?? reading.lecturaActual - reading.lecturaAnterior) | number: '1.0-2' }}
-                </td>
-                <td class="col-fecha">{{ formatFecha(reading.fecha) }}</td>
-                <td class="col-estado">
-                  <span
-                    class="estado-badge"
-                    [style.background]="getEstadoColor(reading.estado) + '20'"
-                    [style.color]="getEstadoColor(reading.estado)"
-                    [style.border-color]="getEstadoColor(reading.estado) + '40'"
-                  >
-                    {{ getEstadoLabel(reading.estado) }}
-                  </span>
-                </td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-    } @else if (!isLoading()) {
-      <div class="empty-state">
-        <i class="bi bi-inbox"></i>
-        <p>No hay lecturas que coincidan con los filtros seleccionados.</p>
-      </div>
-    }
+  @if (selectedReadingForDetail) {
+    <app-reading-detail-modal
+      [reading]="selectedReadingForDetail"
+      (editRequested)="openEditModal($event)"
+      (closed)="closeDetailModal()"
+    />
   }
+
+  <!-- Contract Picker Modal -->
+  <app-contract-picker
+    [open]="isContractPickerOpen"
+    title="Buscar Contrato para Filtrar Lecturas"
+    (contractSelected)="onContractSelected($event)"
+    (closed)="cerrarBuscadorContratos()"
+  />
 </div>

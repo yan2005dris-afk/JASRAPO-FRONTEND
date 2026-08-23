@@ -1,1 +1,491 @@
-<p>facturacion-electronica works!</p>
+<div class="billing-container">
+  <!-- Encabezado -->
+  <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+    <div>
+      <h3 class="fw-bold mb-0 text-dark fs-4">Facturación Electrónica (SRI)</h3>
+      <p class="text-muted small mb-0">
+        Gestione la emisión de comprobantes autorizados por el SRI. Recuerde que las planillas
+        requieren pago al 100% para ser emitidas.
+      </p>
+    </div>
+    <div class="d-flex gap-2">
+      <button
+        type="button"
+        class="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium px-3"
+        (click)="sincronizarConSri()"
+        [disabled]="isSyncing() || isLoading()"
+      >
+        @if (isSyncing()) {
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+        } @else {
+          <i class="bi bi-arrow-repeat"></i>
+        }
+        {{ isSyncing() ? 'Sincronizando...' : 'Sincronizar con SRI' }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Cards de Métricas / KPI -->
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon bg-success-subtle text-success">
+            <i class="bi bi-patch-check-fill"></i>
+          </div>
+          <div>
+            <span class="text-muted small fw-semibold text-uppercase">Autorizados</span>
+            <h4 class="fw-bold text-success mb-0 font-monospace">{{ totalAutorizados() }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon bg-info-subtle text-info">
+            <i class="bi bi-hourglass-split"></i>
+          </div>
+          <div>
+            <span class="text-muted small fw-semibold text-uppercase">Por Emitir</span>
+            <h4 class="fw-bold text-dark mb-0 font-monospace">{{ totalPorEmitir() }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon bg-danger-subtle text-danger">
+            <i class="bi bi-exclamation-octagon-fill"></i>
+          </div>
+          <div>
+            <span class="text-muted small fw-semibold text-uppercase">Devueltos/Rechazados</span>
+            <h4 class="fw-bold text-danger mb-0 font-monospace">
+              {{ totalRechazadosDevueltos() }}
+            </h4>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card border-0 shadow-sm rounded-3 p-3 h-100 bg-white">
+        <div class="d-flex align-items-center gap-3">
+          <div class="stat-icon bg-primary-subtle text-primary">
+            <i class="bi bi-currency-dollar"></i>
+          </div>
+          <div>
+            <span class="text-muted small fw-semibold text-uppercase">Monto Autorizado</span>
+            <h4 class="fw-bold text-primary mb-0 font-monospace">${{ totalMontoAutorizado() }}</h4>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filtros -->
+  <div class="card border-0 shadow-sm rounded-3 mb-4">
+    <div class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label small fw-semibold mb-1" for="identificacion"
+            >Cédula / RUC Comprador</label
+          >
+          <input
+            id="identificacion"
+            type="text"
+            class="form-control shadow-none"
+            placeholder="Ej: 1104859382"
+            [ngModel]="identificacion()"
+            (ngModelChange)="identificacion.set($event)"
+            (keyup.enter)="cargarComprobantes()"
+          />
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label small fw-semibold mb-1" for="tipoComprobante"
+            >Tipo Comprobante</label
+          >
+          <select
+            id="tipoComprobante"
+            class="form-select shadow-none"
+            [ngModel]="tipoComprobante()"
+            (ngModelChange)="tipoComprobante.set($event)"
+          >
+            @for (t of tiposComprobanteList; track t.value) {
+              <option [value]="t.value">{{ t.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label small fw-semibold mb-1" for="estado">Estado SRI</label>
+          <select
+            id="estado"
+            class="form-select shadow-none"
+            [ngModel]="estado()"
+            (ngModelChange)="estado.set($event)"
+          >
+            @for (e of estadosList; track e.value) {
+              <option [value]="e.value">{{ e.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label small fw-semibold mb-1" for="fechaDesde">Fecha Desde</label>
+          <app-date-picker
+            [inputId]="'fechaDesde'"
+            [value]="fechaDesde()"
+            (valueChange)="fechaDesde.set($event)"
+          />
+        </div>
+
+        <div class="col-md-2">
+          <label class="form-label small fw-semibold mb-1" for="fechaHasta">Fecha Hasta</label>
+          <app-date-picker
+            [inputId]="'fechaHasta'"
+            [value]="fechaHasta()"
+            (valueChange)="fechaHasta.set($event)"
+          />
+        </div>
+
+        <div class="col-md-1 d-flex gap-2">
+          <button
+            type="button"
+            class="btn btn-primary d-flex align-items-center justify-content-center w-100 fw-medium"
+            title="Buscar"
+            (click)="cargarComprobantes()"
+            [disabled]="isLoading()"
+          >
+            <i class="bi bi-search"></i>
+          </button>
+          <button
+            type="button"
+            class="btn btn-outline-secondary d-flex align-items-center justify-content-center w-100 fw-medium"
+            title="Limpiar"
+            (click)="limpiar()"
+            [disabled]="isLoading()"
+          >
+            <i class="bi bi-x-circle"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabla de Comprobantes Electrónicos -->
+  <div class="card border-0 shadow-sm rounded-3">
+    <div
+      class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3"
+    >
+      <div class="input-group search-group" style="max-width: 380px">
+        <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
+          <i class="bi bi-search"></i>
+        </span>
+        <input
+          type="text"
+          class="form-control border-start-0 ps-0 shadow-none"
+          placeholder="Filtrar por clave de acceso o cliente..."
+          [ngModel]="searchTermTable()"
+          (ngModelChange)="searchTermTable.set($event)"
+        />
+      </div>
+
+      <span class="text-muted small"> Total: {{ totalItems() }} comprobantes registrados </span>
+    </div>
+
+    <div class="pt-2">
+      @if (isLoading()) {
+        <div class="d-flex justify-content-center align-items-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando comprobantes...</span>
+          </div>
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0 custom-table">
+            <thead>
+              <tr>
+                <th scope="col" class="ps-4">Secuencial</th>
+                <th scope="col" class="text-muted fw-semibold small">Tipo</th>
+                <th scope="col" class="text-muted fw-semibold small">Cliente / Razón Social</th>
+                <th scope="col" class="text-muted fw-semibold small">Identificación</th>
+                <th scope="col" class="text-muted fw-semibold small">Fecha Emisión</th>
+                <th scope="col" class="text-muted fw-semibold small text-center">Estado SRI</th>
+                <th scope="col" class="text-muted fw-semibold small text-end">Total</th>
+                <th
+                  scope="col"
+                  class="text-muted fw-semibold small text-center pe-4"
+                  style="width: 140px"
+                >
+                  Acciones
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of filteredComprobantes(); track item.id) {
+                <tr>
+                  <td class="ps-4 font-monospace fw-semibold text-primary">
+                    {{ item.establecimiento }}-{{ item.puntoEmision }}-{{ item.secuencial }}
+                  </td>
+                  <td>
+                    <span class="badge bg-light text-dark border">
+                      {{ item.tipoComprobanteDescripcion || item.tipoComprobante }}
+                    </span>
+                  </td>
+                  <td class="fw-semibold text-dark">
+                    {{ item.razonSocialComprador || 'CONSUMIDOR FINAL' }}
+                  </td>
+                  <td class="font-monospace text-muted">{{ item.identificacionComprador }}</td>
+                  <td>{{ item.fechaEmision | localDate: 'dd/MM/yyyy' }}</td>
+                  <td class="text-center">
+                    <span class="badge rounded-pill" [ngClass]="getEstadoBadgeClass(item.estado)">
+                      {{ item.estado }}
+                    </span>
+                  </td>
+                  <td class="text-end font-monospace fw-bold text-dark">
+                    ${{ item.total | number: '1.2-2' }}
+                  </td>
+                  <td class="text-center pe-4">
+                    <div class="d-flex gap-1 justify-content-center">
+                      <!-- Ver Detalle -->
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-secondary"
+                        title="Ver Detalle"
+                        (click)="verDetalle(item.claveAcceso)"
+                      >
+                        <i class="bi bi-eye"></i>
+                      </button>
+
+                      <!-- Descargar XML -->
+                      @if (item.xmlDisponible || item.estado === 'AUTORIZADO') {
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-primary"
+                          title="Descargar XML"
+                          (click)="descargarXml(item.claveAcceso)"
+                        >
+                          <i class="bi bi-filetype-xml"></i>
+                        </button>
+                      }
+
+                      <!-- Emitir Manual (si está en BORRADOR o POR_EMITIR) -->
+                      @if (item.estado === 'POR_EMITIR' || item.estado === 'BORRADOR') {
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-success"
+                          title="Emitir al SRI"
+                          (click)="emitirManual(item.claveAcceso)"
+                          [disabled]="actionInProgress() === item.claveAcceso"
+                        >
+                          @if (actionInProgress() === item.claveAcceso) {
+                            <span
+                              class="spinner-border spinner-border-sm"
+                              role="status"
+                              aria-hidden="true"
+                            ></span>
+                          } @else {
+                            <i class="bi bi-send-fill"></i>
+                          }
+                        </button>
+                      }
+
+                      <!-- Reintentar (si fue devuelta o rechazada) -->
+                      @if (item.estado === 'DEVUELTA' || item.estado === 'RECHAZADO') {
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-warning"
+                          title="Reintentar Envío"
+                          (click)="reintentar(item.claveAcceso)"
+                          [disabled]="actionInProgress() === item.claveAcceso"
+                        >
+                          @if (actionInProgress() === item.claveAcceso) {
+                            <span
+                              class="spinner-border spinner-border-sm"
+                              role="status"
+                              aria-hidden="true"
+                            ></span>
+                          } @else {
+                            <i class="bi bi-arrow-clockwise"></i>
+                          }
+                        </button>
+                      }
+
+                      <!-- Anular (solo si no está autorizada) -->
+                      @if (item.estado !== 'AUTORIZADO' && item.estado !== 'ANULADO') {
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-danger"
+                          title="Anular"
+                          (click)="anular(item.claveAcceso)"
+                          [disabled]="actionInProgress() === item.claveAcceso"
+                        >
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+
+              @if (filteredComprobantes().length === 0) {
+                <tr>
+                  <td colspan="8" class="text-center py-5">
+                    <div class="empty-state py-4">
+                      <div class="empty-state-icon">
+                        <i class="bi bi-file-earmark-text text-muted"></i>
+                      </div>
+                      <p class="fw-semibold mb-1 text-dark">Sin comprobantes electrónicos</p>
+                      <p class="text-muted small mb-0">
+                        No se encontraron comprobantes para los filtros seleccionados.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+    <!-- Paginación -->
+    @if (!isLoading() && totalItems() > 0) {
+      <div class="card-footer bg-white border-top px-4 py-3">
+        <app-pagination
+          [totalItems]="totalItems()"
+          [currentPage]="currentPage()"
+          [pageSize]="pageSize()"
+          [pageSizeOptions]="pageSizeOptions"
+          itemNameSingular="comprobante"
+          itemNamePlural="comprobantes"
+          (pageChange)="onPageChange($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
+        />
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Modal Detalle del Comprobante -->
+@if (selectedComprobante()) {
+  <div class="modal fade show d-block detail-modal" tabindex="-1" role="dialog" aria-modal="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow rounded-4">
+        <div class="modal-header border-bottom-0 pb-2">
+          <div>
+            <h5 class="modal-title fw-bold">Detalle de Comprobante Electrónico</h5>
+            <p class="text-muted mb-0 small">
+              Clave de Acceso:
+              <span class="font-monospace text-dark">{{ selectedComprobante()?.claveAcceso }}</span>
+            </p>
+          </div>
+          <button
+            type="button"
+            class="btn-close shadow-none"
+            aria-label="Cerrar"
+            (click)="cerrarModalDetalle()"
+          ></button>
+        </div>
+
+        <div class="modal-body pt-2">
+          <!-- Info Resumen -->
+          <div class="card bg-light border-0 rounded-3 p-3 mb-3">
+            <div class="row g-2 small">
+              <div class="col-sm-6">
+                <span class="text-muted">Cliente:</span>
+                <div class="fw-semibold text-dark">
+                  {{ selectedComprobante()?.razonSocialComprador }}
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted">Identificación:</span>
+                <div class="font-monospace fw-semibold">
+                  {{ selectedComprobante()?.identificacionComprador }}
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted">Número Autorización:</span>
+                <div class="font-monospace">
+                  {{ selectedComprobante()?.numAutorizacion || '—' }}
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <span class="text-muted">Fecha Autorización:</span>
+                <div>{{ selectedComprobante()?.fechaAutorizacion || '—' }}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabla de Ítems / Detalles -->
+          <h6 class="fw-bold mb-2 small text-uppercase text-muted">
+            Detalle de Rubros / Conceptos
+          </h6>
+          <div class="table-responsive mb-3">
+            <table class="table table-sm table-bordered align-middle">
+              <thead class="table-light">
+                <tr>
+                  <th>Código</th>
+                  <th>Descripción</th>
+                  <th class="text-center">Cant.</th>
+                  <th class="text-end">P. Unitario</th>
+                  <th class="text-end">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (d of selectedComprobante()?.detalles; track d.id) {
+                  <tr>
+                    <td class="font-monospace small">{{ d.codigoPrincipal }}</td>
+                    <td>{{ d.descripcion }}</td>
+                    <td class="text-center">{{ d.cantidad }}</td>
+                    <td class="text-end font-monospace">
+                      ${{ d.precioUnitario | number: '1.2-2' }}
+                    </td>
+                    <td class="text-end font-monospace fw-bold">
+                      ${{ d.subtotal | number: '1.2-2' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Totales -->
+          <div class="d-flex justify-content-end">
+            <div class="card bg-light border-0 rounded-3 p-3" style="min-width: 250px">
+              <div class="d-flex justify-content-between mb-1 small">
+                <span class="text-muted">Subtotal:</span>
+                <span class="font-monospace"
+                  >${{ selectedComprobante()?.subtotal | number: '1.2-2' }}</span
+                >
+              </div>
+              <div class="d-flex justify-content-between mb-1 small">
+                <span class="text-muted">Impuestos:</span>
+                <span class="font-monospace"
+                  >${{ selectedComprobante()?.totalImpuestos | number: '1.2-2' }}</span
+                >
+              </div>
+              <div class="d-flex justify-content-between border-top pt-2 fw-bold text-primary">
+                <span>TOTAL:</span>
+                <span class="font-monospace"
+                  >${{ selectedComprobante()?.total | number: '1.2-2' }}</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer border-top-0 pt-0">
+          <button type="button" class="btn btn-secondary px-3" (click)="cerrarModalDetalle()">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

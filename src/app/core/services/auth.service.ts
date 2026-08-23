@@ -1,7 +1,16 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { Observable, tap, catchError, throwError, switchMap, timer, Subscription } from 'rxjs';
+import {
+  Observable,
+  tap,
+  catchError,
+  throwError,
+  switchMap,
+  timer,
+  Subscription,
+  shareReplay,
+} from 'rxjs';
 import { LoginRequest, LoginResponse, RefreshTokenResponse, User } from '../models/auth.model';
 import { environment } from '../../../environments/environment';
 import { MenuService } from './menu.service';
@@ -57,16 +66,29 @@ export class AuthService {
     this.router.navigate(['/login']);
   }
 
+  private refreshInProgress$: Observable<RefreshTokenResponse> | null = null;
+
   refreshToken(): Observable<RefreshTokenResponse> {
-    return this.http
+    if (this.refreshInProgress$) {
+      return this.refreshInProgress$;
+    }
+
+    this.refreshInProgress$ = this.http
       .post<RefreshTokenResponse>(`${this.API_URL}/refresh`, {}, { withCredentials: true })
       .pipe(
-        tap((response: RefreshTokenResponse) => this.handleRefreshSuccess(response)),
+        tap((response: RefreshTokenResponse) => {
+          this.handleRefreshSuccess(response);
+          this.refreshInProgress$ = null;
+        }),
         catchError((error) => {
+          this.refreshInProgress$ = null;
           console.error('Error al refrescar token:', error);
           return throwError(() => error);
         }),
+        shareReplay(1),
       );
+
+    return this.refreshInProgress$;
   }
 
   private calculateRefreshDelay(): number {

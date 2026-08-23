@@ -1,0 +1,837 @@
+<div class="payment-form-page">
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+    <!-- Header -->
+    <div
+      class="card-header border-bottom px-4 py-3 bg-white d-flex justify-content-between align-items-center gap-3 flex-wrap"
+    >
+      <div class="d-flex align-items-center gap-3">
+        <div class="header-icon-tile">
+          <i class="bi bi-cash-stack"></i>
+        </div>
+        <div>
+          <h5 class="fw-bold text-dark mb-0 fs-5">Registrar Pago</h5>
+          <p class="text-muted small mb-0">
+            Recaudación en ventanilla — registre el pago o abono del cliente.
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
+        (click)="close()"
+        [disabled]="isLoading"
+      >
+        <i class="bi bi-arrow-left"></i>
+        Volver
+      </button>
+    </div>
+
+    <!-- Body -->
+    <div class="card-body p-4 bg-white d-flex flex-column gap-4">
+      <!-- TOP ROW: Cliente / Contrato (Izq) + Gestión de Cobro (Der) -->
+      <div class="row g-4">
+        <!-- TOP LEFT: Cliente / Contrato -->
+        <div class="col-lg-6">
+          <div class="mb-3">
+            <label for="contractDisplayInput" class="form-label fw-semibold text-dark medium mb-1">
+              Cliente / Contrato <span class="text-danger">*</span>
+            </label>
+
+            @if (!selectedClient) {
+              <div class="input-group">
+                <div
+                  id="contractDisplayInput"
+                  class="form-control border-end-0 shadow-none text-muted fst-italic bg-light d-flex align-items-center"
+                  style="cursor: default; user-select: none"
+                >
+                  Presione "Buscar" para seleccionar un contrato...
+                </div>
+                <button
+                  id="btnOpenContractPicker"
+                  type="button"
+                  class="btn btn-outline-primary border px-3 d-flex align-items-center gap-2"
+                  (click)="openPicker()"
+                >
+                  <i class="bi bi-search"></i>
+                  Buscar
+                </button>
+              </div>
+            } @else {
+              <!-- Tarjeta de Cliente Seleccionado -->
+              <div
+                class="selected-client-card p-3 rounded-3 border d-flex align-items-center justify-content-between gap-2"
+              >
+                <div class="d-flex align-items-center gap-3">
+                  <div class="client-avatar-tile">
+                    {{ getClientDisplayName(selectedClient).charAt(0).toUpperCase() }}
+                  </div>
+                  <div>
+                    <div class="fw-bold text-dark small">
+                      {{ getClientDisplayName(selectedClient) }}
+                    </div>
+                    <div class="text-muted" style="font-size: 0.78rem">
+                      ID: <span class="fw-medium">{{ selectedClient.identificacion }}</span>
+                      @if (selectedContract) {
+                        <span class="mx-1">·</span>
+                        <span class="fw-medium">Contrato #{{ selectedContract.contratoId }}</span>
+                      }
+                      @if (selectedClient.telefono) {
+                        <span class="mx-1">·</span>
+                        <span>{{ selectedClient.telefono }}</span>
+                      }
+                    </div>
+                    @if (selectedClient.direccionDomicilio) {
+                      <div
+                        class="text-muted d-flex align-items-center gap-1"
+                        style="font-size: 0.78rem"
+                      >
+                        <i class="bi bi-geo-alt"></i>
+                        <span>{{ selectedClient.direccionDomicilio }}</span>
+                      </div>
+                    }
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-1 flex-shrink-0"
+                  style="font-size: 0.75rem"
+                  (click)="clearSelectedContract()"
+                  [disabled]="isLoading"
+                >
+                  <i class="bi bi-pencil-square me-1"></i> Cambiar
+                </button>
+              </div>
+
+              <!-- Alerta de datos de facturación -->
+              @if (hasIncompleteBillingData && !usarConsumidorFinal) {
+                <div
+                  class="billing-warning-alert mt-2 p-3 rounded-3"
+                  style="background-color: #fffbeb; border: 1px solid #fde68a"
+                >
+                  <div class="d-flex align-items-center gap-3 mb-2">
+                    <i class="fs-2 bi bi-exclamation-triangle" style="color: #b45309"></i>
+                    <div>
+                      <div class="small fw-semibold text-dark mb-1">
+                        Datos de facturación incompletos
+                      </div>
+                      <div class="text-muted" style="font-size: 0.78rem">
+                        Faltan email, dirección o datos de RUC. Sugerimos usar CONSUMIDOR FINAL (sin
+                        identificación tributaria en el comprobante).
+                      </div>
+                    </div>
+                  </div>
+                  <div class="d-flex justify-content-end">
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-warning fw-medium text-dark px-3"
+                      (click)="setUsarConsumidorFinal(true)"
+                    >
+                      Usar CONSUMIDOR FINAL
+                    </button>
+                  </div>
+                </div>
+              }
+
+              <!-- Badge Consumidor Final -->
+              @if (usarConsumidorFinal) {
+                <div
+                  class="consumidor-badge mt-2 p-2 px-3 rounded-3 d-flex align-items-center justify-content-between gap-2"
+                >
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-receipt text-primary"></i>
+                    <span class="small text-dark fw-medium"
+                      >Comprobante como: <strong>CONSUMIDOR FINAL</strong></span
+                    >
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-link text-muted p-0 shadow-none text-decoration-none"
+                    (click)="setUsarConsumidorFinal(false)"
+                  >
+                    Deshacer
+                  </button>
+                </div>
+              }
+            }
+          </div>
+
+          <!-- Contract Picker Modal -->
+          <app-contract-picker
+            [open]="isPickerOpen"
+            title="Buscar Contrato"
+            (contractSelected)="onContractSelected($event)"
+            (closed)="isPickerOpen = false"
+          />
+        </div>
+
+        <!-- TOP RIGHT: Gestión de Cobro (Método de Pago, Fecha, Monto, Notas) -->
+        <div class="col-lg-6">
+          <!-- Método de Pago -->
+          <div class="mb-3">
+            <span class="form-label d-block fw-semibold text-dark medium mb-2">
+              Método de Pago <span class="text-danger">*</span>
+            </span>
+            <div class="row g-2">
+              <div class="col-4">
+                <button
+                  type="button"
+                  class="pay-method-card w-100 border rounded-3 py-3 d-flex flex-column align-items-center justify-content-center gap-1"
+                  [class.active]="metodoPago === 'EFECTIVO'"
+                  (click)="setMetodoPago('EFECTIVO')"
+                >
+                  <i class="bi bi-cash-stack fs-4"></i>
+                  <span class="small fw-bold text-uppercase">Efectivo</span>
+                </button>
+              </div>
+              <div class="col-4">
+                <button
+                  type="button"
+                  class="pay-method-card w-100 border rounded-3 py-3 d-flex flex-column align-items-center justify-content-center gap-1"
+                  [class.active]="metodoPago === 'TRANSFERENCIA'"
+                  (click)="setMetodoPago('TRANSFERENCIA')"
+                >
+                  <i class="bi bi-bank fs-4"></i>
+                  <span class="small fw-bold text-uppercase">Transferencia</span>
+                </button>
+              </div>
+              <div class="col-4">
+                <button
+                  type="button"
+                  class="pay-method-card w-100 border rounded-3 py-3 d-flex flex-column align-items-center justify-content-center gap-1"
+                  [class.active]="metodoPago === 'TARJETA'"
+                  (click)="setMetodoPago('TARJETA')"
+                >
+                  <i class="bi bi-credit-card fs-4"></i>
+                  <span class="small fw-bold text-uppercase">Tarjeta</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Campos condicionales: Transferencia -->
+          @if (metodoPago === 'TRANSFERENCIA') {
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label for="selectBancoPago" class="form-label fw-semibold text-dark small mb-1">
+                  Banco <span class="text-danger">*</span>
+                </label>
+                <select
+                  id="selectBancoPago"
+                  class="form-select form-select-sm shadow-none"
+                  [(ngModel)]="bancoSeleccionado"
+                >
+                  <option value="">Seleccione banco...</option>
+                  @for (b of banks; track b.codigo) {
+                    <option [value]="b.codigo">{{ b.descripcion }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-6">
+                <label for="inputNumeroOpTransf" class="form-label fw-semibold text-dark small mb-1"
+                  >N° Operación / Ref.</label
+                >
+                <input
+                  id="inputNumeroOpTransf"
+                  type="text"
+                  class="form-control form-control-sm shadow-none"
+                  placeholder="p. ej. TRX-98745"
+                  [(ngModel)]="numeroOperacion"
+                />
+              </div>
+            </div>
+
+            <!-- Adjuntar Comprobante -->
+            <div class="mb-3 p-2 bg-light-subtle rounded-3 border">
+              <div class="d-flex align-items-center justify-content-between mb-1">
+                <label
+                  for="comprobanteFileInput"
+                  class="form-label fw-semibold text-dark small mb-0 d-flex align-items-center gap-1"
+                >
+                  <i class="bi bi-paperclip text-primary"></i>
+                  Comprobante de Transferencia
+                </label>
+                @if (comprobanteKey) {
+                  <span
+                    class="badge bg-success-subtle text-success border border-success-subtle d-flex align-items-center gap-1"
+                  >
+                    <i class="bi bi-cloud-check-fill"></i> Adjuntado con éxito
+                  </span>
+                }
+              </div>
+
+              <input
+                #fileInput
+                id="comprobanteFileInput"
+                type="file"
+                class="d-none"
+                accept="image/jpeg,image/png,image/webp,application/pdf"
+                (change)="onComprobanteSelected($event)"
+              />
+
+              @if (!comprobanteFile && !isUploadingComprobante) {
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary w-100 py-2 d-flex align-items-center justify-content-center gap-2 rounded-2"
+                  (click)="fileInput.click()"
+                >
+                  <i class="bi bi-cloud-arrow-up fs-6"></i>
+                  <span>Subir Comprobante (JPG, PNG, PDF)</span>
+                </button>
+              }
+
+              @if (isUploadingComprobante) {
+                <div
+                  class="d-flex align-items-center justify-content-center gap-2 py-2 text-primary small"
+                >
+                  <span
+                    class="spinner-border spinner-border-sm"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                  <span>Subiendo comprobante a RustFS...</span>
+                </div>
+              }
+
+              @if (comprobanteFile && !isUploadingComprobante) {
+                <div
+                  class="d-flex align-items-center justify-content-between p-2 bg-white rounded border mt-1"
+                >
+                  <div class="d-flex align-items-center gap-2 overflow-hidden">
+                    @if (comprobantePreviewUrl) {
+                      <img
+                        [src]="comprobantePreviewUrl"
+                        alt="Preview"
+                        class="rounded object-fit-cover"
+                        style="width: 32px; height: 32px"
+                      />
+                    } @else {
+                      <div class="p-1 rounded bg-danger-subtle text-danger">
+                        <i class="bi bi-file-earmark-pdf fs-5"></i>
+                      </div>
+                    }
+                    <div class="overflow-hidden">
+                      <div class="small fw-medium text-dark text-truncate" style="max-width: 220px">
+                        {{ comprobanteFile.name }}
+                      </div>
+                      <div class="text-muted" style="font-size: 0.72rem">
+                        {{ (comprobanteFile.size / 1024).toFixed(1) }} KB
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-link text-danger p-0 shadow-none text-decoration-none"
+                    (click)="clearComprobante(); fileInput.value = ''"
+                    title="Eliminar comprobante"
+                  >
+                    <i class="bi bi-trash fs-6"></i>
+                  </button>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Campos condicionales: Tarjeta -->
+          @if (metodoPago === 'TARJETA') {
+            <div class="row g-2 mb-3">
+              <div class="col-6">
+                <label for="selectTarjetaPago" class="form-label fw-semibold text-dark small mb-1">
+                  Marca de Tarjeta <span class="text-danger">*</span>
+                </label>
+                <select
+                  id="selectTarjetaPago"
+                  class="form-select form-select-sm shadow-none"
+                  [(ngModel)]="tarjetaSeleccionada"
+                >
+                  <option value="">Seleccione marca...</option>
+                  @for (c of cards; track c.codigo) {
+                    <option [value]="c.codigo">{{ c.descripcion }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-6">
+                <label
+                  for="inputNumeroOpTarjeta"
+                  class="form-label fw-semibold text-dark small mb-1"
+                  >N° Autorización / Voucher</label
+                >
+                <input
+                  id="inputNumeroOpTarjeta"
+                  type="text"
+                  class="form-control form-control-sm shadow-none"
+                  placeholder="p. ej. VOUCH-1023"
+                  [(ngModel)]="numeroOperacion"
+                />
+              </div>
+            </div>
+          }
+
+          <!-- Fecha de Pago y Monto -->
+          <div class="row g-2 mb-3">
+            <div class="col-6">
+              <label for="fechaPagoPicker" class="form-label fw-semibold text-dark small mb-1">
+                Fecha de Pago <span class="text-danger">*</span>
+              </label>
+              <app-date-picker
+                [value]="fechaPago"
+                placeholder="Seleccione fecha"
+                inputId="fechaPagoPicker"
+                (valueChange)="onFechaPagoChange($event)"
+              />
+            </div>
+            <div class="col-6">
+              <label
+                for="inputMontoRecibidoForm"
+                class="form-label fw-semibold text-dark small mb-1"
+              >
+                Monto Recibido ($) <span class="text-danger">*</span>
+              </label>
+              <div class="input-group input-group-sm">
+                <span class="input-group-text bg-light fw-bold text-dark">$</span>
+                <input
+                  id="inputMontoRecibidoForm"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  class="form-control shadow-none fw-bold text-dark tabular-nums"
+                  placeholder="0.00"
+                  [(ngModel)]="montoRecibido"
+                  [readonly]="pagoMode === 'PUNTUAL'"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Notas -->
+          <div>
+            <label
+              for="textareaObservacionesPago"
+              class="form-label fw-semibold text-dark small mb-1"
+              >Notas</label
+            >
+            <textarea
+              id="textareaObservacionesPago"
+              class="form-control form-control-sm shadow-none"
+              rows="2"
+              placeholder="Detalle interno o nota sobre este pago..."
+              [(ngModel)]="observaciones"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <hr class="my-0 text-muted opacity-25" />
+
+      @if (selectedClient) {
+        <div>
+          <span class="form-label d-block fw-semibold text-dark medium mb-2"> Modo de cobro </span>
+          <div
+            class="mode-toggle mb-2 d-flex p-1 bg-light rounded-pill border"
+            style="width: fit-content"
+          >
+            <!-- Mode toggle -->
+            <button
+              type="button"
+              class="btn rounded-pill px-4 py-1 border-0 fw-medium"
+              [class.btn-primary]="pagoMode === 'DEUDA'"
+              [class.text-muted]="pagoMode !== 'DEUDA'"
+              (click)="setPagoMode('DEUDA')"
+            >
+              Cobrar deuda
+            </button>
+            <button
+              type="button"
+              class="btn rounded-pill px-4 py-1 border-0 fw-medium"
+              [class.btn-primary]="pagoMode === 'PUNTUAL'"
+              [class.text-muted]="pagoMode !== 'PUNTUAL'"
+              (click)="setPagoMode('PUNTUAL')"
+            >
+              Cobro puntual
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- BOTTOM SECTION: Full-Width Tables (Estado de Cuenta / Cobro Puntual) -->
+      <div class="w-100">
+        <!-- 2. Estado de Cuenta Pendiente (Solo modo DEUDA) -->
+        @if (pagoMode === 'DEUDA') {
+          <div>
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="form-label d-block fw-semibold text-dark medium mb-0">
+                <i class="bi bi-receipt me-1 text-primary"></i>
+                Estado de Cuenta Pendiente
+              </span>
+              @if (selectedClient && !isLoadingPreInvoices && pendingPreInvoices.length > 0) {
+                <span class="badge badge-soft-danger"
+                  >{{ pendingPreInvoices.length }} pendiente(s)</span
+                >
+              }
+            </div>
+
+            @if (!selectedClient) {
+              <div class="text-muted text-center py-4 rounded-3 border bg-light-subtle small">
+                <i class="bi bi-file-earmark-text d-block mb-1 fs-4"></i>
+                Seleccione un contrato para ver las cuentas pendientes.
+              </div>
+            }
+
+            @if (selectedClient && isLoadingPreInvoices) {
+              <div class="text-center py-4 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                <span class="small ms-2">Cargando prefacturas...</span>
+              </div>
+            }
+
+            @if (selectedClient && !isLoadingPreInvoices && pendingPreInvoices.length === 0) {
+              <div class="text-muted text-center py-4 rounded-3 border bg-light-subtle small">
+                <i class="bi bi-check-circle d-block mb-1 fs-4 text-success"></i>
+                Sin cuentas pendientes para este contrato.
+              </div>
+            }
+
+            @if (selectedClient && !isLoadingPreInvoices && pendingPreInvoices.length > 0) {
+              <div class="pre-invoices-table-wrap border rounded-3 overflow-hidden">
+                <table
+                  class="table table-sm table-hover mb-0 align-middle"
+                  style="font-size: 0.84rem"
+                >
+                  <thead class="table-light">
+                    <tr>
+                      <th style="width: 2.5rem" class="px-3">
+                        <input
+                          type="checkbox"
+                          class="form-check-input"
+                          [checked]="allPreInvoicesSelected"
+                          (change)="toggleAllPreInvoices()"
+                          id="chkSelectAll"
+                        />
+                      </th>
+                      <th
+                        class="fw-semibold text-muted text-uppercase"
+                        style="letter-spacing: 0.03em"
+                      >
+                        Período / Concepto
+                      </th>
+                      <th
+                        class="fw-semibold text-muted text-uppercase"
+                        style="letter-spacing: 0.03em"
+                      >
+                        # Pref. / Fecha
+                      </th>
+                      <th
+                        class="fw-semibold text-muted text-uppercase text-end"
+                        style="letter-spacing: 0.03em"
+                      >
+                        Subtotal
+                      </th>
+                      <th
+                        class="fw-semibold text-muted text-uppercase text-end"
+                        style="letter-spacing: 0.03em"
+                      >
+                        IVA
+                      </th>
+                      <th
+                        class="fw-semibold text-muted text-uppercase text-end"
+                        style="letter-spacing: 0.03em"
+                      >
+                        Total
+                      </th>
+                      <th
+                        class="fw-semibold text-muted text-uppercase text-center"
+                        style="letter-spacing: 0.03em"
+                      >
+                        Estado
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (pre of pendingPreInvoices; track pre.prefacturaId) {
+                      <tr
+                        class="pre-invoice-row"
+                        [class.selected]="isPreInvoiceSelected(pre.prefacturaId)"
+                        (click)="togglePreInvoice(pre.prefacturaId)"
+                        style="cursor: pointer"
+                      >
+                        <td class="px-3" (click)="$event.stopPropagation()">
+                          <input
+                            type="checkbox"
+                            class="form-check-input"
+                            [checked]="isPreInvoiceSelected(pre.prefacturaId)"
+                            (change)="togglePreInvoice(pre.prefacturaId)"
+                          />
+                        </td>
+                        <td>
+                          <div class="fw-bold text-dark d-flex align-items-center gap-1">
+                            <span>{{ getPeriodLabel(pre) }}</span>
+                            @if (isInstalacionPreInvoice(pre)) {
+                              <span
+                                class="badge bg-primary-subtle text-primary border border-primary-subtle"
+                                style="font-size: 0.68rem"
+                                >Instalación</span
+                              >
+                            }
+                          </div>
+                          <div
+                            class="text-muted"
+                            style="font-size: 0.76rem"
+                            [title]="getPreInvoiceConceptos(pre)"
+                          >
+                            <i class="bi bi-droplet-half me-1 text-primary"></i>
+                            {{ getPreInvoiceConceptos(pre) }}
+                          </div>
+                        </td>
+                        <td>
+                          <div class="fw-medium text-dark">#{{ pre.prefacturaId }}</div>
+                          @if (getPreInvoiceDate(pre)) {
+                            <div class="text-muted" style="font-size: 0.72rem">
+                              <i class="bi bi-calendar3 me-1"></i>{{ getPreInvoiceDate(pre) }}
+                            </div>
+                          }
+                        </td>
+                        <td class="text-end tabular-nums">
+                          {{ pre.subtotal | currency: 'USD' : 'symbol' : '1.2-2' }}
+                        </td>
+                        <td class="text-end tabular-nums">
+                          {{ pre.iva | currency: 'USD' : 'symbol' : '1.2-2' }}
+                        </td>
+                        <td class="text-end tabular-nums fw-bold text-dark">
+                          {{ pre.totalPagar | currency: 'USD' : 'symbol' : '1.2-2' }}
+                        </td>
+                        <td class="text-center">
+                          <span class="badge" [ngClass]="getPreInvoiceStateTone(pre.estado)">
+                            {{ getPreInvoiceStateLabel(pre.estado) }}
+                          </span>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+
+            <!-- Banner Total a Recaudar -->
+            @if (selectedClient && !isLoadingPreInvoices && pendingPreInvoices.length > 0) {
+              <div
+                class="statement-total-banner mt-3 p-3 rounded-3 d-flex align-items-center justify-content-between gap-2"
+              >
+                <div>
+                  <div class="text-uppercase fw-bold small text-primary">Total Seleccionado</div>
+                  <div class="text-muted" style="font-size: 0.78rem">
+                    {{ selectedPreInvoiceIds.size }} de
+                    {{ pendingPreInvoices.length }} prefactura(s)
+                  </div>
+                </div>
+                <div class="fs-3 fw-bold text-dark tabular-nums">
+                  {{ totalAPagarPendiente | currency: 'USD' : 'symbol' : '1.2-2' }}
+                </div>
+              </div>
+            }
+
+            <!-- Banner saldo a favor -->
+            @if (selectedClient && totalSaldoFavorDisponible > 0) {
+              <div
+                class="saldo-favor-alert mt-2 p-2 px-3 rounded-3 d-flex align-items-center justify-content-between"
+              >
+                <div class="d-flex align-items-center gap-2">
+                  <i class="bi bi-info-circle-fill text-info"></i>
+                  <span class="small text-dark">
+                    Saldo a favor disponible:
+                    <strong>${{ totalSaldoFavorDisponible | number: '1.2-2' }}</strong>
+                  </span>
+                </div>
+                <span class="badge badge-soft-info">Aplicable</span>
+              </div>
+            }
+          </div>
+        } @else if (pagoMode === 'PUNTUAL') {
+          <!-- Cobro Puntual Full-Width -->
+          <div class="puntual-inline-section">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+              <span class="form-label d-block fw-semibold text-dark medium mb-0">
+                <i class="bi bi-bag-plus me-1 text-primary"></i>
+                Rubros a Cobrar
+              </span>
+              <div class="d-flex align-items-center gap-2">
+                <span class="badge badge-soft-primary">{{ puntualItems.length }} item(s)</span>
+                <button
+                  type="button"
+                  class="btn btn-sm btn-primary d-flex align-items-center gap-1 py-1 px-3 fw-medium"
+                  style="font-size: 0.82rem"
+                  (click)="openRubroPicker()"
+                >
+                  <i class="bi bi-search"></i>
+                  Buscar Rubro
+                </button>
+              </div>
+            </div>
+
+            <!-- Rubro Picker Modal -->
+            <app-rubro-picker
+              [open]="isRubroPickerOpen"
+              title="Catálogo de Rubros y Servicios"
+              (rubroSelected)="onRubroSelected($event)"
+              (closed)="isRubroPickerOpen = false"
+            />
+
+            <!-- Tabla de Items seleccionados para cobro puntual -->
+            <div class="border rounded-3 overflow-hidden mb-2">
+              <table
+                class="table table-sm table-hover mb-0 align-middle"
+                style="font-size: 0.84rem"
+              >
+                <thead class="table-light">
+                  <tr>
+                    <th class="fw-semibold text-muted text-uppercase px-3">Rubro</th>
+                    <th
+                      class="fw-semibold text-muted text-uppercase text-center"
+                      style="width: 100px"
+                    >
+                      Cant.
+                    </th>
+                    <th class="fw-semibold text-muted text-uppercase text-end">P. Unit</th>
+                    <th class="fw-semibold text-muted text-uppercase text-end">IVA</th>
+                    <th class="fw-semibold text-muted text-uppercase text-end">Total</th>
+                    <th style="width: 50px"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of puntualItems; track item.rubroId; let idx = $index) {
+                    <tr>
+                      <td class="px-3">
+                        <div class="fw-semibold text-dark">{{ item.rubroNombre }}</div>
+                        <input
+                          type="text"
+                          class="form-control form-control-sm border-0 border-bottom rounded-0 border-secondary-subtle bg-transparent p-0 text-muted shadow-none"
+                          style="font-size: 0.76rem"
+                          placeholder="Nota opcional..."
+                          [ngModel]="item.descripcion"
+                          (ngModelChange)="updatePuntualDescripcion(idx, $event)"
+                        />
+                      </td>
+                      <td class="text-center">
+                        <input
+                          type="number"
+                          min="1"
+                          class="form-control form-control-sm text-center px-1 shadow-none"
+                          style="width: 70px; margin: 0 auto"
+                          [ngModel]="item.cantidad"
+                          (ngModelChange)="updatePuntualCantidad(idx, $event)"
+                        />
+                      </td>
+                      <td class="text-end tabular-nums text-muted">
+                        {{ item.precioUnitario | currency: 'USD' : 'symbol' : '1.2-2' }}
+                      </td>
+                      <td class="text-end tabular-nums text-muted">
+                        {{ item.iva | currency: 'USD' : 'symbol' : '1.2-2' }}
+                      </td>
+                      <td class="text-end tabular-nums fw-bold text-dark">
+                        {{ item.total | currency: 'USD' : 'symbol' : '1.2-2' }}
+                      </td>
+                      <td class="text-center">
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-link text-danger p-0 shadow-none"
+                          (click)="removePuntualItem(idx)"
+                          title="Quitar"
+                        >
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                  @if (puntualItems.length === 0) {
+                    <tr>
+                      <td colspan="6" class="text-center py-4 text-muted bg-light">
+                        <i class="bi bi-cart-x fs-4 d-block mb-1"></i>
+                        Haga clic en <strong>Buscar Rubro</strong> para agregar ítems al cobro
+                        puntual.
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Resumen de Totales Puntual -->
+            @if (puntualItems.length > 0) {
+              <div
+                class="statement-total-banner mt-3 p-3 rounded-3 d-flex align-items-center justify-content-between gap-2"
+              >
+                <div>
+                  <div class="text-uppercase fw-bold small text-primary">Total a Cobrar</div>
+                  <div class="text-muted" style="font-size: 0.78rem">
+                    Subtotal: {{ puntualSubtotal | currency: 'USD' : 'symbol' : '1.2-2' }} | IVA:
+                    {{ puntualIva | currency: 'USD' : 'symbol' : '1.2-2' }}
+                  </div>
+                </div>
+                <div class="fs-3 fw-bold text-dark tabular-nums">
+                  {{ puntualTotal | currency: 'USD' : 'symbol' : '1.2-2' }}
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div
+      class="card-footer border-top px-4 py-3 bg-white d-flex justify-content-between align-items-center flex-wrap gap-2"
+    >
+      <button
+        type="button"
+        class="btn btn-outline-secondary fw-medium px-3"
+        (click)="close()"
+        [disabled]="isLoading"
+      >
+        Cancelar
+      </button>
+      <div class="d-flex align-items-center gap-2">
+        @if (pagoMode === 'DEUDA') {
+          <button
+            type="button"
+            class="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium px-3"
+            (click)="requestAgreement()"
+            [disabled]="isLoading"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="1.3em"
+              height="1.3em"
+              viewBox="0 0 24 24"
+            >
+              <path d="M0 0h24v24H0z" fill="none" />
+              <path
+                fill="currentColor"
+                d="M12.1 21q-.425 0-.712-.288T11.1 20q0-.175.075-.363t.225-.337l4.625-4.625l-.725-.725l-4.6 4.625q-.15.15-.325.225t-.375.075q-.425 0-.712-.287T9 17.875q0-.25.075-.413t.2-.287L13.9 12.55l-.7-.7l-4.625 4.6q-.15.15-.325.225t-.4.075q-.4 0-.7-.3t-.3-.7q0-.2.075-.375t.225-.325l4.625-4.625l-.725-.7l-4.6 4.625q-.125.125-.3.2t-.425.075q-.425 0-.713-.288t-.287-.712q0-.2.075-.375t.225-.325L10.6 7.35l3.75 3.775q.275.275.65.438t.75.162q.8 0 1.4-.562t.6-1.438q0-.35-.125-.725t-.45-.7L12.7 3.825q.425-.4.95-.612T14.7 3q.65 0 1.2.213t1 .662l4.225 4.25q.45.45.663 1T22 10.4q0 .5-.225 1.013t-.65.937L12.8 20.7q-.2.2-.35.25t-.35.05m-8.575-8l-.65-.65q-.425-.4-.65-.95T2 10.25q0-.65.25-1.2t.625-.925L7.1 3.875q.4-.4.95-.638T9.125 3q.675 0 1.2.188t1.025.687L16.475 9q.15.15.225.325t.075.375q0 .4-.3.7t-.7.3q-.225 0-.375-.062t-.325-.238l-4.5-4.45z"
+              />
+            </svg>
+
+            Solicitar Convenio
+          </button>
+        }
+        <button
+          type="button"
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-4"
+          (click)="submitPayment()"
+          [disabled]="!isFormValid || isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+          @if (!isLoading) {
+            <i class="bi bi-check-circle"></i>
+          }
+          {{
+            isLoading
+              ? 'Registrando...'
+              : pagoMode === 'PUNTUAL'
+                ? 'Registrar Cobro'
+                : 'Registrar Pago'
+          }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

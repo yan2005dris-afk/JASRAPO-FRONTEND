@@ -1,0 +1,20 @@
+/* Filas seleccionables (modo selección): el doble clic elige la tarifa */
+.selectable-row {
+  cursor: pointer;
+}
+
+.selectable-row:hover td {
+  background-color: rgba(var(--bs-primary-rgb), 0.06) !important;
+}
+
+.tariff-row {
+  transition: background-color 0.15s ease-in-out;
+}
+
+.tariff-row:hover {
+  background-color: #f8fafc;
+}
+
+.expanded-rubros-row > td {
+  border-bottom: 1px solid var(--bs-border-color);
+}
