@@ -61,7 +61,7 @@ export class BillInquiryComponent {
     this.errorMessage.set(null);
   }
 
-  consultar(): void {
+  async consultar(): Promise<void> {
     this.searchClicked.set(true);
     const term = this.terminoBusqueda().trim();
     if (term.length < 2) {
@@ -75,30 +75,29 @@ export class BillInquiryComponent {
     this.errorMessage.set(null);
     this.results.set(null);
 
-    this.consultaPlanillaService.consultar(term, this.searchType()).subscribe({
-      next: (data) => {
-        this.loading.set(false);
-        if (data) {
-          this.results.set(data);
-          this.consultaPlanillaService.currentDeuda.set(data);
-        } else {
-          this.noResults.set(true);
-        }
-      },
-      error: (error) => {
-        this.loading.set(false);
-        if (error.status === 404) {
-          this.noResults.set(true);
-        } else if (error.status === 429) {
-          this.errorMessage.set(
-            'Demasiadas consultas. Por favor, intente nuevamente en unos minutos.',
-          );
-        } else {
-          this.errorMessage.set('Ocurrió un error al consultar la deuda. Intente más tarde.');
-        }
-        console.error('Error during debt consultation:', error);
-      },
-    });
+    try {
+      const data = await this.consultaPlanillaService.consultar(term, this.searchType());
+      this.loading.set(false);
+      if (data) {
+        this.results.set(data);
+        this.consultaPlanillaService.currentDeuda.set(data);
+      } else {
+        this.noResults.set(true);
+      }
+    } catch (error: unknown) {
+      this.loading.set(false);
+      const httpError = error as { status?: number };
+      if (httpError?.status === 404) {
+        this.noResults.set(true);
+      } else if (httpError?.status === 429) {
+        this.errorMessage.set(
+          'Demasiadas consultas. Por favor, intente nuevamente en unos minutos.',
+        );
+      } else {
+        this.errorMessage.set('Ocurrió un error al consultar la deuda. Intente más tarde.');
+      }
+      console.error('Error during debt consultation:', error);
+    }
   }
 
   descargarPlanillaContrato(contrato: ContratoDeudaPublica): void {
@@ -159,6 +158,6 @@ export class BillInquiryComponent {
   }
 
   onEnter(): void {
-    this.consultar();
+    void this.consultar();
   }
 }

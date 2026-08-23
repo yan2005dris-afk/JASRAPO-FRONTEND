@@ -2,7 +2,7 @@ import { Component, OnInit, AfterViewInit, inject, ChangeDetectorRef } from '@an
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { PlanillaPdfService } from '../genera-planilla/planilla-pdf.service';
-import { ConsultaPlanillaService } from '../../bill-inquiry/bill-inquiry.service';
+import { ConsultaPlanillaService, PlanillaPdfData } from '../../bill-inquiry/bill-inquiry.service';
 import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/pdf-previewer.component';
 
 @Component({
@@ -51,9 +51,7 @@ export class PreviewPlanillaComponent implements OnInit, AfterViewInit {
   private cdr = inject(ChangeDetectorRef);
 
   pdfBase64?: string;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  planillaData: any;
+  planillaData?: PlanillaPdfData;
 
   ngOnInit(): void {
     const data = this.consultaPlanillaService.currentPlanilla();
@@ -73,6 +71,7 @@ export class PreviewPlanillaComponent implements OnInit, AfterViewInit {
   }
 
   async generarPlanilla() {
+    if (!this.planillaData) return;
     try {
       console.log('Iniciando generación de PDF (Blob Promise)...');
       const blob = await this.planillaPdfService.generatePlanillaBlob(this.planillaData);
@@ -87,10 +86,11 @@ export class PreviewPlanillaComponent implements OnInit, AfterViewInit {
 
   regenerar() {
     this.pdfBase64 = undefined;
-    setTimeout(() => this.generarPlanilla(), 100);
+    setTimeout(() => void this.generarPlanilla(), 100);
   }
 
   descargar() {
+    if (!this.planillaData) return;
     this.planillaPdfService.downloadPlanilla(
       this.planillaData,
       `planilla_${this.planillaData.numeroPlanilla}.pdf`,

@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { TDocumentDefinitions, StyleDictionary, Margins } from 'pdfmake/interfaces';
 import { PdfGeneratorService } from '../../../shared/services/pdf-generator.service';
 import { LOGO_JASRAPO_BASE64 } from '../../../shared/constants/images.constant';
+import type { PlanillaPdfData } from '../../bill-inquiry/bill-inquiry.service';
 
 @Injectable({
   providedIn: 'root',
@@ -9,26 +10,22 @@ import { LOGO_JASRAPO_BASE64 } from '../../../shared/constants/images.constant';
 export class PlanillaPdfService {
   private pdfGenerator = inject(PdfGeneratorService);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async generatePlanillaBlob(data: any): Promise<Blob> {
+  async generatePlanillaBlob(data: PlanillaPdfData): Promise<Blob> {
     const definition = this.getPlanillaDefinition(data);
     return await this.pdfGenerator.generatePdfBlob(definition);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async generatePlanillaDataUrl(data: any): Promise<string> {
+  async generatePlanillaDataUrl(data: PlanillaPdfData): Promise<string> {
     const definition = this.getPlanillaDefinition(data);
     return await this.pdfGenerator.getPdfDataUrl(definition);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  downloadPlanilla(data: any, fileName = 'planilla.pdf'): void {
+  downloadPlanilla(data: PlanillaPdfData, fileName = 'planilla.pdf'): void {
     const definition = this.getPlanillaDefinition(data);
     this.pdfGenerator.downloadPdf(definition, fileName);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private getPlanillaDefinition(data: any): TDocumentDefinitions {
+  private getPlanillaDefinition(data: PlanillaPdfData): TDocumentDefinitions {
     const styles: StyleDictionary = {
       headerLogo: {
         alignment: 'left',

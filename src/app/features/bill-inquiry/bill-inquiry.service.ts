@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { firstValueFrom, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 
@@ -26,6 +26,49 @@ export interface DeudaPublicaResponse {
   totalDeuda: number;
 }
 
+export interface PlanillaDetalleItem {
+  codigo: string;
+  cant: string;
+  desc: string;
+  uni: string;
+  sub: string;
+  pre: string;
+  des: string;
+  tot: string;
+}
+
+export interface PlanillaPdfData {
+  numeroPlanilla: string;
+  clienteNombre: string;
+  clienteIdentificacion: string;
+  cuenta: string;
+  medidor: string;
+  mesesAtrasados: string;
+  fechaEmision: string;
+  fechaVencimiento: string;
+  categoria: string;
+  facturacion: string;
+  totalPagar: number;
+  subtotal12: number;
+  subtotal0: number;
+  subtotalNoObjeto: number;
+  subtotalExento: number;
+  subtotalSinImpuestos: number;
+  totalDescuento: number;
+  iva12: number;
+  direccion?: string;
+  telefono?: string;
+  email?: string;
+  direccionAdicional?: string;
+  periodo?: string;
+  claveAcceso?: string;
+  fechaAutorizacion?: string;
+  lecturaAnterior?: string;
+  lecturaActual?: string;
+  consumo?: string;
+  detalles: PlanillaDetalleItem[];
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -33,21 +76,22 @@ export class ConsultaPlanillaService {
   private readonly http = inject(HttpClient);
   private readonly apiUrl = `${environment.apiUrl}/search`;
 
-  // State para guardar el resultado de búsqueda actual
+  // State para guardar el resultado de búsqueda actual usando Signals
   public readonly currentDeuda = signal<DeudaPublicaResponse | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  public readonly currentPlanilla = signal<any>(null);
+  public readonly currentPlanilla = signal<PlanillaPdfData | null>(null);
 
-  consultar(termino: string, tipo: SearchType): Observable<DeudaPublicaResponse> {
+  async consultar(termino: string, tipo: SearchType): Promise<DeudaPublicaResponse> {
     const params = {
       tipo,
       valor: termino.trim(),
     };
 
-    return this.http.get<DeudaPublicaResponse>(this.apiUrl, { params }).pipe(
-      catchError((error: HttpErrorResponse) => {
-        return throwError(() => error);
-      }),
+    return await firstValueFrom(
+      this.http.get<DeudaPublicaResponse>(this.apiUrl, { params }).pipe(
+        catchError((error: HttpErrorResponse) => {
+          return throwError(() => error);
+        }),
+      ),
     );
   }
 }
