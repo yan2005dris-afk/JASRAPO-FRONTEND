@@ -2,13 +2,13 @@
   min-height: 100vh;
   display: flex;
   align-items: center;
-  background-color: var(--bs-body-bg, #f8fafc);
+  background-color: #f8fafc;
 }
 
 .search-card {
-  border-radius: 1rem;
-  background: var(--bs-card-bg, #ffffff);
-  border: 1px solid var(--bs-border-color-translucent, rgba(0, 0, 0, 0.06)) !important;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #cbdedf !important;
 }
 
 .brand-logo-container {
@@ -22,15 +22,16 @@
 }
 
 .page-title {
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
+  color: #0e2728;
 }
 
 /* Segmented Control Tabs */
 .search-tabs-container {
   display: flex;
-  background-color: var(--bs-tertiary-bg, #f1f5f9);
+  background-color: #dbf7f8;
   padding: 0.35rem;
-  border-radius: 0.75rem;
+  border-radius: 10px;
   gap: 0.35rem;
 }
 
@@ -39,21 +40,21 @@
   border: none;
   background: transparent;
   padding: 0.6rem 1rem;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: var(--bs-secondary-color, #64748b);
-  border-radius: 0.5rem;
-  transition: all 0.2s ease-in-out;
+  color: #597b7d;
+  border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
 
   &:hover {
-    color: var(--bs-primary, #0d6efd);
+    color: #0c9ea1;
   }
 
   &.active {
     background-color: #ffffff;
-    color: var(--bs-primary, #0d6efd);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    color: #0c9ea1;
+    box-shadow: 0 1px 3px rgba(14, 39, 40, 0.08);
   }
 }
 
@@ -67,22 +68,23 @@
 
   .search-icon {
     left: 1.15rem;
-    color: #94a3b8;
-    font-size: 1.1rem;
+    color: #597b7d;
+    font-size: 1rem;
     pointer-events: none;
   }
 
   .custom-search-input {
     padding-left: 3rem;
     padding-right: 2.75rem;
-    border-radius: 0.75rem;
-    font-size: 1.05rem;
-    border-color: #cbd5e1;
+    border-radius: 8px;
+    font-size: 1rem;
+    border-color: #cbdedf;
+    color: #0e2728;
     transition: all 0.2s ease;
 
     &:focus {
-      border-color: var(--bs-primary, #0d6efd);
-      box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.12);
+      border-color: #0c9ea1;
+      box-shadow: 0 0 0 4px rgba(15, 195, 198, 0.2);
     }
   }
 
@@ -90,37 +92,40 @@
     right: 0.85rem;
     top: 50%;
     transform: translateY(-50%);
-    font-size: 1.15rem;
+    font-size: 1rem;
     line-height: 1;
 
     &:hover {
-      color: #334155 !important;
+      color: #0e2728 !important;
     }
   }
 }
 
 .btn-submit {
-  border-radius: 0.75rem;
+  border-radius: 8px;
   font-weight: 600;
   padding: 0.8rem 1.5rem;
-  transition: all 0.2s ease-in-out;
+  background-color: #0c9ea1;
+  border: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
-  &:not(:disabled):hover {
+  &:hover:not(:disabled) {
+    background-color: #0fc3c6;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.25);
+    box-shadow: 0 4px 12px rgba(12, 158, 161, 0.25);
   }
 }
 
 /* Empty State */
 .empty-state-box {
-  background-color: var(--bs-tertiary-bg, #f8fafc);
-  border: 1px dashed var(--bs-border-color, #cbd5e1);
+  background-color: #f8fafc;
+  border: 1px dashed #cbdedf;
 
   .empty-icon-circle {
     width: 48px;
     height: 48px;
     border-radius: 50%;
-    background-color: #ecfdf5;
+    background-color: #dbf7f8;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -129,12 +134,12 @@
 
 /* Results Card */
 .result-card {
-  border-radius: 0.875rem;
-  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  border: 1px solid #cbdedf;
 }
 
 .result-header {
-  background-color: var(--bs-primary, #0d6efd);
+  background-color: #0c9ea1;
 
   .avatar-icon {
     width: 36px;
@@ -145,16 +150,18 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 }
 
 .section-subtitle {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   letter-spacing: 0.05em;
+  color: #597b7d !important;
 }
 
 .contract-item {
+  border-color: #cbdedf !important;
   transition: background-color 0.15s ease;
 
   &:hover {
@@ -163,8 +170,8 @@
 }
 
 .badge-soft-primary {
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  background-color: #dbf7f8;
+  color: #0c9ea1;
   font-size: 0.8rem;
   padding: 0.35rem 0.6rem;
 }
@@ -202,7 +209,7 @@
     .contract-balance {
       text-align: left !important;
       width: 100%;
-      border-top: 1px dashed #e2e8f0;
+      border-top: 1px dashed #cbdedf;
       padding-top: 0.5rem;
       margin-top: 0.25rem;
       display: flex;
