@@ -106,11 +106,8 @@ export class IndexedDbService {
       const transaction = db.transaction('medidores_cache', 'readwrite');
       const store = transaction.objectStore('medidores_cache');
 
-      // Limpiar datos antiguos
-      store.clear();
-
+      // Realizar upsert (merge por medidorId): actualiza existentes y añade nuevos
       for (const meter of meters) {
-        // Asegurarse de mapear/guardar como número o string según el ID
         store.put(meter);
       }
 
