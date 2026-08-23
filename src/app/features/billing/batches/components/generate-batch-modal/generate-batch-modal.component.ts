@@ -67,7 +67,7 @@ export class GenerateBatchModalComponent implements OnInit {
   readonly selectedRoute = computed(() => {
     const id = this.selectedRouteId();
     if (!id) return null;
-    return this.routes().find((r) => r.rutaId === id) || null;
+    return this.routes().find((r) => Number(r.rutaId) === Number(id)) || null;
   });
 
   readonly hasPendingRoutes = computed(() => {
@@ -92,6 +92,13 @@ export class GenerateBatchModalComponent implements OnInit {
       this.selectedRouteId.set(r.rutaId);
       if (r.comunidadId && this.comunidadId() !== r.comunidadId) {
         this.comunidadId.set(r.comunidadId);
+      }
+      const fechaRef = r.fechaPlanificada || r.fechaInicio;
+      if (fechaRef) {
+        const d = new Date(fechaRef);
+        if (!isNaN(d.getTime())) {
+          this.mes.set(d.getUTCMonth() + 1);
+        }
       }
     }
   }
@@ -123,16 +130,20 @@ export class GenerateBatchModalComponent implements OnInit {
 
   onPeriodoChange(val: number | null): void {
     this.periodoId.set(val);
+    this.selectedRouteId.set(null);
     this.onFiltersChanged();
   }
 
   onComunidadChange(val: number | null): void {
     this.comunidadId.set(val);
+    this.selectedRouteId.set(null);
     this.onFiltersChanged();
   }
 
   onFiltersChanged(): void {
     const pId = this.periodoId();
+    this.selectedRouteId.set(null);
+
     if (!pId) {
       this.routes.set([]);
       return;
@@ -146,11 +157,12 @@ export class GenerateBatchModalComponent implements OnInit {
         periodoId: pId,
         comunidadId: this.comunidadId() || undefined,
         tipoRuta: 'TOMA_LECTURA',
+        estado: 'COMPLETADA',
         limit: 50,
       })
       .subscribe({
         next: (res) => {
-          this.routes.set(res.data);
+          this.routes.set(res.data || []);
           this.isLoadingRoutes.set(false);
           this.cdr.markForCheck();
         },
