@@ -36,11 +36,35 @@ interface ConnectionHistoryPrefactura {
   };
 }
 
-interface ConnectionHistoryData {
+export interface ConnectionHistoryFila {
+  emision: string;
+  lectActual: string;
+  lectAnterior: string;
+  consumo: string;
+  valEmision: string;
+  abonos: string;
+  saldo: string;
+}
+
+export interface ConnectionHistoryReport {
+  titulo?: string;
+  fechaEmision?: string;
+  fechaDesde?: string;
+  fechaHasta?: string;
+  cuenta?: string;
+  clienteNombre?: string;
+  medidor?: string;
+  filas: ConnectionHistoryFila[];
+  totalValEmision: string;
+  totalAbonos: string;
+  saldoFinal: string;
+}
+
+export interface ConnectionHistoryData {
+  reporte?: ConnectionHistoryReport;
+  // Fallbacks para compatibilidad
   contratoId?: string;
   prefacturas?: ConnectionHistoryPrefactura[];
-  fechaDesde?: string | null;
-  fechaHasta?: string | null;
   [key: string]: unknown;
 }
 
@@ -97,6 +121,19 @@ export class ConnectionHistoryComponent {
 
   readonly tableRows = computed(() => {
     const data = this.reportData();
+    if (data?.reporte?.filas) {
+      return data.reporte.filas.map((f) => ({
+        emision: f.emision,
+        lectAnterior: f.lectAnterior,
+        lectActual: f.lectActual,
+        consumo: f.consumo,
+        valEmision: f.valEmision,
+        abonos: f.abonos,
+        saldo: f.saldo,
+        saldoNum: Number(f.saldo || 0),
+      }));
+    }
+
     if (!data?.prefacturas) return [];
 
     return data.prefacturas.map((pf) => {
@@ -122,19 +159,31 @@ export class ConnectionHistoryComponent {
   });
 
   readonly totalValEmision = computed(() => {
-    const pfs = this.reportData()?.prefacturas ?? [];
+    const data = this.reportData();
+    if (data?.reporte?.totalValEmision !== undefined) {
+      return Number(data.reporte.totalValEmision).toFixed(2);
+    }
+    const pfs = data?.prefacturas ?? [];
     const sum = pfs.reduce((s, pf) => s + Number(pf.totalPagar ?? 0), 0);
     return sum.toFixed(2);
   });
 
   readonly totalAbonos = computed(() => {
-    const pfs = this.reportData()?.prefacturas ?? [];
+    const data = this.reportData();
+    if (data?.reporte?.totalAbonos !== undefined) {
+      return Number(data.reporte.totalAbonos).toFixed(2);
+    }
+    const pfs = data?.prefacturas ?? [];
     const sum = pfs.reduce((s, pf) => s + Number(pf.abono ?? 0), 0);
     return sum.toFixed(2);
   });
 
   readonly saldoFinal = computed(() => {
-    const pfs = this.reportData()?.prefacturas ?? [];
+    const data = this.reportData();
+    if (data?.reporte?.saldoFinal !== undefined) {
+      return Number(data.reporte.saldoFinal).toFixed(2);
+    }
+    const pfs = data?.prefacturas ?? [];
     const sum = pfs.reduce((s, pf) => s + Number(pf.saldoActual ?? 0), 0);
     return sum.toFixed(2);
   });
