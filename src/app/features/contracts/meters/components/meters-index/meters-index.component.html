@@ -234,6 +234,18 @@
                             </button>
                           </li>
                           <li>
+                            <button
+                              class="dropdown-item d-flex align-items-center gap-2"
+                              (click)="openHistory(meter)"
+                            >
+                              <i
+                                class="bi bi-clock-history text-secondary"
+                                style="font-size: 0.8rem"
+                              ></i>
+                              Historial
+                            </button>
+                          </li>
+                          <li>
                             <hr class="dropdown-divider" />
                           </li>
                           <li>
@@ -299,6 +311,16 @@
           (cancelForm)="closeModal()"
         >
         </app-meters-form>
+      </div>
+    </div>
+  </div>
+}
+
+@if (showHistoryModal) {
+  <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5)">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content border-0 shadow">
+        <app-meter-history-modal [meter]="historyMeter" (closeModal)="closeHistory()" />
       </div>
     </div>
   </div>

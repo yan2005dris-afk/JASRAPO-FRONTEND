@@ -9,6 +9,8 @@ import {
   IPaginatedMetersResponse,
   ISearchMetersParams,
   IExportMetersParams,
+  IMeterHistory,
+  IReplaceMeterResponse,
 } from '../interfaces/imeter.interface';
 import { environment } from '../../../../../environments/environment';
 
@@ -77,6 +79,14 @@ export class MetersService {
 
   getMeterById(id: number): Observable<IMeter> {
     return this.http.get<IMeter>(`${this.endpoint}/${id}`);
+  }
+
+  getMeterHistory(id: number): Observable<IMeterHistory[]> {
+    return this.http.get<IMeterHistory[]>(`${this.endpoint}/${id}/history`);
+  }
+
+  getReplacementDetail(reemplazoId: number | string): Observable<IReplaceMeterResponse> {
+    return this.http.get<IReplaceMeterResponse>(`${this.endpoint}/replacements/${reemplazoId}`);
   }
 
   updateMeter(id: number, body: IUpdateMeterStatusBody): Observable<IMeter> {
