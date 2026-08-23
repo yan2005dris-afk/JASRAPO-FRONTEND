@@ -6,45 +6,58 @@
       <span class="brand-name">JASRAPO PWA</span>
     </div>
 
-    <div class="header-status">
-      <!-- Network Badge Indicator -->
-      @if (networkService.isOnline()) {
-        <span class="status-badge online" title="Conexión Online">
-          <span class="status-dot animate-pulse"></span>
-          Online
-        </span>
-      } @else {
-        <span class="status-badge offline" title="Trabajando sin conexión">
-          <span class="status-dot"></span>
-          Offline
-        </span>
-      }
+    <div class="header-actions">
+      <div class="header-status">
+        <!-- Network Badge Indicator -->
+        @if (networkService.isOnline()) {
+          <span class="status-badge online" title="Conexión Online">
+            <span class="status-dot animate-pulse"></span>
+            Online
+          </span>
+        } @else {
+          <span class="status-badge offline" title="Trabajando sin conexión">
+            <span class="status-dot"></span>
+            Offline
+          </span>
+        }
 
-      <!-- Offline Sync Badge -->
-      @if (syncService.totalPending() > 0) {
-        <button
-          class="sync-badge border-0"
-          [class.syncing]="syncService.isSyncing()"
-          [disabled]="!networkService.isOnline() || syncService.isSyncing()"
-          (click)="forceSync()"
-          [title]="
-            networkService.isOnline()
-              ? 'Sincronizar ahora'
-              : 'Sincronización pendiente (sin conexión)'
-          "
-        >
-          <i
-            class="bi"
-            [class.bi-arrow-repeat]="syncService.isSyncing()"
-            [class.bi-cloud-arrow-up-fill]="!syncService.isSyncing()"
-          ></i>
-          <span class="pending-count">{{ syncService.totalPending() }}</span>
-        </button>
-      } @else {
-        <span class="sync-badge synced" title="Todos los datos sincronizados">
-          <i class="bi bi-cloud-check-fill"></i>
-        </span>
-      }
+        <!-- Offline Sync Badge -->
+        @if (syncService.totalPending() > 0) {
+          <button
+            class="sync-badge border-0"
+            [class.syncing]="syncService.isSyncing()"
+            [disabled]="!networkService.isOnline() || syncService.isSyncing()"
+            (click)="forceSync()"
+            [title]="
+              networkService.isOnline()
+                ? 'Sincronizar ahora'
+                : 'Sincronización pendiente (sin conexión)'
+            "
+          >
+            <i
+              class="bi"
+              [class.bi-arrow-repeat]="syncService.isSyncing()"
+              [class.bi-cloud-arrow-up-fill]="!syncService.isSyncing()"
+            ></i>
+            <span class="pending-count">{{ syncService.totalPending() }}</span>
+          </button>
+        } @else {
+          <span class="sync-badge synced" title="Todos los datos sincronizados">
+            <i class="bi bi-cloud-check-fill"></i>
+          </span>
+        }
+      </div>
+
+      <!-- Logout button in Header -->
+      <button
+        (click)="onLogout()"
+        class="header-logout-btn"
+        id="btn-header-logout"
+        title="Cerrar sesión"
+        aria-label="Cerrar sesión"
+      >
+        <i class="bi bi-box-arrow-right"></i>
+      </button>
     </div>
   </header>
 
@@ -72,18 +85,18 @@
         <span class="tab-label">Rutas</span>
       </a>
 
-      <!-- Tab 2: Tareas / Órdenes -->
+      <!-- Tab 2: Órdenes de Trabajo -->
       <a
-        routerLink="/app/operador/rutas"
+        routerLink="/app/operador/lecturas"
         routerLinkActive="active"
         class="nav-tab"
-        id="tab-tareas"
+        id="tab-ordenes"
         aria-label="Órdenes de Trabajo"
       >
         <div class="icon-wrapper">
           <i class="bi bi-card-checklist"></i>
         </div>
-        <span class="tab-label">Tareas</span>
+        <span class="tab-label">Órdenes</span>
       </a>
 
       <!-- Tab 3: Novedades -->
@@ -92,6 +105,7 @@
         routerLinkActive="active"
         class="nav-tab"
         id="tab-novedades"
+        aria-label="Novedades de Campo"
       >
         <div class="icon-wrapper">
           <i class="bi bi-exclamation-triangle"></i>
@@ -99,12 +113,13 @@
         <span class="tab-label">Novedades</span>
       </a>
 
-      <!-- Tab 4: Sincronizar -->
+      <!-- Tab 4: Sincronización -->
       <a
         routerLink="/app/operador/sincronizar"
         routerLinkActive="active"
         class="nav-tab"
         id="tab-sincronizar"
+        aria-label="Sincronización Offline"
       >
         <div class="icon-wrapper position-relative">
           <i class="bi bi-cloud-arrow-up"></i>
@@ -114,19 +129,6 @@
         </div>
         <span class="tab-label">Sync</span>
       </a>
-
-      <!-- Tab 5: Cerrar Sesión -->
-      <button
-        (click)="onLogout()"
-        class="nav-tab btn-logout border-0 bg-transparent"
-        id="tab-logout"
-        aria-label="Cerrar sesión"
-      >
-        <div class="icon-wrapper">
-          <i class="bi bi-box-arrow-right text-danger"></i>
-        </div>
-        <span class="tab-label text-danger">Salir</span>
-      </button>
     </div>
   </nav>
 </div>

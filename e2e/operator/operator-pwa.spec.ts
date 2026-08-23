@@ -15,11 +15,12 @@ test.describe('PWA Operador - Sincronización y Rutas', () => {
     const taskCards = page.locator('.task-card, .map-task-row');
     await expect(taskCards.first()).toBeVisible({ timeout: 10000 });
 
-    // 4. Verificar existencia de las tabs del footer
+    // 4. Verificar existencia de las tabs del footer y logout en header
     await expect(page.locator('#tab-rutas')).toBeVisible();
-    await expect(page.locator('#tab-tareas')).toBeVisible();
+    await expect(page.locator('#tab-ordenes')).toBeVisible();
     await expect(page.locator('#tab-novedades')).toBeVisible();
     await expect(page.locator('#tab-sincronizar')).toBeVisible();
+    await expect(page.locator('#btn-header-logout')).toBeVisible();
 
     // 5. Navegar a la pantalla de toma de lecturas
     await page.goto('/app/operador/lecturas');
