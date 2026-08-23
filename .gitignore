@@ -46,6 +46,10 @@ Thumbs.db
 
 /generated/prisma
 
+# OpenAPI spec cache + generated client (regenerable via `pnpm gen:api`).
+.openapi/
+src/app/generated/
+
 # -- foglamp local scan --
 .foglamp/
 
