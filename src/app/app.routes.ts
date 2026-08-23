@@ -30,6 +30,71 @@ export const routes: Routes = [
     ],
   },
   {
+    path: 'app/operador',
+    loadComponent: () =>
+      import('./layout/operator-layout/operator-layout.component').then(
+        (m) => m.OperatorLayoutComponent,
+      ),
+    canActivate: [authGuard],
+    children: [
+      {
+        // Redirect legacy URL para backward compatibility
+        path: 'tareas',
+        redirectTo: 'rutas',
+        pathMatch: 'full',
+      },
+      {
+        path: 'rutas',
+        data: { breadcrumb: 'Rutas' },
+        loadComponent: () =>
+          import('./features/operator/rutas/rutas.component').then((m) => m.RutasComponent),
+      },
+      {
+        path: 'lecturas',
+        data: { breadcrumb: 'Lecturas' },
+        loadComponent: () =>
+          import('./features/operator/readings/lecturas.component').then(
+            (m) => m.LecturasComponent,
+          ),
+      },
+      {
+        path: 'novedades',
+        data: { breadcrumb: 'Novedades' },
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            loadComponent: () =>
+              import('./features/operator/novelties/novedades.component').then(
+                (m) => m.NovedadesComponent,
+              ),
+          },
+          {
+            path: 'new',
+            data: { breadcrumb: 'Nueva Novedad' },
+            loadComponent: () =>
+              import('./features/operator/novelties/novedades-form/novedades-form.component').then(
+                (m) => m.NovedadesFormComponent,
+              ),
+          },
+        ],
+      },
+      {
+        path: 'sincronizar',
+        data: { breadcrumb: 'Sincronizar' },
+        loadComponent: () =>
+          import('./features/operator/sync-queue/sincronizar.component').then(
+            (m) => m.SincronizarComponent,
+          ),
+      },
+      {
+        path: '',
+        redirectTo: 'rutas',
+        pathMatch: 'full',
+      },
+    ],
+  },
+  {
     path: 'app',
     loadComponent: () =>
       import('./layout/main-layout/main-layout.component').then((m) => m.MainLayout),

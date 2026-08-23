@@ -1,0 +1,104 @@
+<div class="form-screen">
+  <div class="form-header">
+    <button class="back-btn" type="button" (click)="goBack()">
+      <i class="bi bi-arrow-left"></i>
+    </button>
+    <h1 class="form-title">Reportar Novedad</h1>
+  </div>
+
+  <!-- Meter search / selection -->
+  @if (!selectedMeter()) {
+    <div class="search-section">
+      <p class="search-hint">Buscá el medidor para reportar la novedad.</p>
+      <app-meter-search-box
+        [value]="searchQuery()"
+        placeholder="Nro Serie o ID Contrato..."
+        (valueChange)="searchQuery.set($event)"
+      />
+
+      @if (filteredMeters().length > 0) {
+        <div class="search-results">
+          @for (meter of filteredMeters(); track meter.medidorId) {
+            <app-meter-card
+              [meter]="meter"
+              [showArrow]="false"
+              (meterSelect)="selectMeter($event)"
+            />
+          }
+        </div>
+      } @else if (searchQuery()) {
+        <div class="empty-search">
+          <i class="bi bi-search"></i>
+          <p>Sin resultados para "{{ searchQuery() }}"</p>
+        </div>
+      }
+    </div>
+  } @else {
+    <!-- Selected meter -->
+    <div class="selected-section">
+      <app-selected-meter-card [meter]="selectedMeter()!" (clear)="clearSelection()" />
+    </div>
+
+    <!-- Form -->
+    <form [formGroup]="noveltyForm" (ngSubmit)="onSubmit()" class="novelty-form">
+      <div class="field">
+        <label for="nf-tipo" class="field-label">Tipo de Anomalía *</label>
+        <select
+          id="nf-tipo"
+          class="field-select"
+          formControlName="tipo"
+          [class.invalid]="noveltyForm.get('tipo')?.touched && noveltyForm.get('tipo')?.invalid"
+        >
+          <option value="" disabled>Seleccioná el tipo...</option>
+          @for (tipo of tiposAnomalia; track tipo.value) {
+            <option [value]="tipo.value">{{ tipo.label }}</option>
+          }
+        </select>
+        @if (noveltyForm.get('tipo')?.touched && noveltyForm.get('tipo')?.hasError('required')) {
+          <span class="field-error">El tipo es obligatorio.</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="nf-obs" class="field-label">Descripción *</label>
+        <textarea
+          id="nf-obs"
+          class="field-textarea"
+          rows="4"
+          placeholder="Describí el problema encontrado..."
+          formControlName="observacion"
+          [class.invalid]="
+            noveltyForm.get('observacion')?.touched && noveltyForm.get('observacion')?.invalid
+          "
+        ></textarea>
+        @if (noveltyForm.get('observacion')?.touched) {
+          @if (noveltyForm.get('observacion')?.hasError('required')) {
+            <span class="field-error">La descripción es obligatoria.</span>
+          } @else if (noveltyForm.get('observacion')?.hasError('minlength')) {
+            <span class="field-error">Mínimo 5 caracteres.</span>
+          }
+        }
+      </div>
+
+      <div class="field">
+        <p class="field-label">Evidencia fotográfica <span class="optional">(opcional)</span></p>
+        <app-photo-capture [preview]="photoPreview()" (previewChange)="photoPreview.set($event)" />
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="goBack()" [disabled]="isSaving()">
+          Cancelar
+        </button>
+        <button type="submit" class="btn-submit" [disabled]="noveltyForm.invalid || isSaving()">
+          @if (isSaving()) {
+            <span class="spinner" role="status" aria-hidden="true"></span>
+            Guardando...
+          } @else {
+            <i class="bi bi-exclamation-octagon-fill"></i>
+            Reportar
+          }
+        </button>
+      </div>
+    </form>
+  }
+</div>

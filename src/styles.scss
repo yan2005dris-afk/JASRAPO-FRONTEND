@@ -7,6 +7,8 @@
 @use './styles/badges';
 @use './styles/modals';
 @use './styles/forms';
+@use './styles/animations';
 
 /* You can add global styles to this file, and also import other style files */
 @import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css');
+@import 'leaflet/dist/leaflet.css';
