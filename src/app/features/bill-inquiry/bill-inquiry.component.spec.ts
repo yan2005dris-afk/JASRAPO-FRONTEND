@@ -32,11 +32,7 @@ describe('ConsultaPlanillaService (SC-235)', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        ConsultaPlanillaService,
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting(), ConsultaPlanillaService],
     });
     service = TestBed.inject(ConsultaPlanillaService);
     httpTesting = TestBed.inject(HttpTestingController);
@@ -66,11 +62,7 @@ describe('BillInquiryComponent (SC-235)', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [BillInquiryComponent],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        provideRouter([]),
-      ],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     });
 
     const fixture = TestBed.createComponent(BillInquiryComponent);

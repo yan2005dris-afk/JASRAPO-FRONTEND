@@ -2,11 +2,7 @@ import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@a
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import {
-  ConsultaPlanillaService,
-  DeudaPublicaResponse,
-  SearchType,
-} from './bill-inquiry.service';
+import { ConsultaPlanillaService, DeudaPublicaResponse, SearchType } from './bill-inquiry.service';
 
 @Component({
   selector: 'app-bill-inquiry',
@@ -34,9 +30,28 @@ export class BillInquiryComponent {
 
   readonly inputLabel = computed(() => {
     return this.searchType() === 'identificacion'
-      ? 'Cédula / RUC'
+      ? 'Cédula / RUC / Pasaporte'
       : 'Número de Guía / Contrato';
   });
+
+  readonly inputPlaceholder = computed(() => {
+    return this.searchType() === 'identificacion' ? 'Ej: 2450524562' : 'Ej: GUIA-OLON-001';
+  });
+
+  setSearchType(type: SearchType): void {
+    this.searchType.set(type);
+    this.terminoBusqueda.set('');
+    this.results.set(null);
+    this.noResults.set(false);
+    this.errorMessage.set(null);
+  }
+
+  limpiar(): void {
+    this.terminoBusqueda.set('');
+    this.results.set(null);
+    this.noResults.set(false);
+    this.errorMessage.set(null);
+  }
 
   consultar(): void {
     this.searchClicked.set(true);
@@ -67,7 +82,9 @@ export class BillInquiryComponent {
         if (error.status === 404) {
           this.noResults.set(true);
         } else if (error.status === 429) {
-          this.errorMessage.set('Demasiadas consultas. Por favor, intente nuevamente en unos minutos.');
+          this.errorMessage.set(
+            'Demasiadas consultas. Por favor, intente nuevamente en unos minutos.',
+          );
         } else {
           this.errorMessage.set('Ocurrió un error al consultar la deuda. Intente más tarde.');
         }
