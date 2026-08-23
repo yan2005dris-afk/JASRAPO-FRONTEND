@@ -38,6 +38,17 @@ export interface OperatorWorkOrder {
   contrato?: OperatorWorkOrderContract;
 }
 
+export interface OperatorParada {
+  ordenTrabajoId: string;
+  tipoActividad: WorkOrderActivityType;
+  estado: WorkOrderState;
+  latitud: number;
+  longitud: number;
+  serie?: string;
+  clienteNombre?: string;
+  direccionSuministro?: string;
+}
+
 export interface OperatorRouteResponse {
   rutaId: string;
   tipoRuta: RouteType;
@@ -57,6 +68,7 @@ export interface OperatorRouteResponse {
   operario: OperatorUserInfo;
   rutaPuntos?: RoutePoint[];
   ordenesTrabajo?: OperatorWorkOrder[];
+  paradas?: OperatorParada[];
 }
 
 export interface RoutePoint {

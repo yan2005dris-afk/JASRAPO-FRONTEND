@@ -72,7 +72,52 @@ export class RutasComponent implements OnInit, OnDestroy {
     for (const task of sortedTasks) {
       if (activeSelectedId !== null && task.rutaId !== activeSelectedId) continue;
 
-      if (task.tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos?.length) {
+      // 1. Puntos desde paradas / ordenesTrabajo (Backend real)
+      const paradas = task.paradas;
+      const ordenes = task.ordenesTrabajo;
+
+      if (paradas && paradas.length > 0) {
+        for (const p of paradas) {
+          if (p.latitud != null && p.longitud != null) {
+            points.push({
+              lat: p.latitud,
+              lng: p.longitud,
+              estado: statusMap.get(p.serie ?? '') ?? p.estado ?? '__SIN_LECTURA__',
+              tipoRuta: p.tipoActividad ?? task.tipoRuta,
+              popupHtml: `
+                <div class="map-info">
+                  <strong>${task.nombre}</strong>
+                  <p style="margin:4px 0 0;font-size:11px;"><strong>Actividad:</strong> ${p.tipoActividad ?? task.tipoRuta}</p>
+                  <p style="margin:2px 0 0;font-size:11px;"><strong>Serie:</strong> ${p.serie ?? 'N/A'}</p>
+                  <p style="margin:2px 0 0;font-size:11px;"><strong>Cliente:</strong> ${p.clienteNombre ?? 'N/A'}</p>
+                </div>
+              `,
+            });
+          }
+        }
+      } else if (ordenes && ordenes.length > 0) {
+        for (const ord of ordenes) {
+          const lat = ord.medidor?.latitud;
+          const lng = ord.medidor?.longitud;
+          const serie = ord.medidor?.serie;
+          if (lat != null && lng != null) {
+            points.push({
+              lat,
+              lng,
+              estado: statusMap.get(serie ?? '') ?? ord.estado ?? '__SIN_LECTURA__',
+              tipoRuta: ord.tipoActividad,
+              popupHtml: `
+                <div class="map-info">
+                  <strong>${task.nombre}</strong>
+                  <p style="margin:4px 0 0;font-size:11px;"><strong>Actividad:</strong> ${ord.tipoActividad}</p>
+                  <p style="margin:2px 0 0;font-size:11px;"><strong>Serie:</strong> ${serie ?? 'N/A'}</p>
+                  <p style="margin:2px 0 0;font-size:11px;"><strong>Cliente:</strong> ${ord.contrato?.clienteNombre ?? 'N/A'}</p>
+                </div>
+              `,
+            });
+          }
+        }
+      } else if (task.tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos?.length) {
         for (const pt of task.rutaPuntos) {
           points.push({
             lat: pt.latitud,
@@ -224,7 +269,20 @@ export class RutasComponent implements OnInit, OnDestroy {
       rutaTipo: task.tipoRuta,
     };
 
-    if (task.tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos?.length) {
+    const paradas = task.paradas;
+    const ordenes = task.ordenesTrabajo;
+
+    if (paradas && paradas.length > 0) {
+      queryParams['series'] = paradas
+        .map((p) => p.serie)
+        .filter((s): s is string => !!s)
+        .join(',');
+    } else if (ordenes && ordenes.length > 0) {
+      queryParams['series'] = ordenes
+        .map((ord) => ord.medidor?.serie)
+        .filter((s): s is string => !!s)
+        .join(',');
+    } else if (task.tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos?.length) {
       queryParams['series'] = task.rutaPuntos.map((pt) => pt.serie).join(',');
     } else if (task.medidor) {
       queryParams['serie'] = task.medidor.serie;
