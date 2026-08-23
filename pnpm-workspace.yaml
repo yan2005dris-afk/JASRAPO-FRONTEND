@@ -23,3 +23,4 @@ allowBuilds:
   '@parcel/watcher': true
   lmdb: true
   msgpackr-extract: true
+  '@scarf/scarf': true

@@ -94,4 +94,21 @@ export class ContractsService {
       responseType: 'blob',
     });
   }
+
+  /**
+   * Asigna el contrato a una ruta de instalación (SC-174).
+   * - Si `routeId` es undefined, el backend crea una nueva ruta INSTALACION
+   *   sin operario asignado.
+   * - Si se pasa `routeId`, se agrega a la ruta existente (que debe ser
+   *   INSTALACION y estar en PENDIENTE).
+   */
+  assignInstallationRoute(
+    contractId: string,
+    payload: { routeId?: number; fechaPlanificada?: string } = {},
+  ): Observable<unknown> {
+    return this.http.post<unknown>(
+      `${this.endpoint}/${contractId}/assign-installation-route`,
+      payload,
+    );
+  }
 }

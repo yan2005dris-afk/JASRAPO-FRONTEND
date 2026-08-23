@@ -218,6 +218,17 @@
                               Editar
                             </button>
                           </li>
+                          @if (contract.estado === 'PENDIENTE_INSTALACION') {
+                            <li>
+                              <button
+                                class="dropdown-item d-flex align-items-center gap-2 text-primary-emphasis"
+                                (click)="openAssignInstallationModal(contract)"
+                              >
+                                <i class="bi bi-truck text-primary"></i>
+                                Asignar a ruta de instalación
+                              </button>
+                            </li>
+                          }
                           @if (getCurrentMeter(contract)) {
                             <li>
                               <button
@@ -273,5 +284,13 @@
     [contract]="contract"
     (saved)="onMeterReplaced()"
     (cancelled)="closeReplaceMeterModal()"
+  />
+}
+
+@if (assigningContract(); as contract) {
+  <app-assign-installation-route-modal
+    [contract]="contract"
+    (assigned)="onRouteAssigned()"
+    (closed)="closeAssignInstallationModal()"
   />
 }
