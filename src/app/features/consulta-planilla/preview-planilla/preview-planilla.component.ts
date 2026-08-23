@@ -11,11 +11,20 @@ import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/
   imports: [CommonModule, PdfPreviewerComponent],
   template: `
     <div class="container-fluid py-4">
-      <div class="card shadow-sm">
+      <div class="card shadow-sm border-0 preview-card">
         <div
-          class="card-header bg-primary text-white d-flex justify-content-between align-items-center"
+          class="card-header preview-header text-white d-flex justify-content-between align-items-center"
         >
-          <h5 class="mb-0">Previsualización de Planilla</h5>
+          <div class="d-flex align-items-center gap-3">
+            <button
+              class="btn btn-light btn-sm d-inline-flex align-items-center gap-1"
+              (click)="volver()"
+            >
+              <i class="bi bi-arrow-left"></i>
+              <span>Volver a Consulta</span>
+            </button>
+            <h5 class="mb-0 fs-6 fw-bold">Previsualización de Planilla</h5>
+          </div>
           <div>
             <button class="btn btn-light btn-sm me-2" (click)="descargar()">
               <i class="bi bi-download"></i> Descargar PDF
@@ -27,8 +36,9 @@ import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/
         </div>
         <div class="card-body p-0">
           @if (pdfBase64) {
-            <div class="p-2 bg-light">
-              <small>Longitud del DataURL generado: {{ pdfBase64.length }}</small>
+            <div class="p-2 bg-light border-bottom text-muted small">
+              <i class="bi bi-file-earmark-pdf me-1 text-primary"></i>
+              <span>Documento renderizado listo para descarga o impresión</span>
             </div>
           }
           <app-pdf-previewer [src]="pdfBase64" height="80vh"></app-pdf-previewer>
@@ -40,6 +50,14 @@ import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/
     `
       :host {
         display: block;
+      }
+      .preview-card {
+        border-radius: 12px;
+        overflow: hidden;
+      }
+      .preview-header {
+        background-color: #0c9ea1;
+        padding: 0.85rem 1.25rem;
       }
     `,
   ],
@@ -82,6 +100,10 @@ export class PreviewPlanillaComponent implements OnInit, AfterViewInit {
       console.error('Error al generar PDF:', e);
       alert('Hubo un error al generar el PDF: ' + (e as Error).message);
     }
+  }
+
+  volver(): void {
+    this.router.navigate(['/consulta-planilla']);
   }
 
   regenerar() {
