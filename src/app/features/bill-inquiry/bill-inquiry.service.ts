@@ -35,6 +35,8 @@ export class ConsultaPlanillaService {
 
   // State para guardar el resultado de búsqueda actual
   public readonly currentDeuda = signal<DeudaPublicaResponse | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  public readonly currentPlanilla = signal<any>(null);
 
   consultar(termino: string, tipo: SearchType): Observable<DeudaPublicaResponse> {
     const params = {
