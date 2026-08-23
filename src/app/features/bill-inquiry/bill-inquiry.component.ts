@@ -1,8 +1,14 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
 import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { ConsultaPlanillaService, DeudaPublicaResponse, SearchType } from './bill-inquiry.service';
+import { Router, RouterLink } from '@angular/router';
+import {
+  ConsultaPlanillaService,
+  ContratoDeudaPublica,
+  DeudaPublicaResponse,
+  SearchType,
+} from './bill-inquiry.service';
+import { PlanillaPdfService } from '../consulta-planilla/genera-planilla/planilla-pdf.service';
 
 @Component({
   selector: 'app-bill-inquiry',
@@ -27,6 +33,8 @@ export class BillInquiryComponent {
   ];
 
   private readonly consultaPlanillaService = inject(ConsultaPlanillaService);
+  private readonly planillaPdfService = inject(PlanillaPdfService);
+  private readonly router = inject(Router);
 
   readonly inputLabel = computed(() => {
     return this.searchType() === 'identificacion'
@@ -91,6 +99,63 @@ export class BillInquiryComponent {
         console.error('Error during debt consultation:', error);
       },
     });
+  }
+
+  descargarPlanillaContrato(contrato: ContratoDeudaPublica): void {
+    const cliente = this.results()?.cliente;
+    const planillaPayload = this.buildPlanillaData(contrato, cliente);
+    this.planillaPdfService.downloadPlanilla(
+      planillaPayload,
+      `prefactura_${contrato.numeroGuia}.pdf`,
+    );
+  }
+
+  verVistaPrevia(contrato: ContratoDeudaPublica): void {
+    const cliente = this.results()?.cliente;
+    const planillaPayload = this.buildPlanillaData(contrato, cliente);
+    this.consultaPlanillaService.currentPlanilla.set(planillaPayload);
+    this.router.navigate(['/consulta-planilla/preview']);
+  }
+
+  private buildPlanillaData(
+    contrato: ContratoDeudaPublica,
+    cliente?: { nombre: string; identificacion: string | null },
+  ) {
+    const fechaActual = new Date();
+    const fechaEmisionFormatted = fechaActual.toLocaleDateString('es-EC');
+
+    return {
+      numeroPlanilla: `PRE-${contrato.numeroGuia}`,
+      clienteNombre: cliente?.nombre || 'CONSUMIDOR FINAL',
+      clienteIdentificacion: cliente?.identificacion || '9999999999999',
+      cuenta: contrato.contratoId,
+      medidor: contrato.numeroGuia,
+      mesesAtrasados: String(contrato.mesesAtrasado || 0),
+      fechaEmision: fechaEmisionFormatted,
+      fechaVencimiento: fechaEmisionFormatted,
+      categoria: 'RESIDENCIAL',
+      facturacion: 'MENSUAL',
+      totalPagar: contrato.saldoVencido,
+      subtotal12: 0,
+      subtotal0: contrato.saldoVencido,
+      subtotalNoObjeto: 0,
+      subtotalExento: 0,
+      subtotalSinImpuestos: contrato.saldoVencido,
+      totalDescuento: 0,
+      iva12: 0,
+      detalles: [
+        {
+          codigo: 'AGUA',
+          cant: '1.0',
+          desc: `Servicio de Agua Potable y Alcantarillado (${contrato.numeroGuia})`,
+          uni: contrato.saldoVencido.toFixed(2),
+          sub: '0.00',
+          pre: contrato.saldoVencido.toFixed(2),
+          des: '0.00',
+          tot: contrato.saldoVencido.toFixed(2),
+        },
+      ],
+    };
   }
 
   onEnter(): void {

@@ -184,6 +184,29 @@
                               ${{ contrato.saldoVencido | number: '1.2-2' }}
                             </span>
                           </div>
+
+                          <div
+                            class="contract-actions w-100 pt-2 mt-1 border-top d-flex justify-content-end gap-2"
+                          >
+                            <button
+                              type="button"
+                              class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"
+                              (click)="verVistaPrevia(contrato)"
+                              title="Previsualizar reporte de deuda"
+                            >
+                              <i class="bi bi-eye"></i>
+                              <span>Ver</span>
+                            </button>
+                            <button
+                              type="button"
+                              class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1"
+                              (click)="descargarPlanillaContrato(contrato)"
+                              title="Descargar reporte en PDF"
+                            >
+                              <i class="bi bi-file-earmark-pdf-fill"></i>
+                              <span>Descargar Planilla</span>
+                            </button>
+                          </div>
                         </div>
                       }
                     </div>
