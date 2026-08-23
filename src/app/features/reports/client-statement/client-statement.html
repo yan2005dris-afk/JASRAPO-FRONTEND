@@ -152,30 +152,25 @@
         <div class="stat-item">
           <span class="stat-label">Cliente</span>
           <span class="stat-value">
-            {{
-              (data.contrato?.cliente?.nombres ?? '') +
-                ' ' +
-                (data.contrato?.cliente?.apellidos ?? '') ||
-                (data.contrato?.cliente?.razonSocial ?? '—')
-            }}
+            {{ data.reporte.clienteNombre || '—' }}
           </span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
           <span class="stat-label">Identificación</span>
           <span class="stat-value font-monospace">
-            {{ data.contrato?.cliente?.identificacion ?? '—' }}
+            {{ data.reporte.clienteIdentificacion || '—' }}
           </span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
           <span class="stat-label">Sector</span>
-          <span class="stat-value">{{ data.contrato?.sector?.nombre ?? '—' }}</span>
+          <span class="stat-value">{{ data.reporte.sector || '—' }}</span>
         </div>
         <div class="stat-divider"></div>
         <div class="stat-item">
           <span class="stat-label">Tarifa</span>
-          <span class="stat-value">{{ data.contrato?.categoriaTarifa?.nombre ?? '—' }}</span>
+          <span class="stat-value">{{ data.reporte.tarifaTipo || '—' }}</span>
         </div>
         <div
           class="stat-deuda"

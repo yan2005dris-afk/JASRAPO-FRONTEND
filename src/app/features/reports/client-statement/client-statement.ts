@@ -12,42 +12,49 @@ import type { IContract } from '../../contracts/service-contracts/interfaces/ico
 type DatePreset = 'currentMonth' | 'lastMonth' | 'last3Months' | 'lastYear';
 type ReportView = 'table' | 'pdf';
 
-// Shape of the JSON response from /reports/account-statement
-interface AccountStatementPeriod {
-  prefactura?: {
-    abono?: number;
-    periodoRel?: { nombre?: string };
-  };
-  lecturas?: {
-    fecha?: string;
-    lecturaActual?: number;
-    lecturaAnterior?: number;
-    consumoCalculado?: number;
-  }[];
+export interface AccountStatementMonth {
+  mes: string;
+  lectActual: string;
+  lectAnterior: string;
+  consu: string;
+  excede: string;
+  cargoFijo: string;
+  excedenteValor: string;
+  total: string;
+  intMora?: string;
+  tasaSeg?: string;
+  convenio?: string;
+  totalMes?: string;
+  pagos: string;
+  saldo: string;
 }
 
-interface AccountStatementData {
-  contratoId?: string | number;
-  contrato?: {
-    cliente?: {
-      nombres?: string;
-      apellidos?: string;
-      razonSocial?: string;
-      identificacion?: string;
-      email?: string;
-      direccionDomicilio?: string;
-    };
-    sector?: { nombre?: string };
-    categoriaTarifa?: {
-      nombre?: string;
-      consumoMinimoMensual?: number;
-      valorBase?: number;
-      valorExcedenteM3?: number;
-    };
-    historialMedidores?: { medidor?: { serie?: string } }[];
-    numeroGuia?: string;
-  };
-  periods?: AccountStatementPeriod[];
+export interface AccountStatementYear {
+  nombre: string;
+  meses: AccountStatementMonth[];
+  subtotalAnual: string;
+  pagos: string;
+  saldo: string;
+}
+
+export interface AccountStatementReport {
+  titulo?: string;
+  fechaEmision?: string;
+  sector?: string;
+  cuenta?: string;
+  medidor?: string;
+  tarifaTipo?: string;
+  clienteNombre?: string;
+  clienteIdentificacion?: string;
+  clienteDireccion?: string;
+  cargoFijo?: string;
+  factor?: string;
+  years: AccountStatementYear[];
+  deudaTotal: string;
+}
+
+export interface AccountStatementData {
+  reporte: AccountStatementReport;
 }
 
 @Component({
@@ -104,85 +111,35 @@ export class ClientStatementComponent {
   // Computed para la tabla: datos procesados del JSON
   readonly tableYears = computed(() => {
     const raw = this.reportData();
-    if (!raw) return [];
+    if (!raw?.reporte?.years) return [];
 
-    const periods = (raw.periods ?? []) as AccountStatementPeriod[];
-    const tarifa = raw.contrato?.categoriaTarifa;
-    const consumoBase = Number(tarifa?.consumoMinimoMensual ?? 0);
-    const valorBase = Number(tarifa?.valorBase ?? 0);
-    const valorExcedente = Number(tarifa?.valorExcedenteM3 ?? 0);
-
-    const years: {
-      nombre: string;
-      meses: {
-        mes: string;
-        lectActual: string;
-        lectAnterior: string;
-        consumo: string;
-        excedente: string;
-        cargoFijo: string;
-        excedenteValor: string;
-        total: string;
-        pagos: string;
-        saldo: string;
-        saldoNegativo: boolean;
-      }[];
-      subtotalAnual: string;
-      pagos: string;
-      saldo: string;
-      saldoNegativo: boolean;
-    }[] = [];
-
-    for (const period of periods) {
-      const periodoNombre = period.prefactura?.periodoRel?.nombre ?? '—';
-      const abonoAnual = Number(period.prefactura?.abono ?? 0);
-      const lecturas = period.lecturas ?? [];
-
-      let saldoAcumulado = 0;
-
-      const meses = lecturas.map((lectura, idx) => {
-        const fecha = lectura.fecha ? new Date(lectura.fecha) : null;
-        const consumoM3 = Number(lectura.consumoCalculado ?? 0);
-        const excede = Math.max(consumoM3 - consumoBase, 0);
-        const excedentePrecio = excede * valorExcedente;
-        const totalMes = valorBase + excedentePrecio;
-
-        const pagoMes = abonoAnual > 0 ? +(abonoAnual / 12).toFixed(2) : 0;
-        const pagoAjustado = idx === 11 ? abonoAnual - pagoMes * 11 : pagoMes;
-
-        saldoAcumulado = saldoAcumulado + totalMes - pagoAjustado;
-
-        return {
-          mes: fecha ? fecha.toLocaleDateString('es-EC', { month: 'long', year: 'numeric' }) : '—',
-          lectActual: Number(lectura.lecturaActual ?? 0).toFixed(2),
-          lectAnterior: Number(lectura.lecturaAnterior ?? 0).toFixed(2),
-          consumo: Math.min(consumoM3, consumoBase).toFixed(2),
-          excedente: excede.toFixed(2),
-          cargoFijo: valorBase.toFixed(2),
-          excedenteValor: excedentePrecio.toFixed(2),
-          total: totalMes.toFixed(2),
-          pagos: pagoAjustado.toFixed(2),
-          saldo: saldoAcumulado.toFixed(2),
-          saldoNegativo: saldoAcumulado < 0,
-        };
-      });
-
-      const subtotalAnual = meses.reduce((sum, m) => sum + Number(m.total), 0);
-
-      years.push({
-        nombre: periodoNombre,
-        meses,
-        subtotalAnual: subtotalAnual.toFixed(2),
-        pagos: abonoAnual.toFixed(2),
-        saldo: saldoAcumulado.toFixed(2),
-        saldoNegativo: saldoAcumulado < 0,
-      });
-    }
-
-    return years;
+    return raw.reporte.years.map((year) => ({
+      nombre: year.nombre,
+      subtotalAnual: year.subtotalAnual,
+      pagos: year.pagos,
+      saldo: year.saldo,
+      saldoNegativo: Number(year.saldo) < 0,
+      meses: (year.meses ?? []).map((mes) => ({
+        mes: mes.mes,
+        lectActual: mes.lectActual,
+        lectAnterior: mes.lectAnterior,
+        consumo: mes.consu,
+        excedente: mes.excede,
+        cargoFijo: mes.cargoFijo,
+        excedenteValor: mes.excedenteValor,
+        total: mes.totalMes ?? mes.total,
+        pagos: mes.pagos,
+        saldo: mes.saldo,
+        saldoNegativo: Number(mes.saldo) < 0,
+      })),
+    }));
   });
 
   readonly deudaTotal = computed(() => {
+    const raw = this.reportData();
+    if (raw?.reporte?.deudaTotal !== undefined) {
+      return Number(raw.reporte.deudaTotal).toFixed(2);
+    }
     let total = 0;
     for (const year of this.tableYears()) {
       const saldo = Number(year.saldo);
