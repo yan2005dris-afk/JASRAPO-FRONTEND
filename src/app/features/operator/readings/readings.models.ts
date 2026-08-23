@@ -46,11 +46,11 @@ export const READING_STATE_ORDER: string[] = [
 
 /** Catálogo de estados offline (fallback cuando no hay conexión al backend). */
 export const ESTADOS_FALLBACK: EstadoInfo[] = [
-  { codigo: 'PENDIENTE',              nombre: 'Pendiente',      orden: 1, icono: 'bi-clock' },
-  { codigo: 'POR_REVISION',           nombre: 'Por Revisión',   orden: 2, icono: 'bi-eye' },
-  { codigo: 'APROBADA',               nombre: 'Aprobada',       orden: 3, icono: 'bi-check-circle' },
-  { codigo: 'RECHAZADA_VERIFICACION', nombre: 'Rechazada',      orden: 4, icono: 'bi-x-circle-fill' },
-  { codigo: 'ESTIMADA',               nombre: 'Estimada',       orden: 5, icono: 'bi-graph-up' },
-  { codigo: 'PLANILLADA',             nombre: 'Planillada',     orden: 6, icono: 'bi-receipt' },
-  { codigo: 'CON_NOVEDAD',            nombre: 'Con Novedad',    orden: 7, icono: 'bi-exclamation-triangle' },
+  { codigo: 'PENDIENTE', nombre: 'Pendiente', orden: 1, icono: 'bi-clock' },
+  { codigo: 'POR_REVISION', nombre: 'Por Revisión', orden: 2, icono: 'bi-eye' },
+  { codigo: 'APROBADA', nombre: 'Aprobada', orden: 3, icono: 'bi-check-circle' },
+  { codigo: 'RECHAZADA_VERIFICACION', nombre: 'Rechazada', orden: 4, icono: 'bi-x-circle-fill' },
+  { codigo: 'ESTIMADA', nombre: 'Estimada', orden: 5, icono: 'bi-graph-up' },
+  { codigo: 'PLANILLADA', nombre: 'Planillada', orden: 6, icono: 'bi-receipt' },
+  { codigo: 'CON_NOVEDAD', nombre: 'Con Novedad', orden: 7, icono: 'bi-exclamation-triangle' },
 ];

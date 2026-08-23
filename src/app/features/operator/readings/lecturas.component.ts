@@ -36,7 +36,6 @@ interface ReadingRecord {
   [key: string]: unknown;
 }
 
-
 @Component({
   selector: 'app-operator-readings',
   standalone: true,
@@ -159,19 +158,17 @@ export class LecturasComponent implements OnInit {
     }
 
     // Orden consistente importado desde readings.models.ts
-    return READING_STATE_ORDER
-      .filter((key) => groups.has(key))
-      .map((key) => {
-        const isSinLectura = key === '__SIN_LECTURA__';
-        const info = isSinLectura
-          ? { label: 'Sin Lectura', icon: 'bi-clock', cssClass: null as string | null }
-          : {
-              label: estadoInfo.get(key)?.label ?? key,
-              icon: estadoInfo.get(key)?.icon ?? 'bi-question',
-              cssClass: `badge-${key.toLowerCase().replace(/_/g, '-')}` as string | null,
-            };
-        return { estado: key, info, meters: groups.get(key)! };
-      });
+    return READING_STATE_ORDER.filter((key) => groups.has(key)).map((key) => {
+      const isSinLectura = key === '__SIN_LECTURA__';
+      const info = isSinLectura
+        ? { label: 'Sin Lectura', icon: 'bi-clock', cssClass: null as string | null }
+        : {
+            label: estadoInfo.get(key)?.label ?? key,
+            icon: estadoInfo.get(key)?.icon ?? 'bi-question',
+            cssClass: `badge-${key.toLowerCase().replace(/_/g, '-')}` as string | null,
+          };
+      return { estado: key, info, meters: groups.get(key)! };
+    });
   });
 
   // Previsualización de la foto capturada en Base64
@@ -313,13 +310,23 @@ export class LecturasComponent implements OnInit {
         const estados = await this.syncService.getReadingEstados();
         // Mapear response a EstadoInfo (codigo, nombre, orden, icono)
         this.estadosCatalog.set(
-          (estados as { codigo?: string; value?: string; estado?: string; nombre?: string; label?: string; orden?: number; icono?: string; icon?: string }[])
-            .map((e) => ({
-              codigo: e.codigo ?? e.value ?? e.estado ?? '',
-              nombre: e.nombre ?? e.label ?? '',
-              orden: e.orden ?? 0,
-              icono: e.icono ?? e.icon ?? 'bi-question',
-            })),
+          (
+            estados as {
+              codigo?: string;
+              value?: string;
+              estado?: string;
+              nombre?: string;
+              label?: string;
+              orden?: number;
+              icono?: string;
+              icon?: string;
+            }[]
+          ).map((e) => ({
+            codigo: e.codigo ?? e.value ?? e.estado ?? '',
+            nombre: e.nombre ?? e.label ?? '',
+            orden: e.orden ?? 0,
+            icono: e.icono ?? e.icon ?? 'bi-question',
+          })),
         );
       } else {
         throw new Error('Offline');

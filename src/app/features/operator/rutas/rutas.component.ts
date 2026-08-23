@@ -13,12 +13,7 @@ import { OperatorService } from '../service/operator.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
 import type { TaskResponse } from '../models/operator.models';
-import {
-  MARKER_COLORS,
-  TIPO_ICONS,
-  STATE_LABELS,
-  FILTER_OPTIONS,
-} from './rutas.constants';
+import { MARKER_COLORS, TIPO_ICONS, STATE_LABELS, FILTER_OPTIONS } from './rutas.constants';
 import * as L from 'leaflet';
 import { firstValueFrom } from 'rxjs';
 
@@ -61,9 +56,7 @@ export class RutasComponent implements OnInit, OnDestroy {
   // ── Computed ─────────────────────────────────────────────────────────────
   readonly filteredTasks = computed<TaskResponse[]>(() => {
     const filter = this.activeFilter();
-    return filter === 'ALL'
-      ? this.tasks()
-      : this.tasks().filter((t) => t.tipoRuta === filter);
+    return filter === 'ALL' ? this.tasks() : this.tasks().filter((t) => t.tipoRuta === filter);
   });
 
   readonly mapPoints = computed<MapPoint[]>(() => {
@@ -294,7 +287,9 @@ export class RutasComponent implements OnInit, OnDestroy {
     if (!navigator.geolocation) return;
     this.geoWatchId = navigator.geolocation.watchPosition(
       (pos) => this.updateUserMarker(pos.coords.latitude, pos.coords.longitude),
-      () => { /* permiso denegado o error GPS — silencioso */ },
+      () => {
+        /* permiso denegado o error GPS — silencioso */
+      },
       { enableHighAccuracy: true, maximumAge: 5000 },
     );
   }

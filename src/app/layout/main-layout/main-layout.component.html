@@ -14,7 +14,10 @@
     </app-sidebar>
   }
 
-  <div class="layout-main-container" [class.sidebar-collapsed]="!layoutService.sidebarOpen() || authService.isOperator()">
+  <div
+    class="layout-main-container"
+    [class.sidebar-collapsed]="!layoutService.sidebarOpen() || authService.isOperator()"
+  >
     <app-header class="layout-header"></app-header>
 
     <main class="layout-content">

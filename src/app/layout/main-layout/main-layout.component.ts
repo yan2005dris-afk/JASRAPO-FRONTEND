@@ -17,4 +17,3 @@ export class MainLayout {
   readonly layoutService = inject(LayoutService);
   readonly authService = inject(AuthService);
 }
-
