@@ -52,7 +52,7 @@
     "@angular/service-worker": "^21.2.18",
     "bootstrap": "^5.3.8",
     "leaflet": "^1.9.4",
-    "ngx-extended-pdf-viewer": "^27.0.0",
+    "ngx-extended-pdf-viewer": "^29.0.0",
     "pdfmake": "^0.3.8",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
