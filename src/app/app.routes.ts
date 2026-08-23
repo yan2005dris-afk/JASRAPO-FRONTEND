@@ -298,6 +298,14 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'Medidores/:id/historial',
+            data: { breadcrumb: 'Historial de Medidor' },
+            loadComponent: () =>
+              import('./features/contracts/meters/pages/meter-history-detail/meter-history-detail.component').then(
+                (m) => m.MeterHistoryDetailComponent,
+              ),
+          },
+          {
             path: 'TarifasYCategorias',
             data: { breadcrumb: 'Tarifas y Categorías' },
             loadComponent: () =>

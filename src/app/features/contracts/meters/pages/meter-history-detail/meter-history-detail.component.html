@@ -1,0 +1,389 @@
+<div class="meter-history-page container-fluid px-4 py-4">
+  <!-- Back Button & Breadcrumbs -->
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="d-flex align-items-center gap-2">
+      <a
+        routerLink="/app/Contratos/Medidores"
+        class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 shadow-sm"
+      >
+        <i class="bi bi-arrow-left"></i>
+        <span>Volver a Medidores</span>
+      </a>
+      <span class="text-muted">/</span>
+      <span class="text-dark fw-semibold small">
+        Historial y Trazabilidad del Medidor #{{ meterId() }}
+      </span>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4">
+      <div class="spinner-border text-primary mx-auto mb-3" role="status"></div>
+      <p class="text-muted small mb-0">Cargando ciclo de vida e historial del medidor...</p>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="alert alert-danger rounded-3 shadow-sm my-4 d-flex align-items-center gap-2">
+      <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+      <div>{{ errorMessage() }}</div>
+    </div>
+  } @else {
+    <!-- Main Info Header Card -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+      <div class="card-header bg-white border-bottom p-4">
+        <div class="d-flex align-items-start justify-content-between flex-wrap gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <div
+              class="meter-header-icon rounded-3 bg-primary bg-opacity-10 text-primary p-3 d-flex align-items-center justify-content-center"
+            >
+              <i class="bi bi-speedometer2 fs-3"></i>
+            </div>
+            <div>
+              <div class="d-flex align-items-center gap-2 mb-1 flex-wrap">
+                <h4 class="fw-bold mb-0 text-dark">
+                  Medidor: {{ history()[0]?.serie || meter()?.serie || 'S/N' }}
+                </h4>
+                @if (meter()?.estado) {
+                  <app-status-badge [status]="meter()!.estado!.codigo" />
+                }
+              </div>
+              <p class="text-muted small mb-0">
+                Marca:
+                <strong class="text-dark">{{
+                  history()[0]?.marca || meter()?.marca || '—'
+                }}</strong>
+                · Modelo:
+                <strong class="text-dark">{{
+                  history()[0]?.modelo || meter()?.modelo || '—'
+                }}</strong>
+              </p>
+            </div>
+          </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-light text-secondary border px-3 py-2 small font-monospace">
+              ID Medidor: #{{ meterId() }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI Cards Grid -->
+      <div class="card-body bg-light p-4 border-bottom">
+        <div class="row g-3">
+          <div class="col-12 col-sm-6 col-md-4">
+            <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
+              <div class="text-muted small d-flex align-items-center gap-1 mb-1">
+                <i class="bi bi-file-earmark-text text-primary"></i>
+                Contrato / Asignación Actual
+              </div>
+              <div class="fw-semibold text-dark">
+                {{
+                  history()[0]?.contratoId
+                    ? 'Contrato #' + history()[0]?.contratoId
+                    : 'Sin Contrato Activo'
+                }}
+              </div>
+              <div class="text-muted text-truncate" style="font-size: 0.75rem">
+                {{ history()[0]?.clienteNombre || 'Disponible en bodega / stock' }}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-6 col-md-4">
+            <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
+              <div class="text-muted small d-flex align-items-center gap-1 mb-1">
+                <i class="bi bi-calendar-event text-info"></i>
+                Vigencia / Fecha Instalación
+              </div>
+              <div class="fw-semibold text-dark">
+                {{
+                  history()[0]?.fechaDesde
+                    ? (history()[0]?.fechaDesde | localDate: 'dd/MM/yyyy')
+                    : '—'
+                }}
+              </div>
+              <div class="text-muted" style="font-size: 0.75rem">
+                Hasta:
+                {{
+                  history()[0]?.fechaHasta
+                    ? (history()[0]?.fechaHasta | localDate: 'dd/MM/yyyy')
+                    : 'Vigente'
+                }}
+              </div>
+            </div>
+          </div>
+
+          <div class="col-12 col-sm-6 col-md-4">
+            <div class="bg-white p-3 rounded-3 border shadow-sm h-100">
+              <div class="text-muted small d-flex align-items-center gap-1 mb-1">
+                <i class="bi bi-arrow-left-right text-warning"></i>
+                Trazabilidad / Eventos
+              </div>
+              <div class="fw-semibold text-dark">
+                {{ history().length }} {{ history().length === 1 ? 'asignación' : 'asignaciones' }}
+              </div>
+              <div class="text-muted" style="font-size: 0.75rem">
+                {{ replacementDetail() ? '1 reemplazo registrado' : 'Sin cambios de medidor' }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="card-body p-0">
+        <ul class="nav nav-tabs px-4 pt-3 border-0">
+          <li class="nav-item">
+            <button
+              class="nav-link fw-medium d-flex align-items-center gap-2"
+              [class.active]="activeTab() === 'timeline'"
+              (click)="setTab('timeline')"
+            >
+              <i class="bi bi-clock-history"></i>
+              Historial de Asignaciones y Lecturas
+              <span class="badge bg-secondary bg-opacity-10 text-secondary rounded-pill">
+                {{ history().length }}
+              </span>
+            </button>
+          </li>
+          @if (replacementDetail()) {
+            <li class="nav-item">
+              <button
+                class="nav-link fw-medium d-flex align-items-center gap-2"
+                [class.active]="activeTab() === 'reemplazo'"
+                (click)="setTab('reemplazo')"
+              >
+                <i class="bi bi-tools"></i>
+                Detalle Técnico del Reemplazo
+                <span class="badge bg-warning bg-opacity-25 text-dark rounded-pill">Activo</span>
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+
+    <!-- Tab 1: Timeline / Tabla de Asignaciones -->
+    @if (activeTab() === 'timeline') {
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+        <div class="card-header bg-white p-4 border-bottom">
+          <h5 class="fw-bold mb-1 text-dark">Cronología de Asignaciones</h5>
+          <p class="text-muted small mb-0">
+            Registro secuencial de contratos, lecturas de inicio/cierre y eventos de sustitución
+            física.
+          </p>
+        </div>
+
+        @if (history().length === 0) {
+          <div class="p-5">
+            <app-empty-state
+              icon="bi bi-clock-history"
+              title="Sin historial"
+              description="Este medidor aún no cuenta con asignaciones o cambios registrados."
+            />
+          </div>
+        } @else {
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 custom-table">
+              <thead>
+                <tr>
+                  <th class="ps-4">Contrato</th>
+                  <th>Cliente</th>
+                  <th>Período Desde</th>
+                  <th>Período Hasta</th>
+                  <th class="text-end">Lect. Inicial</th>
+                  <th class="text-end">Lect. Final</th>
+                  <th class="text-end">Saldo Pendiente</th>
+                  <th>Motivo / Evento</th>
+                  <th class="text-center pe-4">Acción</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of history(); track item.historialId) {
+                  <tr>
+                    <td class="ps-4 fw-semibold text-dark font-monospace">
+                      #{{ item.contratoId }}
+                    </td>
+                    <td class="small">
+                      <div class="fw-medium text-dark">{{ item.clienteNombre || '—' }}</div>
+                    </td>
+                    <td class="small text-muted font-monospace">
+                      {{ item.fechaDesde ? (item.fechaDesde | localDate: 'dd/MM/yyyy') : '—' }}
+                    </td>
+                    <td class="small text-muted font-monospace">
+                      @if (item.fechaHasta) {
+                        {{ item.fechaHasta | localDate: 'dd/MM/yyyy' }}
+                      } @else {
+                        <span class="badge bg-success bg-opacity-10 text-success fw-medium"
+                          >Activo</span
+                        >
+                      }
+                    </td>
+                    <td class="text-end font-monospace small">{{ item.lecturaInicial }} m³</td>
+                    <td class="text-end font-monospace small">
+                      {{ item.lecturaFinal !== null ? item.lecturaFinal + ' m³' : '—' }}
+                    </td>
+                    <td class="text-end font-monospace small">
+                      {{
+                        item.saldoPendienteCambio !== null ? '$' + item.saldoPendienteCambio : '—'
+                      }}
+                    </td>
+                    <td class="small">
+                      @if (item.esReemplazo) {
+                        <span
+                          class="badge bg-warning bg-opacity-10 text-warning-emphasis d-inline-flex align-items-center gap-1"
+                        >
+                          <i class="bi bi-arrow-repeat"></i>
+                          {{ getMotivoLabel(item.motivo) }}
+                        </span>
+                      } @else {
+                        <span class="text-muted">{{ item.motivo || 'Instalación Regular' }}</span>
+                      }
+                    </td>
+                    <td class="text-center pe-4">
+                      @if (
+                        item.esReemplazo && (item.reemplazoSalienteId || item.reemplazoEntranteId)
+                      ) {
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1 shadow-sm"
+                          (click)="
+                            viewReplacement(item.reemplazoSalienteId ?? item.reemplazoEntranteId)
+                          "
+                        >
+                          <i class="bi bi-eye"></i>
+                          Ver Reemplazo
+                        </button>
+                      } @else {
+                        <span class="text-muted small">—</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Tab 2: Detalle Técnico del Reemplazo -->
+    @if (activeTab() === 'reemplazo') {
+      <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+        <div
+          class="card-header bg-white p-4 border-bottom d-flex align-items-center justify-content-between flex-wrap gap-2"
+        >
+          <div>
+            <h5 class="fw-bold mb-1 text-dark">Detalle de la Orden de Reemplazo</h5>
+            <p class="text-muted small mb-0">
+              Parámetros técnicos de corte, responsabilidad, consumos y estado de autorización.
+            </p>
+          </div>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+            (click)="setTab('timeline')"
+          >
+            <i class="bi bi-arrow-left"></i>
+            Volver a la Cronología
+          </button>
+        </div>
+
+        @if (isLoadingReplacement()) {
+          <div class="p-5 text-center">
+            <div class="spinner-border text-primary mb-2" role="status"></div>
+            <p class="text-muted small mb-0">Cargando detalles de la orden de reemplazo...</p>
+          </div>
+        } @else if (replacementDetail(); as d) {
+          <div class="card-body p-4">
+            <div class="row g-4">
+              <!-- Bloque 1: Causa y Responsabilidad -->
+              <div class="col-12 col-md-6">
+                <div class="border rounded-3 p-3 bg-white h-100">
+                  <h6
+                    class="fw-bold text-dark border-bottom pb-2 mb-3 d-flex align-items-center gap-2"
+                  >
+                    <i class="bi bi-info-circle text-primary"></i>
+                    Diagnóstico y Causa del Cambio
+                  </h6>
+                  <dl class="row mb-0 small">
+                    <dt class="col-sm-5 text-muted">Motivo Principal:</dt>
+                    <dd class="col-sm-7 fw-semibold text-dark">{{ getMotivoLabel(d.motivo) }}</dd>
+
+                    <dt class="col-sm-5 text-muted">Detalle / Hallazgo:</dt>
+                    <dd class="col-sm-7">
+                      {{ d.detalleMotivo || 'Sin observaciones adicionales' }}
+                    </dd>
+
+                    <dt class="col-sm-5 text-muted">Responsabilidad:</dt>
+                    <dd class="col-sm-7">
+                      <span class="badge bg-info bg-opacity-10 text-info-emphasis">
+                        {{ getResponsabilidadLabel(d.responsabilidadDano) }}
+                      </span>
+                    </dd>
+
+                    <dt class="col-sm-5 text-muted">Estado de Resolución:</dt>
+                    <dd class="col-sm-7"><app-status-badge [status]="d.estado" /></dd>
+
+                    <dt class="col-sm-5 text-muted">Aprobación:</dt>
+                    <dd class="col-sm-7">
+                      @if (d.estadoAprobacion) {
+                        <app-status-badge [status]="d.estadoAprobacion" />
+                      } @else {
+                        <span class="text-muted">—</span>
+                      }
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+
+              <!-- Bloque 2: Balance de Consumos y Facturación -->
+              <div class="col-12 col-md-6">
+                <div class="border rounded-3 p-3 bg-white h-100">
+                  <h6
+                    class="fw-bold text-dark border-bottom pb-2 mb-3 d-flex align-items-center gap-2"
+                  >
+                    <i class="bi bi-calculator text-success"></i>
+                    Balance de Consumo y Tratamiento
+                  </h6>
+                  <dl class="row mb-0 small">
+                    <dt class="col-sm-6 text-muted">Tratamiento Medidor Saliente:</dt>
+                    <dd class="col-sm-6 fw-semibold">
+                      {{ getTratamientoLabel(d.tratamientoSaliente) }}
+                    </dd>
+
+                    <dt class="col-sm-6 text-muted">Consumo Facturable Saliente:</dt>
+                    <dd class="col-sm-6 font-monospace text-dark">
+                      {{ d.consumoFacturableSaliente }} m³
+                    </dd>
+
+                    <dt class="col-sm-6 text-muted">Tratamiento Medidor Entrante:</dt>
+                    <dd class="col-sm-6 fw-semibold">
+                      {{ getTratamientoLabel(d.tratamientoEntrante) }}
+                    </dd>
+
+                    <dt class="col-sm-6 text-muted">Consumo Facturable Entrante:</dt>
+                    <dd class="col-sm-6 font-monospace text-dark">
+                      {{ d.consumoFacturableEntrante }} m³
+                    </dd>
+
+                    <dt class="col-sm-6 text-muted">Consumo Diferido:</dt>
+                    <dd class="col-sm-6 font-monospace text-muted">
+                      {{ d.consumoDiferidoEntrante }} m³
+                    </dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <div class="p-5">
+            <div class="alert alert-warning small mb-0">
+              No se pudo cargar la información del reemplazo seleccionado.
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
