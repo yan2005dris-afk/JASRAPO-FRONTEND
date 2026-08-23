@@ -36,6 +36,8 @@ import {
   DropdownItem,
 } from '../../../../../shared/components/dropdown/dropdown.component';
 
+import { Router } from '@angular/router';
+
 @Component({
   selector: 'app-meters',
   imports: [
@@ -55,6 +57,7 @@ import {
   },
 })
 export class MetersIndexComponent implements OnInit {
+  private readonly router = inject(Router);
   private readonly metersService = inject(MetersService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly toastService = inject(ToastService);
@@ -382,10 +385,8 @@ export class MetersIndexComponent implements OnInit {
   }
 
   openHistory(meter: IMeter): void {
-    this.historyMeter = meter;
-    this.showHistoryModal = true;
     this.openDropdownId = null;
-    this.cdr.detectChanges();
+    this.router.navigate(['/app/Contratos/Medidores', meter.medidorId, 'historial']);
   }
 
   closeHistory(): void {
