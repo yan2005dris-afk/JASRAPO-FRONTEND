@@ -39,8 +39,8 @@ importers:
         specifier: ^5.3.8
         version: 5.3.8(@popperjs/core@2.11.8)
       ngx-extended-pdf-viewer:
-        specifier: ^27.0.0
-        version: 27.0.0(@angular/common@21.2.20(@angular/core@21.2.20(@angular/compiler@21.2.20)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.20(@angular/compiler@21.2.20)(rxjs@7.8.2))
+        specifier: ^29.0.0
+        version: 29.0.1(@angular/common@21.2.20(@angular/core@21.2.20(@angular/compiler@21.2.20)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.20(@angular/compiler@21.2.20)(rxjs@7.8.2))
       pdfmake:
         specifier: ^0.3.8
         version: 0.3.11
@@ -3580,11 +3580,11 @@ packages:
     resolution: {integrity: sha512-8Ofs/AUQh8MaEcrlq5xOX0CQ9ypTF5dl78mjlMNfOK08fzpgTHQRQPBxcPlEtIw0yRpws+Zo/3r+5WRby7u3Gg==}
     engines: {node: '>= 0.6'}
 
-  ngx-extended-pdf-viewer@27.0.0:
-    resolution: {integrity: sha512-Q8MM9IDrOlPsEDC62XZsU9VMffNFFrgblPhb9Bav5G/Cj9UnUiITaoO6qthw0nea4ES10RQRuILxcfYbSr5wpg==}
+  ngx-extended-pdf-viewer@29.0.1:
+    resolution: {integrity: sha512-AczpsOPXpBJsWm067bIm4LxRqGPB7NL9JArxDR3FY37NMoD26D/Kz2jcGbXJIO6o5T5y/Ed3VKpfK8qyLem/jQ==}
     peerDependencies:
-      '@angular/common': '>=19.0.0 <22.0.0'
-      '@angular/core': '>=19.0.0 <22.0.0'
+      '@angular/common': '>=19.0.0 <23.0.0 || 22.0.0-rc'
+      '@angular/core': '>=19.0.0 <23.0.0 || 22.0.0-rc'
 
   nimma@0.2.3:
     resolution: {integrity: sha512-1ZOI8J+1PKKGceo/5CT5GfQOG6H8I2BencSK06YarZ2wXwH37BSSUWldqJmMJYA5JfqDqffxDXynt6f11AyKcA==}
@@ -8322,7 +8322,7 @@ snapshots:
 
   negotiator@1.0.0: {}
 
-  ngx-extended-pdf-viewer@27.0.0(@angular/common@21.2.20(@angular/core@21.2.20(@angular/compiler@21.2.20)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.20(@angular/compiler@21.2.20)(rxjs@7.8.2)):
+  ngx-extended-pdf-viewer@29.0.1(@angular/common@21.2.20(@angular/core@21.2.20(@angular/compiler@21.2.20)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.20(@angular/compiler@21.2.20)(rxjs@7.8.2)):
     dependencies:
       '@angular/common': 21.2.20(@angular/core@21.2.20(@angular/compiler@21.2.20)(rxjs@7.8.2))(rxjs@7.8.2)
       '@angular/core': 21.2.20(@angular/compiler@21.2.20)(rxjs@7.8.2)
