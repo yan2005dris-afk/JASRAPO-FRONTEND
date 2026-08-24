@@ -22,6 +22,7 @@ import { IRubro } from '../../billing/rubros/interfaces/irubro.interface';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { TableExportService } from '../../../shared/services/table-export.service';
 
 @Component({
   selector: 'app-tariffs',
@@ -328,5 +329,97 @@ export class TariffsComponent implements OnInit {
     }
     this.closeRubroModals();
     this.loadTariffs();
+  }
+
+  // ---------- Exportaciones (PDF, Excel, CSV) ----------
+  private readonly tableExportService = inject(TableExportService);
+
+  exportToPdf(): void {
+    const list = this.tariffs();
+    if (list.length === 0) return;
+
+    this.tableExportService.exportToPdf({
+      title: 'LISTADO DE CATEGORÍAS DE TARIFAS',
+      fileName: `Tarifas_${new Date().toISOString().slice(0, 10)}`,
+      columns: [
+        {
+          header: 'ID',
+          transform: (t) => (t as unknown as ITariffCategory).categoriaTarifaId ?? '—',
+          width: 35,
+          align: 'center',
+        },
+        { header: 'Categoría', key: 'nombre', width: 140 },
+        {
+          header: 'Consumo Mínimo (m³)',
+          transform: (t) => `${(t as unknown as ITariffCategory).consumoMinimoMensual ?? 0} m³`,
+          width: 90,
+          align: 'center',
+        },
+        { header: 'Descripción', key: 'descripcion', width: 180 },
+        {
+          header: 'Estado',
+          transform: (t) => ((t as unknown as ITariffCategory).activo ? 'ACTIVO' : 'INACTIVO'),
+          width: 60,
+          align: 'center',
+        },
+      ],
+      data: list as unknown as Record<string, unknown>[],
+      summary: `Total de categorías de tarifa: ${list.length}`,
+    });
+  }
+
+  exportToExcel(): void {
+    const list = this.tariffs();
+    if (list.length === 0) return;
+
+    this.tableExportService.exportToExcel({
+      title: 'LISTADO DE CATEGORÍAS DE TARIFAS',
+      fileName: `Tarifas_${new Date().toISOString().slice(0, 10)}`,
+      columns: [
+        {
+          header: 'ID',
+          transform: (t) => (t as unknown as ITariffCategory).categoriaTarifaId ?? '—',
+        },
+        { header: 'Categoría', key: 'nombre' },
+        {
+          header: 'Consumo Mínimo Mensual (m³)',
+          key: 'consumoMinimoMensual',
+        },
+        { header: 'Descripción', key: 'descripcion' },
+        {
+          header: 'Estado',
+          transform: (t) => ((t as unknown as ITariffCategory).activo ? 'ACTIVO' : 'INACTIVO'),
+        },
+      ],
+      data: list as unknown as Record<string, unknown>[],
+      summary: `Total de categorías de tarifa: ${list.length}`,
+    });
+  }
+
+  exportToCsv(): void {
+    const list = this.tariffs();
+    if (list.length === 0) return;
+
+    this.tableExportService.exportToCsv({
+      title: 'LISTADO DE CATEGORÍAS DE TARIFAS',
+      fileName: `Tarifas_${new Date().toISOString().slice(0, 10)}`,
+      columns: [
+        {
+          header: 'ID',
+          transform: (t) => (t as unknown as ITariffCategory).categoriaTarifaId ?? '—',
+        },
+        { header: 'Categoría', key: 'nombre' },
+        {
+          header: 'Consumo Mínimo Mensual (m³)',
+          key: 'consumoMinimoMensual',
+        },
+        { header: 'Descripción', key: 'descripcion' },
+        {
+          header: 'Estado',
+          transform: (t) => ((t as unknown as ITariffCategory).activo ? 'ACTIVO' : 'INACTIVO'),
+        },
+      ],
+      data: list as unknown as Record<string, unknown>[],
+    });
   }
 }

@@ -25,6 +25,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
+import { TableExportService } from '../../../shared/services/table-export.service';
 
 @Component({
   selector: 'app-clients',
@@ -382,5 +383,103 @@ export class ClientsComponent implements OnInit {
     if (page < 1 || page > this.totalPages) return;
     this.currentPage = page;
     this.fetchClientsComponent();
+  }
+
+  // ---------- Exportaciones (PDF, Excel, CSV) ----------
+  private readonly tableExportService = inject(TableExportService);
+
+  exportToPdf(): void {
+    if (this.clients.length === 0) return;
+
+    this.tableExportService.exportToPdf({
+      title: 'LISTADO GENERAL DE CLIENTES',
+      fileName: `Clientes_${new Date().toISOString().slice(0, 10)}`,
+      columns: [
+        {
+          header: 'Cliente',
+          transform: (c) => this.obtenerNombreCliente(c as unknown as IClient),
+          width: 120,
+        },
+        {
+          header: 'Tipo Doc.',
+          transform: (c) => this.obtenerTipoIdentificacionCliente(c as unknown as IClient),
+          width: 60,
+        },
+        {
+          header: 'Identificación',
+          transform: (c) => (c as unknown as IClient).identificacion ?? '—',
+          width: 75,
+        },
+        { header: 'Email', transform: (c) => (c as unknown as IClient).email ?? '—', width: 110 },
+        {
+          header: 'Teléfono',
+          transform: (c) => (c as unknown as IClient).telefono ?? '—',
+          width: 70,
+        },
+        {
+          header: 'Estado',
+          transform: (c) => ((c as unknown as IClient).activo ? 'ACTIVO' : 'INACTIVO'),
+          width: 50,
+          align: 'center',
+        },
+      ],
+      data: this.clients as unknown as Record<string, unknown>[],
+      summary: `Total clientes: ${this.clients.length}`,
+    });
+  }
+
+  exportToExcel(): void {
+    if (this.clients.length === 0) return;
+
+    this.tableExportService.exportToExcel({
+      title: 'LISTADO GENERAL DE CLIENTES',
+      fileName: `Clientes_${new Date().toISOString().slice(0, 10)}`,
+      columns: [
+        { header: 'Cliente', transform: (c) => this.obtenerNombreCliente(c as unknown as IClient) },
+        {
+          header: 'Tipo Identificación',
+          transform: (c) => this.obtenerTipoIdentificacionCliente(c as unknown as IClient),
+        },
+        {
+          header: 'Identificación',
+          transform: (c) => (c as unknown as IClient).identificacion ?? '—',
+        },
+        { header: 'Email', transform: (c) => (c as unknown as IClient).email ?? '—' },
+        { header: 'Teléfono', transform: (c) => (c as unknown as IClient).telefono ?? '—' },
+        {
+          header: 'Estado',
+          transform: (c) => ((c as unknown as IClient).activo ? 'ACTIVO' : 'INACTIVO'),
+        },
+      ],
+      data: this.clients as unknown as Record<string, unknown>[],
+      summary: `Total clientes: ${this.clients.length}`,
+    });
+  }
+
+  exportToCsv(): void {
+    if (this.clients.length === 0) return;
+
+    this.tableExportService.exportToCsv({
+      title: 'LISTADO GENERAL DE CLIENTES',
+      fileName: `Clientes_${new Date().toISOString().slice(0, 10)}`,
+      columns: [
+        { header: 'Cliente', transform: (c) => this.obtenerNombreCliente(c as unknown as IClient) },
+        {
+          header: 'Tipo Identificación',
+          transform: (c) => this.obtenerTipoIdentificacionCliente(c as unknown as IClient),
+        },
+        {
+          header: 'Identificación',
+          transform: (c) => (c as unknown as IClient).identificacion ?? '—',
+        },
+        { header: 'Email', transform: (c) => (c as unknown as IClient).email ?? '—' },
+        { header: 'Teléfono', transform: (c) => (c as unknown as IClient).telefono ?? '—' },
+        {
+          header: 'Estado',
+          transform: (c) => ((c as unknown as IClient).activo ? 'ACTIVO' : 'INACTIVO'),
+        },
+      ],
+      data: this.clients as unknown as Record<string, unknown>[],
+    });
   }
 }

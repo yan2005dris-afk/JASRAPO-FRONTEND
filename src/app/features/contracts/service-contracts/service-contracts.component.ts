@@ -14,6 +14,7 @@ import { ReplaceMeterModalComponent } from '../meters/components/replace-meter-m
 import { AssignInstallationRouteModalComponent } from './components/assign-installation-route-modal/assign-installation-route-modal.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
+import { TableExportService } from '../../../shared/services/table-export.service';
 
 @Component({
   selector: 'app-service-contracts',
@@ -231,5 +232,108 @@ export class ServiceContractsComponent implements OnInit {
   onRouteAssigned(): void {
     this.closeAssignInstallationModal();
     this.loadContracts();
+  }
+
+  // ---------- Exportaciones (PDF, Excel, CSV) ----------
+  private readonly tableExportService = inject(TableExportService);
+
+  exportToPdf(): void {
+    const data = this.contracts();
+    if (data.length === 0) return;
+
+    this.tableExportService.exportToPdf({
+      title: 'LISTADO DE CONTRATOS DE SERVICIO',
+      fileName: `Contratos_${new Date().toISOString().slice(0, 10)}`,
+      columns: [
+        { header: 'N° Guía', key: 'numeroGuia', width: 65 },
+        {
+          header: 'Cliente',
+          transform: (c) => this.getClientName(c as unknown as IContract),
+          width: 110,
+        },
+        {
+          header: 'Identificación',
+          transform: (c) => (c as unknown as IContract).cliente?.identificacion ?? '—',
+          width: 70,
+        },
+        {
+          header: 'Medidor',
+          transform: (c) => this.getCurrentMeter(c as unknown as IContract)?.medidor?.serie ?? '—',
+          width: 60,
+        },
+        { header: 'Ubicación', key: 'direccionSuministro', width: 110 },
+        {
+          header: 'Estado',
+          transform: (c) => (c as unknown as IContract).estado || '—',
+          width: 60,
+          align: 'center',
+        },
+      ],
+      data: data as unknown as Record<string, unknown>[],
+      summary: `Total de contratos exportados: ${data.length}`,
+    });
+  }
+
+  exportToExcel(): void {
+    const data = this.contracts();
+    if (data.length === 0) return;
+
+    this.tableExportService.exportToExcel({
+      title: 'LISTADO DE CONTRATOS DE SERVICIO',
+      fileName: `Contratos_${new Date().toISOString().slice(0, 10)}`,
+      columns: [
+        { header: 'N° Guía', key: 'numeroGuia' },
+        {
+          header: 'Cliente',
+          transform: (c) => this.getClientName(c as unknown as IContract),
+        },
+        {
+          header: 'Identificación',
+          transform: (c) => (c as unknown as IContract).cliente?.identificacion ?? '—',
+        },
+        {
+          header: 'Medidor',
+          transform: (c) => this.getCurrentMeter(c as unknown as IContract)?.medidor?.serie ?? '—',
+        },
+        { header: 'Ubicación', key: 'direccionSuministro' },
+        {
+          header: 'Estado',
+          transform: (c) => (c as unknown as IContract).estado || '—',
+        },
+      ],
+      data: data as unknown as Record<string, unknown>[],
+      summary: `Total de contratos exportados: ${data.length}`,
+    });
+  }
+
+  exportToCsv(): void {
+    const data = this.contracts();
+    if (data.length === 0) return;
+
+    this.tableExportService.exportToCsv({
+      title: 'LISTADO DE CONTRATOS DE SERVICIO',
+      fileName: `Contratos_${new Date().toISOString().slice(0, 10)}`,
+      columns: [
+        { header: 'N° Guía', key: 'numeroGuia' },
+        {
+          header: 'Cliente',
+          transform: (c) => this.getClientName(c as unknown as IContract),
+        },
+        {
+          header: 'Identificación',
+          transform: (c) => (c as unknown as IContract).cliente?.identificacion ?? '—',
+        },
+        {
+          header: 'Medidor',
+          transform: (c) => this.getCurrentMeter(c as unknown as IContract)?.medidor?.serie ?? '—',
+        },
+        { header: 'Ubicación', key: 'direccionSuministro' },
+        {
+          header: 'Estado',
+          transform: (c) => (c as unknown as IContract).estado || '—',
+        },
+      ],
+      data: data as unknown as Record<string, unknown>[],
+    });
   }
 }

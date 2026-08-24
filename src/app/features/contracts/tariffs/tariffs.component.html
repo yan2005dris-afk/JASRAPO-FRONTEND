@@ -59,6 +59,7 @@
 
         <!-- Botón Limpiar -->
         <button
+          type="button"
           class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="clearFilters()"
           [disabled]="isLoading()"
@@ -66,6 +67,51 @@
           <i class="bi bi-x-circle"></i>
           Limpiar
         </button>
+
+        <!-- Botón de Exportar Dropdown -->
+        @if (!selectionMode()) {
+          <div class="dropdown">
+            <button
+              class="btn btn-outline-secondary dropdown-toggle d-flex align-items-center gap-1 shadow-sm px-3"
+              type="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+              [disabled]="tariffs().length === 0"
+            >
+              <i class="bi bi-download"></i>
+              Exportar
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+              <li>
+                <button
+                  class="dropdown-item d-flex align-items-center gap-2 py-2"
+                  (click)="exportToPdf()"
+                >
+                  <i class="bi bi-file-earmark-pdf-fill text-danger"></i>
+                  Exportar a PDF
+                </button>
+              </li>
+              <li>
+                <button
+                  class="dropdown-item d-flex align-items-center gap-2 py-2"
+                  (click)="exportToExcel()"
+                >
+                  <i class="bi bi-file-earmark-excel-fill text-success"></i>
+                  Exportar a Excel (.xls)
+                </button>
+              </li>
+              <li>
+                <button
+                  class="dropdown-item d-flex align-items-center gap-2 py-2"
+                  (click)="exportToCsv()"
+                >
+                  <i class="bi bi-file-earmark-text-fill text-primary"></i>
+                  Exportar a CSV
+                </button>
+              </li>
+            </ul>
+          </div>
+        }
 
         <div class="btn-group btn-group-sm ms-auto">
           <button
