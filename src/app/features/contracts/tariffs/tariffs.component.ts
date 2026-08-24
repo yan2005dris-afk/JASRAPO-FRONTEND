@@ -124,17 +124,6 @@ export class TariffsComponent implements OnInit {
     });
   }
 
-  expandAll(): void {
-    const ids = this.filteredTariffs()
-      .map((t) => t.categoriaTarifaId)
-      .filter((id): id is number => id !== undefined);
-    this.expandedTariffs.set(new Set(ids));
-  }
-
-  collapseAll(): void {
-    this.expandedTariffs.set(new Set());
-  }
-
   // Paginación
   readonly pageSizeOptions = [5, 10, 15, 20];
   readonly pageSize = signal(10);

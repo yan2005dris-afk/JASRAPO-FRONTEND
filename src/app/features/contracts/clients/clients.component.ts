@@ -79,10 +79,8 @@ export class ClientsComponent implements OnInit {
   readonly clientSelected = output<IClient>();
 
   ngOnInit(): void {
-    // En modo selección se cargan los clientes de una vez para poder elegir.
-    if (this.selectionMode()) {
-      this.searchClients();
-    }
+    // Carga de clientes inicial automática
+    this.searchClients();
   }
 
   /** Emite el cliente elegido (solo en modo selección). */
