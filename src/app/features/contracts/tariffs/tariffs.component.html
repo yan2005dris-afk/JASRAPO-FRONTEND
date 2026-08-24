@@ -59,6 +59,7 @@
 
         <!-- Botón Limpiar -->
         <button
+          type="button"
           class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="clearFilters()"
           [disabled]="isLoading()"
@@ -67,26 +68,17 @@
           Limpiar
         </button>
 
-        <div class="btn-group btn-group-sm ms-auto">
-          <button
-            type="button"
-            class="btn btn-outline-secondary d-flex align-items-center gap-1"
-            (click)="expandAll()"
-            title="Expandir todas las categorías"
-          >
-            <i class="bi bi-arrows-expand"></i>
-            <span class="d-none d-sm-inline">Expandir todo</span>
-          </button>
-          <button
-            type="button"
-            class="btn btn-outline-secondary d-flex align-items-center gap-1"
-            (click)="collapseAll()"
-            title="Colapsar todas las categorías"
-          >
-            <i class="bi bi-arrows-collapse"></i>
-            <span class="d-none d-sm-inline">Colapsar todo</span>
-          </button>
-        </div>
+        <!-- Botón de Exportar Dropdown -->
+        @if (!selectionMode()) {
+          <app-dropdown
+            label="Exportar"
+            icon="bi bi-download"
+            [items]="exportItems"
+            [disabled]="tariffs().length === 0"
+            buttonClass="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm px-3"
+            (actionSelected)="handleExportAction($event)"
+          ></app-dropdown>
+        }
       </div>
     </div>
 

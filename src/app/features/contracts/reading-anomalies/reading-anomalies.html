@@ -139,8 +139,9 @@
           Buscar
         </button>
 
-        <!-- Limpiar -->
+        <!-- Botón Limpiar -->
         <button
+          type="button"
           class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="limpiarFiltros()"
           [disabled]="isLoading"
@@ -148,6 +149,16 @@
           <i class="bi bi-x-circle"></i>
           Limpiar
         </button>
+
+        <!-- Botón de Exportar Dropdown -->
+        <app-dropdown
+          label="Exportar"
+          icon="bi bi-download"
+          [items]="exportItems"
+          [disabled]="anomalies.length === 0"
+          buttonClass="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm px-3"
+          (actionSelected)="handleExportAction($event)"
+        ></app-dropdown>
       </div>
     </div>
 

@@ -25,6 +25,11 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
+import { TableExportService } from '../../../shared/services/table-export.service';
+import {
+  DropdownComponent,
+  DropdownItem,
+} from '../../../shared/components/dropdown/dropdown.component';
 
 @Component({
   selector: 'app-clients',
@@ -34,6 +39,7 @@ import { TableSkeletonComponent } from '../../../shared/components/table-skeleto
     ClientsFormComponent,
     PaginationComponent,
     TableSkeletonComponent,
+    DropdownComponent,
   ],
   templateUrl: './clients.component.html',
   styleUrl: './clients.component.scss',
@@ -44,6 +50,22 @@ import { TableSkeletonComponent } from '../../../shared/components/table-skeleto
 })
 export class ClientsComponent implements OnInit {
   readonly authService = inject(AuthService);
+
+  readonly exportItems: DropdownItem[] = [
+    { label: 'Exportar a PDF', action: 'pdf', icon: 'bi bi-file-earmark-pdf-fill text-danger' },
+    {
+      label: 'Exportar a Excel (.xls)',
+      action: 'excel',
+      icon: 'bi bi-file-earmark-excel-fill text-success',
+    },
+    { label: 'Exportar a CSV', action: 'csv', icon: 'bi bi-file-earmark-text-fill text-primary' },
+  ];
+
+  handleExportAction(action: string): void {
+    if (action === 'pdf') this.exportToPdf();
+    else if (action === 'excel') this.exportToExcel();
+    else if (action === 'csv') this.exportToCsv();
+  }
 
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly clientsService = inject(ClientsService);
@@ -57,10 +79,8 @@ export class ClientsComponent implements OnInit {
   readonly clientSelected = output<IClient>();
 
   ngOnInit(): void {
-    // En modo selección se cargan los clientes de una vez para poder elegir.
-    if (this.selectionMode()) {
-      this.searchClients();
-    }
+    // Carga de clientes inicial automática
+    this.searchClients();
   }
 
   /** Emite el cliente elegido (solo en modo selección). */
@@ -382,5 +402,103 @@ export class ClientsComponent implements OnInit {
     if (page < 1 || page > this.totalPages) return;
     this.currentPage = page;
     this.fetchClientsComponent();
+  }
+
+  // ---------- Exportaciones (PDF, Excel, CSV) ----------
+  private readonly tableExportService = inject(TableExportService);
+
+  exportToPdf(): void {
+    if (this.clients.length === 0) return;
+
+    this.tableExportService.exportToPdf({
+      title: 'LISTADO GENERAL DE CLIENTES',
+      fileName: `Clientes_${new Date().toISOString().slice(0, 10)}`,
+      columns: [
+        {
+          header: 'Cliente',
+          transform: (c) => this.obtenerNombreCliente(c as unknown as IClient),
+          width: 120,
+        },
+        {
+          header: 'Tipo Doc.',
+          transform: (c) => this.obtenerTipoIdentificacionCliente(c as unknown as IClient),
+          width: 60,
+        },
+        {
+          header: 'Identificación',
+          transform: (c) => (c as unknown as IClient).identificacion ?? '—',
+          width: 75,
+        },
+        { header: 'Email', transform: (c) => (c as unknown as IClient).email ?? '—', width: 110 },
+        {
+          header: 'Teléfono',
+          transform: (c) => (c as unknown as IClient).telefono ?? '—',
+          width: 70,
+        },
+        {
+          header: 'Estado',
+          transform: (c) => ((c as unknown as IClient).activo ? 'ACTIVO' : 'INACTIVO'),
+          width: 50,
+          align: 'center',
+        },
+      ],
+      data: this.clients as unknown as Record<string, unknown>[],
+      summary: `Total clientes: ${this.clients.length}`,
+    });
+  }
+
+  exportToExcel(): void {
+    if (this.clients.length === 0) return;
+
+    this.tableExportService.exportToExcel({
+      title: 'LISTADO GENERAL DE CLIENTES',
+      fileName: `Clientes_${new Date().toISOString().slice(0, 10)}`,
+      columns: [
+        { header: 'Cliente', transform: (c) => this.obtenerNombreCliente(c as unknown as IClient) },
+        {
+          header: 'Tipo Identificación',
+          transform: (c) => this.obtenerTipoIdentificacionCliente(c as unknown as IClient),
+        },
+        {
+          header: 'Identificación',
+          transform: (c) => (c as unknown as IClient).identificacion ?? '—',
+        },
+        { header: 'Email', transform: (c) => (c as unknown as IClient).email ?? '—' },
+        { header: 'Teléfono', transform: (c) => (c as unknown as IClient).telefono ?? '—' },
+        {
+          header: 'Estado',
+          transform: (c) => ((c as unknown as IClient).activo ? 'ACTIVO' : 'INACTIVO'),
+        },
+      ],
+      data: this.clients as unknown as Record<string, unknown>[],
+      summary: `Total clientes: ${this.clients.length}`,
+    });
+  }
+
+  exportToCsv(): void {
+    if (this.clients.length === 0) return;
+
+    this.tableExportService.exportToCsv({
+      title: 'LISTADO GENERAL DE CLIENTES',
+      fileName: `Clientes_${new Date().toISOString().slice(0, 10)}`,
+      columns: [
+        { header: 'Cliente', transform: (c) => this.obtenerNombreCliente(c as unknown as IClient) },
+        {
+          header: 'Tipo Identificación',
+          transform: (c) => this.obtenerTipoIdentificacionCliente(c as unknown as IClient),
+        },
+        {
+          header: 'Identificación',
+          transform: (c) => (c as unknown as IClient).identificacion ?? '—',
+        },
+        { header: 'Email', transform: (c) => (c as unknown as IClient).email ?? '—' },
+        { header: 'Teléfono', transform: (c) => (c as unknown as IClient).telefono ?? '—' },
+        {
+          header: 'Estado',
+          transform: (c) => ((c as unknown as IClient).activo ? 'ACTIVO' : 'INACTIVO'),
+        },
+      ],
+      data: this.clients as unknown as Record<string, unknown>[],
+    });
   }
 }

@@ -22,6 +22,11 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { TableExportService } from '../../../shared/services/table-export.service';
+import {
+  DropdownComponent,
+  DropdownItem,
+} from '../../../shared/components/dropdown/dropdown.component';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Router } from '@angular/router';
 import { RouteFormModalComponent } from './components/route-form-modal/route-form-modal.component';
@@ -39,6 +44,7 @@ import { ReassignRouteModalComponent } from './components/reassign-route-modal/r
     PaginationComponent,
     RouteFormModalComponent,
     ReassignRouteModalComponent,
+    DropdownComponent,
   ],
   templateUrl: './reading-routes.html',
   styleUrl: './reading-routes.scss',
@@ -55,6 +61,22 @@ export class ReadingRoutesComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  readonly exportItems: DropdownItem[] = [
+    { label: 'Exportar a PDF', action: 'pdf', icon: 'bi bi-file-earmark-pdf-fill text-danger' },
+    {
+      label: 'Exportar a Excel (.xls)',
+      action: 'excel',
+      icon: 'bi bi-file-earmark-excel-fill text-success',
+    },
+    { label: 'Exportar a CSV', action: 'csv', icon: 'bi bi-file-earmark-text-fill text-primary' },
+  ];
+
+  handleExportAction(action: string): void {
+    if (action === 'pdf') this.exportToPdf();
+    else if (action === 'excel') this.exportToExcel();
+    else if (action === 'csv') this.exportToCsv();
+  }
 
   // List State
   routes: IReadingRoute[] = [];
@@ -313,6 +335,124 @@ export class ReadingRoutesComponent implements OnInit {
           'error',
         );
       },
+    });
+  }
+
+  // ---------- Exportaciones de Listado de Rutas (PDF, Excel, CSV) ----------
+  private readonly tableExportService = inject(TableExportService);
+
+  exportToPdf(): void {
+    if (this.routes.length === 0) return;
+
+    this.tableExportService.exportToPdf({
+      title: 'LISTADO DE RUTAS DE TRABAJO Y LECTURA',
+      fileName: `Rutas_Lectura_${new Date().toISOString().slice(0, 10)}`,
+      columns: [
+        { header: 'ID', key: 'rutaId', width: 35, align: 'center' },
+        { header: 'Nombre de Ruta', key: 'nombre', width: 110 },
+        {
+          header: 'Tipo',
+          transform: (r) => (r as unknown as IReadingRoute).tipoRuta.replace(/_/g, ' '),
+          width: 70,
+        },
+        {
+          header: 'Comunidad',
+          transform: (r) => this.getComunidadNombre((r as unknown as IReadingRoute).comunidadId),
+          width: 90,
+        },
+        {
+          header: 'Operario',
+          transform: (r) => this.getOperarioNombre((r as unknown as IReadingRoute).operarioId),
+          width: 100,
+        },
+        {
+          header: 'Fecha Planificada',
+          transform: (r) =>
+            (r as unknown as IReadingRoute).fechaPlanificada
+              ? new Date((r as unknown as IReadingRoute).fechaPlanificada!).toLocaleDateString(
+                  'es-EC',
+                )
+              : '—',
+          width: 65,
+          align: 'center',
+        },
+        { header: 'Estado', key: 'estado', width: 60, align: 'center' },
+      ],
+      data: this.routes as unknown as Record<string, unknown>[],
+      summary: `Total de rutas: ${this.routes.length}`,
+    });
+  }
+
+  exportToExcel(): void {
+    if (this.routes.length === 0) return;
+
+    this.tableExportService.exportToExcel({
+      title: 'LISTADO DE RUTAS DE TRABAJO Y LECTURA',
+      fileName: `Rutas_Lectura_${new Date().toISOString().slice(0, 10)}`,
+      columns: [
+        { header: 'ID', key: 'rutaId' },
+        { header: 'Nombre de Ruta', key: 'nombre' },
+        {
+          header: 'Tipo',
+          transform: (r) => (r as unknown as IReadingRoute).tipoRuta.replace(/_/g, ' '),
+        },
+        {
+          header: 'Comunidad',
+          transform: (r) => this.getComunidadNombre((r as unknown as IReadingRoute).comunidadId),
+        },
+        {
+          header: 'Operario Asignado',
+          transform: (r) => this.getOperarioNombre((r as unknown as IReadingRoute).operarioId),
+        },
+        {
+          header: 'Fecha Planificada',
+          transform: (r) =>
+            (r as unknown as IReadingRoute).fechaPlanificada
+              ? new Date((r as unknown as IReadingRoute).fechaPlanificada!).toLocaleDateString(
+                  'es-EC',
+                )
+              : '—',
+        },
+        { header: 'Estado', key: 'estado' },
+      ],
+      data: this.routes as unknown as Record<string, unknown>[],
+      summary: `Total de rutas: ${this.routes.length}`,
+    });
+  }
+
+  exportToCsv(): void {
+    if (this.routes.length === 0) return;
+
+    this.tableExportService.exportToCsv({
+      title: 'LISTADO DE RUTAS DE TRABAJO Y LECTURA',
+      fileName: `Rutas_Lectura_${new Date().toISOString().slice(0, 10)}`,
+      columns: [
+        { header: 'ID', key: 'rutaId' },
+        { header: 'Nombre de Ruta', key: 'nombre' },
+        {
+          header: 'Tipo',
+          transform: (r) => (r as unknown as IReadingRoute).tipoRuta.replace(/_/g, ' '),
+        },
+        {
+          header: 'Comunidad',
+          transform: (r) => this.getComunidadNombre((r as unknown as IReadingRoute).comunidadId),
+        },
+        {
+          header: 'Operario Asignado',
+          transform: (r) => this.getOperarioNombre((r as unknown as IReadingRoute).operarioId),
+        },
+        {
+          header: 'Fecha Planificada',
+          transform: (r) =>
+            (r as unknown as IReadingRoute).fechaPlanificada
+              ? new Date((r as unknown as IReadingRoute).fechaPlanificada!).toLocaleDateString(
+                  'es-EC',
+                )
+              : '—',
+        },
+        { header: 'Estado', key: 'estado' },
+      ],
+      data: this.routes as unknown as Record<string, unknown>[],
     });
   }
 }

@@ -99,6 +99,17 @@
             <i class="bi bi-x-circle"></i>
             Limpiar
           </button>
+
+          <!-- Botón de Exportar Dropdown -->
+          @if (contracts().length > 0) {
+            <app-dropdown
+              label="Exportar"
+              icon="bi bi-download"
+              [items]="exportItems"
+              buttonClass="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm px-3"
+              (actionSelected)="handleExportAction($event)"
+            ></app-dropdown>
+          }
         </div>
       </div>
 

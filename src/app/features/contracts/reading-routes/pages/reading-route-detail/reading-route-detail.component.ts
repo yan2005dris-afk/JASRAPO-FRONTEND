@@ -10,8 +10,10 @@ import {
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { ReadingRoutesService } from '../../services/reading-routes.service';
 import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
+import { TableExportService } from '../../../../../shared/services/table-export.service';
 import {
   IReadingRoute,
   IRouteKpis,
@@ -71,11 +73,13 @@ export class ReadingRouteDetailComponent implements OnInit {
   private readonly usersService = inject(UsersService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
+  private readonly tableExportService = inject(TableExportService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   routeId!: number;
   readingRoute = signal<IReadingRoute | null>(null);
   isLoadingRoute = signal(true);
+  isExportingPdf = signal(false);
 
   // Catalogs
   comunidades: Comunidad[] = [];
@@ -738,5 +742,31 @@ export class ReadingRouteDetailComponent implements OnInit {
         // TODO: implementar relectura
         this.toastService.info('Solicitud de relectura aún no conectada al backend');
       });
+  }
+
+  // ── Generación de Hoja de Campo Oficial (SC-236 Backend Stream) ───────
+  async exportFieldSheetPdf(): Promise<void> {
+    const route = this.readingRoute();
+    if (!route) return;
+
+    this.isExportingPdf.set(true);
+
+    try {
+      const blob = await firstValueFrom(this.routesService.getFieldSheetPdf(route.rutaId));
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Hoja_Campo_Ruta_${route.rutaId}_${route.tipoRuta}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+
+      this.toastService.success('Hoja de campo oficial generada exitosamente');
+    } catch (err) {
+      console.error('Error al exportar PDF oficial:', err);
+      this.toastService.error('Ocurrió un error al generar la hoja de campo');
+    } finally {
+      this.isExportingPdf.set(false);
+      this.cdr.markForCheck();
+    }
   }
 }

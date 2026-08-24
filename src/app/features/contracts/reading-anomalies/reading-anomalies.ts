@@ -21,6 +21,11 @@ import { TableSkeletonComponent } from '../../../shared/components/table-skeleto
 import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { TableExportService } from '../../../shared/services/table-export.service';
+import {
+  DropdownComponent,
+  DropdownItem,
+} from '../../../shared/components/dropdown/dropdown.component';
 import { AnomalyFormModalComponent } from './components/anomaly-form-modal/anomaly-form-modal.component';
 import { AnomalyResolveModalComponent } from './components/anomaly-resolve-modal/anomaly-resolve-modal.component';
 import type { IContract } from '../service-contracts/interfaces/icontract.interface';
@@ -40,6 +45,7 @@ import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
     AnomalyFormModalComponent,
     AnomalyResolveModalComponent,
     LocalDatePipe,
+    DropdownComponent,
   ],
   templateUrl: './reading-anomalies.html',
   styleUrl: './reading-anomalies.scss',
@@ -55,6 +61,22 @@ export class ReadingAnomaliesComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  readonly exportItems: DropdownItem[] = [
+    { label: 'Exportar a PDF', action: 'pdf', icon: 'bi bi-file-earmark-pdf-fill text-danger' },
+    {
+      label: 'Exportar a Excel (.xls)',
+      action: 'excel',
+      icon: 'bi bi-file-earmark-excel-fill text-success',
+    },
+    { label: 'Exportar a CSV', action: 'csv', icon: 'bi bi-file-earmark-text-fill text-primary' },
+  ];
+
+  handleExportAction(action: string): void {
+    if (action === 'pdf') this.exportToPdf();
+    else if (action === 'excel') this.exportToExcel();
+    else if (action === 'csv') this.exportToCsv();
+  }
 
   // List State
   anomalies: IReadingAnomaly[] = [];
@@ -299,5 +321,120 @@ export class ReadingAnomaliesComponent implements OnInit {
           });
         }
       });
+  }
+
+  // ---------- Exportaciones de Bandeja de Anomalías (PDF, Excel, CSV) ----------
+  private readonly tableExportService = inject(TableExportService);
+
+  exportToPdf(): void {
+    if (this.anomalies.length === 0) return;
+
+    this.tableExportService.exportToPdf({
+      title: 'BANDEJA DE ANOMALÍAS DE LECTURA',
+      fileName: `Anomalias_Lectura_${new Date().toISOString().slice(0, 10)}`,
+      columns: [
+        { header: 'ID', key: 'anomaliaId', width: 40, align: 'center' },
+        {
+          header: 'Lectura ID',
+          transform: (a) => (a as unknown as IReadingAnomaly).lecturaId ?? '—',
+          width: 60,
+          align: 'center',
+        },
+        {
+          header: 'Tipo Anomalía',
+          transform: (a) => (a as unknown as IReadingAnomaly).tipo?.replace(/_/g, ' ') ?? '—',
+          width: 100,
+        },
+        {
+          header: 'Fecha Lectura',
+          transform: (a) => {
+            const f = (a as unknown as IReadingAnomaly).lectura?.fecha;
+            return f ? new Date(f).toLocaleDateString('es-EC') : '—';
+          },
+          width: 70,
+          align: 'center',
+        },
+        {
+          header: 'Lectura Actual',
+          transform: (a) => {
+            const l = (a as unknown as IReadingAnomaly).lectura?.lecturaActual;
+            return l != null ? String(l) : '—';
+          },
+          width: 70,
+          align: 'center',
+        },
+        {
+          header: 'Observación',
+          transform: (a) => (a as unknown as IReadingAnomaly).observacion || '—',
+          width: 120,
+        },
+        { header: 'Estado', key: 'estado', width: 60, align: 'center' },
+      ],
+      data: this.anomalies as unknown as Record<string, unknown>[],
+      summary: `Total incidentes registrados: ${this.anomalies.length}`,
+    });
+  }
+
+  exportToExcel(): void {
+    if (this.anomalies.length === 0) return;
+
+    this.tableExportService.exportToExcel({
+      title: 'BANDEJA DE ANOMALÍAS DE LECTURA',
+      fileName: `Anomalias_Lectura_${new Date().toISOString().slice(0, 10)}`,
+      columns: [
+        { header: 'ID', key: 'anomaliaId' },
+        { header: 'Lectura ID', key: 'lecturaId' },
+        {
+          header: 'Tipo Anomalía',
+          transform: (a) => (a as unknown as IReadingAnomaly).tipo?.replace(/_/g, ' ') ?? '—',
+        },
+        {
+          header: 'Fecha Lectura',
+          transform: (a) => {
+            const f = (a as unknown as IReadingAnomaly).lectura?.fecha;
+            return f ? new Date(f).toLocaleDateString('es-EC') : '—';
+          },
+        },
+        {
+          header: 'Lectura Actual',
+          transform: (a) => (a as unknown as IReadingAnomaly).lectura?.lecturaActual ?? '—',
+        },
+        { header: 'Observación', key: 'observacion' },
+        { header: 'Estado', key: 'estado' },
+      ],
+      data: this.anomalies as unknown as Record<string, unknown>[],
+      summary: `Total anomalías: ${this.anomalies.length}`,
+    });
+  }
+
+  exportToCsv(): void {
+    if (this.anomalies.length === 0) return;
+
+    this.tableExportService.exportToCsv({
+      title: 'BANDEJA DE ANOMALÍAS DE LECTURA',
+      fileName: `Anomalias_Lectura_${new Date().toISOString().slice(0, 10)}`,
+      columns: [
+        { header: 'ID', key: 'anomaliaId' },
+        { header: 'Lectura ID', key: 'lecturaId' },
+        {
+          header: 'Tipo Anomalía',
+          transform: (a) => (a as unknown as IReadingAnomaly).tipo?.replace(/_/g, ' ') ?? '—',
+        },
+        {
+          header: 'Fecha Lectura',
+          transform: (a) => {
+            const f = (a as unknown as IReadingAnomaly).lectura?.fecha;
+            return f ? new Date(f).toLocaleDateString('es-EC') : '—';
+          },
+        },
+        {
+          header: 'Lectura Actual',
+          transform: (a) => (a as unknown as IReadingAnomaly).lectura?.lecturaActual ?? '—',
+        },
+        { header: 'Observación', key: 'observacion' },
+        { header: 'Estado', key: 'estado' },
+      ],
+      data: this.anomalies as unknown as Record<string, unknown>[],
+    });
   }
 }

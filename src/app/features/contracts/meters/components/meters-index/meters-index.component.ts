@@ -166,10 +166,8 @@ export class MetersIndexComponent implements OnInit {
     this.metersService.getMeterStatuses().subscribe({
       next: (estados) => {
         this.statusCatalog = estados;
-        // En modo selección se cargan de una vez los medidores disponibles.
-        if (this.selectionMode()) {
-          this.loadMeters();
-        }
+        // Carga automática inicial de medidores
+        this.loadMeters();
         this.cdr.markForCheck();
       },
       error: (err: HttpErrorResponse) => {
