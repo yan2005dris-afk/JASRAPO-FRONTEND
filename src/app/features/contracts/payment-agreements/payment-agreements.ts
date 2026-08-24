@@ -81,6 +81,7 @@ export class PaymentAgreementsComponent implements OnInit, OnDestroy {
 
   // Filters
   searchTerm = '';
+  selectedEstado = 'TODOS';
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Modals
@@ -105,6 +106,10 @@ export class PaymentAgreementsComponent implements OnInit, OnDestroy {
       limit: this.pageSize,
     };
 
+    if (this.selectedEstado && this.selectedEstado !== 'TODOS') {
+      params.estado = this.selectedEstado;
+    }
+
     const term = this.searchTerm.trim();
     if (term) {
       params.search = term;
@@ -128,8 +133,15 @@ export class PaymentAgreementsComponent implements OnInit, OnDestroy {
     });
   }
 
+  onEstadoChange(estado: string): void {
+    this.selectedEstado = estado;
+    this.currentPage = 1;
+    this.loadAgreements();
+  }
+
   limpiarFiltros(): void {
     this.searchTerm = '';
+    this.selectedEstado = 'TODOS';
     this.currentPage = 1;
     this.loadAgreements();
   }

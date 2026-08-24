@@ -48,12 +48,43 @@
               class="btn btn-outline-secondary border-start-0 shadow-none px-2"
               title="Limpiar búsqueda"
               aria-label="Limpiar búsqueda"
-              (click)="limpiarFiltros()"
+              (click)="searchTerm = ''; onSearchTermChange('')"
             >
               <i class="bi bi-x"></i>
             </button>
           }
         </div>
+
+        <!-- Filtro por Estado -->
+        <select
+          class="form-select shadow-none"
+          style="width: 170px"
+          [ngModel]="selectedEstado"
+          (ngModelChange)="onEstadoChange($event)"
+          aria-label="Filtrar por estado del convenio"
+        >
+          <option value="TODOS">Todos los estados</option>
+          <option value="ACTIVO">Activo</option>
+          <option value="PENDIENTE_ABONO">Pendiente Abono</option>
+          <option value="PREPARADO">Preparado</option>
+          <option value="PAGADO">Pagado</option>
+          <option value="ANULADO">Anulado</option>
+        </select>
+
+        <!-- Botón Buscar -->
+        <button
+          type="button"
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="loadAgreements()"
+          [disabled]="isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          } @else {
+            <i class="bi bi-search"></i>
+          }
+          {{ isLoading ? 'Buscando...' : 'Buscar' }}
+        </button>
 
         <!-- Botón Limpiar -->
         <button

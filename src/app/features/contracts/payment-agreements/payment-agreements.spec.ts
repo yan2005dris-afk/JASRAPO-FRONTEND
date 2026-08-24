@@ -106,6 +106,16 @@ describe('PaymentAgreementsComponent', () => {
     component.limpiarFiltros();
 
     expect(component.searchTerm).toBe('');
+    expect(component.selectedEstado).toBe('TODOS');
     expect(lastQuery().search).toBeUndefined();
+    expect(lastQuery().estado).toBeUndefined();
+  });
+
+  it('aplica el filtro por estado del convenio', () => {
+    component.onEstadoChange('ACTIVO');
+
+    expect(component.selectedEstado).toBe('ACTIVO');
+    expect(component.currentPage).toBe(1);
+    expect(lastQuery().estado).toBe('ACTIVO');
   });
 });
