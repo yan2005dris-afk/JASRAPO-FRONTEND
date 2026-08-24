@@ -31,51 +31,26 @@
         style="max-height: 75vh; overflow-y: auto"
       >
         <div class="row g-3">
-          <!-- 1. Buscador de Contrato (Inline Autocomplete) -->
-          <div class="col-12 position-relative">
-            <label for="inputContratoIdLectura" class="form-label fw-semibold text-dark small mb-1">
-              Contrato de Servicio / Medidor <span class="text-danger">*</span>
-            </label>
-            <div class="input-group">
-              <span class="input-group-text bg-white text-muted">
-                <i class="bi bi-file-text"></i>
-              </span>
-              <input
-                id="inputContratoIdLectura"
-                type="text"
-                class="form-control shadow-none"
-                placeholder="Buscar por guía, cliente o CI..."
-                [value]="contractSearchQuery"
-                [disabled]="isLoading || !!reading()"
-                (input)="onContractSearchInput($any($event.target).value)"
-                (focus)="
-                  contractSearchResults.length > 0 ? (isContractAutocompleteOpen = true) : null
-                "
-                autocomplete="off"
-              />
-              @if ((selectedContract || contractSearchQuery) && !reading()) {
-                <button
-                  type="button"
-                  class="btn btn-outline-secondary"
-                  (click)="clearSelectedContract()"
-                  [disabled]="isLoading"
-                  title="Limpiar selección"
-                >
-                  <i class="bi bi-x-lg"></i>
-                </button>
-              }
-            </div>
-
-            <!-- Autocomplete Dropdown Contratos -->
-            @if (isContractAutocompleteOpen) {
-              <div class="autocomplete-dropdown shadow-lg rounded-3 border bg-white mt-1 py-1">
-                @if (isSearchingContracts) {
-                  <div class="px-3 py-2 text-muted small d-flex align-items-center gap-2">
-                    <span class="spinner-border spinner-border-sm" role="status"></span>
-                    <span>Buscando contratos...</span>
-                  </div>
-                } @else if (contractSearchResults.length === 0) {
-                  <div class="px-3 py-2 text-muted small">
+          <!-- 1. Buscador de Contrato (Usa app-picker-input base) -->
+          <div class="col-12">
+            <app-picker-input
+              inputId="inputContratoIdLectura"
+              label="Contrato de Servicio / Medidor"
+              placeholder="Buscar por guía, cliente o CI..."
+              icon="bi-file-text"
+              [query]="contractSearchQuery"
+              [disabled]="isLoading || !!reading()"
+              [required]="true"
+              [isLoading]="isSearchingContracts"
+              [isOpen]="isContractAutocompleteOpen"
+              [hasValue]="!!selectedContract"
+              (queryChange)="onContractSearchInput($event)"
+              (openChange)="isContractAutocompleteOpen = $event"
+              (clear)="clearSelectedContract()"
+            >
+              <div picker-items>
+                @if (contractSearchResults.length === 0) {
+                  <div class="px-3 py-2 text-muted small text-center">
                     No se encontraron contratos para "{{ contractSearchQuery }}".
                   </div>
                 } @else {
@@ -89,9 +64,9 @@
                         <div class="fw-semibold text-dark small">
                           {{ contract.numeroGuia }}
                           @if (getActiveMeter(contract)?.serie) {
-                            <span class="badge bg-light text-primary border ms-1"
-                              >Medidor: {{ getActiveMeter(contract)?.serie }}</span
-                            >
+                            <span class="badge bg-light text-primary border ms-1">
+                              Medidor: {{ getActiveMeter(contract)?.serie }}
+                            </span>
                           }
                         </div>
                         <div class="text-muted extra-small">
@@ -108,7 +83,7 @@
                   }
                 }
               </div>
-            }
+            </app-picker-input>
 
             @if (selectedContract) {
               <div class="d-flex align-items-center gap-2 mt-2 flex-wrap">

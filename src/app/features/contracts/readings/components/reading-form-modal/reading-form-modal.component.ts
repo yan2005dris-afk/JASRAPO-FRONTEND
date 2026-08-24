@@ -17,6 +17,7 @@ import {
 } from '../../interfaces/ireading.interface';
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 import { PeriodPickerComponent } from '../../../../../shared/components/period-picker/period-picker.component';
+import { PickerInputComponent } from '../../../../../shared/components/picker-input/picker-input.component';
 import { ContractsService } from '../../../service-contracts/services/contracts.service';
 import type {
   IContract,
@@ -28,7 +29,13 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
 @Component({
   selector: 'app-reading-form-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePickerComponent, PeriodPickerComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DatePickerComponent,
+    PeriodPickerComponent,
+    PickerInputComponent,
+  ],
   templateUrl: './reading-form-modal.component.html',
   styleUrl: './reading-form-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
