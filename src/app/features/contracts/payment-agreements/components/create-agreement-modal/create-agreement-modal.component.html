@@ -5,7 +5,7 @@
   aria-modal="true"
   aria-labelledby="createAgreementModalTitle"
 >
-  <div class="modal-dialog modal-dialog-centered modal-lg" style="max-width: 720px">
+  <div class="modal-dialog modal-dialog-centered modal-xl" style="max-width: 960px">
     <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
       <!-- Header con Stepper -->
       <div
@@ -70,7 +70,10 @@
       </div>
 
       <!-- Body -->
-      <div class="modal-body p-4 bg-white create-modal-body">
+      <div
+        class="modal-body p-4 bg-white create-modal-body"
+        style="max-height: 78vh; overflow-y: auto"
+      >
         <!-- ═══════════ PASO 1: ELEGIR CONTRATO ═══════════ -->
         @if (currentStep === 1) {
           <div class="d-flex flex-column gap-3">
@@ -245,12 +248,12 @@
               (click)="backToContractSelection()"
             >
               <i class="bi bi-arrow-left-right me-1"></i>
-              Cambiar
+              Cambiar Contrato
             </button>
           </div>
 
           @if (isSearchingDebt) {
-            <div class="text-center py-4 text-muted">
+            <div class="text-center py-5 text-muted">
               <span class="spinner-border spinner-border-sm me-2" role="status"></span>
               <span class="small">Consultando deuda del contrato...</span>
             </div>
@@ -263,217 +266,232 @@
             </div>
           }
 
-          <!-- Resumen de deuda -->
+          <!-- Grid de 2 Columnas Espacioso para Paso 2 -->
           @if (debtSummary && debtSummary.deudaTotal > 0) {
-            <!-- KPI Cards Grid -->
-            <div class="row g-2 mb-3">
-              <div class="col-sm-4">
-                <div class="p-3 bg-light rounded-3 border h-100 text-center">
-                  <span class="text-muted extra-small text-uppercase fw-bold d-block mb-1"
-                    >Deuda Total</span
-                  >
-                  <span class="fs-5 fw-bold text-danger tabular-nums">
-                    ${{ debtSummary.deudaTotal | number: '1.2-2' }}
-                  </span>
-                </div>
-              </div>
-              <div class="col-sm-4">
-                <div class="p-3 bg-light rounded-3 border h-100 text-center">
-                  <span class="text-muted extra-small text-uppercase fw-bold d-block mb-1"
-                    >Meses de Mora</span
-                  >
-                  <span class="fs-5 fw-bold text-dark tabular-nums">
-                    {{ debtSummary.maxMesesAtrasado }}
-                    <small class="fw-normal text-muted fs-6">meses</small>
-                  </span>
-                </div>
-              </div>
-              <div class="col-sm-4">
-                <div class="p-3 bg-light rounded-3 border h-100 text-center">
-                  <span class="text-muted extra-small text-uppercase fw-bold d-block mb-1"
-                    >Prefacturas</span
-                  >
-                  <span class="fs-5 fw-bold text-dark tabular-nums">
-                    {{ debtSummary.totalPrefacturasImpagadas }}
-                    <small class="fw-normal text-muted fs-6">pendientes</small>
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Parámetros del convenio -->
-            <div class="p-3 border rounded-3 bg-white mb-3 shadow-xs">
-              <h6
-                class="fw-bold text-dark small text-uppercase mb-3 d-flex align-items-center gap-2"
-              >
-                <i class="bi bi-sliders text-primary"></i>
-                Parámetros de Financiamiento
-              </h6>
-
-              <div class="row g-3">
-                <!-- Cuotas -->
-                <div class="col-md-6">
-                  <div class="d-flex justify-content-between align-items-center mb-1">
-                    <label
-                      for="inputNumeroCuotas"
-                      class="form-label fw-semibold text-dark small mb-0"
-                    >
-                      Número de Cuotas <span class="text-danger">*</span>
-                    </label>
-                    <!-- Quick select chips -->
-                    <div class="d-flex gap-1">
-                      @for (preset of [3, 6, 12, 24]; track preset) {
-                        <button
-                          type="button"
-                          class="btn btn-xs rounded-pill px-2 py-0"
-                          [class.btn-primary]="numeroCuotas === preset"
-                          [class.btn-outline-secondary]="numeroCuotas !== preset"
-                          style="font-size: 0.7rem"
-                          (click)="numeroCuotas = preset"
-                        >
-                          {{ preset }}m
-                        </button>
-                      }
+            <div class="row g-4">
+              <!-- Columna Izquierda: Parámetros del Formulario -->
+              <div class="col-lg-6 d-flex flex-column gap-3">
+                <!-- KPI Cards Grid -->
+                <div class="row g-2">
+                  <div class="col-4">
+                    <div class="p-2 bg-light rounded-3 border h-100 text-center">
+                      <span class="text-muted extra-small text-uppercase fw-bold d-block mb-1"
+                        >Deuda Total</span
+                      >
+                      <span class="fs-6 fw-bold text-danger tabular-nums">
+                        ${{ debtSummary.deudaTotal | number: '1.2-2' }}
+                      </span>
                     </div>
                   </div>
-                  <div class="input-group">
-                    <input
-                      id="inputNumeroCuotas"
-                      type="number"
-                      min="1"
-                      max="24"
-                      class="form-control shadow-none fw-bold text-dark tabular-nums"
-                      [(ngModel)]="numeroCuotas"
-                      [disabled]="isLoading"
-                    />
-                    <span class="input-group-text bg-light text-muted small">meses (1 - 24)</span>
+                  <div class="col-4">
+                    <div class="p-2 bg-light rounded-3 border h-100 text-center">
+                      <span class="text-muted extra-small text-uppercase fw-bold d-block mb-1"
+                        >Meses Mora</span
+                      >
+                      <span class="fs-6 fw-bold text-dark tabular-nums">
+                        {{ debtSummary.maxMesesAtrasado }} <small class="text-muted">m</small>
+                      </span>
+                    </div>
+                  </div>
+                  <div class="col-4">
+                    <div class="p-2 bg-light rounded-3 border h-100 text-center">
+                      <span class="text-muted extra-small text-uppercase fw-bold d-block mb-1"
+                        >Prefacturas</span
+                      >
+                      <span class="fs-6 fw-bold text-dark tabular-nums">
+                        {{ debtSummary.totalPrefacturasImpagadas }}
+                        <small class="text-muted">pend.</small>
+                      </span>
+                    </div>
                   </div>
                 </div>
 
-                <!-- Abono Inicial -->
-                <div class="col-md-6">
-                  <label
-                    for="inputAbonoInicialConvenio"
-                    class="form-label fw-semibold text-dark small mb-1"
+                <!-- Formulario de Configuración -->
+                <div class="p-3 border rounded-3 bg-white shadow-xs">
+                  <h6
+                    class="fw-bold text-dark small text-uppercase mb-3 d-flex align-items-center gap-2"
                   >
-                    Abono Inicial Voluntario ($)
-                  </label>
-                  <div class="input-group">
-                    <span class="input-group-text bg-light fw-bold text-muted">$</span>
-                    <input
-                      id="inputAbonoInicialConvenio"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      [max]="debtSummary.deudaTotal"
-                      class="form-control shadow-none fw-bold text-dark tabular-nums"
-                      placeholder="0.00"
-                      [(ngModel)]="abonoInicial"
-                      [disabled]="isLoading"
-                    />
+                    <i class="bi bi-sliders text-primary"></i>
+                    Configurar Cuotas
+                  </h6>
+
+                  <div class="d-flex flex-column gap-3">
+                    <!-- Cuotas con chips -->
+                    <div>
+                      <div class="d-flex justify-content-between align-items-center mb-1">
+                        <label
+                          for="inputNumeroCuotas"
+                          class="form-label fw-semibold text-dark small mb-0"
+                        >
+                          Número de Cuotas <span class="text-danger">*</span>
+                        </label>
+                        <!-- Quick select chips -->
+                        <div class="d-flex gap-1">
+                          @for (preset of [3, 6, 12, 24]; track preset) {
+                            <button
+                              type="button"
+                              class="btn btn-xs rounded-pill px-2 py-0"
+                              [class.btn-primary]="numeroCuotas === preset"
+                              [class.btn-outline-secondary]="numeroCuotas !== preset"
+                              style="font-size: 0.7rem"
+                              (click)="numeroCuotas = preset"
+                            >
+                              {{ preset }}m
+                            </button>
+                          }
+                        </div>
+                      </div>
+                      <div class="input-group">
+                        <input
+                          id="inputNumeroCuotas"
+                          type="number"
+                          min="1"
+                          max="24"
+                          class="form-control shadow-none fw-bold text-dark tabular-nums"
+                          [(ngModel)]="numeroCuotas"
+                          [disabled]="isLoading"
+                        />
+                        <span class="input-group-text bg-light text-muted small"
+                          >meses (1 - 24)</span
+                        >
+                      </div>
+                    </div>
+
+                    <!-- Abono Inicial -->
+                    <div>
+                      <label
+                        for="inputAbonoInicialConvenio"
+                        class="form-label fw-semibold text-dark small mb-1"
+                      >
+                        Abono Inicial Voluntario ($)
+                      </label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-light fw-bold text-muted">$</span>
+                        <input
+                          id="inputAbonoInicialConvenio"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          [max]="debtSummary.deudaTotal"
+                          class="form-control shadow-none fw-bold text-dark tabular-nums"
+                          placeholder="0.00"
+                          [(ngModel)]="abonoInicial"
+                          [disabled]="isLoading"
+                        />
+                      </div>
+                    </div>
+
+                    <!-- Fecha Primer Pago -->
+                    <div>
+                      <label
+                        for="inputFechaPrimerPago"
+                        class="form-label fw-semibold text-dark small mb-1"
+                      >
+                        Fecha Primer Vencimiento <span class="text-danger">*</span>
+                      </label>
+                      <app-date-picker
+                        [inputId]="'inputFechaPrimerPago'"
+                        [value]="fechaPrimerPago"
+                        [disabled]="isLoading"
+                        (valueChange)="fechaPrimerPago = $event"
+                      />
+                    </div>
+
+                    <!-- Motivo -->
+                    <div>
+                      <label
+                        for="inputMotivoConvenio"
+                        class="form-label fw-semibold text-dark small mb-1"
+                      >
+                        Motivo / Justificación
+                      </label>
+                      <input
+                        id="inputMotivoConvenio"
+                        type="text"
+                        class="form-control shadow-none"
+                        placeholder="Ej. Solicitud por calamidad doméstica..."
+                        [(ngModel)]="motivo"
+                        [disabled]="isLoading"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Columna Derecha: Proyección y Tabla de Amortización -->
+              <div class="col-lg-6 d-flex flex-column gap-3">
+                <!-- Highlight de Financiamiento -->
+                <div
+                  class="d-flex justify-content-between align-items-center p-3 rounded-3 bg-light border"
+                >
+                  <div>
+                    <span class="text-muted extra-small text-uppercase fw-bold d-block"
+                      >Neto a Financiar</span
+                    >
+                    <span class="fw-bold text-primary tabular-nums fs-5"
+                      >${{ netFinancedDebt | number: '1.2-2' }}</span
+                    >
+                  </div>
+                  <div class="text-end">
+                    <span class="text-muted extra-small text-uppercase fw-bold d-block"
+                      >Cuota Estimada</span
+                    >
+                    <span class="fw-bold text-success tabular-nums fs-5">
+                      ${{
+                        (numeroCuotas > 0 ? netFinancedDebt / numeroCuotas : 0) | number: '1.2-2'
+                      }}
+                    </span>
                   </div>
                 </div>
 
-                <!-- Fecha Primer Pago -->
-                <div class="col-md-6">
-                  <label
-                    for="inputFechaPrimerPago"
-                    class="form-label fw-semibold text-dark small mb-1"
-                  >
-                    Fecha Primer Vencimiento <span class="text-danger">*</span>
-                  </label>
-                  <app-date-picker
-                    [inputId]="'inputFechaPrimerPago'"
-                    [value]="fechaPrimerPago"
-                    [disabled]="isLoading"
-                    (valueChange)="fechaPrimerPago = $event"
-                  />
-                </div>
-
-                <!-- Motivo -->
-                <div class="col-md-6">
-                  <label
-                    for="inputMotivoConvenio"
-                    class="form-label fw-semibold text-dark small mb-1"
-                  >
-                    Motivo / Justificación
-                  </label>
-                  <input
-                    id="inputMotivoConvenio"
-                    type="text"
-                    class="form-control shadow-none"
-                    placeholder="Ej. Solicitud por calamidad doméstica..."
-                    [(ngModel)]="motivo"
-                    [disabled]="isLoading"
-                  />
-                </div>
+                <!-- Tabla de Amortización Estimada -->
+                @if (simulatedInstallments.length > 0) {
+                  <div>
+                    <h6
+                      class="fw-bold text-dark small text-uppercase mb-2 d-flex align-items-center gap-1"
+                      style="letter-spacing: 0.5px"
+                    >
+                      <i class="bi bi-table text-primary"></i>
+                      Tabla de Amortización Estimada
+                    </h6>
+                    <div
+                      class="table-responsive rounded-3 border bg-white"
+                      style="max-height: 280px; overflow-y: auto"
+                    >
+                      <table class="table table-sm table-hover align-middle mb-0 custom-table">
+                        <caption class="visually-hidden">
+                          Simulación de cuotas del convenio
+                        </caption>
+                        <thead class="bg-light sticky-top">
+                          <tr>
+                            <th scope="col" class="ps-3 text-muted small"># Cuota</th>
+                            <th scope="col" class="text-muted small">Fecha Vencimiento</th>
+                            <th scope="col" class="text-end text-muted small">Valor</th>
+                            <th scope="col" class="text-end pe-3 text-muted small">Saldo</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (cuota of simulatedInstallments; track cuota.numeroCuota) {
+                            <tr>
+                              <td class="ps-3 small fw-bold text-dark">
+                                Cuota {{ cuota.numeroCuota }}
+                              </td>
+                              <td class="small text-muted">{{ cuota.fechaVencimiento }}</td>
+                              <td class="text-end small fw-bold text-dark tabular-nums">
+                                ${{ cuota.valorCuota | number: '1.2-2' }}
+                              </td>
+                              <td class="text-end pe-3 small text-muted tabular-nums">
+                                ${{ cuota.saldoRestante | number: '1.2-2' }}
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                }
               </div>
             </div>
-
-            <!-- Resumen a Financiar Highlight -->
-            <div
-              class="d-flex justify-content-between align-items-center p-3 rounded-3 bg-light border mb-3 flex-wrap gap-2"
-            >
-              <div>
-                <span class="text-muted extra-small text-uppercase fw-bold d-block"
-                  >Monto Neto a Financiar</span
-                >
-                <span class="fw-bold text-primary tabular-nums fs-5"
-                  >${{ netFinancedDebt | number: '1.2-2' }}</span
-                >
-              </div>
-              <div class="text-end">
-                <span class="text-muted extra-small text-uppercase fw-bold d-block"
-                  >Cuota Mensual Estimada</span
-                >
-                <span class="fw-bold text-success tabular-nums fs-5">
-                  ${{ (numeroCuotas > 0 ? netFinancedDebt / numeroCuotas : 0) | number: '1.2-2' }}
-                </span>
-              </div>
-            </div>
-
-            <!-- Tabla de Amortización Simulada -->
-            @if (simulatedInstallments.length > 0) {
-              <h6
-                class="fw-bold text-dark small text-uppercase mb-2 d-flex align-items-center gap-1"
-                style="letter-spacing: 0.5px"
-              >
-                <i class="bi bi-table text-primary"></i>
-                Tabla de Amortización Estimada
-              </h6>
-              <div
-                class="table-responsive rounded-3 border mb-2"
-                style="max-height: 200px; overflow-y: auto"
-              >
-                <table class="table table-sm table-hover align-middle mb-0 custom-table">
-                  <caption class="visually-hidden">
-                    Simulación de cuotas del convenio
-                  </caption>
-                  <thead class="bg-light sticky-top">
-                    <tr>
-                      <th scope="col" class="ps-3 text-muted small"># Cuota</th>
-                      <th scope="col" class="text-muted small">Fecha Vencimiento</th>
-                      <th scope="col" class="text-end text-muted small">Valor Cuota</th>
-                      <th scope="col" class="text-end pe-3 text-muted small">Saldo Restante</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    @for (cuota of simulatedInstallments; track cuota.numeroCuota) {
-                      <tr>
-                        <td class="ps-3 small fw-bold text-dark">Cuota {{ cuota.numeroCuota }}</td>
-                        <td class="small text-muted">{{ cuota.fechaVencimiento }}</td>
-                        <td class="text-end small fw-bold text-dark tabular-nums">
-                          ${{ cuota.valorCuota | number: '1.2-2' }}
-                        </td>
-                        <td class="text-end pe-3 small text-muted tabular-nums">
-                          ${{ cuota.saldoRestante | number: '1.2-2' }}
-                        </td>
-                      </tr>
-                    }
-                  </tbody>
-                </table>
-              </div>
-            }
           }
         }
       </div>
