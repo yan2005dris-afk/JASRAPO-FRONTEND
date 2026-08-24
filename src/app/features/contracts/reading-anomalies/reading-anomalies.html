@@ -70,43 +70,28 @@
       </button>
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
-        <!-- Contrato seleccionado (modal buscador) -->
-        <div class="input-group search-group" style="width: 290px">
+        <!-- Input de búsqueda con buscador global -->
+        <div class="input-group search-group" style="width: 320px">
           <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
-            <i class="bi bi-file-text"></i>
+            <i class="bi bi-search"></i>
           </span>
           <input
             type="text"
-            class="form-control border-start-0 ps-0 shadow-none text-truncate"
-            placeholder="Buscar contrato / cliente..."
-            [value]="
-              selectedContractNumber ? selectedContractNumber + ' - ' + selectedContractName : ''
-            "
-            readonly
-            (click)="abrirBuscadorContratos()"
-            [title]="
-              selectedContractName
-                ? selectedContractNumber + ' - ' + selectedContractName
-                : 'Seleccione un contrato'
-            "
+            class="form-control border-start-0 ps-0 shadow-none"
+            placeholder="Buscar por lectura, observación, cliente, guía o medidor..."
+            [ngModel]="searchTerm"
+            (ngModelChange)="onSearchTermChange($event)"
+            (keyup.enter)="searchAnomalies()"
           />
-          @if (selectedContractNumber) {
+          @if (searchTerm) {
             <button
               type="button"
-              class="btn btn-outline-secondary border-start-0 shadow-none px-2"
-              title="Quitar filtro de contrato"
-              (click)="limpiarFiltros(); $event.stopPropagation()"
+              class="btn btn-outline-secondary border-start-0"
+              title="Limpiar búsqueda"
+              aria-label="Limpiar búsqueda"
+              (click)="onSearchTermChange('')"
             >
-              <i class="bi bi-x"></i>
-            </button>
-          } @else {
-            <button
-              type="button"
-              class="btn btn-outline-primary shadow-none"
-              title="Buscar contrato"
-              (click)="abrirBuscadorContratos()"
-            >
-              <i class="bi bi-search"></i>
+              <i class="bi bi-x-lg"></i>
             </button>
           }
         </div>
@@ -114,30 +99,15 @@
         <!-- Filter Tipo -->
         <select
           class="form-select shadow-none"
-          style="width: 210px"
-          [(ngModel)]="filterTipo"
-          (change)="loadAnomalies()"
+          style="width: 200px"
+          [ngModel]="filterTipo"
+          (ngModelChange)="onFilterTipoChange($event)"
         >
           <option value="">Todos los incidentes</option>
           @for (opt of tipoOptions; track opt.value) {
             <option [value]="opt.value">{{ opt.label }}</option>
           }
         </select>
-
-        <!-- Buscar -->
-        <button
-          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
-          (click)="loadAnomalies()"
-          [disabled]="isLoading"
-        >
-          @if (isLoading) {
-            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-          }
-          @if (!isLoading) {
-            <i class="bi bi-search"></i>
-          }
-          Buscar
-        </button>
 
         <!-- Botón Limpiar -->
         <button

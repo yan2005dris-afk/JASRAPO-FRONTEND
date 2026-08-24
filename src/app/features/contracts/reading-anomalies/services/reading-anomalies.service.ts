@@ -29,6 +29,9 @@ export class ReadingAnomaliesService {
     if (params?.limit !== undefined) {
       httpParams = httpParams.set('limit', String(params.limit));
     }
+    if (params?.search?.trim()) {
+      httpParams = httpParams.set('search', params.search.trim());
+    }
     if (params?.lecturaId) {
       httpParams = httpParams.set('lecturaId', params.lecturaId);
     }

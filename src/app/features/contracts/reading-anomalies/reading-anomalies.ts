@@ -3,7 +3,7 @@ import {
   ChangeDetectorRef,
   Component,
   OnInit,
-  inject,
+  inject, OnDestroy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -54,7 +54,7 @@ import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class ReadingAnomaliesComponent implements OnInit {
+export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly anomaliesService = inject(ReadingAnomaliesService);
@@ -91,8 +91,11 @@ export class ReadingAnomaliesComponent implements OnInit {
 
   // Workqueue Filter (default: PENDIENTE)
   activeStatusFilter = 'PENDIENTE';
+  searchTerm = '';
   filterLecturaId = '';
   filterTipo = '';
+
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Contract Picker Filter
   selectedContractNumber = '';
@@ -130,6 +133,32 @@ export class ReadingAnomaliesComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+    }
+  }
+
+  onSearchTermChange(term: string): void {
+    this.searchTerm = term;
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+    }
+    this.searchTimer = setTimeout(() => {
+      this.searchAnomalies();
+    }, 400);
+  }
+
+  onFilterTipoChange(tipo: string): void {
+    this.filterTipo = tipo;
+    this.searchAnomalies();
+  }
+
+  searchAnomalies(): void {
+    this.currentPage = 1;
+    this.loadAnomalies();
+  }
+
   loadAnomalies(): void {
     this.isLoading = true;
     this.openDropdownId = null;
@@ -139,6 +168,9 @@ export class ReadingAnomaliesComponent implements OnInit {
       limit: this.pageSize,
     };
 
+    if (this.searchTerm.trim()) {
+      params.search = this.searchTerm.trim();
+    }
     if (this.activeStatusFilter) {
       params.estado = this.activeStatusFilter;
     }
@@ -192,7 +224,11 @@ export class ReadingAnomaliesComponent implements OnInit {
   }
 
   limpiarFiltros(): void {
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+    }
     this.activeStatusFilter = 'PENDIENTE';
+    this.searchTerm = '';
     this.filterLecturaId = '';
     this.selectedContractNumber = '';
     this.selectedContractName = '';
