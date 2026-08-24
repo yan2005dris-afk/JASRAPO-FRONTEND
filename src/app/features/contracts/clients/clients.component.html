@@ -26,7 +26,7 @@
       }
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
-        <!-- Input de búsqueda -->
+        <!-- Input de búsqueda con buscador global -->
         <div class="input-group search-group">
           <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
             <i class="bi bi-search"></i>
@@ -35,20 +35,31 @@
           <input
             type="text"
             class="form-control border-start-0 ps-0 shadow-none"
-            placeholder="Buscar cliente..."
-            [(ngModel)]="searchTerm"
+            placeholder="Buscar por cédula, nombres, razón social, email o teléfono..."
+            [ngModel]="searchTerm"
+            (ngModelChange)="onSearchTermChange($event)"
             (keyup.enter)="searchClients()"
           />
+          @if (searchTerm) {
+            <button
+              type="button"
+              class="btn btn-outline-secondary border-start-0"
+              title="Limpiar búsqueda"
+              aria-label="Limpiar búsqueda"
+              (click)="onSearchTermChange('')"
+            >
+              <i class="bi bi-x-lg"></i>
+            </button>
+          }
         </div>
 
-        <!-- Tipo de búsqueda -->
-        <select class="form-select shadow-none" style="width: 190px" [(ngModel)]="searchType">
-          <option value="nombreCompleto">Nombres</option>
-          <option value="identificacion">Identificación</option>
-        </select>
-
         <!-- Estado -->
-        <select class="form-select shadow-none" style="width: 150px" [(ngModel)]="estadoBusqueda">
+        <select
+          class="form-select shadow-none"
+          style="width: 150px"
+          [ngModel]="estadoBusqueda"
+          (ngModelChange)="onEstadoBusquedaChange($event)"
+        >
           <option value="todos">Todos</option>
           <option value="activos">Activos</option>
           <option value="inactivos">Inactivos</option>

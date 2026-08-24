@@ -6,6 +6,7 @@ import {
   inject,
   input,
   output,
+  OnDestroy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -48,7 +49,7 @@ import {
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class ClientsComponent implements OnInit {
+export class ClientsComponent implements OnInit, OnDestroy {
   readonly authService = inject(AuthService);
 
   readonly exportItems: DropdownItem[] = [
@@ -140,6 +141,29 @@ export class ClientsComponent implements OnInit {
     return this.clients;
   }
 
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+
+  ngOnDestroy(): void {
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+    }
+  }
+
+  onSearchTermChange(term: string): void {
+    this.searchTerm = term;
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+    }
+    this.searchTimer = setTimeout(() => {
+      this.searchClients();
+    }, 400);
+  }
+
+  onEstadoBusquedaChange(estado: EstadoBusquedaCliente): void {
+    this.estadoBusqueda = estado;
+    this.searchClients();
+  }
+
   searchClients(): void {
     this.currentPage = 1;
     this.hasFetched = true;
@@ -151,11 +175,7 @@ export class ClientsComponent implements OnInit {
     const params: SearchClientsParams = {};
 
     if (valor) {
-      if (this.searchType === 'nombreCompleto') {
-        params.nombreCompleto = valor;
-      } else if (this.searchType === 'identificacion') {
-        params.identificacion = valor;
-      }
+      params.search = valor;
     }
 
     if (this.estadoBusqueda === 'activos') params.activo = true;
@@ -168,7 +188,6 @@ export class ClientsComponent implements OnInit {
     this.isLoading = true;
     this.cdr.markForCheck();
 
-    const valor = this.searchTerm.trim();
     const params: SearchClientsParams = {
       ...this.buildParams(),
       page: this.currentPage,
@@ -177,16 +196,6 @@ export class ClientsComponent implements OnInit {
 
     this.clientsService.searchClients(params).subscribe({
       next: (result) => {
-        if (
-          this.searchType === 'nombreCompleto' &&
-          valor &&
-          result.data.length === 0 &&
-          this.currentPage === 1
-        ) {
-          this.fetchPorNombresYApellidos(valor);
-          return;
-        }
-
         this.clients = result.data;
         this.totalItems = result.meta.total;
         this.isLoading = false;
@@ -202,54 +211,14 @@ export class ClientsComponent implements OnInit {
     });
   }
 
-  private fetchPorNombresYApellidos(valor: string): void {
-    const partes = valor.replace(/\s+/g, ' ').trim().split(' ');
-
-    let nombres = valor;
-    let apellidos = '';
-
-    if (partes.length >= 4) {
-      const mitad = Math.ceil(partes.length / 2);
-      nombres = partes.slice(0, mitad).join(' ');
-      apellidos = partes.slice(mitad).join(' ');
-    } else if (partes.length >= 2) {
-      nombres = partes[0];
-      apellidos = partes.slice(1).join(' ');
-    }
-
-    const params: SearchClientsParams = {
-      nombres,
-      page: this.currentPage,
-      limit: this.pageSize,
-    };
-
-    if (apellidos) params.apellidos = apellidos;
-    if (this.estadoBusqueda === 'activos') params.activo = true;
-    if (this.estadoBusqueda === 'inactivos') params.activo = false;
-
-    this.clientsService.searchClients(params).subscribe({
-      next: (result) => {
-        this.clients = result.data;
-        this.totalItems = result.meta.total;
-        this.isLoading = false;
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        console.error('Error buscando por nombres y apellidos:', err);
-        this.clients = [];
-        this.totalItems = 0;
-        this.isLoading = false;
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
   limpiarBusqueda(): void {
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+    }
     this.searchTerm = '';
     this.searchType = 'nombreCompleto';
     this.estadoBusqueda = 'todos';
     this.currentPage = 1;
-    this.hasFetched = true;
     this.fetchClientsComponent();
   }
 
