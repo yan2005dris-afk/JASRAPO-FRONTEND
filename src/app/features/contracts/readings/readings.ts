@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  OnDestroy,
   OnInit,
   inject,
 } from '@angular/core';
@@ -13,7 +14,6 @@ import { IReading, IReadingFilterParams } from './interfaces/ireading.interface'
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
-import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { ReadingFormModalComponent } from './components/reading-form-modal/reading-form-modal.component';
@@ -22,7 +22,6 @@ import {
   ReadingsTableComponent,
   IReadingRowItem,
 } from './components/readings-table/readings-table.component';
-import type { IContract } from '../service-contracts/interfaces/icontract.interface';
 
 @Component({
   selector: 'app-readings',
@@ -33,7 +32,6 @@ import type { IContract } from '../service-contracts/interfaces/icontract.interf
     EmptyStateComponent,
     PaginationComponent,
     TableSkeletonComponent,
-    ContractPickerComponent,
     ReadingFormModalComponent,
     ReadingDetailModalComponent,
     ReadingsTableComponent,
@@ -45,7 +43,7 @@ import type { IContract } from '../service-contracts/interfaces/icontract.interf
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class ReadingsComponent implements OnInit {
+export class ReadingsComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly readingsService = inject(ReadingsService);
   private readonly toastService = inject(ToastService);
@@ -64,10 +62,9 @@ export class ReadingsComponent implements OnInit {
   pageSize = 10;
 
   // Filters
-  filterContratoId = '';
-  selectedContractNumber = '';
-  selectedContractName = '';
-  isContractPickerOpen = false;
+  searchTerm = '';
+  selectedEstado = 'TODOS';
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Modals
   isFormModalOpen = false;
@@ -79,6 +76,7 @@ export class ReadingsComponent implements OnInit {
   }
 
   loadReadings(): void {
+    this.clearSearchTimer();
     this.isLoading = true;
     this.openDropdownId = null;
 
@@ -87,8 +85,13 @@ export class ReadingsComponent implements OnInit {
       limit: this.pageSize,
     };
 
-    if (this.filterContratoId.trim()) {
-      params.contratoId = this.filterContratoId.trim();
+    if (this.selectedEstado && this.selectedEstado !== 'TODOS') {
+      params.estado = this.selectedEstado;
+    }
+
+    const term = this.searchTerm.trim();
+    if (term) {
+      params.search = term;
     }
 
     this.readingsService.getReadings(params).subscribe({
@@ -107,6 +110,32 @@ export class ReadingsComponent implements OnInit {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  onSearchTermChange(term: string): void {
+    this.searchTerm = term;
+    this.clearSearchTimer();
+    this.searchTimer = setTimeout(() => {
+      this.currentPage = 1;
+      this.loadReadings();
+    }, 400);
+  }
+
+  onEstadoChange(estado: string): void {
+    this.selectedEstado = estado;
+    this.currentPage = 1;
+    this.loadReadings();
+  }
+
+  limpiarFiltros(): void {
+    this.searchTerm = '';
+    this.selectedEstado = 'TODOS';
+    this.currentPage = 1;
+    this.loadReadings();
+  }
+
+  ngOnDestroy(): void {
+    this.clearSearchTimer();
   }
 
   get tableReadings(): IReadingRowItem[] {
@@ -136,31 +165,11 @@ export class ReadingsComponent implements OnInit {
     });
   }
 
-  abrirBuscadorContratos(): void {
-    this.isContractPickerOpen = true;
-  }
-
-  cerrarBuscadorContratos(): void {
-    this.isContractPickerOpen = false;
-  }
-
-  onContractSelected(contract: IContract): void {
-    this.filterContratoId = contract.contratoId;
-    this.selectedContractNumber = contract.numeroGuia
-      ? `Guía: ${contract.numeroGuia}`
-      : `Contrato #${contract.contratoId}`;
-    this.selectedContractName = ContractPickerComponent.formatClientName(contract.cliente);
-    this.isContractPickerOpen = false;
-    this.currentPage = 1;
-    this.loadReadings();
-  }
-
-  limpiarFiltros(): void {
-    this.filterContratoId = '';
-    this.selectedContractNumber = '';
-    this.selectedContractName = '';
-    this.currentPage = 1;
-    this.loadReadings();
+  private clearSearchTimer(): void {
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+      this.searchTimer = null;
+    }
   }
 
   onPageChange(page: number): void {

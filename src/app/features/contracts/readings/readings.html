@@ -26,64 +26,71 @@
       </button>
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
-        <!-- Contrato seleccionado (modal buscador) -->
+        <!-- Buscador de texto libre -->
         <div class="input-group search-group" style="width: 290px">
           <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
-            <i class="bi bi-file-text"></i>
+            <i class="bi bi-search"></i>
           </span>
           <input
+            id="buscadorLecturas"
             type="text"
-            class="form-control border-start-0 ps-0 shadow-none text-truncate"
-            placeholder="Buscar contrato / cliente..."
-            [value]="
-              selectedContractNumber ? selectedContractNumber + ' - ' + selectedContractName : ''
-            "
-            readonly
-            (click)="abrirBuscadorContratos()"
-            [title]="
-              selectedContractName
-                ? selectedContractNumber + ' - ' + selectedContractName
-                : 'Seleccione un contrato'
-            "
+            class="form-control border-start-0 ps-0 shadow-none"
+            placeholder="Buscar contrato / cliente / medidor..."
+            aria-label="Buscar lecturas por número de guía, cliente o serie del medidor"
+            autocomplete="off"
+            [ngModel]="searchTerm"
+            (ngModelChange)="onSearchTermChange($event)"
+            (keyup.enter)="loadReadings()"
           />
-          @if (selectedContractNumber) {
+          @if (searchTerm) {
             <button
               type="button"
               class="btn btn-outline-secondary border-start-0 shadow-none px-2"
-              title="Quitar filtro de contrato"
-              (click)="limpiarFiltros(); $event.stopPropagation()"
+              title="Limpiar búsqueda"
+              aria-label="Limpiar búsqueda"
+              (click)="searchTerm = ''; onSearchTermChange('')"
             >
               <i class="bi bi-x"></i>
-            </button>
-          } @else {
-            <button
-              type="button"
-              class="btn btn-outline-primary shadow-none"
-              title="Buscar contrato"
-              (click)="abrirBuscadorContratos()"
-            >
-              <i class="bi bi-search"></i>
             </button>
           }
         </div>
 
-        <!-- Buscar -->
+        <!-- Filtro Estado de Lectura -->
+        <select
+          class="form-select shadow-none"
+          style="width: 170px"
+          [ngModel]="selectedEstado"
+          (ngModelChange)="onEstadoChange($event)"
+          aria-label="Filtrar por estado de lectura"
+        >
+          <option value="TODOS">Todos los estados</option>
+          <option value="PENDIENTE">Pendiente</option>
+          <option value="POR_REVISION">Por Revisión</option>
+          <option value="APROBADA">Aprobada</option>
+          <option value="RECHAZADA_VERIFICACION">Rechazada</option>
+          <option value="ESTIMADA">Estimada</option>
+          <option value="PLANILLADA">Planillada</option>
+          <option value="CON_NOVEDAD">Con Novedad</option>
+        </select>
+
+        <!-- Botón Buscar -->
         <button
+          type="button"
           class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="loadReadings()"
           [disabled]="isLoading"
         >
           @if (isLoading) {
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-          }
-          @if (!isLoading) {
+          } @else {
             <i class="bi bi-search"></i>
           }
-          Buscar
+          {{ isLoading ? 'Buscando...' : 'Buscar' }}
         </button>
 
-        <!-- Limpiar -->
+        <!-- Botón Limpiar -->
         <button
+          type="button"
           class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="limpiarFiltros()"
           [disabled]="isLoading"
@@ -157,12 +164,4 @@
       (closed)="closeDetailModal()"
     />
   }
-
-  <!-- Contract Picker Modal -->
-  <app-contract-picker
-    [open]="isContractPickerOpen"
-    title="Buscar Contrato para Filtrar Lecturas"
-    (contractSelected)="onContractSelected($event)"
-    (closed)="cerrarBuscadorContratos()"
-  />
 </div>

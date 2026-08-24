@@ -23,7 +23,6 @@ import type {
   IHistorialMedidor,
   IMedidorResumen,
 } from '../../../service-contracts/interfaces/icontract.interface';
-import { ReadingRoutesService } from '../../../reading-routes/services/reading-routes.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 
 @Component({
@@ -40,7 +39,6 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
 export class ReadingFormModalComponent implements OnInit {
   private readonly readingsService = inject(ReadingsService);
   private readonly contractsService = inject(ContractsService);
-  private readonly routesService = inject(ReadingRoutesService);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -56,14 +54,6 @@ export class ReadingFormModalComponent implements OnInit {
   selectedContract: IContract | null = null;
   private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-  // Period Autocomplete Search
-  periods: { periodoId: number; nombre?: string; estado: string }[] = [];
-  isLoadingPeriods = false;
-  periodSearchQuery = '';
-  filteredPeriods: { periodoId: number; nombre?: string; estado: string }[] = [];
-  isPeriodAutocompleteOpen = false;
-  selectedPeriod: { periodoId: number; nombre?: string; estado: string } | null = null;
-
   medidorId = '';
   fecha = '';
   lecturaAnterior = 0;
@@ -77,7 +67,6 @@ export class ReadingFormModalComponent implements OnInit {
   isLoading = false;
 
   ngOnInit(): void {
-    this.loadPeriods();
     const r = this.reading();
     if (r) {
       this.medidorId = String(r.medidor?.medidorId || '');
@@ -95,35 +84,9 @@ export class ReadingFormModalComponent implements OnInit {
         this.contractSearchQuery =
           `${r.contrato.numeroGuia || ''} - Contrato #${r.contrato.contratoId}`.trim();
       }
-      if (r.periodoRel) {
-        this.periodSearchQuery = r.periodoRel.nombre || `Período #${r.periodoRel.periodoId}`;
-      }
     } else {
       this.fecha = new Date().toISOString().split('T')[0];
     }
-  }
-
-  loadPeriods(): void {
-    this.isLoadingPeriods = true;
-    this.routesService.getPeriods().subscribe({
-      next: (periods) => {
-        this.periods = periods || [];
-        this.filteredPeriods = [...this.periods];
-        this.isLoadingPeriods = false;
-        if (this.periodoId && !this.selectedPeriod) {
-          const match = this.periods.find((p) => p.periodoId === this.periodoId);
-          if (match) {
-            this.selectedPeriod = match;
-            this.periodSearchQuery = match.nombre || `Período #${match.periodoId}`;
-          }
-        }
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.isLoadingPeriods = false;
-        this.cdr.markForCheck();
-      },
-    });
   }
 
   formatClientName(cliente: IContract['cliente']): string {
@@ -237,48 +200,10 @@ export class ReadingFormModalComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  onPeriodSearchInput(query: string): void {
-    this.periodSearchQuery = query;
-    const trimmed = query.toLowerCase().trim();
-    if (!trimmed) {
-      this.filteredPeriods = [...this.periods];
-    } else {
-      this.filteredPeriods = this.periods.filter(
-        (p) =>
-          (p.nombre || '').toLowerCase().includes(trimmed) || String(p.periodoId).includes(trimmed),
-      );
-    }
-    this.isPeriodAutocompleteOpen = true;
-    this.cdr.markForCheck();
-  }
-
   onPeriodSelectedFromPicker(
     period: { periodoId: number; nombre?: string; estado: string } | null,
   ): void {
-    if (period) {
-      this.selectedPeriod = period;
-      this.periodoId = period.periodoId;
-    } else {
-      this.selectedPeriod = null;
-      this.periodoId = null;
-    }
-    this.cdr.markForCheck();
-  }
-
-  selectPeriod(period: { periodoId: number; nombre?: string; estado: string }): void {
-    this.selectedPeriod = period;
-    this.periodoId = period.periodoId;
-    this.periodSearchQuery = period.nombre || `Período #${period.periodoId}`;
-    this.isPeriodAutocompleteOpen = false;
-    this.cdr.markForCheck();
-  }
-
-  clearSelectedPeriod(): void {
-    this.selectedPeriod = null;
-    this.periodoId = null;
-    this.periodSearchQuery = '';
-    this.filteredPeriods = [...this.periods];
-    this.isPeriodAutocompleteOpen = false;
+    this.periodoId = period?.periodoId ?? null;
     this.cdr.markForCheck();
   }
 
