@@ -15,6 +15,10 @@ import { AssignInstallationRouteModalComponent } from './components/assign-insta
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
 import { TableExportService } from '../../../shared/services/table-export.service';
+import {
+  DropdownComponent,
+  DropdownItem,
+} from '../../../shared/components/dropdown/dropdown.component';
 
 @Component({
   selector: 'app-service-contracts',
@@ -25,6 +29,7 @@ import { TableExportService } from '../../../shared/services/table-export.servic
     AssignInstallationRouteModalComponent,
     PaginationComponent,
     TableSkeletonComponent,
+    DropdownComponent,
   ],
   templateUrl: './service-contracts.component.html',
   styleUrl: './service-contracts.component.scss',
@@ -35,6 +40,22 @@ import { TableExportService } from '../../../shared/services/table-export.servic
 })
 export class ServiceContractsComponent implements OnInit {
   private readonly contractsService = inject(ContractsService);
+
+  readonly exportItems: DropdownItem[] = [
+    { label: 'Exportar a PDF', action: 'pdf', icon: 'bi bi-file-earmark-pdf-fill text-danger' },
+    {
+      label: 'Exportar a Excel (.xls)',
+      action: 'excel',
+      icon: 'bi bi-file-earmark-excel-fill text-success',
+    },
+    { label: 'Exportar a CSV', action: 'csv', icon: 'bi bi-file-earmark-text-fill text-primary' },
+  ];
+
+  handleExportAction(action: string): void {
+    if (action === 'pdf') this.exportToPdf();
+    else if (action === 'excel') this.exportToExcel();
+    else if (action === 'csv') this.exportToCsv();
+  }
 
   // Menú de acciones por fila (tres puntitos)
   readonly openDropdownId = signal<string | null>(null);

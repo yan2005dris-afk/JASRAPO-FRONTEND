@@ -26,6 +26,10 @@ import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
 import { TableExportService } from '../../../shared/services/table-export.service';
+import {
+  DropdownComponent,
+  DropdownItem,
+} from '../../../shared/components/dropdown/dropdown.component';
 
 @Component({
   selector: 'app-clients',
@@ -35,6 +39,7 @@ import { TableExportService } from '../../../shared/services/table-export.servic
     ClientsFormComponent,
     PaginationComponent,
     TableSkeletonComponent,
+    DropdownComponent,
   ],
   templateUrl: './clients.component.html',
   styleUrl: './clients.component.scss',
@@ -45,6 +50,22 @@ import { TableExportService } from '../../../shared/services/table-export.servic
 })
 export class ClientsComponent implements OnInit {
   readonly authService = inject(AuthService);
+
+  readonly exportItems: DropdownItem[] = [
+    { label: 'Exportar a PDF', action: 'pdf', icon: 'bi bi-file-earmark-pdf-fill text-danger' },
+    {
+      label: 'Exportar a Excel (.xls)',
+      action: 'excel',
+      icon: 'bi bi-file-earmark-excel-fill text-success',
+    },
+    { label: 'Exportar a CSV', action: 'csv', icon: 'bi bi-file-earmark-text-fill text-primary' },
+  ];
+
+  handleExportAction(action: string): void {
+    if (action === 'pdf') this.exportToPdf();
+    else if (action === 'excel') this.exportToExcel();
+    else if (action === 'csv') this.exportToCsv();
+  }
 
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly clientsService = inject(ClientsService);

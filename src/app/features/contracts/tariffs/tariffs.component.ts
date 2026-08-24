@@ -23,6 +23,10 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TableExportService } from '../../../shared/services/table-export.service';
+import {
+  DropdownComponent,
+  DropdownItem,
+} from '../../../shared/components/dropdown/dropdown.component';
 
 @Component({
   selector: 'app-tariffs',
@@ -33,6 +37,7 @@ import { TableExportService } from '../../../shared/services/table-export.servic
     RubroFormModalComponent,
     RubroTableComponent,
     PaginationComponent,
+    DropdownComponent,
   ],
   templateUrl: './tariffs.component.html',
   styleUrl: './tariffs.component.scss',
@@ -46,6 +51,22 @@ export class TariffsComponent implements OnInit {
   private readonly rubrosService = inject(RubrosService);
   private readonly toast = inject(ToastService);
   private readonly confirmDialog = inject(ConfirmDialogService);
+
+  readonly exportItems: DropdownItem[] = [
+    { label: 'Exportar a PDF', action: 'pdf', icon: 'bi bi-file-earmark-pdf-fill text-danger' },
+    {
+      label: 'Exportar a Excel (.xls)',
+      action: 'excel',
+      icon: 'bi bi-file-earmark-excel-fill text-success',
+    },
+    { label: 'Exportar a CSV', action: 'csv', icon: 'bi bi-file-earmark-text-fill text-primary' },
+  ];
+
+  handleExportAction(action: string): void {
+    if (action === 'pdf') this.exportToPdf();
+    else if (action === 'excel') this.exportToExcel();
+    else if (action === 'csv') this.exportToCsv();
+  }
 
   // Modo selección
   readonly selectionMode = input(false);

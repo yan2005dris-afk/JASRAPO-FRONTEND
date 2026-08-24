@@ -23,6 +23,10 @@ import { TableSkeletonComponent } from '../../../shared/components/table-skeleto
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { TableExportService } from '../../../shared/services/table-export.service';
+import {
+  DropdownComponent,
+  DropdownItem,
+} from '../../../shared/components/dropdown/dropdown.component';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Router } from '@angular/router';
 import { RouteFormModalComponent } from './components/route-form-modal/route-form-modal.component';
@@ -40,6 +44,7 @@ import { ReassignRouteModalComponent } from './components/reassign-route-modal/r
     PaginationComponent,
     RouteFormModalComponent,
     ReassignRouteModalComponent,
+    DropdownComponent,
   ],
   templateUrl: './reading-routes.html',
   styleUrl: './reading-routes.scss',
@@ -56,6 +61,22 @@ export class ReadingRoutesComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  readonly exportItems: DropdownItem[] = [
+    { label: 'Exportar a PDF', action: 'pdf', icon: 'bi bi-file-earmark-pdf-fill text-danger' },
+    {
+      label: 'Exportar a Excel (.xls)',
+      action: 'excel',
+      icon: 'bi bi-file-earmark-excel-fill text-success',
+    },
+    { label: 'Exportar a CSV', action: 'csv', icon: 'bi bi-file-earmark-text-fill text-primary' },
+  ];
+
+  handleExportAction(action: string): void {
+    if (action === 'pdf') this.exportToPdf();
+    else if (action === 'excel') this.exportToExcel();
+    else if (action === 'csv') this.exportToCsv();
+  }
 
   // List State
   routes: IReadingRoute[] = [];

@@ -16,6 +16,10 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { TableExportService } from '../../../shared/services/table-export.service';
+import {
+  DropdownComponent,
+  DropdownItem,
+} from '../../../shared/components/dropdown/dropdown.component';
 import { CreateAgreementModalComponent } from './components/create-agreement-modal/create-agreement-modal.component';
 import { AgreementDetailModalComponent } from './components/agreement-detail-modal/agreement-detail-modal.component';
 import type { IContract } from '../service-contracts/interfaces/icontract.interface';
@@ -33,6 +37,7 @@ import type { IContract } from '../service-contracts/interfaces/icontract.interf
     ContractPickerComponent,
     CreateAgreementModalComponent,
     AgreementDetailModalComponent,
+    DropdownComponent,
   ],
   templateUrl: './payment-agreements.html',
   styleUrl: './payment-agreements.scss',
@@ -45,6 +50,22 @@ export class PaymentAgreementsComponent implements OnInit {
   private readonly agreementsService = inject(PaymentAgreementsService);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  readonly exportItems: DropdownItem[] = [
+    { label: 'Exportar a PDF', action: 'pdf', icon: 'bi bi-file-earmark-pdf-fill text-danger' },
+    {
+      label: 'Exportar a Excel (.xls)',
+      action: 'excel',
+      icon: 'bi bi-file-earmark-excel-fill text-success',
+    },
+    { label: 'Exportar a CSV', action: 'csv', icon: 'bi bi-file-earmark-text-fill text-primary' },
+  ];
+
+  handleExportAction(action: string): void {
+    if (action === 'pdf') this.exportToPdf();
+    else if (action === 'excel') this.exportToExcel();
+    else if (action === 'csv') this.exportToCsv();
+  }
 
   // List State
   agreements: IAgreement[] = [];

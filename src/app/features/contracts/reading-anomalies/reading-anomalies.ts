@@ -22,6 +22,10 @@ import { ContractPickerComponent } from '../../../shared/components/contract-pic
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { TableExportService } from '../../../shared/services/table-export.service';
+import {
+  DropdownComponent,
+  DropdownItem,
+} from '../../../shared/components/dropdown/dropdown.component';
 import { AnomalyFormModalComponent } from './components/anomaly-form-modal/anomaly-form-modal.component';
 import { AnomalyResolveModalComponent } from './components/anomaly-resolve-modal/anomaly-resolve-modal.component';
 import type { IContract } from '../service-contracts/interfaces/icontract.interface';
@@ -41,6 +45,7 @@ import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
     AnomalyFormModalComponent,
     AnomalyResolveModalComponent,
     LocalDatePipe,
+    DropdownComponent,
   ],
   templateUrl: './reading-anomalies.html',
   styleUrl: './reading-anomalies.scss',
@@ -56,6 +61,22 @@ export class ReadingAnomaliesComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  readonly exportItems: DropdownItem[] = [
+    { label: 'Exportar a PDF', action: 'pdf', icon: 'bi bi-file-earmark-pdf-fill text-danger' },
+    {
+      label: 'Exportar a Excel (.xls)',
+      action: 'excel',
+      icon: 'bi bi-file-earmark-excel-fill text-success',
+    },
+    { label: 'Exportar a CSV', action: 'csv', icon: 'bi bi-file-earmark-text-fill text-primary' },
+  ];
+
+  handleExportAction(action: string): void {
+    if (action === 'pdf') this.exportToPdf();
+    else if (action === 'excel') this.exportToExcel();
+    else if (action === 'csv') this.exportToCsv();
+  }
 
   // List State
   anomalies: IReadingAnomaly[] = [];
