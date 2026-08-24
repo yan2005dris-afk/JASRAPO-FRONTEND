@@ -31,6 +31,12 @@ export class ReadingsService {
     if (params?.contratoId) {
       httpParams = httpParams.set('contratoId', params.contratoId);
     }
+    if (params?.estado) {
+      httpParams = httpParams.set('estado', params.estado);
+    }
+    if (params?.search) {
+      httpParams = httpParams.set('search', params.search);
+    }
 
     return this.http.get<IPaginatedResult<IReading>>(this.endpoint, {
       params: httpParams,

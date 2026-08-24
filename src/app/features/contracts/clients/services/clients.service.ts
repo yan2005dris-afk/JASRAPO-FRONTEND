@@ -25,6 +25,10 @@ export class ClientsService {
   searchClients(params: SearchClientsParams): Observable<IPaginatedResult<IClient>> {
     let httpParams = new HttpParams();
 
+    if (params.search) {
+      httpParams = httpParams.set('search', params.search);
+    }
+
     if (params.nombreCompleto) {
       httpParams = httpParams.set('nombreCompleto', params.nombreCompleto);
     }

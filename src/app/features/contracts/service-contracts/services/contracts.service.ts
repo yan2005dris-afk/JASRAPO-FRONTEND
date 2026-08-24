@@ -52,6 +52,9 @@ export class ContractsService {
     if (params.estado) {
       httpParams = httpParams.set('estado', params.estado);
     }
+    if (params.hasDebt !== undefined) {
+      httpParams = httpParams.set('hasDebt', String(params.hasDebt));
+    }
 
     return this.http.get<PaginatedResponse<IContract>>(this.endpoint, { params: httpParams });
   }

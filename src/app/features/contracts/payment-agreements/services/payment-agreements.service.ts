@@ -32,6 +32,9 @@ export class PaymentAgreementsService {
     if (params?.contratoId) {
       httpParams = httpParams.set('contratoId', params.contratoId);
     }
+    if (params?.estado) {
+      httpParams = httpParams.set('estado', params.estado);
+    }
     if (params?.search) {
       httpParams = httpParams.set('search', params.search);
     }

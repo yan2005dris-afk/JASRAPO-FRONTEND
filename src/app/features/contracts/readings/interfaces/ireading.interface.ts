@@ -78,6 +78,8 @@ export interface IReadingFilterParams {
   page?: number;
   limit?: number;
   contratoId?: string;
+  estado?: string;
+  search?: string;
 }
 
 export interface IReadingStateCatalog {

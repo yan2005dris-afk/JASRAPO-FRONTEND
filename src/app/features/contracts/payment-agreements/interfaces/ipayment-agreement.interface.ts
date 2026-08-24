@@ -82,6 +82,7 @@ export interface IFindAllAgreementsParams {
   page?: number;
   limit?: number;
   contratoId?: string;
+  estado?: string;
   search?: string;
 }
 
