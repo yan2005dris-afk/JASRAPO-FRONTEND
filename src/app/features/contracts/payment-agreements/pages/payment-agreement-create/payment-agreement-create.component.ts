@@ -19,6 +19,7 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
 import { TableSkeletonComponent } from '../../../../../shared/components/table-skeleton/table-skeleton.component';
+import { ContractsTableComponent } from '../../../service-contracts/components/contracts-table/contracts-table.component';
 import { ContractsService } from '../../../service-contracts/services/contracts.service';
 import type { IContract } from '../../../service-contracts/interfaces/icontract.interface';
 
@@ -35,6 +36,7 @@ type WizardStep = 1 | 2;
     DatePickerComponent,
     PaginationComponent,
     TableSkeletonComponent,
+    ContractsTableComponent,
   ],
   templateUrl: './payment-agreement-create.component.html',
   styleUrl: './payment-agreement-create.component.scss',

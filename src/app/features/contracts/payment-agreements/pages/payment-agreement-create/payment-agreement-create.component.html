@@ -122,67 +122,14 @@
               </p>
             </div>
           } @else {
-            <div class="table-responsive border rounded-3">
-              <table class="table table-hover align-middle mb-0 custom-table">
-                <caption class="visually-hidden">
-                  Contratos disponibles para crear un convenio de pago
-                </caption>
-                <thead class="bg-light">
-                  <tr>
-                    <th scope="col" class="ps-3 text-muted small">N° Guía / Contrato</th>
-                    <th scope="col" class="text-muted small">Cliente / Titular</th>
-                    <th scope="col" class="text-center text-muted small">Estado</th>
-                    <th scope="col" class="text-center pe-3 text-muted small" style="width: 120px">
-                      Acción
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (contract of contracts; track contract.contratoId) {
-                    <tr
-                      class="contract-row"
-                      [class.table-active]="isContractSelected(contract)"
-                      [title]="'Doble clic para elegir ' + contract.numeroGuia"
-                      (click)="markContract(contract)"
-                      (dblclick)="chooseContract(contract)"
-                    >
-                      <td class="ps-3">
-                        <div class="fw-bold text-dark d-flex align-items-center gap-1">
-                          <i class="bi bi-file-text text-primary"></i>
-                          <span>{{ contract.numeroGuia }}</span>
-                        </div>
-                        <div class="text-muted extra-small">ID #{{ contract.contratoId }}</div>
-                      </td>
-                      <td>
-                        <div class="fw-semibold text-dark">
-                          {{ formatClientName(contract.cliente) }}
-                        </div>
-                        <div class="text-muted extra-small">
-                          CI: {{ contract.cliente.identificacion }}
-                        </div>
-                      </td>
-                      <td class="text-center">
-                        <span
-                          class="badge"
-                          [class.badge-soft-success]="contract.estado === 'ACTIVO'"
-                          [class.badge-soft-warning]="contract.estado !== 'ACTIVO'"
-                        >
-                          {{ contract.estado }}
-                        </span>
-                      </td>
-                      <td class="text-center pe-3" (click)="$event.stopPropagation()">
-                        <button
-                          type="button"
-                          class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-medium"
-                          (click)="chooseContract(contract)"
-                        >
-                          <i class="bi bi-check2 me-1"></i>Elegir
-                        </button>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
+            <div class="border rounded-3 overflow-hidden bg-white">
+              <app-contracts-table
+                [contracts]="contracts"
+                mode="select"
+                [selectedContract]="selectedContract"
+                (contractSelected)="markContract($event)"
+                (contractDoubleClicked)="chooseContract($event)"
+              />
             </div>
 
             <app-pagination
