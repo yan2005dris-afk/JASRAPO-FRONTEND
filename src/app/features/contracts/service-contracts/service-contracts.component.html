@@ -33,17 +33,6 @@
         </button>
 
         <div class="d-flex align-items-center gap-2 flex-wrap">
-          <!-- Botón de Exportar Dropdown -->
-          @if (contracts().length > 0) {
-            <app-dropdown
-              label="Exportar"
-              icon="bi bi-download"
-              [items]="exportItems"
-              buttonClass="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm px-3"
-              (actionSelected)="handleExportAction($event)"
-            ></app-dropdown>
-          }
-
           <!-- Input de búsqueda -->
           <div class="input-group search-group">
             <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
@@ -110,6 +99,17 @@
             <i class="bi bi-x-circle"></i>
             Limpiar
           </button>
+
+          <!-- Botón de Exportar Dropdown -->
+          @if (contracts().length > 0) {
+            <app-dropdown
+              label="Exportar"
+              icon="bi bi-download"
+              [items]="exportItems"
+              buttonClass="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm px-3"
+              (actionSelected)="handleExportAction($event)"
+            ></app-dropdown>
+          }
         </div>
       </div>
 

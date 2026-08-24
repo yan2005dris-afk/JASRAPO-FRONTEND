@@ -52,33 +52,20 @@
       }
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
-        <!-- Search -->
-        <div class="input-group search-group" style="width: 280px">
+        <!-- Input de búsqueda -->
+        <div class="input-group search-group">
           <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
             <i class="bi bi-search"></i>
           </span>
+
           <input
             type="text"
             class="form-control border-start-0 ps-0 shadow-none"
-            placeholder="Buscar medidor..."
+            placeholder="Buscar por serie, marca, modelo..."
             [(ngModel)]="searchQuery"
             (keyup.enter)="searchMeters()"
           />
         </div>
-
-        <button
-          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
-          (click)="searchMeters()"
-          [disabled]="isLoading"
-        >
-          @if (isLoading) {
-            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-          }
-          @if (!isLoading) {
-            <i class="bi bi-search"></i>
-          }
-          {{ isLoading ? 'Buscando...' : 'Buscar' }}
-        </button>
 
         <!-- Estado -->
         <select
@@ -93,6 +80,23 @@
           }
         </select>
 
+        <!-- Botón Buscar -->
+        <button
+          class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="searchMeters()"
+          [disabled]="isLoading"
+        >
+          @if (isLoading) {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          }
+
+          @if (!isLoading) {
+            <i class="bi bi-search"></i>
+          }
+
+          {{ isLoading ? 'Buscando...' : 'Buscar' }}
+        </button>
+
         <!-- Dropdown (oculto en modo selección) -->
         @if (!selectionMode()) {
           <app-dropdown
@@ -104,10 +108,10 @@
           <!-- Exportar inventario: respeta el estado y la búsqueda activos -->
           <app-dropdown
             [label]="isExporting ? 'Exportando...' : 'Exportar'"
-            [icon]="isExporting ? 'spinner-border spinner-border-sm' : 'bi bi-box-arrow-down'"
+            [icon]="isExporting ? 'spinner-border spinner-border-sm' : 'bi bi-download'"
             [items]="exportItems"
-            [disabled]="isExporting"
-            buttonClass="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium"
+            [disabled]="isExporting || meters.length === 0"
+            buttonClass="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm px-3"
             (actionSelected)="handleExportAction($event)"
           ></app-dropdown>
         }
