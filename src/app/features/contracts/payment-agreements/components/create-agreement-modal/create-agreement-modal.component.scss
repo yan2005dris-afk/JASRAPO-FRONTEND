@@ -25,17 +25,103 @@
   overflow-y: auto;
 }
 
-.autocomplete-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  z-index: 1060;
-  max-height: 160px;
-  overflow-y: auto;
-  border-color: #e2e8f0;
-}
-
 .extra-small {
   font-size: 0.78rem;
+}
+
+.btn-xs {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.badge-soft-success {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.badge-soft-warning {
+  background-color: #fef3c7;
+  color: #b45309;
+}
+
+.contract-row {
+  cursor: pointer;
+
+  &.table-active {
+    --bs-table-accent-bg: #dbf7f8;
+    box-shadow: inset 3px 0 0 #0c9ea1;
+  }
+}
+
+.custom-table {
+  thead th {
+    font-weight: 600;
+    color: #597b7d;
+    border-bottom: 1px solid #cbdedf;
+    white-space: nowrap;
+  }
+
+  tbody td {
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+}
+
+/* Stepper: mismo patrón visual que replace-meter-modal */
+.stepper-nav {
+  .step-item {
+    color: #64748b;
+    transition: all 0.2s ease;
+
+    &:disabled {
+      opacity: 0.55;
+    }
+
+    .step-badge {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background-color: #f1f5f9;
+      color: #64748b;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    &.active {
+      color: #0c9ea1;
+
+      .step-badge {
+        background-color: #0c9ea1;
+        color: #ffffff;
+      }
+    }
+
+    &.completed {
+      color: #0f172a;
+
+      .step-badge {
+        background-color: #dbf7f8;
+        color: #0c9ea1;
+      }
+    }
+  }
+
+  .step-divider {
+    height: 2px;
+    background-color: #e2e8f0;
+    transition: background-color 0.2s ease;
+
+    &.completed {
+      background-color: #0c9ea1;
+    }
+  }
 }

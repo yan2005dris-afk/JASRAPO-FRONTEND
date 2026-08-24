@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  OnDestroy,
   OnInit,
   inject,
   output,
@@ -16,18 +17,31 @@ import {
 } from '../../interfaces/ipayment-agreement.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
+import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
+import { TableSkeletonComponent } from '../../../../../shared/components/table-skeleton/table-skeleton.component';
 import { ContractsService } from '../../../service-contracts/services/contracts.service';
 import type { IContract } from '../../../service-contracts/interfaces/icontract.interface';
+
+/** Espera tras la última tecla antes de consultar contratos en el paso 1. */
+const CONTRACT_SEARCH_DEBOUNCE_MS = 400;
+
+type WizardStep = 1 | 2;
 
 @Component({
   selector: 'app-create-agreement-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePickerComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DatePickerComponent,
+    PaginationComponent,
+    TableSkeletonComponent,
+  ],
   templateUrl: './create-agreement-modal.component.html',
   styleUrl: './create-agreement-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreateAgreementModalComponent implements OnInit {
+export class CreateAgreementModalComponent implements OnInit, OnDestroy {
   private readonly agreementsService = inject(PaymentAgreementsService);
   private readonly contractsService = inject(ContractsService);
   private readonly toastService = inject(ToastService);
@@ -36,18 +50,23 @@ export class CreateAgreementModalComponent implements OnInit {
   readonly created = output<void>();
   readonly closed = output<void>();
 
-  contratoIdInput = '';
+  currentStep: WizardStep = 1;
+
+  // Paso 1: tabla paginada de contratos
+  contractSearchTerm = '';
+  contracts: IContract[] = [];
+  totalContracts = 0;
+  isLoadingContracts = false;
+  contractsError = '';
+  contractsPage = 1;
+  contractsPageSize = 5;
+  selectedContract: IContract | null = null;
+  private contractSearchTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Paso 2: resumen de deuda y plan de cuotas
   debtSummary: IDebtSummary | null = null;
   isSearchingDebt = false;
   searchError = '';
-
-  // Contract inline autocomplete
-  contractSearchQuery = '';
-  contractSearchResults: IContract[] = [];
-  isSearchingContracts = false;
-  isAutocompleteOpen = false;
-  selectedContract: IContract | null = null;
-  private searchDebounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   numeroCuotas = 6;
   abonoInicial = 0;
@@ -60,6 +79,12 @@ export class CreateAgreementModalComponent implements OnInit {
     nextMonth.setMonth(nextMonth.getMonth() + 1);
     nextMonth.setDate(1);
     this.fechaPrimerPago = nextMonth.toISOString().split('T')[0];
+
+    this.loadContracts();
+  }
+
+  ngOnDestroy(): void {
+    this.clearContractSearchTimer();
   }
 
   formatClientName(cliente: IContract['cliente']): string {
@@ -69,74 +94,122 @@ export class CreateAgreementModalComponent implements OnInit {
     return `${cliente.nombres} ${cliente.apellidos}`.trim();
   }
 
-  onContractSearchInput(query: string): void {
-    this.contractSearchQuery = query;
-    if (this.searchDebounceTimer) {
-      clearTimeout(this.searchDebounceTimer);
-    }
+  // ---------- Paso 1: selección de contrato ----------
 
-    const trimmed = query.trim();
-    if (!trimmed) {
-      this.contractSearchResults = [];
-      this.isAutocompleteOpen = false;
-      this.cdr.markForCheck();
-      return;
-    }
-
-    this.searchDebounceTimer = setTimeout(() => {
-      this.executeContractSearch(trimmed);
-    }, 350);
+  onContractSearchInput(term: string): void {
+    this.contractSearchTerm = term;
+    this.clearContractSearchTimer();
+    this.contractSearchTimer = setTimeout(() => {
+      this.contractsPage = 1;
+      this.loadContracts();
+    }, CONTRACT_SEARCH_DEBOUNCE_MS);
   }
 
-  private executeContractSearch(term: string): void {
-    this.isSearchingContracts = true;
-    this.isAutocompleteOpen = true;
+  clearContractSearch(): void {
+    this.contractSearchTerm = '';
+    this.contractsPage = 1;
+    this.loadContracts();
+  }
+
+  loadContracts(): void {
+    this.clearContractSearchTimer();
+    this.isLoadingContracts = true;
+    this.contractsError = '';
     this.cdr.markForCheck();
 
-    this.contractsService.getContracts({ search: term, limit: 8 }).subscribe({
-      next: (res) => {
-        this.contractSearchResults = res.data;
-        this.isSearchingContracts = false;
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.contractSearchResults = [];
-        this.isSearchingContracts = false;
-        this.cdr.markForCheck();
-      },
-    });
+    const term = this.contractSearchTerm.trim();
+
+    this.contractsService
+      .getContracts({
+        search: term || undefined,
+        page: this.contractsPage,
+        limit: this.contractsPageSize,
+      })
+      .subscribe({
+        next: (res) => {
+          this.contracts = res.data ?? [];
+          this.totalContracts = res.meta?.total ?? this.contracts.length;
+          this.isLoadingContracts = false;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.contracts = [];
+          this.totalContracts = 0;
+          this.contractsError = 'No se pudieron cargar los contratos. Intente nuevamente.';
+          this.isLoadingContracts = false;
+          this.cdr.markForCheck();
+        },
+      });
   }
 
-  selectContract(contract: IContract): void {
+  onContractsPageChange(page: number): void {
+    this.contractsPage = page;
+    this.loadContracts();
+  }
+
+  onContractsPageSizeChange(size: number): void {
+    this.contractsPageSize = size;
+    this.contractsPage = 1;
+    this.loadContracts();
+  }
+
+  /** Un clic marca el contrato en la tabla sin avanzar de paso. */
+  markContract(contract: IContract): void {
+    if (this.selectedContract?.contratoId === contract.contratoId) return;
+
+    // Al cambiar de contrato el plan del paso 2 deja de ser válido: la deuda es
+    // otra y el abono ingresado se calculó sobre la deuda anterior.
     this.selectedContract = contract;
-    this.contratoIdInput = String(contract.contratoId);
-    this.contractSearchQuery = `${contract.numeroGuia} - ${this.formatClientName(contract.cliente)}`;
-    this.isAutocompleteOpen = false;
-    this.contractSearchResults = [];
-    this.cdr.markForCheck();
-    this.searchDebt();
-  }
-
-  clearSelectedContract(): void {
-    this.selectedContract = null;
-    this.contratoIdInput = '';
-    this.contractSearchQuery = '';
-    this.contractSearchResults = [];
-    this.isAutocompleteOpen = false;
     this.debtSummary = null;
     this.searchError = '';
+    this.abonoInicial = 0;
     this.cdr.markForCheck();
   }
 
-  searchDebt(): void {
-    if (!this.contratoIdInput.trim()) return;
+  /** Doble clic o botón "Elegir": marca el contrato y pasa al paso 2. */
+  chooseContract(contract: IContract): void {
+    this.markContract(contract);
+    this.goToStep(2);
+  }
+
+  isContractSelected(contract: IContract): boolean {
+    return this.selectedContract?.contratoId === contract.contratoId;
+  }
+
+  get step1Valid(): boolean {
+    return this.selectedContract !== null;
+  }
+
+  // ---------- Navegación del stepper ----------
+
+  goToStep(step: WizardStep): void {
+    if (step === 2 && !this.step1Valid) return;
+
+    this.currentStep = step;
+
+    if (step === 2 && this.selectedContract) {
+      this.loadDebtSummary(this.selectedContract.contratoId);
+    }
+
+    this.cdr.markForCheck();
+  }
+
+  backToContractSelection(): void {
+    this.currentStep = 1;
+    this.cdr.markForCheck();
+  }
+
+  // ---------- Paso 2: deuda y simulación ----------
+
+  private loadDebtSummary(contratoId: string): void {
+    if (this.debtSummary?.contratoId === contratoId) return;
 
     this.isSearchingDebt = true;
     this.searchError = '';
     this.debtSummary = null;
     this.cdr.markForCheck();
 
-    this.agreementsService.getDebtSummary(this.contratoIdInput.trim()).subscribe({
+    this.agreementsService.getDebtSummary(contratoId).subscribe({
       next: (summary) => {
         this.debtSummary = summary;
         this.isSearchingDebt = false;
@@ -146,7 +219,7 @@ export class CreateAgreementModalComponent implements OnInit {
         this.cdr.markForCheck();
       },
       error: () => {
-        this.searchError = `No se encontró información de deuda para el contrato #${this.contratoIdInput}.`;
+        this.searchError = `No se encontró información de deuda para el contrato #${contratoId}.`;
         this.isSearchingDebt = false;
         this.cdr.markForCheck();
       },
@@ -190,6 +263,7 @@ export class CreateAgreementModalComponent implements OnInit {
   }
 
   get isFormValid(): boolean {
+    if (!this.selectedContract) return false;
     if (!this.debtSummary || this.debtSummary.deudaTotal <= 0) return false;
     if (this.numeroCuotas < 1 || this.numeroCuotas > 24) return false;
     if (this.abonoInicial < 0 || this.abonoInicial >= this.debtSummary.deudaTotal) return false;
@@ -198,10 +272,10 @@ export class CreateAgreementModalComponent implements OnInit {
   }
 
   submit(): void {
-    if (!this.isFormValid || this.isLoading || !this.debtSummary) return;
+    if (!this.isFormValid || this.isLoading || !this.selectedContract) return;
 
     const dto: ICreateAgreementDto = {
-      contratoId: this.contratoIdInput.trim(),
+      contratoId: this.selectedContract.contratoId,
       numeroCuotas: Number(this.numeroCuotas),
       abonoInicial: Number(this.abonoInicial || 0),
       fechaPrimerPago: this.fechaPrimerPago,
@@ -226,5 +300,12 @@ export class CreateAgreementModalComponent implements OnInit {
 
   close(): void {
     this.closed.emit();
+  }
+
+  private clearContractSearchTimer(): void {
+    if (this.contractSearchTimer) {
+      clearTimeout(this.contractSearchTimer);
+      this.contractSearchTimer = null;
+    }
   }
 }
