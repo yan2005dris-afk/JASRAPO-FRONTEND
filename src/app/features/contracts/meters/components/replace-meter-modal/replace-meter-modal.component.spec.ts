@@ -4,7 +4,7 @@ import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { ReplaceMeterModalComponent } from './replace-meter-modal.component';
 import { MetersService } from '../../services/meters.service';
-import { ReadingRoutesService } from '../../../reading-routes/services/reading-routes.service';
+import { PeriodsService } from '../../../../../shared/services/periods.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
 import { IMeter, IReplaceMeterResponse } from '../../interfaces/imeter.interface';
@@ -104,7 +104,7 @@ describe('ReplaceMeterModalComponent', () => {
     replaceMeter: vi.fn(),
   };
 
-  const mockRoutesService = {
+  const mockPeriodsService = {
     getPeriods: vi.fn().mockReturnValue(of(mockPeriods)),
   };
 
@@ -120,7 +120,7 @@ describe('ReplaceMeterModalComponent', () => {
       providers: [
         FormBuilder,
         { provide: MetersService, useValue: mockMetersService },
-        { provide: ReadingRoutesService, useValue: mockRoutesService },
+        { provide: PeriodsService, useValue: mockPeriodsService },
         { provide: ToastService, useValue: mockToastService },
       ],
     }).compileComponents();

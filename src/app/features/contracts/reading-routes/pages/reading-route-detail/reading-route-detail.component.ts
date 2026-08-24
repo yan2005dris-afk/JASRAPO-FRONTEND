@@ -39,6 +39,7 @@ import { ReadingDetailModalComponent } from '../../../readings/components/readin
 import { ReadingFormModalComponent } from '../../../readings/components/reading-form-modal/reading-form-modal.component';
 import { ReadingsService } from '../../../readings/services/readings.service';
 import { IReading } from '../../../readings/interfaces/ireading.interface';
+import { PeriodsService } from '../../../../../shared/services/periods.service';
 
 type ReadingSource = IReadingRowItem | IReading;
 
@@ -68,6 +69,7 @@ export class ReadingRouteDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly routesService = inject(ReadingRoutesService);
+  private readonly periodsService = inject(PeriodsService);
   private readonly readingsService = inject(ReadingsService);
   private readonly comunidadesService = inject(ComunidadesService);
   private readonly usersService = inject(UsersService);
@@ -151,7 +153,7 @@ export class ReadingRouteDetailComponent implements OnInit {
       },
     });
 
-    this.routesService.getPeriods().subscribe({
+    this.periodsService.getPeriods().subscribe({
       next: (res) => {
         this.periodos = res;
         this.cdr.markForCheck();

@@ -25,11 +25,13 @@ import { Sectores } from '../../../../admin/sectores-prueba/models/sectores.inte
 import { User } from '../../../../users/models/user.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
+import { PeriodPickerComponent } from '../../../../../shared/components/period-picker/period-picker.component';
+import type { IAccountingPeriod } from '../../../../../shared/services/periods.service';
 
 @Component({
   selector: 'app-route-form-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePickerComponent],
+  imports: [CommonModule, FormsModule, DatePickerComponent, PeriodPickerComponent],
   templateUrl: './route-form-modal.component.html',
   styleUrl: './route-form-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -52,7 +54,6 @@ export class RouteFormModalComponent implements OnInit {
   readonly operarios = signal<User[]>([]);
   readonly comunidades = signal<Comunidad[]>([]);
   readonly sectores = signal<Sectores[]>([]);
-  readonly periodos = signal<{ periodoId: number; nombre?: string; estado: string }[]>([]);
 
   // Form State Signals
   readonly nombre = signal<string>('');
@@ -121,12 +122,6 @@ export class RouteFormModalComponent implements OnInit {
       },
     });
 
-    this.routesService.getPeriods().subscribe({
-      next: (res) => {
-        this.periodos.set(res);
-      },
-    });
-
     this.usersService.getUsers(1, 100).subscribe({
       next: (res) => {
         const filtered = res.data.filter((u) => {
@@ -136,6 +131,10 @@ export class RouteFormModalComponent implements OnInit {
         this.operarios.set(filtered);
       },
     });
+  }
+
+  onPeriodSelected(period: IAccountingPeriod | null): void {
+    this.periodoId.set(period ? period.periodoId : null);
   }
 
   onComunidadChange(newComunidadId: number | null): void {

@@ -28,7 +28,7 @@ import {
   TratamientoEntrante,
 } from '../../interfaces/imeter.interface';
 import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
-import { ReadingRoutesService } from '../../../reading-routes/services/reading-routes.service';
+import { PeriodsService } from '../../../../../shared/services/periods.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { MeterTableComponent } from '../../../../../shared/components/meter-table/meter-table.component';
 
@@ -43,7 +43,7 @@ import { MeterTableComponent } from '../../../../../shared/components/meter-tabl
 export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly metersService = inject(MetersService);
-  private readonly routesService = inject(ReadingRoutesService);
+  private readonly periodsService = inject(PeriodsService);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly elementRef = inject(ElementRef);
@@ -537,7 +537,7 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
   }
 
   private loadPeriods(): void {
-    this.routesService.getPeriods().subscribe({
+    this.periodsService.getPeriods().subscribe({
       next: (res) => {
         this.periodos.set(res || []);
         const active = res.find((p) => p.estado === 'ABIERTO');
