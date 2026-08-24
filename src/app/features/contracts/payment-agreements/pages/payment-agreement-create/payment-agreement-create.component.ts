@@ -148,6 +148,7 @@ export class PaymentAgreementCreateComponent implements OnInit, OnDestroy {
     this.contractsService
       .getContracts({
         search: term || undefined,
+        hasDebt: true,
         page: this.contractsPage,
         limit: this.contractsPageSize,
       })

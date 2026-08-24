@@ -83,13 +83,7 @@
 
           <!-- Estado -->
           <td class="text-center small">
-            <span
-              class="badge rounded-pill"
-              [class.badge-soft-success]="contract.estado === 'ACTIVO'"
-              [class.badge-soft-warning]="contract.estado !== 'ACTIVO'"
-            >
-              {{ contract.estado }}
-            </span>
+            <app-status-badge [status]="contract.estado" />
           </td>
 
           <!-- Acciones -->

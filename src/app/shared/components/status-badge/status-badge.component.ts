@@ -105,9 +105,13 @@ export class StatusBadgeComponent {
     if (
       [
         'PENDIENTE',
+        'PENDIENTE_PAGO',
+        'PENDIENTE_INSTALACION',
         'IN_REVIEW',
         'EN_REVISION',
         'EN_PROCESO',
+        'EN_CONVENIO',
+        'RECONEXION',
         'PARCIAL',
         'CON_NOVEDAD',
         'POR_REVISION',
@@ -119,6 +123,10 @@ export class StatusBadgeComponent {
       [
         'ANULADO',
         'INACTIVO',
+        'EN_MORA',
+        'ORDEN_CORTE',
+        'SUSPENDIDO',
+        'RETIRADO',
         'RECHAZADO',
         'RECHAZADA',
         'RECHAZADA_VERIFICACION',

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 import type { IContract, IHistorialMedidor } from '../../interfaces/icontract.interface';
 
 export type ContractsTableMode = 'manage' | 'select';
@@ -7,7 +8,7 @@ export type ContractsTableMode = 'manage' | 'select';
 @Component({
   selector: 'app-contracts-table',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, StatusBadgeComponent],
   templateUrl: './contracts-table.component.html',
   styleUrl: './contracts-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

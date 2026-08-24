@@ -119,6 +119,7 @@ export interface ISearchContractsParams {
   medidorSerie?: string;
   ubicacion?: string;
   estado?: string;
+  hasDebt?: boolean;
 }
 
 // Campos por los que se puede buscar texto en la tabla (debe coincidir con ISearchContractsParams).
