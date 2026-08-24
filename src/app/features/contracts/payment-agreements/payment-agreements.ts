@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { PaymentAgreementsService } from './services/payment-agreements.service';
 import { IAgreement, IFindAllAgreementsParams } from './interfaces/ipayment-agreement.interface';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
@@ -20,7 +21,6 @@ import {
   DropdownComponent,
   DropdownItem,
 } from '../../../shared/components/dropdown/dropdown.component';
-import { CreateAgreementModalComponent } from './components/create-agreement-modal/create-agreement-modal.component';
 import { AgreementDetailModalComponent } from './components/agreement-detail-modal/agreement-detail-modal.component';
 
 /** Espera tras la última tecla antes de consultar el backend. */
@@ -36,7 +36,6 @@ const SEARCH_DEBOUNCE_MS = 400;
     EmptyStateComponent,
     TableSkeletonComponent,
     PaginationComponent,
-    CreateAgreementModalComponent,
     AgreementDetailModalComponent,
     DropdownComponent,
   ],
@@ -49,6 +48,7 @@ const SEARCH_DEBOUNCE_MS = 400;
 })
 export class PaymentAgreementsComponent implements OnInit, OnDestroy {
   private readonly agreementsService = inject(PaymentAgreementsService);
+  private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -85,7 +85,6 @@ export class PaymentAgreementsComponent implements OnInit, OnDestroy {
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Modals
-  isCreateModalOpen = false;
   selectedDetailAgreement: IAgreement | null = null;
 
   ngOnInit(): void {
@@ -200,20 +199,9 @@ export class PaymentAgreementsComponent implements OnInit, OnDestroy {
     return agreement.cuotas.filter((c) => c.estado?.codigo === 'PAGADA' || c.pagoCompleto).length;
   }
 
-  // Modals
+  // Modals & Navigation
   openCreateModal(): void {
-    this.isCreateModalOpen = true;
-    this.cdr.markForCheck();
-  }
-
-  closeCreateModal(): void {
-    this.isCreateModalOpen = false;
-    this.cdr.markForCheck();
-  }
-
-  onAgreementCreated(): void {
-    this.isCreateModalOpen = false;
-    this.loadAgreements();
+    this.router.navigate(['/app/Contratos/ConveniosDePago/new']);
   }
 
   openDetailModal(agreement: IAgreement): void {

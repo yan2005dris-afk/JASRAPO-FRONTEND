@@ -319,10 +319,24 @@ export const routes: Routes = [
           {
             path: 'ConveniosDePago',
             data: { breadcrumb: 'Convenios de Pago' },
-            loadComponent: () =>
-              import('./features/contracts/payment-agreements/payment-agreements').then(
-                (m) => m.PaymentAgreementsComponent,
-              ),
+            children: [
+              {
+                path: '',
+                pathMatch: 'full',
+                loadComponent: () =>
+                  import('./features/contracts/payment-agreements/payment-agreements').then(
+                    (m) => m.PaymentAgreementsComponent,
+                  ),
+              },
+              {
+                path: 'new',
+                data: { breadcrumb: 'Nuevo Convenio' },
+                loadComponent: () =>
+                  import('./features/contracts/payment-agreements/pages/payment-agreement-create/payment-agreement-create.component').then(
+                    (m) => m.PaymentAgreementCreateComponent,
+                  ),
+              },
+            ],
           },
           {
             path: 'RutasDeLectura',

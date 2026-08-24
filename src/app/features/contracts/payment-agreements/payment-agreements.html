@@ -263,10 +263,6 @@
   </div>
 
   <!-- MODALS -->
-  @if (isCreateModalOpen) {
-    <app-create-agreement-modal (created)="onAgreementCreated()" (closed)="closeCreateModal()" />
-  }
-
   @if (selectedDetailAgreement) {
     <app-agreement-detail-modal
       [agreement]="selectedDetailAgreement"

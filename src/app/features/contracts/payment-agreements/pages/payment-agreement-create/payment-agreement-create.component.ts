@@ -5,10 +5,10 @@ import {
   OnDestroy,
   OnInit,
   inject,
-  output,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PaymentAgreementsService } from '../../services/payment-agreements.service';
 import {
   ICreateAgreementDto,
@@ -22,13 +22,12 @@ import { TableSkeletonComponent } from '../../../../../shared/components/table-s
 import { ContractsService } from '../../../service-contracts/services/contracts.service';
 import type { IContract } from '../../../service-contracts/interfaces/icontract.interface';
 
-/** Espera tras la última tecla antes de consultar contratos en el paso 1. */
 const CONTRACT_SEARCH_DEBOUNCE_MS = 400;
 
 type WizardStep = 1 | 2;
 
 @Component({
-  selector: 'app-create-agreement-modal',
+  selector: 'app-payment-agreement-create',
   standalone: true,
   imports: [
     CommonModule,
@@ -37,29 +36,28 @@ type WizardStep = 1 | 2;
     PaginationComponent,
     TableSkeletonComponent,
   ],
-  templateUrl: './create-agreement-modal.component.html',
-  styleUrl: './create-agreement-modal.component.scss',
+  templateUrl: './payment-agreement-create.component.html',
+  styleUrl: './payment-agreement-create.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CreateAgreementModalComponent implements OnInit, OnDestroy {
+export class PaymentAgreementCreateComponent implements OnInit, OnDestroy {
   private readonly agreementsService = inject(PaymentAgreementsService);
   private readonly contractsService = inject(ContractsService);
   private readonly toastService = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
-
-  readonly created = output<void>();
-  readonly closed = output<void>();
 
   currentStep: WizardStep = 1;
 
-  // Paso 1: tabla paginada de contratos
+  // Paso 1: selección de contrato
   contractSearchTerm = '';
   contracts: IContract[] = [];
   totalContracts = 0;
   isLoadingContracts = false;
   contractsError = '';
   contractsPage = 1;
-  contractsPageSize = 5;
+  contractsPageSize = 10;
   selectedContract: IContract | null = null;
   private contractSearchTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -80,7 +78,12 @@ export class CreateAgreementModalComponent implements OnInit, OnDestroy {
     nextMonth.setDate(1);
     this.fechaPrimerPago = nextMonth.toISOString().split('T')[0];
 
-    this.loadContracts();
+    const contratoIdParam = this.route.snapshot.queryParamMap.get('contratoId');
+    if (contratoIdParam) {
+      this.loadContractById(contratoIdParam);
+    } else {
+      this.loadContracts();
+    }
   }
 
   ngOnDestroy(): void {
@@ -88,10 +91,31 @@ export class CreateAgreementModalComponent implements OnInit, OnDestroy {
   }
 
   formatClientName(cliente: IContract['cliente']): string {
+    if (!cliente) return '-';
     if (cliente.razonSocial) {
       return cliente.razonSocial;
     }
-    return `${cliente.nombres} ${cliente.apellidos}`.trim();
+    return `${cliente.nombres || ''} ${cliente.apellidos || ''}`.trim() || '-';
+  }
+
+  private loadContractById(contratoId: string): void {
+    this.isLoadingContracts = true;
+    this.cdr.markForCheck();
+
+    this.contractsService.getContractById(contratoId).subscribe({
+      next: (contract) => {
+        this.isLoadingContracts = false;
+        if (contract) {
+          this.chooseContract(contract);
+        } else {
+          this.loadContracts();
+        }
+      },
+      error: () => {
+        this.isLoadingContracts = false;
+        this.loadContracts();
+      },
+    });
   }
 
   // ---------- Paso 1: selección de contrato ----------
@@ -153,12 +177,9 @@ export class CreateAgreementModalComponent implements OnInit, OnDestroy {
     this.loadContracts();
   }
 
-  /** Un clic marca el contrato en la tabla sin avanzar de paso. */
   markContract(contract: IContract): void {
     if (this.selectedContract?.contratoId === contract.contratoId) return;
 
-    // Al cambiar de contrato el plan del paso 2 deja de ser válido: la deuda es
-    // otra y el abono ingresado se calculó sobre la deuda anterior.
     this.selectedContract = contract;
     this.debtSummary = null;
     this.searchError = '';
@@ -166,7 +187,6 @@ export class CreateAgreementModalComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  /** Doble clic o botón "Elegir": marca el contrato y pasa al paso 2. */
   chooseContract(contract: IContract): void {
     this.markContract(contract);
     this.goToStep(2);
@@ -287,7 +307,7 @@ export class CreateAgreementModalComponent implements OnInit, OnDestroy {
       next: () => {
         this.isLoading = false;
         this.toastService.show('Convenio de pago creado exitosamente', 'success');
-        this.created.emit();
+        this.router.navigate(['/app/Contratos/ConveniosDePago']);
       },
       error: (err) => {
         this.isLoading = false;
@@ -298,8 +318,8 @@ export class CreateAgreementModalComponent implements OnInit, OnDestroy {
     });
   }
 
-  close(): void {
-    this.closed.emit();
+  cancel(): void {
+    this.router.navigate(['/app/Contratos/ConveniosDePago']);
   }
 
   private clearContractSearchTimer(): void {
