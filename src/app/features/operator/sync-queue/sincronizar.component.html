@@ -1,0 +1,362 @@
+<div class="sync-queue-view">
+  <!-- Header -->
+  <div class="queue-header">
+    <h1 class="queue-title">
+      <i class="bi bi-cloud-arrow-up"></i>
+      Cola de Sincronización
+    </h1>
+
+    <!-- Header Actions -->
+    <div class="header-actions">
+      <button
+        class="btn-auto-sync"
+        [class.active]="syncService.autoSyncEnabled()"
+        (click)="syncService.toggleAutoSync()"
+        id="btn-toggle-auto-sync"
+        [title]="
+          syncService.autoSyncEnabled()
+            ? 'Auto-sync activado — click para desactivar'
+            : 'Auto-sync desactivado — click para activar'
+        "
+      >
+        <i
+          class="bi"
+          [class.bi-wifi]="syncService.autoSyncEnabled()"
+          [class.bi-wifi-off]="!syncService.autoSyncEnabled()"
+        ></i>
+        Auto
+      </button>
+
+      @if (syncService.totalPending() > 0 && networkService.isOnline()) {
+        <button
+          class="btn-sync"
+          (click)="forceSync()"
+          [disabled]="syncService.isSyncing()"
+          id="btn-sync-now"
+        >
+          @if (syncService.isSyncing()) {
+            <span class="spinner-border spinner-border-sm" role="status"></span>
+          } @else {
+            <i class="bi bi-arrow-repeat"></i>
+          }
+          Sincronizar
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Tab Switcher -->
+  <div class="tab-switcher">
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'pendientes'"
+      (click)="switchTab('pendientes')"
+      id="tab-pendientes"
+    >
+      Pendientes
+      @if (totalPendientes() > 0) {
+        <span class="tab-count pending">{{ totalPendientes() }}</span>
+      }
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'rechazados'"
+      (click)="switchTab('rechazados')"
+      id="tab-rechazados"
+    >
+      Rechazados
+      @if (totalRechazados() > 0) {
+        <span class="tab-count rejected">{{ totalRechazados() }}</span>
+      }
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'sincronizados'"
+      (click)="switchTab('sincronizados')"
+      id="tab-sincronizados"
+    >
+      Sincronizados
+      @if (syncedReadings().length > 0) {
+        <span class="tab-count synced">{{ syncedReadings().length }}</span>
+      }
+    </button>
+  </div>
+
+  <!-- TAB: Pendientes -->
+  @if (activeTab() === 'pendientes') {
+    <div class="queue-section">
+      @if (totalPendientes() === 0) {
+        <div class="empty-state">
+          <i class="bi bi-check-circle"></i>
+          <p>No hay registros pendientes de envío.</p>
+        </div>
+      }
+
+      <!-- Lecturas Pendientes -->
+      @for (record of pendingReadings(); track record.id) {
+        <div class="queue-card reading-card">
+          <div class="card-type-badge reading">Lectura</div>
+          <div class="card-body-content">
+            @if (record['clienteNombre']) {
+              <div class="card-info">
+                <span class="info-label">Cliente:</span>
+                <span class="info-value">{{ record['clienteNombre'] }}</span>
+              </div>
+            }
+            <div class="card-info">
+              <span class="info-label">Medidor:</span>
+              <span class="info-value">{{ record['serie'] ?? record['medidorId'] }}</span>
+            </div>
+            <div class="card-info">
+              <span class="info-label">Lectura:</span>
+              <span class="info-value"
+                >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
+              >
+            </div>
+            <div class="card-info">
+              <span class="info-label">Consumo:</span>
+              <span class="info-value">{{ record['consumoCalculado'] }} m³</span>
+            </div>
+          </div>
+          <div class="card-status">
+            <span class="status-tag pending-tag"> <i class="bi bi-clock"></i> Pendiente </span>
+          </div>
+        </div>
+      }
+
+      <!-- Anomalías Pendientes -->
+      @for (record of pendingAnomalies(); track record.id) {
+        <div class="queue-card anomaly-card">
+          <div class="card-type-badge anomaly">Novedad</div>
+          <div class="card-body-content">
+            <div class="card-info">
+              <span class="info-label">Medidor:</span>
+              <span class="info-value">{{ record['medidorId'] }}</span>
+            </div>
+            <div class="card-info">
+              <span class="info-label">Tipo:</span>
+              <span class="info-value">{{ record['tipo'] }}</span>
+            </div>
+            <div class="card-info truncate-text">
+              <span class="info-label">Observación:</span>
+              <span class="info-value">{{ record['observacion'] }}</span>
+            </div>
+          </div>
+          <div class="card-status">
+            <span class="status-tag pending-tag"> <i class="bi bi-clock"></i> Pendiente </span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- TAB: Rechazados -->
+  @if (activeTab() === 'rechazados') {
+    <div class="queue-section">
+      @if (totalRechazados() === 0) {
+        <div class="empty-state">
+          <i class="bi bi-hand-thumbs-up"></i>
+          <p>No hay registros rechazados. ¡Todo bien!</p>
+        </div>
+      }
+
+      <!-- Lecturas Rechazadas -->
+      @for (record of rejectedReadings(); track record.id) {
+        <div class="queue-card rejected-card">
+          <div class="card-type-badge reading">Lectura</div>
+          <div class="card-body-content">
+            <div class="card-info">
+              <span class="info-label">Medidor:</span>
+              <span class="info-value">{{ record['medidorId'] }}</span>
+            </div>
+            <div class="card-info">
+              <span class="info-label">Lectura:</span>
+              <span class="info-value"
+                >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
+              >
+            </div>
+            <!-- Error Message -->
+            <div class="error-banner">
+              <i class="bi bi-exclamation-octagon-fill"></i>
+              <span>{{ record.errorMessage }}</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            @if (editingRecord()?.id === record.id && editingType() === 'lectura') {
+              <!-- Edit Form Inline -->
+              <div class="edit-form">
+                <div class="edit-row">
+                  <label [attr.for]="'edit-ant-' + record.id" class="edit-label"
+                    >Lectura Anterior</label
+                  >
+                  <input
+                    [attr.id]="'edit-ant-' + record.id"
+                    type="number"
+                    class="edit-input"
+                    [(ngModel)]="editLecturaAnterior"
+                  />
+                </div>
+                <div class="edit-row">
+                  <label [attr.for]="'edit-act-' + record.id" class="edit-label"
+                    >Lectura Actual</label
+                  >
+                  <input
+                    [attr.id]="'edit-act-' + record.id"
+                    type="number"
+                    class="edit-input"
+                    [(ngModel)]="editLecturaActual"
+                  />
+                </div>
+                <div class="edit-row-check">
+                  <input
+                    type="checkbox"
+                    id="editLecturaInicial-{{ record.id }}"
+                    [(ngModel)]="editLecturaInicial"
+                  />
+                  <label [for]="'editLecturaInicial-' + record.id" class="edit-label"
+                    >¿Lectura Inicial?</label
+                  >
+                </div>
+                <div class="edit-actions">
+                  <button class="btn-save" (click)="saveEditReading()">
+                    <i class="bi bi-check-lg"></i> Guardar
+                  </button>
+                  <button class="btn-cancel" (click)="cancelEdit()">Cancelar</button>
+                </div>
+              </div>
+            } @else {
+              <button class="btn-edit" (click)="startEditReading(record)">
+                <i class="bi bi-pencil-square"></i> Editar
+              </button>
+              <button class="btn-discard" (click)="discardReading(record)">
+                <i class="bi bi-trash3"></i> Descartar
+              </button>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Anomalías Rechazadas -->
+      @for (record of rejectedAnomalies(); track record.id) {
+        <div class="queue-card rejected-card">
+          <div class="card-type-badge anomaly">Novedad</div>
+          <div class="card-body-content">
+            <div class="card-info">
+              <span class="info-label">Medidor:</span>
+              <span class="info-value">{{ record['medidorId'] }}</span>
+            </div>
+            <div class="card-info">
+              <span class="info-label">Tipo:</span>
+              <span class="info-value">{{ record['tipo'] }}</span>
+            </div>
+            <!-- Error Message -->
+            <div class="error-banner">
+              <i class="bi bi-exclamation-octagon-fill"></i>
+              <span>{{ record.errorMessage }}</span>
+            </div>
+          </div>
+          <div class="card-actions">
+            @if (editingRecord()?.id === record.id && editingType() === 'anomalia') {
+              <div class="edit-form">
+                <div class="edit-row">
+                  <label [attr.for]="'edit-tipo-' + record.id" class="edit-label">Tipo</label>
+                  <select
+                    [attr.id]="'edit-tipo-' + record.id"
+                    class="edit-input"
+                    [(ngModel)]="editTipo"
+                  >
+                    <option value="FUGA">Fuga de Agua</option>
+                    <option value="MEDIDOR_DAÑADO">Medidor Dañado / Roto</option>
+                    <option value="LECTURA_ERRONEA">Lectura Errónea</option>
+                    <option value="OTRO">Otro Problema</option>
+                  </select>
+                </div>
+                <div class="edit-row">
+                  <label [attr.for]="'edit-obs-' + record.id" class="edit-label">Observación</label>
+                  <textarea
+                    [attr.id]="'edit-obs-' + record.id"
+                    class="edit-input edit-textarea"
+                    [(ngModel)]="editObservacion"
+                    rows="3"
+                  ></textarea>
+                </div>
+                <div class="edit-actions">
+                  <button class="btn-save" (click)="saveEditAnomaly()">
+                    <i class="bi bi-check-lg"></i> Guardar
+                  </button>
+                  <button class="btn-cancel" (click)="cancelEdit()">Cancelar</button>
+                </div>
+              </div>
+            } @else {
+              <button class="btn-edit" (click)="startEditAnomaly(record)">
+                <i class="bi bi-pencil-square"></i> Editar
+              </button>
+              <button class="btn-discard" (click)="discardAnomaly(record)">
+                <i class="bi bi-trash3"></i> Descartar
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- TAB: Sincronizados -->
+  @if (activeTab() === 'sincronizados') {
+    <div class="queue-section">
+      <div class="section-toolbar">
+        @if (syncedReadings().length > 0) {
+          <button class="btn-clear-history" (click)="clearHistory()" id="btn-clear-history">
+            <i class="bi bi-trash3"></i> Limpiar historial
+          </button>
+        }
+      </div>
+
+      @if (syncedReadings().length === 0) {
+        <div class="empty-state">
+          <i class="bi bi-cloud-check"></i>
+          <p>No hay registros sincronizados aún.</p>
+        </div>
+      }
+
+      @for (record of syncedReadings(); track record.id) {
+        <div class="queue-card synced-card">
+          <div class="card-type-badge reading">Lectura</div>
+          <div class="card-body-content">
+            @if (record['clienteNombre']) {
+              <div class="card-info">
+                <span class="info-label">Cliente:</span>
+                <span class="info-value">{{ record['clienteNombre'] }}</span>
+              </div>
+            }
+            <div class="card-info">
+              <span class="info-label">Medidor:</span>
+              <span class="info-value">{{ record['serie'] ?? record['medidorId'] }}</span>
+            </div>
+            <div class="card-info">
+              <span class="info-label">Lectura:</span>
+              <span class="info-value"
+                >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
+              >
+            </div>
+            <div class="card-info">
+              <span class="info-label">Consumo:</span>
+              <span class="info-value">{{ record['consumoCalculado'] }} m³</span>
+            </div>
+            @if (record['syncedAt']) {
+              <div class="card-info">
+                <span class="info-label">Sincronizado:</span>
+                <span class="info-value">{{ record['syncedAt'] | date: 'dd/MM/yyyy HH:mm' }}</span>
+              </div>
+            }
+          </div>
+          <div class="card-status">
+            <span class="status-tag synced-tag">
+              <i class="bi bi-cloud-check-fill"></i> Sincronizado
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

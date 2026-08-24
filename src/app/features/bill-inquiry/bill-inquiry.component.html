@@ -1,113 +1,251 @@
-<div class="container-fluid">
-  <div class="row justify-content-center align-items-center" style="min-height: 80vh">
-    <div class="col-12 col-md-8 col-lg-6">
-      <div class="card shadow-sm">
-        <div class="card-body text-center">
-          <div class="mb-4">
-            <img
-              ngSrc="assets/JAPO.png"
-              alt="Logo JAPO"
-              width="160"
-              height="80"
-              priority
-              class="img-fluid"
-            />
-          </div>
-          <h2 class="card-title fw-bold mb-4">CONSULTA DE PLANILLA</h2>
+<div class="inquiry-page-wrapper">
+  <div class="container py-4">
+    <div class="row justify-content-center">
+      <div class="col-12 col-md-10 col-lg-7 col-xl-6">
+        <!-- Main Search Card -->
+        <div class="card search-card shadow-sm border-0 mb-4">
+          <div class="card-body p-4 p-md-5 text-center">
+            <div class="brand-logo-container mb-3">
+              <img
+                ngSrc="assets/JAPO.png"
+                alt="Logo JAPO"
+                width="160"
+                height="80"
+                priority
+                class="img-fluid brand-logo"
+              />
+            </div>
 
-          <div class="mb-3">
-            <label class="visually-hidden" for="searchType">Tipo de búsqueda</label>
-            <select
-              id="searchType"
-              class="form-select form-select-lg text-center"
-              [ngModel]="searchType()"
-              (ngModelChange)="searchType.set($event)"
+            <h1 class="page-title h3 fw-bold text-dark mb-2">Consulta de Planilla</h1>
+            <p class="text-muted small mb-4">
+              Verifique el estado de su cuenta, saldo pendiente y contratos asociados
+            </p>
+
+            <!-- Segmented Control Tabs -->
+            <div class="search-tabs-container mb-4" role="tablist">
+              <button
+                type="button"
+                class="search-tab-btn"
+                [class.active]="searchType() === 'identificacion'"
+                (click)="setSearchType('identificacion')"
+                role="tab"
+                [attr.aria-selected]="searchType() === 'identificacion'"
+              >
+                <i class="bi bi-person-vcard me-2"></i>Cédula / RUC
+              </button>
+              <button
+                type="button"
+                class="search-tab-btn"
+                [class.active]="searchType() === 'numeroGuia'"
+                (click)="setSearchType('numeroGuia')"
+                role="tab"
+                [attr.aria-selected]="searchType() === 'numeroGuia'"
+              >
+                <i class="bi bi-file-earmark-text me-2"></i>N° de Guía
+              </button>
+            </div>
+
+            <!-- Input Group with Clear & Action -->
+            <div class="search-input-group mb-3">
+              <div class="input-wrapper position-relative">
+                <i class="bi bi-search search-icon position-absolute"></i>
+                <input
+                  id="terminoBusqueda"
+                  type="text"
+                  class="form-control form-control-lg custom-search-input"
+                  [placeholder]="inputPlaceholder()"
+                  [ngModel]="terminoBusqueda()"
+                  (ngModelChange)="terminoBusqueda.set($event)"
+                  (keyup.enter)="onEnter()"
+                  [attr.inputmode]="searchType() === 'identificacion' ? 'numeric' : 'text'"
+                  autocomplete="off"
+                  required
+                />
+                @if (terminoBusqueda().length > 0) {
+                  <button
+                    type="button"
+                    class="btn btn-link btn-clear position-absolute text-muted p-0"
+                    (click)="limpiar()"
+                    aria-label="Limpiar búsqueda"
+                  >
+                    <i class="bi bi-x-circle-fill"></i>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <button
+              class="btn btn-primary btn-lg w-100 btn-submit shadow-sm"
+              [disabled]="terminoBusqueda().trim() === '' || loading()"
+              (click)="consultar()"
             >
-              @for (option of searchOptions; track option.value) {
-                <option [value]="option.value">{{ option.label }}</option>
+              @if (!loading()) {
+                <span class="d-inline-flex align-items-center gap-2">
+                  <i class="bi bi-search"></i>
+                  <span>Consultar Deuda</span>
+                </span>
+              } @else {
+                <span class="d-inline-flex align-items-center gap-2">
+                  <span
+                    class="spinner-border spinner-border-sm"
+                    role="status"
+                    aria-hidden="true"
+                  ></span>
+                  <span>Buscando registros...</span>
+                </span>
               }
-            </select>
-          </div>
+            </button>
 
-          <div class="mb-3">
-            <label class="visually-hidden" for="terminoBusqueda">{{ inputLabel() }}</label>
-            <input
-              id="terminoBusqueda"
-              type="text"
-              class="form-control form-control-lg text-center"
-              [placeholder]="'Ingrese ' + inputLabel()"
-              [ngModel]="terminoBusqueda()"
-              (ngModelChange)="terminoBusqueda.set($event)"
-              (keyup.enter)="onEnter()"
-              #terminoInput="ngModel"
-              required
-            />
-          </div>
-
-          <button
-            class="btn btn-primary btn-lg w-100 mt-4"
-            [disabled]="terminoBusqueda().trim() === '' || loading()"
-            (click)="consultar()"
-          >
-            @if (!loading()) {
-              <span>Consultar</span>
-            } @else {
-              <span
-                class="spinner-border spinner-border-sm"
-                role="status"
-                aria-hidden="true"
-              ></span>
-              <span> Consultando...</span>
+            <!-- Alerts -->
+            @if (errorMessage()) {
+              <div
+                class="alert alert-danger d-flex align-items-center mt-4 text-start rounded-3"
+                role="alert"
+              >
+                <i class="bi bi-exclamation-triangle-fill fs-5 me-2"></i>
+                <div class="small">{{ errorMessage() }}</div>
+              </div>
             }
-          </button>
 
-          @if (searchClicked() && terminoBusqueda().trim() === '') {
-            <div class="alert alert-danger mt-3">El campo es obligatorio.</div>
-          }
-
-          @if (noResults()) {
-            <div class="alert alert-warning mt-3">
-              No se encontraron resultados para la búsqueda.
-            </div>
-          }
-
-          @if (results()) {
-            <div class="card mt-4 text-start border-success">
-              <div class="card-header bg-success text-white">
-                <h5 class="mb-0"><i class="bi bi-person-check me-2"></i>Cliente Encontrado</h5>
+            @if (noResults()) {
+              <div class="empty-state-box mt-4 p-4 text-center rounded-3">
+                <div class="empty-icon-circle mb-2 mx-auto">
+                  <i class="bi bi-check2-circle text-success fs-3"></i>
+                </div>
+                <h6 class="fw-bold text-dark mb-1">Sin deudas pendientes</h6>
+                <p class="text-muted small mb-0">
+                  No se encontraron registros de deuda vencida para el criterio ingresado.
+                </p>
               </div>
-              <div class="card-body">
-                <h6 class="card-title fw-bold">{{ results()?.clienteNombre }}</h6>
-                <p class="card-text mb-1"><strong>Medidor:</strong> {{ results()?.medidor }}</p>
-                <p class="card-text mb-1">
-                  <strong>Mes Facturado:</strong> {{ results()?.mes }} {{ results()?.anio }}
-                </p>
-                <p class="card-text mb-1">
-                  <strong>Vencimiento:</strong>
-                  <span class="text-danger fw-bold">{{ results()?.fechaVencimiento }}</span>
-                </p>
-                <p class="card-text mb-3">
-                  <strong>Total a Pagar:</strong>
-                  <span class="fs-5 fw-bold text-success">${{ results()?.total }}</span>
-                </p>
+            }
 
-                <button
-                  class="btn btn-outline-success btn-sm w-100 d-flex align-items-center justify-content-center gap-2"
-                  routerLink="/consulta-planilla/preview"
-                >
-                  <i class="bi bi-file-earmark-pdf"></i>
-                  Ver Planilla Digital
-                </button>
+            <!-- Results Card -->
+            @if (results()) {
+              <div class="results-container mt-4 text-start animate-fade-in">
+                <div class="card result-card border-0 shadow-sm overflow-hidden">
+                  <div
+                    class="card-header result-header p-3 d-flex justify-content-between align-items-center"
+                  >
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="avatar-icon">
+                        <i class="bi bi-person-fill"></i>
+                      </div>
+                      <div>
+                        <span class="text-white-50 small d-block">Titular de la Cuenta</span>
+                        <h6 class="mb-0 text-white fw-bold">{{ results()?.cliente?.nombre }}</h6>
+                      </div>
+                    </div>
+                    @if (results()?.cliente?.identificacion) {
+                      <span class="badge bg-white text-primary fw-semibold px-2 py-1">
+                        {{ results()?.cliente?.identificacion }}
+                      </span>
+                    }
+                  </div>
+
+                  <div class="card-body p-3 p-md-4">
+                    <h6 class="section-subtitle text-muted text-uppercase fw-bold mb-3">
+                      Detalle de Contratos y Servicios
+                    </h6>
+
+                    <div class="contracts-list mb-3">
+                      @for (contrato of results()?.contratos; track contrato.contratoId) {
+                        <div
+                          class="contract-item p-3 mb-2 rounded-3 border bg-white d-flex justify-content-between align-items-center flex-wrap gap-2"
+                        >
+                          <div class="contract-meta">
+                            <span class="badge badge-soft-primary font-monospace mb-1">{{
+                              contrato.numeroGuia
+                            }}</span>
+                            <div class="d-flex align-items-center gap-2">
+                              <span class="small text-muted">Estado:</span>
+                              <span class="badge bg-secondary-subtle text-secondary small">{{
+                                contrato.estado
+                              }}</span>
+                            </div>
+                          </div>
+
+                          <div class="contract-delay text-md-center">
+                            <span class="small text-muted d-block">Atraso</span>
+                            @if (contrato.mesesAtrasado > 0) {
+                              <span class="badge bg-warning-subtle text-warning fw-bold">
+                                {{ contrato.mesesAtrasado }}
+                                {{ contrato.mesesAtrasado === 1 ? 'mes' : 'meses' }}
+                              </span>
+                            } @else {
+                              <span class="badge bg-success-subtle text-success fw-bold"
+                                >Al día</span
+                              >
+                            }
+                          </div>
+
+                          <div class="contract-balance text-end">
+                            <span class="small text-muted d-block">Saldo Vencido</span>
+                            <span class="fw-bold text-danger fs-6">
+                              ${{ contrato.saldoVencido | number: '1.2-2' }}
+                            </span>
+                          </div>
+
+                          <div
+                            class="contract-actions w-100 pt-2 mt-1 border-top d-flex justify-content-end gap-2"
+                          >
+                            <button
+                              type="button"
+                              class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1"
+                              (click)="verVistaPrevia(contrato)"
+                              title="Previsualizar reporte de deuda"
+                            >
+                              <i class="bi bi-eye"></i>
+                              <span>Ver</span>
+                            </button>
+                            <button
+                              type="button"
+                              class="btn btn-primary btn-sm d-inline-flex align-items-center gap-1"
+                              (click)="descargarPlanillaContrato(contrato)"
+                              title="Descargar reporte en PDF"
+                            >
+                              <i class="bi bi-file-earmark-pdf-fill"></i>
+                              <span>Descargar Planilla</span>
+                            </button>
+                          </div>
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Total Banner -->
+                    <div
+                      class="total-banner p-3 rounded-3 d-flex justify-content-between align-items-center"
+                    >
+                      <div>
+                        <span class="text-muted small d-block fw-medium">Total Consolidado</span>
+                        <span class="fw-bold text-dark">Valor a Pagar</span>
+                      </div>
+                      <div class="text-end">
+                        <span class="total-amount fs-3 fw-bold text-danger">
+                          ${{ results()?.totalDeuda | number: '1.2-2' }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div class="office-notice text-center mt-3 pt-2">
+                      <small class="text-muted">
+                        <i class="bi bi-geo-alt-fill text-primary me-1"></i>
+                        Para realizar su pago, acérquese a las ventanillas de recaudación en la
+                        oficina central.
+                      </small>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          }
+            }
 
-          <div class="mt-4">
-            <a
-              routerLink="/login"
-              class="text-secondary text-decoration-underline small hover-primary fw-medium"
-              >Ir a Login</a
-            >
+            <div class="footer-links mt-4 pt-2">
+              <a
+                routerLink="/login"
+                class="btn btn-link text-secondary text-decoration-none small fw-medium"
+              >
+                <i class="bi bi-box-arrow-in-right me-1"></i>Ingreso al Sistema Administrativo
+              </a>
+            </div>
           </div>
         </div>
       </div>
