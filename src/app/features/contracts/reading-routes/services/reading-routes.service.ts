@@ -58,6 +58,12 @@ export class ReadingRoutesService {
     return this.http.get<IReadingRoute>(`${this.endpoint}/${id}`);
   }
 
+  getFieldSheetPdf(id: string | number): Observable<Blob> {
+    return this.http.get(`${this.endpoint}/${id}/pdf`, {
+      responseType: 'blob',
+    });
+  }
+
   getPeriods(): Observable<{ periodoId: number; nombre?: string; estado: string }[]> {
     return this.http.get<{ periodoId: number; nombre?: string; estado: string }[]>(
       `${this.endpoint}/periods`,

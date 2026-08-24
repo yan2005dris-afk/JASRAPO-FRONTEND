@@ -744,7 +744,7 @@ export class ReadingRouteDetailComponent implements OnInit {
       });
   }
 
-  // ── Generación de Hoja de Campo (SC-236) ──────────────────────────────
+  // ── Generación de Hoja de Campo Oficial (SC-236 Backend Stream) ───────
   async exportFieldSheetPdf(): Promise<void> {
     const route = this.readingRoute();
     if (!route) return;
@@ -752,127 +752,17 @@ export class ReadingRouteDetailComponent implements OnInit {
     this.isExportingPdf.set(true);
 
     try {
-      const comunidad = this.getComunidadNombre(route.comunidadId);
-      const operario = this.getOperarioNombre(route.operarioId);
-      const periodo = this.getPeriodoNombre(route.periodoId);
-      const fechaPlanificada = route.fechaPlanificada
-        ? new Date(route.fechaPlanificada).toLocaleDateString('es-EC')
-        : '—';
+      const blob = await firstValueFrom(this.routesService.getFieldSheetPdf(route.rutaId));
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Hoja_Campo_Ruta_${route.rutaId}_${route.tipoRuta}_${new Date().toISOString().slice(0, 10)}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(url);
 
-      if (this.isLecturaRoute()) {
-        const res = await firstValueFrom(
-          this.routesService.getReadingsByRuta(route.rutaId, { page: 1, limit: 1000 }),
-        );
-        const data = res.data;
-        const totalRows = data.length;
-        const pendientes = data.filter((r) => r.estadoLectura === 'PENDIENTE').length;
-        const conNovedad = data.filter((r) => r.estadoLectura === 'CON_NOVEDAD').length;
-
-        this.tableExportService.exportToPdf({
-          title: `HOJA DE CAMPO - ${route.nombre.toUpperCase()}`,
-          subtitle: 'JASRAPO - JUNTA DE AGUA POTABLE',
-          fileName: `Hoja_Campo_Ruta_${route.rutaId}_${route.tipoRuta}_${new Date().toISOString().slice(0, 10)}`,
-          metadata: [
-            { label: 'Ruta', value: `#${route.rutaId}` },
-            { label: 'Tipo', value: this.getTipoLabel(route.tipoRuta) },
-            { label: 'Comunidad', value: comunidad },
-            { label: 'Operario Asignado', value: operario },
-            { label: 'Período', value: periodo },
-            { label: 'Fecha Planificada', value: fechaPlanificada },
-          ],
-          columns: [
-            { header: '#', transform: (_, idx) => idx + 1, width: 20, align: 'center' },
-            { header: 'N° Guía', key: 'guia', width: 55 },
-            { header: 'Cliente', key: 'clienteNombre', width: 105 },
-            { header: 'Dirección', key: 'direccion', width: 115 },
-            { header: 'N° Serie', key: 'medidorSerie', width: 60 },
-            {
-              header: 'Lect. Ant.',
-              transform: (r) => (r['lecturaAnterior'] != null ? String(r['lecturaAnterior']) : '—'),
-              width: 50,
-              align: 'center',
-            },
-            {
-              header: 'Lect. Actual',
-              transform: (r) =>
-                r['lecturaActual'] != null ? String(r['lecturaActual']) : '_______',
-              width: 60,
-              align: 'center',
-            },
-            { header: 'Estado', key: 'estadoLectura', width: 50, align: 'center' },
-          ],
-          data: data as unknown as Record<string, unknown>[],
-          summary: `Resumen de Hoja: Total: ${totalRows} | Pendientes: ${pendientes} | Con Novedad: ${conNovedad}`,
-        });
-      } else {
-        const res = await firstValueFrom(
-          this.routesService.getOrdenesByRuta(route.rutaId, { page: 1, limit: 1000 }),
-        );
-        const data = res.data;
-        const totalRows = data.length;
-        const pendientes = data.filter((o) => o.estado === 'PENDIENTE').length;
-        const fallidas = data.filter((o) => o.estado === 'FALLIDA').length;
-
-        this.tableExportService.exportToPdf({
-          title: `HOJA DE CAMPO - ${route.nombre.toUpperCase()}`,
-          subtitle: 'JASRAPO - JUNTA DE AGUA POTABLE',
-          fileName: `Hoja_Campo_Ruta_${route.rutaId}_${route.tipoRuta}_${new Date().toISOString().slice(0, 10)}`,
-          metadata: [
-            { label: 'Ruta', value: `#${route.rutaId}` },
-            { label: 'Tipo', value: this.getTipoLabel(route.tipoRuta) },
-            { label: 'Comunidad', value: comunidad },
-            { label: 'Operario Asignado', value: operario },
-            { label: 'Período', value: periodo },
-            { label: 'Fecha Planificada', value: fechaPlanificada },
-          ],
-          columns: [
-            {
-              header: '#',
-              transform: (o, idx) => (o as unknown as OrderWork).ordenVisita || idx + 1,
-              width: 20,
-              align: 'center',
-            },
-            {
-              header: 'N° Contrato',
-              transform: (o) => (o as unknown as OrderWork).contrato?.numeroContrato ?? '—',
-              width: 60,
-            },
-            {
-              header: 'Cliente',
-              transform: (o) => (o as unknown as OrderWork).contrato?.clienteNombre ?? '—',
-              width: 115,
-            },
-            {
-              header: 'Dirección',
-              transform: (o) => (o as unknown as OrderWork).contrato?.direccion ?? '—',
-              width: 120,
-            },
-            {
-              header: 'N° Serie',
-              transform: (o) => (o as unknown as OrderWork).medidor?.numeroSerie ?? '—',
-              width: 60,
-            },
-            {
-              header: 'Tipo Actividad',
-              transform: (o) => (o as unknown as OrderWork).tipoActividad ?? route.tipoRuta,
-              width: 65,
-            },
-            { header: 'Estado', key: 'estado', width: 50, align: 'center' },
-            {
-              header: 'Firma / Obs.',
-              transform: () => '________________',
-              width: 75,
-              align: 'center',
-            },
-          ],
-          data: data as unknown as Record<string, unknown>[],
-          summary: `Resumen de Hoja: Total: ${totalRows} | Pendientes: ${pendientes} | Novedades (Fallidas): ${fallidas}`,
-        });
-      }
-
-      this.toastService.success('Hoja de campo generada exitosamente');
+      this.toastService.success('Hoja de campo oficial generada exitosamente');
     } catch (err) {
-      console.error('Error al exportar PDF:', err);
+      console.error('Error al exportar PDF oficial:', err);
       this.toastService.error('Ocurrió un error al generar la hoja de campo');
     } finally {
       this.isExportingPdf.set(false);
