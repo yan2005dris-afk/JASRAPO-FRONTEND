@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  OnDestroy,
   OnInit,
   inject,
 } from '@angular/core';
@@ -13,7 +14,6 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
-import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { TableExportService } from '../../../shared/services/table-export.service';
 import {
@@ -22,7 +22,9 @@ import {
 } from '../../../shared/components/dropdown/dropdown.component';
 import { CreateAgreementModalComponent } from './components/create-agreement-modal/create-agreement-modal.component';
 import { AgreementDetailModalComponent } from './components/agreement-detail-modal/agreement-detail-modal.component';
-import type { IContract } from '../service-contracts/interfaces/icontract.interface';
+
+/** Espera tras la última tecla antes de consultar el backend. */
+const SEARCH_DEBOUNCE_MS = 400;
 
 @Component({
   selector: 'app-payment-agreements',
@@ -34,7 +36,6 @@ import type { IContract } from '../service-contracts/interfaces/icontract.interf
     EmptyStateComponent,
     TableSkeletonComponent,
     PaginationComponent,
-    ContractPickerComponent,
     CreateAgreementModalComponent,
     AgreementDetailModalComponent,
     DropdownComponent,
@@ -46,7 +47,7 @@ import type { IContract } from '../service-contracts/interfaces/icontract.interf
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class PaymentAgreementsComponent implements OnInit {
+export class PaymentAgreementsComponent implements OnInit, OnDestroy {
   private readonly agreementsService = inject(PaymentAgreementsService);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -79,12 +80,8 @@ export class PaymentAgreementsComponent implements OnInit {
   pageSize = 10;
 
   // Filters
-  filterContratoId = '';
-
-  // Contract picker
-  isContractPickerOpen = false;
-  selectedContractNumber = '';
-  selectedContractName = '';
+  searchTerm = '';
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Modals
   isCreateModalOpen = false;
@@ -94,7 +91,12 @@ export class PaymentAgreementsComponent implements OnInit {
     this.loadAgreements();
   }
 
+  ngOnDestroy(): void {
+    this.clearSearchTimer();
+  }
+
   loadAgreements(): void {
+    this.clearSearchTimer();
     this.isLoading = true;
     this.openDropdownId = null;
 
@@ -103,8 +105,9 @@ export class PaymentAgreementsComponent implements OnInit {
       limit: this.pageSize,
     };
 
-    if (this.filterContratoId.trim()) {
-      params.contratoId = this.filterContratoId.trim();
+    const term = this.searchTerm.trim();
+    if (term) {
+      params.search = term;
     }
 
     this.agreementsService.getAgreements(params).subscribe({
@@ -126,33 +129,27 @@ export class PaymentAgreementsComponent implements OnInit {
   }
 
   limpiarFiltros(): void {
-    this.filterContratoId = '';
-    this.selectedContractNumber = '';
-    this.selectedContractName = '';
+    this.searchTerm = '';
     this.currentPage = 1;
     this.loadAgreements();
   }
 
-  // ---------- Buscador de contratos ----------
+  // ---------- Buscador del listado ----------
 
-  abrirBuscadorContratos(): void {
-    this.isContractPickerOpen = true;
-    this.cdr.markForCheck();
+  onSearchTermChange(term: string): void {
+    this.searchTerm = term;
+    this.clearSearchTimer();
+    this.searchTimer = setTimeout(() => {
+      this.currentPage = 1;
+      this.loadAgreements();
+    }, SEARCH_DEBOUNCE_MS);
   }
 
-  onContractSelected(contract: IContract): void {
-    this.filterContratoId = String(contract.contratoId);
-    this.selectedContractNumber = contract.numeroGuia;
-    this.selectedContractName = ContractPickerComponent.formatClientName(contract.cliente);
-    this.isContractPickerOpen = false;
-    this.currentPage = 1;
-    this.loadAgreements();
-    this.cdr.markForCheck();
-  }
-
-  onContractPickerClosed(): void {
-    this.isContractPickerOpen = false;
-    this.cdr.markForCheck();
+  private clearSearchTimer(): void {
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+      this.searchTimer = null;
+    }
   }
 
   onPageChange(page: number): void {
