@@ -3,7 +3,8 @@ import {
   ChangeDetectorRef,
   Component,
   OnInit,
-  inject, OnDestroy,
+  inject,
+  OnDestroy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -18,7 +19,6 @@ import { StatusBadgeComponent } from '../../../shared/components/status-badge/st
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
-import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { TableExportService } from '../../../shared/services/table-export.service';
@@ -28,7 +28,6 @@ import {
 } from '../../../shared/components/dropdown/dropdown.component';
 import { AnomalyFormModalComponent } from './components/anomaly-form-modal/anomaly-form-modal.component';
 import { AnomalyResolveModalComponent } from './components/anomaly-resolve-modal/anomaly-resolve-modal.component';
-import type { IContract } from '../service-contracts/interfaces/icontract.interface';
 import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
 
 @Component({
@@ -41,7 +40,6 @@ import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
     EmptyStateComponent,
     PaginationComponent,
     TableSkeletonComponent,
-    ContractPickerComponent,
     AnomalyFormModalComponent,
     AnomalyResolveModalComponent,
     LocalDatePipe,
@@ -96,11 +94,6 @@ export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
   filterTipo = '';
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
-
-  // Contract Picker Filter
-  selectedContractNumber = '';
-  selectedContractName = '';
-  isContractPickerOpen = false;
 
   // Modals
   isFormModalOpen = false;
@@ -205,24 +198,6 @@ export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
     this.loadAnomalies();
   }
 
-  abrirBuscadorContratos(): void {
-    this.isContractPickerOpen = true;
-  }
-
-  cerrarBuscadorContratos(): void {
-    this.isContractPickerOpen = false;
-  }
-
-  onContractSelected(contract: IContract): void {
-    this.selectedContractNumber = contract.numeroGuia
-      ? `Guía: ${contract.numeroGuia}`
-      : `Contrato #${contract.contratoId}`;
-    this.selectedContractName = ContractPickerComponent.formatClientName(contract.cliente);
-    this.isContractPickerOpen = false;
-    this.currentPage = 1;
-    this.loadAnomalies();
-  }
-
   limpiarFiltros(): void {
     if (this.searchTimer) {
       clearTimeout(this.searchTimer);
@@ -230,8 +205,6 @@ export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
     this.activeStatusFilter = 'PENDIENTE';
     this.searchTerm = '';
     this.filterLecturaId = '';
-    this.selectedContractNumber = '';
-    this.selectedContractName = '';
     this.filterTipo = '';
     this.currentPage = 1;
     this.loadAnomalies();

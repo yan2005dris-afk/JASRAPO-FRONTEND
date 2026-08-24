@@ -297,12 +297,4 @@
       (closed)="closeResolveModal()"
     />
   }
-
-  <!-- Contract Picker Modal -->
-  <app-contract-picker
-    [open]="isContractPickerOpen"
-    title="Buscar Contrato para Filtrar Anomalías"
-    (contractSelected)="onContractSelected($event)"
-    (closed)="cerrarBuscadorContratos()"
-  />
 </div>
