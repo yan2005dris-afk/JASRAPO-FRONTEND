@@ -1,10 +1,10 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   OnDestroy,
   OnInit,
   inject,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -50,7 +50,6 @@ export class PaymentAgreementsComponent implements OnInit, OnDestroy {
   private readonly agreementsService = inject(PaymentAgreementsService);
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
-  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly exportItems: DropdownItem[] = [
     { label: 'Exportar a PDF', action: 'pdf', icon: 'bi bi-file-earmark-pdf-fill text-danger' },
@@ -68,24 +67,24 @@ export class PaymentAgreementsComponent implements OnInit, OnDestroy {
     else if (action === 'csv') this.exportToCsv();
   }
 
-  // List State
-  agreements: IAgreement[] = [];
-  totalItems = 0;
-  isLoading = false;
-  hasFetched = false;
-  openDropdownId: string | null = null;
+  // List State Signals
+  readonly agreements = signal<IAgreement[]>([]);
+  readonly totalItems = signal(0);
+  readonly isLoading = signal(false);
+  readonly hasFetched = signal(false);
+  readonly openDropdownId = signal<string | null>(null);
 
-  // Pagination
-  currentPage = 1;
-  pageSize = 10;
+  // Pagination Signals
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(10);
 
-  // Filters
-  searchTerm = '';
-  selectedEstado = 'TODOS';
+  // Filters Signals
+  readonly searchTerm = signal('');
+  readonly selectedEstado = signal('TODOS');
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
-  // Modals
-  selectedDetailAgreement: IAgreement | null = null;
+  // Modals Signals
+  readonly selectedDetailAgreement = signal<IAgreement | null>(null);
 
   ngOnInit(): void {
     this.loadAgreements();
@@ -97,61 +96,60 @@ export class PaymentAgreementsComponent implements OnInit, OnDestroy {
 
   loadAgreements(): void {
     this.clearSearchTimer();
-    this.isLoading = true;
-    this.openDropdownId = null;
+    this.isLoading.set(true);
+    this.openDropdownId.set(null);
 
     const params: IFindAllAgreementsParams = {
-      page: this.currentPage,
-      limit: this.pageSize,
+      page: this.currentPage(),
+      limit: this.pageSize(),
     };
 
-    if (this.selectedEstado && this.selectedEstado !== 'TODOS') {
-      params.estado = this.selectedEstado;
+    const estado = this.selectedEstado();
+    if (estado && estado !== 'TODOS') {
+      params.estado = estado;
     }
 
-    const term = this.searchTerm.trim();
+    const term = this.searchTerm().trim();
     if (term) {
       params.search = term;
     }
 
     this.agreementsService.getAgreements(params).subscribe({
       next: (res) => {
-        this.agreements = res.data;
-        this.totalItems = res.meta?.totalItems ?? res.data.length;
-        this.isLoading = false;
-        this.hasFetched = true;
-        this.cdr.markForCheck();
+        this.agreements.set(res.data);
+        this.totalItems.set(res.meta?.totalItems ?? res.data.length);
+        this.isLoading.set(false);
+        this.hasFetched.set(true);
       },
       error: () => {
-        this.agreements = [];
-        this.totalItems = 0;
-        this.isLoading = false;
-        this.hasFetched = true;
-        this.cdr.markForCheck();
+        this.agreements.set([]);
+        this.totalItems.set(0);
+        this.isLoading.set(false);
+        this.hasFetched.set(true);
       },
     });
   }
 
   onEstadoChange(estado: string): void {
-    this.selectedEstado = estado;
-    this.currentPage = 1;
+    this.selectedEstado.set(estado);
+    this.currentPage.set(1);
     this.loadAgreements();
   }
 
   limpiarFiltros(): void {
-    this.searchTerm = '';
-    this.selectedEstado = 'TODOS';
-    this.currentPage = 1;
+    this.searchTerm.set('');
+    this.selectedEstado.set('TODOS');
+    this.currentPage.set(1);
     this.loadAgreements();
   }
 
   // ---------- Buscador del listado ----------
 
   onSearchTermChange(term: string): void {
-    this.searchTerm = term;
+    this.searchTerm.set(term);
     this.clearSearchTimer();
     this.searchTimer = setTimeout(() => {
-      this.currentPage = 1;
+      this.currentPage.set(1);
       this.loadAgreements();
     }, SEARCH_DEBOUNCE_MS);
   }
@@ -164,26 +162,24 @@ export class PaymentAgreementsComponent implements OnInit, OnDestroy {
   }
 
   onPageChange(page: number): void {
-    this.currentPage = page;
+    this.currentPage.set(page);
     this.loadAgreements();
   }
 
   onPageSizeChange(size: number): void {
-    this.pageSize = size;
-    this.currentPage = 1;
+    this.pageSize.set(size);
+    this.currentPage.set(1);
     this.loadAgreements();
   }
 
   toggleDropdown(id: string, event: MouseEvent): void {
     event.stopPropagation();
-    this.openDropdownId = this.openDropdownId === id ? null : id;
-    this.cdr.markForCheck();
+    this.openDropdownId.update((current) => (current === id ? null : id));
   }
 
   closeDropdowns(): void {
-    if (this.openDropdownId !== null) {
-      this.openDropdownId = null;
-      this.cdr.markForCheck();
+    if (this.openDropdownId() !== null) {
+      this.openDropdownId.set(null);
     }
   }
 
@@ -205,31 +201,28 @@ export class PaymentAgreementsComponent implements OnInit, OnDestroy {
   }
 
   openDetailModal(agreement: IAgreement): void {
-    this.openDropdownId = null;
+    this.openDropdownId.set(null);
     this.agreementsService.getAgreementById(agreement.convenioId).subscribe({
       next: (full) => {
-        this.selectedDetailAgreement = full;
-        this.cdr.markForCheck();
+        this.selectedDetailAgreement.set(full);
       },
       error: () => {
-        this.selectedDetailAgreement = agreement;
-        this.cdr.markForCheck();
+        this.selectedDetailAgreement.set(agreement);
       },
     });
   }
 
   closeDetailModal(): void {
-    this.selectedDetailAgreement = null;
-    this.cdr.markForCheck();
+    this.selectedDetailAgreement.set(null);
   }
 
   onAgreementUpdated(): void {
-    this.selectedDetailAgreement = null;
+    this.selectedDetailAgreement.set(null);
     this.loadAgreements();
   }
 
   downloadPdf(agreement: IAgreement): void {
-    this.openDropdownId = null;
+    this.openDropdownId.set(null);
     this.agreementsService.getAgreementPdf(agreement.convenioId).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
@@ -250,7 +243,8 @@ export class PaymentAgreementsComponent implements OnInit, OnDestroy {
   private readonly tableExportService = inject(TableExportService);
 
   exportToPdf(): void {
-    if (this.agreements.length === 0) return;
+    const list = this.agreements();
+    if (list.length === 0) return;
 
     this.tableExportService.exportToPdf({
       title: 'LISTADO DE CONVENIOS DE PAGO',
@@ -299,13 +293,14 @@ export class PaymentAgreementsComponent implements OnInit, OnDestroy {
           align: 'center',
         },
       ],
-      data: this.agreements as unknown as Record<string, unknown>[],
-      summary: `Total convenios listados: ${this.agreements.length}`,
+      data: list as unknown as Record<string, unknown>[],
+      summary: `Total convenios listados: ${list.length}`,
     });
   }
 
   exportToExcel(): void {
-    if (this.agreements.length === 0) return;
+    const list = this.agreements();
+    if (list.length === 0) return;
 
     this.tableExportService.exportToExcel({
       title: 'LISTADO DE CONVENIOS DE PAGO',
@@ -332,13 +327,14 @@ export class PaymentAgreementsComponent implements OnInit, OnDestroy {
             '—',
         },
       ],
-      data: this.agreements as unknown as Record<string, unknown>[],
-      summary: `Total convenios: ${this.agreements.length}`,
+      data: list as unknown as Record<string, unknown>[],
+      summary: `Total convenios: ${list.length}`,
     });
   }
 
   exportToCsv(): void {
-    if (this.agreements.length === 0) return;
+    const list = this.agreements();
+    if (list.length === 0) return;
 
     this.tableExportService.exportToCsv({
       title: 'LISTADO DE CONVENIOS DE PAGO',
@@ -365,7 +361,7 @@ export class PaymentAgreementsComponent implements OnInit, OnDestroy {
             '—',
         },
       ],
-      data: this.agreements as unknown as Record<string, unknown>[],
+      data: list as unknown as Record<string, unknown>[],
     });
   }
 }

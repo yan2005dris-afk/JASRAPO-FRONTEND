@@ -88,7 +88,7 @@ describe('PaymentAgreementsComponent', () => {
     component.onSearchTermChange('María');
     vi.advanceTimersByTime(400);
 
-    expect(component.currentPage).toBe(1);
+    expect(component.currentPage()).toBe(1);
     expect(lastQuery().page).toBe(1);
   });
 
@@ -105,8 +105,8 @@ describe('PaymentAgreementsComponent', () => {
 
     component.limpiarFiltros();
 
-    expect(component.searchTerm).toBe('');
-    expect(component.selectedEstado).toBe('TODOS');
+    expect(component.searchTerm()).toBe('');
+    expect(component.selectedEstado()).toBe('TODOS');
     expect(lastQuery().search).toBeUndefined();
     expect(lastQuery().estado).toBeUndefined();
   });
@@ -114,8 +114,8 @@ describe('PaymentAgreementsComponent', () => {
   it('aplica el filtro por estado del convenio', () => {
     component.onEstadoChange('ACTIVO');
 
-    expect(component.selectedEstado).toBe('ACTIVO');
-    expect(component.currentPage).toBe(1);
+    expect(component.selectedEstado()).toBe('ACTIVO');
+    expect(component.currentPage()).toBe(1);
     expect(lastQuery().estado).toBe('ACTIVO');
   });
 });

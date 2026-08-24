@@ -38,17 +38,17 @@
             placeholder="Buscar contrato / cliente / medidor..."
             aria-label="Buscar lecturas por número de guía, cliente o serie del medidor"
             autocomplete="off"
-            [ngModel]="searchTerm"
+            [ngModel]="searchTerm()"
             (ngModelChange)="onSearchTermChange($event)"
             (keyup.enter)="loadReadings()"
           />
-          @if (searchTerm) {
+          @if (searchTerm()) {
             <button
               type="button"
               class="btn btn-outline-secondary border-start-0 shadow-none px-2"
               title="Limpiar búsqueda"
               aria-label="Limpiar búsqueda"
-              (click)="searchTerm = ''; onSearchTermChange('')"
+              (click)="searchTerm.set(''); onSearchTermChange('')"
             >
               <i class="bi bi-x"></i>
             </button>
@@ -59,7 +59,7 @@
         <select
           class="form-select shadow-none"
           style="width: 170px"
-          [ngModel]="selectedEstado"
+          [ngModel]="selectedEstado()"
           (ngModelChange)="onEstadoChange($event)"
           aria-label="Filtrar por estado de lectura"
         >
@@ -78,14 +78,14 @@
           type="button"
           class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="loadReadings()"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         >
-          @if (isLoading) {
+          @if (isLoading()) {
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
           } @else {
             <i class="bi bi-search"></i>
           }
-          {{ isLoading ? 'Buscando...' : 'Buscar' }}
+          {{ isLoading() ? 'Buscando...' : 'Buscar' }}
         </button>
 
         <!-- Botón Limpiar -->
@@ -93,7 +93,7 @@
           type="button"
           class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="limpiarFiltros()"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         >
           <i class="bi bi-x-circle"></i>
           Limpiar
@@ -103,13 +103,13 @@
 
     <!-- Table -->
     <div class="pt-2">
-      @if (isLoading) {
+      @if (isLoading()) {
         <div class="p-3">
           <app-table-skeleton [rows]="5" [cols]="8" />
         </div>
       }
 
-      @if (!isLoading && readings.length === 0) {
+      @if (!isLoading() && readings().length === 0) {
         <app-empty-state
           icon="bi bi-speedometer2"
           title="No hay lecturas registradas"
@@ -120,13 +120,13 @@
         />
       }
 
-      @if (!isLoading && readings.length > 0) {
+      @if (!isLoading() && readings().length > 0) {
         <app-readings-table
-          [readings]="tableReadings"
+          [readings]="tableReadings()"
           [showSector]="true"
           [showActions]="true"
           [allowValidation]="true"
-          [openDropdownId]="openDropdownId"
+          [openDropdownId]="openDropdownId()"
           (viewDetail)="openDetailModal($event)"
           (editReading)="openEditModal($event)"
           (approveReading)="approveReading($any($event))"
@@ -138,9 +138,9 @@
       <!-- Pagination -->
       <div class="px-4 py-3 border-top bg-white">
         <app-pagination
-          [currentPage]="currentPage"
-          [pageSize]="pageSize"
-          [totalItems]="totalItems"
+          [currentPage]="currentPage()"
+          [pageSize]="pageSize()"
+          [totalItems]="totalItems()"
           (pageChange)="onPageChange($event)"
           (pageSizeChange)="onPageSizeChange($event)"
         />
@@ -149,17 +149,17 @@
   </div>
 
   <!-- MODALS -->
-  @if (isFormModalOpen) {
+  @if (isFormModalOpen()) {
     <app-reading-form-modal
-      [reading]="selectedReadingForEdit"
+      [reading]="selectedReadingForEdit()"
       (saved)="onReadingSaved()"
       (closed)="closeFormModal()"
     />
   }
 
-  @if (selectedReadingForDetail) {
+  @if (selectedReadingForDetail()) {
     <app-reading-detail-modal
-      [reading]="selectedReadingForDetail"
+      [reading]="selectedReadingForDetail()!"
       (editRequested)="openEditModal($event)"
       (closed)="closeDetailModal()"
     />

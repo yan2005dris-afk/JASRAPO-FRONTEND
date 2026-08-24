@@ -70,7 +70,7 @@ describe('ClientsComponent', () => {
 
     component.limpiarBusqueda();
 
-    expect(component.searchTerm).toBe('');
+    expect(component.searchTerm()).toBe('');
     expect(clientsServiceSpy.searchClients).toHaveBeenLastCalledWith({
       page: 1,
       limit: 5,

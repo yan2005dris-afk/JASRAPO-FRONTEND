@@ -1,10 +1,11 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   OnDestroy,
   OnInit,
+  computed,
   inject,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -48,98 +49,30 @@ export class ReadingsComponent implements OnInit, OnDestroy {
   private readonly readingsService = inject(ReadingsService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
-  private readonly cdr = inject(ChangeDetectorRef);
 
-  // List State
-  readings: IReading[] = [];
-  totalItems = 0;
-  isLoading = false;
-  hasFetched = false;
-  openDropdownId: string | null = null;
+  // List State Signals
+  readonly readings = signal<IReading[]>([]);
+  readonly totalItems = signal(0);
+  readonly isLoading = signal(false);
+  readonly hasFetched = signal(false);
+  readonly openDropdownId = signal<string | null>(null);
 
-  // Pagination
-  currentPage = 1;
-  pageSize = 10;
+  // Pagination Signals
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(10);
 
-  // Filters
-  searchTerm = '';
-  selectedEstado = 'TODOS';
+  // Filters Signals
+  readonly searchTerm = signal('');
+  readonly selectedEstado = signal('TODOS');
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
-  // Modals
-  isFormModalOpen = false;
-  selectedReadingForEdit: IReading | null = null;
-  selectedReadingForDetail: IReading | null = null;
+  // Modals Signals
+  readonly isFormModalOpen = signal(false);
+  readonly selectedReadingForEdit = signal<IReading | null>(null);
+  readonly selectedReadingForDetail = signal<IReading | null>(null);
 
-  ngOnInit(): void {
-    this.loadReadings();
-  }
-
-  loadReadings(): void {
-    this.clearSearchTimer();
-    this.isLoading = true;
-    this.openDropdownId = null;
-
-    const params: IReadingFilterParams = {
-      page: this.currentPage,
-      limit: this.pageSize,
-    };
-
-    if (this.selectedEstado && this.selectedEstado !== 'TODOS') {
-      params.estado = this.selectedEstado;
-    }
-
-    const term = this.searchTerm.trim();
-    if (term) {
-      params.search = term;
-    }
-
-    this.readingsService.getReadings(params).subscribe({
-      next: (res) => {
-        this.readings = res.data;
-        this.totalItems = res.meta?.total ?? res.meta?.totalItems ?? res.data.length;
-        this.isLoading = false;
-        this.hasFetched = true;
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.readings = [];
-        this.totalItems = 0;
-        this.isLoading = false;
-        this.hasFetched = true;
-        this.cdr.markForCheck();
-      },
-    });
-  }
-
-  onSearchTermChange(term: string): void {
-    this.searchTerm = term;
-    this.clearSearchTimer();
-    this.searchTimer = setTimeout(() => {
-      this.currentPage = 1;
-      this.loadReadings();
-    }, 400);
-  }
-
-  onEstadoChange(estado: string): void {
-    this.selectedEstado = estado;
-    this.currentPage = 1;
-    this.loadReadings();
-  }
-
-  limpiarFiltros(): void {
-    this.searchTerm = '';
-    this.selectedEstado = 'TODOS';
-    this.currentPage = 1;
-    this.loadReadings();
-  }
-
-  ngOnDestroy(): void {
-    this.clearSearchTimer();
-  }
-
-  get tableReadings(): IReadingRowItem[] {
-    return this.readings.map((r) => {
+  readonly tableReadings = computed<IReadingRowItem[]>(() => {
+    return this.readings().map((r) => {
       const cliente = r.contrato?.cliente;
       const clienteNombre = cliente?.razonSocial?.trim()
         ? cliente.razonSocial.trim()
@@ -163,6 +96,72 @@ export class ReadingsComponent implements OnInit, OnDestroy {
         tieneAnomalia: r.tieneAnomalia,
       };
     });
+  });
+
+  ngOnInit(): void {
+    this.loadReadings();
+  }
+
+  loadReadings(): void {
+    this.clearSearchTimer();
+    this.isLoading.set(true);
+    this.openDropdownId.set(null);
+
+    const params: IReadingFilterParams = {
+      page: this.currentPage(),
+      limit: this.pageSize(),
+    };
+
+    const estado = this.selectedEstado();
+    if (estado && estado !== 'TODOS') {
+      params.estado = estado;
+    }
+
+    const term = this.searchTerm().trim();
+    if (term) {
+      params.search = term;
+    }
+
+    this.readingsService.getReadings(params).subscribe({
+      next: (res) => {
+        this.readings.set(res.data);
+        this.totalItems.set(res.meta?.total ?? res.meta?.totalItems ?? res.data.length);
+        this.isLoading.set(false);
+        this.hasFetched.set(true);
+      },
+      error: () => {
+        this.readings.set([]);
+        this.totalItems.set(0);
+        this.isLoading.set(false);
+        this.hasFetched.set(true);
+      },
+    });
+  }
+
+  onSearchTermChange(term: string): void {
+    this.searchTerm.set(term);
+    this.clearSearchTimer();
+    this.searchTimer = setTimeout(() => {
+      this.currentPage.set(1);
+      this.loadReadings();
+    }, 400);
+  }
+
+  onEstadoChange(estado: string): void {
+    this.selectedEstado.set(estado);
+    this.currentPage.set(1);
+    this.loadReadings();
+  }
+
+  limpiarFiltros(): void {
+    this.searchTerm.set('');
+    this.selectedEstado.set('TODOS');
+    this.currentPage.set(1);
+    this.loadReadings();
+  }
+
+  ngOnDestroy(): void {
+    this.clearSearchTimer();
   }
 
   private clearSearchTimer(): void {
@@ -173,85 +172,77 @@ export class ReadingsComponent implements OnInit, OnDestroy {
   }
 
   onPageChange(page: number): void {
-    this.currentPage = page;
+    this.currentPage.set(page);
     this.loadReadings();
   }
 
   onPageSizeChange(size: number): void {
-    this.pageSize = size;
-    this.currentPage = 1;
+    this.pageSize.set(size);
+    this.currentPage.set(1);
     this.loadReadings();
   }
 
   toggleDropdown(id: string, event: MouseEvent): void {
     event.stopPropagation();
-    this.openDropdownId = this.openDropdownId === id ? null : id;
-    this.cdr.markForCheck();
+    this.openDropdownId.update((current) => (current === id ? null : id));
   }
 
   closeDropdowns(): void {
-    if (this.openDropdownId !== null) {
-      this.openDropdownId = null;
-      this.cdr.markForCheck();
+    if (this.openDropdownId() !== null) {
+      this.openDropdownId.set(null);
     }
   }
 
   // Modals Actions
   openCreateModal(): void {
-    this.selectedReadingForEdit = null;
-    this.isFormModalOpen = true;
-    this.cdr.markForCheck();
+    this.selectedReadingForEdit.set(null);
+    this.isFormModalOpen.set(true);
   }
 
   openEditModal(reading: IReadingRowItem | IReading): void {
-    this.openDropdownId = null;
+    this.openDropdownId.set(null);
     const full =
-      this.readings.find((r) => String(r.lecturaId) === String(reading.lecturaId)) ||
+      this.readings().find((r) => String(r.lecturaId) === String(reading.lecturaId)) ||
       (reading as IReading);
-    this.selectedReadingForEdit = full;
-    this.isFormModalOpen = true;
-    this.cdr.markForCheck();
+    this.selectedReadingForEdit.set(full);
+    this.isFormModalOpen.set(true);
   }
 
   closeFormModal(): void {
-    this.isFormModalOpen = false;
-    this.selectedReadingForEdit = null;
-    this.cdr.markForCheck();
+    this.isFormModalOpen.set(false);
+    this.selectedReadingForEdit.set(null);
   }
 
   onReadingSaved(): void {
-    this.isFormModalOpen = false;
-    this.selectedReadingForEdit = null;
-    if (this.selectedReadingForDetail) {
-      this.selectedReadingForDetail = null;
+    this.isFormModalOpen.set(false);
+    this.selectedReadingForEdit.set(null);
+    if (this.selectedReadingForDetail()) {
+      this.selectedReadingForDetail.set(null);
     }
     this.loadReadings();
   }
 
   openDetailModal(reading: IReadingRowItem | IReading): void {
-    this.openDropdownId = null;
+    this.openDropdownId.set(null);
     this.readingsService.getReadingById(String(reading.lecturaId)).subscribe({
       next: (full) => {
-        this.selectedReadingForDetail = full;
-        this.cdr.markForCheck();
+        this.selectedReadingForDetail.set(full);
       },
       error: () => {
         const fallback =
-          this.readings.find((r) => String(r.lecturaId) === String(reading.lecturaId)) ||
+          this.readings().find((r) => String(r.lecturaId) === String(reading.lecturaId)) ||
           (reading as IReading);
-        this.selectedReadingForDetail = fallback;
-        this.cdr.markForCheck();
+        this.selectedReadingForDetail.set(fallback);
       },
     });
   }
 
   closeDetailModal(): void {
-    this.selectedReadingForDetail = null;
-    this.cdr.markForCheck();
+    this.selectedReadingForDetail.set(null);
   }
 
   reportAnomaly(reading: IReadingRowItem | IReading): void {
-    this.openDropdownId = null;
+    this.openDropdownId.set(null);
     this.router.navigate(['/app/Contratos/AnomaliasDeLectura'], {
       queryParams: {
         lecturaId: reading.lecturaId,
@@ -261,7 +252,7 @@ export class ReadingsComponent implements OnInit, OnDestroy {
   }
 
   approveReading(reading: IReading): void {
-    this.openDropdownId = null;
+    this.openDropdownId.set(null);
     this.readingsService.updateReading(reading.lecturaId, { estado: 'APROBADA' }).subscribe({
       next: () => {
         this.toastService.show('Lectura aprobada exitosamente', 'success');
@@ -275,7 +266,7 @@ export class ReadingsComponent implements OnInit, OnDestroy {
   }
 
   deleteReading(reading: IReading): void {
-    this.openDropdownId = null;
+    this.openDropdownId.set(null);
     this.dialogService
       .confirm({
         title: 'Eliminar Lectura',
@@ -286,18 +277,17 @@ export class ReadingsComponent implements OnInit, OnDestroy {
       })
       .subscribe((confirmed) => {
         if (confirmed) {
-          this.isLoading = true;
+          this.isLoading.set(true);
           this.readingsService.deleteReading(reading.lecturaId).subscribe({
             next: () => {
-              this.isLoading = false;
+              this.isLoading.set(false);
               this.toastService.show('Lectura eliminada exitosamente', 'success');
               this.loadReadings();
             },
             error: (err) => {
-              this.isLoading = false;
+              this.isLoading.set(false);
               const msg = err?.error?.message || 'Error al eliminar lectura';
               this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
-              this.cdr.markForCheck();
             },
           });
         }

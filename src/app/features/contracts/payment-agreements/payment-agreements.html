@@ -38,17 +38,17 @@
             placeholder="Buscar contrato / cliente..."
             aria-label="Buscar convenios por número de guía, cliente o identificación"
             autocomplete="off"
-            [ngModel]="searchTerm"
+            [ngModel]="searchTerm()"
             (ngModelChange)="onSearchTermChange($event)"
             (keyup.enter)="loadAgreements()"
           />
-          @if (searchTerm) {
+          @if (searchTerm()) {
             <button
               type="button"
               class="btn btn-outline-secondary border-start-0 shadow-none px-2"
               title="Limpiar búsqueda"
               aria-label="Limpiar búsqueda"
-              (click)="searchTerm = ''; onSearchTermChange('')"
+              (click)="searchTerm.set(''); onSearchTermChange('')"
             >
               <i class="bi bi-x"></i>
             </button>
@@ -59,7 +59,7 @@
         <select
           class="form-select shadow-none"
           style="width: 170px"
-          [ngModel]="selectedEstado"
+          [ngModel]="selectedEstado()"
           (ngModelChange)="onEstadoChange($event)"
           aria-label="Filtrar por estado del convenio"
         >
@@ -76,14 +76,14 @@
           type="button"
           class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="loadAgreements()"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         >
-          @if (isLoading) {
+          @if (isLoading()) {
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
           } @else {
             <i class="bi bi-search"></i>
           }
-          {{ isLoading ? 'Buscando...' : 'Buscar' }}
+          {{ isLoading() ? 'Buscando...' : 'Buscar' }}
         </button>
 
         <!-- Botón Limpiar -->
@@ -91,7 +91,7 @@
           type="button"
           class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="limpiarFiltros()"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         >
           <i class="bi bi-x-circle"></i>
           Limpiar
@@ -102,7 +102,7 @@
           label="Exportar"
           icon="bi bi-download"
           [items]="exportItems"
-          [disabled]="agreements.length === 0"
+          [disabled]="agreements().length === 0"
           buttonClass="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm px-3"
           (actionSelected)="handleExportAction($event)"
         ></app-dropdown>
@@ -111,13 +111,13 @@
 
     <!-- Table -->
     <div class="pt-2">
-      @if (isLoading) {
+      @if (isLoading()) {
         <div class="p-3">
           <app-table-skeleton [rows]="5" [cols]="8" />
         </div>
       }
 
-      @if (!isLoading && agreements.length === 0) {
+      @if (!isLoading() && agreements().length === 0) {
         <app-empty-state
           icon="bi bi-file-earmark-medical"
           title="No hay convenios de pago"
@@ -128,7 +128,7 @@
         />
       }
 
-      @if (!isLoading && agreements.length > 0) {
+      @if (!isLoading() && agreements().length > 0) {
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 custom-table">
             <thead>
@@ -147,7 +147,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (ag of agreements; track ag.convenioId) {
+              @for (ag of agreements(); track ag.convenioId) {
                 <tr>
                   <td class="ps-4">
                     <input class="form-check-input table-checkbox" type="checkbox" />
@@ -215,7 +215,7 @@
                       </button>
                       <ul
                         class="dropdown-menu dropdown-menu-end shadow-sm border-0"
-                        [class.show]="openDropdownId === ag.convenioId"
+                        [class.show]="openDropdownId() === ag.convenioId"
                         style="min-width: 165px"
                       >
                         <li>
@@ -251,9 +251,9 @@
         <!-- Pagination -->
         <div class="px-4 py-3 border-top bg-white">
           <app-pagination
-            [currentPage]="currentPage"
-            [pageSize]="pageSize"
-            [totalItems]="totalItems"
+            [currentPage]="currentPage()"
+            [pageSize]="pageSize()"
+            [totalItems]="totalItems()"
             (pageChange)="onPageChange($event)"
             (pageSizeChange)="onPageSizeChange($event)"
           />
@@ -263,9 +263,9 @@
   </div>
 
   <!-- MODALS -->
-  @if (selectedDetailAgreement) {
+  @if (selectedDetailAgreement()) {
     <app-agreement-detail-modal
-      [agreement]="selectedDetailAgreement"
+      [agreement]="selectedDetailAgreement()!"
       (updated)="onAgreementUpdated()"
       (closed)="closeDetailModal()"
     />

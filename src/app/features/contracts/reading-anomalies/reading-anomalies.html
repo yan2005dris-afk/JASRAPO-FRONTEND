@@ -14,7 +14,7 @@
     <button
       type="button"
       class="btn btn-sm btn-filter"
-      [class.active]="activeStatusFilter === 'PENDIENTE'"
+      [class.active]="activeStatusFilter() === 'PENDIENTE'"
       (click)="setStatusFilter('PENDIENTE')"
     >
       <i class="bi bi-flag-fill me-1 text-warning"></i> Pendientes (Nuevas)
@@ -22,7 +22,7 @@
     <button
       type="button"
       class="btn btn-sm btn-filter"
-      [class.active]="activeStatusFilter === ''"
+      [class.active]="activeStatusFilter() === ''"
       (click)="setStatusFilter('')"
     >
       Todas
@@ -30,7 +30,7 @@
     <button
       type="button"
       class="btn btn-sm btn-filter"
-      [class.active]="activeStatusFilter === 'EN_REVISION'"
+      [class.active]="activeStatusFilter() === 'EN_REVISION'"
       (click)="setStatusFilter('EN_REVISION')"
     >
       En Revisión
@@ -38,7 +38,7 @@
     <button
       type="button"
       class="btn btn-sm btn-filter"
-      [class.active]="activeStatusFilter === 'RESUELTA'"
+      [class.active]="activeStatusFilter() === 'RESUELTA'"
       (click)="setStatusFilter('RESUELTA')"
     >
       Resueltas
@@ -46,7 +46,7 @@
     <button
       type="button"
       class="btn btn-sm btn-filter"
-      [class.active]="activeStatusFilter === 'DESCARTADA'"
+      [class.active]="activeStatusFilter() === 'DESCARTADA'"
       (click)="setStatusFilter('DESCARTADA')"
     >
       Descartadas
@@ -79,11 +79,11 @@
             type="text"
             class="form-control border-start-0 ps-0 shadow-none"
             placeholder="Buscar por lectura, observación, cliente, guía o medidor..."
-            [ngModel]="searchTerm"
+            [ngModel]="searchTerm()"
             (ngModelChange)="onSearchTermChange($event)"
             (keyup.enter)="searchAnomalies()"
           />
-          @if (searchTerm) {
+          @if (searchTerm()) {
             <button
               type="button"
               class="btn btn-outline-secondary border-start-0"
@@ -100,7 +100,7 @@
         <select
           class="form-select shadow-none"
           style="width: 200px"
-          [ngModel]="filterTipo"
+          [ngModel]="filterTipo()"
           (ngModelChange)="onFilterTipoChange($event)"
         >
           <option value="">Todos los incidentes</option>
@@ -114,7 +114,7 @@
           type="button"
           class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="limpiarFiltros()"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         >
           <i class="bi bi-x-circle"></i>
           Limpiar
@@ -125,7 +125,7 @@
           label="Exportar"
           icon="bi bi-download"
           [items]="exportItems"
-          [disabled]="anomalies.length === 0"
+          [disabled]="anomalies().length === 0"
           buttonClass="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm px-3"
           (actionSelected)="handleExportAction($event)"
         ></app-dropdown>
@@ -134,13 +134,13 @@
 
     <!-- Table -->
     <div class="pt-2">
-      @if (isLoading) {
+      @if (isLoading()) {
         <div class="p-3">
           <app-table-skeleton [rows]="5" [cols]="7" />
         </div>
       }
 
-      @if (!isLoading && anomalies.length === 0) {
+      @if (!isLoading() && anomalies().length === 0) {
         <app-empty-state
           icon="bi bi-shield-check"
           title="No hay anomalías"
@@ -151,7 +151,7 @@
         />
       }
 
-      @if (!isLoading && anomalies.length > 0) {
+      @if (!isLoading() && anomalies().length > 0) {
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 custom-table">
             <thead>
@@ -168,7 +168,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (anomaly of anomalies; track anomaly.anomaliaId) {
+              @for (anomaly of anomalies(); track anomaly.anomaliaId) {
                 <tr>
                   <td class="ps-4">
                     <input class="form-check-input table-checkbox" type="checkbox" />
@@ -223,7 +223,7 @@
                         </button>
                         <ul
                           class="dropdown-menu dropdown-menu-end shadow-sm border-0"
-                          [class.show]="openDropdownId === anomaly.anomaliaId"
+                          [class.show]="openDropdownId() === anomaly.anomaliaId"
                           style="min-width: 145px"
                         >
                           <li>
@@ -269,9 +269,9 @@
         <!-- Pagination -->
         <div class="px-4 py-3 border-top bg-white">
           <app-pagination
-            [currentPage]="currentPage"
-            [pageSize]="pageSize"
-            [totalItems]="totalItems"
+            [currentPage]="currentPage()"
+            [pageSize]="pageSize()"
+            [totalItems]="totalItems()"
             (pageChange)="onPageChange($event)"
             (pageSizeChange)="onPageSizeChange($event)"
           />
@@ -281,18 +281,18 @@
   </div>
 
   <!-- MODALS -->
-  @if (isFormModalOpen) {
+  @if (isFormModalOpen()) {
     <app-anomaly-form-modal
-      [anomaly]="selectedAnomalyForEdit"
-      [initialLecturaId]="initialLecturaIdForModal"
+      [anomaly]="selectedAnomalyForEdit()"
+      [initialLecturaId]="initialLecturaIdForModal()"
       (saved)="onAnomalySaved()"
       (closed)="closeFormModal()"
     />
   }
 
-  @if (selectedAnomalyForResolve) {
+  @if (selectedAnomalyForResolve()) {
     <app-anomaly-resolve-modal
-      [anomaly]="selectedAnomalyForResolve"
+      [anomaly]="selectedAnomalyForResolve()!"
       (resolved)="onAnomalyResolved()"
       (closed)="closeResolveModal()"
     />

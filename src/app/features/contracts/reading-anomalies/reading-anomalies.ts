@@ -1,10 +1,10 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   OnInit,
   inject,
   OnDestroy,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -58,7 +58,6 @@ export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
   private readonly anomaliesService = inject(ReadingAnomaliesService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
-  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly exportItems: DropdownItem[] = [
     { label: 'Exportar a PDF', action: 'pdf', icon: 'bi bi-file-earmark-pdf-fill text-danger' },
@@ -76,30 +75,30 @@ export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
     else if (action === 'csv') this.exportToCsv();
   }
 
-  // List State
-  anomalies: IReadingAnomaly[] = [];
-  totalItems = 0;
-  isLoading = false;
-  hasFetched = false;
-  openDropdownId: string | null = null;
+  // List State Signals
+  readonly anomalies = signal<IReadingAnomaly[]>([]);
+  readonly totalItems = signal(0);
+  readonly isLoading = signal(false);
+  readonly hasFetched = signal(false);
+  readonly openDropdownId = signal<string | null>(null);
 
-  // Pagination
-  currentPage = 1;
-  pageSize = 10;
+  // Pagination Signals
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(10);
 
-  // Workqueue Filter (default: PENDIENTE)
-  activeStatusFilter = 'PENDIENTE';
-  searchTerm = '';
-  filterLecturaId = '';
-  filterTipo = '';
+  // Workqueue Filter Signals
+  readonly activeStatusFilter = signal('PENDIENTE');
+  readonly searchTerm = signal('');
+  readonly filterLecturaId = signal('');
+  readonly filterTipo = signal('');
 
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
-  // Modals
-  isFormModalOpen = false;
-  selectedAnomalyForEdit: IReadingAnomaly | null = null;
-  initialLecturaIdForModal: string | null = null;
-  selectedAnomalyForResolve: IReadingAnomaly | null = null;
+  // Modals Signals
+  readonly isFormModalOpen = signal(false);
+  readonly selectedAnomalyForEdit = signal<IReadingAnomaly | null>(null);
+  readonly initialLecturaIdForModal = signal<string | null>(null);
+  readonly selectedAnomalyForResolve = signal<IReadingAnomaly | null>(null);
 
   readonly tipoOptions: { value: TipoAnomalia; label: string }[] = [
     { value: 'FUGA', label: 'Fuga de Agua' },
@@ -111,8 +110,8 @@ export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.route.queryParams.subscribe((params) => {
       if (params['report'] === 'true' && params['lecturaId']) {
-        this.initialLecturaIdForModal = String(params['lecturaId']);
-        this.isFormModalOpen = true;
+        this.initialLecturaIdForModal.set(String(params['lecturaId']));
+        this.isFormModalOpen.set(true);
         // Limpiar query params de la URL para que no filtren la tabla general
         this.router.navigate([], {
           relativeTo: this.route,
@@ -120,7 +119,7 @@ export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
           replaceUrl: true,
         });
       } else if (params['lecturaId']) {
-        this.filterLecturaId = String(params['lecturaId']);
+        this.filterLecturaId.set(String(params['lecturaId']));
       }
       this.loadAnomalies();
     });
@@ -133,7 +132,7 @@ export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
   }
 
   onSearchTermChange(term: string): void {
-    this.searchTerm = term;
+    this.searchTerm.set(term);
     if (this.searchTimer) {
       clearTimeout(this.searchTimer);
     }
@@ -143,58 +142,60 @@ export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
   }
 
   onFilterTipoChange(tipo: string): void {
-    this.filterTipo = tipo;
+    this.filterTipo.set(tipo);
     this.searchAnomalies();
   }
 
   searchAnomalies(): void {
-    this.currentPage = 1;
+    this.currentPage.set(1);
     this.loadAnomalies();
   }
 
   loadAnomalies(): void {
-    this.isLoading = true;
-    this.openDropdownId = null;
+    this.isLoading.set(true);
+    this.openDropdownId.set(null);
 
     const params: IReadingAnomalyFilterParams = {
-      page: this.currentPage,
-      limit: this.pageSize,
+      page: this.currentPage(),
+      limit: this.pageSize(),
     };
 
-    if (this.searchTerm.trim()) {
-      params.search = this.searchTerm.trim();
+    const term = this.searchTerm().trim();
+    if (term) {
+      params.search = term;
     }
-    if (this.activeStatusFilter) {
-      params.estado = this.activeStatusFilter;
+    const status = this.activeStatusFilter();
+    if (status) {
+      params.estado = status;
     }
-    if (this.filterLecturaId.trim()) {
-      params.lecturaId = this.filterLecturaId.trim();
+    const lecturaId = this.filterLecturaId().trim();
+    if (lecturaId) {
+      params.lecturaId = lecturaId;
     }
-    if (this.filterTipo) {
-      params.tipo = this.filterTipo;
+    const tipo = this.filterTipo();
+    if (tipo) {
+      params.tipo = tipo;
     }
 
     this.anomaliesService.getAnomalies(params).subscribe({
       next: (res) => {
-        this.anomalies = res.data;
-        this.totalItems = res.meta?.totalItems ?? res.data.length;
-        this.isLoading = false;
-        this.hasFetched = true;
-        this.cdr.markForCheck();
+        this.anomalies.set(res.data);
+        this.totalItems.set(res.meta?.totalItems ?? res.data.length);
+        this.isLoading.set(false);
+        this.hasFetched.set(true);
       },
       error: () => {
-        this.anomalies = [];
-        this.totalItems = 0;
-        this.isLoading = false;
-        this.hasFetched = true;
-        this.cdr.markForCheck();
+        this.anomalies.set([]);
+        this.totalItems.set(0);
+        this.isLoading.set(false);
+        this.hasFetched.set(true);
       },
     });
   }
 
   setStatusFilter(status: string): void {
-    this.activeStatusFilter = status;
-    this.currentPage = 1;
+    this.activeStatusFilter.set(status);
+    this.currentPage.set(1);
     this.loadAnomalies();
   }
 
@@ -202,35 +203,33 @@ export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
     if (this.searchTimer) {
       clearTimeout(this.searchTimer);
     }
-    this.activeStatusFilter = 'PENDIENTE';
-    this.searchTerm = '';
-    this.filterLecturaId = '';
-    this.filterTipo = '';
-    this.currentPage = 1;
+    this.activeStatusFilter.set('PENDIENTE');
+    this.searchTerm.set('');
+    this.filterLecturaId.set('');
+    this.filterTipo.set('');
+    this.currentPage.set(1);
     this.loadAnomalies();
   }
 
   onPageChange(page: number): void {
-    this.currentPage = page;
+    this.currentPage.set(page);
     this.loadAnomalies();
   }
 
   onPageSizeChange(size: number): void {
-    this.pageSize = size;
-    this.currentPage = 1;
+    this.pageSize.set(size);
+    this.currentPage.set(1);
     this.loadAnomalies();
   }
 
   toggleDropdown(id: string, event: MouseEvent): void {
     event.stopPropagation();
-    this.openDropdownId = this.openDropdownId === id ? null : id;
-    this.cdr.markForCheck();
+    this.openDropdownId.update((current) => (current === id ? null : id));
   }
 
   closeDropdowns(): void {
-    if (this.openDropdownId !== null) {
-      this.openDropdownId = null;
-      this.cdr.markForCheck();
+    if (this.openDropdownId() !== null) {
+      this.openDropdownId.set(null);
     }
   }
 
@@ -254,56 +253,50 @@ export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
 
   // Modals Actions
   openCreateModal(): void {
-    this.selectedAnomalyForEdit = null;
-    this.isFormModalOpen = true;
-    this.cdr.markForCheck();
+    this.selectedAnomalyForEdit.set(null);
+    this.isFormModalOpen.set(true);
   }
 
   openEditModal(anomaly: IReadingAnomaly): void {
-    this.openDropdownId = null;
-    this.selectedAnomalyForEdit = anomaly;
-    this.isFormModalOpen = true;
-    this.cdr.markForCheck();
+    this.openDropdownId.set(null);
+    this.selectedAnomalyForEdit.set(anomaly);
+    this.isFormModalOpen.set(true);
   }
 
   closeFormModal(): void {
-    this.isFormModalOpen = false;
-    this.selectedAnomalyForEdit = null;
-    this.cdr.markForCheck();
+    this.isFormModalOpen.set(false);
+    this.selectedAnomalyForEdit.set(null);
   }
 
   onAnomalySaved(): void {
-    this.isFormModalOpen = false;
-    this.selectedAnomalyForEdit = null;
+    this.isFormModalOpen.set(false);
+    this.selectedAnomalyForEdit.set(null);
     this.loadAnomalies();
   }
 
   openResolveModal(anomaly: IReadingAnomaly): void {
-    this.openDropdownId = null;
+    this.openDropdownId.set(null);
     this.anomaliesService.getAnomalyById(anomaly.anomaliaId).subscribe({
       next: (full) => {
-        this.selectedAnomalyForResolve = full;
-        this.cdr.markForCheck();
+        this.selectedAnomalyForResolve.set(full);
       },
       error: () => {
-        this.selectedAnomalyForResolve = anomaly;
-        this.cdr.markForCheck();
+        this.selectedAnomalyForResolve.set(anomaly);
       },
     });
   }
 
   closeResolveModal(): void {
-    this.selectedAnomalyForResolve = null;
-    this.cdr.markForCheck();
+    this.selectedAnomalyForResolve.set(null);
   }
 
   onAnomalyResolved(): void {
-    this.selectedAnomalyForResolve = null;
+    this.selectedAnomalyForResolve.set(null);
     this.loadAnomalies();
   }
 
   deleteAnomaly(anomaly: IReadingAnomaly): void {
-    this.openDropdownId = null;
+    this.openDropdownId.set(null);
     this.dialogService
       .confirm({
         title: 'Eliminar Anomalía',
@@ -314,18 +307,17 @@ export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
       })
       .subscribe((confirmed) => {
         if (confirmed) {
-          this.isLoading = true;
+          this.isLoading.set(true);
           this.anomaliesService.deleteAnomaly(anomaly.anomaliaId).subscribe({
             next: () => {
-              this.isLoading = false;
+              this.isLoading.set(false);
               this.toastService.show('Anomalía eliminada exitosamente', 'success');
               this.loadAnomalies();
             },
             error: (err) => {
-              this.isLoading = false;
+              this.isLoading.set(false);
               const msg = err?.error?.message || 'Error al eliminar anomalía';
               this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
-              this.cdr.markForCheck();
             },
           });
         }
@@ -336,7 +328,8 @@ export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
   private readonly tableExportService = inject(TableExportService);
 
   exportToPdf(): void {
-    if (this.anomalies.length === 0) return;
+    const list = this.anomalies();
+    if (list.length === 0) return;
 
     this.tableExportService.exportToPdf({
       title: 'BANDEJA DE ANOMALÍAS DE LECTURA',
@@ -379,13 +372,14 @@ export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
         },
         { header: 'Estado', key: 'estado', width: 60, align: 'center' },
       ],
-      data: this.anomalies as unknown as Record<string, unknown>[],
-      summary: `Total incidentes registrados: ${this.anomalies.length}`,
+      data: list as unknown as Record<string, unknown>[],
+      summary: `Total incidentes registrados: ${list.length}`,
     });
   }
 
   exportToExcel(): void {
-    if (this.anomalies.length === 0) return;
+    const list = this.anomalies();
+    if (list.length === 0) return;
 
     this.tableExportService.exportToExcel({
       title: 'BANDEJA DE ANOMALÍAS DE LECTURA',
@@ -411,13 +405,14 @@ export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
         { header: 'Observación', key: 'observacion' },
         { header: 'Estado', key: 'estado' },
       ],
-      data: this.anomalies as unknown as Record<string, unknown>[],
-      summary: `Total anomalías: ${this.anomalies.length}`,
+      data: list as unknown as Record<string, unknown>[],
+      summary: `Total anomalías: ${list.length}`,
     });
   }
 
   exportToCsv(): void {
-    if (this.anomalies.length === 0) return;
+    const list = this.anomalies();
+    if (list.length === 0) return;
 
     this.tableExportService.exportToCsv({
       title: 'BANDEJA DE ANOMALÍAS DE LECTURA',
@@ -443,7 +438,7 @@ export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
         { header: 'Observación', key: 'observacion' },
         { header: 'Estado', key: 'estado' },
       ],
-      data: this.anomalies as unknown as Record<string, unknown>[],
+      data: list as unknown as Record<string, unknown>[],
     });
   }
 }

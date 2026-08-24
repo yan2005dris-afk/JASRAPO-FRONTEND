@@ -85,15 +85,15 @@ describe('ReadingsComponent', () => {
     component.onSearchTermChange('María');
     vi.advanceTimersByTime(400);
 
-    expect(component.currentPage).toBe(1);
+    expect(component.currentPage()).toBe(1);
     expect(lastQuery().page).toBe(1);
   });
 
   it('aplica el filtro por estado de lectura', () => {
     component.onEstadoChange('APROBADA');
 
-    expect(component.selectedEstado).toBe('APROBADA');
-    expect(component.currentPage).toBe(1);
+    expect(component.selectedEstado()).toBe('APROBADA');
+    expect(component.currentPage()).toBe(1);
     expect(lastQuery().estado).toBe('APROBADA');
   });
 
@@ -104,8 +104,8 @@ describe('ReadingsComponent', () => {
 
     component.limpiarFiltros();
 
-    expect(component.searchTerm).toBe('');
-    expect(component.selectedEstado).toBe('TODOS');
+    expect(component.searchTerm()).toBe('');
+    expect(component.selectedEstado()).toBe('TODOS');
     expect(lastQuery().search).toBeUndefined();
     expect(lastQuery().estado).toBeUndefined();
   });

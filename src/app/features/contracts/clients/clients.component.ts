@@ -1,11 +1,12 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   OnInit,
   inject,
   input,
   output,
+  signal,
+  computed,
   OnDestroy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -19,7 +20,6 @@ import {
   EstadoBusquedaCliente,
   IClient,
   IIdentificacion,
-  TipoBusquedaCliente,
 } from './interfaces/iclients.interface';
 import { ClientsFormComponent } from './components/clients-form/clients-form.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
@@ -68,7 +68,6 @@ export class ClientsComponent implements OnInit, OnDestroy {
     else if (action === 'csv') this.exportToCsv();
   }
 
-  private readonly cdr = inject(ChangeDetectorRef);
   private readonly clientsService = inject(ClientsService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
@@ -79,9 +78,49 @@ export class ClientsComponent implements OnInit, OnDestroy {
   readonly selectionMode = input(false);
   readonly clientSelected = output<IClient>();
 
+  // Estado reactivo con Signals
+  readonly clients = signal<IClient[]>([]);
+  readonly totalItems = signal(0);
+  readonly isLoading = signal(false);
+  readonly hasFetched = signal(false);
+
+  readonly searchTerm = signal('');
+  readonly estadoBusqueda = signal<EstadoBusquedaCliente>('todos');
+
+  readonly isModalOpen = signal(false);
+  readonly objetoClienteAEditar = signal<IClient | null>(null);
+
+  readonly isDetalleModalOpen = signal(false);
+  readonly clienteDetalleSeleccionado = signal<IClient | null>(null);
+
+  readonly openDropdownId = signal<string | number | null>(null);
+
+  readonly pageSizeOptions = [5, 10, 15];
+  readonly pageSize = signal(5);
+  readonly currentPage = signal(1);
+
+  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalItems() / this.pageSize())));
+
+  readonly pageNumbers = computed(() => {
+    const range = 2;
+    const current = this.currentPage();
+    const total = this.totalPages();
+    const start = Math.max(1, current - range);
+    const end = Math.min(total, current + range);
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  });
+
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+
   ngOnInit(): void {
     // Carga de clientes inicial automática
     this.searchClients();
+  }
+
+  ngOnDestroy(): void {
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+    }
   }
 
   /** Emite el cliente elegido (solo en modo selección). */
@@ -91,66 +130,19 @@ export class ClientsComponent implements OnInit, OnDestroy {
     }
   }
 
-  clients: IClient[] = [];
-  totalItems = 0;
-
-  isLoading = false;
-  hasFetched = false;
-
-  searchTerm = '';
-  searchType: TipoBusquedaCliente = 'nombreCompleto';
-  estadoBusqueda: EstadoBusquedaCliente = 'todos';
-
-  isModalOpen = false;
-  objetoClienteAEditar: IClient | null = null;
-
-  isDetalleModalOpen = false;
-  clienteDetalleSeleccionado: IClient | null = null;
-
-  openDropdownId: string | number | null = null;
-
   toggleDropdown(id: string | number, event: MouseEvent): void {
     event.stopPropagation();
-    this.openDropdownId = this.openDropdownId === id ? null : id;
-    this.cdr.markForCheck();
+    this.openDropdownId.update((current) => (current === id ? null : id));
   }
 
   closeDropdowns(): void {
-    if (this.openDropdownId !== null) {
-      this.openDropdownId = null;
-      this.cdr.markForCheck();
-    }
-  }
-
-  pageSizeOptions = [5, 10, 15];
-  pageSize = 5;
-  currentPage = 1;
-
-  get totalPages(): number {
-    return Math.max(1, Math.ceil(this.totalItems / this.pageSize));
-  }
-
-  get pageNumbers(): number[] {
-    const range = 2;
-    const start = Math.max(1, this.currentPage - range);
-    const end = Math.min(this.totalPages, this.currentPage + range);
-    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-  }
-
-  get pagedClients(): IClient[] {
-    return this.clients;
-  }
-
-  private searchTimer: ReturnType<typeof setTimeout> | null = null;
-
-  ngOnDestroy(): void {
-    if (this.searchTimer) {
-      clearTimeout(this.searchTimer);
+    if (this.openDropdownId() !== null) {
+      this.openDropdownId.set(null);
     }
   }
 
   onSearchTermChange(term: string): void {
-    this.searchTerm = term;
+    this.searchTerm.set(term);
     if (this.searchTimer) {
       clearTimeout(this.searchTimer);
     }
@@ -160,53 +152,51 @@ export class ClientsComponent implements OnInit, OnDestroy {
   }
 
   onEstadoBusquedaChange(estado: EstadoBusquedaCliente): void {
-    this.estadoBusqueda = estado;
+    this.estadoBusqueda.set(estado);
     this.searchClients();
   }
 
   searchClients(): void {
-    this.currentPage = 1;
-    this.hasFetched = true;
+    this.currentPage.set(1);
+    this.hasFetched.set(true);
     this.fetchClientsComponent();
   }
 
   private buildParams(): SearchClientsParams {
-    const valor = this.searchTerm.trim();
+    const valor = this.searchTerm().trim();
     const params: SearchClientsParams = {};
 
     if (valor) {
       params.search = valor;
     }
 
-    if (this.estadoBusqueda === 'activos') params.activo = true;
-    if (this.estadoBusqueda === 'inactivos') params.activo = false;
+    const estado = this.estadoBusqueda();
+    if (estado === 'activos') params.activo = true;
+    if (estado === 'inactivos') params.activo = false;
 
     return params;
   }
 
   private fetchClientsComponent(): void {
-    this.isLoading = true;
-    this.cdr.markForCheck();
+    this.isLoading.set(true);
 
     const params: SearchClientsParams = {
       ...this.buildParams(),
-      page: this.currentPage,
-      limit: this.pageSize,
+      page: this.currentPage(),
+      limit: this.pageSize(),
     };
 
     this.clientsService.searchClients(params).subscribe({
       next: (result) => {
-        this.clients = result.data;
-        this.totalItems = result.meta.total;
-        this.isLoading = false;
-        this.cdr.markForCheck();
+        this.clients.set(result.data);
+        this.totalItems.set(result.meta.total);
+        this.isLoading.set(false);
       },
       error: (err) => {
         console.error('Error buscando clientes:', err);
-        this.clients = [];
-        this.totalItems = 0;
-        this.isLoading = false;
-        this.cdr.markForCheck();
+        this.clients.set([]);
+        this.totalItems.set(0);
+        this.isLoading.set(false);
       },
     });
   }
@@ -215,10 +205,9 @@ export class ClientsComponent implements OnInit, OnDestroy {
     if (this.searchTimer) {
       clearTimeout(this.searchTimer);
     }
-    this.searchTerm = '';
-    this.searchType = 'nombreCompleto';
-    this.estadoBusqueda = 'todos';
-    this.currentPage = 1;
+    this.searchTerm.set('');
+    this.estadoBusqueda.set('todos');
+    this.currentPage.set(1);
     this.fetchClientsComponent();
   }
 
@@ -232,8 +221,9 @@ export class ClientsComponent implements OnInit, OnDestroy {
       fechaHasta: this.toIsoDate(hoy),
     };
 
-    if (this.estadoBusqueda === 'activos') params['activo'] = 'true';
-    if (this.estadoBusqueda === 'inactivos') params['activo'] = 'false';
+    const estado = this.estadoBusqueda();
+    if (estado === 'activos') params['activo'] = 'true';
+    if (estado === 'inactivos') params['activo'] = 'false';
 
     this.router.navigate(['/app/reportes/listado-clientes'], { queryParams: params });
   }
@@ -246,21 +236,18 @@ export class ClientsComponent implements OnInit, OnDestroy {
   }
 
   abrirModal(): void {
-    this.objetoClienteAEditar = null;
-    this.isModalOpen = true;
-    this.cdr.markForCheck();
+    this.objetoClienteAEditar.set(null);
+    this.isModalOpen.set(true);
   }
 
   cerrarModal(): void {
-    this.objetoClienteAEditar = null;
-    this.isModalOpen = false;
-    this.cdr.markForCheck();
+    this.objetoClienteAEditar.set(null);
+    this.isModalOpen.set(false);
   }
 
   editarCliente(cliente: IClient): void {
-    this.objetoClienteAEditar = cliente;
-    this.isModalOpen = true;
-    this.cdr.markForCheck();
+    this.objetoClienteAEditar.set(cliente);
+    this.isModalOpen.set(true);
   }
 
   verDetalleCliente(cliente: IClient): void {
@@ -273,9 +260,8 @@ export class ClientsComponent implements OnInit, OnDestroy {
 
     this.clientsService.getClientById(clienteId).subscribe({
       next: (clienteDetalle) => {
-        this.clienteDetalleSeleccionado = clienteDetalle;
-        this.isDetalleModalOpen = true;
-        this.cdr.markForCheck();
+        this.clienteDetalleSeleccionado.set(clienteDetalle);
+        this.isDetalleModalOpen.set(true);
       },
       error: (err) => {
         console.error('Error obteniendo detalle del cliente:', err);
@@ -285,15 +271,14 @@ export class ClientsComponent implements OnInit, OnDestroy {
   }
 
   cerrarDetalleModal(): void {
-    this.clienteDetalleSeleccionado = null;
-    this.isDetalleModalOpen = false;
-    this.cdr.markForCheck();
+    this.clienteDetalleSeleccionado.set(null);
+    this.isDetalleModalOpen.set(false);
   }
 
   abrirEdicionDesdeDetalle(): void {
-    if (!this.clienteDetalleSeleccionado) return;
+    const cliente = this.clienteDetalleSeleccionado();
+    if (!cliente) return;
 
-    const cliente = this.clienteDetalleSeleccionado;
     this.cerrarDetalleModal();
     this.editarCliente(cliente);
   }
@@ -320,8 +305,7 @@ export class ClientsComponent implements OnInit, OnDestroy {
       })
       .subscribe((confirmed) => {
         if (confirmed) {
-          this.isLoading = true;
-          this.cdr.markForCheck();
+          this.isLoading.set(true);
           this.clientsService.deleteClient(clienteId).subscribe({
             next: () => {
               this.toastService.success('Cliente eliminado correctamente', 'Éxito');
@@ -331,8 +315,7 @@ export class ClientsComponent implements OnInit, OnDestroy {
               console.error('Error eliminando cliente:', err);
               const msg = err.error?.message || 'Ocurrió un error al eliminar el cliente.';
               this.toastService.error(msg, 'Error');
-              this.isLoading = false;
-              this.cdr.markForCheck();
+              this.isLoading.set(false);
             },
           });
         }
@@ -360,16 +343,16 @@ export class ClientsComponent implements OnInit, OnDestroy {
   }
 
   setPageSize(size: number): void {
-    this.pageSize = size;
-    this.currentPage = 1;
-    if (this.hasFetched) {
+    this.pageSize.set(size);
+    this.currentPage.set(1);
+    if (this.hasFetched()) {
       this.fetchClientsComponent();
     }
   }
 
   goToPage(page: number): void {
-    if (page < 1 || page > this.totalPages) return;
-    this.currentPage = page;
+    if (page < 1 || page > this.totalPages()) return;
+    this.currentPage.set(page);
     this.fetchClientsComponent();
   }
 
@@ -377,7 +360,8 @@ export class ClientsComponent implements OnInit, OnDestroy {
   private readonly tableExportService = inject(TableExportService);
 
   exportToPdf(): void {
-    if (this.clients.length === 0) return;
+    const list = this.clients();
+    if (list.length === 0) return;
 
     this.tableExportService.exportToPdf({
       title: 'LISTADO GENERAL DE CLIENTES',
@@ -411,13 +395,14 @@ export class ClientsComponent implements OnInit, OnDestroy {
           align: 'center',
         },
       ],
-      data: this.clients as unknown as Record<string, unknown>[],
-      summary: `Total clientes: ${this.clients.length}`,
+      data: list as unknown as Record<string, unknown>[],
+      summary: `Total clientes: ${list.length}`,
     });
   }
 
   exportToExcel(): void {
-    if (this.clients.length === 0) return;
+    const list = this.clients();
+    if (list.length === 0) return;
 
     this.tableExportService.exportToExcel({
       title: 'LISTADO GENERAL DE CLIENTES',
@@ -439,13 +424,14 @@ export class ClientsComponent implements OnInit, OnDestroy {
           transform: (c) => ((c as unknown as IClient).activo ? 'ACTIVO' : 'INACTIVO'),
         },
       ],
-      data: this.clients as unknown as Record<string, unknown>[],
-      summary: `Total clientes: ${this.clients.length}`,
+      data: list as unknown as Record<string, unknown>[],
+      summary: `Total clientes: ${list.length}`,
     });
   }
 
   exportToCsv(): void {
-    if (this.clients.length === 0) return;
+    const list = this.clients();
+    if (list.length === 0) return;
 
     this.tableExportService.exportToCsv({
       title: 'LISTADO GENERAL DE CLIENTES',
@@ -467,7 +453,7 @@ export class ClientsComponent implements OnInit, OnDestroy {
           transform: (c) => ((c as unknown as IClient).activo ? 'ACTIVO' : 'INACTIVO'),
         },
       ],
-      data: this.clients as unknown as Record<string, unknown>[],
+      data: list as unknown as Record<string, unknown>[],
     });
   }
 }
