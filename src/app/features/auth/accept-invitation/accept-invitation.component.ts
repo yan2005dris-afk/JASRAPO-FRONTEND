@@ -1,4 +1,13 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  signal,
+  computed,
+  inject,
+  ChangeDetectionStrategy,
+  DestroyRef,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -17,12 +26,14 @@ import { InvitationPreviewResponse } from '../../../core/models/invitation.model
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: './accept-invitation.component.html',
   styleUrls: ['./accept-invitation.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AcceptInvitationComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly invitationsService = inject(InvitationsService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly token = signal<string>('');
   readonly isLoading = signal<boolean>(true);
@@ -79,9 +90,12 @@ export class AcceptInvitationComponent implements OnInit {
       { validators: this.passwordsMatchValidator },
     );
 
-    this.form.get('password')?.valueChanges.subscribe((val) => {
-      this.passwordValue.set(val || '');
-    });
+    this.form
+      .get('password')
+      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((val) => {
+        this.passwordValue.set(val || '');
+      });
   }
 
   private validatePasswordStrength(control: AbstractControl): Record<string, boolean> | null {
