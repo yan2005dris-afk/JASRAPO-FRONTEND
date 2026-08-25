@@ -17,6 +17,7 @@ import {
 } from '../../interfaces/ireading.interface';
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 import { PeriodPickerComponent } from '../../../../../shared/components/period-picker/period-picker.component';
+import type { IAccountingPeriod } from '../../../../../shared/services/periods.service';
 import { PickerInputComponent } from '../../../../../shared/components/picker-input/picker-input.component';
 import { ContractsService } from '../../../service-contracts/services/contracts.service';
 import type {
@@ -207,9 +208,7 @@ export class ReadingFormModalComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  onPeriodSelectedFromPicker(
-    period: { periodoId: number; nombre?: string; estado: string } | null,
-  ): void {
+  onPeriodSelectedFromPicker(period: IAccountingPeriod | null): void {
     this.periodoId = period?.periodoId ?? null;
     this.cdr.markForCheck();
   }

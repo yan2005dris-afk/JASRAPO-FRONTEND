@@ -1,24 +1,19 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
-  OnInit,
   computed,
+  effect,
   inject,
   input,
   output,
   signal,
+  untracked,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PickerInputComponent } from '../picker-input/picker-input.component';
-import { ReadingRoutesService } from '../../../features/contracts/reading-routes/services/reading-routes.service';
-
-export interface IPeriodItem {
-  periodoId: number;
-  nombre?: string;
-  estado: string;
-}
+import { IAccountingPeriod, PeriodsService } from '../../services/periods.service';
 
 @Component({
   selector: 'app-period-picker',
@@ -28,9 +23,8 @@ export interface IPeriodItem {
   styleUrl: './period-picker.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PeriodPickerComponent implements OnInit {
-  private readonly routesService = inject(ReadingRoutesService);
-  private readonly cdr = inject(ChangeDetectorRef);
+export class PeriodPickerComponent {
+  private readonly periodsService = inject(PeriodsService);
 
   readonly inputId = input<string>('periodPickerInput');
   readonly label = input<string>('Período Contable');
@@ -39,13 +33,13 @@ export class PeriodPickerComponent implements OnInit {
   readonly disabled = input<boolean>(false);
   readonly selectedPeriodId = input<number | null>(null);
 
-  readonly periodSelected = output<IPeriodItem | null>();
+  readonly periodSelected = output<IAccountingPeriod | null>();
 
-  readonly periods = signal<IPeriodItem[]>([]);
-  readonly isLoading = signal<boolean>(false);
+  readonly periods = signal<IAccountingPeriod[]>([]);
+  readonly isLoading = signal<boolean>(true);
   readonly isOpen = signal<boolean>(false);
   readonly searchQuery = signal<string>('');
-  readonly currentSelected = signal<IPeriodItem | null>(null);
+  readonly currentSelected = signal<IAccountingPeriod | null>(null);
 
   readonly filteredPeriods = computed(() => {
     const q = this.searchQuery().toLowerCase().trim();
@@ -59,28 +53,45 @@ export class PeriodPickerComponent implements OnInit {
     );
   });
 
-  ngOnInit(): void {
-    this.loadPeriods();
-  }
+  constructor() {
+    this.periodsService
+      .getPeriods()
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: (data) => {
+          this.periods.set(data || []);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.periods.set([]);
+          this.isLoading.set(false);
+        },
+      });
 
-  loadPeriods(): void {
-    this.isLoading.set(true);
-    this.routesService.getPeriods().subscribe({
-      next: (data) => {
-        this.periods.set(data || []);
-        this.isLoading.set(false);
-        const initialId = this.selectedPeriodId();
-        if (initialId) {
-          const match = data.find((p) => p.periodoId === initialId);
-          if (match) {
-            this.selectPeriod(match, false);
-          }
-        }
-      },
-      error: () => {
-        this.periods.set([]);
-        this.isLoading.set(false);
-      },
+    // Sincronizar `currentSelected` cuando el padre cambia `selectedPeriodId`
+    // o cuando la lista de períodos termina de cargar. La lectura de
+    // `currentSelected` se hace con `untracked` para que el effect no reaccione
+    // a mutaciones internas (p. ej. selección manual del usuario).
+    effect(() => {
+      const selectedId = this.selectedPeriodId();
+      const list = this.periods();
+
+      if (selectedId === null) {
+        untracked(() => this.currentSelected.set(null));
+        return;
+      }
+      if (list.length === 0) return;
+
+      const current = untracked(() => this.currentSelected());
+      if (current && current.periodoId === selectedId) return;
+
+      const match = list.find((p) => p.periodoId === selectedId);
+      if (match) {
+        untracked(() => {
+          this.currentSelected.set(match);
+          this.searchQuery.set(match.nombre || `Período #${match.periodoId}`);
+        });
+      }
     });
   }
 
@@ -92,7 +103,7 @@ export class PeriodPickerComponent implements OnInit {
     this.isOpen.set(open);
   }
 
-  selectPeriod(period: IPeriodItem, emit = true): void {
+  selectPeriod(period: IAccountingPeriod, emit = true): void {
     this.currentSelected.set(period);
     this.searchQuery.set(period.nombre || `Período #${period.periodoId}`);
     this.isOpen.set(false);

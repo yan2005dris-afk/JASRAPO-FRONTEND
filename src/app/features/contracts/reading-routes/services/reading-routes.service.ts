@@ -64,12 +64,6 @@ export class ReadingRoutesService {
     });
   }
 
-  getPeriods(): Observable<{ periodoId: number; nombre?: string; estado: string }[]> {
-    return this.http.get<{ periodoId: number; nombre?: string; estado: string }[]>(
-      `${this.endpoint}/periods`,
-    );
-  }
-
   createRoute(dto: ICreateRouteDto): Observable<IReadingRoute> {
     return this.http.post<IReadingRoute>(this.endpoint, dto);
   }
