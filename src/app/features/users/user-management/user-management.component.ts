@@ -12,6 +12,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { UsersService } from '../services/users.service';
 import { User } from '../models/user.interface';
+import { InvitationsService } from '../../../core/services/invitations.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
@@ -29,6 +30,7 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 })
 export class UserManagementComponent implements OnInit {
   private readonly usersService = inject(UsersService);
+  private readonly invitationsService = inject(InvitationsService);
   readonly authService = inject(AuthService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
@@ -167,6 +169,35 @@ export class UserManagementComponent implements OnInit {
 
   navigateToEdit(user: User): void {
     this.router.navigate([user.usuarioId, 'edit'], { relativeTo: this.route });
+  }
+
+  reenviarInvitacion(user: User): void {
+    this.dialogService
+      .confirm({
+        title: 'Reenviar invitación',
+        message: `¿Deseas reenviar el correo de invitación con un nuevo enlace de activación a ${user.nombres} (${user.email})?`,
+        confirmText: 'Reenviar',
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.isLoading.set(true);
+          this.invitationsService.resend(user.usuarioId).subscribe({
+            next: () => {
+              this.isLoading.set(false);
+              this.toastService.success(
+                `Invitación reenviada correctamente a ${user.email}`,
+                'Éxito',
+              );
+            },
+            error: (err) => {
+              this.isLoading.set(false);
+              const msg =
+                err.error?.message || 'No se pudo reenviar la invitación.';
+              this.toastService.error(msg, 'Error');
+            },
+          });
+        }
+      });
   }
 
   eliminarUsuario(user: User): void {

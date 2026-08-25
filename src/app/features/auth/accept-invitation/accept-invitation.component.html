@@ -1,0 +1,244 @@
+<!--
+  THESIS: Dedicated, high-trust onboarding portal for invited municipal water operators and staff.
+  OWN-WORLD: JASRAPO Deep Lagoon (#0c9ea1) + Water Mist (#dbf7f8) design tokens, structured password security meter, clear state transitions.
+  STORY: An invited team member activates their account, validates security requirements, and confirms credentials.
+  FIRST VIEWPORT: Two-column hero-card layout on desktop, centered responsive card with full brand assets and clear verification cues.
+  FORM: Direction 1 - Municipal Water System Gateway.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, DESIGN.md, and every shipping raster carrying its provenance.
+-->
+<div class="invitation-layout min-vh-100 d-flex flex-column justify-content-between">
+  <!-- Top Navigation / Brand Header -->
+  <header class="py-3 px-4 px-md-5 border-bottom bg-white d-flex align-items-center justify-content-between">
+    <div class="d-flex align-items-center gap-2">
+      <img
+        src="https://i.imgur.com/oHyMUhU.png"
+        alt="JASRAPO Logo"
+        class="brand-logo"
+      />
+      <div class="brand-divider d-none d-sm-block"></div>
+      <span class="brand-tagline d-none d-sm-block text-muted small fw-medium">
+        Junta Administradora de Agua Potable Olón
+      </span>
+    </div>
+    <a routerLink="/login" class="btn btn-outline-secondary btn-sm px-3 fw-medium">
+      Iniciar Sesión
+    </a>
+  </header>
+
+  <!-- Main Content Area -->
+  <main class="flex-grow-1 d-flex align-items-center justify-content-center py-5 px-3">
+    <div class="container" style="max-width: 580px;">
+
+      <!-- Loading State -->
+      @if (isLoading()) {
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center bg-white">
+          <div class="d-flex flex-column align-items-center justify-content-center py-4">
+            <div class="spinner-grow text-primary mb-3" style="width: 3rem; height: 3rem;" role="status">
+              <span class="visually-hidden">Cargando...</span>
+            </div>
+            <h5 class="fw-bold text-dark mb-1">Verificando invitación</h5>
+            <p class="text-muted small mb-0">Estamos validando tu enlace de seguridad...</p>
+          </div>
+        </div>
+      }
+
+      <!-- Error State -->
+      @else if (errorState() && !invitation()) {
+        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 text-center bg-white">
+          <div class="error-icon-tile mx-auto mb-3">
+            <i class="bi bi-shield-x text-danger fs-2"></i>
+          </div>
+          <h4 class="fw-bold text-dark mb-2">Enlace no disponible</h4>
+          <p class="text-muted mb-4 fs-6">
+            {{ errorState() }}
+          </p>
+          <div class="d-flex flex-column flex-sm-row gap-2 justify-content-center">
+            <a routerLink="/login" class="btn btn-primary px-4 py-2 fw-medium">
+              Ir a Iniciar Sesión
+            </a>
+          </div>
+        </div>
+      }
+
+      <!-- Success State -->
+      @else if (isSuccess()) {
+        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 text-center bg-white anim-scale-up">
+          <div class="success-icon-tile mx-auto mb-3">
+            <i class="bi bi-check-circle-fill text-success fs-1"></i>
+          </div>
+          <h3 class="fw-bold text-dark mb-2">¡Cuenta Activada con Éxito!</h3>
+          <p class="text-muted mb-4 fs-6">
+            Tu contraseña ha sido registrada correctamente. Ya puedes acceder al sistema de gestión JASRAPO con tus credenciales.
+          </p>
+          <button (click)="goToLogin()" class="btn btn-primary btn-lg w-100 py-2 fw-semibold">
+            Ingresar al Sistema
+          </button>
+        </div>
+      }
+
+      <!-- Form Card: Accept Invitation -->
+      @else if (invitation(); as inv) {
+        <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+          <!-- Card Header Banner -->
+          <div class="card-hero-banner px-4 py-4 px-md-5 text-white">
+            <div class="d-flex align-items-center gap-3">
+              <div class="user-avatar-badge">
+                <i class="bi bi-person-check-fill fs-3 text-primary"></i>
+              </div>
+              <div>
+                <span class="badge bg-white text-primary fw-semibold px-2 py-1 mb-1">
+                  Activación de Cuenta
+                </span>
+                <h4 class="fw-bold mb-0 text-white">{{ inv.nombres }} {{ inv.apellidos }}</h4>
+                <small class="text-white-50">{{ inv.email }}</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Body -->
+          <div class="p-4 p-md-5">
+            @if (errorState()) {
+              <div class="alert alert-danger alert-dismissible fade show border-0 shadow-sm mb-4" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                {{ errorState() }}
+                <button type="button" class="btn-close" (click)="errorState.set(null)" aria-label="Cerrar"></button>
+              </div>
+            }
+
+            <p class="text-muted small mb-4">
+              Bienvenido al portal institucional. Para completar tu incorporación, por favor define tu contraseña de acceso seguro:
+            </p>
+
+            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="d-flex flex-column gap-3">
+              <!-- Nueva Contraseña -->
+              <div>
+                <label for="password" class="form-label fw-semibold small text-dark mb-1">
+                  Contraseña <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                  <input
+                    [type]="showPassword() ? 'text' : 'password'"
+                    id="password"
+                    formControlName="password"
+                    class="form-control"
+                    placeholder="Escribe tu contraseña"
+                    [class.is-invalid]="form.get('password')?.touched && form.get('password')?.invalid"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    (click)="showPassword.set(!showPassword())"
+                    [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Ver contraseña'"
+                  >
+                    <i class="bi" [ngClass]="showPassword() ? 'bi-eye-slash' : 'bi-eye'"></i>
+                  </button>
+                </div>
+
+                <!-- Password Strength Checklist -->
+                <div class="strength-meter-box mt-2 p-2 rounded-2 bg-light">
+                  <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="small text-muted fw-medium" style="font-size: 0.75rem;">Requisitos de seguridad:</span>
+                    <span class="badge" [ngClass]="{
+                      'bg-danger': strengthScore() <= 2,
+                      'bg-warning text-dark': strengthScore() === 3 || strengthScore() === 4,
+                      'bg-success': strengthScore() === 5
+                    }">
+                      {{ strengthScore() === 5 ? 'Fuerte' : strengthScore() >= 3 ? 'Media' : 'Débil' }}
+                    </span>
+                  </div>
+                  <div class="row g-1 small text-muted" style="font-size: 0.75rem;">
+                    <div class="col-6 d-flex align-items-center gap-1" [class.text-success]="hasMinLength()">
+                      <i class="bi" [ngClass]="hasMinLength() ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+                      Mínimo 8 caracteres
+                    </div>
+                    <div class="col-6 d-flex align-items-center gap-1" [class.text-success]="hasUppercase()">
+                      <i class="bi" [ngClass]="hasUppercase() ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+                      Una mayúscula (A-Z)
+                    </div>
+                    <div class="col-6 d-flex align-items-center gap-1" [class.text-success]="hasLowercase()">
+                      <i class="bi" [ngClass]="hasLowercase() ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+                      Una minúscula (a-z)
+                    </div>
+                    <div class="col-6 d-flex align-items-center gap-1" [class.text-success]="hasNumber()">
+                      <i class="bi" [ngClass]="hasNumber() ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+                      Al menos un número (0-9)
+                    </div>
+                    <div class="col-12 d-flex align-items-center gap-1" [class.text-success]="hasSymbol()">
+                      <i class="bi" [ngClass]="hasSymbol() ? 'bi-check-circle-fill' : 'bi-circle'"></i>
+                      Un caracter especial (@, $, !, %, *, ?, &, #, ., _, -)
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Confirmar Contraseña -->
+              <div>
+                <label for="password_confirmation" class="form-label fw-semibold small text-dark mb-1">
+                  Confirmar Contraseña <span class="text-danger">*</span>
+                </label>
+                <div class="input-group">
+                  <input
+                    [type]="showPasswordConfirm() ? 'text' : 'password'"
+                    id="password_confirmation"
+                    formControlName="password_confirmation"
+                    class="form-control"
+                    placeholder="Repite tu contraseña"
+                    [class.is-invalid]="
+                      (form.get('password_confirmation')?.touched && form.get('password_confirmation')?.invalid) ||
+                      (form.touched && form.errors?.['mismatch'])
+                    "
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    (click)="showPasswordConfirm.set(!showPasswordConfirm())"
+                    [attr.aria-label]="showPasswordConfirm() ? 'Ocultar contraseña' : 'Ver contraseña'"
+                  >
+                    <i class="bi" [ngClass]="showPasswordConfirm() ? 'bi-eye-slash' : 'bi-eye'"></i>
+                  </button>
+                </div>
+                @if (form.touched && form.errors?.['mismatch']) {
+                  <small class="text-danger mt-1 d-block">Las contraseñas no coinciden.</small>
+                }
+              </div>
+
+              <!-- Aceptación de Términos -->
+              <div class="form-check mt-2">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  id="accept_terms"
+                  formControlName="accept_terms"
+                  [class.is-invalid]="form.get('accept_terms')?.touched && form.get('accept_terms')?.invalid"
+                />
+                <label class="form-check-label small text-muted" for="accept_terms">
+                  Acepto los <a href="#" class="text-primary text-decoration-none fw-semibold" (click)="$event.preventDefault()">términos de uso y políticas de privacidad</a> institucionales.
+                </label>
+              </div>
+
+              <!-- Botón Submit -->
+              <button
+                type="submit"
+                class="btn btn-primary btn-lg w-100 py-2 mt-3 fw-semibold d-flex align-items-center justify-content-center gap-2"
+                [disabled]="form.invalid || isSubmitting()"
+              >
+                @if (isSubmitting()) {
+                  <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  <span>Activando cuenta...</span>
+                } @else {
+                  <i class="bi bi-shield-lock-fill"></i>
+                  <span>Establecer Contraseña y Activar</span>
+                }
+              </button>
+            </form>
+          </div>
+        </div>
+      }
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="py-3 text-center text-muted small border-top bg-white">
+    &copy; 2026 JASRAPO - Junta Administradora de Agua Potable y Alcantarillado Olón.
+  </footer>
+</div>

@@ -1,0 +1,69 @@
+.invitation-layout {
+  background: linear-gradient(135deg, #dbf7f8 0%, #ffffff 100%), #ffffff;
+  min-height: 100vh;
+}
+
+.brand-logo {
+  height: 38px;
+  width: auto;
+  object-fit: contain;
+}
+
+.brand-divider {
+  width: 1px;
+  height: 24px;
+  background-color: #cbdedf;
+  margin: 0 0.5rem;
+}
+
+.card-hero-banner {
+  background: linear-gradient(135deg, var(--primary-color, #0c9ea1) 0%, #0e2728 100%);
+}
+
+.user-avatar-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: #dbf7f8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+}
+
+.error-icon-tile,
+.success-icon-tile {
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-icon-tile {
+  background-color: rgba(239, 68, 68, 0.12);
+}
+
+.success-icon-tile {
+  background-color: rgba(16, 185, 129, 0.12);
+}
+
+.strength-meter-box {
+  border: 1px solid #cbdedf;
+}
+
+.anim-scale-up {
+  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
