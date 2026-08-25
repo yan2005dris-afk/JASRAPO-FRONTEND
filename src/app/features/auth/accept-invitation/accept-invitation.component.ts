@@ -41,7 +41,7 @@ export class AcceptInvitationComponent implements OnInit {
   readonly hasUppercase = computed(() => /[A-Z]/.test(this.passwordValue()));
   readonly hasLowercase = computed(() => /[a-z]/.test(this.passwordValue()));
   readonly hasNumber = computed(() => /\d/.test(this.passwordValue()));
-  readonly hasSymbol = computed(() => /[@$!%*?&#.,_\-]/.test(this.passwordValue()));
+  readonly hasSymbol = computed(() => /[@$!%*?&#.,_-]/.test(this.passwordValue()));
   readonly strengthScore = computed(() => {
     let score = 0;
     if (this.hasMinLength()) score++;
@@ -71,11 +71,7 @@ export class AcceptInvitationComponent implements OnInit {
       {
         password: [
           '',
-          [
-            Validators.required,
-            Validators.minLength(8),
-            this.validatePasswordStrength.bind(this),
-          ],
+          [Validators.required, Validators.minLength(8), this.validatePasswordStrength.bind(this)],
         ],
         password_confirmation: ['', [Validators.required]],
         accept_terms: [false, [Validators.requiredTrue]],
@@ -88,18 +84,18 @@ export class AcceptInvitationComponent implements OnInit {
     });
   }
 
-  private validatePasswordStrength(control: AbstractControl): { [key: string]: boolean } | null {
+  private validatePasswordStrength(control: AbstractControl): Record<string, boolean> | null {
     const val = control.value || '';
     const valid =
       val.length >= 8 &&
       /[A-Z]/.test(val) &&
       /[a-z]/.test(val) &&
       /\d/.test(val) &&
-      /[@$!%*?&#.,_\-]/.test(val);
+      /[@$!%*?&#.,_-]/.test(val);
     return valid ? null : { weakPassword: true };
   }
 
-  private passwordsMatchValidator(group: AbstractControl): { [key: string]: boolean } | null {
+  private passwordsMatchValidator(group: AbstractControl): Record<string, boolean> | null {
     const pass = group.get('password')?.value;
     const confirm = group.get('password_confirmation')?.value;
     return pass === confirm ? null : { mismatch: true };
@@ -154,8 +150,7 @@ export class AcceptInvitationComponent implements OnInit {
         error: (err) => {
           this.isSubmitting.set(false);
           const msg =
-            err.error?.message ||
-            'Ocurrió un error al procesar tu registro. Intenta de nuevo.';
+            err.error?.message || 'Ocurrió un error al procesar tu registro. Intenta de nuevo.';
           this.errorState.set(msg);
         },
       });

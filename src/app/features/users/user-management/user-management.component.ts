@@ -191,8 +191,7 @@ export class UserManagementComponent implements OnInit {
             },
             error: (err) => {
               this.isLoading.set(false);
-              const msg =
-                err.error?.message || 'No se pudo reenviar la invitación.';
+              const msg = err.error?.message || 'No se pudo reenviar la invitación.';
               this.toastService.error(msg, 'Error');
             },
           });

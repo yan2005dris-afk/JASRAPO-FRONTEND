@@ -12,9 +12,9 @@ export const routes: Routes = [
   {
     path: 'auth/invitations/accept',
     loadComponent: () =>
-      import(
-        './features/auth/accept-invitation/accept-invitation.component'
-      ).then((m) => m.AcceptInvitationComponent),
+      import('./features/auth/accept-invitation/accept-invitation.component').then(
+        (m) => m.AcceptInvitationComponent,
+      ),
     canActivate: [guestGuard],
   },
   {

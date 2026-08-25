@@ -22,7 +22,9 @@ export class InvitationsService {
    * Obtiene la vista previa de una invitación pública mediante su token
    */
   preview(token: string): Observable<InvitationPreviewResponse> {
-    return this.http.get<InvitationPreviewResponse>(`${this.authUrl}/${encodeURIComponent(token)}/preview`);
+    return this.http.get<InvitationPreviewResponse>(
+      `${this.authUrl}/${encodeURIComponent(token)}/preview`,
+    );
   }
 
   /**
