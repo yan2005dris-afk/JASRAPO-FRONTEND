@@ -1,40 +1,29 @@
-.invitation-layout {
-  background: linear-gradient(135deg, #dbf7f8 0%, #ffffff 100%), #ffffff;
-  min-height: 100vh;
-}
-
-.brand-logo {
-  height: 38px;
-  width: auto;
+/* Custom Logo consistent with login */
+.custom-logo-small {
+  max-height: 180px;
   object-fit: contain;
 }
 
-.brand-divider {
-  width: 1px;
-  height: 24px;
-  background-color: #cbdedf;
-  margin: 0 0.5rem;
+.user-greeting-badge {
+  background-color: var(--bs-light, #f8f9fa);
+  border: 1px solid #e2e8f0;
 }
 
-.card-hero-banner {
-  background: linear-gradient(135deg, var(--primary-color, #0c9ea1) 0%, #0e2728 100%);
-}
-
-.user-avatar-badge {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
+.user-avatar-mini {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   background: #dbf7f8;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+  flex-shrink: 0;
 }
 
 .error-icon-tile,
 .success-icon-tile {
-  width: 64px;
-  height: 64px;
+  width: 60px;
+  height: 60px;
   border-radius: 16px;
   display: flex;
   align-items: center;
@@ -50,7 +39,16 @@
 }
 
 .strength-meter-box {
-  border: 1px solid #cbdedf;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-eye-toggle {
+  border-color: #dee2e6;
+  &:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+  }
 }
 
 .anim-scale-up {
@@ -60,7 +58,7 @@
 @keyframes scaleUp {
   from {
     opacity: 0;
-    transform: scale(0.96);
+    transform: scale(0.95);
   }
   to {
     opacity: 1;
