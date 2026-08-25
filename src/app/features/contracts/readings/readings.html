@@ -26,67 +26,74 @@
       </button>
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
-        <!-- Contrato seleccionado (modal buscador) -->
+        <!-- Buscador de texto libre -->
         <div class="input-group search-group" style="width: 290px">
           <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
-            <i class="bi bi-file-text"></i>
+            <i class="bi bi-search"></i>
           </span>
           <input
+            id="buscadorLecturas"
             type="text"
-            class="form-control border-start-0 ps-0 shadow-none text-truncate"
-            placeholder="Buscar contrato / cliente..."
-            [value]="
-              selectedContractNumber ? selectedContractNumber + ' - ' + selectedContractName : ''
-            "
-            readonly
-            (click)="abrirBuscadorContratos()"
-            [title]="
-              selectedContractName
-                ? selectedContractNumber + ' - ' + selectedContractName
-                : 'Seleccione un contrato'
-            "
+            class="form-control border-start-0 ps-0 shadow-none"
+            placeholder="Buscar contrato / cliente / medidor..."
+            aria-label="Buscar lecturas por número de guía, cliente o serie del medidor"
+            autocomplete="off"
+            [ngModel]="searchTerm()"
+            (ngModelChange)="onSearchTermChange($event)"
+            (keyup.enter)="loadReadings()"
           />
-          @if (selectedContractNumber) {
+          @if (searchTerm()) {
             <button
               type="button"
               class="btn btn-outline-secondary border-start-0 shadow-none px-2"
-              title="Quitar filtro de contrato"
-              (click)="limpiarFiltros(); $event.stopPropagation()"
+              title="Limpiar búsqueda"
+              aria-label="Limpiar búsqueda"
+              (click)="searchTerm.set(''); onSearchTermChange('')"
             >
               <i class="bi bi-x"></i>
-            </button>
-          } @else {
-            <button
-              type="button"
-              class="btn btn-outline-primary shadow-none"
-              title="Buscar contrato"
-              (click)="abrirBuscadorContratos()"
-            >
-              <i class="bi bi-search"></i>
             </button>
           }
         </div>
 
-        <!-- Buscar -->
+        <!-- Filtro Estado de Lectura -->
+        <select
+          class="form-select shadow-none"
+          style="width: 170px"
+          [ngModel]="selectedEstado()"
+          (ngModelChange)="onEstadoChange($event)"
+          aria-label="Filtrar por estado de lectura"
+        >
+          <option value="TODOS">Todos los estados</option>
+          <option value="PENDIENTE">Pendiente</option>
+          <option value="POR_REVISION">Por Revisión</option>
+          <option value="APROBADA">Aprobada</option>
+          <option value="RECHAZADA_VERIFICACION">Rechazada</option>
+          <option value="ESTIMADA">Estimada</option>
+          <option value="PLANILLADA">Planillada</option>
+          <option value="CON_NOVEDAD">Con Novedad</option>
+        </select>
+
+        <!-- Botón Buscar -->
         <button
+          type="button"
           class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="loadReadings()"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         >
-          @if (isLoading) {
+          @if (isLoading()) {
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-          }
-          @if (!isLoading) {
+          } @else {
             <i class="bi bi-search"></i>
           }
-          Buscar
+          {{ isLoading() ? 'Buscando...' : 'Buscar' }}
         </button>
 
-        <!-- Limpiar -->
+        <!-- Botón Limpiar -->
         <button
+          type="button"
           class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="limpiarFiltros()"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         >
           <i class="bi bi-x-circle"></i>
           Limpiar
@@ -96,13 +103,13 @@
 
     <!-- Table -->
     <div class="pt-2">
-      @if (isLoading) {
+      @if (isLoading()) {
         <div class="p-3">
           <app-table-skeleton [rows]="5" [cols]="8" />
         </div>
       }
 
-      @if (!isLoading && readings.length === 0) {
+      @if (!isLoading() && readings().length === 0) {
         <app-empty-state
           icon="bi bi-speedometer2"
           title="No hay lecturas registradas"
@@ -113,13 +120,13 @@
         />
       }
 
-      @if (!isLoading && readings.length > 0) {
+      @if (!isLoading() && readings().length > 0) {
         <app-readings-table
-          [readings]="tableReadings"
+          [readings]="tableReadings()"
           [showSector]="true"
           [showActions]="true"
           [allowValidation]="true"
-          [openDropdownId]="openDropdownId"
+          [openDropdownId]="openDropdownId()"
           (viewDetail)="openDetailModal($event)"
           (editReading)="openEditModal($event)"
           (approveReading)="approveReading($any($event))"
@@ -131,9 +138,9 @@
       <!-- Pagination -->
       <div class="px-4 py-3 border-top bg-white">
         <app-pagination
-          [currentPage]="currentPage"
-          [pageSize]="pageSize"
-          [totalItems]="totalItems"
+          [currentPage]="currentPage()"
+          [pageSize]="pageSize()"
+          [totalItems]="totalItems()"
           (pageChange)="onPageChange($event)"
           (pageSizeChange)="onPageSizeChange($event)"
         />
@@ -142,27 +149,19 @@
   </div>
 
   <!-- MODALS -->
-  @if (isFormModalOpen) {
+  @if (isFormModalOpen()) {
     <app-reading-form-modal
-      [reading]="selectedReadingForEdit"
+      [reading]="selectedReadingForEdit()"
       (saved)="onReadingSaved()"
       (closed)="closeFormModal()"
     />
   }
 
-  @if (selectedReadingForDetail) {
+  @if (selectedReadingForDetail()) {
     <app-reading-detail-modal
-      [reading]="selectedReadingForDetail"
+      [reading]="selectedReadingForDetail()!"
       (editRequested)="openEditModal($event)"
       (closed)="closeDetailModal()"
     />
   }
-
-  <!-- Contract Picker Modal -->
-  <app-contract-picker
-    [open]="isContractPickerOpen"
-    title="Buscar Contrato para Filtrar Lecturas"
-    (contractSelected)="onContractSelected($event)"
-    (closed)="cerrarBuscadorContratos()"
-  />
 </div>

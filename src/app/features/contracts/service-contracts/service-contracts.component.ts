@@ -12,6 +12,7 @@ import {
 import { ServiceContractFormComponent } from './components/service-contract-form/service-contract-form.component';
 import { ReplaceMeterModalComponent } from '../meters/components/replace-meter-modal/replace-meter-modal.component';
 import { AssignInstallationRouteModalComponent } from './components/assign-installation-route-modal/assign-installation-route-modal.component';
+import { ContractsTableComponent } from './components/contracts-table/contracts-table.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
 import { TableExportService } from '../../../shared/services/table-export.service';
@@ -27,6 +28,7 @@ import {
     ServiceContractFormComponent,
     ReplaceMeterModalComponent,
     AssignInstallationRouteModalComponent,
+    ContractsTableComponent,
     PaginationComponent,
     TableSkeletonComponent,
     DropdownComponent,

@@ -1,28 +1,30 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
+  OnDestroy,
   OnInit,
   inject,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { PaymentAgreementsService } from './services/payment-agreements.service';
 import { IAgreement, IFindAllAgreementsParams } from './interfaces/ipayment-agreement.interface';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
-import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { TableExportService } from '../../../shared/services/table-export.service';
 import {
   DropdownComponent,
   DropdownItem,
 } from '../../../shared/components/dropdown/dropdown.component';
-import { CreateAgreementModalComponent } from './components/create-agreement-modal/create-agreement-modal.component';
 import { AgreementDetailModalComponent } from './components/agreement-detail-modal/agreement-detail-modal.component';
-import type { IContract } from '../service-contracts/interfaces/icontract.interface';
+
+/** Espera tras la última tecla antes de consultar el backend. */
+const SEARCH_DEBOUNCE_MS = 400;
 
 @Component({
   selector: 'app-payment-agreements',
@@ -34,8 +36,6 @@ import type { IContract } from '../service-contracts/interfaces/icontract.interf
     EmptyStateComponent,
     TableSkeletonComponent,
     PaginationComponent,
-    ContractPickerComponent,
-    CreateAgreementModalComponent,
     AgreementDetailModalComponent,
     DropdownComponent,
   ],
@@ -46,10 +46,10 @@ import type { IContract } from '../service-contracts/interfaces/icontract.interf
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class PaymentAgreementsComponent implements OnInit {
+export class PaymentAgreementsComponent implements OnInit, OnDestroy {
   private readonly agreementsService = inject(PaymentAgreementsService);
+  private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
-  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly exportItems: DropdownItem[] = [
     { label: 'Exportar a PDF', action: 'pdf', icon: 'bi bi-file-earmark-pdf-fill text-danger' },
@@ -67,115 +67,119 @@ export class PaymentAgreementsComponent implements OnInit {
     else if (action === 'csv') this.exportToCsv();
   }
 
-  // List State
-  agreements: IAgreement[] = [];
-  totalItems = 0;
-  isLoading = false;
-  hasFetched = false;
-  openDropdownId: string | null = null;
+  // List State Signals
+  readonly agreements = signal<IAgreement[]>([]);
+  readonly totalItems = signal(0);
+  readonly isLoading = signal(false);
+  readonly hasFetched = signal(false);
+  readonly openDropdownId = signal<string | null>(null);
 
-  // Pagination
-  currentPage = 1;
-  pageSize = 10;
+  // Pagination Signals
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(10);
 
-  // Filters
-  filterContratoId = '';
+  // Filters Signals
+  readonly searchTerm = signal('');
+  readonly selectedEstado = signal('TODOS');
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
-  // Contract picker
-  isContractPickerOpen = false;
-  selectedContractNumber = '';
-  selectedContractName = '';
-
-  // Modals
-  isCreateModalOpen = false;
-  selectedDetailAgreement: IAgreement | null = null;
+  // Modals Signals
+  readonly selectedDetailAgreement = signal<IAgreement | null>(null);
 
   ngOnInit(): void {
     this.loadAgreements();
   }
 
+  ngOnDestroy(): void {
+    this.clearSearchTimer();
+  }
+
   loadAgreements(): void {
-    this.isLoading = true;
-    this.openDropdownId = null;
+    this.clearSearchTimer();
+    this.isLoading.set(true);
+    this.openDropdownId.set(null);
 
     const params: IFindAllAgreementsParams = {
-      page: this.currentPage,
-      limit: this.pageSize,
+      page: this.currentPage(),
+      limit: this.pageSize(),
     };
 
-    if (this.filterContratoId.trim()) {
-      params.contratoId = this.filterContratoId.trim();
+    const estado = this.selectedEstado();
+    if (estado && estado !== 'TODOS') {
+      params.estado = estado;
+    }
+
+    const term = this.searchTerm().trim();
+    if (term) {
+      params.search = term;
     }
 
     this.agreementsService.getAgreements(params).subscribe({
       next: (res) => {
-        this.agreements = res.data;
-        this.totalItems = res.meta?.totalItems ?? res.data.length;
-        this.isLoading = false;
-        this.hasFetched = true;
-        this.cdr.markForCheck();
+        this.agreements.set(res.data);
+        this.totalItems.set(res.meta?.totalItems ?? res.data.length);
+        this.isLoading.set(false);
+        this.hasFetched.set(true);
       },
       error: () => {
-        this.agreements = [];
-        this.totalItems = 0;
-        this.isLoading = false;
-        this.hasFetched = true;
-        this.cdr.markForCheck();
+        this.agreements.set([]);
+        this.totalItems.set(0);
+        this.isLoading.set(false);
+        this.hasFetched.set(true);
       },
     });
   }
 
+  onEstadoChange(estado: string): void {
+    this.selectedEstado.set(estado);
+    this.currentPage.set(1);
+    this.loadAgreements();
+  }
+
   limpiarFiltros(): void {
-    this.filterContratoId = '';
-    this.selectedContractNumber = '';
-    this.selectedContractName = '';
-    this.currentPage = 1;
+    this.searchTerm.set('');
+    this.selectedEstado.set('TODOS');
+    this.currentPage.set(1);
     this.loadAgreements();
   }
 
-  // ---------- Buscador de contratos ----------
+  // ---------- Buscador del listado ----------
 
-  abrirBuscadorContratos(): void {
-    this.isContractPickerOpen = true;
-    this.cdr.markForCheck();
+  onSearchTermChange(term: string): void {
+    this.searchTerm.set(term);
+    this.clearSearchTimer();
+    this.searchTimer = setTimeout(() => {
+      this.currentPage.set(1);
+      this.loadAgreements();
+    }, SEARCH_DEBOUNCE_MS);
   }
 
-  onContractSelected(contract: IContract): void {
-    this.filterContratoId = String(contract.contratoId);
-    this.selectedContractNumber = contract.numeroGuia;
-    this.selectedContractName = ContractPickerComponent.formatClientName(contract.cliente);
-    this.isContractPickerOpen = false;
-    this.currentPage = 1;
-    this.loadAgreements();
-    this.cdr.markForCheck();
-  }
-
-  onContractPickerClosed(): void {
-    this.isContractPickerOpen = false;
-    this.cdr.markForCheck();
+  private clearSearchTimer(): void {
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+      this.searchTimer = null;
+    }
   }
 
   onPageChange(page: number): void {
-    this.currentPage = page;
+    this.currentPage.set(page);
     this.loadAgreements();
   }
 
   onPageSizeChange(size: number): void {
-    this.pageSize = size;
-    this.currentPage = 1;
+    this.pageSize.set(size);
+    this.currentPage.set(1);
     this.loadAgreements();
   }
 
   toggleDropdown(id: string, event: MouseEvent): void {
     event.stopPropagation();
-    this.openDropdownId = this.openDropdownId === id ? null : id;
-    this.cdr.markForCheck();
+    this.openDropdownId.update((current) => (current === id ? null : id));
   }
 
   closeDropdowns(): void {
-    if (this.openDropdownId !== null) {
-      this.openDropdownId = null;
-      this.cdr.markForCheck();
+    if (this.openDropdownId() !== null) {
+      this.openDropdownId.set(null);
     }
   }
 
@@ -191,48 +195,34 @@ export class PaymentAgreementsComponent implements OnInit {
     return agreement.cuotas.filter((c) => c.estado?.codigo === 'PAGADA' || c.pagoCompleto).length;
   }
 
-  // Modals
+  // Modals & Navigation
   openCreateModal(): void {
-    this.isCreateModalOpen = true;
-    this.cdr.markForCheck();
-  }
-
-  closeCreateModal(): void {
-    this.isCreateModalOpen = false;
-    this.cdr.markForCheck();
-  }
-
-  onAgreementCreated(): void {
-    this.isCreateModalOpen = false;
-    this.loadAgreements();
+    this.router.navigate(['/app/Contratos/ConveniosDePago/new']);
   }
 
   openDetailModal(agreement: IAgreement): void {
-    this.openDropdownId = null;
+    this.openDropdownId.set(null);
     this.agreementsService.getAgreementById(agreement.convenioId).subscribe({
       next: (full) => {
-        this.selectedDetailAgreement = full;
-        this.cdr.markForCheck();
+        this.selectedDetailAgreement.set(full);
       },
       error: () => {
-        this.selectedDetailAgreement = agreement;
-        this.cdr.markForCheck();
+        this.selectedDetailAgreement.set(agreement);
       },
     });
   }
 
   closeDetailModal(): void {
-    this.selectedDetailAgreement = null;
-    this.cdr.markForCheck();
+    this.selectedDetailAgreement.set(null);
   }
 
   onAgreementUpdated(): void {
-    this.selectedDetailAgreement = null;
+    this.selectedDetailAgreement.set(null);
     this.loadAgreements();
   }
 
   downloadPdf(agreement: IAgreement): void {
-    this.openDropdownId = null;
+    this.openDropdownId.set(null);
     this.agreementsService.getAgreementPdf(agreement.convenioId).subscribe({
       next: (blob) => {
         const url = window.URL.createObjectURL(blob);
@@ -253,7 +243,8 @@ export class PaymentAgreementsComponent implements OnInit {
   private readonly tableExportService = inject(TableExportService);
 
   exportToPdf(): void {
-    if (this.agreements.length === 0) return;
+    const list = this.agreements();
+    if (list.length === 0) return;
 
     this.tableExportService.exportToPdf({
       title: 'LISTADO DE CONVENIOS DE PAGO',
@@ -302,13 +293,14 @@ export class PaymentAgreementsComponent implements OnInit {
           align: 'center',
         },
       ],
-      data: this.agreements as unknown as Record<string, unknown>[],
-      summary: `Total convenios listados: ${this.agreements.length}`,
+      data: list as unknown as Record<string, unknown>[],
+      summary: `Total convenios listados: ${list.length}`,
     });
   }
 
   exportToExcel(): void {
-    if (this.agreements.length === 0) return;
+    const list = this.agreements();
+    if (list.length === 0) return;
 
     this.tableExportService.exportToExcel({
       title: 'LISTADO DE CONVENIOS DE PAGO',
@@ -335,13 +327,14 @@ export class PaymentAgreementsComponent implements OnInit {
             '—',
         },
       ],
-      data: this.agreements as unknown as Record<string, unknown>[],
-      summary: `Total convenios: ${this.agreements.length}`,
+      data: list as unknown as Record<string, unknown>[],
+      summary: `Total convenios: ${list.length}`,
     });
   }
 
   exportToCsv(): void {
-    if (this.agreements.length === 0) return;
+    const list = this.agreements();
+    if (list.length === 0) return;
 
     this.tableExportService.exportToCsv({
       title: 'LISTADO DE CONVENIOS DE PAGO',
@@ -368,7 +361,7 @@ export class PaymentAgreementsComponent implements OnInit {
             '—',
         },
       ],
-      data: this.agreements as unknown as Record<string, unknown>[],
+      data: list as unknown as Record<string, unknown>[],
     });
   }
 }

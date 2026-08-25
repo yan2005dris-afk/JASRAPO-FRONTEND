@@ -26,61 +26,64 @@
       </button>
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
-        <!-- Contrato seleccionado (modal buscador) -->
-        <!-- Contrato seleccionado (modal buscador) -->
+        <!-- Buscador de texto libre sobre el listado -->
         <div class="input-group search-group" style="width: 290px">
           <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
-            <i class="bi bi-file-text"></i>
+            <i class="bi bi-search"></i>
           </span>
           <input
+            id="buscadorConvenios"
             type="text"
-            class="form-control border-start-0 ps-0 shadow-none text-truncate"
+            class="form-control border-start-0 ps-0 shadow-none"
             placeholder="Buscar contrato / cliente..."
-            [value]="
-              selectedContractNumber ? selectedContractNumber + ' - ' + selectedContractName : ''
-            "
-            readonly
-            (click)="abrirBuscadorContratos()"
-            [title]="
-              selectedContractName
-                ? selectedContractNumber + ' - ' + selectedContractName
-                : 'Seleccione un contrato'
-            "
+            aria-label="Buscar convenios por número de guía, cliente o identificación"
+            autocomplete="off"
+            [ngModel]="searchTerm()"
+            (ngModelChange)="onSearchTermChange($event)"
+            (keyup.enter)="loadAgreements()"
           />
-          @if (selectedContractNumber) {
+          @if (searchTerm()) {
             <button
               type="button"
               class="btn btn-outline-secondary border-start-0 shadow-none px-2"
-              title="Quitar filtro de contrato"
-              (click)="limpiarFiltros(); $event.stopPropagation()"
+              title="Limpiar búsqueda"
+              aria-label="Limpiar búsqueda"
+              (click)="searchTerm.set(''); onSearchTermChange('')"
             >
               <i class="bi bi-x"></i>
-            </button>
-          } @else {
-            <button
-              type="button"
-              class="btn btn-outline-primary shadow-none"
-              title="Buscar contrato"
-              (click)="abrirBuscadorContratos()"
-            >
-              <i class="bi bi-search"></i>
             </button>
           }
         </div>
 
-        <!-- Buscar -->
+        <!-- Filtro por Estado -->
+        <select
+          class="form-select shadow-none"
+          style="width: 170px"
+          [ngModel]="selectedEstado()"
+          (ngModelChange)="onEstadoChange($event)"
+          aria-label="Filtrar por estado del convenio"
+        >
+          <option value="TODOS">Todos los estados</option>
+          <option value="ACTIVO">Activo</option>
+          <option value="PENDIENTE_ABONO">Pendiente Abono</option>
+          <option value="PREPARADO">Preparado</option>
+          <option value="PAGADO">Pagado</option>
+          <option value="ANULADO">Anulado</option>
+        </select>
+
+        <!-- Botón Buscar -->
         <button
+          type="button"
           class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="loadAgreements()"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         >
-          @if (isLoading) {
+          @if (isLoading()) {
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-          }
-          @if (!isLoading) {
+          } @else {
             <i class="bi bi-search"></i>
           }
-          Buscar
+          {{ isLoading() ? 'Buscando...' : 'Buscar' }}
         </button>
 
         <!-- Botón Limpiar -->
@@ -88,7 +91,7 @@
           type="button"
           class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="limpiarFiltros()"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         >
           <i class="bi bi-x-circle"></i>
           Limpiar
@@ -99,7 +102,7 @@
           label="Exportar"
           icon="bi bi-download"
           [items]="exportItems"
-          [disabled]="agreements.length === 0"
+          [disabled]="agreements().length === 0"
           buttonClass="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm px-3"
           (actionSelected)="handleExportAction($event)"
         ></app-dropdown>
@@ -108,13 +111,13 @@
 
     <!-- Table -->
     <div class="pt-2">
-      @if (isLoading) {
+      @if (isLoading()) {
         <div class="p-3">
           <app-table-skeleton [rows]="5" [cols]="8" />
         </div>
       }
 
-      @if (!isLoading && agreements.length === 0) {
+      @if (!isLoading() && agreements().length === 0) {
         <app-empty-state
           icon="bi bi-file-earmark-medical"
           title="No hay convenios de pago"
@@ -125,7 +128,7 @@
         />
       }
 
-      @if (!isLoading && agreements.length > 0) {
+      @if (!isLoading() && agreements().length > 0) {
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 custom-table">
             <thead>
@@ -144,7 +147,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (ag of agreements; track ag.convenioId) {
+              @for (ag of agreements(); track ag.convenioId) {
                 <tr>
                   <td class="ps-4">
                     <input class="form-check-input table-checkbox" type="checkbox" />
@@ -212,7 +215,7 @@
                       </button>
                       <ul
                         class="dropdown-menu dropdown-menu-end shadow-sm border-0"
-                        [class.show]="openDropdownId === ag.convenioId"
+                        [class.show]="openDropdownId() === ag.convenioId"
                         style="min-width: 165px"
                       >
                         <li>
@@ -248,9 +251,9 @@
         <!-- Pagination -->
         <div class="px-4 py-3 border-top bg-white">
           <app-pagination
-            [currentPage]="currentPage"
-            [pageSize]="pageSize"
-            [totalItems]="totalItems"
+            [currentPage]="currentPage()"
+            [pageSize]="pageSize()"
+            [totalItems]="totalItems()"
             (pageChange)="onPageChange($event)"
             (pageSizeChange)="onPageSizeChange($event)"
           />
@@ -260,21 +263,11 @@
   </div>
 
   <!-- MODALS -->
-  @if (isCreateModalOpen) {
-    <app-create-agreement-modal (created)="onAgreementCreated()" (closed)="closeCreateModal()" />
-  }
-
-  @if (selectedDetailAgreement) {
+  @if (selectedDetailAgreement()) {
     <app-agreement-detail-modal
-      [agreement]="selectedDetailAgreement"
+      [agreement]="selectedDetailAgreement()!"
       (updated)="onAgreementUpdated()"
       (closed)="closeDetailModal()"
     />
   }
 </div>
-
-<app-contract-picker
-  [open]="isContractPickerOpen"
-  (contractSelected)="onContractSelected($event)"
-  (closed)="onContractPickerClosed()"
-/>
