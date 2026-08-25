@@ -10,6 +10,24 @@ export const routes: Routes = [
     canActivate: [guestGuard],
   },
   {
+    path: 'accept-invite',
+    redirectTo: 'invitation/set-password',
+    pathMatch: 'full',
+  },
+  {
+    path: 'invitation',
+    children: [
+      {
+        path: 'set-password',
+        loadComponent: () =>
+          import('./features/invitations/pages/set-password/set-password.component').then(
+            (m) => m.SetPasswordComponent,
+          ),
+        canActivate: [guestGuard],
+      },
+    ],
+  },
+  {
     path: 'consulta-planilla',
     canActivate: [guestGuard],
     children: [
