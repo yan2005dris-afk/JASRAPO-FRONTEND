@@ -20,6 +20,7 @@ import {
 import { ClientsComponent } from '../../../clients/clients.component';
 import { TariffsComponent } from '../../../tariffs/tariffs.component';
 import { MetersIndexComponent } from '../../../meters/components/meters-index/meters-index.component';
+import { ReplaceMeterModalComponent } from '../../../meters/components/replace-meter-modal/replace-meter-modal.component';
 import { ComunidadesComponent } from '../../../../admin/comunidades/comunidades.component';
 import { IClient } from '../../../clients/interfaces/iclients.interface';
 import { IMeter } from '../../../meters/interfaces/imeter.interface';
@@ -39,6 +40,7 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
     ClientsComponent,
     TariffsComponent,
     MetersIndexComponent,
+    ReplaceMeterModalComponent,
     ComunidadesComponent,
   ],
   templateUrl: './service-contract-form.component.html',
@@ -68,6 +70,7 @@ export class ServiceContractFormComponent implements OnInit {
   // Estado de los modales hijos
   readonly isClientPickerOpen = signal(false);
   readonly isMeterPickerOpen = signal(false);
+  readonly isReplaceMeterModalOpen = signal(false);
   readonly isTariffPickerOpen = signal(false);
   readonly isComunidadPickerOpen = signal(false);
 
@@ -151,6 +154,34 @@ export class ServiceContractFormComponent implements OnInit {
   onMeterSelected(meter: IMeter): void {
     this.selectedMeter.set(meter);
     this.closeMeterPicker();
+  }
+
+  // ---------- Reemplazo de medidor (flujo dedicado para contratos existentes) ----------
+  openReplaceMeterModal(): void {
+    this.isReplaceMeterModalOpen.set(true);
+  }
+
+  closeReplaceMeterModal(): void {
+    this.isReplaceMeterModalOpen.set(false);
+  }
+
+  onMeterReplaced(): void {
+    this.closeReplaceMeterModal();
+    this.toast.success('Medidor reemplazado correctamente', 'Éxito');
+    const contract = this.contractToEdit();
+    if (contract) {
+      this.contractsService.getContractById(contract.contratoId).subscribe({
+        next: (refreshedContract) => {
+          this.preloadContract(refreshedContract);
+          this.saved.emit();
+        },
+        error: () => {
+          this.saved.emit();
+        },
+      });
+    } else {
+      this.saved.emit();
+    }
   }
 
   // ---------- Selector de tarifa ----------
@@ -292,20 +323,19 @@ export class ServiceContractFormComponent implements OnInit {
     });
   }
 
-  /** Actualiza un contrato existente (PATCH). Permite editar todos los campos. */
+  /** Actualiza un contrato existente (PATCH). Actualiza únicamente datos contractuales. */
   private updateContract(): void {
     this.submitted.set(true);
 
     const contract = this.contractToEdit();
     const client = this.selectedClient();
-    const meter = this.selectedMeter();
     const tariff = this.selectedTariff();
     const comunidad = this.selectedComunidad();
 
-    if (!contract || this.form.invalid || !client || !meter || !tariff || !comunidad) {
+    if (!contract || this.form.invalid || !client || !tariff || !comunidad) {
       this.form.markAllAsTouched();
       this.toast.warning(
-        'Complete los datos y seleccione cliente, comunidad, medidor y tarifa.',
+        'Complete los datos y seleccione cliente, comunidad y tarifa.',
         'Datos incompletos',
       );
       return;
@@ -323,20 +353,14 @@ export class ServiceContractFormComponent implements OnInit {
     }
 
     const value = this.form.value;
-    // Edición completa: se envían todos los campos editables (incluido el cliente).
+    // Solo se actualizan datos contractuales. El medidor se gestiona por POST /meters/replace.
     const payload: IUpdateContractRequest = {
       estado: value.estado,
       direccionSuministro: value.direccionSuministro,
-      lecturaInicial: Number(value.lecturaInicial),
       clienteId: String(clientId),
       comunidadId: String(comunidad.id),
       categoriaTarifaId: String(tariff.categoriaTarifaId),
     };
-
-    // Si se reemplazó el medidor, se incluye el nuevo id para que el backend lo cambie.
-    if (String(meter.medidorId) !== this.originalMeterId) {
-      payload.medidorId = String(meter.medidorId);
-    }
 
     this.isSaving.set(true);
     this.contractsService.updateContract(contract.contratoId, payload).subscribe({
