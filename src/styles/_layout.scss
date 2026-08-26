@@ -1,11 +1,12 @@
 /* 
-  Layout Styles
-  Global styles for the application shell (Header, Sidebar, Main Layout)
+  Layout Styles — shell only (wrapper, sidebar container, main, header)
+  Sidebar component details moved to _sidebar.scss for maintainability.
+  Usa tokens de _variables.scss
 */
 
 /* ---------------------------------------------------
    1. MAIN LAYOUT SHELL
---------------------------------------------------- */
+   --------------------------------------------------- */
 .layout-wrapper {
   display: flex;
   height: 100vh;
@@ -15,7 +16,7 @@
 }
 
 .layout-sidebar {
-  width: 260px;
+  width: var(--sidebar-width);
   flex-shrink: 0;
   height: 100%;
   background-color: var(--white);
@@ -23,14 +24,14 @@
   z-index: 1000;
   overflow: hidden;
   transition:
-    width 0.3s ease-in-out,
-    transform 0.3s ease-in-out,
-    margin-left 0.3s ease-in-out;
+    width var(--sidebar-transition-duration) var(--sidebar-transition-timing),
+    transform var(--sidebar-transition-duration) var(--sidebar-transition-timing),
+    margin-left var(--sidebar-transition-duration) var(--sidebar-transition-timing);
 }
 
 .layout-sidebar.sidebar-hidden {
   transform: translateX(-100%);
-  margin-left: -260px;
+  margin-left: calc(-1 * var(--sidebar-width));
 }
 
 .layout-main-container {
@@ -39,7 +40,11 @@
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  transition: margin-left 0.3s ease-in-out;
+  min-width: 0;
+  transition:
+    margin-left var(--sidebar-transition-duration) var(--sidebar-transition-timing),
+    width var(--sidebar-transition-duration) var(--sidebar-transition-timing);
+  will-change: width, margin-left;
 }
 
 .layout-main-container.sidebar-collapsed {
@@ -69,7 +74,7 @@
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 1040;
-  transition: opacity 0.3s ease-in-out;
+  transition: opacity var(--sidebar-transition-duration) var(--sidebar-transition-timing);
 }
 
 @media (max-width: 991px) {
@@ -105,107 +110,23 @@
   }
 
   .layout-sidebar.sidebar-hidden {
-    transform: none !important;
-    margin-left: 0 !important;
-    width: 70px !important;
+    transform: none;
+    margin-left: 0;
+    width: var(--sidebar-rail-width);
+  }
 
-    /* Center navigation items list */
-    .nav {
-      align-items: center !important;
-    }
+  .layout-main-container {
+    width: calc(100% - var(--sidebar-width));
+  }
 
-    /* Hide text labels (fade + collapse width instead of hard display:none) */
-    .link-text {
-      max-width: 0;
-      overflow: hidden;
-      opacity: 0;
-      white-space: nowrap;
-      transition:
-        max-width 0.3s ease-in-out,
-        opacity 0.2s ease-in-out;
-    }
-
-    /* Hide dropdown chevron icons */
-    .bi-chevron-down {
-      display: none !important;
-    }
-
-    /* Hide submenus completely when collapsed */
-    .btn-toggle-nav {
-      display: none !important;
-    }
-
-    /* Center and shrink brand section */
-    .sidebar-brand {
-      height: 64px !important;
-      padding: 0 !important;
-      justify-content: center !important;
-
-      h5 {
-        max-width: 0;
-        margin: 0;
-        overflow: hidden;
-        opacity: 0;
-        white-space: nowrap;
-        transition:
-          max-width 0.3s ease-in-out,
-          opacity 0.2s ease-in-out;
-      }
-    }
-
-    .brand-logo {
-      margin-bottom: 0 !important;
-      width: 32px !important;
-      height: 32px !important;
-    }
-
-    /* Transform menu buttons to centered circular buttons */
-    .nav-link-custom {
-      margin: 8px auto !important;
-      padding: 0 !important;
-      width: 44px !important;
-      height: 44px !important;
-      border-radius: 50% !important;
-      justify-content: center !important;
-      border-left: none !important;
-
-      i,
-      .material-symbols-outlined {
-        margin-right: 0 !important;
-        font-size: 1.25rem !important;
-      }
-
-      /* Hover estándar: solo cambio de fondo suave, sin escala ni sombra */
-      &:hover:not(.active) {
-        background-color: var(--soft-blue-bg) !important;
-        color: var(--primary-color) !important;
-      }
-
-      /* Seleccionado en mini-rail: más contrastado que el hover para que se distinga */
-      &.active {
-        background-color: rgba(12, 158, 161, 0.2) !important;
-        color: var(--primary-color) !important;
-        border-left: none !important;
-        font-weight: 600;
-
-        i,
-        .material-symbols-outlined {
-          color: var(--primary-color) !important;
-          font-weight: 600;
-        }
-      }
-
-      &.active:hover {
-        background-color: rgba(12, 158, 161, 0.24) !important;
-        color: var(--primary-color) !important;
-      }
-    }
+  .layout-main-container.sidebar-collapsed {
+    width: calc(100% - var(--sidebar-rail-width));
   }
 }
 
 /* ---------------------------------------------------
    2. HEADER SPECIFICS
---------------------------------------------------- */
+   --------------------------------------------------- */
 .btn-icon {
   display: flex;
   justify-content: center;
@@ -286,156 +207,4 @@
 .avatar:hover {
   opacity: 0.9;
   cursor: pointer;
-}
-
-/* ---------------------------------------------------
-   3. SIDEBAR STYLING
---------------------------------------------------- */
-.sidebar-brand {
-  height: 64px;
-  padding: 0 1.5rem 0 2rem; /* Matches the 64px header height and aligns logo with menu icons */
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.sidebar-nav {
-  padding-top: 0.75rem !important; /* 12px padding top + 4px menu item margin = 16px spacing below divider */
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-}
-
-.brand-logo {
-  width: 38px;
-  height: 38px;
-  object-fit: contain;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.nav-link-custom {
-  margin: 4px 14px;
-  padding: 0.7rem 1.1rem;
-  font-size: 0.925rem;
-  font-weight: 500;
-  color: var(--dark-text);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease,
-    width 0.3s ease-in-out,
-    height 0.3s ease-in-out,
-    padding 0.3s ease-in-out,
-    margin 0.3s ease-in-out,
-    border-radius 0.3s ease-in-out;
-  border-left: 3px solid transparent;
-}
-
-.nav-link-custom:hover {
-  background-color: var(--soft-blue-bg);
-  color: var(--primary-color) !important;
-}
-
-.nav-link-custom i,
-.nav-link-custom .material-symbols-outlined {
-  display: inline-block;
-  font-size: 1.25rem; /* Material Symbols look better at 1.25rem (20px) */
-  transition: transform 0.2s ease-in-out;
-}
-
-.nav-link-custom .bi-chevron-down {
-  font-size: 0.8rem;
-  margin-right: 0.75rem; /* Separar el chevron del borde derecho */
-}
-
-.rotate-icon {
-  transform: rotate(-180deg);
-}
-
-.nav-link-custom.active,
-.nav-link.active {
-  background: linear-gradient(
-    135deg,
-    rgba(12, 158, 161, 0.08),
-    rgba(12, 158, 161, 0.02)
-  ) !important;
-  color: var(--primary-color) !important;
-  font-weight: 600;
-  border-left: 3px solid var(--primary-color) !important;
-
-  i {
-    color: var(--primary-color) !important;
-  }
-}
-
-.nav-link-sub {
-  color: var(--muted-text);
-  text-decoration: none;
-  padding: 0.55rem 1rem 0.55rem 1.75rem;
-  margin: 2px 14px;
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: 8px;
-  transition: all 0.2s ease-in-out;
-}
-
-.nav-link-sub:hover {
-  background-color: var(--light-bg);
-  color: var(--dark-text);
-}
-
-.nav-link-sub.active {
-  background-color: rgba(12, 158, 161, 0.06) !important;
-  color: var(--primary-color) !important;
-  font-weight: 600;
-}
-
-/* ---------------------------------------------------
-   4. SIDEBAR SEARCH
---------------------------------------------------- */
-.sidebar-search {
-  border-bottom: 1px solid var(--border-color);
-
-  .input-group-text,
-  .form-control {
-    border-color: var(--border-color);
-    background-color: transparent;
-    font-size: 0.875rem;
-  }
-
-  .form-control:focus {
-    border-color: var(--primary-color);
-  }
-
-  .sidebar-search-clear {
-    border-color: var(--border-color);
-    color: var(--muted-text);
-    font-size: 0.65rem;
-    text-decoration: none;
-  }
-}
-
-.sidebar-search-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  color: var(--muted-text);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-
-  &:hover {
-    background-color: var(--soft-blue-bg);
-    color: var(--primary-color) !important;
-  }
-}
-
-.sidebar-empty-state {
-  font-size: 0.85rem;
-
-  .bi-search {
-    font-size: 1.25rem;
-    opacity: 0.4;
-  }
 }
