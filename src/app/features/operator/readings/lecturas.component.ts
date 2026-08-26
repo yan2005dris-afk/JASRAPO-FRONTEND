@@ -10,7 +10,6 @@ import { OperatorSyncService } from '../../../core/services/operator-sync.servic
 import { MeterCacheService } from '../../../core/services/meter-cache.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
-import { PhotoCaptureComponent } from '../../../shared/components/photo-capture/photo-capture.component';
 import { MeterSearchBoxComponent } from '../components/meter-search-box/meter-search-box.component';
 import { MeterCardComponent } from '../components/meter-card/meter-card.component';
 import { SelectedMeterCardComponent } from '../components/selected-meter-card/selected-meter-card.component';
@@ -51,7 +50,6 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
     CommonModule,
     ReactiveFormsModule,
     ScrollingModule,
-    PhotoCaptureComponent,
     MeterSearchBoxComponent,
     MeterCardComponent,
     SelectedMeterCardComponent,
