@@ -10,12 +10,17 @@ export interface PendingRecord {
   [key: string]: any;
 }
 
+export interface CachedCollection<T> {
+  items: T[];
+  savedAt: string;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class IndexedDbService {
   private readonly dbName = 'jasrapo-operator-db';
-  private readonly dbVersion = 6;
+  private readonly dbVersion = 7;
   private db: IDBDatabase | null = null;
 
   constructor() {
@@ -84,6 +89,11 @@ export class IndexedDbService {
         // Almacén para catálogo de estados de lectura (offline-first)
         if (!db.objectStoreNames.contains('estados_cache')) {
           db.createObjectStore('estados_cache', { keyPath: 'tipo' });
+        }
+
+        // Snapshot de rutas asignadas para navegación degradada sin conexión
+        if (!db.objectStoreNames.contains('rutas_cache')) {
+          db.createObjectStore('rutas_cache', { keyPath: 'scope' });
         }
       };
 
@@ -372,6 +382,40 @@ export class IndexedDbService {
       const store = transaction.objectStore('estados_cache');
       const request = store.get('estados_lectura');
       request.onsuccess = () => resolve(request.result?.items ?? null);
+      request.onerror = () => reject(request.error);
+    });
+  }
+  // --- RUTAS CACHE (snapshot offline) ---
+
+  async saveRoutesCache<T>(scope: string, routes: T[]): Promise<void> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('rutas_cache', 'readwrite');
+      const store = transaction.objectStore('rutas_cache');
+      store.put({
+        scope,
+        items: routes,
+        savedAt: new Date().toISOString(),
+      });
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  async getRoutesCache<T>(scope: string): Promise<CachedCollection<T> | null> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('rutas_cache', 'readonly');
+      const store = transaction.objectStore('rutas_cache');
+      const request = store.get(scope);
+      request.onsuccess = () => {
+        const snapshot = request.result as { items?: T[]; savedAt?: string } | undefined;
+        if (!snapshot?.items || !snapshot.savedAt) {
+          resolve(null);
+          return;
+        }
+        resolve({ items: snapshot.items, savedAt: snapshot.savedAt });
+      };
       request.onerror = () => reject(request.error);
     });
   }

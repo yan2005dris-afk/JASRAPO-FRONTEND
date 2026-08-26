@@ -62,6 +62,17 @@ export class OperatorSyncService {
     });
   }
 
+  private dataURItoBlob(dataURI: string): Blob {
+    const splitDataURI = dataURI.split(',');
+    const byteString = splitDataURI[0].indexOf('base64') >= 0 ? atob(splitDataURI[1]) : decodeURI(splitDataURI[1]);
+    const mimeString = splitDataURI[0].split(':')[1].split(';')[0];
+    const ia = new Uint8Array(byteString.length);
+    for (let i = 0; i < byteString.length; i++) {
+      ia[i] = byteString.charCodeAt(i);
+    }
+    return new Blob([ia], { type: mimeString });
+  }
+
   /**
    * Refresca el contador de registros pendientes en IndexedDB
    */
@@ -90,15 +101,27 @@ export class OperatorSyncService {
    * Si no → POST (crear nueva)
    */
   async submitReading(reading: any): Promise<any> {
-    const { _lecturaId, ...payload } = reading;
+    const { _lecturaId, fotoBase64, ...payload } = reading;
 
     if (this.networkService.isOnline()) {
       try {
+        const formData = new FormData();
+        for (const [key, value] of Object.entries(payload)) {
+          if (value !== null && value !== undefined) {
+            formData.append(key, String(value));
+          }
+        }
+        if (fotoBase64) {
+          const blob = this.dataURItoBlob(fotoBase64);
+          const fieldName = _lecturaId ? 'foto' : 'file';
+          formData.append(fieldName, blob, 'foto.jpg');
+        }
+
         const request$ = _lecturaId
-          ? this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, payload, {
+          ? this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, formData, {
               withCredentials: true,
             })
-          : this.http.post<any>(this.READINGS_API, payload, { withCredentials: true });
+          : this.http.post<any>(this.READINGS_API, formData, { withCredentials: true });
 
         const response = await firstValueFrom(request$);
         await this.dbService.saveSyncedReading({ ...payload, _lecturaId });
@@ -128,14 +151,20 @@ export class OperatorSyncService {
   async submitAnomaly(anomaly: any): Promise<any> {
     if (this.networkService.isOnline()) {
       try {
-        const payload = {
-          lecturaId: anomaly.lecturaId,
-          tipo: anomaly.tipo,
-          estado: anomaly.estado,
-          ...(anomaly.observacion ? { observacion: anomaly.observacion } : {}),
-        };
+        const formData = new FormData();
+        formData.append('lecturaId', String(anomaly.lecturaId));
+        formData.append('tipo', String(anomaly.tipo));
+        formData.append('estado', String(anomaly.estado));
+        if (anomaly.observacion) {
+          formData.append('observacion', String(anomaly.observacion));
+        }
+        if (anomaly.fotoBase64) {
+          const blob = this.dataURItoBlob(anomaly.fotoBase64);
+          formData.append('file', blob, 'evidencia.jpg');
+        }
+
         const response = await firstValueFrom(
-          this.http.post<any>(this.ANOMALIES_API, payload, { withCredentials: true }),
+          this.http.post<any>(this.ANOMALIES_API, formData, { withCredentials: true }),
         );
         this.toastService.success('Novedad/Anomalía registrada en el servidor.', 'Éxito');
         return response;
@@ -209,15 +238,29 @@ export class OperatorSyncService {
           syncState: _syncState, // eslint-disable-line @typescript-eslint/no-unused-vars
           errorMessage: _errorMessage, // eslint-disable-line @typescript-eslint/no-unused-vars
           _lecturaId,
+          fotoBase64,
           ...payload
         } = pending;
+        
+        const formData = new FormData();
+        for (const [key, value] of Object.entries(payload)) {
+          if (value !== null && value !== undefined) {
+            formData.append(key, String(value));
+          }
+        }
+        if (fotoBase64) {
+          const blob = this.dataURItoBlob(fotoBase64);
+          const fieldName = _lecturaId ? 'foto' : 'file';
+          formData.append(fieldName, blob, 'foto.jpg');
+        }
+
         const request$ = _lecturaId
-          ? this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, payload, {
+          ? this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, formData, {
               withCredentials: true,
             })
-          : this.http.post<any>(this.READINGS_API, payload, { withCredentials: true });
+          : this.http.post<any>(this.READINGS_API, formData, { withCredentials: true });
         await firstValueFrom(request$);
-        await this.dbService.saveSyncedReading(pending);
+        await this.dbService.saveSyncedReading({ ...payload, _lecturaId });
         await this.dbService.deletePendingReading(id!);
         successReadingsCount++;
       } catch (error) {
@@ -244,15 +287,22 @@ export class OperatorSyncService {
     for (const pending of anomalies) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { id, syncState: _syncState2, errorMessage: _errorMessage2, ...payload } = pending;
-        const anomalyPayload = {
-          lecturaId: payload['lecturaId'],
-          tipo: payload['tipo'],
-          estado: payload['estado'],
-          ...(payload['observacion'] ? { observacion: payload['observacion'] } : {}),
-        };
+        const { id, syncState: _syncState2, errorMessage: _errorMessage2, fotoBase64, ...payload } = pending;
+        
+        const formData = new FormData();
+        formData.append('lecturaId', String(payload['lecturaId']));
+        formData.append('tipo', String(payload['tipo']));
+        formData.append('estado', String(payload['estado']));
+        if (payload['observacion']) {
+          formData.append('observacion', String(payload['observacion']));
+        }
+        if (fotoBase64) {
+          const blob = this.dataURItoBlob(fotoBase64);
+          formData.append('file', blob, 'evidencia.jpg');
+        }
+
         await firstValueFrom(
-          this.http.post<any>(this.ANOMALIES_API, anomalyPayload, { withCredentials: true }),
+          this.http.post<any>(this.ANOMALIES_API, formData, { withCredentials: true }),
         );
         await this.dbService.deletePendingAnomaly(id!);
         successAnomaliesCount++;
