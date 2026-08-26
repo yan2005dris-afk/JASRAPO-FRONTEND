@@ -21,6 +21,7 @@
   background-color: var(--white);
   border-right: 1px solid var(--border-color);
   z-index: 1000;
+  overflow: hidden;
   transition:
     width 0.3s ease-in-out,
     transform 0.3s ease-in-out,
@@ -113,9 +114,15 @@
       align-items: center !important;
     }
 
-    /* Hide text labels */
+    /* Hide text labels (fade + collapse width instead of hard display:none) */
     .link-text {
-      display: none !important;
+      max-width: 0;
+      overflow: hidden;
+      opacity: 0;
+      white-space: nowrap;
+      transition:
+        max-width 0.3s ease-in-out,
+        opacity 0.2s ease-in-out;
     }
 
     /* Hide dropdown chevron icons */
@@ -135,7 +142,14 @@
       justify-content: center !important;
 
       h5 {
-        display: none !important;
+        max-width: 0;
+        margin: 0;
+        overflow: hidden;
+        opacity: 0;
+        white-space: nowrap;
+        transition:
+          max-width 0.3s ease-in-out,
+          opacity 0.2s ease-in-out;
       }
     }
 
@@ -161,14 +175,29 @@
         font-size: 1.25rem !important;
       }
 
-      &.active {
-        background-color: rgba(12, 158, 161, 0.1) !important;
+      /* Hover estándar: solo cambio de fondo suave, sin escala ni sombra */
+      &:hover:not(.active) {
+        background-color: var(--soft-blue-bg) !important;
         color: var(--primary-color) !important;
-        border-left: none !important;
       }
 
-      &:hover {
-        transform: scale(1.05);
+      /* Seleccionado en mini-rail: más contrastado que el hover para que se distinga */
+      &.active {
+        background-color: rgba(12, 158, 161, 0.2) !important;
+        color: var(--primary-color) !important;
+        border-left: none !important;
+        font-weight: 600;
+
+        i,
+        .material-symbols-outlined {
+          color: var(--primary-color) !important;
+          font-weight: 600;
+        }
+      }
+
+      &.active:hover {
+        background-color: rgba(12, 158, 161, 0.24) !important;
+        color: var(--primary-color) !important;
       }
     }
   }
@@ -290,12 +319,19 @@
   border-radius: 10px;
   display: flex;
   align-items: center;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease,
+    width 0.3s ease-in-out,
+    height 0.3s ease-in-out,
+    padding 0.3s ease-in-out,
+    margin 0.3s ease-in-out,
+    border-radius 0.3s ease-in-out;
   border-left: 3px solid transparent;
 }
 
 .nav-link-custom:hover {
-  background-color: var(--light-bg);
+  background-color: var(--soft-blue-bg);
   color: var(--primary-color) !important;
 }
 

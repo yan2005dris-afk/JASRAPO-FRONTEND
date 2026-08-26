@@ -14,6 +14,8 @@ import { MenuService } from '../../core/services/menu.service';
 import { LayoutService } from '../../core/services/layout.service';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MenuItem } from '../../core/models/menu.model';
+import { Router, NavigationEnd } from '@angular/router';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-sidebar',
@@ -25,9 +27,24 @@ import { MenuItem } from '../../core/models/menu.model';
 export class Sidebar {
   readonly menuService = inject(MenuService);
   readonly layoutService = inject(LayoutService);
+  readonly router = inject(Router);
 
   readonly expandedItems = signal<Record<number, boolean>>({});
   readonly searchQuery = signal('');
+  readonly currentUrl = signal(this.router.url);
+
+  constructor() {
+    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe((e) => {
+      this.currentUrl.set((e as NavigationEnd).urlAfterRedirects);
+    });
+  }
+
+  isParentActive(item: MenuItem): boolean {
+    const url = this.currentUrl();
+    if (item.route && url.startsWith(item.route)) return true;
+    if (!item.children?.length) return false;
+    return item.children.some((child) => !!child.route && url.startsWith(child.route));
+  }
 
   private readonly searchInputRef = viewChild<ElementRef<HTMLInputElement>>('searchInput');
 

@@ -55,6 +55,7 @@
               type="button"
               class="nav-link nav-link-custom d-flex justify-content-between align-items-center w-100 border-0 bg-transparent"
               (click)="toggleItem(item.id)"
+              [class.active]="isParentActive(item)"
               [attr.aria-expanded]="effectiveExpandedItems()[item.id]"
               [matTooltip]="!layoutService.sidebarOpen() ? item.name : ''"
               matTooltipPosition="right"
