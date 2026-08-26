@@ -160,7 +160,14 @@
         <button class="back-btn" (click)="goBackToActions()" id="btn-back-actions">
           <i class="bi bi-arrow-left"></i>
         </button>
-        <h1 class="screen-title">Registrar Lectura</h1>
+        <h1 class="screen-title">
+          @switch (activeTipoActividad()) {
+            @case ('INSTALACION') { Registrar Instalación }
+            @case ('INSPECCION')  { Registrar Inspección }
+            @case ('RECONEXION')  { Registrar Reconexión }
+            @default              { Registrar Lectura }
+          }
+        </h1>
       </div>
 
       @if (selectedMeter(); as meter) {
@@ -174,104 +181,37 @@
         </div>
       }
 
-      <form [formGroup]="readingForm" (ngSubmit)="onSubmit()" class="reading-form">
-        <div class="form-field">
-          <label for="lectura-anterior" class="field-label">Lectura Anterior</label>
-          <input
-            id="lectura-anterior"
-            type="number"
-            inputmode="decimal"
-            min="0"
-            step="0.01"
-            class="field-input readonly"
-            formControlName="lecturaAnterior"
-            readonly
+      @switch (activeTipoActividad()) {
+        @case ('INSTALACION') {
+          <app-instalacion-form
+            [isSaving]="isSaving()"
+            (formSubmit)="onWorkOrderSubmit($event)"
+            (cancel)="goBackToActions()"
           />
-          <span class="field-hint">Último valor registrado (m³)</span>
-        </div>
-
-        <div class="form-field">
-          <label for="input-lectura-actual" class="field-label required">Lectura Actual</label>
-          <input
-            id="input-lectura-actual"
-            type="number"
-            inputmode="decimal"
-            min="0"
-            step="0.01"
-            placeholder="0.00"
-            class="field-input"
-            formControlName="lecturaActual"
-            [class.invalid]="
-              readingForm.get('lecturaActual')?.touched && readingForm.get('lecturaActual')?.invalid
-            "
+        }
+        @case ('INSPECCION') {
+          <app-inspeccion-form
+            [isSaving]="isSaving()"
+            (formSubmit)="onWorkOrderSubmit($event)"
+            (cancel)="goBackToActions()"
           />
-          @if (readingForm.get('lecturaActual')?.touched) {
-            @if (readingForm.get('lecturaActual')?.hasError('required')) {
-              <span class="field-error">La lectura actual es obligatoria.</span>
-            } @else if (readingForm.get('lecturaActual')?.hasError('min')) {
-              <span class="field-error">No se permiten valores negativos.</span>
-            } @else if (readingForm.get('lecturaActual')?.hasError('lowerThanAnterior')) {
-              <span class="field-error">Debe ser mayor o igual a la lectura anterior.</span>
-            }
-          }
-        </div>
-
-        <div class="form-switch-field">
-          <input
-            type="checkbox"
-            id="lecturaInicialSwitch"
-            formControlName="lecturaInicial"
-            class="switch-input"
+        }
+        @case ('RECONEXION') {
+          <app-reconexion-form
+            [isSaving]="isSaving()"
+            (formSubmit)="onWorkOrderSubmit($event)"
+            (cancel)="goBackToActions()"
           />
-          <label for="lecturaInicialSwitch" class="switch-label">¿Es Lectura Inicial?</label>
-          <span class="field-hint full-width">Ignora la validación con la lectura anterior.</span>
-        </div>
-
-        <div class="form-field">
-          <label for="descripcion-anomalia" class="field-label">Observaciones / Anomalías</label>
-          <textarea
-            id="descripcion-anomalia"
-            class="field-input field-textarea"
-            rows="3"
-            placeholder="Describe alguna novedad (opcional)..."
-            formControlName="descripcionAnomalia"
-          ></textarea>
-        </div>
-
-        <div class="form-field">
-          <span class="field-label">Fotografía del Medidor</span>
-          <app-photo-capture
-            [preview]="photoPreview()"
-            (previewChange)="photoPreview.set($event)"
+        }
+        @default {
+          <app-lectura-form
+            [lecturaAnterior]="lecturaAnteriorPreloaded()"
+            [isSaving]="isSaving()"
+            (formSubmit)="onWorkOrderSubmit($event)"
+            (cancel)="goBackToActions()"
           />
-          <span class="field-hint">Recomendado para anomalías o lecturas altas.</span>
-        </div>
-
-        <div class="form-actions">
-          <button
-            type="button"
-            class="btn-cancel"
-            (click)="goBackToActions()"
-            [disabled]="isSaving()"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            class="btn-submit"
-            [disabled]="readingForm.invalid || isSaving()"
-            id="btn-submit-reading"
-          >
-            @if (isSaving()) {
-              <span class="spinner" role="status" aria-hidden="true"></span>
-              Guardando...
-            } @else {
-              <i class="bi bi-check-circle-fill"></i>
-              Guardar Lectura
-            }
-          </button>
-        </div>
-      </form>
+        }
+      }
     </div>
   }
 </div>

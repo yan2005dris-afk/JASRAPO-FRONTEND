@@ -24,6 +24,12 @@ import {
   READING_STATE_ORDER,
   ESTADOS_FALLBACK,
 } from './readings.models';
+import { LecturaFormComponent } from '../components/work-order-forms/lectura-form.component';
+import { InstalacionFormComponent } from '../components/work-order-forms/instalacion-form.component';
+import { InspeccionFormComponent } from '../components/work-order-forms/inspeccion-form.component';
+import { ReconexionFormComponent } from '../components/work-order-forms/reconexion-form.component';
+import type { WorkOrderFormPayload } from '../models/work-order-form.models';
+import type { WorkOrderActivityType } from '../models/operator.models';
 
 /** Registro de lectura proveniente del backend o IndexedDB. */
 interface ReadingRecord {
@@ -50,6 +56,10 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
     MeterCardComponent,
     SelectedMeterCardComponent,
     RouteTypePipe,
+    LecturaFormComponent,
+    InstalacionFormComponent,
+    InspeccionFormComponent,
+    ReconexionFormComponent,
   ],
   templateUrl: './lecturas.component.html',
   styleUrl: './lecturas.component.scss',
@@ -67,6 +77,12 @@ export class LecturasComponent implements OnInit {
   private readonly operatorService = inject(OperatorService);
   // Mobile step flow
   readonly currentStep = signal<MobileStep>('search');
+
+  /** Active work-order activity type — drives which sub-form is rendered */
+  readonly activeTipoActividad = signal<WorkOrderActivityType>('LECTURA');
+
+  /** Series of the work orders available for the current route context (for type resolution) */
+  private workOrdersByMeter = new Map<string, WorkOrderActivityType>();
 
   // Catálogo de medidores cargado (memoria local)
   readonly metersList = this.meterCache.metersList;
@@ -197,8 +213,11 @@ export class LecturasComponent implements OnInit {
   readonly allowedSeries = signal<Set<string> | null>(null);
   readonly routeContext = signal<{ nombre: string; tipo: string } | null>(null);
 
-  // Formulario
+  // Formulario — kept for backward compatibility (not used when sub-forms are active)
   readingForm!: FormGroup;
+
+  // Lectura anterior pre-cargada para el formulario de Lectura
+  readonly lecturaAnteriorPreloaded = signal<number>(0);
 
   readonly filteredMeters = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
@@ -291,9 +310,22 @@ export class LecturasComponent implements OnInit {
     const rutaTipo = params.get('rutaTipo');
     const seriesParam = params.get('series');
     const singleSerie = params.get('serie');
+    const workOrdersParam = params.get('workOrders');
 
     if (rutaNombre && rutaTipo) {
       this.routeContext.set({ nombre: rutaNombre, tipo: rutaTipo });
+    }
+
+    // Build a lookup map: serie → tipoActividad from serialised work-orders query param
+    // Expected format: "SERIE1:LECTURA,SERIE2:INSTALACION"
+    if (workOrdersParam) {
+      this.workOrdersByMeter.clear();
+      for (const entry of workOrdersParam.split(',')) {
+        const [serie, tipo] = entry.split(':');
+        if (serie && tipo) {
+          this.workOrdersByMeter.set(serie.trim(), tipo.trim() as WorkOrderActivityType);
+        }
+      }
     }
 
     if (seriesParam) {
@@ -398,9 +430,16 @@ export class LecturasComponent implements OnInit {
     this.searchQuery.set('');
     this.currentStep.set('actions');
 
-    // Intentar deducir lectura anterior
+    // Resolve activity type from work-orders map; default to LECTURA
+    const tipo = this.workOrdersByMeter.get(meter.serie) ?? 'LECTURA';
+    this.activeTipoActividad.set(tipo);
+
+    // Pre-load previous reading value for the Lectura sub-form
+    const existing = this.existingReadingMap().get(meter.medidorId.toString());
+    this.lecturaAnteriorPreloaded.set(existing?.lecturaActual ?? 0);
+
     this.readingForm.patchValue({
-      lecturaAnterior: meter.contratoId ? 0 : 0,
+      lecturaAnterior: existing?.lecturaActual ?? 0,
       lecturaActual: 0,
       descripcionAnomalia: '',
     });
@@ -442,31 +481,29 @@ export class LecturasComponent implements OnInit {
     this.goBackToSearch();
   }
 
-  async onSubmit(): Promise<void> {
-    if (this.readingForm.invalid || !this.selectedMeter()) {
-      this.readingForm.markAllAsTouched();
-      return;
-    }
+  /**
+   * Entry point called by each work-order sub-form via (formSubmit).
+   * Builds the final sync payload and delegates to OperatorSyncService.
+   */
+  async onWorkOrderSubmit(formPayload: WorkOrderFormPayload): Promise<void> {
+    const meter = this.selectedMeter();
+    if (!meter) return;
 
     this.isSaving.set(true);
-    const formValue = this.readingForm.value;
-    const meter = this.selectedMeter()!;
-
     const existingReading = this.existingReadingMap().get(meter.medidorId.toString());
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const payload: any = {
+      ...formPayload,
       fecha: new Date().toISOString(),
-      lecturaAnterior: Number(formValue.lecturaAnterior),
-      lecturaActual: Number(formValue.lecturaActual),
-      consumoCalculado: Number(formValue.lecturaActual) - Number(formValue.lecturaAnterior),
       medidorId: meter.medidorId.toString(),
-      lecturaInicial: !!formValue.lecturaInicial,
-      ...(formValue.descripcionAnomalia
-        ? { descripcionAnomalia: formValue.descripcionAnomalia }
-        : {}),
-      ...(this.photoPreview() ? { fotoBase64: this.photoPreview() } : {}),
     };
+
+    // For LECTURA type, add consumption and wire existing reading id
+    if (formPayload.tipoActividad === 'LECTURA') {
+      payload.consumoCalculado =
+        Number(formPayload.lecturaActual) - Number(formPayload.lecturaAnterior);
+    }
 
     if (existingReading?.lecturaId) {
       payload._lecturaId = existingReading.lecturaId;
@@ -475,12 +512,12 @@ export class LecturasComponent implements OnInit {
     try {
       const response = await this.syncService.submitReading(payload);
 
-      if (this.networkService.isOnline() && response && response.lecturaId) {
+      if (this.networkService.isOnline() && response?.lecturaId) {
         const currentReadings = await this.dbService.getRegisteredReadingsCache();
-        const updated = currentReadings.map((r) =>
+        const updated = currentReadings.map((r: { lecturaId?: string }) =>
           r.lecturaId === response.lecturaId ? response : r,
         );
-        if (!currentReadings.some((r) => r.lecturaId === response.lecturaId)) {
+        if (!currentReadings.some((r: { lecturaId?: string }) => r.lecturaId === response.lecturaId)) {
           updated.push(response);
         }
         await this.dbService.saveRegisteredReadingsCache(updated);
@@ -494,6 +531,31 @@ export class LecturasComponent implements OnInit {
     } finally {
       this.isSaving.set(false);
     }
+  }
+
+  /** @deprecated Use onWorkOrderSubmit — kept to avoid breaking any residual template references */
+  async onSubmit(): Promise<void> {
+    if (this.readingForm.invalid || !this.selectedMeter()) {
+      this.readingForm.markAllAsTouched();
+      return;
+    }
+    const formValue = this.readingForm.value;
+    const meter = this.selectedMeter()!;
+    const existingReading = this.existingReadingMap().get(meter.medidorId.toString());
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const payload: any = {
+      tipoActividad: 'LECTURA',
+      fecha: new Date().toISOString(),
+      lecturaAnterior: Number(formValue.lecturaAnterior),
+      lecturaActual: Number(formValue.lecturaActual),
+      consumoCalculado: Number(formValue.lecturaActual) - Number(formValue.lecturaAnterior),
+      medidorId: meter.medidorId.toString(),
+      lecturaInicial: !!formValue.lecturaInicial,
+      ...(formValue.descripcionAnomalia ? { descripcionAnomalia: formValue.descripcionAnomalia } : {}),
+      ...(this.photoPreview() ? { fotoBase64: this.photoPreview() } : {}),
+    };
+    if (existingReading?.lecturaId) payload._lecturaId = existingReading.lecturaId;
+    await this.onWorkOrderSubmit(payload);
   }
 
   async forceSync(): Promise<void> {
