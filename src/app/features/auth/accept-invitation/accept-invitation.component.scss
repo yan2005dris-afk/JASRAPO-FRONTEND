@@ -1,0 +1,67 @@
+/* Custom Logo consistent with login */
+.custom-logo-small {
+  max-height: 180px;
+  object-fit: contain;
+}
+
+.user-greeting-badge {
+  background-color: var(--bs-light, #f8f9fa);
+  border: 1px solid #e2e8f0;
+}
+
+.user-avatar-mini {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #dbf7f8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.error-icon-tile,
+.success-icon-tile {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.error-icon-tile {
+  background-color: rgba(239, 68, 68, 0.12);
+}
+
+.success-icon-tile {
+  background-color: rgba(16, 185, 129, 0.12);
+}
+
+.strength-meter-box {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-eye-toggle {
+  border-color: #dee2e6;
+  &:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+  }
+}
+
+.anim-scale-up {
+  animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes scaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
