@@ -64,7 +64,8 @@ export class OperatorSyncService {
 
   private dataURItoBlob(dataURI: string): Blob {
     const splitDataURI = dataURI.split(',');
-    const byteString = splitDataURI[0].indexOf('base64') >= 0 ? atob(splitDataURI[1]) : decodeURI(splitDataURI[1]);
+    const byteString =
+      splitDataURI[0].indexOf('base64') >= 0 ? atob(splitDataURI[1]) : decodeURI(splitDataURI[1]);
     const mimeString = splitDataURI[0].split(':')[1].split(';')[0];
     const ia = new Uint8Array(byteString.length);
     for (let i = 0; i < byteString.length; i++) {
@@ -241,7 +242,7 @@ export class OperatorSyncService {
           fotoBase64,
           ...payload
         } = pending;
-        
+
         const formData = new FormData();
         for (const [key, value] of Object.entries(payload)) {
           if (value !== null && value !== undefined) {
@@ -287,8 +288,14 @@ export class OperatorSyncService {
     for (const pending of anomalies) {
       try {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { id, syncState: _syncState2, errorMessage: _errorMessage2, fotoBase64, ...payload } = pending;
-        
+        const {
+          id,
+          syncState: _syncState2,
+          errorMessage: _errorMessage2,
+          fotoBase64,
+          ...payload
+        } = pending;
+
         const formData = new FormData();
         formData.append('lecturaId', String(payload['lecturaId']));
         formData.append('tipo', String(payload['tipo']));
