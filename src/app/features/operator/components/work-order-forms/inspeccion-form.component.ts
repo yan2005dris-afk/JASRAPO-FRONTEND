@@ -4,7 +4,7 @@ import {
   Output,
   EventEmitter,
   OnInit,
-  inject,
+  OnInit,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -31,9 +31,7 @@ const ESTADO_SELLOS_OPTIONS: { value: InspeccionFormPayload['estadoSellos']; lab
           id="insp-sellos"
           class="field-input"
           formControlName="estadoSellos"
-          [class.invalid]="
-            form.get('estadoSellos')?.touched && form.get('estadoSellos')?.invalid
-          "
+          [class.invalid]="form.get('estadoSellos')?.touched && form.get('estadoSellos')?.invalid"
         >
           <option value="" disabled>Seleccionar...</option>
           @for (opt of selloOptions; track opt.value) {
@@ -46,12 +44,7 @@ const ESTADO_SELLOS_OPTIONS: { value: InspeccionFormPayload['estadoSellos']; lab
       </div>
 
       <div class="form-switch-field">
-        <input
-          type="checkbox"
-          id="insp-fugas"
-          formControlName="hayFugas"
-          class="switch-input"
-        />
+        <input type="checkbox" id="insp-fugas" formControlName="hayFugas" class="switch-input" />
         <label for="insp-fugas" class="switch-label">¿Se detectaron fugas?</label>
       </div>
 
@@ -75,7 +68,7 @@ const ESTADO_SELLOS_OPTIONS: { value: InspeccionFormPayload['estadoSellos']; lab
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn-cancel" (click)="cancel.emit()" [disabled]="isSaving">
+        <button type="button" class="btn-cancel" (click)="canceled.emit()" [disabled]="isSaving">
           Cancelar
         </button>
         <button
@@ -97,11 +90,12 @@ const ESTADO_SELLOS_OPTIONS: { value: InspeccionFormPayload['estadoSellos']; lab
   `,
 })
 export class InspeccionFormComponent implements OnInit {
+  // eslint-disable-next-line @angular-eslint/prefer-inject
   constructor(private readonly fb: FormBuilder) {}
 
   @Input() isSaving = false;
   @Output() formSubmit = new EventEmitter<InspeccionFormPayload>();
-  @Output() cancel = new EventEmitter<void>();
+  @Output() canceled = new EventEmitter<void>();
 
   readonly selloOptions = ESTADO_SELLOS_OPTIONS;
 

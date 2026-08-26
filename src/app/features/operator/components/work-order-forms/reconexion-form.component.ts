@@ -4,7 +4,7 @@ import {
   Output,
   EventEmitter,
   OnInit,
-  inject,
+  OnInit,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -20,11 +20,7 @@ import type { ReconexionFormPayload } from '../../models/work-order-form.models'
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()" class="reading-form">
       <div class="form-field">
-        <div
-          class="alert-info"
-          role="note"
-          aria-label="Instrucción de reconexión"
-        >
+        <div class="alert-info" role="note" aria-label="Instrucción de reconexión">
           <i class="bi bi-info-circle-fill"></i>
           Antes de reconectar, confirme que el sello anterior fue retirado correctamente.
         </div>
@@ -44,7 +40,9 @@ import type { ReconexionFormPayload } from '../../models/work-order-form.models'
           form.get('confirmacionRetiroSello')?.touched &&
           form.get('confirmacionRetiroSello')?.hasError('required')
         ) {
-          <span class="field-error full-width">Debe confirmar el retiro del sello para continuar.</span>
+          <span class="field-error full-width"
+            >Debe confirmar el retiro del sello para continuar.</span
+          >
         }
       </div>
 
@@ -57,7 +55,7 @@ import type { ReconexionFormPayload } from '../../models/work-order-form.models'
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn-cancel" (click)="cancel.emit()" [disabled]="isSaving">
+        <button type="button" class="btn-cancel" (click)="canceled.emit()" [disabled]="isSaving">
           Cancelar
         </button>
         <button
@@ -79,11 +77,12 @@ import type { ReconexionFormPayload } from '../../models/work-order-form.models'
   `,
 })
 export class ReconexionFormComponent implements OnInit {
+  // eslint-disable-next-line @angular-eslint/prefer-inject
   constructor(private readonly fb: FormBuilder) {}
 
   @Input() isSaving = false;
   @Output() formSubmit = new EventEmitter<ReconexionFormPayload>();
-  @Output() cancel = new EventEmitter<void>();
+  @Output() canceled = new EventEmitter<void>();
 
   form!: FormGroup;
   photoPreview: string | null = null;

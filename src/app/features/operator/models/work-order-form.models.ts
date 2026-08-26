@@ -35,7 +35,4 @@ export interface ReconexionFormPayload {
 }
 
 export type WorkOrderFormPayload =
-  | LecturaFormPayload
-  | InstalacionFormPayload
-  | InspeccionFormPayload
-  | ReconexionFormPayload;
+  LecturaFormPayload | InstalacionFormPayload | InspeccionFormPayload | ReconexionFormPayload;

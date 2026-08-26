@@ -162,10 +162,18 @@
         </button>
         <h1 class="screen-title">
           @switch (activeTipoActividad()) {
-            @case ('INSTALACION') { Registrar Instalación }
-            @case ('INSPECCION')  { Registrar Inspección }
-            @case ('RECONEXION')  { Registrar Reconexión }
-            @default              { Registrar Lectura }
+            @case ('INSTALACION') {
+              Registrar Instalación
+            }
+            @case ('INSPECCION') {
+              Registrar Inspección
+            }
+            @case ('RECONEXION') {
+              Registrar Reconexión
+            }
+            @default {
+              Registrar Lectura
+            }
           }
         </h1>
       </div>
@@ -186,21 +194,21 @@
           <app-instalacion-form
             [isSaving]="isSaving()"
             (formSubmit)="onWorkOrderSubmit($event)"
-            (cancel)="goBackToActions()"
+            (canceled)="goBackToActions()"
           />
         }
         @case ('INSPECCION') {
           <app-inspeccion-form
             [isSaving]="isSaving()"
             (formSubmit)="onWorkOrderSubmit($event)"
-            (cancel)="goBackToActions()"
+            (canceled)="goBackToActions()"
           />
         }
         @case ('RECONEXION') {
           <app-reconexion-form
             [isSaving]="isSaving()"
             (formSubmit)="onWorkOrderSubmit($event)"
-            (cancel)="goBackToActions()"
+            (canceled)="goBackToActions()"
           />
         }
         @default {
@@ -208,7 +216,7 @@
             [lecturaAnterior]="lecturaAnteriorPreloaded()"
             [isSaving]="isSaving()"
             (formSubmit)="onWorkOrderSubmit($event)"
-            (cancel)="goBackToActions()"
+            (canceled)="goBackToActions()"
           />
         }
       }

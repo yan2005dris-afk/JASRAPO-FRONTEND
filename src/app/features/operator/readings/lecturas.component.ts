@@ -517,7 +517,9 @@ export class LecturasComponent implements OnInit {
         const updated = currentReadings.map((r: { lecturaId?: string }) =>
           r.lecturaId === response.lecturaId ? response : r,
         );
-        if (!currentReadings.some((r: { lecturaId?: string }) => r.lecturaId === response.lecturaId)) {
+        if (
+          !currentReadings.some((r: { lecturaId?: string }) => r.lecturaId === response.lecturaId)
+        ) {
           updated.push(response);
         }
         await this.dbService.saveRegisteredReadingsCache(updated);
@@ -551,7 +553,9 @@ export class LecturasComponent implements OnInit {
       consumoCalculado: Number(formValue.lecturaActual) - Number(formValue.lecturaAnterior),
       medidorId: meter.medidorId.toString(),
       lecturaInicial: !!formValue.lecturaInicial,
-      ...(formValue.descripcionAnomalia ? { descripcionAnomalia: formValue.descripcionAnomalia } : {}),
+      ...(formValue.descripcionAnomalia
+        ? { descripcionAnomalia: formValue.descripcionAnomalia }
+        : {}),
       ...(this.photoPreview() ? { fotoBase64: this.photoPreview() } : {}),
     };
     if (existingReading?.lecturaId) payload._lecturaId = existingReading.lecturaId;

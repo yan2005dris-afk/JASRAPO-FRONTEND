@@ -4,7 +4,7 @@ import {
   Output,
   EventEmitter,
   OnInit,
-  inject,
+  OnInit,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -49,7 +49,9 @@ import type { InstalacionFormPayload } from '../../models/work-order-form.models
             form.get('lecturaInicial')?.touched && form.get('lecturaInicial')?.invalid
           "
         />
-        @if (form.get('lecturaInicial')?.touched && form.get('lecturaInicial')?.hasError('required')) {
+        @if (
+          form.get('lecturaInicial')?.touched && form.get('lecturaInicial')?.hasError('required')
+        ) {
           <span class="field-error">La lectura inicial es obligatoria.</span>
         }
         @if (form.get('lecturaInicial')?.touched && form.get('lecturaInicial')?.hasError('min')) {
@@ -66,7 +68,7 @@ import type { InstalacionFormPayload } from '../../models/work-order-form.models
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn-cancel" (click)="cancel.emit()" [disabled]="isSaving">
+        <button type="button" class="btn-cancel" (click)="canceled.emit()" [disabled]="isSaving">
           Cancelar
         </button>
         <button
@@ -88,11 +90,12 @@ import type { InstalacionFormPayload } from '../../models/work-order-form.models
   `,
 })
 export class InstalacionFormComponent implements OnInit {
+  // eslint-disable-next-line @angular-eslint/prefer-inject
   constructor(private readonly fb: FormBuilder) {}
 
   @Input() isSaving = false;
   @Output() formSubmit = new EventEmitter<InstalacionFormPayload>();
-  @Output() cancel = new EventEmitter<void>();
+  @Output() canceled = new EventEmitter<void>();
 
   form!: FormGroup;
   photoPreview: string | null = null;

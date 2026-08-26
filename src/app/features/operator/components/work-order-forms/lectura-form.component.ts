@@ -5,7 +5,7 @@ import {
   EventEmitter,
   OnInit,
   DestroyRef,
-  inject,
+  OnInit,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -89,7 +89,7 @@ import type { LecturaFormPayload } from '../../models/work-order-form.models';
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn-cancel" (click)="cancel.emit()" [disabled]="isSaving">
+        <button type="button" class="btn-cancel" (click)="canceled.emit()" [disabled]="isSaving">
           Cancelar
         </button>
         <button
@@ -111,15 +111,17 @@ import type { LecturaFormPayload } from '../../models/work-order-form.models';
   `,
 })
 export class LecturaFormComponent implements OnInit {
+  /* eslint-disable @angular-eslint/prefer-inject */
   constructor(
     private readonly fb: FormBuilder,
     private readonly destroyRef: DestroyRef,
   ) {}
+  /* eslint-enable @angular-eslint/prefer-inject */
 
   @Input() lecturaAnterior = 0;
   @Input() isSaving = false;
   @Output() formSubmit = new EventEmitter<LecturaFormPayload>();
-  @Output() cancel = new EventEmitter<void>();
+  @Output() canceled = new EventEmitter<void>();
 
   form!: FormGroup;
   photoPreview: string | null = null;

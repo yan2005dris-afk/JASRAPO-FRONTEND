@@ -2,6 +2,7 @@ import { FormBuilder } from '@angular/forms';
 import { LecturaFormComponent } from './lectura-form.component';
 
 function createComponent(lecturaAnterior = 0): LecturaFormComponent {
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   const destroyRef = { onDestroy: () => () => {} } as never;
   const comp = new LecturaFormComponent(new FormBuilder(), destroyRef);
   comp.lecturaAnterior = lecturaAnterior;
