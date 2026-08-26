@@ -287,11 +287,10 @@ export class OperatorSyncService {
     // 2. Sincronizar las anomalías
     for (const pending of anomalies) {
       try {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const {
           id,
-          syncState: _syncState2,
-          errorMessage: _errorMessage2,
+          syncState: _syncState2, // eslint-disable-line @typescript-eslint/no-unused-vars
+          errorMessage: _errorMessage2, // eslint-disable-line @typescript-eslint/no-unused-vars
           fotoBase64,
           ...payload
         } = pending;
