@@ -7,19 +7,22 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { OperatorService } from '../service/operator.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
+import { NetworkService } from '../../../core/services/network.service';
 import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
 import type { TaskResponse } from '../models/operator.models';
+import { OperatorRouteOfflineService } from '../service/operator-route-offline.service';
 import { MARKER_COLORS, TIPO_ICONS, STATE_LABELS, FILTER_OPTIONS } from './rutas.constants';
 import * as L from 'leaflet';
-import { firstValueFrom } from 'rxjs';
 
 type ViewMode = 'list' | 'map';
 
 interface MapPoint {
+  routeId: string;
   lat: number;
   lng: number;
   estado: string;
@@ -36,14 +39,19 @@ interface MapPoint {
   styleUrl: './rutas.component.scss',
 })
 export class RutasComponent implements OnInit, OnDestroy {
-  private readonly operatorService = inject(OperatorService);
+  private readonly routeOfflineService = inject(OperatorRouteOfflineService);
   private readonly dbService = inject(IndexedDbService);
+  private readonly networkService = inject(NetworkService);
   private readonly router = inject(Router);
 
   private map?: L.Map;
   private markersGroup?: L.LayerGroup;
   private userMarker?: L.Marker;
   private geoWatchId?: number;
+  /** Contador de tileerrors consecutivos para evitar degradar el mapa por un blip. */
+  private consecutiveTileErrors = 0;
+  /** Subject para desuscribir observables en ngOnDestroy. */
+  private readonly destroy$ = new Subject<void>();
 
   // ── Signals ──────────────────────────────────────────────────────────────
   readonly tasks = signal<TaskResponse[]>([]);
@@ -52,6 +60,13 @@ export class RutasComponent implements OnInit, OnDestroy {
   readonly isLoading = signal<boolean>(false);
   readonly selectedTaskId = signal<string | null>(null);
   readonly readingStatusBySerie = signal<Map<string, string>>(new Map());
+  readonly routesSource = signal<'network' | 'cache' | null>(null);
+  readonly routesCachedAt = signal<string | null>(null);
+  readonly loadError = signal<string | null>(null);
+  readonly tileLayerUnavailable = signal<boolean>(false);
+  readonly isDegradedMap = computed(
+    () => !this.networkService.isOnline() || this.tileLayerUnavailable(),
+  );
 
   // ── Computed ─────────────────────────────────────────────────────────────
   readonly filteredTasks = computed<TaskResponse[]>(() => {
@@ -80,6 +95,7 @@ export class RutasComponent implements OnInit, OnDestroy {
         for (const p of paradas) {
           if (p.latitud != null && p.longitud != null) {
             points.push({
+              routeId: task.rutaId,
               lat: p.latitud,
               lng: p.longitud,
               estado: statusMap.get(p.serie ?? '') ?? p.estado ?? '__SIN_LECTURA__',
@@ -96,12 +112,15 @@ export class RutasComponent implements OnInit, OnDestroy {
           }
         }
       } else if (ordenes && ordenes.length > 0) {
-        for (const ord of ordenes) {
+        // Backend puede no garantizar orden estable entre requests; ordenamos acá
+        // por ordenVisita para que la secuencia de visita sea consistente en UI.
+        for (const ord of ordenes.slice().sort((a, b) => a.ordenVisita - b.ordenVisita)) {
           const lat = ord.medidor?.latitud;
           const lng = ord.medidor?.longitud;
           const serie = ord.medidor?.serie;
           if (lat != null && lng != null) {
             points.push({
+              routeId: task.rutaId,
               lat,
               lng,
               estado: statusMap.get(serie ?? '') ?? ord.estado ?? '__SIN_LECTURA__',
@@ -120,6 +139,7 @@ export class RutasComponent implements OnInit, OnDestroy {
       } else if (task.tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos?.length) {
         for (const pt of task.rutaPuntos) {
           points.push({
+            routeId: task.rutaId,
             lat: pt.latitud,
             lng: pt.longitud,
             estado: statusMap.get(pt.serie) ?? '__SIN_LECTURA__',
@@ -135,6 +155,7 @@ export class RutasComponent implements OnInit, OnDestroy {
         }
       } else if (task.medidor?.latitud != null && task.medidor?.longitud != null) {
         points.push({
+          routeId: task.rutaId,
           lat: task.medidor.latitud,
           lng: task.medidor.longitud,
           estado: statusMap.get(task.medidor.serie) ?? '__SIN_LECTURA__',
@@ -160,9 +181,14 @@ export class RutasComponent implements OnInit, OnDestroy {
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   ngOnInit(): void {
     this.loadAll();
+    // Al reconectarse, refrescar rutas: si el admin reasignó mientras el operador
+    // estaba offline, debe ver la lista actualizada sin tener que salir y volver a entrar.
+    this.networkService.connected$.pipe(takeUntil(this.destroy$)).subscribe(() => this.loadAll());
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
     this.destroyMap();
   }
 
@@ -171,14 +197,21 @@ export class RutasComponent implements OnInit, OnDestroy {
   /** Carga rutas asignadas y estados de lecturas en paralelo. */
   private async loadAll(): Promise<void> {
     this.isLoading.set(true);
+    this.loadError.set(null);
     try {
-      const [tasks] = await Promise.all([
-        firstValueFrom(this.operatorService.getTasks()),
+      const [routeResult] = await Promise.all([
+        this.routeOfflineService.loadAssignedRoutes(),
         this.loadReadingStatuses(),
       ]);
-      this.tasks.set(tasks);
-    } catch {
-      // Errores individuales manejados internamente
+      this.tasks.set(routeResult.routes);
+      this.routesSource.set(routeResult.source);
+      this.routesCachedAt.set(routeResult.cachedAt);
+    } catch (err) {
+      this.tasks.set([]);
+      this.routesSource.set(null);
+      this.routesCachedAt.set(null);
+      const raw = err instanceof Error ? err.message : String(err);
+      this.loadError.set(this.translateLoadError(raw));
     } finally {
       this.isLoading.set(false);
       if (this.viewMode() === 'map') this.initMap();
@@ -188,6 +221,20 @@ export class RutasComponent implements OnInit, OnDestroy {
   /** Recarga manual de rutas (pull-to-refresh). */
   loadTasks(): void {
     this.loadAll();
+  }
+
+  /**
+   * Mapea el mensaje crudo del servicio a un copy orientado al operador.
+   * Tres causas reales distintas → tres acciones distintas del usuario.
+   */
+  private translateLoadError(raw: string): string {
+    if (raw.includes('identificar al operador')) {
+      return 'Tu sesión expiró. Volvé a iniciar sesión para cargar tus rutas.';
+    }
+    if (raw.includes('No hay rutas guardadas')) {
+      return 'No hay rutas guardadas en este dispositivo. Conectate una vez para descargarlas.';
+    }
+    return 'No pudimos cargar las rutas. Verificá tu conexión y reintentá.';
   }
 
   /** Construye el mapa medidorSerie → estado desde IndexedDB. */
@@ -295,10 +342,32 @@ export class RutasComponent implements OnInit, OnDestroy {
     return this.stateLabelMap[estado] ?? estado;
   }
 
+  taskHasMapPoints(task: TaskResponse): boolean {
+    return this.getTaskPointCount(task) > 0;
+  }
+
+  taskHasMeterCoordinates(task: TaskResponse): boolean {
+    return Number.isFinite(task.medidor?.latitud) && Number.isFinite(task.medidor?.longitud);
+  }
+
+  getTaskPointCount(task: TaskResponse): number {
+    if (task.paradas?.length) {
+      return task.paradas.filter((point) => point.latitud != null && point.longitud != null).length;
+    }
+    if (task.ordenesTrabajo?.length) {
+      return task.ordenesTrabajo.filter(
+        (order) => order.medidor?.latitud != null && order.medidor?.longitud != null,
+      ).length;
+    }
+    if (task.rutaPuntos?.length) return task.rutaPuntos.length;
+    return task.medidor?.latitud != null && task.medidor?.longitud != null ? 1 : 0;
+  }
+
   // ── Mapa Leaflet ──────────────────────────────────────────────────────────
 
   private initMap(): void {
     this.destroyMap();
+    this.tileLayerUnavailable.set(false);
 
     const mapElement = document.getElementById('map');
     if (!mapElement) return;
@@ -310,12 +379,46 @@ export class RutasComponent implements OnInit, OnDestroy {
 
     this.map = L.map('map').setView(center, 14);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    }).addTo(this.map);
+    if (this.networkService.isOnline()) {
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      })
+        .on('tileerror', () => {
+          // Un solo tile con timeout no debe degradar el mapa para toda la sesión.
+          // Marcamos degradado solo después de N fallos consecutivos y nos recuperamos
+          // ante el primer tileload.
+          this.consecutiveTileErrors += 1;
+          if (this.consecutiveTileErrors >= 5) {
+            this.tileLayerUnavailable.set(true);
+          }
+        })
+        .on('tileload', () => {
+          this.consecutiveTileErrors = 0;
+          if (this.networkService.isOnline()) {
+            this.tileLayerUnavailable.set(false);
+          }
+        })
+        .addTo(this.map);
+    }
 
     this.markersGroup = L.layerGroup().addTo(this.map);
+
+    const routeLines = new Map<string, L.LatLngTuple[]>();
+    for (const point of points) {
+      const line = routeLines.get(point.routeId) ?? [];
+      line.push([point.lat, point.lng]);
+      routeLines.set(point.routeId, line);
+    }
+    for (const line of routeLines.values()) {
+      if (line.length < 2) continue;
+      L.polyline(line, {
+        color: '#0f7375',
+        weight: 4,
+        opacity: 0.8,
+        dashArray: this.isDegradedMap() ? '8 8' : undefined,
+      }).addTo(this.markersGroup);
+    }
 
     points.forEach((point) => {
       const color = MARKER_COLORS[point.estado] ?? '#9ca3af';

@@ -25,6 +25,32 @@
     }
   </div>
 
+  @if (routesSource() === 'cache') {
+    <div class="alert alert-warning d-flex align-items-center gap-2 py-2 px-3 mb-3" role="alert">
+      <i class="bi bi-cloud-slash-fill"></i>
+      <span>
+        Estás viendo rutas guardadas localmente.
+        @if (routesCachedAt()) {
+          Actualizadas: {{ routesCachedAt() | date: 'short' }}.
+        }
+      </span>
+    </div>
+  }
+
+  @if (loadError() && !isLoading()) {
+    <div
+      class="border rounded p-4 text-center text-muted d-flex flex-column align-items-center gap-2"
+      role="alert"
+    >
+      <i class="bi bi-map fs-2"></i>
+      <strong>Mapa offline no preparado</strong>
+      <p class="mb-0">{{ loadError() }}</p>
+      <button type="button" class="view-toggle-btn" (click)="loadTasks()">
+        <i class="bi bi-arrow-clockwise"></i> Reintentar
+      </button>
+    </div>
+  }
+
   <!-- Skeleton de carga -->
   @if (isLoading()) {
     <div class="skeleton-list" aria-busy="true" aria-label="Cargando rutas...">
@@ -32,10 +58,23 @@
         <div class="skeleton-card"></div>
       }
     </div>
-  } @else {
+  } @else if (!loadError()) {
     <!-- ── Vista Mapa ─────────────────────────────────────────────────────── -->
     @if (viewMode() === 'map') {
       <div class="map-section">
+        @if (isDegradedMap()) {
+          <div
+            class="alert alert-warning d-flex align-items-center gap-2 py-2 px-3 mb-0"
+            role="status"
+          >
+            <i class="bi bi-wifi-off"></i>
+            <span>
+              Mapa base no disponible. Se muestran las paradas, el recorrido aproximado y tu
+              ubicación GPS.
+            </span>
+          </div>
+        }
+
         @if (selectedTaskId()) {
           <div class="map-toolbar">
             <button class="map-tool-btn btn-clear" (click)="selectTask(null)" type="button">
@@ -44,7 +83,12 @@
           </div>
         }
 
-        <div id="map" style="height: 500px" class="map-container">
+        <div
+          id="map"
+          style="height: 500px"
+          class="map-container"
+          [class.map-degraded]="isDegradedMap()"
+        >
           <button
             class="map-locate-btn"
             (click)="centerOnUser()"
@@ -96,13 +140,13 @@
             >
               <span class="task-orden-badge">{{ task.orden }}</span>
               <span class="task-name">{{ task.nombre }}</span>
-              @if (task.medidor?.latitud && task.medidor?.longitud) {
+              @if (taskHasMeterCoordinates(task)) {
                 <span class="task-coords">
                   {{ task.medidor!.latitud | number: '1.4-4' }},
                   {{ task.medidor!.longitud | number: '1.4-4' }}
                 </span>
-              } @else if (task.rutaPuntos && task.rutaPuntos.length > 0) {
-                <span class="task-coords task-coords--ok">{{ task.rutaPuntos.length }} pts</span>
+              } @else if (getTaskPointCount(task) > 0) {
+                <span class="task-coords task-coords--ok"> {{ getTaskPointCount(task) }} pts </span>
               } @else {
                 <span class="task-no-coords">Sin coords</span>
               }
@@ -148,10 +192,7 @@
               >
                 <i class="bi bi-droplet-fill"></i> Lecturas
               </button>
-              @if (
-                (task.medidor?.latitud && task.medidor?.longitud) ||
-                (task.rutaPuntos && task.rutaPuntos.length > 0)
-              ) {
+              @if (taskHasMapPoints(task)) {
                 <button
                   class="btn-card-map"
                   (click)="viewOnMap(task)"
