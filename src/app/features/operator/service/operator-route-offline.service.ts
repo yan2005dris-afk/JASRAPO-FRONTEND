@@ -33,7 +33,11 @@ export class OperatorRouteOfflineService {
     if (this.networkService.isOnline()) {
       try {
         const routes = await firstValueFrom(this.operatorService.getRoutes());
-        await this.dbService.saveRoutesCache(cacheScope, routes).catch(() => undefined);
+        // No bloqueamos el flujo online por un fallo de persistencia: el operador
+        // ya tiene los datos en pantalla. Solo logueamos para diagnóstico.
+        await this.dbService
+          .saveRoutesCache(cacheScope, routes)
+          .catch((e) => console.warn('[routes-cache] persist failed', e));
         return { routes, source: 'network', cachedAt: null };
       } catch (error) {
         networkError = error;

@@ -7,6 +7,8 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
@@ -46,6 +48,10 @@ export class RutasComponent implements OnInit, OnDestroy {
   private markersGroup?: L.LayerGroup;
   private userMarker?: L.Marker;
   private geoWatchId?: number;
+  /** Contador de tileerrors consecutivos para evitar degradar el mapa por un blip. */
+  private consecutiveTileErrors = 0;
+  /** Subject para desuscribir observables en ngOnDestroy. */
+  private readonly destroy$ = new Subject<void>();
 
   // ── Signals ──────────────────────────────────────────────────────────────
   readonly tasks = signal<TaskResponse[]>([]);
@@ -106,6 +112,8 @@ export class RutasComponent implements OnInit, OnDestroy {
           }
         }
       } else if (ordenes && ordenes.length > 0) {
+        // Backend puede no garantizar orden estable entre requests; ordenamos acá
+        // por ordenVisita para que la secuencia de visita sea consistente en UI.
         for (const ord of ordenes.slice().sort((a, b) => a.ordenVisita - b.ordenVisita)) {
           const lat = ord.medidor?.latitud;
           const lng = ord.medidor?.longitud;
@@ -173,9 +181,14 @@ export class RutasComponent implements OnInit, OnDestroy {
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   ngOnInit(): void {
     this.loadAll();
+    // Al reconectarse, refrescar rutas: si el admin reasignó mientras el operador
+    // estaba offline, debe ver la lista actualizada sin tener que salir y volver a entrar.
+    this.networkService.connected$.pipe(takeUntil(this.destroy$)).subscribe(() => this.loadAll());
   }
 
   ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
     this.destroyMap();
   }
 
@@ -193,13 +206,12 @@ export class RutasComponent implements OnInit, OnDestroy {
       this.tasks.set(routeResult.routes);
       this.routesSource.set(routeResult.source);
       this.routesCachedAt.set(routeResult.cachedAt);
-    } catch {
+    } catch (err) {
       this.tasks.set([]);
       this.routesSource.set(null);
       this.routesCachedAt.set(null);
-      this.loadError.set(
-        'No hay rutas guardadas en este dispositivo. Conectate una vez para descargarlas.',
-      );
+      const raw = err instanceof Error ? err.message : String(err);
+      this.loadError.set(this.translateLoadError(raw));
     } finally {
       this.isLoading.set(false);
       if (this.viewMode() === 'map') this.initMap();
@@ -209,6 +221,20 @@ export class RutasComponent implements OnInit, OnDestroy {
   /** Recarga manual de rutas (pull-to-refresh). */
   loadTasks(): void {
     this.loadAll();
+  }
+
+  /**
+   * Mapea el mensaje crudo del servicio a un copy orientado al operador.
+   * Tres causas reales distintas → tres acciones distintas del usuario.
+   */
+  private translateLoadError(raw: string): string {
+    if (raw.includes('identificar al operador')) {
+      return 'Tu sesión expiró. Volvé a iniciar sesión para cargar tus rutas.';
+    }
+    if (raw.includes('No hay rutas guardadas')) {
+      return 'No hay rutas guardadas en este dispositivo. Conectate una vez para descargarlas.';
+    }
+    return 'No pudimos cargar las rutas. Verificá tu conexión y reintentá.';
   }
 
   /** Construye el mapa medidorSerie → estado desde IndexedDB. */
@@ -358,7 +384,21 @@ export class RutasComponent implements OnInit, OnDestroy {
         attribution:
           '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
       })
-        .on('tileerror', () => this.tileLayerUnavailable.set(true))
+        .on('tileerror', () => {
+          // Un solo tile con timeout no debe degradar el mapa para toda la sesión.
+          // Marcamos degradado solo después de N fallos consecutivos y nos recuperamos
+          // ante el primer tileload.
+          this.consecutiveTileErrors += 1;
+          if (this.consecutiveTileErrors >= 5) {
+            this.tileLayerUnavailable.set(true);
+          }
+        })
+        .on('tileload', () => {
+          this.consecutiveTileErrors = 0;
+          if (this.networkService.isOnline()) {
+            this.tileLayerUnavailable.set(false);
+          }
+        })
         .addTo(this.map);
     }
 

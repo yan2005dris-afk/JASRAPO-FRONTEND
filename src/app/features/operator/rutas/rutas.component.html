@@ -26,10 +26,10 @@
   </div>
 
   @if (routesSource() === 'cache') {
-    <div class="alert alert-warning d-flex align-items-center gap-2 py-2 px-3 mb-3" role="status">
+    <div class="alert alert-warning d-flex align-items-center gap-2 py-2 px-3 mb-3" role="alert">
       <i class="bi bi-cloud-slash-fill"></i>
       <span>
-        Usando rutas guardadas en el dispositivo.
+        Estás viendo rutas guardadas localmente.
         @if (routesCachedAt()) {
           Actualizadas: {{ routesCachedAt() | date: 'short' }}.
         }
