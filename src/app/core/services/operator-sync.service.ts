@@ -64,6 +64,9 @@ export class OperatorSyncService {
 
   private dataURItoBlob(dataURI: string): Blob {
     const splitDataURI = dataURI.split(',');
+    if (splitDataURI.length < 2 || !splitDataURI[1]) {
+      throw new Error('Invalid photo data URI: missing payload separator.');
+    }
     const byteString =
       splitDataURI[0].indexOf('base64') >= 0 ? atob(splitDataURI[1]) : decodeURI(splitDataURI[1]);
     const mimeString = splitDataURI[0].split(':')[1].split(';')[0];
@@ -100,6 +103,12 @@ export class OperatorSyncService {
    * Envia una lectura al backend o la encola si está offline.
    * Si reading._lecturaId está presente → PATCH (actualizar existente)
    * Si no → POST (crear nueva)
+   *
+   * Wire format: multipart/form-data.
+   * El field name del archivo de evidencia depende del endpoint (contrato backend):
+   *   - POST   /readings              → 'file'   (ReadingController.create)
+   *   - PATCH  /operator/readings/:id → 'foto'   (OperatorController.actualizarLectura)
+   * Asimetría intencional — cubierta por operator-sync.service.spec.ts.
    */
   async submitReading(reading: any): Promise<any> {
     const { _lecturaId, fotoBase64, ...payload } = reading;
@@ -114,6 +123,7 @@ export class OperatorSyncService {
         }
         if (fotoBase64) {
           const blob = this.dataURItoBlob(fotoBase64);
+          // POST → 'file'; PATCH /operator/readings/:id → 'foto'. Ver JSDoc arriba.
           const fieldName = _lecturaId ? 'foto' : 'file';
           formData.append(fieldName, blob, 'foto.jpg');
         }
@@ -251,6 +261,7 @@ export class OperatorSyncService {
         }
         if (fotoBase64) {
           const blob = this.dataURItoBlob(fotoBase64);
+          // Misma asimetría que submitReading: ver JSDoc arriba.
           const fieldName = _lecturaId ? 'foto' : 'file';
           formData.append(fieldName, blob, 'foto.jpg');
         }
