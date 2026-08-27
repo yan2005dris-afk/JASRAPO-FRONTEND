@@ -159,6 +159,15 @@
                     <li>
                       <button
                         class="dropdown-item d-flex align-items-center gap-2"
+                        (click)="reenviarInvitacion(user)"
+                      >
+                        <i class="bi bi-send-fill text-info" style="font-size: 0.8rem"></i>
+                        Reenviar Invitación
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        class="dropdown-item d-flex align-items-center gap-2"
                         (click)="navigateToEdit(user)"
                       >
                         <i class="bi bi-pencil-fill text-primary" style="font-size: 0.8rem"></i>

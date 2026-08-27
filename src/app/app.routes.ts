@@ -10,6 +10,14 @@ export const routes: Routes = [
     canActivate: [guestGuard],
   },
   {
+    path: 'auth/invitations/accept',
+    loadComponent: () =>
+      import('./features/auth/accept-invitation/accept-invitation.component').then(
+        (m) => m.AcceptInvitationComponent,
+      ),
+    canActivate: [guestGuard],
+  },
+  {
     path: 'consulta-planilla',
     canActivate: [guestGuard],
     children: [
