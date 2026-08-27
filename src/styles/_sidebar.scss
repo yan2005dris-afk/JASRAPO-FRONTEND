@@ -1,0 +1,376 @@
+/*
+  Sidebar Styles — maintainable and scalable.
+  Uses tokens from _variables.scss and minimizes !important via specificity
+  and import order. Imported after _layout.scss in styles.scss.
+*/
+
+/* ---------------------------------------------------
+   Local tokens (readable aliases to CSS vars)
+   --------------------------------------------------- */
+// No SCSS vars needed — we use var(--sidebar-*) directly so they can change at runtime
+
+/* ---------------------------------------------------
+   Brand + Nav base (desktop + mobile)
+   --------------------------------------------------- */
+.sidebar-brand {
+  height: 64px;
+  padding: 0 1.5rem 0 2rem;
+  transition: all var(--sidebar-transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.sidebar-nav {
+  padding-top: 0.75rem;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-width: 100%;
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-color) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 3px;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    background-color: var(--muted-text);
+  }
+}
+
+.brand-logo {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+  transition: all var(--sidebar-transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Nav links — base reutilizable */
+.nav-link-custom {
+  margin: 4px 14px;
+  padding: 0.7rem 1.1rem;
+  font-size: 0.925rem;
+  font-weight: 500;
+  color: var(--dark-text);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  max-width: calc(100% - 28px);
+  box-sizing: border-box;
+  overflow: hidden;
+  transition:
+    background-color var(--sidebar-hover-duration) ease-out,
+    color var(--sidebar-hover-duration) ease-out,
+    width var(--sidebar-transition-duration) var(--sidebar-transition-timing),
+    height var(--sidebar-transition-duration) var(--sidebar-transition-timing),
+    padding var(--sidebar-transition-duration) var(--sidebar-transition-timing),
+    margin var(--sidebar-transition-duration) var(--sidebar-transition-timing),
+    border-radius var(--sidebar-transition-duration) var(--sidebar-transition-timing);
+  border-left: 3px solid transparent;
+}
+
+.nav-link-custom:hover {
+  background-color: var(--soft-blue-bg);
+  color: var(--primary-color) !important;
+}
+
+.nav-link-custom i,
+.nav-link-custom .material-symbols-outlined {
+  display: inline-block;
+  font-size: 1.25rem;
+  transition:
+    transform 0.2s ease-in-out,
+    color var(--sidebar-hover-duration) ease-out;
+}
+
+.nav-link-custom .bi-chevron-down {
+  font-size: 0.8rem;
+  margin-right: 0.75rem;
+}
+
+.rotate-icon {
+  transform: rotate(-180deg);
+}
+
+/* Active in normal mode — no left bar, background only */
+.nav-link-custom.active,
+.nav-link.active {
+  background-color: var(--sidebar-active-bg) !important;
+  color: var(--primary-color) !important;
+  font-weight: 600;
+  border-left: 3px solid transparent;
+
+  i {
+    color: var(--primary-color) !important;
+  }
+}
+
+.nav-link-sub {
+  color: var(--muted-text);
+  text-decoration: none;
+  padding: 0.5rem 1rem 0.5rem 2.5rem;
+  margin: 1px 14px;
+  display: block;
+  font-size: 0.825rem;
+  font-weight: 500;
+  border-radius: 8px;
+  position: relative;
+  transition:
+    background-color var(--sidebar-hover-duration) ease-out,
+    color var(--sidebar-hover-duration) ease-out;
+}
+
+.nav-link-sub:hover {
+  background-color: var(--soft-blue-bg);
+  color: var(--primary-color);
+}
+
+.nav-link-sub.active {
+  background-color: var(--sidebar-sub-active-bg) !important;
+  color: var(--primary-color) !important;
+  font-weight: 600;
+}
+
+/* Submenu with left guide line — rendered/destroyed via Angular @if */
+@keyframes fadeInSubmenu {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.submenu-con-linea {
+  margin: 0 0 0 2rem;
+  padding: 0.25rem 0 0.4rem 0.5rem;
+  border-left: 1.5px solid var(--border-color);
+  animation: fadeInSubmenu 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .submenu-con-linea {
+    animation: none;
+  }
+  .layout-sidebar,
+  .layout-sidebar *,
+  .nav-link-custom,
+  .link-text,
+  .sidebar-brand h5 {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+.submenu-con-linea .nav-link-sub {
+  margin: 2px 0;
+  padding: 0.45rem 0.75rem;
+}
+
+/* Full reset of the li wrapping button + submenu, scoped to the sidebar */
+.layout-sidebar li.nav-item {
+  border: none !important;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  background: none;
+}
+
+.layout-sidebar li.nav-item::before,
+.layout-sidebar li.nav-item::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Remove underline/border on active links (scoped to sidebar) */
+.sidebar-nav a {
+  border-bottom: 0;
+  text-decoration: none;
+}
+
+.nav-link-sub::after,
+.nav-link-custom::after,
+.sidebar-nav a::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Remove bottom strip/shadow from menu items when active/open */
+.nav-link-custom.active,
+.nav-link-custom {
+  box-shadow: none !important;
+  border-bottom: none !important;
+}
+
+/* Search */
+.sidebar-search {
+  border-bottom: 1px solid var(--border-color);
+
+  .input-group-text,
+  .form-control {
+    border-color: var(--border-color);
+    background-color: transparent;
+    font-size: 0.875rem;
+  }
+  .form-control:focus {
+    border-color: var(--primary-color);
+  }
+  .sidebar-search-clear {
+    border-color: var(--border-color);
+    color: var(--muted-text);
+    font-size: 0.65rem;
+    text-decoration: none;
+  }
+}
+
+.sidebar-search-icon {
+  width: var(--sidebar-rail-btn-size);
+  height: var(--sidebar-rail-btn-size);
+  border-radius: 50%;
+  color: var(--muted-text);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+
+  &:hover {
+    background-color: var(--soft-blue-bg);
+    color: var(--primary-color) !important;
+  }
+}
+
+.sidebar-empty-state {
+  font-size: 0.85rem;
+  .bi-search {
+    font-size: 1.25rem;
+    opacity: 0.4;
+  }
+}
+
+/* ---------------------------------------------------
+   Mini-rail overrides — no !important, via specificity + order
+   --------------------------------------------------- */
+@media (min-width: 992px) {
+  .layout-sidebar.sidebar-hidden {
+    /* center list */
+    .nav {
+      align-items: center;
+    }
+
+    /* hide text with fade (not display:none) */
+    .link-text {
+      max-width: 0;
+      overflow: hidden;
+      opacity: 0;
+      white-space: nowrap;
+      transition:
+        max-width var(--sidebar-transition-duration) var(--sidebar-transition-timing),
+        opacity 0.2s ease-in-out;
+    }
+
+    .bi-chevron-down,
+    .nav-link-custom .bi-chevron-down {
+      display: none !important;
+    }
+
+    .submenu-con-linea {
+      display: none;
+    }
+
+    .sidebar-brand {
+      height: 64px;
+      padding: 0;
+      justify-content: center;
+
+      h5 {
+        max-width: 0;
+        margin: 0;
+        overflow: hidden;
+        opacity: 0;
+        white-space: nowrap;
+        transition:
+          max-width var(--sidebar-transition-duration) var(--sidebar-transition-timing),
+          opacity 0.2s ease-in-out;
+      }
+    }
+
+    .brand-logo {
+      margin-bottom: 0;
+      width: 32px;
+      height: 32px;
+    }
+
+    /* circular buttons — perfect circle, not oval */
+    .nav-link-custom {
+      margin: 8px auto;
+      padding: 0;
+      width: var(--sidebar-rail-btn-size);
+      height: var(--sidebar-rail-btn-size);
+      min-width: var(--sidebar-rail-btn-size);
+      min-height: var(--sidebar-rail-btn-size);
+      box-sizing: border-box;
+      aspect-ratio: 1 / 1;
+      flex-shrink: 0;
+      line-height: 1;
+      border-radius: 50%;
+      justify-content: center;
+      align-items: center;
+      border-left: none;
+
+      /* reset icon wrapper (Bootstrap's me-2, etc.) */
+      .nav-link-custom__icon-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+
+      i,
+      .material-symbols-outlined {
+        margin: 0 !important;
+        padding: 0 !important;
+        font-size: 1.25rem;
+        line-height: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      &:hover:not(.active) {
+        background-color: var(--soft-blue-bg);
+        color: var(--primary-color) !important;
+      }
+
+      &.active {
+        background-color: var(--sidebar-rail-active-bg) !important;
+        color: var(--sidebar-rail-active-color) !important;
+        border-left: none !important;
+        font-weight: 600;
+
+        i,
+        .material-symbols-outlined {
+          color: var(--sidebar-rail-active-color) !important;
+          font-weight: 600;
+        }
+      }
+
+      &.active:hover {
+        background-color: var(--sidebar-rail-active-hover-bg) !important;
+        color: var(--sidebar-rail-active-color) !important;
+      }
+    }
+  }
+}
