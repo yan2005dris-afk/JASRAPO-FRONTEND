@@ -280,8 +280,16 @@
     0 4px 12px rgba(0, 0, 0, 0.05),
     0 1px 3px rgba(0, 0, 0, 0.03);
   border: 1px solid var(--border-color);
-  background-color: var(--soft-blue-bg);
+  background-color: #eef4f4;
+  background-image:
+    linear-gradient(rgba(15, 115, 117, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(15, 115, 117, 0.1) 1px, transparent 1px);
+  background-size: 32px 32px;
   z-index: 1;
+
+  &.map-degraded {
+    border-color: #f2c66d;
+  }
 }
 
 .map-locate-btn {
