@@ -39,6 +39,9 @@
         type="button"
         class="btn btn-link sidebar-search-icon"
         (click)="openSearchAndFocus()"
+        [matTooltip]="'Buscar'"
+        matTooltipPosition="right"
+        matTooltipShowDelay="300"
         aria-label="Buscar en el menú"
       >
         <i class="bi bi-search"></i>

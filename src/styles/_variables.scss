@@ -50,12 +50,13 @@
   /* Sidebar Layout Tokens — single source of truth for dimensions/transitions */
   --sidebar-width: 260px;
   --sidebar-rail-width: 70px;
-  --sidebar-rail-btn-size: 44px;
+  --sidebar-rail-btn-size: 48px;
   --sidebar-transition-duration: 0.3s;
   --sidebar-transition-timing: ease-in-out;
   --sidebar-hover-duration: 0.12s;
-  --sidebar-active-bg: rgba(var(--bs-primary-rgb), 0.12);
-  --sidebar-sub-active-bg: rgba(var(--bs-primary-rgb), 0.1);
-  --sidebar-rail-active-bg: rgba(var(--bs-primary-rgb), 0.2);
-  --sidebar-rail-active-hover-bg: rgba(var(--bs-primary-rgb), 0.24);
+  --sidebar-active-bg: rgba(12, 158, 161, 0.12);
+  --sidebar-sub-active-bg: rgba(12, 158, 161, 0.1);
+  --sidebar-rail-active-bg: rgba(12, 158, 161, 0.2);
+  --sidebar-rail-active-hover-bg: rgba(12, 158, 161, 0.24);
+  --sidebar-rail-active-color: var(--primary-color);
 }
