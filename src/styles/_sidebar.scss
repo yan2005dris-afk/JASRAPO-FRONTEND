@@ -116,12 +116,13 @@
 .nav-link-sub {
   color: var(--muted-text);
   text-decoration: none;
-  padding: 0.55rem 1rem 0.55rem 1.75rem;
-  margin: 2px 14px;
+  padding: 0.5rem 1rem 0.5rem 2.5rem;
+  margin: 1px 14px;
   display: block;
-  font-size: 0.875rem;
+  font-size: 0.825rem;
   font-weight: 500;
   border-radius: 8px;
+  position: relative;
   transition:
     background-color var(--sidebar-hover-duration) ease-out,
     color var(--sidebar-hover-duration) ease-out;
@@ -136,6 +137,73 @@
   background-color: var(--sidebar-sub-active-bg) !important;
   color: var(--primary-color) !important;
   font-weight: 600;
+}
+
+/* Submenu con línea guía lateral — se renderiza/destruye con @if de Angular */
+@keyframes fadeInSubmenu {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.submenu-con-linea {
+  margin: 0 0 0 2rem;
+  padding: 0.25rem 0 0.4rem 0.5rem;
+  border-left: 1.5px solid var(--border-color);
+  animation: fadeInSubmenu 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.submenu-con-linea .nav-link-sub {
+  margin: 2px 0;
+  padding: 0.45rem 0.75rem;
+}
+
+/* Reset completo del li que envuelve botón + submenu */
+li.nav-item {
+  border: none !important;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  background: none;
+}
+
+li.nav-item::before,
+li.nav-item::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Eliminar underline/border de links activos */
+.nav-link-sub,
+.nav-link-custom,
+.sidebar-nav a {
+  border-bottom: none !important;
+  text-decoration: none !important;
+}
+
+.nav-link-sub::after,
+.nav-link-custom::after,
+.sidebar-nav a::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Eliminar franja/sombra inferior del menú al estar activo/abierto */
+.nav-link-custom.active,
+.nav-link-custom {
+  box-shadow: none !important;
+  border-bottom: none !important;
+}
+
+.btn-toggle-nav,
+.btn-toggle-nav ul {
+  border: none !important;
+  box-shadow: none !important;
 }
 
 /* Search */

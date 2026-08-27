@@ -76,21 +76,19 @@
             </button>
 
             @if (effectiveExpandedItems()[item.id]) {
-              <div>
-                <ul class="btn-toggle-nav list-unstyled fw-normal pb-1 small ps-4">
-                  @for (child of item.children; track child.id) {
-                    <li>
-                      <a
-                        [routerLink]="child.route"
-                        routerLinkActive="active"
-                        class="nav-link-sub rounded"
-                      >
-                        {{ child.name }}
-                      </a>
-                    </li>
-                  }
-                </ul>
-              </div>
+              <ul class="submenu-con-linea list-unstyled fw-normal small">
+                @for (child of item.children; track child.id) {
+                  <li>
+                    <a
+                      [routerLink]="child.route"
+                      routerLinkActive="active"
+                      class="nav-link-sub rounded"
+                    >
+                      {{ child.name }}
+                    </a>
+                  </li>
+                }
+              </ul>
             }
           }
 
