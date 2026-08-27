@@ -1,13 +1,14 @@
-import { FormBuilder } from '@angular/forms';
+import { TestBed } from '@angular/core/testing';
 import { LecturaFormComponent } from './lectura-form.component';
 
 function createComponent(lecturaAnterior = 0): LecturaFormComponent {
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  const destroyRef = { onDestroy: () => () => {} } as never;
-  const comp = new LecturaFormComponent(new FormBuilder(), destroyRef);
-  comp.lecturaAnterior = lecturaAnterior;
-  comp.ngOnInit();
-  return comp;
+  TestBed.configureTestingModule({
+    imports: [LecturaFormComponent],
+  });
+  const fixture = TestBed.createComponent(LecturaFormComponent);
+  fixture.componentInstance.lecturaAnterior = lecturaAnterior;
+  fixture.detectChanges(); // triggers ngOnInit with the @Input value
+  return fixture.componentInstance;
 }
 
 describe('LecturaFormComponent', () => {
@@ -27,15 +28,17 @@ describe('LecturaFormComponent', () => {
     expect(comp.form.valid).toBe(true);
   });
 
-  it('should emit correct LecturaFormPayload on valid submit', () => {
+  it('should emit correct LecturaFormPayload on valid submit (with photo)', () => {
     const comp = createComponent(10);
     comp.form.patchValue({ lecturaActual: 20 });
+    comp.photoPreview = 'data:image/jpeg;base64,abc';
     const emitted: unknown[] = [];
     comp.formSubmit.subscribe((v) => emitted.push(v));
     comp.submit();
     expect(emitted).toHaveLength(1);
     expect((emitted[0] as { tipoActividad: string }).tipoActividad).toBe('LECTURA');
     expect((emitted[0] as { lecturaActual: number }).lecturaActual).toBe(20);
+    expect((emitted[0] as { fotoBase64: string }).fotoBase64).toBe('data:image/jpeg;base64,abc');
   });
 
   it('should not emit if form is invalid', () => {

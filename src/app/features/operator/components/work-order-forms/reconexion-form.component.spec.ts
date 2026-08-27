@@ -1,11 +1,14 @@
-import { FormBuilder } from '@angular/forms';
+import { TestBed } from '@angular/core/testing';
 import { ReconexionFormComponent } from './reconexion-form.component';
 import type { ReconexionFormPayload } from '../../models/work-order-form.models';
 
 function createComponent(): ReconexionFormComponent {
-  const comp = new ReconexionFormComponent(new FormBuilder());
-  comp.ngOnInit();
-  return comp;
+  TestBed.configureTestingModule({
+    imports: [ReconexionFormComponent],
+  });
+  const fixture = TestBed.createComponent(ReconexionFormComponent);
+  fixture.detectChanges(); // triggers ngOnInit
+  return fixture.componentInstance;
 }
 
 describe('ReconexionFormComponent', () => {

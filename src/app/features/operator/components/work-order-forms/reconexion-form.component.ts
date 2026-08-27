@@ -1,15 +1,9 @@
-import {
-  Component,
-  Input,
-  Output,
-  EventEmitter,
-  OnInit,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { PhotoCaptureComponent } from '../../../../shared/components/photo-capture/photo-capture.component';
 import type { ReconexionFormPayload } from '../../models/work-order-form.models';
+import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
 
 @Component({
   selector: 'app-reconexion-form',
@@ -19,42 +13,41 @@ import type { ReconexionFormPayload } from '../../models/work-order-form.models'
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()" class="reading-form">
       <div class="form-field">
-        <div class="alert-info" role="note" aria-label="Instrucción de reconexión">
-          <i class="bi bi-info-circle-fill"></i>
-          Antes de reconectar, confirme que el sello anterior fue retirado correctamente.
+        <span class="field-label required">Confirmación de Retiro de Sello</span>
+        <div class="confirmation-box">
+          <i class="bi bi-shield-check"></i>
+          <p>
+            Confirmo que retiré el sello de seguridad del medidor antes de la reconexión. Entiendo
+            que esta acción queda registrada con mi firma digital.
+          </p>
         </div>
-      </div>
-
-      <div class="form-switch-field">
-        <input
-          type="checkbox"
-          id="rec-confirmacion"
-          formControlName="confirmacionRetiroSello"
-          class="switch-input"
-        />
-        <label for="rec-confirmacion" class="switch-label">
-          Confirmo que el sello fue retirado
-        </label>
+        <div class="switch-field">
+          <input
+            type="checkbox"
+            id="rec-confirm"
+            formControlName="confirmacionRetiroSello"
+            class="switch-input"
+          />
+          <label for="rec-confirm" class="switch-label">Confirmo el retiro del sello</label>
+        </div>
         @if (
           form.get('confirmacionRetiroSello')?.touched &&
-          form.get('confirmacionRetiroSello')?.hasError('required')
+          form.get('confirmacionRetiroSello')?.invalid
         ) {
-          <span class="field-error full-width"
-            >Debe confirmar el retiro del sello para continuar.</span
-          >
+          <span class="field-error">Debe confirmar el retiro del sello.</span>
         }
       </div>
 
       <div class="form-field">
-        <span class="field-label required">Fotografía del Sello Retirado</span>
+        <span class="field-label required">Fotografía Post-Retiro</span>
         <app-photo-capture [preview]="photoPreview" (previewChange)="onPhotoChange($event)" />
         @if (submitted && !photoPreview) {
-          <span class="field-error">La fotografía del sello retirado es obligatoria.</span>
+          <span class="field-error">La fotografía post-retiro es obligatoria.</span>
         }
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn-cancel" (click)="canceled.emit()" [disabled]="isSaving">
+        <button type="button" class="btn-cancel" (click)="cancel()" [disabled]="isSaving">
           Cancelar
         </button>
         <button
@@ -67,7 +60,7 @@ import type { ReconexionFormPayload } from '../../models/work-order-form.models'
             <span class="spinner" role="status" aria-hidden="true"></span>
             Guardando...
           } @else {
-            <i class="bi bi-plug-fill"></i>
+            <i class="bi bi-check-circle-fill"></i>
             Confirmar Reconexión
           }
         </button>
@@ -75,45 +68,25 @@ import type { ReconexionFormPayload } from '../../models/work-order-form.models'
     </form>
   `,
 })
-export class ReconexionFormComponent implements OnInit {
-  // eslint-disable-next-line @angular-eslint/prefer-inject
-  constructor(private readonly fb: FormBuilder) {}
-
-  @Input() isSaving = false;
-  @Output() formSubmit = new EventEmitter<ReconexionFormPayload>();
-  @Output() canceled = new EventEmitter<void>();
-
-  form!: FormGroup;
-  photoPreview: string | null = null;
-  submitted = false;
-
-  /**
-   * Resetea el flag `submitted` cuando el operador carga una foto nueva.
-   * Sin esto, si un submit fallido dejó el gate prendido y el operador luego
-   * carga la foto faltante, el error seguiría visible. El reset mantiene
-   * el contrato "submitted solo se enciende al hacer submit".
-   */
-  onPhotoChange(val: string | null): void {
-    this.photoPreview = val;
-    if (val) this.submitted = false;
-  }
-
-  ngOnInit(): void {
-    this.form = this.fb.group({
-      confirmacionRetiroSello: [false, Validators.requiredTrue],
+export class ReconexionFormComponent extends BaseWorkOrderFormComponent<ReconexionFormPayload> {
+  protected buildForm(): FormGroup {
+    return this.fb.group({
+      // Validador custom: el checkbox debe ser true (no solo truthy).
+      confirmacionRetiroSello: [
+        false,
+        (control: { value: boolean }) => (control.value === true ? null : { required: true }),
+      ],
     });
   }
 
-  submit(): void {
-    this.submitted = true;
-    if (this.form.invalid || !this.photoPreview) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this.formSubmit.emit({
+  protected buildPayload(
+    formValue: Record<string, unknown>,
+    photo: string | null,
+  ): ReconexionFormPayload {
+    return {
       tipoActividad: 'RECONEXION',
       confirmacionRetiroSello: true,
-      fotoBase64: this.photoPreview,
-    });
+      fotoBase64: photo as string,
+    };
   }
 }

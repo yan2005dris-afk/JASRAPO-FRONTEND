@@ -1,17 +1,17 @@
 import {
   Component,
-  Input,
-  Output,
-  EventEmitter,
-  OnInit,
-  DestroyRef,
   ChangeDetectionStrategy,
+  Input,
+  DestroyRef,
+  inject,
+  OnInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PhotoCaptureComponent } from '../../../../shared/components/photo-capture/photo-capture.component';
 import type { LecturaFormPayload } from '../../models/work-order-form.models';
+import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
 
 @Component({
   selector: 'app-lectura-form',
@@ -83,12 +83,12 @@ import type { LecturaFormPayload } from '../../models/work-order-form.models';
 
       <div class="form-field">
         <span class="field-label">Fotografía del Medidor</span>
-        <app-photo-capture [preview]="photoPreview" (previewChange)="photoPreview = $event" />
+        <app-photo-capture [preview]="photoPreview" (previewChange)="onPhotoChange($event)" />
         <span class="field-hint">Recomendado para anomalías o lecturas altas.</span>
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn-cancel" (click)="canceled.emit()" [disabled]="isSaving">
+        <button type="button" class="btn-cancel" (click)="cancel()" [disabled]="isSaving">
           Cancelar
         </button>
         <button
@@ -109,42 +109,65 @@ import type { LecturaFormPayload } from '../../models/work-order-form.models';
     </form>
   `,
 })
-export class LecturaFormComponent implements OnInit {
-  /* eslint-disable @angular-eslint/prefer-inject */
-  constructor(
-    private readonly fb: FormBuilder,
-    private readonly destroyRef: DestroyRef,
-  ) {}
-  /* eslint-enable @angular-eslint/prefer-inject */
-
+export class LecturaFormComponent
+  extends BaseWorkOrderFormComponent<LecturaFormPayload>
+  implements OnInit
+{
+  /** Lectura anterior pre-cargada por el padre desde el caché. */
   @Input() lecturaAnterior = 0;
-  @Input() isSaving = false;
-  @Output() formSubmit = new EventEmitter<LecturaFormPayload>();
-  @Output() canceled = new EventEmitter<void>();
 
-  form!: FormGroup;
-  photoPreview: string | null = null;
+  // Necesario porque ngOnInit debe llamar buildForm + suscribir valueChanges,
+  // pero el base también implementa ngOnInit (que llama buildForm). Resolvemos
+  // con takeUntilDestroyed y reescritura explícita del ciclo de vida.
+  private readonly destroyRef = inject(DestroyRef);
 
-  ngOnInit(): void {
-    this.form = this.fb.group({
+  override ngOnInit(): void {
+    super.ngOnInit();
+    this.setupValidations();
+  }
+
+  protected buildForm(): FormGroup {
+    return this.fb.group({
       lecturaAnterior: [{ value: this.lecturaAnterior, disabled: true }],
       lecturaActual: [0, [Validators.required, Validators.min(0)]],
       lecturaInicial: [false],
       descripcionAnomalia: [''],
     });
+  }
 
+  protected buildPayload(
+    formValue: Record<string, unknown>,
+    photo: string | null,
+  ): LecturaFormPayload {
+    return {
+      tipoActividad: 'LECTURA',
+      lecturaAnterior: Number(formValue['lecturaAnterior'] ?? 0),
+      lecturaActual: Number(formValue['lecturaActual'] ?? 0),
+      lecturaInicial: !!formValue['lecturaInicial'],
+      ...(formValue['descripcionAnomalia']
+        ? { descripcionAnomalia: String(formValue['descripcionAnomalia']) }
+        : {}),
+      ...(photo ? { fotoBase64: photo } : {}),
+    };
+  }
+
+  /**
+   * Validación cruzada específica del form Lectura: lecturaActual debe ser
+   * >= lecturaAnterior, salvo que lecturaInicial=true. Otros forms no necesitan
+   * esta lógica — se mantiene acá, no en el base.
+   */
+  private setupValidations(): void {
     this.form
       .get('lecturaActual')
       ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.validateReadings());
-
+      .subscribe(() => this.validateCrossField());
     this.form
       .get('lecturaInicial')
       ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.validateReadings());
+      .subscribe(() => this.validateCrossField());
   }
 
-  private validateReadings(): void {
+  private validateCrossField(): void {
     const actual = this.form.get('lecturaActual')?.value;
     const anterior = this.lecturaAnterior;
     const isInicial = this.form.get('lecturaInicial')?.value;
@@ -159,21 +182,5 @@ export class LecturaFormComponent implements OnInit {
       delete errs['lowerThanAnterior'];
       ctrl.setErrors(Object.keys(errs).length ? errs : null);
     }
-  }
-
-  submit(): void {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    const v = this.form.getRawValue();
-    this.formSubmit.emit({
-      tipoActividad: 'LECTURA',
-      lecturaAnterior: Number(v.lecturaAnterior),
-      lecturaActual: Number(v.lecturaActual),
-      lecturaInicial: !!v.lecturaInicial,
-      ...(v.descripcionAnomalia ? { descripcionAnomalia: v.descripcionAnomalia } : {}),
-      ...(this.photoPreview ? { fotoBase64: this.photoPreview } : {}),
-    });
   }
 }

@@ -1,15 +1,9 @@
-import {
-  Component,
-  Input,
-  Output,
-  EventEmitter,
-  OnInit,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { PhotoCaptureComponent } from '../../../../shared/components/photo-capture/photo-capture.component';
 import type { InstalacionFormPayload } from '../../models/work-order-form.models';
+import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
 
 @Component({
   selector: 'app-instalacion-form',
@@ -67,7 +61,7 @@ import type { InstalacionFormPayload } from '../../models/work-order-form.models
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn-cancel" (click)="canceled.emit()" [disabled]="isSaving">
+        <button type="button" class="btn-cancel" (click)="cancel()" [disabled]="isSaving">
           Cancelar
         </button>
         <button
@@ -88,48 +82,23 @@ import type { InstalacionFormPayload } from '../../models/work-order-form.models
     </form>
   `,
 })
-export class InstalacionFormComponent implements OnInit {
-  // eslint-disable-next-line @angular-eslint/prefer-inject
-  constructor(private readonly fb: FormBuilder) {}
-
-  @Input() isSaving = false;
-  @Output() formSubmit = new EventEmitter<InstalacionFormPayload>();
-  @Output() canceled = new EventEmitter<void>();
-
-  form!: FormGroup;
-  photoPreview: string | null = null;
-  submitted = false;
-
-  /**
-   * Resetea el flag `submitted` cuando el operador carga una foto nueva.
-   * Sin esto, si un submit fallido dejó el gate prendido y el operador luego
-   * carga la foto faltante, el error seguiría visible. El reset mantiene
-   * el contrato "submitted solo se enciende al hacer submit".
-   */
-  onPhotoChange(val: string | null): void {
-    this.photoPreview = val;
-    if (val) this.submitted = false;
-  }
-
-  ngOnInit(): void {
-    this.form = this.fb.group({
+export class InstalacionFormComponent extends BaseWorkOrderFormComponent<InstalacionFormPayload> {
+  protected buildForm(): FormGroup {
+    return this.fb.group({
       nuevoSerie: ['', Validators.required],
       lecturaInicial: [0, [Validators.required, Validators.min(0)]],
     });
   }
 
-  submit(): void {
-    this.submitted = true;
-    if (this.form.invalid || !this.photoPreview) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    const v = this.form.value;
-    this.formSubmit.emit({
+  protected buildPayload(
+    formValue: Record<string, unknown>,
+    photo: string | null,
+  ): InstalacionFormPayload {
+    return {
       tipoActividad: 'INSTALACION',
-      nuevoSerie: v.nuevoSerie,
-      lecturaInicial: Number(v.lecturaInicial),
-      fotoBase64: this.photoPreview,
-    });
+      nuevoSerie: String(formValue['nuevoSerie'] ?? ''),
+      lecturaInicial: Number(formValue['lecturaInicial'] ?? 0),
+      fotoBase64: photo as string,
+    };
   }
 }

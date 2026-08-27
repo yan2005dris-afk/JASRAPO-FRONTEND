@@ -1,15 +1,9 @@
-import {
-  Component,
-  Input,
-  Output,
-  EventEmitter,
-  OnInit,
-  ChangeDetectionStrategy,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { PhotoCaptureComponent } from '../../../../shared/components/photo-capture/photo-capture.component';
 import type { InspeccionFormPayload } from '../../models/work-order-form.models';
+import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
 
 const ESTADO_SELLOS_OPTIONS: { value: InspeccionFormPayload['estadoSellos']; label: string }[] = [
   { value: 'INTACTO', label: 'Intacto' },
@@ -67,7 +61,7 @@ const ESTADO_SELLOS_OPTIONS: { value: InspeccionFormPayload['estadoSellos']; lab
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn-cancel" (click)="canceled.emit()" [disabled]="isSaving">
+        <button type="button" class="btn-cancel" (click)="cancel()" [disabled]="isSaving">
           Cancelar
         </button>
         <button
@@ -88,52 +82,27 @@ const ESTADO_SELLOS_OPTIONS: { value: InspeccionFormPayload['estadoSellos']; lab
     </form>
   `,
 })
-export class InspeccionFormComponent implements OnInit {
-  // eslint-disable-next-line @angular-eslint/prefer-inject
-  constructor(private readonly fb: FormBuilder) {}
-
-  @Input() isSaving = false;
-  @Output() formSubmit = new EventEmitter<InspeccionFormPayload>();
-  @Output() canceled = new EventEmitter<void>();
-
+export class InspeccionFormComponent extends BaseWorkOrderFormComponent<InspeccionFormPayload> {
   readonly selloOptions = ESTADO_SELLOS_OPTIONS;
 
-  form!: FormGroup;
-  photoPreview: string | null = null;
-  submitted = false;
-
-  /**
-   * Resetea el flag `submitted` cuando el operador carga una foto nueva.
-   * Sin esto, si un submit fallido dejó el gate prendido y el operador luego
-   * carga la foto faltante, el error seguiría visible. El reset mantiene
-   * el contrato "submitted solo se enciende al hacer submit".
-   */
-  onPhotoChange(val: string | null): void {
-    this.photoPreview = val;
-    if (val) this.submitted = false;
-  }
-
-  ngOnInit(): void {
-    this.form = this.fb.group({
+  protected buildForm(): FormGroup {
+    return this.fb.group({
       estadoSellos: ['', Validators.required],
       hayFugas: [false],
       observaciones: [''],
     });
   }
 
-  submit(): void {
-    this.submitted = true;
-    if (this.form.invalid || !this.photoPreview) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    const v = this.form.value;
-    this.formSubmit.emit({
+  protected buildPayload(
+    formValue: Record<string, unknown>,
+    photo: string | null,
+  ): InspeccionFormPayload {
+    return {
       tipoActividad: 'INSPECCION',
-      estadoSellos: v.estadoSellos,
-      hayFugas: !!v.hayFugas,
-      ...(v.observaciones ? { observaciones: v.observaciones } : {}),
-      fotoBase64: this.photoPreview,
-    });
+      estadoSellos: formValue['estadoSellos'] as InspeccionFormPayload['estadoSellos'],
+      hayFugas: !!formValue['hayFugas'],
+      ...(formValue['observaciones'] ? { observaciones: String(formValue['observaciones']) } : {}),
+      fotoBase64: photo as string,
+    };
   }
 }

@@ -1,11 +1,14 @@
-import { FormBuilder } from '@angular/forms';
+import { TestBed } from '@angular/core/testing';
 import { InstalacionFormComponent } from './instalacion-form.component';
 import type { InstalacionFormPayload } from '../../models/work-order-form.models';
 
 function createComponent(): InstalacionFormComponent {
-  const comp = new InstalacionFormComponent(new FormBuilder());
-  comp.ngOnInit();
-  return comp;
+  TestBed.configureTestingModule({
+    imports: [InstalacionFormComponent],
+  });
+  const fixture = TestBed.createComponent(InstalacionFormComponent);
+  fixture.detectChanges();
+  return fixture.componentInstance;
 }
 
 describe('InstalacionFormComponent', () => {
