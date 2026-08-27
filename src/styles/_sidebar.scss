@@ -1,6 +1,6 @@
 /* 
   Sidebar Styles — mantenible y escalable
-  Usa tokens de _variables.scss y evita !important mediante especificidad y orden de importación.
+  Usa tokens de _variables.scss y minimiza el uso de !important mediante especificidad y orden de importación.
   Importado después de _layout.scss en styles.scss
 */
 
@@ -158,13 +158,19 @@
   animation: fadeInSubmenu 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .submenu-con-linea {
+    animation: none;
+  }
+}
+
 .submenu-con-linea .nav-link-sub {
   margin: 2px 0;
   padding: 0.45rem 0.75rem;
 }
 
-/* Reset completo del li que envuelve botón + submenu */
-li.nav-item {
+/* Reset completo del li que envuelve botón + submenu, solo dentro del sidebar */
+.layout-sidebar li.nav-item {
   border: none !important;
   margin: 0;
   padding: 0;
@@ -172,8 +178,8 @@ li.nav-item {
   background: none;
 }
 
-li.nav-item::before,
-li.nav-item::after {
+.layout-sidebar li.nav-item::before,
+.layout-sidebar li.nav-item::after {
   display: none !important;
   content: none !important;
 }

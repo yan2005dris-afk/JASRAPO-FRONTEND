@@ -16,6 +16,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MenuItem } from '../../core/models/menu.model';
 import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-sidebar',
@@ -34,9 +35,14 @@ export class Sidebar {
   readonly currentUrl = signal(this.router.url);
 
   constructor() {
-    this.router.events.pipe(filter((e) => e instanceof NavigationEnd)).subscribe((e) => {
-      this.currentUrl.set((e as NavigationEnd).urlAfterRedirects);
-    });
+    this.router.events
+      .pipe(
+        filter((e) => e instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe((e) => {
+        this.currentUrl.set((e as NavigationEnd).urlAfterRedirects);
+      });
   }
 
   isParentActive(item: MenuItem): boolean {
