@@ -16,6 +16,7 @@ const ESTADO_SELLOS_OPTIONS: { value: InspeccionFormPayload['estadoSellos']; lab
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [CommonModule, ReactiveFormsModule, PhotoCaptureComponent],
+  styleUrl: './work-order-forms.scss',
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()" class="reading-form">
       <div class="form-field">
