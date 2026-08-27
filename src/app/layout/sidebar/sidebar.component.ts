@@ -8,15 +8,14 @@ import {
   viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MenuService } from '../../core/services/menu.service';
 import { LayoutService } from '../../core/services/layout.service';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MenuItem } from '../../core/models/menu.model';
-import { Router, NavigationEnd } from '@angular/router';
-import { filter } from 'rxjs/operators';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs/operators';
+import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-sidebar',
@@ -32,24 +31,20 @@ export class Sidebar {
 
   readonly expandedItems = signal<Record<number, boolean>>({});
   readonly searchQuery = signal('');
-  readonly currentUrl = signal(this.router.url);
-
-  constructor() {
-    this.router.events
-      .pipe(
-        filter((e) => e instanceof NavigationEnd),
-        takeUntilDestroyed(),
-      )
-      .subscribe((e) => {
-        this.currentUrl.set((e as NavigationEnd).urlAfterRedirects);
-      });
-  }
+  readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map((e) => e.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
 
   isParentActive(item: MenuItem): boolean {
     const url = this.currentUrl();
-    if (item.route && url.startsWith(item.route)) return true;
+    const matches = (route: string) => url === route || url.startsWith(route + '/');
+    if (item.route && matches(item.route)) return true;
     if (!item.children?.length) return false;
-    return item.children.some((child) => !!child.route && url.startsWith(child.route));
+    return item.children.some((child) => !!child.route && matches(child.route));
   }
 
   private readonly searchInputRef = viewChild<ElementRef<HTMLInputElement>>('searchInput');

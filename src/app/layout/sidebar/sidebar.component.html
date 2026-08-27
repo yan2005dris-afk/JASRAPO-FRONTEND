@@ -59,11 +59,13 @@
               class="nav-link nav-link-custom d-flex justify-content-between align-items-center w-100 border-0 bg-transparent"
               (click)="toggleItem(item.id)"
               [class.active]="isParentActive(item)"
+              [attr.aria-current]="isParentActive(item) ? 'page' : null"
               [attr.aria-expanded]="effectiveExpandedItems()[item.id]"
               [matTooltip]="!layoutService.sidebarOpen() ? item.name : ''"
               matTooltipPosition="right"
+              matTooltipShowDelay="300"
             >
-              <span class="text-dark d-flex align-items-center">
+              <span class="nav-link-custom__icon-wrap text-dark d-flex align-items-center">
                 @if (item.icon) {
                   <span class="material-symbols-outlined me-2 align-middle">{{ item.icon }}</span>
                 }
@@ -99,9 +101,13 @@
               class="nav-link nav-link-custom d-flex align-items-center text-dark"
               [matTooltip]="!layoutService.sidebarOpen() ? item.name : ''"
               matTooltipPosition="right"
+              matTooltipShowDelay="300"
             >
               @if (item.icon) {
-                <span class="material-symbols-outlined me-2 align-middle">{{ item.icon }}</span>
+                <span
+                  class="nav-link-custom__icon-wrap material-symbols-outlined me-2 align-middle"
+                  >{{ item.icon }}</span
+                >
               }
               <span class="link-text" [class.ps-4]="!item.icon">{{ item.name }}</span>
             </a>

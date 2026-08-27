@@ -1,7 +1,7 @@
-/* 
-  Layout Styles — shell only (wrapper, sidebar container, main, header)
+/*
+  Layout Styles — shell only (wrapper, sidebar container, main, header).
   Sidebar component details moved to _sidebar.scss for maintainability.
-  Usa tokens de _variables.scss
+  Uses tokens from _variables.scss.
 */
 
 /* ---------------------------------------------------
@@ -23,7 +23,6 @@
   border-right: 1px solid var(--border-color);
   z-index: 1000;
   overflow: hidden;
-  overflow-x: hidden;
   box-sizing: border-box;
   max-width: 100%;
   transition:

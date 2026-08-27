@@ -1,16 +1,16 @@
-/* 
-  Sidebar Styles — mantenible y escalable
-  Usa tokens de _variables.scss y minimiza el uso de !important mediante especificidad y orden de importación.
-  Importado después de _layout.scss en styles.scss
+/*
+  Sidebar Styles — maintainable and scalable.
+  Uses tokens from _variables.scss and minimizes !important via specificity
+  and import order. Imported after _layout.scss in styles.scss.
 */
 
 /* ---------------------------------------------------
-   Tokens locales (alias legibles a CSS vars)
+   Local tokens (readable aliases to CSS vars)
    --------------------------------------------------- */
-// No SCSS vars necesarias — usamos var(--sidebar-*) directamente para que cambie en runtime
+// No SCSS vars needed — we use var(--sidebar-*) directly so they can change at runtime
 
 /* ---------------------------------------------------
-   Brand + Nav base (desktop + móvil)
+   Brand + Nav base (desktop + mobile)
    --------------------------------------------------- */
 .sidebar-brand {
   height: 64px;
@@ -100,13 +100,13 @@
   transform: rotate(-180deg);
 }
 
-/* Activo en modo normal — sin raya lateral, solo fondo */
+/* Active in normal mode — no left bar, background only */
 .nav-link-custom.active,
 .nav-link.active {
   background-color: var(--sidebar-active-bg) !important;
   color: var(--primary-color) !important;
   font-weight: 600;
-  border-left: 3px solid transparent !important;
+  border-left: 3px solid transparent;
 
   i {
     color: var(--primary-color) !important;
@@ -139,7 +139,7 @@
   font-weight: 600;
 }
 
-/* Submenu con línea guía lateral — se renderiza/destruye con @if de Angular */
+/* Submenu with left guide line — rendered/destroyed via Angular @if */
 @keyframes fadeInSubmenu {
   from {
     opacity: 0;
@@ -162,6 +162,14 @@
   .submenu-con-linea {
     animation: none;
   }
+  .layout-sidebar,
+  .layout-sidebar *,
+  .nav-link-custom,
+  .link-text,
+  .sidebar-brand h5 {
+    transition: none !important;
+    animation: none !important;
+  }
 }
 
 .submenu-con-linea .nav-link-sub {
@@ -169,7 +177,7 @@
   padding: 0.45rem 0.75rem;
 }
 
-/* Reset completo del li que envuelve botón + submenu, solo dentro del sidebar */
+/* Full reset of the li wrapping button + submenu, scoped to the sidebar */
 .layout-sidebar li.nav-item {
   border: none !important;
   margin: 0;
@@ -184,12 +192,10 @@
   content: none !important;
 }
 
-/* Eliminar underline/border de links activos */
-.nav-link-sub,
-.nav-link-custom,
+/* Remove underline/border on active links (scoped to sidebar) */
 .sidebar-nav a {
-  border-bottom: none !important;
-  text-decoration: none !important;
+  border-bottom: 0;
+  text-decoration: none;
 }
 
 .nav-link-sub::after,
@@ -199,17 +205,11 @@
   content: none !important;
 }
 
-/* Eliminar franja/sombra inferior del menú al estar activo/abierto */
+/* Remove bottom strip/shadow from menu items when active/open */
 .nav-link-custom.active,
 .nav-link-custom {
   box-shadow: none !important;
   border-bottom: none !important;
-}
-
-.btn-toggle-nav,
-.btn-toggle-nav ul {
-  border: none !important;
-  box-shadow: none !important;
 }
 
 /* Search */
@@ -258,16 +258,16 @@
 }
 
 /* ---------------------------------------------------
-   Mini-rail overrides — sin !important, por especificidad + orden
+   Mini-rail overrides — no !important, via specificity + order
    --------------------------------------------------- */
 @media (min-width: 992px) {
   .layout-sidebar.sidebar-hidden {
-    /* centrar lista */
+    /* center list */
     .nav {
       align-items: center;
     }
 
-    /* ocultar texto con fade (no display:none) */
+    /* hide text with fade (not display:none) */
     .link-text {
       max-width: 0;
       overflow: hidden;
@@ -283,7 +283,6 @@
       display: none !important;
     }
 
-    .btn-toggle-nav,
     .submenu-con-linea {
       display: none;
     }
@@ -311,7 +310,7 @@
       height: 32px;
     }
 
-    /* botones circulares — círculo perfecto, no ovalado */
+    /* circular buttons — perfect circle, not oval */
     .nav-link-custom {
       margin: 8px auto;
       padding: 0;
@@ -328,8 +327,8 @@
       align-items: center;
       border-left: none;
 
-      /* resetear wrapper del icono (me-2 de Bootstrap, etc.) */
-      > span:first-child {
+      /* reset icon wrapper (Bootstrap's me-2, etc.) */
+      .nav-link-custom__icon-wrap {
         display: flex;
         align-items: center;
         justify-content: center;
