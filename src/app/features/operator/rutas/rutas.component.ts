@@ -329,7 +329,20 @@ export class RutasComponent implements OnInit, OnDestroy {
       const workOrders = paradas
         .filter((p) => !!p.serie && !!p.tipoActividad)
         .map((p) => `${p.serie}:${p.tipoActividad}`);
-      if (workOrders.length) queryParams['workOrders'] = workOrders.join(',');
+      if (workOrders.length) {
+        // Agrupa por serie para soportar multiples ordenes del mismo medidor:
+        // SERIE1:TIPO1;TIPO2 (en lugar de duplicar la serie)
+        const grouped = new Map<string, string[]>();
+        for (const wo of workOrders) {
+          const [s, t] = wo.split(':');
+          const arr = grouped.get(s) ?? [];
+          arr.push(t);
+          grouped.set(s, arr);
+        }
+        const merged: string[] = [];
+        for (const [s, ts] of grouped) merged.push(`${s}:${ts.join(';')}`);
+        queryParams['workOrders'] = merged.join(',');
+      }
     } else if (ordenes && ordenes.length > 0) {
       queryParams['series'] = ordenes
         .map((ord) => ord.medidor?.serie)
@@ -340,7 +353,18 @@ export class RutasComponent implements OnInit, OnDestroy {
       const workOrders = ordenes
         .filter((o) => !!o.medidor?.serie && !!o.tipoActividad)
         .map((o) => `${o.medidor!.serie}:${o.tipoActividad}`);
-      if (workOrders.length) queryParams['workOrders'] = workOrders.join(',');
+      if (workOrders.length) {
+        const grouped = new Map<string, string[]>();
+        for (const wo of workOrders) {
+          const [s, t] = wo.split(':');
+          const arr = grouped.get(s) ?? [];
+          arr.push(t);
+          grouped.set(s, arr);
+        }
+        const merged: string[] = [];
+        for (const [s, ts] of grouped) merged.push(`${s}:${ts.join(';')}`);
+        queryParams['workOrders'] = merged.join(',');
+      }
     } else if (task.tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos?.length) {
       queryParams['series'] = task.rutaPuntos.map((pt) => pt.serie).join(',');
     } else if (task.medidor) {
@@ -373,6 +397,40 @@ export class RutasComponent implements OnInit, OnDestroy {
     }
     if (task.rutaPuntos?.length) return task.rutaPuntos.length;
     return task.medidor?.latitud != null && task.medidor?.longitud != null ? 1 : 0;
+  }
+
+  /**
+   * Label del botón principal de cada ruta según tipoRuta.
+   * Antes mostraba "Lecturas" universal — bug UX.
+   */
+  actionLabelFor(task: TaskResponse): string {
+    switch (task.tipoRuta) {
+      case 'INSTALACION':
+        return 'Instalación';
+      case 'INSPECCION':
+        return 'Inspección';
+      case 'RECONEXION':
+        return 'Reconexión';
+      default:
+        return 'Lecturas';
+    }
+  }
+
+  /**
+   * Ícono Bootstrap Icons para el botón según tipoRuta.
+   * Mantiene consistencia con TIPO_ICONS en rutas.constants.ts.
+   */
+  actionIconFor(task: TaskResponse): string {
+    switch (task.tipoRuta) {
+      case 'INSTALACION':
+        return 'bi-tools';
+      case 'INSPECCION':
+        return 'bi-search';
+      case 'RECONEXION':
+        return 'bi-plug-fill';
+      default:
+        return 'bi-droplet-fill';
+    }
   }
 
   // ── Mapa Leaflet ──────────────────────────────────────────────────────────

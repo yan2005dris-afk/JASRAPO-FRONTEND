@@ -75,7 +75,8 @@ export class LecturasComponent implements OnInit {
   readonly activeTipoActividad = signal<WorkOrderActivityType>('LECTURA');
 
   /** Series of the work orders available for the current route context (for type resolution) */
-  private workOrdersByMeter = new Map<string, WorkOrderActivityType>();
+  /** Tipos de orden pendientes por medidor (un medidor puede tener varios). */
+  private workOrdersByMeter = new Map<string, Set<WorkOrderActivityType>>();
 
   // Catálogo de medidores cargado (memoria local)
   readonly metersList = this.meterCache.metersList;
@@ -265,11 +266,16 @@ export class LecturasComponent implements OnInit {
     // Expected format: "SERIE1:LECTURA,SERIE2:INSTALACION"
     if (workOrdersParam) {
       this.workOrdersByMeter.clear();
+      // Formato: "SERIE1:TIPO1;TIPO2,SERIE2:TIPO1" — un medidor puede tener varias ordenes.
       for (const entry of workOrdersParam.split(',')) {
-        const [serie, tipo] = entry.split(':');
-        if (serie && tipo) {
-          this.workOrdersByMeter.set(serie.trim(), tipo.trim() as WorkOrderActivityType);
+        const [serie, tiposCsv] = entry.split(':');
+        if (!serie || !tiposCsv) continue;
+        const set = new Set<WorkOrderActivityType>();
+        for (const tipo of tiposCsv.split(';')) {
+          const t = tipo.trim() as WorkOrderActivityType;
+          if (t) set.add(t);
         }
+        if (set.size) this.workOrdersByMeter.set(serie.trim(), set);
       }
     }
 
@@ -376,8 +382,10 @@ export class LecturasComponent implements OnInit {
     this.currentStep.set('actions');
 
     // Resolve activity type from work-orders map; default to LECTURA
-    const tipo = this.workOrdersByMeter.get(meter.serie) ?? 'LECTURA';
-    this.activeTipoActividad.set(tipo);
+    // Si el medidor tiene ordenes pendientes, abrimos con el primer tipo.
+    // Si no, fallback a LECTURA (caso del operador que entra manualmente a /lecturas).
+    const tipos = this.workOrdersByMeter.get(meter.serie);
+    this.activeTipoActividad.set(tipos?.values().next().value ?? 'LECTURA');
 
     // Pre-load previous reading value for the Lectura sub-form
     const existing = this.existingReadingMap().get(meter.medidorId.toString());
@@ -398,6 +406,23 @@ export class LecturasComponent implements OnInit {
         queryParams: { medidorId: meter.medidorId, lecturaId },
       });
     }
+  }
+
+  /**
+   * Tipos de orden de trabajo pendientes para un medidor.
+   * Devuelve un Set para que el template use @if (set.has(...)) con un solo lookup.
+   */
+  workOrderTypesFor(meter: IMeterDto): Set<WorkOrderActivityType> {
+    return this.workOrdersByMeter.get(meter.serie) ?? new Set();
+  }
+
+  /**
+   * Navega al form del tipo de orden seleccionado.
+   * El @switch del template renderiza el componente correcto.
+   */
+  goToWorkOrderForm(tipo: WorkOrderActivityType): void {
+    this.activeTipoActividad.set(tipo);
+    this.currentStep.set('form');
   }
 
   goBackToSearch(): void {
