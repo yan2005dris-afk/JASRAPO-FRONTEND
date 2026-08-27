@@ -199,6 +199,62 @@ export class OperatorSyncService {
   }
 
   /**
+   * Envia una orden de trabajo (INSTALACION / INSPECCION / RECONEXION) al backend
+   * o la encola si está offline. Requiere ticket #261 mergeado para tener endpoint real.
+   *
+   * Field name del archivo: 'foto' (consistente con PATCH /operator/readings/:id).
+   * El contrato completo (campo por tipo de actividad, validaciones server-side) se
+   * documenta en Shortcut #261.
+   */
+  async submitWorkOrder(workOrder: any): Promise<any> {
+    const { ordenTrabajoId, fotoBase64, ...payload } = workOrder;
+
+    if (this.networkService.isOnline()) {
+      try {
+        const formData = new FormData();
+        for (const [key, value] of Object.entries(payload)) {
+          if (value !== null && value !== undefined) {
+            formData.append(key, String(value));
+          }
+        }
+        if (fotoBase64) {
+          const blob = this.dataURItoBlob(fotoBase64);
+          // PATCH cuando hay ordenTrabajoId, POST cuando es nueva.
+          const fieldName = ordenTrabajoId ? 'foto' : 'file';
+          formData.append(fieldName, blob, 'evidencia.jpg');
+        }
+
+        const url = ordenTrabajoId
+          ? `${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`
+          : `${this.OPERATOR_API}/work-orders`;
+        const request$ = ordenTrabajoId
+          ? this.http.patch<any>(url, formData, { withCredentials: true })
+          : this.http.post<any>(url, formData, { withCredentials: true });
+
+        const response = await firstValueFrom(request$);
+        this.toastService.success('Orden de trabajo registrada correctamente.', 'Éxito');
+        return response;
+      } catch (error: any) {
+        this.toastService.error(
+          error.error?.message || 'Error al enviar orden al servidor.',
+          'Error',
+        );
+        throw error;
+      }
+    } else {
+      // TODO (#267): encolar en nuevo store `ordenes_pendientes` cuando exista.
+      // Mientras tanto, guardamos en el store legacy de lecturas para no perder el dato.
+      await this.dbService.savePendingReading(workOrder);
+      await this.refreshPendingCounts();
+      this.toastService.warning(
+        'Modo Offline: Orden guardada localmente. Se sincronizará al recuperar internet.',
+        'Guardado Local',
+      );
+      return { offline: true };
+    }
+  }
+
+  /**
    * Determina si un error HTTP es de validación del servidor (4xx) o de red/infraestructura.
    * Errores de red: status 0, 502, 503, 504 o sin status.
    */

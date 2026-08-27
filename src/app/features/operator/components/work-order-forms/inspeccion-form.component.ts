@@ -60,7 +60,7 @@ const ESTADO_SELLOS_OPTIONS: { value: InspeccionFormPayload['estadoSellos']; lab
 
       <div class="form-field">
         <span class="field-label required">Fotografía de Evidencia</span>
-        <app-photo-capture [preview]="photoPreview" (previewChange)="photoPreview = $event" />
+        <app-photo-capture [preview]="photoPreview" (previewChange)="onPhotoChange($event)" />
         @if (submitted && !photoPreview) {
           <span class="field-error">La fotografía de evidencia es obligatoria.</span>
         }
@@ -101,6 +101,17 @@ export class InspeccionFormComponent implements OnInit {
   form!: FormGroup;
   photoPreview: string | null = null;
   submitted = false;
+
+  /**
+   * Resetea el flag `submitted` cuando el operador carga una foto nueva.
+   * Sin esto, si un submit fallido dejó el gate prendido y el operador luego
+   * carga la foto faltante, el error seguiría visible. El reset mantiene
+   * el contrato "submitted solo se enciende al hacer submit".
+   */
+  onPhotoChange(val: string | null): void {
+    this.photoPreview = val;
+    if (val) this.submitted = false;
+  }
 
   ngOnInit(): void {
     this.form = this.fb.group({

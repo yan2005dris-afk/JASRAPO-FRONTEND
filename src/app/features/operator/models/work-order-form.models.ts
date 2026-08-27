@@ -36,3 +36,18 @@ export interface ReconexionFormPayload {
 
 export type WorkOrderFormPayload =
   LecturaFormPayload | InstalacionFormPayload | InspeccionFormPayload | ReconexionFormPayload;
+
+/**
+ * Calcula el consumo entre la lectura anterior y la actual.
+ * Si `lecturaInicial` es true, retorna 0 (se ignora la lectura anterior).
+ * Si el resultado es negativo, retorna 0 (clamp defensivo).
+ */
+export function calculateConsumo(
+  lecturaAnterior: number,
+  lecturaActual: number,
+  lecturaInicial: boolean,
+): number {
+  if (lecturaInicial) return 0;
+  const diff = Number(lecturaActual) - Number(lecturaAnterior);
+  return diff < 0 ? 0 : diff;
+}

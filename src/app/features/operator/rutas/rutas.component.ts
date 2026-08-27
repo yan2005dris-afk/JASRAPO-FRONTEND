@@ -324,11 +324,23 @@ export class RutasComponent implements OnInit, OnDestroy {
         .map((p) => p.serie)
         .filter((s): s is string => !!s)
         .join(',');
+      // Para que LecturasComponent resuelva `activeTipoActividad` por medidor
+      // y renderice el form correcto via @switch.
+      const workOrders = paradas
+        .filter((p) => !!p.serie && !!p.tipoActividad)
+        .map((p) => `${p.serie}:${p.tipoActividad}`);
+      if (workOrders.length) queryParams['workOrders'] = workOrders.join(',');
     } else if (ordenes && ordenes.length > 0) {
       queryParams['series'] = ordenes
         .map((ord) => ord.medidor?.serie)
         .filter((s): s is string => !!s)
         .join(',');
+      // Misma idea: si las órdenes declaran tipoActividad (INSTALACION/INSPECCION/RECONEXION),
+      // lo pasamos al form dinámico. Sin esto, los 3 forms nuevos son código muerto en producción.
+      const workOrders = ordenes
+        .filter((o) => !!o.medidor?.serie && !!o.tipoActividad)
+        .map((o) => `${o.medidor!.serie}:${o.tipoActividad}`);
+      if (workOrders.length) queryParams['workOrders'] = workOrders.join(',');
     } else if (task.tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos?.length) {
       queryParams['series'] = task.rutaPuntos.map((pt) => pt.serie).join(',');
     } else if (task.medidor) {
