@@ -183,14 +183,19 @@
               <p class="task-descripcion">{{ task.descripcion }}</p>
             }
             <div class="task-card-actions">
-              <!-- Botón principal: ir a lecturas con tap simple -->
+              <!--
+                    Botón principal: label/icon varía según tipo de actividad.
+                    Antes mostraba "Lecturas" universal (bug UX).
+                  -->
+              @let actionLabel = actionLabelFor(task);
+              @let actionIcon = actionIconFor(task);
               <button
                 class="btn-card-lecturas"
                 (click)="openRoute(task)"
                 type="button"
-                [attr.aria-label]="'Ir a lecturas de ' + task.nombre"
+                [attr.aria-label]="'Ir a ' + actionLabel.toLowerCase() + ' de ' + task.nombre"
               >
-                <i class="bi bi-droplet-fill"></i> Lecturas
+                <i class="bi" [class]="actionIcon"></i> {{ actionLabel }}
               </button>
               @if (taskHasMapPoints(task)) {
                 <button
