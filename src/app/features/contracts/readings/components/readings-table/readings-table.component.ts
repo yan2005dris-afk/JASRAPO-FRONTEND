@@ -33,6 +33,7 @@ export class ReadingsTableComponent {
   readonly showActions = input(true);
   readonly allowValidation = input(false);
   readonly allowReReading = input(true);
+  readonly allowEditing = input(true);
   readonly openDropdownId = input<string | null>(null);
 
   readonly viewDetail = output<IReadingRowItem>();

@@ -115,9 +115,10 @@
                       </button>
                     </li>
                     @if (
-                      r.estado === 'PENDIENTE' ||
-                      r.estado === 'POR_REVISION' ||
-                      r.estado === 'EN_REVISION'
+                      allowEditing() &&
+                      (r.estado === 'PENDIENTE' ||
+                        r.estado === 'POR_REVISION' ||
+                        r.estado === 'EN_REVISION')
                     ) {
                       <li>
                         <button

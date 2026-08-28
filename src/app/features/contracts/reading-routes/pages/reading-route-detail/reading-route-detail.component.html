@@ -60,7 +60,11 @@
             Marcar como Completada
           </button>
         }
-        @if (route.estado !== 'CANCELADA' && route.estado !== 'COMPLETADA') {
+        @if (
+          route.estado !== 'CANCELADA' &&
+          route.estado !== 'COMPLETADA' &&
+          route.estado !== 'PARCIAL'
+        ) {
           <button
             type="button"
             class="btn btn-sm btn-outline-danger d-flex align-items-center gap-1"
@@ -239,8 +243,9 @@
               [readings]="readings()"
               [showSector]="false"
               [showActions]="true"
-              [allowValidation]="true"
-              [allowReReading]="true"
+              [allowValidation]="readingRoute()?.estado === 'EN_PROGRESO'"
+              [allowReReading]="readingRoute()?.estado === 'EN_PROGRESO'"
+              [allowEditing]="readingRoute()?.estado === 'EN_PROGRESO'"
               [openDropdownId]="openDropdownId()"
               (toggleDropdown)="onToggleReadingDropdown($event)"
               (viewDetail)="onViewLecturaDetail($event)"
