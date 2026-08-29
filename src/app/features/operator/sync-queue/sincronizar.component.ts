@@ -176,6 +176,10 @@ export class SincronizarComponent implements OnInit {
     this.editingType.set('anomalia');
   }
 
+  isWorkOrder(record: PendingRecord): boolean {
+    return record['recordType'] === 'WORK_ORDER';
+  }
+
   cancelEdit(): void {
     this.editingRecord.set(null);
     this.editingType.set(null);

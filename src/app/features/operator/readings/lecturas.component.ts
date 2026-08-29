@@ -539,7 +539,7 @@ export class LecturasComponent implements OnInit {
         };
         const response = await this.syncService.submitReading(lecturaPayload);
         await this.updateReadingsCacheAfterSubmit(response);
-        this.setSubmissionSuccess(response);
+        this.setSubmissionSuccess(response as { offline?: boolean });
       } else {
         // INSTALACION / INSPECCION / RECONEXION → endpoint dedicado (#261)
         const ordenTrabajoId = this.workOrderIdFor(
@@ -554,7 +554,7 @@ export class LecturasComponent implements OnInit {
           fecha: new Date().toISOString(),
         };
         const response = await this.syncService.submitWorkOrder(workOrderPayload);
-        this.setSubmissionSuccess(response);
+        this.setSubmissionSuccess(response as { offline?: boolean });
       }
 
       this.goBackToSearch();

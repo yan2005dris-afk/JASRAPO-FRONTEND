@@ -41,7 +41,11 @@
             id="btn-refresh-meters"
             title="Sincronizar"
           >
-            <i class="bi bi-arrow-clockwise" [class.animate-spin]="isLoadingMeters()"></i>
+            <i
+              class="bi bi-arrow-clockwise"
+              [class.animate-spin]="isLoadingMeters()"
+              aria-hidden="true"
+            ></i>
           </button>
         }
       </div>
@@ -68,7 +72,7 @@
           (click)="goBackToSearch()"
           id="btn-back-search"
         >
-          <i class="bi bi-arrow-left"></i>
+          <i class="bi bi-arrow-left" aria-hidden="true"></i>
         </button>
         <h1 class="screen-title">Acciones</h1>
       </div>
@@ -82,7 +86,7 @@
 
         @if (readMetersIds().has(meter.medidorId.toString())) {
           <div class="alert-info">
-            <i class="bi bi-info-circle-fill"></i>
+            <i class="bi bi-info-circle-fill" aria-hidden="true"></i>
             Esta lectura ya fue enviada para revisión y no puede modificarse.
           </div>
         }
@@ -96,12 +100,12 @@
         @let primaryOrder = primaryWorkOrderFor(meter);
         <div class="status-summary" aria-label="Estado del medidor">
           <span
-            ><i class="bi bi-speedometer2"></i> Lectura:
+            ><i class="bi bi-speedometer2" aria-hidden="true"></i> Lectura:
             <strong>{{ readingStateLabel(meter) }}</strong></span
           >
           @if (primaryOrder; as order) {
             <span class="work-order-status"
-              ><i class="bi bi-clipboard-check"></i> Orden:
+              ><i class="bi bi-clipboard-check" aria-hidden="true"></i> Orden:
               <strong>{{ workOrderStateLabel(order[1].estado) }}</strong></span
             >
           }
@@ -113,14 +117,16 @@
               (click)="goToWorkOrderForm(order[0])"
               id="btn-action-primary"
             >
-              <div class="action-icon"><i class="bi bi-clipboard-check"></i></div>
+              <div class="action-icon">
+                <i class="bi bi-clipboard-check" aria-hidden="true"></i>
+              </div>
               <div class="action-text">
                 <span class="action-title">Completar {{ order[0] | routeType }}</span
                 ><span class="action-desc"
                   >Orden asignada · {{ workOrderStateLabel(order[1].estado) }}</span
                 >
               </div>
-              <i class="bi bi-chevron-right"></i>
+              <i class="bi bi-chevron-right" aria-hidden="true"></i>
             </button>
           }
           <span class="secondary-label">Otras acciones</span>
@@ -143,7 +149,7 @@
               id="btn-action-reading"
             >
               <div class="action-icon">
-                <i class="bi bi-moisture"></i>
+                <i class="bi bi-moisture" aria-hidden="true"></i>
               </div>
               <div class="action-text">
                 <span class="action-title">{{
@@ -155,7 +161,7 @@
                     : 'Ingresar consumo del medidor'
                 }}</span>
               </div>
-              <i class="bi bi-chevron-right"></i>
+              <i class="bi bi-chevron-right" aria-hidden="true"></i>
             </button>
           }
 
@@ -166,13 +172,13 @@
             id="btn-action-novelty"
           >
             <div class="action-icon">
-              <i class="bi bi-exclamation-triangle"></i>
+              <i class="bi bi-exclamation-triangle" aria-hidden="true"></i>
             </div>
             <div class="action-text">
               <span class="action-title">Registrar Novedad</span>
               <span class="action-desc">Fuga, daño, anomalía del medidor</span>
             </div>
-            <i class="bi bi-chevron-right"></i>
+            <i class="bi bi-chevron-right" aria-hidden="true"></i>
           </button>
 
           <!-- Acciones dinámicas según ordenes pendientes del medidor. -->
@@ -185,12 +191,12 @@
               (click)="goToWorkOrderForm('INSTALACION')"
               id="btn-action-installation"
             >
-              <div class="action-icon"><i class="bi bi-tools"></i></div>
+              <div class="action-icon"><i class="bi bi-tools" aria-hidden="true"></i></div>
               <div class="action-text">
                 <span class="action-title">Completar Instalación</span>
                 <span class="action-desc">Instalar medidor nuevo con foto y lectura inicial</span>
               </div>
-              <i class="bi bi-chevron-right"></i>
+              <i class="bi bi-chevron-right" aria-hidden="true"></i>
             </button>
           }
           @if (
@@ -201,12 +207,12 @@
               (click)="goToWorkOrderForm('INSPECCION')"
               id="btn-action-inspection"
             >
-              <div class="action-icon"><i class="bi bi-search"></i></div>
+              <div class="action-icon"><i class="bi bi-search" aria-hidden="true"></i></div>
               <div class="action-text">
                 <span class="action-title">Completar Inspección</span>
                 <span class="action-desc">Sellos, fugas y observaciones del medidor</span>
               </div>
-              <i class="bi bi-chevron-right"></i>
+              <i class="bi bi-chevron-right" aria-hidden="true"></i>
             </button>
           }
           @if (
@@ -217,12 +223,12 @@
               (click)="goToWorkOrderForm('RECONEXION')"
               id="btn-action-reconnection"
             >
-              <div class="action-icon"><i class="bi bi-plug-fill"></i></div>
+              <div class="action-icon"><i class="bi bi-plug-fill" aria-hidden="true"></i></div>
               <div class="action-text">
                 <span class="action-title">Completar Reconexión</span>
                 <span class="action-desc">Confirmar retiro de sello con foto</span>
               </div>
-              <i class="bi bi-chevron-right"></i>
+              <i class="bi bi-chevron-right" aria-hidden="true"></i>
             </button>
           }
         </div>
@@ -241,7 +247,7 @@
           (click)="goBackToActions()"
           id="btn-back-actions"
         >
-          <i class="bi bi-arrow-left"></i>
+          <i class="bi bi-arrow-left" aria-hidden="true"></i>
         </button>
         <h1 class="screen-title">
           @switch (activeTipoActividad()) {
@@ -263,7 +269,7 @@
 
       @if (selectedMeter(); as meter) {
         <div class="meter-summary">
-          <i class="bi bi-speedometer2"></i>
+          <i class="bi bi-speedometer2" aria-hidden="true"></i>
           <span class="summary-serie">{{ meter.serie }}</span>
           @if (meter.clienteNombre) {
             <span class="summary-sep">·</span>
