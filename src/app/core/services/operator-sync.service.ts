@@ -7,6 +7,8 @@ import { ToastService } from '../../shared/components/toast/toast.service';
 import { environment } from '../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
 
+import { AuthService } from './auth.service';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -15,6 +17,7 @@ export class OperatorSyncService {
   private readonly networkService = inject(NetworkService);
   private readonly dbService = inject(IndexedDbService);
   private readonly toastService = inject(ToastService);
+  private readonly authService = inject(AuthService);
 
   private readonly READINGS_API = `${environment.apiUrl}/readings`;
   private readonly OPERATOR_API = `${environment.apiUrl}/operator`;
@@ -518,11 +521,13 @@ export class OperatorSyncService {
   }
 
   /**
-   * Descarga todos los datos de trabajo del operador autenticado:
+   * Descarga todos los datos de trabajo del operador autenticado de forma atómica:
    * 1. Rutas asignadas
    * 2. Medidores correspondientes a sus rutas
    * 3. Lecturas del período
    * 4. Catálogo de estados
+   *
+   * Si cualquiera de las descargas falla, NO se muta la base local y se preserva el snapshot previo.
    */
   async downloadAssignedData(): Promise<{
     routesCount: number;
@@ -539,31 +544,31 @@ export class OperatorSyncService {
 
     this.isDownloading.set(true);
     try {
-      // 1. Descargar rutas asignadas
-      const routes = await firstValueFrom(
-        this.http.get<any[]>(`${this.OPERATOR_API}/routes`, { withCredentials: true }),
-      );
-      await this.dbService.saveRoutesCache('assigned', routes);
+      // Descargar todos los recursos en memoria en paralelo
+      const [routes, meters, readings, estados] = await Promise.all([
+        firstValueFrom(
+          this.http.get<any[]>(`${this.OPERATOR_API}/routes`, { withCredentials: true }),
+        ),
+        firstValueFrom(
+          this.http.get<any[]>(`${this.OPERATOR_API}/sync`, { withCredentials: true }),
+        ),
+        firstValueFrom(
+          this.http.get<any[]>(`${this.OPERATOR_API}/readings`, { withCredentials: true }),
+        ),
+        this.getReadingEstados().catch(() => []),
+      ]);
 
-      // 2. Descargar medidores asignados a las rutas
-      const meters = await firstValueFrom(
-        this.http.get<any[]>(`${this.OPERATOR_API}/sync`, { withCredentials: true }),
-      );
-      await this.dbService.saveMetersCache(meters);
+      const currentUserId = this.authService.currentUser()?.id ?? null;
 
-      // 3. Descargar lecturas ya registradas en el período
-      const readings = await firstValueFrom(
-        this.http.get<any[]>(`${this.OPERATOR_API}/readings`, { withCredentials: true }),
-      );
-      await this.dbService.saveRegisteredReadingsCache(readings);
-
-      // 4. Catálogo de estados
-      try {
-        const estados = await this.getReadingEstados();
-        await this.dbService.saveEstadosCache(estados);
-      } catch {
-        // Fallback silencioso si falla el catálogo
-      }
+      // Guardar de forma atómica en una única transacción IndexedDB
+      await this.dbService.saveCompleteAssignedSnapshot({
+        routes,
+        meters,
+        registeredReadings: readings,
+        estados,
+        scope: 'assigned',
+        operatorId: currentUserId ?? undefined,
+      });
 
       this.markInitialSyncDone();
       this.saveLastDownloadDate();

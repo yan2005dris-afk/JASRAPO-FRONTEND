@@ -116,7 +116,9 @@ export class IndexedDbService {
       const transaction = db.transaction('medidores_cache', 'readwrite');
       const store = transaction.objectStore('medidores_cache');
 
-      // Realizar upsert (merge por medidorId): actualiza existentes y añade nuevos
+      // Reemplazo completo del snapshot para no dejar medidores obsoletos
+      store.clear();
+
       for (const meter of meters) {
         store.put(meter);
       }
@@ -385,6 +387,63 @@ export class IndexedDbService {
       request.onerror = () => reject(request.error);
     });
   }
+  /**
+   * Guarda un snapshot completo de forma atómica en una única transacción IndexedDB.
+   * Si alguna operación falla, ninguna tabla queda en estado inconsistente.
+   */
+  async saveCompleteAssignedSnapshot(data: {
+    routes: any[];
+    meters: any[];
+    registeredReadings: any[];
+    estados?: any[];
+    scope?: string;
+    operatorId?: number | string;
+  }): Promise<void> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const stores = ['rutas_cache', 'medidores_cache', 'lecturas_registradas', 'estados_cache'];
+      const transaction = db.transaction(stores, 'readwrite');
+
+      try {
+        // 1. Rutas
+        const routeStore = transaction.objectStore('rutas_cache');
+        routeStore.put({
+          scope: data.scope ?? 'assigned',
+          operatorId: data.operatorId ?? null,
+          items: data.routes,
+          savedAt: new Date().toISOString(),
+        });
+
+        // 2. Medidores
+        const meterStore = transaction.objectStore('medidores_cache');
+        meterStore.clear();
+        for (const meter of data.meters) {
+          meterStore.put(meter);
+        }
+
+        // 3. Lecturas registradas
+        const readingStore = transaction.objectStore('lecturas_registradas');
+        readingStore.clear();
+        for (const reading of data.registeredReadings) {
+          readingStore.put(reading);
+        }
+
+        // 4. Estados de lectura
+        if (data.estados && data.estados.length > 0) {
+          const estadosStore = transaction.objectStore('estados_cache');
+          estadosStore.put({ tipo: 'estados_lectura', items: data.estados });
+        }
+      } catch (err) {
+        transaction.abort();
+        reject(err);
+        return;
+      }
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
   // --- RUTAS CACHE (snapshot offline) ---
 
   async saveRoutesCache<T>(scope: string, routes: T[]): Promise<void> {

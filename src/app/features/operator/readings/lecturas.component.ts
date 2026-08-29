@@ -616,8 +616,6 @@ export class LecturasComponent implements OnInit {
   async forceSync(): Promise<void> {
     await this.syncService.syncPendingData();
     await this.loadPendingReadings();
-    if (this.networkService.isOnline()) {
-      await this.fetchAndCacheMeters();
-    }
+    await this.loadCachedMeters();
   }
 }
