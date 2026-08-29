@@ -32,6 +32,19 @@ export interface MeterGroup {
 /** Pasos del flujo de ingreso de lectura en pantalla móvil. */
 export type MobileStep = 'search' | 'actions' | 'form';
 
+/** Estado discriminado único de la máquina de estados de Lecturas */
+export type LecturaState =
+  | { kind: 'search' }
+  | {
+      kind: 'actions';
+      meter: import('../../contracts/meters/interfaces/imeter.interface').IMeterDto;
+    }
+  | {
+      kind: 'form';
+      meter: import('../../contracts/meters/interfaces/imeter.interface').IMeterDto;
+      tipo: import('../models/operator.models').WorkOrderActivityType;
+    };
+
 /** Orden estándar de grupos de estado para visualización consistente. */
 export const READING_STATE_ORDER: string[] = [
   '__SIN_LECTURA__',
