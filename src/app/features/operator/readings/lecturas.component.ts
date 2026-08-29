@@ -5,6 +5,7 @@ import { OperatorService } from '../service/operator.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { NetworkService } from '../../../core/services/network.service';
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { MeterCacheService } from '../../../core/services/meter-cache.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
@@ -78,6 +79,7 @@ export class LecturasComponent implements OnInit {
   private readonly dbService = inject(IndexedDbService);
   readonly networkService = inject(NetworkService);
   readonly syncService = inject(OperatorSyncService);
+  private readonly authService = inject(AuthService);
   private readonly meterCache = inject(MeterCacheService);
   private readonly toastService = inject(ToastService);
   private readonly operatorService = inject(OperatorService);
@@ -255,7 +257,9 @@ export class LecturasComponent implements OnInit {
   private async loadCachedMeters(): Promise<void> {
     try {
       await this.meterCache.load();
-      const cachedReadings = await this.dbService.getRegisteredReadingsCache();
+      const operatorId = this.authService.currentUser()?.id;
+      const scope = operatorId ? `operator:${operatorId}` : undefined;
+      const cachedReadings = await this.dbService.getRegisteredReadingsCache(scope);
       this.registeredReadings.set(cachedReadings);
 
       // Si se pasó una serie específica en la query URL y no estaba seleccionada

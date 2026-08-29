@@ -7,6 +7,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { of } from 'rxjs';
 import { signal } from '@angular/core';
+import { AuthService } from '../../../core/services/auth.service';
 
 describe('SincronizarComponent', () => {
   let component: SincronizarComponent;
@@ -16,8 +17,13 @@ describe('SincronizarComponent', () => {
   let mockNetworkService: Record<string, unknown>;
   let mockToastService: Record<string, unknown>;
   let mockConfirmService: Record<string, unknown>;
+  let mockAuthService: Record<string, unknown>;
 
   beforeEach(async () => {
+    mockAuthService = {
+      currentUser: signal({ id: '42', name: 'Operador Test' }),
+    };
+
     mockDbService = {
       getPendingReadingsByState: vi.fn().mockResolvedValue([]),
       getPendingAnomaliesByState: vi.fn().mockResolvedValue([]),
@@ -63,7 +69,7 @@ describe('SincronizarComponent', () => {
     };
 
     mockConfirmService = {
-      confirm: vi.fn().mockReturnValue(of(true)),
+      confirm: vi.fn().mockResolvedValue(true),
     };
 
     await TestBed.configureTestingModule({
@@ -72,6 +78,7 @@ describe('SincronizarComponent', () => {
         { provide: IndexedDbService, useValue: mockDbService },
         { provide: OperatorSyncService, useValue: mockSyncService },
         { provide: NetworkService, useValue: mockNetworkService },
+        { provide: AuthService, useValue: mockAuthService },
         { provide: ToastService, useValue: mockToastService },
         { provide: ConfirmDialogService, useValue: mockConfirmService },
       ],

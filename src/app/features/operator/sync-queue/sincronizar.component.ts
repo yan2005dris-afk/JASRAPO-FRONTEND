@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IndexedDbService, PendingRecord } from '../../../core/services/indexed-db.service';
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
 import { NetworkService } from '../../../core/services/network.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { firstValueFrom } from 'rxjs';
@@ -21,6 +22,7 @@ export class SincronizarComponent implements OnInit {
   private readonly dbService = inject(IndexedDbService);
   readonly syncService = inject(OperatorSyncService);
   readonly networkService = inject(NetworkService);
+  private readonly authService = inject(AuthService);
   private readonly toastService = inject(ToastService);
   private readonly confirmService = inject(ConfirmDialogService);
 
@@ -71,6 +73,9 @@ export class SincronizarComponent implements OnInit {
 
   async loadQueue(): Promise<void> {
     try {
+      const operatorId = this.authService.currentUser()?.id;
+      const scope = operatorId ? `operator:${operatorId}` : 'assigned';
+
       const [pendR, rejR, pendA, rejA, synced, meters, routesCache, registeredReadings] =
         await Promise.all([
           this.dbService.getPendingReadingsByState('PENDIENTE_SYNC'),
@@ -78,9 +83,9 @@ export class SincronizarComponent implements OnInit {
           this.dbService.getPendingAnomaliesByState('PENDIENTE_SYNC'),
           this.dbService.getPendingAnomaliesByState('RECHAZADA'),
           this.dbService.getSyncedReadings(),
-          this.dbService.getMetersCache(),
-          this.dbService.getRoutesCache('assigned'),
-          this.dbService.getRegisteredReadingsCache(),
+          this.dbService.getMetersCache(scope),
+          this.dbService.getRoutesCache(scope),
+          this.dbService.getRegisteredReadingsCache(scope),
         ]);
 
       this.cachedMetersCount.set(meters.length);
