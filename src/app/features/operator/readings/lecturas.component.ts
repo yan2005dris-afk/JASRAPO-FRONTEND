@@ -23,10 +23,7 @@ import {
   READING_STATE_ORDER,
   ESTADOS_FALLBACK,
 } from './readings.models';
-import { LecturaFormComponent } from '../components/work-order-forms/lectura-form.component';
-import { InstalacionFormComponent } from '../components/work-order-forms/instalacion-form.component';
-import { InspeccionFormComponent } from '../components/work-order-forms/inspeccion-form.component';
-import { ReconexionFormComponent } from '../components/work-order-forms/reconexion-form.component';
+import { WorkOrderDispatcherComponent } from '../components/work-order-dispatcher/work-order-dispatcher.component';
 import { calculateConsumo, type WorkOrderFormPayload } from '../models/work-order-form.models';
 import type { WorkOrderActivityType, WorkOrderState } from '../models/operator.models';
 
@@ -66,10 +63,7 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
     MeterCardComponent,
     SelectedMeterCardComponent,
     RouteTypePipe,
-    LecturaFormComponent,
-    InstalacionFormComponent,
-    InspeccionFormComponent,
-    ReconexionFormComponent,
+    WorkOrderDispatcherComponent,
   ],
   templateUrl: './lecturas.component.html',
   styleUrl: './lecturas.component.scss',

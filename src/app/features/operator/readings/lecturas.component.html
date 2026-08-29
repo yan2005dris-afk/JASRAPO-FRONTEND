@@ -315,36 +315,15 @@
         </div>
       }
 
-      @switch (activeTipoActividad()) {
-        @case ('INSTALACION') {
-          <app-instalacion-form
-            [isSaving]="isSaving()"
-            (formSubmit)="onWorkOrderSubmit($event)"
-            (canceled)="goBackToActions()"
-          />
-        }
-        @case ('INSPECCION') {
-          <app-inspeccion-form
-            [isSaving]="isSaving()"
-            (formSubmit)="onWorkOrderSubmit($event)"
-            (canceled)="goBackToActions()"
-          />
-        }
-        @case ('RECONEXION') {
-          <app-reconexion-form
-            [isSaving]="isSaving()"
-            (formSubmit)="onWorkOrderSubmit($event)"
-            (canceled)="goBackToActions()"
-          />
-        }
-        @default {
-          <app-lectura-form
-            [lecturaAnterior]="lecturaAnteriorPreloaded()"
-            [isSaving]="isSaving()"
-            (formSubmit)="onWorkOrderSubmit($event)"
-            (canceled)="goBackToActions()"
-          />
-        }
+      @if (selectedMeter(); as meter) {
+        <app-work-order-dispatcher
+          [meter]="meter"
+          [tipoActividad]="activeTipoActividad()"
+          [lecturaAnterior]="lecturaAnteriorPreloaded()"
+          [isSaving]="isSaving()"
+          (submitted)="onWorkOrderSubmit($event)"
+          (canceled)="goBackToActions()"
+        />
       }
     </div>
   }
