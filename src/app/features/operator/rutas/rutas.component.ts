@@ -16,25 +16,16 @@ import { NetworkService } from '../../../core/services/network.service';
 import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
 import type { OperatorRouteResponse } from '../models/operator.models';
 import { OperatorRouteOfflineService } from '../service/operator-route-offline.service';
-import { MARKER_COLORS, TIPO_ICONS, STATE_LABELS, FILTER_OPTIONS } from './rutas.constants';
-import * as L from 'leaflet';
+import { STATE_LABELS, FILTER_OPTIONS } from './rutas.constants';
+import { RutasMapComponent, type MapPoint } from '../components/rutas-map/rutas-map.component';
 
 type ViewMode = 'list' | 'map';
-
-interface MapPoint {
-  routeId: string;
-  lat: number;
-  lng: number;
-  estado: string;
-  tipoRuta: string;
-  popupHtml: string;
-}
 
 @Component({
   selector: 'app-rutas',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, RouteTypePipe],
+  imports: [CommonModule, RouteTypePipe, RutasMapComponent],
   templateUrl: './rutas.component.html',
   styleUrl: './rutas.component.scss',
 })
@@ -44,13 +35,6 @@ export class RutasComponent implements OnInit, OnDestroy {
   private readonly networkService = inject(NetworkService);
   private readonly router = inject(Router);
 
-  private map?: L.Map;
-  private markersGroup?: L.LayerGroup;
-  private userMarker?: L.Marker;
-  private geoWatchId?: number;
-  /** Contador de tileerrors consecutivos para evitar degradar el mapa por un blip. */
-  private consecutiveTileErrors = 0;
-  /** Subject para desuscribir observables en ngOnDestroy. */
   private readonly destroy$ = new Subject<void>();
 
   // ── Signals ──────────────────────────────────────────────────────────────
@@ -63,10 +47,6 @@ export class RutasComponent implements OnInit, OnDestroy {
   readonly routesSource = signal<'network' | 'cache' | null>(null);
   readonly routesCachedAt = signal<string | null>(null);
   readonly loadError = signal<string | null>(null);
-  readonly tileLayerUnavailable = signal<boolean>(false);
-  readonly isDegradedMap = computed(
-    () => !this.networkService.isOnline() || this.tileLayerUnavailable(),
-  );
 
   // ── Computed ─────────────────────────────────────────────────────────────
   readonly filteredTasks = computed<OperatorRouteResponse[]>(() => {
@@ -189,7 +169,6 @@ export class RutasComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    this.destroyMap();
   }
 
   // ── Carga de datos ────────────────────────────────────────────────────────
@@ -214,7 +193,6 @@ export class RutasComponent implements OnInit, OnDestroy {
       this.loadError.set(this.translateLoadError(raw));
     } finally {
       this.isLoading.set(false);
-      if (this.viewMode() === 'map') this.initMap();
     }
   }
 
@@ -281,29 +259,23 @@ export class RutasComponent implements OnInit, OnDestroy {
   setFilter(tipo: string): void {
     this.activeFilter.set(tipo);
     this.selectedTaskId.set(null);
-    if (this.viewMode() === 'map') setTimeout(() => this.initMap(), 0);
   }
 
   toggleView(): void {
     const newMode = this.viewMode() === 'list' ? 'map' : 'list';
     this.viewMode.set(newMode);
-    if (newMode === 'map') {
-      setTimeout(() => this.initMap(), 0);
-    } else {
+    if (newMode === 'list') {
       this.selectedTaskId.set(null);
-      this.destroyMap();
     }
   }
 
   selectTask(taskId: string | null): void {
     this.selectedTaskId.set(taskId);
-    if (this.viewMode() === 'map') this.initMap();
   }
 
   viewOnMap(task: OperatorRouteResponse): void {
     this.selectedTaskId.set(task.rutaId);
     this.viewMode.set('map');
-    setTimeout(() => this.initMap(), 0);
   }
 
   /**
@@ -434,132 +406,6 @@ export class RutasComponent implements OnInit, OnDestroy {
         return 'bi-plug-fill';
       default:
         return 'bi-droplet-fill';
-    }
-  }
-
-  // ── Mapa Leaflet ──────────────────────────────────────────────────────────
-
-  private initMap(): void {
-    this.destroyMap();
-    this.tileLayerUnavailable.set(false);
-
-    const mapElement = document.getElementById('map');
-    if (!mapElement) return;
-
-    const points = this.mapPoints();
-    const center: L.LatLngExpression = points[0]
-      ? [points[0].lat, points[0].lng]
-      : [-0.9677, -80.7089];
-
-    this.map = L.map('map').setView(center, 14);
-
-    if (this.networkService.isOnline()) {
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      })
-        .on('tileerror', () => {
-          // Un solo tile con timeout no debe degradar el mapa para toda la sesión.
-          // Marcamos degradado solo después de N fallos consecutivos y nos recuperamos
-          // ante el primer tileload.
-          this.consecutiveTileErrors += 1;
-          if (this.consecutiveTileErrors >= 5) {
-            this.tileLayerUnavailable.set(true);
-          }
-        })
-        .on('tileload', () => {
-          this.consecutiveTileErrors = 0;
-          if (this.networkService.isOnline()) {
-            this.tileLayerUnavailable.set(false);
-          }
-        })
-        .addTo(this.map);
-    }
-
-    this.markersGroup = L.layerGroup().addTo(this.map);
-
-    const routeLines = new Map<string, L.LatLngTuple[]>();
-    for (const point of points) {
-      const line = routeLines.get(point.routeId) ?? [];
-      line.push([point.lat, point.lng]);
-      routeLines.set(point.routeId, line);
-    }
-    for (const line of routeLines.values()) {
-      if (line.length < 2) continue;
-      L.polyline(line, {
-        color: '#0f7375',
-        weight: 4,
-        opacity: 0.8,
-        dashArray: this.isDegradedMap() ? '8 8' : undefined,
-      }).addTo(this.markersGroup);
-    }
-
-    points.forEach((point) => {
-      const color = MARKER_COLORS[point.estado] ?? '#9ca3af';
-      const iconClass = TIPO_ICONS[point.tipoRuta] ?? 'bi-geo-alt-fill';
-      const icon = L.divIcon({
-        html: `<div class="map-type-marker" style="background:${color}"><i class="bi ${iconClass}"></i></div>`,
-        className: '',
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
-        popupAnchor: [0, -20],
-      });
-
-      L.marker([point.lat, point.lng], { icon })
-        .bindPopup(point.popupHtml)
-        .addTo(this.markersGroup!);
-    });
-
-    if (points.length > 1) {
-      const bounds = L.latLngBounds(points.map((p) => [p.lat, p.lng] as L.LatLngTuple));
-      this.map.fitBounds(bounds, { padding: [40, 40] });
-    }
-
-    this.startGeoWatch();
-  }
-
-  private startGeoWatch(): void {
-    if (!navigator.geolocation) return;
-    this.geoWatchId = navigator.geolocation.watchPosition(
-      (pos) => this.updateUserMarker(pos.coords.latitude, pos.coords.longitude),
-      () => {
-        /* permiso denegado o error GPS — silencioso */
-      },
-      { enableHighAccuracy: true, maximumAge: 5000 },
-    );
-  }
-
-  private updateUserMarker(lat: number, lng: number): void {
-    if (!this.map) return;
-    const icon = L.divIcon({
-      html: `<div class="map-user-marker"><i class="bi bi-person-fill"></i></div>`,
-      className: '',
-      iconSize: [36, 36],
-      iconAnchor: [18, 18],
-    });
-    if (this.userMarker) {
-      this.userMarker.setLatLng([lat, lng]);
-    } else {
-      this.userMarker = L.marker([lat, lng], { icon }).addTo(this.map);
-    }
-  }
-
-  centerOnUser(): void {
-    if (this.userMarker && this.map) {
-      this.map.setView(this.userMarker.getLatLng(), 16);
-    }
-  }
-
-  private destroyMap(): void {
-    if (this.geoWatchId !== undefined) {
-      navigator.geolocation.clearWatch(this.geoWatchId);
-      this.geoWatchId = undefined;
-    }
-    this.userMarker = undefined;
-    if (this.map) {
-      this.map.remove();
-      this.map = undefined;
-      this.markersGroup = undefined;
     }
   }
 }
