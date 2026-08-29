@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { MeterSearchComponent } from './meter-search.component';
 import { IMeterDto } from '../../../contracts/meters/interfaces/imeter.interface';
-import { MeterGroup } from '../../readings/readings.models';
+import { EstadoChip, MeterGroup } from '../../readings/readings.models';
 
 describe('MeterSearchComponent', () => {
   const mockMeters: IMeterDto[] = [
@@ -29,6 +29,11 @@ describe('MeterSearchComponent', () => {
       latitud: null,
       longitud: null,
     },
+  ];
+
+  const mockFilterChips: EstadoChip[] = [
+    { value: 'todas', label: 'Todas', icon: 'bi-grid' },
+    { value: 'PENDIENTE', label: 'Pendiente', icon: 'bi-clock' },
   ];
 
   const mockGroups: MeterGroup[] = [
@@ -65,17 +70,62 @@ describe('MeterSearchComponent', () => {
     expect(comp.filteredItems().length).toBe(0);
   });
 
-  it('emits meterSelected on selection', () => {
+  it('renders the search box, filters, and meter cards from the inputs', () => {
+    const fixture = TestBed.createComponent(MeterSearchComponent);
+    fixture.componentRef.setInput('groups', mockGroups);
+    fixture.componentRef.setInput('filterChips', mockFilterChips);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('.search-input')).not.toBeNull();
+    expect(element.querySelectorAll('.filter-chip')).toHaveLength(2);
+    expect(element.querySelector('.meters-virtual-viewport')).not.toBeNull();
+    expect(fixture.componentInstance.filteredItems()).toHaveLength(2);
+  });
+
+  it('updates the selected filter and emits filter changes', () => {
+    const fixture = TestBed.createComponent(MeterSearchComponent);
+    const comp = fixture.componentInstance;
+    fixture.componentRef.setInput('groups', mockGroups);
+    fixture.componentRef.setInput('filterChips', mockFilterChips);
+    fixture.detectChanges();
+
+    const filters: string[] = [];
+    comp.filterChange.subscribe((filter) => filters.push(filter));
+    const pendingChip = fixture.nativeElement.querySelectorAll(
+      '.filter-chip',
+    )[1] as HTMLButtonElement;
+    pendingChip.click();
+    fixture.detectChanges();
+
+    expect(comp.selectedEstadoFilter()).toBe('PENDIENTE');
+    expect(filters).toEqual(['PENDIENTE']);
+    expect(comp.filteredItems()).toHaveLength(2);
+  });
+
+  it('renders loading and empty states', () => {
+    const fixture = TestBed.createComponent(MeterSearchComponent);
+    fixture.componentRef.setInput('groups', []);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.empty-state')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('No hay medidores cargados.');
+
+    fixture.componentRef.setInput('isLoading', true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.loading-state')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.empty-state')).toBeNull();
+  });
+
+  it('propagates a meter card selection through meterSelected', () => {
     const fixture = TestBed.createComponent(MeterSearchComponent);
     const comp = fixture.componentInstance;
     fixture.componentRef.setInput('groups', mockGroups);
     fixture.detectChanges();
 
     const selected: IMeterDto[] = [];
-    comp.meterSelected.subscribe((m) => selected.push(m));
+    comp.meterSelected.subscribe((meter) => selected.push(meter));
+    comp.onMeterSelect(mockMeters[0]);
 
-    comp.meterSelected.emit(mockMeters[0]);
-    expect(selected).toHaveLength(1);
-    expect(selected[0].serie).toBe('SER-001');
+    expect(selected).toEqual([mockMeters[0]]);
   });
 });

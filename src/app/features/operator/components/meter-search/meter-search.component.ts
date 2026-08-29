@@ -1,12 +1,4 @@
-import {
-  Component,
-  Input,
-  Output,
-  EventEmitter,
-  ChangeDetectionStrategy,
-  signal,
-  computed,
-} from '@angular/core';
+import { Component, ChangeDetectionStrategy, computed, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { IMeterDto } from '../../../contracts/meters/interfaces/imeter.interface';
@@ -29,12 +21,12 @@ export interface VirtualMeterItem {
       <app-meter-search-box
         [value]="searchQuery()"
         (valueChange)="onSearchChange($event)"
-        [disabled]="disabled"
+        [disabled]="disabled()"
       />
 
-      @if (filterChips.length > 0) {
+      @if (filterChips().length > 0) {
         <div class="estado-filters" role="group" aria-label="Filtros de estado">
-          @for (chip of filterChips; track chip.value) {
+          @for (chip of filterChips(); track chip.value) {
             <button
               type="button"
               class="filter-chip"
@@ -49,18 +41,20 @@ export interface VirtualMeterItem {
       }
 
       <div class="meters-list">
-        @if (isLoading) {
+        @if (isLoading()) {
           <div class="loading-state" role="status" aria-live="polite">
             <span class="spinner-sm"></span>
             Cargando medidores...
           </div>
         }
 
-        @if (filteredItems().length === 0 && !isLoading) {
+        @if (filteredItems().length === 0 && !isLoading()) {
           <div class="empty-state">
             <i class="bi bi-inbox"></i>
             <p>
-              {{ searchQuery() ? 'Sin resultados para la búsqueda.' : 'No hay medidores cargados.' }}
+              {{
+                searchQuery() ? 'Sin resultados para la búsqueda.' : 'No hay medidores cargados.'
+              }}
             </p>
           </div>
         }
@@ -76,7 +70,7 @@ export interface VirtualMeterItem {
               <app-meter-card
                 [meter]="item.meter"
                 [status]="item.status"
-                (meterSelect)="meterSelected.emit($event)"
+                (meterSelect)="onMeterSelect($event)"
               />
             </div>
           </cdk-virtual-scroll-viewport>
@@ -143,15 +137,14 @@ export interface VirtualMeterItem {
   ],
 })
 export class MeterSearchComponent {
-  @Input() meters: IMeterDto[] = [];
-  @Input() groups: MeterGroup[] = [];
-  @Input() filterChips: EstadoChip[] = [];
-  @Input() isLoading = false;
-  @Input() disabled = false;
+  readonly groups = input.required<MeterGroup[]>();
+  readonly filterChips = input<EstadoChip[]>([]);
+  readonly isLoading = input(false);
+  readonly disabled = input(false);
 
-  @Output() meterSelected = new EventEmitter<IMeterDto>();
-  @Output() searchQueryChange = new EventEmitter<string>();
-  @Output() filterChange = new EventEmitter<string>();
+  readonly meterSelected = output<IMeterDto>();
+  readonly searchQueryChange = output<string>();
+  readonly filterChange = output<string>();
 
   readonly searchQuery = signal<string>('');
   readonly selectedEstadoFilter = signal<string>('todas');
@@ -161,7 +154,7 @@ export class MeterSearchComponent {
     const filter = this.selectedEstadoFilter();
     const items: VirtualMeterItem[] = [];
 
-    for (const group of this.groups) {
+    for (const group of this.groups()) {
       if (filter !== 'todas' && group.estado !== filter) continue;
       for (const meter of group.meters) {
         if (
@@ -177,6 +170,10 @@ export class MeterSearchComponent {
     }
     return items;
   });
+
+  onMeterSelect(meter: IMeterDto): void {
+    this.meterSelected.emit(meter);
+  }
 
   onSearchChange(value: string): void {
     this.searchQuery.set(value);
