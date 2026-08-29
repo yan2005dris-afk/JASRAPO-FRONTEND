@@ -1,4 +1,5 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { NovedadesComponent } from './novedades.component';
@@ -7,6 +8,7 @@ import { OperatorService } from '../service/operator.service';
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { MetersService } from '../../contracts/meters/services/meters.service';
+import { MeterCacheService } from '../../../core/services/meter-cache.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { HttpClient } from '@angular/common/http';
 import type { ReadingWithAnomaly } from '../models/operator.models';
@@ -45,6 +47,10 @@ describe('NovedadesComponent', () => {
   const dbServiceMock = {
     getMetersCache: vi.fn().mockResolvedValue([]),
   };
+  const meterCacheMock = {
+    load: vi.fn().mockResolvedValue(undefined),
+    metersList: signal([]),
+  };
 
   const httpMock = { get: vi.fn(), post: vi.fn() };
   const metersServiceMock = { getMeters: vi.fn().mockReturnValue(of([])) };
@@ -64,6 +70,7 @@ describe('NovedadesComponent', () => {
         { provide: OperatorService, useValue: operatorServiceMock },
         { provide: OperatorSyncService, useValue: operatorSyncMock },
         { provide: IndexedDbService, useValue: dbServiceMock },
+        { provide: MeterCacheService, useValue: meterCacheMock },
         { provide: MetersService, useValue: metersServiceMock },
         { provide: ToastService, useValue: toastServiceMock },
         { provide: HttpClient, useValue: httpMock },
