@@ -11,7 +11,7 @@ import {
   viewChild,
   ElementRef,
   effect,
-  ViewEncapsulation,
+  untracked,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import * as L from 'leaflet';
@@ -31,7 +31,6 @@ export interface MapPoint {
   selector: 'app-rutas-map',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None,
   imports: [CommonModule],
   template: `
     <div class="rutas-map-component-wrapper">
@@ -124,7 +123,7 @@ export interface MapPoint {
       }
 
       /* Estilos autónomos de Leaflet Markers y Popups */
-      .map-user-marker {
+      :host ::ng-deep .map-user-marker {
         width: 36px;
         height: 36px;
         border-radius: 50%;
@@ -156,7 +155,7 @@ export interface MapPoint {
             0 2px 8px rgba(0, 0, 0, 0.3);
         }
       }
-      .map-type-marker {
+      :host ::ng-deep .map-type-marker {
         width: 32px;
         height: 32px;
         border-radius: 50%;
@@ -169,35 +168,34 @@ export interface MapPoint {
         outline: none;
         transition: transform 0.15s ease;
       }
-      .map-type-marker:focus,
-      .map-type-marker:focus-visible {
+      :host ::ng-deep .leaflet-marker-icon:focus,
+      :host ::ng-deep .leaflet-marker-icon:focus-visible {
+        outline: 3px solid #0c9ea1;
+        outline-offset: 2px;
         transform: scale(1.18);
-        box-shadow:
-          0 0 0 3px #0c9ea1,
-          0 3px 8px rgba(0, 0, 0, 0.35);
       }
-      .map-type-marker i {
+      :host ::ng-deep .map-type-marker i {
         color: #fff;
         font-size: 14px;
         line-height: 1;
       }
-      .leaflet-popup-content-wrapper {
+      :host ::ng-deep .leaflet-popup-content-wrapper {
         border-radius: 8px !important;
         padding: 0 !important;
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12) !important;
       }
-      .leaflet-popup-content {
+      :host ::ng-deep .leaflet-popup-content {
         margin: 12px !important;
         font-family: inherit !important;
       }
-      .map-info {
+      :host ::ng-deep .map-info {
         font-family: inherit;
         font-size: 0.8125rem;
         color: var(--dark-text, #1e293b);
         line-height: 1.4;
         min-width: 160px;
       }
-      .map-info strong {
+      :host ::ng-deep .map-info strong {
         display: block;
         font-size: 0.875rem;
         color: var(--dark-text, #1e293b);
@@ -231,21 +229,27 @@ export class RutasMapComponent implements OnInit, OnDestroy {
     effect(() => {
       this.points();
       if (this.map && !this.isDestroyed) {
-        this.renderPoints();
+        untracked(() => this.renderPoints());
       }
     });
 
     effect(() => {
       const online = this.networkService.isOnline();
+      if (!this.map || this.isDestroyed) return;
+
+      if (online) {
+        // A network recovery is not proof that Leaflet loaded a tile. Keep
+        // degradation visible until a tileload event confirms recovery.
+        this.ensureTileLayer();
+      } else {
+        this.removeTileLayer();
+      }
+    });
+
+    effect(() => {
+      this.isDegradedMap();
       if (this.map && !this.isDestroyed) {
-        if (online) {
-          this.tileLayerUnavailable.set(false);
-          this.consecutiveTileErrors = 0;
-          this.ensureTileLayer();
-        } else {
-          this.removeTileLayer();
-        }
-        this.renderPoints();
+        untracked(() => this.renderPoints());
       }
     });
   }
@@ -349,16 +353,20 @@ export class RutasMapComponent implements OnInit, OnDestroy {
       const color = MARKER_COLORS[point.estado] ?? '#9ca3af';
       const iconClass = TIPO_ICONS[point.tipoRuta] ?? 'bi-geo-alt-fill';
       const icon = L.divIcon({
-        html: `<div class="map-type-marker" style="background:${color}" tabindex="0" role="button" aria-label="Ruta ${point.routeId}"><i class="bi ${iconClass}" aria-hidden="true"></i></div>`,
+        html: `<div class="map-type-marker" style="background:${color}"><i class="bi ${iconClass}" aria-hidden="true"></i></div>`,
         className: '',
         iconSize: [32, 32],
         iconAnchor: [16, 16],
         popupAnchor: [0, -20],
       });
 
-      const marker = L.marker([point.lat, point.lng], { icon })
+      const marker = L.marker([point.lat, point.lng], { icon, keyboard: true })
         .bindPopup(point.popupHtml)
         .addTo(this.markersGroup!);
+
+      const markerElement = marker.getElement();
+      markerElement?.setAttribute('role', 'button');
+      markerElement?.setAttribute('aria-label', `Ruta ${point.routeId}`);
 
       marker.on('click', () => {
         this.pointSelected.emit(point.routeId);

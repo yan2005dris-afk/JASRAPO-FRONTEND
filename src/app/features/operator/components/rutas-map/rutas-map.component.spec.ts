@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { RutasMapComponent, MapPoint } from './rutas-map.component';
 import { NetworkService } from '../../../../core/services/network.service';
+import * as L from 'leaflet';
 import { signal } from '@angular/core';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 
@@ -185,7 +186,7 @@ describe('RutasMapComponent', () => {
     expect(canvas2.classList.contains('leaflet-container')).toBe(true);
   });
 
-  it('emits pointSelected on marker interaction', async () => {
+  it('makes each marker a single keyboard-accessible button and emits on click and Enter', async () => {
     const fixture = TestBed.createComponent(RutasMapComponent);
     fixture.componentRef.setInput('points', mockPoints);
     fixture.detectChanges();
@@ -193,9 +194,47 @@ describe('RutasMapComponent', () => {
 
     const selected: string[] = [];
     fixture.componentInstance.pointSelected.subscribe((id) => selected.push(id));
+    const marker = fixture.nativeElement.querySelector('.leaflet-marker-icon') as HTMLElement;
+    const markerContent = marker.querySelector('.map-type-marker') as HTMLElement;
 
-    // Emit programático verificado a través del output
-    fixture.componentInstance.pointSelected.emit('route-1');
-    expect(selected).toEqual(['route-1']);
+    expect(marker.getAttribute('role')).toBe('button');
+    expect(marker.getAttribute('aria-label')).toBe('Ruta route-1');
+    expect(marker.tabIndex).toBe(0);
+    expect(markerContent.tabIndex).toBe(-1);
+
+    marker.click();
+    marker.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true }));
+    expect(selected).toEqual(['route-1', 'route-1']);
+  });
+
+  it('keeps tile degradation after network recovery until a tile loads', async () => {
+    const fixture = TestBed.createComponent(RutasMapComponent);
+    fixture.componentRef.setInput('points', mockPoints);
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r, 10));
+
+    const tileLayer = (fixture.componentInstance as unknown as { tileLayer: L.TileLayer })
+      .tileLayer;
+    for (let i = 0; i < 5; i++) tileLayer.fire('tileerror');
+    expect(fixture.componentInstance.tileLayerUnavailable()).toBe(true);
+
+    isOnlineSignal.set(true);
+    fixture.detectChanges();
+    expect(fixture.componentInstance.tileLayerUnavailable()).toBe(true);
+
+    tileLayer.fire('tileload');
+    expect(fixture.componentInstance.tileLayerUnavailable()).toBe(false);
+  });
+
+  it('rerenders markers when the points input changes', async () => {
+    const fixture = TestBed.createComponent(RutasMapComponent);
+    fixture.componentRef.setInput('points', mockPoints);
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r, 10));
+    expect(fixture.nativeElement.querySelectorAll('.leaflet-marker-icon').length).toBe(2);
+
+    fixture.componentRef.setInput('points', [mockPoints[0]]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.leaflet-marker-icon').length).toBe(1);
   });
 });
