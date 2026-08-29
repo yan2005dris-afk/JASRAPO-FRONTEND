@@ -19,6 +19,7 @@ import {
   EstadoChip,
   MeterGroup,
   MobileStep,
+  LecturaState,
   READING_STATE_ORDER,
   ESTADOS_FALLBACK,
 } from './readings.models';
@@ -83,13 +84,20 @@ export class LecturasComponent implements OnInit {
   private readonly meterCache = inject(MeterCacheService);
   private readonly toastService = inject(ToastService);
   private readonly operatorService = inject(OperatorService);
-  // Mobile step flow
-  readonly currentStep = signal<MobileStep>('search');
+  // State Machine única con estado discriminado
+  readonly state = signal<LecturaState>({ kind: 'search' });
 
-  /** Active work-order activity type — drives which sub-form is rendered */
-  readonly activeTipoActividad = signal<WorkOrderActivityType>('LECTURA');
+  // Selectores derivados para compatibilidad y template
+  readonly currentStep = computed<MobileStep>(() => this.state().kind);
+  readonly selectedMeter = computed<IMeterDto | null>(() => {
+    const s = this.state();
+    return s.kind === 'search' ? null : s.meter;
+  });
+  readonly activeTipoActividad = computed<WorkOrderActivityType>(() => {
+    const s = this.state();
+    return s.kind === 'form' ? s.tipo : 'LECTURA';
+  });
 
-  /** Series of the work orders available for the current route context (for type resolution) */
   /** Tipos de orden pendientes por medidor (un medidor puede tener varios). */
   private readonly workOrdersByMeter = signal<
     Map<string, Map<WorkOrderActivityType, AssignedWorkOrder>>
@@ -98,7 +106,6 @@ export class LecturasComponent implements OnInit {
   // Catálogo de medidores cargado (memoria local)
   readonly metersList = this.meterCache.metersList;
   readonly searchQuery = signal<string>('');
-  readonly selectedMeter = signal<IMeterDto | null>(null);
   readonly isLoadingMeters = signal<boolean>(false);
   readonly isSaving = signal<boolean>(false);
   readonly submissionFeedback = signal<SubmissionFeedback | null>(null);
@@ -402,18 +409,11 @@ export class LecturasComponent implements OnInit {
     }
   }
 
-  // --- Step Navigation ---
+  // --- Step Navigation & State Machine Transitions ---
 
   selectMeter(meter: IMeterDto): void {
-    this.selectedMeter.set(meter);
     this.searchQuery.set('');
-    this.currentStep.set('actions');
-
-    // Resolve activity type from work-orders map; default to LECTURA
-    // Si el medidor tiene ordenes pendientes, abrimos con el primer tipo.
-    // Si no, fallback a LECTURA (caso del operador que entra manualmente a /lecturas).
-    const tipos = this.actionableWorkOrdersFor(meter);
-    this.activeTipoActividad.set(tipos[0]?.[0] ?? 'LECTURA');
+    this.state.set({ kind: 'actions', meter });
 
     // Pre-load previous reading value for the Lectura sub-form
     const existing = this.existingReadingMap().get(meter.medidorId.toString());
@@ -421,7 +421,17 @@ export class LecturasComponent implements OnInit {
   }
 
   goToReadingForm(): void {
-    this.currentStep.set('form');
+    const s = this.state();
+    if (s.kind === 'actions' || s.kind === 'form') {
+      this.state.set({ kind: 'form', meter: s.meter, tipo: 'LECTURA' });
+    }
+  }
+
+  goToWorkOrderForm(tipo: WorkOrderActivityType): void {
+    const s = this.state();
+    if (s.kind === 'actions' || s.kind === 'form') {
+      this.state.set({ kind: 'form', meter: s.meter, tipo });
+    }
   }
 
   goToNoveltyForm(): void {
@@ -477,22 +487,15 @@ export class LecturasComponent implements OnInit {
     return workOrder.id;
   }
 
-  /**
-   * Navega al form del tipo de orden seleccionado.
-   * El @switch del template renderiza el componente correcto.
-   */
-  goToWorkOrderForm(tipo: WorkOrderActivityType): void {
-    this.activeTipoActividad.set(tipo);
-    this.currentStep.set('form');
-  }
-
   goBackToSearch(): void {
-    this.selectedMeter.set(null);
-    this.currentStep.set('search');
+    this.state.set({ kind: 'search' });
   }
 
   goBackToActions(): void {
-    this.currentStep.set('actions');
+    const s = this.state();
+    if (s.kind === 'form') {
+      this.state.set({ kind: 'actions', meter: s.meter });
+    }
   }
 
   clearSelection(): void {
