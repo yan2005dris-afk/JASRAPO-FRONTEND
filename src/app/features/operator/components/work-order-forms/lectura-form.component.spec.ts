@@ -28,6 +28,18 @@ describe('LecturaFormComponent', () => {
     expect(comp.form.valid).toBe(true);
   });
 
+  it('should reset submitted state when a photo is captured after a failed submit', () => {
+    const comp = createComponent();
+
+    comp.submit();
+    expect(comp['submitted']()).toBe(true);
+
+    comp['onPhotoChange']('data:image/jpeg;base64,captured');
+
+    expect(comp['submitted']()).toBe(false);
+    expect(comp.photoPreview()).toBe('data:image/jpeg;base64,captured');
+  });
+
   it('should emit correct LecturaFormPayload on valid submit (with photo)', () => {
     const comp = createComponent(10);
     comp.form.patchValue({ lecturaActual: 20 });

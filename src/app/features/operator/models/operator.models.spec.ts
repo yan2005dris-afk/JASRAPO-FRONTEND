@@ -1,11 +1,11 @@
 import { describe, it, expect } from 'vitest';
 
 // RED: these imports WILL fail until operator.models.ts exists with the correct exports
-import type { TaskResponse, ReadingWithAnomaly } from './operator.models';
+import type { OperatorRouteResponse, ReadingWithAnomaly } from './operator.models';
 
 describe('operator.models — type contracts', () => {
-  it('TaskResponse has required fields with correct shape', () => {
-    const task: TaskResponse = {
+  it('OperatorRouteResponse has required fields with correct shape', () => {
+    const task: OperatorRouteResponse = {
       rutaId: 'r-001',
       tipoRuta: 'TOMA_LECTURA',
       nombre: 'Ruta Norte',
@@ -24,8 +24,8 @@ describe('operator.models — type contracts', () => {
     expect(task.medidor).toBeNull();
   });
 
-  it('TaskResponse medidor field carries serie and optional coordinates', () => {
-    const task: TaskResponse = {
+  it('OperatorRouteResponse medidor field carries serie and optional coordinates', () => {
+    const task: OperatorRouteResponse = {
       rutaId: 'r-002',
       tipoRuta: 'INSTALACION',
       nombre: 'Ruta Sur',

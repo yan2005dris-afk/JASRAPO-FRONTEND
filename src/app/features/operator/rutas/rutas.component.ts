@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { NetworkService } from '../../../core/services/network.service';
 import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
-import type { TaskResponse } from '../models/operator.models';
+import type { OperatorRouteResponse } from '../models/operator.models';
 import { OperatorRouteOfflineService } from '../service/operator-route-offline.service';
 import { MARKER_COLORS, TIPO_ICONS, STATE_LABELS, FILTER_OPTIONS } from './rutas.constants';
 import * as L from 'leaflet';
@@ -54,7 +54,7 @@ export class RutasComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   // ── Signals ──────────────────────────────────────────────────────────────
-  readonly tasks = signal<TaskResponse[]>([]);
+  readonly tasks = signal<OperatorRouteResponse[]>([]);
   readonly activeFilter = signal<string>('ALL');
   readonly viewMode = signal<ViewMode>('list');
   readonly isLoading = signal<boolean>(false);
@@ -69,7 +69,7 @@ export class RutasComponent implements OnInit, OnDestroy {
   );
 
   // ── Computed ─────────────────────────────────────────────────────────────
-  readonly filteredTasks = computed<TaskResponse[]>(() => {
+  readonly filteredTasks = computed<OperatorRouteResponse[]>(() => {
     const filter = this.activeFilter();
     return filter === 'ALL' ? this.tasks() : this.tasks().filter((t) => t.tipoRuta === filter);
   });
@@ -300,7 +300,7 @@ export class RutasComponent implements OnInit, OnDestroy {
     if (this.viewMode() === 'map') this.initMap();
   }
 
-  viewOnMap(task: TaskResponse): void {
+  viewOnMap(task: OperatorRouteResponse): void {
     this.selectedTaskId.set(task.rutaId);
     this.viewMode.set('map');
     setTimeout(() => this.initMap(), 0);
@@ -310,7 +310,7 @@ export class RutasComponent implements OnInit, OnDestroy {
    * Navega a la pantalla de lecturas filtrando por los medidores de esta ruta.
    * Usa click simple (compatible con táctil y escritorio).
    */
-  openRoute(task: TaskResponse): void {
+  openRoute(task: OperatorRouteResponse): void {
     const queryParams: Record<string, string> = {
       rutaNombre: task.nombre,
       rutaTipo: task.tipoRuta,
@@ -382,15 +382,15 @@ export class RutasComponent implements OnInit, OnDestroy {
     return this.stateLabelMap[estado] ?? estado;
   }
 
-  taskHasMapPoints(task: TaskResponse): boolean {
+  taskHasMapPoints(task: OperatorRouteResponse): boolean {
     return this.getTaskPointCount(task) > 0;
   }
 
-  taskHasMeterCoordinates(task: TaskResponse): boolean {
+  taskHasMeterCoordinates(task: OperatorRouteResponse): boolean {
     return Number.isFinite(task.medidor?.latitud) && Number.isFinite(task.medidor?.longitud);
   }
 
-  getTaskPointCount(task: TaskResponse): number {
+  getTaskPointCount(task: OperatorRouteResponse): number {
     if (task.paradas?.length) {
       return task.paradas.filter((point) => point.latitud != null && point.longitud != null).length;
     }
@@ -407,7 +407,7 @@ export class RutasComponent implements OnInit, OnDestroy {
    * Label del botón principal de cada ruta según tipoRuta.
    * Antes mostraba "Lecturas" universal — bug UX.
    */
-  actionLabelFor(task: TaskResponse): string {
+  actionLabelFor(task: OperatorRouteResponse): string {
     switch (task.tipoRuta) {
       case 'INSTALACION':
         return 'Instalación';
@@ -424,7 +424,7 @@ export class RutasComponent implements OnInit, OnDestroy {
    * Ícono Bootstrap Icons para el botón según tipoRuta.
    * Mantiene consistencia con TIPO_ICONS en rutas.constants.ts.
    */
-  actionIconFor(task: TaskResponse): string {
+  actionIconFor(task: OperatorRouteResponse): string {
     switch (task.tipoRuta) {
       case 'INSTALACION':
         return 'bi-tools';

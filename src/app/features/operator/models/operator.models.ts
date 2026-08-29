@@ -78,8 +78,6 @@ export interface RoutePoint {
   clienteNombre: string;
 }
 
-// Backward compatibility alias during migration
-export type TaskResponse = OperatorRouteResponse;
 export type TaskRouteType = RouteType;
 export type TaskState = RouteState;
 export type TaskMedidor = OperatorMeterInfo;

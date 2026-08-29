@@ -28,6 +28,18 @@ describe('ReconexionFormComponent', () => {
     expect(emitted).toHaveLength(0);
   });
 
+  it('should reset submitted state when a photo is captured after a failed submit', () => {
+    const comp = createComponent();
+
+    comp.submit();
+    expect(comp['submitted']()).toBe(true);
+
+    comp['onPhotoChange']('data:image/jpeg;base64,captured');
+
+    expect(comp['submitted']()).toBe(false);
+    expect(comp.photoPreview()).toBe('data:image/jpeg;base64,captured');
+  });
+
   it('should emit correct ReconexionFormPayload when form is fully valid', () => {
     const comp = createComponent();
     comp.form.patchValue({ confirmacionRetiroSello: true });
