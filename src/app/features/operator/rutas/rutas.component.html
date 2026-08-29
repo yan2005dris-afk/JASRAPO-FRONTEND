@@ -62,19 +62,6 @@
     <!-- ── Vista Mapa ─────────────────────────────────────────────────────── -->
     @if (viewMode() === 'map') {
       <div class="map-section">
-        @if (isDegradedMap()) {
-          <div
-            class="alert alert-warning d-flex align-items-center gap-2 py-2 px-3 mb-0"
-            role="status"
-          >
-            <i class="bi bi-wifi-off"></i>
-            <span>
-              Mapa base no disponible. Se muestran las paradas, el recorrido aproximado y tu
-              ubicación GPS.
-            </span>
-          </div>
-        }
-
         @if (selectedTaskId()) {
           <div class="map-toolbar">
             <button class="map-tool-btn btn-clear" (click)="selectTask(null)" type="button">
@@ -83,22 +70,10 @@
           </div>
         }
 
-        <div
-          id="map"
-          style="height: 500px"
-          class="map-container"
-          [class.map-degraded]="isDegradedMap()"
-        >
-          <button
-            class="map-locate-btn"
-            (click)="centerOnUser()"
-            type="button"
-            title="Ir a mi ubicación"
-            aria-label="Centrar mapa en mi ubicación"
-          >
-            <i class="bi bi-crosshair2"></i>
-          </button>
-        </div>
+        <app-rutas-map
+          [points]="mapPoints()"
+          (pointSelected)="selectTask($event)"
+        />
 
         <div class="map-legend" aria-label="Leyenda del mapa">
           <span class="legend-item"
