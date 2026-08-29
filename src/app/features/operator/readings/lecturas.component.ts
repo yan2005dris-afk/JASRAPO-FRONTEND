@@ -9,8 +9,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { MeterCacheService } from '../../../core/services/meter-cache.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
-import { MeterSearchBoxComponent } from '../components/meter-search-box/meter-search-box.component';
-import { MeterCardComponent } from '../components/meter-card/meter-card.component';
+import { MeterSearchComponent } from '../components/meter-search/meter-search.component';
 import { SelectedMeterCardComponent } from '../components/selected-meter-card/selected-meter-card.component';
 import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
 import { firstValueFrom } from 'rxjs';
@@ -59,8 +58,7 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
   imports: [
     CommonModule,
     ScrollingModule,
-    MeterSearchBoxComponent,
-    MeterCardComponent,
+    MeterSearchComponent,
     SelectedMeterCardComponent,
     RouteTypePipe,
     WorkOrderDispatcherComponent,

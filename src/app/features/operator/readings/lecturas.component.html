@@ -46,57 +46,15 @@
         }
       </div>
 
-      <app-meter-search-box [value]="searchQuery()" (valueChange)="searchQuery.set($event)" />
-
-      <div class="estado-filters">
-        @for (chip of estadoFilterChips(); track chip.value) {
-          <button
-            type="button"
-            class="filter-chip"
-            [class.active]="selectedEstadoFilter() === chip.value"
-            (click)="selectedEstadoFilter.set(chip.value)"
-          >
-            <i [class]="'bi ' + chip.icon"></i> {{ chip.label }}
-          </button>
-        }
-      </div>
-
-      <div class="meters-list">
-        @if (isLoadingMeters()) {
-          <div class="loading-state">
-            <span class="spinner-sm"></span>
-            Cargando medidores...
-          </div>
-        }
-
-        @if (filteredMeters().length === 0 && !isLoadingMeters()) {
-          <div class="empty-state">
-            <i class="bi bi-inbox"></i>
-            <p>
-              {{
-                searchQuery() ? 'Sin resultados para la búsqueda.' : 'No hay medidores cargados.'
-              }}
-            </p>
-          </div>
-        }
-
-        @if (virtualMeterItems().length > 0) {
-          <cdk-virtual-scroll-viewport
-            itemSize="86"
-            class="meters-virtual-viewport"
-            minBufferPx="430"
-            maxBufferPx="860"
-          >
-            <div *cdkVirtualFor="let item of virtualMeterItems()" class="virtual-meter-row">
-              <app-meter-card
-                [meter]="item.meter"
-                [status]="item.status"
-                (meterSelect)="selectMeter($event)"
-              />
-            </div>
-          </cdk-virtual-scroll-viewport>
-        }
-      </div>
+      <app-meter-search
+        [meters]="filteredMeters()"
+        [groups]="metersByEstado()"
+        [filterChips]="estadoFilterChips()"
+        [isLoading]="isLoadingMeters()"
+        (meterSelected)="selectMeter($event)"
+        (searchQueryChange)="searchQuery.set($event)"
+        (filterChange)="selectedEstadoFilter.set($event)"
+      />
     </div>
   }
 
