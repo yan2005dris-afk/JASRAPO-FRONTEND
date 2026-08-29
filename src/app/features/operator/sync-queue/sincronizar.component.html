@@ -266,47 +266,11 @@
           </div>
           <div class="card-actions">
             @if (editingRecord()?.id === record.id && editingType() === 'lectura') {
-              <!-- Edit Form Inline -->
-              <div class="edit-form">
-                <div class="edit-row">
-                  <label [attr.for]="'edit-ant-' + record.id" class="edit-label"
-                    >Lectura Anterior</label
-                  >
-                  <input
-                    [attr.id]="'edit-ant-' + record.id"
-                    type="number"
-                    class="edit-input"
-                    [(ngModel)]="editLecturaAnterior"
-                  />
-                </div>
-                <div class="edit-row">
-                  <label [attr.for]="'edit-act-' + record.id" class="edit-label"
-                    >Lectura Actual</label
-                  >
-                  <input
-                    [attr.id]="'edit-act-' + record.id"
-                    type="number"
-                    class="edit-input"
-                    [(ngModel)]="editLecturaActual"
-                  />
-                </div>
-                <div class="edit-row-check">
-                  <input
-                    type="checkbox"
-                    id="editLecturaInicial-{{ record.id }}"
-                    [(ngModel)]="editLecturaInicial"
-                  />
-                  <label [for]="'editLecturaInicial-' + record.id" class="edit-label"
-                    >¿Lectura Inicial?</label
-                  >
-                </div>
-                <div class="edit-actions">
-                  <button class="btn-save" (click)="saveEditReading()">
-                    <i class="bi bi-check-lg"></i> Guardar
-                  </button>
-                  <button class="btn-cancel" (click)="cancelEdit()">Cancelar</button>
-                </div>
-              </div>
+              <app-sync-reading-editor
+                [record]="record"
+                (saved)="onReadingEditorSaved($event)"
+                (canceled)="cancelEdit()"
+              />
             } @else {
               <button class="btn-edit" (click)="startEditReading(record)">
                 <i class="bi bi-pencil-square"></i> Editar
@@ -340,36 +304,11 @@
           </div>
           <div class="card-actions">
             @if (editingRecord()?.id === record.id && editingType() === 'anomalia') {
-              <div class="edit-form">
-                <div class="edit-row">
-                  <label [attr.for]="'edit-tipo-' + record.id" class="edit-label">Tipo</label>
-                  <select
-                    [attr.id]="'edit-tipo-' + record.id"
-                    class="edit-input"
-                    [(ngModel)]="editTipo"
-                  >
-                    <option value="FUGA">Fuga de Agua</option>
-                    <option value="MEDIDOR_DAÑADO">Medidor Dañado / Roto</option>
-                    <option value="LECTURA_ERRONEA">Lectura Errónea</option>
-                    <option value="OTRO">Otro Problema</option>
-                  </select>
-                </div>
-                <div class="edit-row">
-                  <label [attr.for]="'edit-obs-' + record.id" class="edit-label">Observación</label>
-                  <textarea
-                    [attr.id]="'edit-obs-' + record.id"
-                    class="edit-input edit-textarea"
-                    [(ngModel)]="editObservacion"
-                    rows="3"
-                  ></textarea>
-                </div>
-                <div class="edit-actions">
-                  <button class="btn-save" (click)="saveEditAnomaly()">
-                    <i class="bi bi-check-lg"></i> Guardar
-                  </button>
-                  <button class="btn-cancel" (click)="cancelEdit()">Cancelar</button>
-                </div>
-              </div>
+              <app-sync-anomaly-editor
+                [record]="record"
+                (saved)="onAnomalyEditorSaved($event)"
+                (canceled)="cancelEdit()"
+              />
             } @else {
               <button class="btn-edit" (click)="startEditAnomaly(record)">
                 <i class="bi bi-pencil-square"></i> Editar

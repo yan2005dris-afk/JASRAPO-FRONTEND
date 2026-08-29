@@ -16,13 +16,28 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { firstValueFrom } from 'rxjs';
+import {
+  SyncReadingEditorComponent,
+  type ReadingEditResult,
+} from '../components/sync-editors/sync-reading-editor.component';
+import {
+  SyncAnomalyEditorComponent,
+  type AnomalyEditResult,
+} from '../components/sync-editors/sync-anomaly-editor.component';
 
 type QueueTab = 'pendientes' | 'rechazados' | 'sincronizados';
 
 @Component({
   selector: 'app-sincronizar',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe, RouterLink],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DatePipe,
+    RouterLink,
+    SyncReadingEditorComponent,
+    SyncAnomalyEditorComponent,
+  ],
   templateUrl: './sincronizar.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './sincronizar.component.scss',
@@ -53,13 +68,6 @@ export class SincronizarComponent implements OnInit {
   // Editing state
   readonly editingRecord = signal<PendingRecord | null>(null);
   readonly editingType = signal<'lectura' | 'anomalia' | null>(null);
-
-  // Edit form model values
-  editLecturaActual = 0;
-  editLecturaAnterior = 0;
-  editLecturaInicial = false;
-  editObservacion = '';
-  editTipo = '';
 
   readonly totalPendientes = computed(
     () => this.pendingReadings().length + this.pendingAnomalies().length,
@@ -158,16 +166,11 @@ export class SincronizarComponent implements OnInit {
   startEditReading(record: PendingRecord): void {
     this.editingRecord.set(record);
     this.editingType.set('lectura');
-    this.editLecturaActual = record['lecturaActual'] ?? 0;
-    this.editLecturaAnterior = record['lecturaAnterior'] ?? 0;
-    this.editLecturaInicial = record['lecturaInicial'] ?? false;
   }
 
   startEditAnomaly(record: PendingRecord): void {
     this.editingRecord.set(record);
     this.editingType.set('anomalia');
-    this.editObservacion = record['observacion'] ?? '';
-    this.editTipo = record['tipo'] ?? '';
   }
 
   cancelEdit(): void {
@@ -175,19 +178,12 @@ export class SincronizarComponent implements OnInit {
     this.editingType.set(null);
   }
 
-  async saveEditReading(): Promise<void> {
-    const record = this.editingRecord();
-    if (!record?.id) return;
-
-    const consumo = this.editLecturaInicial
-      ? this.editLecturaActual
-      : this.editLecturaActual - this.editLecturaAnterior;
-
-    await this.dbService.updatePendingReading(record.id, {
-      lecturaActual: this.editLecturaActual,
-      lecturaAnterior: this.editLecturaAnterior,
-      lecturaInicial: this.editLecturaInicial,
-      consumoCalculado: consumo,
+  async onReadingEditorSaved(result: ReadingEditResult): Promise<void> {
+    await this.dbService.updatePendingReading(result.recordId, {
+      lecturaActual: result.lecturaActual,
+      lecturaAnterior: result.lecturaAnterior,
+      lecturaInicial: result.lecturaInicial,
+      consumoCalculado: result.consumoCalculado,
       syncState: 'PENDIENTE_SYNC',
       errorMessage: null,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -202,13 +198,11 @@ export class SincronizarComponent implements OnInit {
     await this.syncService.refreshPendingCounts();
   }
 
-  async saveEditAnomaly(): Promise<void> {
-    const record = this.editingRecord();
-    if (!record?.id) return;
-
-    await this.dbService.updatePendingAnomaly(record.id, {
-      observacion: this.editObservacion,
-      tipo: this.editTipo,
+  async onAnomalyEditorSaved(result: AnomalyEditResult): Promise<void> {
+    await this.dbService.updatePendingAnomaly(result.recordId, {
+      observacion: result.observacion,
+      tipo: result.tipo,
+      fotoBase64: result.fotoBase64 ?? null,
       syncState: 'PENDIENTE_SYNC',
       errorMessage: null,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
