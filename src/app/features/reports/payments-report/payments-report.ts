@@ -8,9 +8,21 @@ import { IPaymentsReportFilters, ISendReportEmailBody } from '../interfaces/irep
 import { ReportsService } from '../services/reports.service';
 import { ClientsService } from '../../contracts/clients/services/clients.service';
 import type { IClient } from '../../contracts/clients/interfaces/iclients.interface';
+import { ReportEmailDialogComponent } from '../shared/report-email-dialog/report-email-dialog.component';
+import { ReportFormatTabsComponent } from '../shared/report-format-tabs/report-format-tabs.component';
+import {
+  IReportContextItem,
+  IReportEmailRequest,
+  IReportResultColumn,
+  IReportResultRow,
+  ReportStatus,
+} from '../shared/models/report-workspace.model';
+import { ReportResponsiveResultsComponent } from '../shared/report-responsive-results/report-responsive-results.component';
+import { ReportWorkspaceComponent } from '../shared/report-workspace/report-workspace.component';
 
 type DatePreset = 'currentMonth' | 'lastMonth' | 'last3Months' | 'lastYear';
 type ReportView = 'table' | 'pdf';
+type FailedReportAction = 'data' | 'pdf' | 'email';
 
 interface PaymentRow {
   factura: string;
@@ -60,7 +72,15 @@ export interface PaymentsReportData {
 
 @Component({
   selector: 'app-payments-report',
-  imports: [FormsModule, PdfPreviewerComponent, DatePickerComponent],
+  imports: [
+    FormsModule,
+    PdfPreviewerComponent,
+    DatePickerComponent,
+    ReportEmailDialogComponent,
+    ReportFormatTabsComponent,
+    ReportResponsiveResultsComponent,
+    ReportWorkspaceComponent,
+  ],
   templateUrl: './payments-report.html',
   styleUrl: './payments-report.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -87,6 +107,8 @@ export class PaymentsReportComponent {
   // Estados de carga
   readonly isLoadingData = signal(false);
   readonly isLoadingPdf = signal(false);
+  readonly workspaceError = signal('');
+  readonly lastFailedAction = signal<FailedReportAction | null>(null);
 
   // Envío por email
   readonly destinatario = signal('');
@@ -109,12 +131,6 @@ export class PaymentsReportComponent {
   readonly rangoFechaInvalido = computed(
     () => !!this.fechaDesde() && !!this.fechaHasta() && this.fechaDesde() > this.fechaHasta(),
   );
-
-  // Email de destino inválido (vacío o con formato incorrecto)
-  readonly esEmailInvalido = computed(() => {
-    const email = this.destinatario().trim();
-    return email === '' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  });
 
   readonly tableRows = computed(() => {
     const data = this.reportData();
@@ -153,6 +169,69 @@ export class PaymentsReportComponent {
     if (!data) return 0;
     if (data.reporte?.totalRegistros !== undefined) return data.reporte.totalRegistros;
     return data.totalRegistros ?? data.pagos?.length ?? 0;
+  });
+
+  readonly contextItems = computed<readonly IReportContextItem[]>(() => [
+    {
+      label: 'Entidad',
+      value: this.selectedClientName() || 'Todos los clientes',
+    },
+    {
+      label: 'Período',
+      value: `${this.fechaDesde() || 'Inicio'} a ${this.fechaHasta() || 'Hoy'}`,
+    },
+    {
+      label: 'Filtros',
+      value: this.clienteId() ? 'Cliente seleccionado' : 'Sin filtro de cliente',
+    },
+  ]);
+
+  readonly resultColumns: readonly IReportResultColumn[] = [
+    { key: 'factura', label: 'Factura' },
+    { key: 'fecha', label: 'Fecha Pago' },
+    { key: 'cliente', label: 'Cliente' },
+    { key: 'cuenta', label: 'Cuenta', align: 'center' },
+    { key: 'medidor', label: 'Medidor', align: 'center' },
+    { key: 'emision', label: 'Emisión', align: 'center' },
+    { key: 'valor', label: 'Valor', align: 'end' },
+  ];
+
+  readonly resultRows = computed<readonly IReportResultRow[]>(() =>
+    this.tableRows().map((row, index) => ({
+      id: `${row.factura}-${row.fecha}-${index}`,
+      cells: {
+        factura: row.factura,
+        fecha: row.fecha,
+        cliente: row.clienteNombre,
+        cuenta: row.cuenta,
+        medidor: row.medidor,
+        emision: row.emision,
+        valor: `$${row.valor}`,
+      },
+    })),
+  );
+
+  readonly workspaceStatus = computed<ReportStatus>(() => {
+    if (this.isLoadingData() || this.isLoadingPdf()) return 'loading';
+    if (this.workspaceError()) return 'error';
+    if (!this.reportData()) return 'empty';
+    if (this.reportData() && this.activeView() === 'table' && this.resultRows().length === 0) {
+      return 'empty';
+    }
+    return 'idle';
+  });
+
+  readonly workspaceStatusMessage = computed(() => {
+    if (this.workspaceError()) return this.workspaceError();
+    if (this.isLoadingPdf()) return 'Generando el documento PDF oficial…';
+    if (this.isLoadingData()) return 'Consultando datos autorizados del reporte…';
+    if (!this.reportData()) {
+      return 'Ajuste los filtros y presione Consultar para cargar el reporte de abonos.';
+    }
+    if (this.workspaceStatus() === 'empty') {
+      return 'No se encontraron abonos para el contexto seleccionado.';
+    }
+    return '';
   });
 
   private buildFilters(): IPaymentsReportFilters {
@@ -283,12 +362,14 @@ export class PaymentsReportComponent {
       next: (data) => {
         this.reportData.set(data as unknown as PaymentsReportData);
         this.isLoadingData.set(false);
+        this.clearWorkspaceError();
       },
       error: (err) => {
         this.isLoadingData.set(false);
-        this.toast.error(
-          this.getErrorMessage(err, 'No se pudieron cargar los datos del reporte de abonos'),
-          'Error',
+        this.setWorkspaceError(
+          err,
+          'No se pudieron cargar los datos del reporte de abonos',
+          'data',
         );
       },
     });
@@ -311,14 +392,12 @@ export class PaymentsReportComponent {
       next: (blob) => {
         this.pdfBlob.set(blob);
         this.isLoadingPdf.set(false);
+        this.clearWorkspaceError();
       },
       error: (err) => {
         this.isLoadingPdf.set(false);
         this.activeView.set('table');
-        this.toast.error(
-          this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'),
-          'Error',
-        );
+        this.setWorkspaceError(err, 'No se pudo generar el PDF del reporte', 'pdf');
       },
     });
   }
@@ -349,17 +428,21 @@ export class PaymentsReportComponent {
     this.isEmailModalOpen.set(false);
   }
 
-  enviarEmail(): void {
+  enviarEmail(request: IReportEmailRequest): void {
     const cliente = this.clienteId().trim();
     if (!cliente) {
       this.toast.error('Seleccione un cliente para enviar el reporte', 'Error');
       return;
     }
 
+    this.destinatario.set(request.destinatario);
+    this.subject.set(request.subject ?? '');
+    const filters = this.buildFilters();
     const body: ISendReportEmailBody = {
+      ...filters,
       clienteId: cliente,
-      destinatario: this.destinatario().trim() || undefined,
-      subject: this.subject().trim() || undefined,
+      destinatario: request.destinatario,
+      subject: request.subject,
     };
 
     this.isSendingEmail.set(true);
@@ -369,16 +452,29 @@ export class PaymentsReportComponent {
         this.isEmailModalOpen.set(false);
         this.destinatario.set('');
         this.subject.set('');
+        this.clearWorkspaceError();
         this.toast.success('Reporte enviado por email', 'Éxito');
       },
       error: (err) => {
         this.isSendingEmail.set(false);
-        this.toast.error(
-          this.getErrorMessage(err, 'No se pudo enviar el reporte por email'),
-          'Error',
-        );
+        this.isEmailModalOpen.set(false);
+        this.setWorkspaceError(err, 'No se pudo enviar el reporte por email', 'email');
       },
     });
+  }
+
+  retryLastAction(): void {
+    switch (this.lastFailedAction()) {
+      case 'pdf':
+        this.generarPdf();
+        break;
+      case 'email':
+        this.abrirModalEmail();
+        break;
+      case 'data':
+      default:
+        this.consultar();
+    }
   }
 
   limpiar(): void {
@@ -396,6 +492,17 @@ export class PaymentsReportComponent {
     this.destinatario.set('');
     this.subject.set('');
     this.activeView.set('table');
+    this.clearWorkspaceError();
+  }
+
+  private setWorkspaceError(err: unknown, fallback: string, action: FailedReportAction): void {
+    this.workspaceError.set(this.getErrorMessage(err, fallback));
+    this.lastFailedAction.set(action);
+  }
+
+  private clearWorkspaceError(): void {
+    this.workspaceError.set('');
+    this.lastFailedAction.set(null);
   }
 
   private getErrorMessage(err: unknown, fallback: string): string {

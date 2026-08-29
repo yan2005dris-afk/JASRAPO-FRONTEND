@@ -45,6 +45,9 @@ export interface IOverdueAccountsFilters {
 
 /** Cuerpo de envío por email de la mayoría de los reportes. */
 export interface ISendReportEmailBody {
+  idempotencyKey?: string;
+  fechaDesde?: string;
+  fechaHasta?: string;
   clienteId?: string;
   contratoId?: string;
   convenioId?: string;

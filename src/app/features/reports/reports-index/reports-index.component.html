@@ -1,0 +1,29 @@
+<section class="reports-index" aria-labelledby="reports-index-title">
+  <app-report-header
+    headingId="reports-index-title"
+    title="Reportes"
+    description="Seleccione un reporte disponible para consultar, previsualizar o distribuir su documento oficial."
+  />
+
+  <nav class="reports-index__groups" aria-label="Índice de reportes disponibles">
+    @for (group of groups; track group.title) {
+      <section class="reports-index__group" [attr.aria-labelledby]="'group-' + $index">
+        <h2 [id]="'group-' + $index" class="reports-index__group-title">{{ group.title }}</h2>
+        <div class="reports-index__grid">
+          @for (report of group.reports; track report.route) {
+            <a class="reports-index__card" [routerLink]="report.route">
+              <span class="reports-index__icon" aria-hidden="true">
+                <i [class]="report.icon"></i>
+              </span>
+              <span>
+                <strong>{{ report.title }}</strong>
+                <small>{{ report.description }}</small>
+              </span>
+              <i class="bi bi-arrow-right reports-index__arrow" aria-hidden="true"></i>
+            </a>
+          }
+        </div>
+      </section>
+    }
+  </nav>
+</section>
