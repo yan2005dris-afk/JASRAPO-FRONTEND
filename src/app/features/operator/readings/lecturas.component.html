@@ -1,4 +1,23 @@
 <div class="lecturas-screen">
+  @if (submissionFeedback(); as feedback) {
+    <div class="submission-feedback feedback-{{ feedback.kind }}" role="status">
+      <i
+        class="bi"
+        [class.bi-check-circle-fill]="feedback.kind === 'synced'"
+        [class.bi-cloud-arrow-up-fill]="feedback.kind === 'queued'"
+        [class.bi-exclamation-triangle-fill]="feedback.kind === 'error'"
+      ></i>
+      <div>
+        <strong>{{ feedback.title }}</strong
+        ><span>{{ feedback.message }}</span>
+      </div>
+      @if (feedback.kind === 'error') {
+        <button type="button" class="feedback-retry" (click)="retryFailedSubmission()">
+          Reintentar
+        </button>
+      }
+    </div>
+  }
   <!-- Route context banner -->
   @if (routeContext(); as ctx) {
     <div class="route-context-banner">
@@ -85,7 +104,13 @@
   @if (currentStep() === 'actions') {
     <div class="step-view">
       <div class="screen-header">
-        <button class="back-btn" (click)="goBackToSearch()" id="btn-back-search">
+        <button
+          type="button"
+          class="back-btn"
+          aria-label="Volver a la búsqueda de medidores"
+          (click)="goBackToSearch()"
+          id="btn-back-search"
+        >
           <i class="bi bi-arrow-left"></i>
         </button>
         <h1 class="screen-title">Acciones</h1>
@@ -111,16 +136,48 @@
           (existingReading.estado === 'PENDIENTE' ||
             existingReading.estado === 'RECHAZADA_VERIFICACION');
 
+        @let primaryOrder = primaryWorkOrderFor(meter);
+        <div class="status-summary" aria-label="Estado del medidor">
+          <span
+            ><i class="bi bi-speedometer2"></i> Lectura:
+            <strong>{{ readingStateLabel(meter) }}</strong></span
+          >
+          @if (primaryOrder; as order) {
+            <span class="work-order-status"
+              ><i class="bi bi-clipboard-check"></i> Orden:
+              <strong>{{ workOrderStateLabel(order[1].estado) }}</strong></span
+            >
+          }
+        </div>
         <div class="action-buttons">
+          @if (primaryOrder; as order) {
+            <button
+              class="action-btn action-primary"
+              (click)="goToWorkOrderForm(order[0])"
+              id="btn-action-primary"
+            >
+              <div class="action-icon"><i class="bi bi-clipboard-check"></i></div>
+              <div class="action-text">
+                <span class="action-title">Completar {{ order[0] | routeType }}</span
+                ><span class="action-desc"
+                  >Orden asignada · {{ workOrderStateLabel(order[1].estado) }}</span
+                >
+              </div>
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          }
+          <span class="secondary-label">Otras acciones</span>
           <!--
                 El botón de Lectura se oculta cuando hay INSTALACION/INSPECCION/RECONEXION
                 pendientes para este medidor (la acción prioritaria es esa otra).
               -->
           @let availableTypes = workOrderTypesFor(meter);
+          @let actionableTypes = actionableWorkOrdersFor(meter);
           @let hasOtherAction =
-            availableTypes.has('INSTALACION') ||
-            availableTypes.has('INSPECCION') ||
-            availableTypes.has('RECONEXION');
+            actionableTypes.some(
+              (order) =>
+                order[0] === 'INSTALACION' || order[0] === 'INSPECCION' || order[0] === 'RECONEXION'
+            );
           @if (!hasOtherAction) {
             <button
               class="action-btn action-reading"
@@ -162,7 +219,10 @@
           </button>
 
           <!-- Acciones dinámicas según ordenes pendientes del medidor. -->
-          @if (availableTypes.has('INSTALACION')) {
+          @if (
+            availableTypes.has('INSTALACION') &&
+            (!primaryOrder || primaryOrder[0] !== 'INSTALACION')
+          ) {
             <button
               class="action-btn action-installation"
               (click)="goToWorkOrderForm('INSTALACION')"
@@ -176,7 +236,9 @@
               <i class="bi bi-chevron-right"></i>
             </button>
           }
-          @if (availableTypes.has('INSPECCION')) {
+          @if (
+            availableTypes.has('INSPECCION') && (!primaryOrder || primaryOrder[0] !== 'INSPECCION')
+          ) {
             <button
               class="action-btn action-inspection"
               (click)="goToWorkOrderForm('INSPECCION')"
@@ -190,7 +252,9 @@
               <i class="bi bi-chevron-right"></i>
             </button>
           }
-          @if (availableTypes.has('RECONEXION')) {
+          @if (
+            availableTypes.has('RECONEXION') && (!primaryOrder || primaryOrder[0] !== 'RECONEXION')
+          ) {
             <button
               class="action-btn action-reconnection"
               (click)="goToWorkOrderForm('RECONEXION')"
@@ -213,7 +277,13 @@
   @if (currentStep() === 'form') {
     <div class="step-view">
       <div class="screen-header">
-        <button class="back-btn" (click)="goBackToActions()" id="btn-back-actions">
+        <button
+          type="button"
+          class="back-btn"
+          aria-label="Volver a las acciones del medidor"
+          (click)="goBackToActions()"
+          id="btn-back-actions"
+        >
           <i class="bi bi-arrow-left"></i>
         </button>
         <h1 class="screen-title">

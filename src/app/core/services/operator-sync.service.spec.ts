@@ -249,6 +249,57 @@ describe('OperatorSyncService', () => {
     });
   });
 
+  // ── submitWorkOrder ──────────────────────────────────────────────────────
+
+  describe('submitWorkOrder', () => {
+    it('usa PATCH con el ID de la orden asignada y foto', async () => {
+      isOnline.mockReturnValue(true);
+      httpPatch.mockReturnValue(of({ id: 'wo-42' }));
+
+      await service.submitWorkOrder({
+        ordenTrabajoId: 'wo-42',
+        tipoActividad: 'INSPECCION',
+        medidorId: 'meter-1',
+        fotoBase64: VALID_DATA_URI,
+      });
+
+      expect(httpPatch).toHaveBeenCalledOnce();
+      expect(httpPost).not.toHaveBeenCalled();
+      const [url, formData] = httpPatch.mock.calls[0];
+      expect(url).toContain('/operator/work-orders/wo-42');
+      const fields = formDataToObject(formData as FormData);
+      expect(fields['foto']).toHaveLength(1);
+      expect(fields['file']).toBeUndefined();
+    });
+
+    it('encola offline con discriminante y conserva el ID real', async () => {
+      isOnline.mockReturnValue(false);
+      const workOrder = {
+        ordenTrabajoId: 'wo-42',
+        tipoActividad: 'INSPECCION',
+        medidorId: 'meter-1',
+        fotoBase64: VALID_DATA_URI,
+      };
+
+      await expect(service.submitWorkOrder(workOrder)).resolves.toEqual({ offline: true });
+
+      expect(savePendingReading).toHaveBeenCalledWith({ ...workOrder, recordType: 'WORK_ORDER' });
+      expect(httpPatch).not.toHaveBeenCalled();
+      expect(httpPost).not.toHaveBeenCalled();
+    });
+
+    it('falla sin ID y no hace ninguna petición', async () => {
+      isOnline.mockReturnValue(true);
+
+      await expect(
+        service.submitWorkOrder({ tipoActividad: 'INSPECCION', lecturaId: 'reading-99' }),
+      ).rejects.toThrow(/falta ordenTrabajoId/);
+
+      expect(httpPatch).not.toHaveBeenCalled();
+      expect(httpPost).not.toHaveBeenCalled();
+    });
+  });
+
   // ── submitAnomaly ────────────────────────────────────────────────────────
 
   describe('submitAnomaly', () => {
@@ -341,6 +392,33 @@ describe('OperatorSyncService', () => {
         errorMessage: 'invalid medidor',
       });
       expect(deletePendingReading).toHaveBeenCalledWith(2);
+    });
+
+    it('reproduce una orden offline por PATCH de work-orders y no por lecturas', async () => {
+      isOnline.mockReturnValue(true);
+      getPendingReadingsByState.mockResolvedValue([
+        {
+          id: 7,
+          syncState: 'PENDIENTE_SYNC',
+          errorMessage: null,
+          recordType: 'WORK_ORDER',
+          ordenTrabajoId: 'wo-42',
+          tipoActividad: 'INSPECCION',
+          medidorId: 'meter-1',
+          fotoBase64: VALID_DATA_URI,
+        },
+      ]);
+      getPendingAnomaliesByState.mockResolvedValue([]);
+      httpPatch.mockReturnValue(of({ id: 'wo-42' }));
+
+      await service.syncPendingData();
+
+      const [url, formData] = httpPatch.mock.calls[0];
+      expect(url).toContain('/operator/work-orders/wo-42');
+      expect(formDataToObject(formData as FormData)['foto']).toHaveLength(1);
+      expect(httpPost).not.toHaveBeenCalled();
+      expect(saveSyncedReading).not.toHaveBeenCalled();
+      expect(deletePendingReading).toHaveBeenCalledWith(7);
     });
 
     it('PATCH sincronizado usa field name "foto" (asimetría)', async () => {

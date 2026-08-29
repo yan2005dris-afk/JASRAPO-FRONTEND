@@ -64,8 +64,8 @@
 }
 
 .back-btn {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1.5px solid var(--border-color);
   background: var(--white);
@@ -82,8 +82,8 @@
 }
 
 .btn-icon {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   border-radius: 10px;
   border: 1.5px solid var(--border-color);
   background: var(--white);
@@ -123,12 +123,12 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.3rem 0.7rem;
+  min-height: 44px;
   border-radius: 999px;
   border: 1.5px solid var(--border-color);
   background: var(--white);
   color: var(--muted-text);
   font-size: 0.72rem;
-  font-weight: 500;
   cursor: pointer;
   white-space: nowrap;
 
@@ -238,6 +238,51 @@
   border-radius: 999px;
 }
 
+// ── Submission feedback ───────────────────────────────────────────────────────
+
+.submission-feedback {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 10px;
+
+  > i {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    flex: 1;
+  }
+  strong {
+    font-weight: 700;
+  }
+}
+
+.feedback-synced {
+  color: #065f46;
+  background: rgba(16, 185, 129, 0.1);
+}
+.feedback-queued {
+  color: #92400e;
+  background: rgba(245, 158, 11, 0.12);
+}
+.feedback-error {
+  color: #991b1b;
+  background: rgba(239, 68, 68, 0.1);
+}
+.feedback-retry {
+  min-height: 44px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
 // ── Actions step ───────────────────────────────────────────────────────────────
 
 .alert-info {
@@ -253,10 +298,37 @@
   font-weight: 500;
 }
 
+.status-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.65rem 0.8rem;
+  border-radius: 10px;
+  background: var(--soft-blue-bg);
+  color: var(--muted-text);
+  font-size: 0.78rem;
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  strong {
+    color: var(--dark-text);
+  }
+  .work-order-status {
+    color: var(--primary-color);
+  }
+}
+
 .action-buttons {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
+}
+
+.action-primary {
+  border: 2px solid var(--primary-color);
+  background: var(--info-color);
 }
 
 .action-btn {

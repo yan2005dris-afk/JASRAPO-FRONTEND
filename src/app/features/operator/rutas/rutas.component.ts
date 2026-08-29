@@ -327,20 +327,22 @@ export class RutasComponent implements OnInit, OnDestroy {
       // Para que LecturasComponent resuelva `activeTipoActividad` por medidor
       // y renderice el form correcto via @switch.
       const workOrders = paradas
-        .filter((p) => !!p.serie && !!p.tipoActividad)
-        .map((p) => `${p.serie}:${p.tipoActividad}`);
+        .filter((p) => !!p.serie && !!p.tipoActividad && !!p.ordenTrabajoId)
+        .map((p) => `${p.serie}:${p.tipoActividad}:${p.ordenTrabajoId}:${p.estado}`);
       if (workOrders.length) {
         // Agrupa por serie para soportar multiples ordenes del mismo medidor:
-        // SERIE1:TIPO1;TIPO2 (en lugar de duplicar la serie)
+        // SERIE1:TIPO1:ID1:ESTADO1;TIPO2:ID2:ESTADO2
         const grouped = new Map<string, string[]>();
         for (const wo of workOrders) {
-          const [s, t] = wo.split(':');
-          const arr = grouped.get(s) ?? [];
-          arr.push(t);
-          grouped.set(s, arr);
+          const [serie, tipo, ordenTrabajoId, estado] = wo.split(':');
+          const assignments = grouped.get(serie) ?? [];
+          assignments.push(`${tipo}:${ordenTrabajoId}:${estado}`);
+          grouped.set(serie, assignments);
         }
         const merged: string[] = [];
-        for (const [s, ts] of grouped) merged.push(`${s}:${ts.join(';')}`);
+        for (const [serie, assignments] of grouped) {
+          merged.push(`${serie}:${assignments.join(';')}`);
+        }
         queryParams['workOrders'] = merged.join(',');
       }
     } else if (ordenes && ordenes.length > 0) {
@@ -351,18 +353,20 @@ export class RutasComponent implements OnInit, OnDestroy {
       // Misma idea: si las órdenes declaran tipoActividad (INSTALACION/INSPECCION/RECONEXION),
       // lo pasamos al form dinámico. Sin esto, los 3 forms nuevos son código muerto en producción.
       const workOrders = ordenes
-        .filter((o) => !!o.medidor?.serie && !!o.tipoActividad)
-        .map((o) => `${o.medidor!.serie}:${o.tipoActividad}`);
+        .filter((o) => !!o.medidor?.serie && !!o.tipoActividad && !!o.ordenTrabajoId)
+        .map((o) => `${o.medidor!.serie}:${o.tipoActividad}:${o.ordenTrabajoId}:${o.estado}`);
       if (workOrders.length) {
         const grouped = new Map<string, string[]>();
         for (const wo of workOrders) {
-          const [s, t] = wo.split(':');
-          const arr = grouped.get(s) ?? [];
-          arr.push(t);
-          grouped.set(s, arr);
+          const [serie, tipo, ordenTrabajoId, estado] = wo.split(':');
+          const assignments = grouped.get(serie) ?? [];
+          assignments.push(`${tipo}:${ordenTrabajoId}:${estado}`);
+          grouped.set(serie, assignments);
         }
         const merged: string[] = [];
-        for (const [s, ts] of grouped) merged.push(`${s}:${ts.join(';')}`);
+        for (const [serie, assignments] of grouped) {
+          merged.push(`${serie}:${assignments.join(';')}`);
+        }
         queryParams['workOrders'] = merged.join(',');
       }
     } else if (task.tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos?.length) {

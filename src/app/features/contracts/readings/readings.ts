@@ -17,8 +17,9 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
-import { ReadingFormModalComponent } from './components/reading-form-modal/reading-form-modal.component';
+
 import { ReadingDetailModalComponent } from './components/reading-detail-modal/reading-detail-modal.component';
+import { ReadingFormModalComponent } from './components/reading-form-modal/reading-form-modal.component';
 import {
   ReadingsTableComponent,
   IReadingRowItem,
@@ -33,8 +34,9 @@ import {
     EmptyStateComponent,
     PaginationComponent,
     TableSkeletonComponent,
-    ReadingFormModalComponent,
+
     ReadingDetailModalComponent,
+    ReadingFormModalComponent,
     ReadingsTableComponent,
   ],
   templateUrl: './readings.html',
@@ -67,7 +69,6 @@ export class ReadingsComponent implements OnInit, OnDestroy {
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Modals Signals
-  readonly isFormModalOpen = signal(false);
   readonly selectedReadingForEdit = signal<IReading | null>(null);
   readonly selectedReadingForDetail = signal<IReading | null>(null);
 
@@ -194,31 +195,22 @@ export class ReadingsComponent implements OnInit, OnDestroy {
   }
 
   // Modals Actions
-  openCreateModal(): void {
-    this.selectedReadingForEdit.set(null);
-    this.isFormModalOpen.set(true);
-  }
 
   openEditModal(reading: IReadingRowItem | IReading): void {
     this.openDropdownId.set(null);
     const full =
-      this.readings().find((r) => String(r.lecturaId) === String(reading.lecturaId)) ||
+      this.readings().find((item) => String(item.lecturaId) === String(reading.lecturaId)) ||
       (reading as IReading);
     this.selectedReadingForEdit.set(full);
-    this.isFormModalOpen.set(true);
+    this.selectedReadingForDetail.set(null);
   }
 
-  closeFormModal(): void {
-    this.isFormModalOpen.set(false);
+  closeEditModal(): void {
     this.selectedReadingForEdit.set(null);
   }
 
   onReadingSaved(): void {
-    this.isFormModalOpen.set(false);
-    this.selectedReadingForEdit.set(null);
-    if (this.selectedReadingForDetail()) {
-      this.selectedReadingForDetail.set(null);
-    }
+    this.closeEditModal();
     this.loadReadings();
   }
 

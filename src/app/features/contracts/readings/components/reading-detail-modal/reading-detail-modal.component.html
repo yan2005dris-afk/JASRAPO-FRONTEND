@@ -107,31 +107,6 @@
             <p class="small text-dark mb-0">{{ reading().descripcionAnomalia }}</p>
           </div>
         }
-
-        <!-- Photo Evidence Preview -->
-        <h6 class="fw-bold text-dark small text-uppercase mb-2" style="letter-spacing: 0.5px">
-          Evidencia Fotográfica
-        </h6>
-        @if (reading().fotoUrl) {
-          <div class="p-3 bg-light rounded-3 border text-center">
-            <a [href]="reading().fotoUrl!" target="_blank" title="Ver imagen en tamaño completo">
-              <img
-                [src]="reading().fotoUrl!"
-                alt="Evidencia fotográfica medidor"
-                class="rounded-3 shadow-sm img-fluid"
-                style="max-height: 320px; object-fit: contain"
-              />
-            </a>
-            <div class="text-muted small mt-2" style="font-size: 0.75rem">
-              Hacé click en la imagen para verla en resolución original.
-            </div>
-          </div>
-        } @else {
-          <div class="p-4 bg-light rounded-3 border text-center text-muted">
-            <i class="bi bi-camera-slash fs-2 d-block mb-1 text-secondary"></i>
-            <span class="small">Sin fotografía de evidencia registrada para esta lectura.</span>
-          </div>
-        }
       </div>
 
       <!-- Footer -->
