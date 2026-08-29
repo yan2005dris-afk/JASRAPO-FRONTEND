@@ -39,12 +39,13 @@ interface SubmissionFeedback {
   message: string;
 }
 
-/** Registro de lectura proveniente del backend o IndexedDB. */
 interface ReadingRecord {
   lecturaId?: string;
   _lecturaId?: string;
   medidorId?: string | number;
   medidor?: { medidorId?: string | number };
+  lecturaActual?: number;
+  lecturaAnterior?: number;
   estado?: string;
   syncState?: string;
   [key: string]: unknown;
@@ -144,22 +145,20 @@ export class LecturasComponent implements OnInit {
   readonly selectedEstadoFilter = signal<string>('todas');
 
   // Mapa medidorId → lectura existente (de registeredReadings + pendingReadings)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  readonly existingReadingMap = computed<Map<string, any>>(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const map = new Map<string, any>();
+  readonly existingReadingMap = computed<Map<string, ReadingRecord>>(() => {
+    const map = new Map<string, ReadingRecord>();
     for (const r of this.registeredReadings()) {
       // Backend response nests medidorId inside medidor object
       const mId = r.medidor?.medidorId ?? r.medidorId;
-      if (mId != null) map.set(mId.toString(), r);
+      if (mId != null) map.set(mId.toString(), r as ReadingRecord);
     }
     for (const p of this.pendingReadings()) {
-      const mId = p.medidorId;
+      const mId = p['medidorId'];
       if (mId != null) {
         map.set(mId.toString(), {
           ...map.get(mId.toString()),
           ...p,
-          estado: p.estado || 'POR_REVISION',
+          estado: (p['estado'] as string) || 'POR_REVISION',
         });
       }
     }

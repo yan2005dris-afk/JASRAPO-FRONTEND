@@ -56,8 +56,7 @@ export class SincronizarComponent implements OnInit {
   readonly pendingAnomalies = signal<PendingRecord[]>([]);
   readonly rejectedReadings = signal<PendingRecord[]>([]);
   readonly rejectedAnomalies = signal<PendingRecord[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  readonly syncedReadings = signal<any[]>([]);
+  readonly syncedReadings = signal<PendingRecord[]>([]);
 
   // Offline storage metrics
   readonly cachedMetersCount = signal<number>(0);
@@ -116,12 +115,16 @@ export class SincronizarComponent implements OnInit {
       this.cachedRoutesCount.set(routesCache?.items?.length ?? 0);
       this.cachedReadingsCount.set(registeredReadings.length);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const metersMap = new Map<string, any>(meters.map((m: any) => [m.medidorId?.toString(), m]));
+      const metersMap = new Map<string, { clienteNombre?: string | null; serie?: string }>(
+        meters.map((m: { medidorId?: number; clienteNombre?: string | null; serie?: string }) => [
+          m.medidorId?.toString() ?? '',
+          m,
+        ]),
+      );
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const enrich = (record: any) => {
-        const meter = metersMap.get(record.medidorId?.toString());
+      const enrich = (record: PendingRecord): PendingRecord => {
+        const mId = record['medidorId'];
+        const meter = mId != null ? metersMap.get(mId.toString()) : undefined;
         return meter
           ? { ...record, clienteNombre: meter.clienteNombre, serie: meter.serie }
           : record;
