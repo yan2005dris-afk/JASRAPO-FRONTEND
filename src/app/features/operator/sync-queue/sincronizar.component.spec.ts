@@ -8,6 +8,7 @@ import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/
 import { of } from 'rxjs';
 import { signal } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
+import { provideRouter } from '@angular/router';
 
 describe('SincronizarComponent', () => {
   let component: SincronizarComponent;
@@ -75,6 +76,7 @@ describe('SincronizarComponent', () => {
     await TestBed.configureTestingModule({
       imports: [SincronizarComponent],
       providers: [
+        provideRouter([]),
         { provide: IndexedDbService, useValue: mockDbService },
         { provide: OperatorSyncService, useValue: mockSyncService },
         { provide: NetworkService, useValue: mockNetworkService },

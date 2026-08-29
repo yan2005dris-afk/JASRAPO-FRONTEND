@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { IndexedDbService, PendingRecord } from '../../../core/services/indexed-db.service';
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
 import { NetworkService } from '../../../core/services/network.service';
@@ -14,7 +15,7 @@ type QueueTab = 'pendientes' | 'rechazados' | 'sincronizados';
 @Component({
   selector: 'app-sincronizar',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe],
+  imports: [CommonModule, FormsModule, DatePipe, RouterLink],
   templateUrl: './sincronizar.component.html',
   styleUrl: './sincronizar.component.scss',
 })
