@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { NetworkService } from './network.service';
@@ -8,6 +7,20 @@ import { environment } from '../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from './auth.service';
+
+type PayloadValue = string | number | boolean | Blob | null | undefined;
+export interface ReadingSubmission {
+  _lecturaId?: string | number;
+  fotoBase64?: string | null;
+  fotoBlob?: Blob | null;
+  [key: string]: PayloadValue;
+}
+export interface WorkOrderSubmission {
+  ordenTrabajoId?: string | number;
+  fotoBase64?: string | null;
+  fotoBlob?: Blob | null;
+  [key: string]: PayloadValue;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -81,8 +94,8 @@ export class OperatorSyncService {
 
   private appendPhoto(
     formData: FormData,
-    photoBlob?: Blob,
-    fotoBase64?: string,
+    photoBlob?: Blob | null,
+    fotoBase64?: string | null,
     field = 'foto',
     filename = 'evidencia.jpg',
   ): void {
@@ -124,10 +137,14 @@ export class OperatorSyncService {
    * El flujo del operador requiere reading._lecturaId y siempre usa PATCH.
    * Wire format: multipart/form-data, con evidencia bajo el campo `foto`.
    */
-  async submitReading(reading: any): Promise<any> {
+  async submitReading(reading: ReadingSubmission & { fotoBlob?: Blob | null }): Promise<unknown> {
     const { _lecturaId, fotoBlob, fotoBase64, ...payload } = reading;
-    if (_lecturaId === null || _lecturaId === undefined || String(_lecturaId).trim() === '') {
-      throw new Error('No se puede enviar la lectura: falta _lecturaId.');
+    const hasId =
+      _lecturaId !== null && _lecturaId !== undefined && String(_lecturaId).trim() !== '';
+    if (this.networkService.isOnline() && !hasId) {
+      throw new Error(
+        'No se puede enviar una lectura nueva en línea: el backend no expone un endpoint de creación.',
+      );
     }
 
     if (this.networkService.isOnline()) {
@@ -140,7 +157,7 @@ export class OperatorSyncService {
         }
         this.appendPhoto(formData, fotoBlob, fotoBase64, 'foto', 'foto.jpg');
 
-        const request$ = this.http.patch<any>(
+        const request$ = this.http.patch<unknown>(
           `${this.OPERATOR_API}/readings/${_lecturaId}`,
           formData,
           {
@@ -152,9 +169,9 @@ export class OperatorSyncService {
         await this.dbService.saveSyncedReading({ ...payload, _lecturaId });
         this.toastService.success('Lectura registrada en el servidor correctamente.', 'Éxito');
         return response;
-      } catch (error: any) {
+      } catch (error: unknown) {
         this.toastService.error(
-          error.error?.message || 'Error al enviar lectura al servidor.',
+          (error as HttpErrorResponse).error?.message || 'Error al enviar lectura al servidor.',
           'Error',
         );
         throw error;
@@ -173,26 +190,31 @@ export class OperatorSyncService {
   /**
    * Envia una anomalía al backend o la encola si está offline
    */
-  async submitAnomaly(anomaly: any): Promise<any> {
+  async submitAnomaly(anomaly: Record<string, unknown>): Promise<unknown> {
     if (this.networkService.isOnline()) {
       try {
         const formData = new FormData();
-        formData.append('lecturaId', String(anomaly.lecturaId));
-        formData.append('tipo', String(anomaly.tipo));
-        formData.append('estado', String(anomaly.estado));
-        if (anomaly.observacion) {
-          formData.append('observacion', String(anomaly.observacion));
+        formData.append('lecturaId', String(anomaly['lecturaId']));
+        formData.append('tipo', String(anomaly['tipo']));
+        formData.append('estado', String(anomaly['estado']));
+        if (anomaly['observacion']) {
+          formData.append('observacion', String(anomaly['observacion']));
         }
-        this.appendPhoto(formData, anomaly.fotoBlob, anomaly.fotoBase64, 'file');
+        this.appendPhoto(
+          formData,
+          (anomaly['fotoBlob'] as Blob) || null,
+          (anomaly['fotoBase64'] as string) || null,
+          'file',
+        );
 
         const response = await firstValueFrom(
-          this.http.post<any>(this.ANOMALIES_API, formData, { withCredentials: true }),
+          this.http.post<unknown>(this.ANOMALIES_API, formData, { withCredentials: true }),
         );
         this.toastService.success('Novedad/Anomalía registrada en el servidor.', 'Éxito');
         return response;
-      } catch (error: any) {
+      } catch (error: unknown) {
         this.toastService.error(
-          error.error?.message || 'Error al enviar novedad al servidor.',
+          (error as HttpErrorResponse).error?.message || 'Error al enviar novedad al servidor.',
           'Error',
         );
         throw error;
@@ -217,7 +239,9 @@ export class OperatorSyncService {
    * El contrato completo (campo por tipo de actividad, validaciones server-side) se
    * documenta en Shortcut #261.
    */
-  async submitWorkOrder(workOrder: any): Promise<any> {
+  async submitWorkOrder(
+    workOrder: WorkOrderSubmission & { fotoBlob?: Blob | null },
+  ): Promise<unknown> {
     const { ordenTrabajoId, fotoBlob, fotoBase64, ...payload } = workOrder;
     if (
       ordenTrabajoId === null ||
@@ -238,14 +262,14 @@ export class OperatorSyncService {
         this.appendPhoto(formData, fotoBlob, fotoBase64);
 
         const url = `${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`;
-        const request$ = this.http.patch<any>(url, formData, { withCredentials: true });
+        const request$ = this.http.patch<unknown>(url, formData, { withCredentials: true });
 
         const response = await firstValueFrom(request$);
         this.toastService.success('Orden de trabajo registrada correctamente.', 'Éxito');
         return response;
-      } catch (error: any) {
+      } catch (error: unknown) {
         this.toastService.error(
-          error.error?.message || 'Error al enviar orden al servidor.',
+          (error as HttpErrorResponse).error?.message || 'Error al enviar orden al servidor.',
           'Error',
         );
         throw error;
@@ -309,10 +333,7 @@ export class OperatorSyncService {
 
     // 1. Sincronizar primero las lecturas encoladas
     for (const pending of readings) {
-      if (
-        pending['recordType'] === 'WORK_ORDER' ||
-        (pending['ordenTrabajoId'] != null && pending['tipoActividad'] !== 'LECTURA')
-      ) {
+      if (pending['recordType'] === 'WORK_ORDER') {
         try {
           const {
             id,
@@ -330,9 +351,13 @@ export class OperatorSyncService {
           }
           this.appendPhoto(formData, fotoBlob, fotoBase64);
           await firstValueFrom(
-            this.http.patch<any>(`${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`, formData, {
-              withCredentials: true,
-            }),
+            this.http.patch<unknown>(
+              `${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`,
+              formData,
+              {
+                withCredentials: true,
+              },
+            ),
           );
           await this.dbService.deletePendingReading(id!);
           successWorkOrdersCount++;
@@ -373,13 +398,14 @@ export class OperatorSyncService {
         if (_lecturaId === null || _lecturaId === undefined || String(_lecturaId).trim() === '') {
           await this.dbService.updatePendingReading(pending.id!, {
             syncState: 'RECHAZADA',
-            errorMessage: 'No se puede sincronizar la lectura: falta _lecturaId.',
+            errorMessage:
+              'Lectura nueva conservada, pero no sincronizada: el backend no expone un endpoint de creación.',
           });
           rejectedCount++;
           continue;
         }
         await firstValueFrom(
-          this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, formData, {
+          this.http.patch<unknown>(`${this.OPERATOR_API}/readings/${_lecturaId}`, formData, {
             withCredentials: true,
           }),
         );
@@ -428,7 +454,7 @@ export class OperatorSyncService {
         this.appendPhoto(formData, fotoBlob, fotoBase64, 'file');
 
         await firstValueFrom(
-          this.http.post<any>(this.ANOMALIES_API, formData, { withCredentials: true }),
+          this.http.post<unknown>(this.ANOMALIES_API, formData, { withCredentials: true }),
         );
         await this.dbService.deletePendingAnomaly(id!);
         successAnomaliesCount++;
@@ -541,13 +567,19 @@ export class OperatorSyncService {
       // Descargar todos los recursos en memoria en paralelo
       const [routes, meters, readings, estados] = await Promise.all([
         firstValueFrom(
-          this.http.get<any[]>(`${this.OPERATOR_API}/routes`, { withCredentials: true }),
+          this.http.get<Record<string, unknown>[]>(`${this.OPERATOR_API}/routes`, {
+            withCredentials: true,
+          }),
         ),
         firstValueFrom(
-          this.http.get<any[]>(`${this.OPERATOR_API}/sync`, { withCredentials: true }),
+          this.http.get<Record<string, unknown>[]>(`${this.OPERATOR_API}/sync`, {
+            withCredentials: true,
+          }),
         ),
         firstValueFrom(
-          this.http.get<any[]>(`${this.OPERATOR_API}/readings`, { withCredentials: true }),
+          this.http.get<Record<string, unknown>[]>(`${this.OPERATOR_API}/readings`, {
+            withCredentials: true,
+          }),
         ),
         this.getReadingEstados().catch(() => []),
       ]);
@@ -580,7 +612,7 @@ export class OperatorSyncService {
       );
 
       return result;
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error al descargar datos del operador:', err);
       if (err instanceof HttpErrorResponse && (err.status === 401 || err.status === 403)) {
         this.assignedDataError.set('authorization');
@@ -591,7 +623,7 @@ export class OperatorSyncService {
       } else {
         this.assignedDataError.set('network');
         this.toastService.error(
-          err.error?.message || 'Error al descargar datos del servidor.',
+          (err as HttpErrorResponse).error?.message || 'Error al descargar datos del servidor.',
           'Error de Descarga',
         );
       }
@@ -612,10 +644,12 @@ export class OperatorSyncService {
   /**
    * Obtiene todas las lecturas del período de facturación actual/activo
    */
-  async getCurrentPeriodReadings(): Promise<any[]> {
+  async getCurrentPeriodReadings(): Promise<Record<string, unknown>[]> {
     try {
       return await firstValueFrom(
-        this.http.get<any[]>(`${this.OPERATOR_API}/readings`, { withCredentials: true }),
+        this.http.get<Record<string, unknown>[]>(`${this.OPERATOR_API}/readings`, {
+          withCredentials: true,
+        }),
       );
     } catch (error) {
       console.error('Error al obtener lecturas del período actual:', error);

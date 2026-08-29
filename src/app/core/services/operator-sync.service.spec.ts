@@ -157,18 +157,18 @@ describe('OperatorSyncService', () => {
       isOnline.mockReturnValue(true);
     });
 
-    it('sin _lecturaId rechaza la lectura y no hace ninguna petición', async () => {
+    it('sin _lecturaId en línea rechaza la lectura y no hace ninguna petición', async () => {
       await expect(service.submitReading({ medidorId: 1, lecturaActual: '123' })).rejects.toThrow(
-        /falta _lecturaId/,
+        /no expone un endpoint de creación/,
       );
       expect(httpPost).not.toHaveBeenCalled();
       expect(httpPatch).not.toHaveBeenCalled();
     });
 
-    it('sin _lecturaId y con foto rechaza sin hacer ninguna petición', async () => {
+    it('sin _lecturaId y con foto en línea rechaza sin hacer ninguna petición', async () => {
       await expect(
         service.submitReading({ medidorId: 1, lecturaActual: '123', fotoBase64: VALID_DATA_URI }),
-      ).rejects.toThrow(/falta _lecturaId/);
+      ).rejects.toThrow(/no expone un endpoint de creación/);
       expect(httpPost).not.toHaveBeenCalled();
       expect(httpPatch).not.toHaveBeenCalled();
     });
@@ -508,7 +508,8 @@ describe('OperatorSyncService', () => {
 
       expect(updatePendingReading).toHaveBeenCalledWith(3, {
         syncState: 'RECHAZADA',
-        errorMessage: 'No se puede sincronizar la lectura: falta _lecturaId.',
+        errorMessage:
+          'Lectura nueva conservada, pero no sincronizada: el backend no expone un endpoint de creación.',
       });
       expect(httpPost).not.toHaveBeenCalled();
       expect(httpPatch).not.toHaveBeenCalled();

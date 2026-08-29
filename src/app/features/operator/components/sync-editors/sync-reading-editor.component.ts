@@ -2,6 +2,7 @@ import { Component, OnInit, signal, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PendingRecord } from '../../../../core/services/indexed-db.service';
+import { calculateConsumo } from '../../models/work-order-form.models';
 
 export interface ReadingEditResult {
   recordId: number;
@@ -232,7 +233,7 @@ export class SyncReadingEditorComponent implements OnInit {
 
     const actual = Number(this.lecturaActual);
     const anterior = Number(this.lecturaAnterior);
-    const consumo = this.lecturaInicial ? actual : actual - anterior;
+    const consumo = calculateConsumo(anterior, actual, this.lecturaInicial);
 
     this.isSaving.set(true);
     this.saved.emit({

@@ -99,7 +99,7 @@ describe('Sync Editors', () => {
       comp.saved.subscribe((r) => saved.push(r));
       comp.save();
 
-      expect(saved[0].consumoCalculado).toBe(10);
+      expect(saved[0].consumoCalculado).toBe(0);
     });
   });
 

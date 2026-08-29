@@ -71,7 +71,7 @@ import { CommonModule } from '@angular/common';
         [placeholder]="placeholder"
         [value]="value"
         [disabled]="disabled"
-        (input)="valueChange.emit($any($event.target).value)"
+        (input)="onInput($event)"
       />
       @if (value) {
         <button
@@ -91,4 +91,9 @@ export class MeterSearchBoxComponent {
   @Input() disabled = false;
   @Input() placeholder = 'Buscar por serie, cliente, contrato...';
   @Output() valueChange = new EventEmitter<string>();
+
+  onInput(event: Event): void {
+    const target = event.target as HTMLInputElement | null;
+    this.valueChange.emit(target?.value ?? '');
+  }
 }
