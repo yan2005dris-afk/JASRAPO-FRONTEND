@@ -70,10 +70,7 @@
           </div>
         }
 
-        <app-rutas-map
-          [points]="mapPoints()"
-          (pointSelected)="selectTask($event)"
-        />
+        <app-rutas-map [points]="mapPoints()" (pointSelected)="selectTask($event)" />
 
         <div class="map-legend" aria-label="Leyenda del mapa">
           <span class="legend-item"
@@ -102,7 +99,7 @@
           >
         </div>
 
-        <div class="map-task-list">
+        <div class="map-task-list" role="list" aria-label="Rutas asignadas en mapa">
           <h2 class="map-task-list-title">Rutas en orden</h2>
           @for (task of filteredTasks(); track task.rutaId) {
             <div
@@ -110,8 +107,14 @@
               [class.selected]="selectedTaskId() === task.rutaId"
               tabindex="0"
               role="button"
+              [attr.aria-pressed]="selectedTaskId() === task.rutaId"
+              [attr.aria-label]="task.nombre + ' orden ' + task.orden"
               (click)="selectTask(selectedTaskId() === task.rutaId ? null : task.rutaId)"
               (keydown.enter)="selectTask(selectedTaskId() === task.rutaId ? null : task.rutaId)"
+              (keydown.space)="
+                $event.preventDefault();
+                selectTask(selectedTaskId() === task.rutaId ? null : task.rutaId)
+              "
             >
               <span class="task-orden-badge">{{ task.orden }}</span>
               <span class="task-name">{{ task.nombre }}</span>
