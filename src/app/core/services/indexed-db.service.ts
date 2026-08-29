@@ -10,8 +10,13 @@ export interface PendingRecord {
   [key: string]: any;
 }
 
-export interface CachedCollection<T> {
-  items: T[];
+export interface AssignedSnapshot {
+  scope: string;
+  operatorId?: string | number | null;
+  routes: any[];
+  meters: any[];
+  registeredReadings: any[];
+  estados?: any[];
   savedAt: string;
 }
 
@@ -20,7 +25,7 @@ export interface CachedCollection<T> {
 })
 export class IndexedDbService {
   private readonly dbName = 'jasrapo-operator-db';
-  private readonly dbVersion = 7;
+  private readonly dbVersion = 8;
   private db: IDBDatabase | null = null;
 
   constructor() {
@@ -39,6 +44,11 @@ export class IndexedDbService {
       request.onupgradeneeded = (event) => {
         const db = request.result;
         const oldVersion = event.oldVersion;
+
+        // Almacén para snapshot completo unificado por operador (aislamiento total)
+        if (!db.objectStoreNames.contains('assigned_snapshots')) {
+          db.createObjectStore('assigned_snapshots', { keyPath: 'scope' });
+        }
 
         // Almacén para caché de medidores
         if (!db.objectStoreNames.contains('medidores_cache')) {
@@ -116,7 +126,9 @@ export class IndexedDbService {
       const transaction = db.transaction('medidores_cache', 'readwrite');
       const store = transaction.objectStore('medidores_cache');
 
-      // Realizar upsert (merge por medidorId): actualiza existentes y añade nuevos
+      // Reemplazo completo del snapshot para no dejar medidores obsoletos
+      store.clear();
+
       for (const meter of meters) {
         store.put(meter);
       }
@@ -126,8 +138,17 @@ export class IndexedDbService {
     });
   }
 
-  async getMetersCache(): Promise<any[]> {
+  async getMetersCache(scope?: string): Promise<any[]> {
     const db = await this.initDb();
+
+    // Si se pasa scope (e.g. 'operator:42'), buscar primero en el snapshot del operador
+    if (scope && db.objectStoreNames.contains('assigned_snapshots')) {
+      const snapshot = await this.getAssignedSnapshot(scope);
+      if (snapshot?.meters) {
+        return snapshot.meters;
+      }
+    }
+
     return new Promise((resolve, reject) => {
       const transaction = db.transaction('medidores_cache', 'readonly');
       const store = transaction.objectStore('medidores_cache');
@@ -313,8 +334,17 @@ export class IndexedDbService {
     });
   }
 
-  async getRegisteredReadingsCache(): Promise<any[]> {
+  async getRegisteredReadingsCache(scope?: string): Promise<any[]> {
     const db = await this.initDb();
+
+    // Si se pasa scope (e.g. 'operator:42'), buscar primero en el snapshot del operador
+    if (scope && db.objectStoreNames.contains('assigned_snapshots')) {
+      const snapshot = await this.getAssignedSnapshot(scope);
+      if (snapshot?.registeredReadings) {
+        return snapshot.registeredReadings;
+      }
+    }
+
     return new Promise((resolve, reject) => {
       const transaction = db.transaction('lecturas_registradas', 'readonly');
       const store = transaction.objectStore('lecturas_registradas');
@@ -385,6 +415,104 @@ export class IndexedDbService {
       request.onerror = () => reject(request.error);
     });
   }
+
+  // --- SNAPSHOTS UNIFICADOS POR OPERADOR ---
+
+  async getAssignedSnapshot(scope: string): Promise<AssignedSnapshot | null> {
+    const db = await this.initDb();
+    if (!db.objectStoreNames.contains('assigned_snapshots')) {
+      return null;
+    }
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('assigned_snapshots', 'readonly');
+      const store = transaction.objectStore('assigned_snapshots');
+      const request = store.get(scope);
+      request.onsuccess = () => resolve(request.result ?? null);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  /**
+   * Guarda un snapshot completo de forma atómica en una única transacción IndexedDB.
+   * Almacena todo el conjunto en `assigned_snapshots` con scope por operador (aislamiento total),
+   * y sincroniza las tablas individuales para compatibilidad.
+   */
+  async saveCompleteAssignedSnapshot(data: {
+    routes: any[];
+    meters: any[];
+    registeredReadings: any[];
+    estados?: any[];
+    scope?: string;
+    operatorId?: number | string;
+  }): Promise<void> {
+    const db = await this.initDb();
+    const scope = data.scope ?? (data.operatorId ? `operator:${data.operatorId}` : 'assigned');
+    const savedAt = new Date().toISOString();
+
+    const snapshotRecord: AssignedSnapshot = {
+      scope,
+      operatorId: data.operatorId ?? null,
+      routes: data.routes,
+      meters: data.meters,
+      registeredReadings: data.registeredReadings,
+      estados: data.estados ?? [],
+      savedAt,
+    };
+
+    return new Promise((resolve, reject) => {
+      const stores = [
+        'assigned_snapshots',
+        'rutas_cache',
+        'medidores_cache',
+        'lecturas_registradas',
+        'estados_cache',
+      ];
+      const transaction = db.transaction(stores, 'readwrite');
+
+      try {
+        // 1. Snapshot unificado aislado por operador
+        const snapshotStore = transaction.objectStore('assigned_snapshots');
+        snapshotStore.put(snapshotRecord);
+
+        // 2. Rutas
+        const routeStore = transaction.objectStore('rutas_cache');
+        routeStore.put({
+          scope,
+          operatorId: data.operatorId ?? null,
+          items: data.routes,
+          savedAt,
+        });
+
+        // 3. Medidores
+        const meterStore = transaction.objectStore('medidores_cache');
+        meterStore.clear();
+        for (const meter of data.meters) {
+          meterStore.put(meter);
+        }
+
+        // 4. Lecturas registradas
+        const readingStore = transaction.objectStore('lecturas_registradas');
+        readingStore.clear();
+        for (const reading of data.registeredReadings) {
+          readingStore.put(reading);
+        }
+
+        // 5. Estados de lectura
+        if (data.estados && data.estados.length > 0) {
+          const estadosStore = transaction.objectStore('estados_cache');
+          estadosStore.put({ tipo: 'estados_lectura', items: data.estados });
+        }
+      } catch (err) {
+        transaction.abort();
+        reject(err);
+        return;
+      }
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
   // --- RUTAS CACHE (snapshot offline) ---
 
   async saveRoutesCache<T>(scope: string, routes: T[]): Promise<void> {
@@ -402,8 +530,17 @@ export class IndexedDbService {
     });
   }
 
-  async getRoutesCache<T>(scope: string): Promise<CachedCollection<T> | null> {
+  async getRoutesCache<T>(scope: string): Promise<{ items: T[]; savedAt: string } | null> {
     const db = await this.initDb();
+
+    // Si existe en assigned_snapshots, preferir ese snapshot
+    if (db.objectStoreNames.contains('assigned_snapshots')) {
+      const snapshot = await this.getAssignedSnapshot(scope);
+      if (snapshot?.routes) {
+        return { items: snapshot.routes as T[], savedAt: snapshot.savedAt };
+      }
+    }
+
     return new Promise((resolve, reject) => {
       const transaction = db.transaction('rutas_cache', 'readonly');
       const store = transaction.objectStore('rutas_cache');

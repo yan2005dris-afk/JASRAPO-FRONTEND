@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { IndexedDbService, PendingRecord } from '../../../core/services/indexed-db.service';
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
 import { NetworkService } from '../../../core/services/network.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { firstValueFrom } from 'rxjs';
@@ -21,6 +22,7 @@ export class SincronizarComponent implements OnInit {
   private readonly dbService = inject(IndexedDbService);
   readonly syncService = inject(OperatorSyncService);
   readonly networkService = inject(NetworkService);
+  private readonly authService = inject(AuthService);
   private readonly toastService = inject(ToastService);
   private readonly confirmService = inject(ConfirmDialogService);
 
@@ -32,6 +34,11 @@ export class SincronizarComponent implements OnInit {
   readonly rejectedAnomalies = signal<PendingRecord[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly syncedReadings = signal<any[]>([]);
+
+  // Offline storage metrics
+  readonly cachedMetersCount = signal<number>(0);
+  readonly cachedRoutesCount = signal<number>(0);
+  readonly cachedReadingsCount = signal<number>(0);
 
   // Editing state
   readonly editingRecord = signal<PendingRecord | null>(null);
@@ -55,16 +62,35 @@ export class SincronizarComponent implements OnInit {
     this.loadQueue();
   }
 
+  async downloadData(): Promise<void> {
+    try {
+      await this.syncService.downloadAssignedData();
+      await this.loadQueue();
+    } catch {
+      // Toast ya emitido por el servicio
+    }
+  }
+
   async loadQueue(): Promise<void> {
     try {
-      const [pendR, rejR, pendA, rejA, synced, meters] = await Promise.all([
-        this.dbService.getPendingReadingsByState('PENDIENTE_SYNC'),
-        this.dbService.getPendingReadingsByState('RECHAZADA'),
-        this.dbService.getPendingAnomaliesByState('PENDIENTE_SYNC'),
-        this.dbService.getPendingAnomaliesByState('RECHAZADA'),
-        this.dbService.getSyncedReadings(),
-        this.dbService.getMetersCache(),
-      ]);
+      const operatorId = this.authService.currentUser()?.id;
+      const scope = operatorId ? `operator:${operatorId}` : 'assigned';
+
+      const [pendR, rejR, pendA, rejA, synced, meters, routesCache, registeredReadings] =
+        await Promise.all([
+          this.dbService.getPendingReadingsByState('PENDIENTE_SYNC'),
+          this.dbService.getPendingReadingsByState('RECHAZADA'),
+          this.dbService.getPendingAnomaliesByState('PENDIENTE_SYNC'),
+          this.dbService.getPendingAnomaliesByState('RECHAZADA'),
+          this.dbService.getSyncedReadings(),
+          this.dbService.getMetersCache(scope),
+          this.dbService.getRoutesCache(scope),
+          this.dbService.getRegisteredReadingsCache(scope),
+        ]);
+
+      this.cachedMetersCount.set(meters.length);
+      this.cachedRoutesCount.set(routesCache?.items?.length ?? 0);
+      this.cachedReadingsCount.set(registeredReadings.length);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const metersMap = new Map<string, any>(meters.map((m: any) => [m.medidorId?.toString(), m]));

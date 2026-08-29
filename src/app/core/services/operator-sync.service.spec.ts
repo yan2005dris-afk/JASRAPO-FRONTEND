@@ -5,6 +5,7 @@ import { OperatorSyncService } from './operator-sync.service';
 import { NetworkService } from './network.service';
 import { IndexedDbService } from './indexed-db.service';
 import { ToastService } from '../../shared/components/toast/toast.service';
+import { AuthService } from './auth.service';
 
 // 1x1 PNG rojo en base64 — foto de prueba mínima y válida para dataURItoBlob.
 const TINY_PNG_BASE64 =
@@ -34,6 +35,8 @@ describe('OperatorSyncService', () => {
   let deletePendingAnomaly: ReturnType<typeof vi.fn>;
   let saveEstadosCache: ReturnType<typeof vi.fn>;
   let getEstadosCache: ReturnType<typeof vi.fn>;
+  let saveCompleteAssignedSnapshot: ReturnType<typeof vi.fn>;
+  let currentUserSignal: { id?: string; name?: string } | null;
   let toast: {
     success: ReturnType<typeof vi.fn>;
     error: ReturnType<typeof vi.fn>;
@@ -85,6 +88,13 @@ describe('OperatorSyncService', () => {
             deletePendingAnomaly,
             saveEstadosCache,
             getEstadosCache,
+            saveCompleteAssignedSnapshot,
+          },
+        },
+        {
+          provide: AuthService,
+          useValue: {
+            currentUser: () => currentUserSignal,
           },
         },
         { provide: ToastService, useValue: toast },
@@ -114,6 +124,8 @@ describe('OperatorSyncService', () => {
     deletePendingAnomaly = vi.fn().mockResolvedValue(undefined);
     saveEstadosCache = vi.fn().mockResolvedValue(undefined);
     getEstadosCache = vi.fn().mockResolvedValue(null);
+    saveCompleteAssignedSnapshot = vi.fn().mockResolvedValue(undefined);
+    currentUserSignal = { id: '42', name: 'Operador Test' };
 
     toast = {
       success: vi.fn(),
@@ -528,6 +540,106 @@ describe('OperatorSyncService', () => {
 
       const result = await service.getReadingEstados();
       expect(result).toEqual(cached);
+    });
+  });
+
+  // ── downloadAssignedData ─────────────────────────────────────────────────
+
+  describe('downloadAssignedData', () => {
+    it('lanza error y toast de advertencia si no hay conexión a internet (offline)', async () => {
+      isOnline.mockReturnValue(false);
+
+      await expect(service.downloadAssignedData()).rejects.toThrow('Offline');
+      expect(toast.warning).toHaveBeenCalledWith(
+        'No tenés conexión a internet para descargar los datos del servidor.',
+        'Sin Conexión',
+      );
+      expect(saveCompleteAssignedSnapshot).not.toHaveBeenCalled();
+    });
+
+    it('descarga rutas, medidores, lecturas y estados en paralelo y persiste de forma atómica', async () => {
+      isOnline.mockReturnValue(true);
+
+      const mockRoutes = [{ rutaId: 'r-1', nombre: 'Ruta 1' }];
+      const mockMeters = [{ medidorId: 101, serie: 'M-101' }];
+      const mockReadings = [{ lecturaId: 'lec-1', medidorId: 101 }];
+      const mockEstados = [{ codigo: 'OK', nombre: 'OK', orden: 1 }];
+
+      httpGet.mockImplementation((url: string) => {
+        if (url.includes('/operator/routes')) return of(mockRoutes);
+        if (url.includes('/operator/sync')) return of(mockMeters);
+        if (url.includes('/operator/readings')) return of(mockReadings);
+        if (url.includes('/readings/estados')) return of(mockEstados);
+        return of([]);
+      });
+
+      const result = await service.downloadAssignedData();
+
+      expect(result).toEqual({
+        routesCount: 1,
+        metersCount: 1,
+        readingsCount: 1,
+      });
+
+      expect(saveCompleteAssignedSnapshot).toHaveBeenCalledWith({
+        routes: mockRoutes,
+        meters: mockMeters,
+        registeredReadings: mockReadings,
+        estados: mockEstados,
+        scope: 'operator:42',
+        operatorId: '42',
+      });
+
+      expect(service.lastDownloadTimestamp()).toBeTruthy();
+      expect(toast.success).toHaveBeenCalledWith(
+        'Datos descargados con éxito: 1 rutas, 1 medidores y 1 lecturas.',
+        'Descarga Completada',
+      );
+    });
+
+    it('no muta IndexedDB si alguna de las llamadas falla a mitad de la descarga (preservando snapshot previo)', async () => {
+      isOnline.mockReturnValue(true);
+
+      const mockRoutes = [{ rutaId: 'r-1' }];
+
+      httpGet.mockImplementation((url: string) => {
+        if (url.includes('/operator/routes')) return of(mockRoutes);
+        if (url.includes('/operator/sync'))
+          return throwError(() => makeHttpError(500, 'Error descargando medidores'));
+        return of([]);
+      });
+
+      await expect(service.downloadAssignedData()).rejects.toBeTruthy();
+
+      expect(saveCompleteAssignedSnapshot).not.toHaveBeenCalled();
+      expect(toast.error).toHaveBeenCalledWith('Error descargando medidores', 'Error de Descarga');
+    });
+
+    it('soporta descarga cuando el operador no tiene rutas asignadas', async () => {
+      isOnline.mockReturnValue(true);
+
+      httpGet.mockImplementation((url: string) => {
+        if (url.includes('/operator/routes')) return of([]);
+        if (url.includes('/operator/sync')) return of([]);
+        if (url.includes('/operator/readings')) return of([]);
+        if (url.includes('/readings/estados')) return of([]);
+        return of([]);
+      });
+
+      const result = await service.downloadAssignedData();
+
+      expect(result).toEqual({
+        routesCount: 0,
+        metersCount: 0,
+        readingsCount: 0,
+      });
+      expect(saveCompleteAssignedSnapshot).toHaveBeenCalledWith(
+        expect.objectContaining({
+          routes: [],
+          meters: [],
+          registeredReadings: [],
+        }),
+      );
     });
   });
 });
