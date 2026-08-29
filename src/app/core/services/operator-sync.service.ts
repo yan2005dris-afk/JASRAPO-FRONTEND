@@ -100,18 +100,15 @@ export class OperatorSyncService {
   }
 
   /**
-   * Envia una lectura al backend o la encola si está offline.
-   * Si reading._lecturaId está presente → PATCH (actualizar existente)
-   * Si no → POST (crear nueva)
-   *
-   * Wire format: multipart/form-data.
-   * El field name del archivo de evidencia depende del endpoint (contrato backend):
-   *   - POST   /readings              → 'file'   (ReadingController.create)
-   *   - PATCH  /operator/readings/:id → 'foto'   (OperatorController.actualizarLectura)
-   * Asimetría intencional — cubierta por operator-sync.service.spec.ts.
+   * Envía una lectura existente al backend o la encola si está offline.
+   * El flujo del operador requiere reading._lecturaId y siempre usa PATCH.
+   * Wire format: multipart/form-data, con evidencia bajo el campo `foto`.
    */
   async submitReading(reading: any): Promise<any> {
     const { _lecturaId, fotoBase64, ...payload } = reading;
+    if (_lecturaId === null || _lecturaId === undefined || String(_lecturaId).trim() === '') {
+      throw new Error('No se puede enviar la lectura: falta _lecturaId.');
+    }
 
     if (this.networkService.isOnline()) {
       try {
@@ -123,16 +120,12 @@ export class OperatorSyncService {
         }
         if (fotoBase64) {
           const blob = this.dataURItoBlob(fotoBase64);
-          // POST → 'file'; PATCH /operator/readings/:id → 'foto'. Ver JSDoc arriba.
-          const fieldName = _lecturaId ? 'foto' : 'file';
-          formData.append(fieldName, blob, 'foto.jpg');
+          formData.append('foto', blob, 'foto.jpg');
         }
 
-        const request$ = _lecturaId
-          ? this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, formData, {
-              withCredentials: true,
-            })
-          : this.http.post<any>(this.READINGS_API, formData, { withCredentials: true });
+        const request$ = this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, formData, {
+          withCredentials: true,
+        });
 
         const response = await firstValueFrom(request$);
         await this.dbService.saveSyncedReading({ ...payload, _lecturaId });
@@ -362,17 +355,22 @@ export class OperatorSyncService {
         }
         if (fotoBase64) {
           const blob = this.dataURItoBlob(fotoBase64);
-          // Misma asimetría que submitReading: ver JSDoc arriba.
-          const fieldName = _lecturaId ? 'foto' : 'file';
-          formData.append(fieldName, blob, 'foto.jpg');
+          formData.append('foto', blob, 'foto.jpg');
         }
 
-        const request$ = _lecturaId
-          ? this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, formData, {
-              withCredentials: true,
-            })
-          : this.http.post<any>(this.READINGS_API, formData, { withCredentials: true });
-        await firstValueFrom(request$);
+        if (_lecturaId === null || _lecturaId === undefined || String(_lecturaId).trim() === '') {
+          await this.dbService.updatePendingReading(pending.id!, {
+            syncState: 'RECHAZADA',
+            errorMessage: 'No se puede sincronizar la lectura: falta _lecturaId.',
+          });
+          rejectedCount++;
+          continue;
+        }
+        await firstValueFrom(
+          this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, formData, {
+            withCredentials: true,
+          }),
+        );
         await this.dbService.saveSyncedReading({ ...payload, _lecturaId });
         await this.dbService.deletePendingReading(id!);
         successReadingsCount++;
