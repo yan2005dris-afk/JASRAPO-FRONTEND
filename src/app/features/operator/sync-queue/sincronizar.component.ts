@@ -1,4 +1,11 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+  computed,
+  OnInit,
+} from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -17,6 +24,7 @@ type QueueTab = 'pendientes' | 'rechazados' | 'sincronizados';
   standalone: true,
   imports: [CommonModule, FormsModule, DatePipe, RouterLink],
   templateUrl: './sincronizar.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './sincronizar.component.scss',
 })
 export class SincronizarComponent implements OnInit {
