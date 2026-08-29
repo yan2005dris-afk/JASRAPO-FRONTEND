@@ -586,7 +586,7 @@ describe('OperatorSyncService', () => {
         meters: mockMeters,
         registeredReadings: mockReadings,
         estados: mockEstados,
-        scope: 'assigned',
+        scope: 'operator:42',
         operatorId: '42',
       });
 

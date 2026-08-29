@@ -559,6 +559,7 @@ export class OperatorSyncService {
       ]);
 
       const currentUserId = this.authService.currentUser()?.id ?? null;
+      const scope = currentUserId ? `operator:${currentUserId}` : 'assigned';
 
       // Guardar de forma atómica en una única transacción IndexedDB
       await this.dbService.saveCompleteAssignedSnapshot({
@@ -566,7 +567,7 @@ export class OperatorSyncService {
         meters,
         registeredReadings: readings,
         estados,
-        scope: 'assigned',
+        scope,
         operatorId: currentUserId ?? undefined,
       });
 
