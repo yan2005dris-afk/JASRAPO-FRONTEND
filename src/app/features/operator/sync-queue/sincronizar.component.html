@@ -52,7 +52,7 @@
         <i class="bi bi-cloud-download"></i>
       </div>
       <div class="hub-text">
-        <h2 class="hub-title">Datos Asignados para Offline</h2>
+        <h2 class="hub-title">Datos asignados offline</h2>
         <p class="hub-subtitle">
           @if (syncService.lastDownloadTimestamp()) {
             Última descarga: {{ syncService.lastDownloadTimestamp() | date: 'dd/MM/yyyy HH:mm' }}
@@ -85,6 +85,16 @@
       </div>
     </div>
 
+    @if (authorizationWarning()) {
+      <div class="authorization-warning" role="alert">
+        <i class="bi bi-shield-exclamation"></i>
+        <span
+          >No tenés autorización para actualizar los datos asignados. Los datos guardados siguen
+          visibles.</span
+        >
+      </div>
+    }
+
     <!-- Download Action -->
     <div class="hub-action">
       <button
@@ -101,12 +111,21 @@
           <span>Descargar / Actualizar Datos</span>
         }
       </button>
+      <a class="routes-link" routerLink="/app/operador/rutas">
+        <i class="bi bi-signpost-2"></i> Ver rutas asignadas
+      </a>
       @if (!networkService.isOnline()) {
         <small class="offline-hint"
-          ><i class="bi bi-wifi-off"></i> Conectate a internet para actualizar datos</small
+          ><i class="bi bi-wifi-off"></i> Sin conexión: podés consultar los datos guardados</small
         >
       }
     </div>
+  </div>
+
+  <!-- Local upload queue -->
+  <div class="local-changes-heading">
+    <h2 id="local-changes-title">Cambios locales por subir</h2>
+    <p>Lecturas, novedades y órdenes de trabajo guardadas en este dispositivo.</p>
   </div>
 
   <!-- Tab Switcher -->
@@ -139,7 +158,7 @@
       (click)="switchTab('sincronizados')"
       id="tab-sincronizados"
     >
-      Sincronizados
+      Enviados
       @if (syncedReadings().length > 0) {
         <span class="tab-count synced">{{ syncedReadings().length }}</span>
       }
@@ -365,7 +384,7 @@
     </div>
   }
 
-  <!-- TAB: Sincronizados -->
+  <!-- TAB: Enviados -->
   @if (activeTab() === 'sincronizados') {
     <div class="queue-section">
       <div class="section-toolbar">
@@ -379,7 +398,7 @@
       @if (syncedReadings().length === 0) {
         <div class="empty-state">
           <i class="bi bi-cloud-check"></i>
-          <p>No hay registros sincronizados aún.</p>
+          <p>No hay registros enviados al servidor aún.</p>
         </div>
       }
 
@@ -409,14 +428,14 @@
             </div>
             @if (record['syncedAt']) {
               <div class="card-info">
-                <span class="info-label">Sincronizado:</span>
+                <span class="info-label">Enviado:</span>
                 <span class="info-value">{{ record['syncedAt'] | date: 'dd/MM/yyyy HH:mm' }}</span>
               </div>
             }
           </div>
           <div class="card-status">
             <span class="status-tag synced-tag">
-              <i class="bi bi-cloud-check-fill"></i> Sincronizado
+              <i class="bi bi-cloud-check-fill"></i> Enviado al servidor
             </span>
           </div>
         </div>

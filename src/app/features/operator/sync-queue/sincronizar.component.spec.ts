@@ -8,6 +8,7 @@ import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/
 import { of } from 'rxjs';
 import { signal } from '@angular/core';
 import { AuthService } from '../../../core/services/auth.service';
+import { provideRouter } from '@angular/router';
 
 describe('SincronizarComponent', () => {
   let component: SincronizarComponent;
@@ -75,6 +76,7 @@ describe('SincronizarComponent', () => {
     await TestBed.configureTestingModule({
       imports: [SincronizarComponent],
       providers: [
+        provideRouter([]),
         { provide: IndexedDbService, useValue: mockDbService },
         { provide: OperatorSyncService, useValue: mockSyncService },
         { provide: NetworkService, useValue: mockNetworkService },
@@ -91,6 +93,14 @@ describe('SincronizarComponent', () => {
 
   it('debería crearse correctamente', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('separa los datos asignados de los cambios locales por subir', () => {
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('Datos asignados offline');
+    expect(text).toContain('Cambios locales por subir');
+    expect(text).toContain('Enviados');
+    expect(text).not.toContain('Sincronizados');
   });
 
   it('debería cargar las métricas de offline en init', async () => {
