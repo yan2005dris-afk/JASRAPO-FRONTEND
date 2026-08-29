@@ -1,4 +1,5 @@
 import { inject, Injectable } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
@@ -40,6 +41,9 @@ export class OperatorRouteOfflineService {
           .catch((e) => console.warn('[routes-cache] persist failed', e));
         return { routes, source: 'network', cachedAt: null };
       } catch (error) {
+        if (error instanceof HttpErrorResponse && (error.status === 401 || error.status === 403)) {
+          throw error;
+        }
         networkError = error;
       }
     }

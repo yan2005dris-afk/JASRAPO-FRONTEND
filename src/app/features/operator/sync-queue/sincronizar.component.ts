@@ -39,6 +39,7 @@ export class SincronizarComponent implements OnInit {
   readonly cachedMetersCount = signal<number>(0);
   readonly cachedRoutesCount = signal<number>(0);
   readonly cachedReadingsCount = signal<number>(0);
+  readonly authorizationWarning = signal(false);
 
   // Editing state
   readonly editingRecord = signal<PendingRecord | null>(null);
@@ -65,9 +66,15 @@ export class SincronizarComponent implements OnInit {
   async downloadData(): Promise<void> {
     try {
       await this.syncService.downloadAssignedData();
+      this.authorizationWarning.set(false);
       await this.loadQueue();
-    } catch {
-      // Toast ya emitido por el servicio
+    } catch (error: unknown) {
+      const status =
+        error && typeof error === 'object' && 'status' in error
+          ? (error as { status?: number }).status
+          : undefined;
+      this.authorizationWarning.set(status === 401 || status === 403);
+      // El servicio ya informa si es offline, red o autorización.
     }
   }
 

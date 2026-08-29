@@ -93,6 +93,14 @@ describe('SincronizarComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('separa los datos asignados de los cambios locales por subir', () => {
+    const text = fixture.nativeElement.textContent;
+    expect(text).toContain('Datos asignados offline');
+    expect(text).toContain('Cambios locales por subir');
+    expect(text).toContain('Enviados');
+    expect(text).not.toContain('Sincronizados');
+  });
+
   it('debería cargar las métricas de offline en init', async () => {
     await component.loadQueue();
     expect(component.cachedMetersCount()).toBe(1);

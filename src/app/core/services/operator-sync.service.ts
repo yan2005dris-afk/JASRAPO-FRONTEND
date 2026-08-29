@@ -30,6 +30,8 @@ export class OperatorSyncService {
   readonly rejectedAnomaliesCount = signal<number>(0);
   readonly isSyncing = signal<boolean>(false);
   readonly isDownloading = signal<boolean>(false);
+  /** Resultado de la última carga, para no confundir permisos con offline. */
+  readonly assignedDataError = signal<'authorization' | 'offline' | 'network' | null>(null);
 
   private readonly LAST_DOWNLOAD_KEY = 'jasrapo_operator_last_download';
   readonly lastDownloadTimestamp = signal<string | null>(
@@ -534,7 +536,10 @@ export class OperatorSyncService {
     metersCount: number;
     readingsCount: number;
   }> {
+    this.assignedDataError.set(null);
+
     if (!this.networkService.isOnline()) {
+      this.assignedDataError.set('offline');
       this.toastService.warning(
         'No tenés conexión a internet para descargar los datos del servidor.',
         'Sin Conexión',
@@ -588,10 +593,19 @@ export class OperatorSyncService {
       return result;
     } catch (err: any) {
       console.error('Error al descargar datos del operador:', err);
-      this.toastService.error(
-        err.error?.message || 'Error al descargar datos del servidor.',
-        'Error de Descarga',
-      );
+      if (err instanceof HttpErrorResponse && (err.status === 401 || err.status === 403)) {
+        this.assignedDataError.set('authorization');
+        this.toastService.error(
+          'No tenés autorización para descargar los datos asignados. Verificá tu sesión o permisos.',
+          'Acceso no autorizado',
+        );
+      } else {
+        this.assignedDataError.set('network');
+        this.toastService.error(
+          err.error?.message || 'Error al descargar datos del servidor.',
+          'Error de Descarga',
+        );
+      }
       throw err;
     } finally {
       this.isDownloading.set(false);

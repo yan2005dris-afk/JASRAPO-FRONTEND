@@ -557,6 +557,20 @@ describe('OperatorSyncService', () => {
       expect(saveCompleteAssignedSnapshot).not.toHaveBeenCalled();
     });
 
+    it('distingue un 403 de un error offline y conserva el snapshot anterior', async () => {
+      isOnline.mockReturnValue(true);
+      httpGet.mockImplementation(() => throwError(() => makeHttpError(403, 'Forbidden')));
+
+      await expect(service.downloadAssignedData()).rejects.toBeTruthy();
+
+      expect(service.assignedDataError()).toBe('authorization');
+      expect(toast.error).toHaveBeenCalledWith(
+        'No tenés autorización para descargar los datos asignados. Verificá tu sesión o permisos.',
+        'Acceso no autorizado',
+      );
+      expect(saveCompleteAssignedSnapshot).not.toHaveBeenCalled();
+    });
+
     it('descarga rutas, medidores, lecturas y estados en paralelo y persiste de forma atómica', async () => {
       isOnline.mockReturnValue(true);
 
