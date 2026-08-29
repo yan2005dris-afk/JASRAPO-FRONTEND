@@ -41,23 +41,23 @@ import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
 
       <div class="form-field">
         <span class="field-label required">Fotografía Post-Retiro</span>
-        <app-photo-capture [preview]="photoPreview" (previewChange)="onPhotoChange($event)" />
-        @if (submitted && !photoPreview) {
+        <app-photo-capture [preview]="photoPreview()" (previewChange)="onPhotoChange($event)" />
+        @if (submitted() && !photoPreview()) {
           <span class="field-error">La fotografía post-retiro es obligatoria.</span>
         }
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn-cancel" (click)="cancel()" [disabled]="isSaving">
+        <button type="button" class="btn-cancel" (click)="cancel()" [disabled]="isSaving()">
           Cancelar
         </button>
         <button
           type="submit"
           class="btn-submit"
-          [disabled]="form.invalid || isSaving"
+          [disabled]="form.invalid || isSaving()"
           id="btn-submit-reconexion"
         >
-          @if (isSaving) {
+          @if (isSaving()) {
             <span class="spinner" role="status" aria-hidden="true"></span>
             Guardando...
           } @else {

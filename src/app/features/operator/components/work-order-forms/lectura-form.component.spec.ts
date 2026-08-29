@@ -6,7 +6,7 @@ function createComponent(lecturaAnterior = 0): LecturaFormComponent {
     imports: [LecturaFormComponent],
   });
   const fixture = TestBed.createComponent(LecturaFormComponent);
-  fixture.componentInstance.lecturaAnterior = lecturaAnterior;
+  fixture.componentRef.setInput('lecturaAnterior', lecturaAnterior);
   fixture.detectChanges(); // triggers ngOnInit with the @Input value
   return fixture.componentInstance;
 }
@@ -31,7 +31,7 @@ describe('LecturaFormComponent', () => {
   it('should emit correct LecturaFormPayload on valid submit (with photo)', () => {
     const comp = createComponent(10);
     comp.form.patchValue({ lecturaActual: 20 });
-    comp.photoPreview = 'data:image/jpeg;base64,abc';
+    comp.photoPreview.set('data:image/jpeg;base64,abc');
     const emitted: unknown[] = [];
     comp.formSubmit.subscribe((v) => emitted.push(v));
     comp.submit();

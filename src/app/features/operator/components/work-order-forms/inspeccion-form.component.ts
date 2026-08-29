@@ -55,23 +55,23 @@ const ESTADO_SELLOS_OPTIONS: { value: InspeccionFormPayload['estadoSellos']; lab
 
       <div class="form-field">
         <span class="field-label required">Fotografía de Evidencia</span>
-        <app-photo-capture [preview]="photoPreview" (previewChange)="onPhotoChange($event)" />
-        @if (submitted && !photoPreview) {
+        <app-photo-capture [preview]="photoPreview()" (previewChange)="onPhotoChange($event)" />
+        @if (submitted() && !photoPreview()) {
           <span class="field-error">La fotografía de evidencia es obligatoria.</span>
         }
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn-cancel" (click)="cancel()" [disabled]="isSaving">
+        <button type="button" class="btn-cancel" (click)="cancel()" [disabled]="isSaving()">
           Cancelar
         </button>
         <button
           type="submit"
           class="btn-submit"
-          [disabled]="form.invalid || isSaving"
+          [disabled]="form.invalid || isSaving()"
           id="btn-submit-inspeccion"
         >
-          @if (isSaving) {
+          @if (isSaving()) {
             <span class="spinner" role="status" aria-hidden="true"></span>
             Guardando...
           } @else {

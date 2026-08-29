@@ -15,8 +15,7 @@ export interface LecturaFormPayload {
 
 export interface InstalacionFormPayload {
   tipoActividad: 'INSTALACION';
-  nuevoSerie: string;
-  lecturaInicial: number;
+  resultadoObservacion?: string;
   fotoBase64: string;
 }
 

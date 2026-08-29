@@ -1,12 +1,10 @@
 .picker-modal {
   z-index: 1065;
 }
-
 .modal-backdrop {
   z-index: 1060;
   background-color: rgba(15, 23, 42, 0.45);
 }
-
 .header-icon-tile {
   width: 44px;
   height: 44px;
@@ -18,26 +16,6 @@
   justify-content: center;
   font-size: 1.25rem;
 }
-
-.cursor-pointer {
-  cursor: pointer;
-}
-
 .tabular-nums {
   font-variant-numeric: tabular-nums;
-}
-
-.autocomplete-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  z-index: 1070;
-  max-height: 180px;
-  overflow-y: auto;
-  border-color: #e2e8f0;
-}
-
-.extra-small {
-  font-size: 0.78rem;
 }

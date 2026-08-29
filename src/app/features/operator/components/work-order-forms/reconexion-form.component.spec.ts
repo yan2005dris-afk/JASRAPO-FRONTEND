@@ -31,7 +31,7 @@ describe('ReconexionFormComponent', () => {
   it('should emit correct ReconexionFormPayload when form is fully valid', () => {
     const comp = createComponent();
     comp.form.patchValue({ confirmacionRetiroSello: true });
-    comp.photoPreview = 'data:image/jpeg;base64,rec';
+    comp.photoPreview.set('data:image/jpeg;base64,rec');
     const emitted: ReconexionFormPayload[] = [];
     comp.formSubmit.subscribe((v) => emitted.push(v));
     comp.submit();

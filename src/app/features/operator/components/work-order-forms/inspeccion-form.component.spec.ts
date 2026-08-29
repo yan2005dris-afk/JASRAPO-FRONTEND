@@ -34,7 +34,7 @@ describe('InspeccionFormComponent', () => {
       hayFugas: true,
       observaciones: 'Fuga detectada en la conexión',
     });
-    comp.photoPreview = 'data:image/jpeg;base64,xyz';
+    comp.photoPreview.set('data:image/jpeg;base64,xyz');
     const emitted: InspeccionFormPayload[] = [];
     comp.formSubmit.subscribe((v) => emitted.push(v));
     comp.submit();

@@ -12,15 +12,18 @@ function createComponent(): InstalacionFormComponent {
 }
 
 describe('InstalacionFormComponent', () => {
-  it('should be invalid when nuevoSerie is empty', () => {
+  it('should only collect installation observations and not meter registration fields', () => {
     const comp = createComponent();
-    expect(comp.form.get('nuevoSerie')?.hasError('required')).toBe(true);
-    expect(comp.form.valid).toBe(false);
+
+    expect(comp.form.get('nuevoSerie')).toBeNull();
+    expect(comp.form.get('lecturaInicial')).toBeNull();
+    expect(comp.form.get('observaciones')).not.toBeNull();
+    expect(comp.form.valid).toBe(true);
   });
 
   it('should not emit if photo is missing', () => {
     const comp = createComponent();
-    comp.form.patchValue({ nuevoSerie: 'MED-001', lecturaInicial: 10 });
+    comp.form.patchValue({ observaciones: 'Instalación en gabinete exterior.' });
     const emitted: unknown[] = [];
     comp.formSubmit.subscribe((v) => emitted.push(v));
     comp.submit();
@@ -29,15 +32,27 @@ describe('InstalacionFormComponent', () => {
 
   it('should emit correct InstalacionFormPayload on valid submit', () => {
     const comp = createComponent();
-    comp.form.patchValue({ nuevoSerie: 'MED-001', lecturaInicial: 5 });
-    comp.photoPreview = 'data:image/jpeg;base64,abc';
+    comp.form.patchValue({ observaciones: 'Instalación ejecutada sin incidencias.' });
+    comp.photoPreview.set('data:image/jpeg;base64,abc');
     const emitted: InstalacionFormPayload[] = [];
     comp.formSubmit.subscribe((v) => emitted.push(v));
     comp.submit();
     expect(emitted).toHaveLength(1);
     expect(emitted[0].tipoActividad).toBe('INSTALACION');
-    expect(emitted[0].nuevoSerie).toBe('MED-001');
-    expect(emitted[0].lecturaInicial).toBe(5);
+    expect(emitted[0].resultadoObservacion).toBe('Instalación ejecutada sin incidencias.');
     expect(emitted[0].fotoBase64).toBe('data:image/jpeg;base64,abc');
+  });
+
+  it('should omit empty installation observations from the payload', () => {
+    const comp = createComponent();
+    comp.photoPreview.set('data:image/jpeg;base64,abc');
+    const emitted: InstalacionFormPayload[] = [];
+    comp.formSubmit.subscribe((v) => emitted.push(v));
+    comp.submit();
+
+    expect(emitted[0]).toEqual({
+      tipoActividad: 'INSTALACION',
+      fotoBase64: 'data:image/jpeg;base64,abc',
+    });
   });
 });

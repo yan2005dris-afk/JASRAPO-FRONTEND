@@ -1,4 +1,4 @@
-import { Directive, EventEmitter, Input, OnInit, Output, inject } from '@angular/core';
+import { Directive, OnInit, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import type { WorkOrderFormPayload } from '../../models/work-order-form.models';
 
@@ -28,26 +28,26 @@ export abstract class BaseWorkOrderFormComponent<T extends WorkOrderFormPayload>
   protected readonly fb = inject(FormBuilder);
 
   /** Input que indica si el padre está guardando (deshabilita submit). */
-  @Input() isSaving = false;
+  readonly isSaving = input(false);
 
   /** Emite el payload tipado cuando el form pasa validación + foto presente. */
-  @Output() formSubmit = new EventEmitter<T>();
+  readonly formSubmit = output<T>();
 
   /** Emite cuando el operador cancela. */
-  @Output() canceled = new EventEmitter<void>();
+  readonly canceled = output<void>();
 
   /** FormGroup concreto — inicializado en ngOnInit vía buildForm(). */
   form!: FormGroup;
 
   /** Data URI base64 de la foto capturada (null hasta que se captura). */
-  photoPreview: string | null = null;
+  readonly photoPreview = signal<string | null>(null);
 
   /**
    * Gate "submitted": se prende al primer intento de submit y dirige la visibilidad
    * de errores de campos opcionales (ej. foto obligatoria).
    * Se resetea cuando el operador carga una foto nueva (onPhotoChange).
    */
-  protected submitted = false;
+  protected readonly submitted = signal(false);
 
   ngOnInit(): void {
     this.form = this.buildForm();
@@ -70,8 +70,8 @@ export abstract class BaseWorkOrderFormComponent<T extends WorkOrderFormPayload>
    * "limpia" el error visible.
    */
   protected onPhotoChange(val: string | null): void {
-    this.photoPreview = val;
-    if (val) this.submitted = false;
+    this.photoPreview.set(val);
+    if (val) this.submitted.set(false);
   }
 
   /**
@@ -79,12 +79,12 @@ export abstract class BaseWorkOrderFormComponent<T extends WorkOrderFormPayload>
    * emite el payload tipado si pasa.
    */
   submit(): void {
-    this.submitted = true;
-    if (this.form.invalid || !this.photoPreview) {
+    this.submitted.set(true);
+    if (this.form.invalid || !this.photoPreview()) {
       this.form.markAllAsTouched();
       return;
     }
-    this.formSubmit.emit(this.buildPayload(this.form.value, this.photoPreview));
+    this.formSubmit.emit(this.buildPayload(this.form.value, this.photoPreview()));
   }
 
   /** Handler de cancel. */

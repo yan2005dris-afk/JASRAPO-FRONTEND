@@ -100,18 +100,15 @@ export class OperatorSyncService {
   }
 
   /**
-   * Envia una lectura al backend o la encola si está offline.
-   * Si reading._lecturaId está presente → PATCH (actualizar existente)
-   * Si no → POST (crear nueva)
-   *
-   * Wire format: multipart/form-data.
-   * El field name del archivo de evidencia depende del endpoint (contrato backend):
-   *   - POST   /readings              → 'file'   (ReadingController.create)
-   *   - PATCH  /operator/readings/:id → 'foto'   (OperatorController.actualizarLectura)
-   * Asimetría intencional — cubierta por operator-sync.service.spec.ts.
+   * Envía una lectura existente al backend o la encola si está offline.
+   * El flujo del operador requiere reading._lecturaId y siempre usa PATCH.
+   * Wire format: multipart/form-data, con evidencia bajo el campo `foto`.
    */
   async submitReading(reading: any): Promise<any> {
     const { _lecturaId, fotoBase64, ...payload } = reading;
+    if (_lecturaId === null || _lecturaId === undefined || String(_lecturaId).trim() === '') {
+      throw new Error('No se puede enviar la lectura: falta _lecturaId.');
+    }
 
     if (this.networkService.isOnline()) {
       try {
@@ -123,16 +120,16 @@ export class OperatorSyncService {
         }
         if (fotoBase64) {
           const blob = this.dataURItoBlob(fotoBase64);
-          // POST → 'file'; PATCH /operator/readings/:id → 'foto'. Ver JSDoc arriba.
-          const fieldName = _lecturaId ? 'foto' : 'file';
-          formData.append(fieldName, blob, 'foto.jpg');
+          formData.append('foto', blob, 'foto.jpg');
         }
 
-        const request$ = _lecturaId
-          ? this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, formData, {
-              withCredentials: true,
-            })
-          : this.http.post<any>(this.READINGS_API, formData, { withCredentials: true });
+        const request$ = this.http.patch<any>(
+          `${this.OPERATOR_API}/readings/${_lecturaId}`,
+          formData,
+          {
+            withCredentials: true,
+          },
+        );
 
         const response = await firstValueFrom(request$);
         await this.dbService.saveSyncedReading({ ...payload, _lecturaId });
@@ -208,6 +205,13 @@ export class OperatorSyncService {
    */
   async submitWorkOrder(workOrder: any): Promise<any> {
     const { ordenTrabajoId, fotoBase64, ...payload } = workOrder;
+    if (
+      ordenTrabajoId === null ||
+      ordenTrabajoId === undefined ||
+      String(ordenTrabajoId).trim() === ''
+    ) {
+      throw new Error('No se puede enviar la orden de trabajo: falta ordenTrabajoId.');
+    }
 
     if (this.networkService.isOnline()) {
       try {
@@ -219,17 +223,11 @@ export class OperatorSyncService {
         }
         if (fotoBase64) {
           const blob = this.dataURItoBlob(fotoBase64);
-          // PATCH cuando hay ordenTrabajoId, POST cuando es nueva.
-          const fieldName = ordenTrabajoId ? 'foto' : 'file';
-          formData.append(fieldName, blob, 'evidencia.jpg');
+          formData.append('foto', blob, 'evidencia.jpg');
         }
 
-        const url = ordenTrabajoId
-          ? `${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`
-          : `${this.OPERATOR_API}/work-orders`;
-        const request$ = ordenTrabajoId
-          ? this.http.patch<any>(url, formData, { withCredentials: true })
-          : this.http.post<any>(url, formData, { withCredentials: true });
+        const url = `${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`;
+        const request$ = this.http.patch<any>(url, formData, { withCredentials: true });
 
         const response = await firstValueFrom(request$);
         this.toastService.success('Orden de trabajo registrada correctamente.', 'Éxito');
@@ -244,7 +242,7 @@ export class OperatorSyncService {
     } else {
       // TODO (#267): encolar en nuevo store `ordenes_pendientes` cuando exista.
       // Mientras tanto, guardamos en el store legacy de lecturas para no perder el dato.
-      await this.dbService.savePendingReading(workOrder);
+      await this.dbService.savePendingReading({ ...workOrder, recordType: 'WORK_ORDER' });
       await this.refreshPendingCounts();
       this.toastService.warning(
         'Modo Offline: Orden guardada localmente. Se sincronizará al recuperar internet.',
@@ -294,11 +292,55 @@ export class OperatorSyncService {
     );
 
     let successReadingsCount = 0;
+    let successWorkOrdersCount = 0;
     let successAnomaliesCount = 0;
     let rejectedCount = 0;
 
     // 1. Sincronizar primero las lecturas encoladas
     for (const pending of readings) {
+      if (
+        pending['recordType'] === 'WORK_ORDER' ||
+        (pending['ordenTrabajoId'] != null && pending['tipoActividad'] !== 'LECTURA')
+      ) {
+        try {
+          const {
+            id,
+            syncState: _syncState, // eslint-disable-line @typescript-eslint/no-unused-vars
+            errorMessage: _errorMessage, // eslint-disable-line @typescript-eslint/no-unused-vars
+            recordType: _recordType, // eslint-disable-line @typescript-eslint/no-unused-vars
+            ordenTrabajoId,
+            fotoBase64,
+            ...workOrderPayload
+          } = pending;
+          const formData = new FormData();
+          for (const [key, value] of Object.entries(workOrderPayload)) {
+            if (value !== null && value !== undefined) formData.append(key, String(value));
+          }
+          if (fotoBase64) {
+            formData.append('foto', this.dataURItoBlob(fotoBase64), 'evidencia.jpg');
+          }
+          await firstValueFrom(
+            this.http.patch<any>(`${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`, formData, {
+              withCredentials: true,
+            }),
+          );
+          await this.dbService.deletePendingReading(id!);
+          successWorkOrdersCount++;
+        } catch (error) {
+          const httpError = error as HttpErrorResponse;
+          if (this.isValidationError(httpError)) {
+            await this.dbService.updatePendingReading(pending.id!, {
+              syncState: 'RECHAZADA',
+              errorMessage: this.extractErrorMessage(httpError),
+            });
+            rejectedCount++;
+          } else {
+            console.error('Error de red al sincronizar orden, deteniendo cola:', error);
+            break;
+          }
+        }
+        continue;
+      }
       try {
         const {
           id,
@@ -317,17 +359,22 @@ export class OperatorSyncService {
         }
         if (fotoBase64) {
           const blob = this.dataURItoBlob(fotoBase64);
-          // Misma asimetría que submitReading: ver JSDoc arriba.
-          const fieldName = _lecturaId ? 'foto' : 'file';
-          formData.append(fieldName, blob, 'foto.jpg');
+          formData.append('foto', blob, 'foto.jpg');
         }
 
-        const request$ = _lecturaId
-          ? this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, formData, {
-              withCredentials: true,
-            })
-          : this.http.post<any>(this.READINGS_API, formData, { withCredentials: true });
-        await firstValueFrom(request$);
+        if (_lecturaId === null || _lecturaId === undefined || String(_lecturaId).trim() === '') {
+          await this.dbService.updatePendingReading(pending.id!, {
+            syncState: 'RECHAZADA',
+            errorMessage: 'No se puede sincronizar la lectura: falta _lecturaId.',
+          });
+          rejectedCount++;
+          continue;
+        }
+        await firstValueFrom(
+          this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, formData, {
+            withCredentials: true,
+          }),
+        );
         await this.dbService.saveSyncedReading({ ...payload, _lecturaId });
         await this.dbService.deletePendingReading(id!);
         successReadingsCount++;
@@ -399,9 +446,9 @@ export class OperatorSyncService {
     this.isSyncing.set(false);
 
     // Notificaciones de resultado
-    if (successReadingsCount > 0 || successAnomaliesCount > 0) {
+    if (successReadingsCount > 0 || successWorkOrdersCount > 0 || successAnomaliesCount > 0) {
       this.toastService.success(
-        `Sincronización completa. Enviado exitosamente: ${successReadingsCount} lecturas y ${successAnomaliesCount} novedades.`,
+        `Sincronización completa. Enviado exitosamente: ${successReadingsCount} lecturas, ${successWorkOrdersCount} órdenes y ${successAnomaliesCount} novedades.`,
         'Sincronizado',
       );
     }

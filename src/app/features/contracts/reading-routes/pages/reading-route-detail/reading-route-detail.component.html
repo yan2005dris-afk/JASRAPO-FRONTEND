@@ -488,13 +488,15 @@
     />
   }
 
-  <!-- Modal Registrar / Editar Lectura -->
-  @if (isFormModalOpen()) {
-    <app-reading-form-modal
-      [reading]="selectedReadingForEdit()"
-      (saved)="onReadingSaved()"
-      (closed)="closeFormModal()"
-    />
+  <!-- Modal Editar Lectura -->
+  @if (isFormModalOpen(); as isOpen) {
+    @if (selectedReadingForEdit(); as reading) {
+      <app-reading-form-modal
+        [reading]="reading"
+        (saved)="onReadingSaved()"
+        (closed)="closeFormModal()"
+      />
+    }
   }
 
   <!-- Modal Reportar Novedad para Orden de Trabajo -->
