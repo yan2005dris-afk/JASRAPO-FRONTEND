@@ -14,7 +14,6 @@ import {
 import { LoginRequest, LoginResponse, RefreshTokenResponse, User } from '../models/auth.model';
 import { environment } from '../../../environments/environment';
 import { MenuService } from './menu.service';
-import { OperatorSyncService } from './operator-sync.service';
 
 @Injectable({
   providedIn: 'root',
@@ -23,7 +22,6 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly menuService = inject(MenuService);
-  private readonly operatorSyncService = inject(OperatorSyncService);
 
   private readonly API_URL = `${environment.apiUrl}/auth`;
 
@@ -62,7 +60,7 @@ export class AuthService {
   private executeLocalLogout(): void {
     this.clearAuthData();
     this.menuService.clearMenu();
-    this.operatorSyncService.clearInitialSyncFlag();
+    sessionStorage.removeItem('jasrapo_operator_synced');
     this.router.navigate(['/login']);
   }
 
