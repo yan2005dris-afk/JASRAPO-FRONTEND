@@ -35,7 +35,10 @@ export type MobileStep = 'search' | 'actions' | 'form';
 /** Estado discriminado único de la máquina de estados de Lecturas */
 export type LecturaState =
   | { kind: 'search' }
-  | { kind: 'actions'; meter: import('../../contracts/meters/interfaces/imeter.interface').IMeterDto }
+  | {
+      kind: 'actions';
+      meter: import('../../contracts/meters/interfaces/imeter.interface').IMeterDto;
+    }
   | {
       kind: 'form';
       meter: import('../../contracts/meters/interfaces/imeter.interface').IMeterDto;
