@@ -123,9 +123,13 @@ export class OperatorSyncService {
           formData.append('foto', blob, 'foto.jpg');
         }
 
-        const request$ = this.http.patch<any>(`${this.OPERATOR_API}/readings/${_lecturaId}`, formData, {
-          withCredentials: true,
-        });
+        const request$ = this.http.patch<any>(
+          `${this.OPERATOR_API}/readings/${_lecturaId}`,
+          formData,
+          {
+            withCredentials: true,
+          },
+        );
 
         const response = await firstValueFrom(request$);
         await this.dbService.saveSyncedReading({ ...payload, _lecturaId });

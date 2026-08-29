@@ -146,13 +146,17 @@ describe('OperatorSyncService', () => {
     });
 
     it('sin _lecturaId rechaza la lectura y no hace ninguna petición', async () => {
-      await expect(service.submitReading({ medidorId: 1, lecturaActual: '123' })).rejects.toThrow(/falta _lecturaId/);
+      await expect(service.submitReading({ medidorId: 1, lecturaActual: '123' })).rejects.toThrow(
+        /falta _lecturaId/,
+      );
       expect(httpPost).not.toHaveBeenCalled();
       expect(httpPatch).not.toHaveBeenCalled();
     });
 
     it('sin _lecturaId y con foto rechaza sin hacer ninguna petición', async () => {
-      await expect(service.submitReading({ medidorId: 1, lecturaActual: '123', fotoBase64: VALID_DATA_URI })).rejects.toThrow(/falta _lecturaId/);
+      await expect(
+        service.submitReading({ medidorId: 1, lecturaActual: '123', fotoBase64: VALID_DATA_URI }),
+      ).rejects.toThrow(/falta _lecturaId/);
       expect(httpPost).not.toHaveBeenCalled();
       expect(httpPatch).not.toHaveBeenCalled();
     });
@@ -404,8 +408,20 @@ describe('OperatorSyncService', () => {
     it('marca una orden como RECHAZADA ante 400 y continúa con la siguiente', async () => {
       isOnline.mockReturnValue(true);
       getPendingReadingsByState.mockResolvedValue([
-        { id: 7, syncState: 'PENDIENTE_SYNC', recordType: 'WORK_ORDER', ordenTrabajoId: 'wo-invalid', tipoActividad: 'INSPECCION' },
-        { id: 8, syncState: 'PENDIENTE_SYNC', recordType: 'WORK_ORDER', ordenTrabajoId: 'wo-valid', tipoActividad: 'INSPECCION' },
+        {
+          id: 7,
+          syncState: 'PENDIENTE_SYNC',
+          recordType: 'WORK_ORDER',
+          ordenTrabajoId: 'wo-invalid',
+          tipoActividad: 'INSPECCION',
+        },
+        {
+          id: 8,
+          syncState: 'PENDIENTE_SYNC',
+          recordType: 'WORK_ORDER',
+          ordenTrabajoId: 'wo-valid',
+          tipoActividad: 'INSPECCION',
+        },
       ]);
       getPendingAnomaliesByState.mockResolvedValue([]);
       httpPatch
@@ -425,8 +441,20 @@ describe('OperatorSyncService', () => {
     it('conserva una orden pendiente ante error de red y detiene la cola', async () => {
       isOnline.mockReturnValue(true);
       getPendingReadingsByState.mockResolvedValue([
-        { id: 7, syncState: 'PENDIENTE_SYNC', recordType: 'WORK_ORDER', ordenTrabajoId: 'wo-42', tipoActividad: 'INSPECCION' },
-        { id: 8, syncState: 'PENDIENTE_SYNC', recordType: 'WORK_ORDER', ordenTrabajoId: 'wo-43', tipoActividad: 'INSPECCION' },
+        {
+          id: 7,
+          syncState: 'PENDIENTE_SYNC',
+          recordType: 'WORK_ORDER',
+          ordenTrabajoId: 'wo-42',
+          tipoActividad: 'INSPECCION',
+        },
+        {
+          id: 8,
+          syncState: 'PENDIENTE_SYNC',
+          recordType: 'WORK_ORDER',
+          ordenTrabajoId: 'wo-43',
+          tipoActividad: 'INSPECCION',
+        },
       ]);
       getPendingAnomaliesByState.mockResolvedValue([]);
       httpPatch.mockReturnValue(throwError(() => makeHttpError(0, 'network down')));
