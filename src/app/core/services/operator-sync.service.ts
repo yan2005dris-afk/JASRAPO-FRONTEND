@@ -8,15 +8,17 @@ import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from './auth.service';
 
-type PayloadValue = string | number | boolean | null | undefined;
+type PayloadValue = string | number | boolean | Blob | null | undefined;
 export interface ReadingSubmission {
   _lecturaId?: string | number;
   fotoBase64?: string | null;
+  fotoBlob?: Blob | null;
   [key: string]: PayloadValue;
 }
 export interface WorkOrderSubmission {
   ordenTrabajoId?: string | number;
   fotoBase64?: string | null;
+  fotoBlob?: Blob | null;
   [key: string]: PayloadValue;
 }
 
@@ -92,8 +94,8 @@ export class OperatorSyncService {
 
   private appendPhoto(
     formData: FormData,
-    photoBlob?: Blob,
-    fotoBase64?: string,
+    photoBlob?: Blob | null,
+    fotoBase64?: string | null,
     field = 'foto',
     filename = 'evidencia.jpg',
   ): void {
@@ -135,9 +137,7 @@ export class OperatorSyncService {
    * El flujo del operador requiere reading._lecturaId y siempre usa PATCH.
    * Wire format: multipart/form-data, con evidencia bajo el campo `foto`.
    */
-  async submitReading(
-    reading: ReadingSubmission & { fotoBlob?: Blob | null },
-  ): Promise<unknown> {
+  async submitReading(reading: ReadingSubmission & { fotoBlob?: Blob | null }): Promise<unknown> {
     const { _lecturaId, fotoBlob, fotoBase64, ...payload } = reading;
     const hasId =
       _lecturaId !== null && _lecturaId !== undefined && String(_lecturaId).trim() !== '';
