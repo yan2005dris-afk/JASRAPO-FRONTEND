@@ -246,6 +246,7 @@ export class LecturasComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.autoSelectFromQueryParam();
     this.loadCachedMeters();
     this.loadPendingReadings();
     this.loadEstadosCatalog();
@@ -254,13 +255,15 @@ export class LecturasComponent implements OnInit {
   private async loadCachedMeters(): Promise<void> {
     try {
       await this.meterCache.load();
-      if (this.networkService.isOnline()) {
-        await this.fetchAndCacheMeters();
-      } else {
-        const cachedReadings = await this.dbService.getRegisteredReadingsCache();
-        this.registeredReadings.set(cachedReadings);
+      const cachedReadings = await this.dbService.getRegisteredReadingsCache();
+      this.registeredReadings.set(cachedReadings);
+
+      // Si se pasó una serie específica en la query URL y no estaba seleccionada
+      const singleSerie = this.activatedRoute.snapshot.queryParamMap.get('serie');
+      if (singleSerie && !this.selectedMeter()) {
+        const meter = this.metersList().find((m) => m.serie === singleSerie);
+        if (meter) this.selectMeter(meter);
       }
-      this.autoSelectFromQueryParam();
     } catch (e) {
       console.error('Error al cargar caché offline:', e);
     }

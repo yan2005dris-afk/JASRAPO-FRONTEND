@@ -39,8 +39,72 @@
           } @else {
             <i class="bi bi-arrow-repeat"></i>
           }
-          Sincronizar
+          Sincronizar Subida
         </button>
+      }
+    </div>
+  </div>
+
+  <!-- Offline Data Hub / Download Section -->
+  <div class="download-hub-card">
+    <div class="hub-main-info">
+      <div class="hub-icon-wrapper">
+        <i class="bi bi-cloud-download"></i>
+      </div>
+      <div class="hub-text">
+        <h2 class="hub-title">Datos Asignados para Offline</h2>
+        <p class="hub-subtitle">
+          @if (syncService.lastDownloadTimestamp()) {
+            Última descarga: {{ syncService.lastDownloadTimestamp() | date: 'dd/MM/yyyy HH:mm' }}
+          } @else {
+            Aún no se han descargado datos para tu jornada.
+          }
+        </p>
+      </div>
+    </div>
+
+    <!-- Metrics -->
+    <div class="hub-metrics">
+      <div class="metric-badge">
+        <i class="bi bi-map"></i>
+        <span
+          ><strong>{{ cachedRoutesCount() }}</strong> Rutas</span
+        >
+      </div>
+      <div class="metric-badge">
+        <i class="bi bi-speedometer2"></i>
+        <span
+          ><strong>{{ cachedMetersCount() }}</strong> Medidores</span
+        >
+      </div>
+      <div class="metric-badge">
+        <i class="bi bi-journal-check"></i>
+        <span
+          ><strong>{{ cachedReadingsCount() }}</strong> Lecturas</span
+        >
+      </div>
+    </div>
+
+    <!-- Download Action -->
+    <div class="hub-action">
+      <button
+        class="btn-download"
+        (click)="downloadData()"
+        [disabled]="syncService.isDownloading() || !networkService.isOnline()"
+        id="btn-download-data"
+      >
+        @if (syncService.isDownloading()) {
+          <span class="spinner-border spinner-border-sm" role="status"></span>
+          <span>Descargando...</span>
+        } @else {
+          <i class="bi bi-arrow-down-circle"></i>
+          <span>Descargar / Actualizar Datos</span>
+        }
+      </button>
+      @if (!networkService.isOnline()) {
+        <small class="offline-hint"
+          ><i class="bi bi-wifi-off"></i> Conectate a internet para actualizar datos</small
+        >
       }
     </div>
   </div>

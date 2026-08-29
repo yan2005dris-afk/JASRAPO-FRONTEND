@@ -26,6 +26,12 @@ export class OperatorSyncService {
   readonly rejectedReadingsCount = signal<number>(0);
   readonly rejectedAnomaliesCount = signal<number>(0);
   readonly isSyncing = signal<boolean>(false);
+  readonly isDownloading = signal<boolean>(false);
+
+  private readonly LAST_DOWNLOAD_KEY = 'jasrapo_operator_last_download';
+  readonly lastDownloadTimestamp = signal<string | null>(
+    localStorage.getItem(this.LAST_DOWNLOAD_KEY),
+  );
 
   // Total de elementos pendientes (solo pendientes de envío, sin rechazados)
   readonly totalPending = computed(
@@ -51,6 +57,12 @@ export class OperatorSyncService {
     const next = !this.autoSyncEnabled();
     this.autoSyncEnabled.set(next);
     localStorage.setItem(this.AUTO_SYNC_KEY, next.toString());
+  }
+
+  private saveLastDownloadDate(): void {
+    const iso = new Date().toISOString();
+    localStorage.setItem(this.LAST_DOWNLOAD_KEY, iso);
+    this.lastDownloadTimestamp.set(iso);
   }
 
   constructor() {
@@ -506,39 +518,86 @@ export class OperatorSyncService {
   }
 
   /**
-   * Sincroniza catálogo de medidores + lecturas registradas para uso offline.
-   *
+   * Descarga todos los datos de trabajo del operador autenticado:
+   * 1. Rutas asignadas
+   * 2. Medidores correspondientes a sus rutas
+   * 3. Lecturas del período
+   * 4. Catálogo de estados
    */
-  async syncCatalogAndReadings(): Promise<void> {
+  async downloadAssignedData(): Promise<{
+    routesCount: number;
+    metersCount: number;
+    readingsCount: number;
+  }> {
+    if (!this.networkService.isOnline()) {
+      this.toastService.warning(
+        'No tenés conexión a internet para descargar los datos del servidor.',
+        'Sin Conexión',
+      );
+      throw new Error('Offline');
+    }
+
+    this.isDownloading.set(true);
     try {
-      // 1. Descargar catálogo completo de medidores
+      // 1. Descargar rutas asignadas
+      const routes = await firstValueFrom(
+        this.http.get<any[]>(`${this.OPERATOR_API}/routes`, { withCredentials: true }),
+      );
+      await this.dbService.saveRoutesCache('assigned', routes);
+
+      // 2. Descargar medidores asignados a las rutas
       const meters = await firstValueFrom(
         this.http.get<any[]>(`${this.OPERATOR_API}/sync`, { withCredentials: true }),
       );
       await this.dbService.saveMetersCache(meters);
 
-      // 2. Descargar lecturas ya registradas en el periodo actual
+      // 3. Descargar lecturas ya registradas en el período
       const readings = await firstValueFrom(
         this.http.get<any[]>(`${this.OPERATOR_API}/readings`, { withCredentials: true }),
       );
       await this.dbService.saveRegisteredReadingsCache(readings);
 
-      // 3. Cachear catálogo de estados de lectura para offline
+      // 4. Catálogo de estados
       try {
         const estados = await this.getReadingEstados();
         await this.dbService.saveEstadosCache(estados);
       } catch {
-        // Si falla, no es crítico — loadEstadosCatalog tiene fallback hardcoded
+        // Fallback silencioso si falla el catálogo
       }
 
       this.markInitialSyncDone();
+      this.saveLastDownloadDate();
+
+      const result = {
+        routesCount: routes.length,
+        metersCount: meters.length,
+        readingsCount: readings.length,
+      };
+
       this.toastService.success(
-        'Catálogo y lecturas del período actual actualizados para uso offline.',
-        'Sincronizado',
+        `Datos descargados con éxito: ${result.routesCount} rutas, ${result.metersCount} medidores y ${result.readingsCount} lecturas.`,
+        'Descarga Completada',
       );
-    } catch (err) {
-      console.error('Error al sincronizar datos para offline:', err);
+
+      return result;
+    } catch (err: any) {
+      console.error('Error al descargar datos del operador:', err);
+      this.toastService.error(
+        err.error?.message || 'Error al descargar datos del servidor.',
+        'Error de Descarga',
+      );
+      throw err;
+    } finally {
+      this.isDownloading.set(false);
     }
+  }
+
+  /**
+   * Sincroniza catálogo de medidores + lecturas registradas para uso offline.
+   * Alias que delega en downloadAssignedData.
+   */
+  async syncCatalogAndReadings(): Promise<void> {
+    await this.downloadAssignedData();
   }
 
   /**

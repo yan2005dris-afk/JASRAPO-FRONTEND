@@ -33,6 +33,11 @@ export class SincronizarComponent implements OnInit {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   readonly syncedReadings = signal<any[]>([]);
 
+  // Offline storage metrics
+  readonly cachedMetersCount = signal<number>(0);
+  readonly cachedRoutesCount = signal<number>(0);
+  readonly cachedReadingsCount = signal<number>(0);
+
   // Editing state
   readonly editingRecord = signal<PendingRecord | null>(null);
   readonly editingType = signal<'lectura' | 'anomalia' | null>(null);
@@ -55,16 +60,32 @@ export class SincronizarComponent implements OnInit {
     this.loadQueue();
   }
 
+  async downloadData(): Promise<void> {
+    try {
+      await this.syncService.downloadAssignedData();
+      await this.loadQueue();
+    } catch {
+      // Toast ya emitido por el servicio
+    }
+  }
+
   async loadQueue(): Promise<void> {
     try {
-      const [pendR, rejR, pendA, rejA, synced, meters] = await Promise.all([
-        this.dbService.getPendingReadingsByState('PENDIENTE_SYNC'),
-        this.dbService.getPendingReadingsByState('RECHAZADA'),
-        this.dbService.getPendingAnomaliesByState('PENDIENTE_SYNC'),
-        this.dbService.getPendingAnomaliesByState('RECHAZADA'),
-        this.dbService.getSyncedReadings(),
-        this.dbService.getMetersCache(),
-      ]);
+      const [pendR, rejR, pendA, rejA, synced, meters, routesCache, registeredReadings] =
+        await Promise.all([
+          this.dbService.getPendingReadingsByState('PENDIENTE_SYNC'),
+          this.dbService.getPendingReadingsByState('RECHAZADA'),
+          this.dbService.getPendingAnomaliesByState('PENDIENTE_SYNC'),
+          this.dbService.getPendingAnomaliesByState('RECHAZADA'),
+          this.dbService.getSyncedReadings(),
+          this.dbService.getMetersCache(),
+          this.dbService.getRoutesCache('assigned'),
+          this.dbService.getRegisteredReadingsCache(),
+        ]);
+
+      this.cachedMetersCount.set(meters.length);
+      this.cachedRoutesCount.set(routesCache?.items?.length ?? 0);
+      this.cachedReadingsCount.set(registeredReadings.length);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const metersMap = new Map<string, any>(meters.map((m: any) => [m.medidorId?.toString(), m]));
