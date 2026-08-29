@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IMeterDto } from '../../../contracts/meters/interfaces/imeter.interface';
 import type { WorkOrderActivityType } from '../../models/operator.models';
@@ -20,32 +20,32 @@ import { ReconexionFormComponent } from '../work-order-forms/reconexion-form.com
   ],
   template: `
     <div class="dispatcher-container">
-      @switch (tipoActividad) {
+      @switch (tipoActividad()) {
         @case ('INSTALACION') {
           <app-instalacion-form
-            [isSaving]="isSaving"
+            [isSaving]="isSaving()"
             (formSubmit)="submitted.emit($event)"
             (canceled)="canceled.emit()"
           />
         }
         @case ('INSPECCION') {
           <app-inspeccion-form
-            [isSaving]="isSaving"
+            [isSaving]="isSaving()"
             (formSubmit)="submitted.emit($event)"
             (canceled)="canceled.emit()"
           />
         }
         @case ('RECONEXION') {
           <app-reconexion-form
-            [isSaving]="isSaving"
+            [isSaving]="isSaving()"
             (formSubmit)="submitted.emit($event)"
             (canceled)="canceled.emit()"
           />
         }
         @default {
           <app-lectura-form
-            [lecturaAnterior]="lecturaAnterior"
-            [isSaving]="isSaving"
+            [lecturaAnterior]="lecturaAnterior()"
+            [isSaving]="isSaving()"
             (formSubmit)="submitted.emit($event)"
             (canceled)="canceled.emit()"
           />
@@ -55,11 +55,11 @@ import { ReconexionFormComponent } from '../work-order-forms/reconexion-form.com
   `,
 })
 export class WorkOrderDispatcherComponent {
-  @Input() meter!: IMeterDto;
-  @Input() tipoActividad: WorkOrderActivityType = 'LECTURA';
-  @Input() lecturaAnterior = 0;
-  @Input() isSaving = false;
+  readonly meter = input.required<IMeterDto>();
+  readonly tipoActividad = input<WorkOrderActivityType>('LECTURA');
+  readonly lecturaAnterior = input(0);
+  readonly isSaving = input(false);
 
-  @Output() submitted = new EventEmitter<WorkOrderFormPayload>();
-  @Output() canceled = new EventEmitter<void>();
+  readonly submitted = output<WorkOrderFormPayload>();
+  readonly canceled = output<void>();
 }
