@@ -204,7 +204,8 @@ describe('OperatorSyncService', () => {
       expect(fields['foto']).toBeUndefined();
     });
 
-    it('dataURI inválida (sin coma) lanza error tipado y no hace petición', async () => {
+    it('dataURI inválida o URL remota no lanza ni agrega un archivo', async () => {
+      httpPatch.mockReturnValue(of({ id: 1 }));
       await expect(
         service.submitReading({
           _lecturaId: 1,
@@ -212,9 +213,27 @@ describe('OperatorSyncService', () => {
           lecturaActual: '1',
           fotoBase64: INVALID_DATA_URI,
         }),
-      ).rejects.toThrow(/Invalid photo data URI/);
+      );
       expect(httpPost).not.toHaveBeenCalled();
     });
+  });
+
+  it('prefiere Blob sobre cualquier valor legacy y lo sube como foto', async () => {
+    isOnline.mockReturnValue(true);
+    httpPatch.mockReturnValue(of({ id: 1 }));
+    const blob = new Blob(['photo'], { type: 'image/jpeg' });
+
+    await service.submitReading({
+      _lecturaId: 1,
+      medidorId: 1,
+      lecturaActual: '1',
+      fotoBlob: blob,
+      fotoBase64: VALID_DATA_URI,
+    });
+
+    const fields = formDataToObject(httpPatch.mock.calls[0][1] as FormData);
+    expect(fields['foto'][0]).toBeInstanceOf(Blob);
+    expect((fields['foto'][0] as Blob).type).toBe('image/jpeg');
   });
 
   // ── submitReading (offline) ───────────────────────────────────────────────

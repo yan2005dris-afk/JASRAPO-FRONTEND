@@ -203,6 +203,7 @@ export class SincronizarComponent implements OnInit {
       observacion: result.observacion,
       tipo: result.tipo,
       fotoBase64: result.fotoBase64 ?? null,
+      fotoBlob: result.fotoBlob ?? null,
       syncState: 'PENDIENTE_SYNC',
       errorMessage: null,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

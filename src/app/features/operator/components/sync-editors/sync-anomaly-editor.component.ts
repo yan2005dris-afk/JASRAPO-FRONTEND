@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, input, output } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PendingRecord } from '../../../../core/services/indexed-db.service';
@@ -8,6 +8,7 @@ export interface AnomalyEditResult {
   tipo: string;
   observacion: string;
   fotoBase64?: string | null;
+  fotoBlob?: Blob | null;
 }
 
 @Component({
@@ -219,7 +220,7 @@ export interface AnomalyEditResult {
     `,
   ],
 })
-export class SyncAnomalyEditorComponent implements OnInit {
+export class SyncAnomalyEditorComponent implements OnInit, OnDestroy {
   readonly record = input.required<PendingRecord>();
   readonly saved = output<AnomalyEditResult>();
   readonly canceled = output<void>();
@@ -228,28 +229,57 @@ export class SyncAnomalyEditorComponent implements OnInit {
   observacion = '';
   readonly fotoPreview = signal<string | null>(null);
   readonly isSaving = signal(false);
+  private fotoBlob: Blob | null = null;
+  private previewObjectUrl: string | null = null;
 
   ngOnInit(): void {
     const rec = this.record();
     this.tipo = String(rec['tipo'] ?? 'FUGA');
     this.observacion = String(rec['observacion'] ?? '');
-    this.fotoPreview.set((rec['fotoBase64'] as string) || (rec['fotoUrl'] as string) || null);
+    this.fotoBlob = rec['fotoBlob'] instanceof Blob ? rec['fotoBlob'] : null;
+
+    if (this.fotoBlob) {
+      this.setBlobPreview(this.fotoBlob);
+    } else {
+      const legacyDataUri = rec['fotoBase64'];
+      this.fotoPreview.set(
+        typeof legacyDataUri === 'string' && legacyDataUri.startsWith('data:')
+          ? legacyDataUri
+          : (rec['fotoUrl'] as string) || null,
+      );
+    }
+  }
+
+  private setBlobPreview(blob: Blob): void {
+    this.revokePreviewUrl();
+    this.previewObjectUrl = URL.createObjectURL(blob);
+    this.fotoPreview.set(this.previewObjectUrl);
+  }
+
+  private revokePreviewUrl(): void {
+    if (this.previewObjectUrl) {
+      URL.revokeObjectURL(this.previewObjectUrl);
+      this.previewObjectUrl = null;
+    }
   }
 
   onPhotoSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-      const file = input.files[0];
-      const reader = new FileReader();
-      reader.onload = () => {
-        this.fotoPreview.set(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+    const file = input.files?.[0];
+    if (!file) return;
+
+    this.fotoBlob = file;
+    this.setBlobPreview(file);
   }
 
   removePhoto(): void {
+    this.fotoBlob = null;
+    this.revokePreviewUrl();
     this.fotoPreview.set(null);
+  }
+
+  ngOnDestroy(): void {
+    this.revokePreviewUrl();
   }
 
   save(): void {
@@ -257,11 +287,13 @@ export class SyncAnomalyEditorComponent implements OnInit {
     if (!this.observacion.trim() || rec.id == null) return;
 
     this.isSaving.set(true);
+    const preview = this.fotoPreview();
     this.saved.emit({
       recordId: rec.id,
       tipo: this.tipo,
       observacion: this.observacion.trim(),
-      fotoBase64: this.fotoPreview(),
+      fotoBlob: this.fotoBlob,
+      fotoBase64: !this.fotoBlob && preview?.startsWith('data:') ? preview : null,
     });
   }
 }

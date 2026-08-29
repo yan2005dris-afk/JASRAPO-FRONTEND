@@ -2,7 +2,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { NetworkService } from './network.service';
-import { IndexedDbService } from './indexed-db.service';
+import { dataURItoBlob, IndexedDbService } from './indexed-db.service';
 import { ToastService } from '../../shared/components/toast/toast.service';
 import { environment } from '../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
@@ -79,19 +79,22 @@ export class OperatorSyncService {
     });
   }
 
-  private dataURItoBlob(dataURI: string): Blob {
-    const splitDataURI = dataURI.split(',');
-    if (splitDataURI.length < 2 || !splitDataURI[1]) {
-      throw new Error('Invalid photo data URI: missing payload separator.');
+  private appendPhoto(
+    formData: FormData,
+    photoBlob?: Blob,
+    fotoBase64?: string,
+    field = 'foto',
+    filename = 'evidencia.jpg',
+  ): void {
+    if (photoBlob instanceof Blob) {
+      formData.append(field, photoBlob, filename);
+    } else if (typeof fotoBase64 === 'string' && fotoBase64.startsWith('data:')) {
+      try {
+        formData.append(field, dataURItoBlob(fotoBase64), filename);
+      } catch {
+        // Ignore malformed legacy values rather than treating display URLs as files.
+      }
     }
-    const byteString =
-      splitDataURI[0].indexOf('base64') >= 0 ? atob(splitDataURI[1]) : decodeURI(splitDataURI[1]);
-    const mimeString = splitDataURI[0].split(':')[1].split(';')[0];
-    const ia = new Uint8Array(byteString.length);
-    for (let i = 0; i < byteString.length; i++) {
-      ia[i] = byteString.charCodeAt(i);
-    }
-    return new Blob([ia], { type: mimeString });
   }
 
   /**
@@ -122,7 +125,7 @@ export class OperatorSyncService {
    * Wire format: multipart/form-data, con evidencia bajo el campo `foto`.
    */
   async submitReading(reading: any): Promise<any> {
-    const { _lecturaId, fotoBase64, ...payload } = reading;
+    const { _lecturaId, fotoBlob, fotoBase64, ...payload } = reading;
     if (_lecturaId === null || _lecturaId === undefined || String(_lecturaId).trim() === '') {
       throw new Error('No se puede enviar la lectura: falta _lecturaId.');
     }
@@ -135,10 +138,7 @@ export class OperatorSyncService {
             formData.append(key, String(value));
           }
         }
-        if (fotoBase64) {
-          const blob = this.dataURItoBlob(fotoBase64);
-          formData.append('foto', blob, 'foto.jpg');
-        }
+        this.appendPhoto(formData, fotoBlob, fotoBase64, 'foto', 'foto.jpg');
 
         const request$ = this.http.patch<any>(
           `${this.OPERATOR_API}/readings/${_lecturaId}`,
@@ -183,10 +183,7 @@ export class OperatorSyncService {
         if (anomaly.observacion) {
           formData.append('observacion', String(anomaly.observacion));
         }
-        if (anomaly.fotoBase64) {
-          const blob = this.dataURItoBlob(anomaly.fotoBase64);
-          formData.append('file', blob, 'evidencia.jpg');
-        }
+        this.appendPhoto(formData, anomaly.fotoBlob, anomaly.fotoBase64, 'file');
 
         const response = await firstValueFrom(
           this.http.post<any>(this.ANOMALIES_API, formData, { withCredentials: true }),
@@ -221,7 +218,7 @@ export class OperatorSyncService {
    * documenta en Shortcut #261.
    */
   async submitWorkOrder(workOrder: any): Promise<any> {
-    const { ordenTrabajoId, fotoBase64, ...payload } = workOrder;
+    const { ordenTrabajoId, fotoBlob, fotoBase64, ...payload } = workOrder;
     if (
       ordenTrabajoId === null ||
       ordenTrabajoId === undefined ||
@@ -238,10 +235,7 @@ export class OperatorSyncService {
             formData.append(key, String(value));
           }
         }
-        if (fotoBase64) {
-          const blob = this.dataURItoBlob(fotoBase64);
-          formData.append('foto', blob, 'evidencia.jpg');
-        }
+        this.appendPhoto(formData, fotoBlob, fotoBase64);
 
         const url = `${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`;
         const request$ = this.http.patch<any>(url, formData, { withCredentials: true });
@@ -326,6 +320,7 @@ export class OperatorSyncService {
             errorMessage: _errorMessage, // eslint-disable-line @typescript-eslint/no-unused-vars
             recordType: _recordType, // eslint-disable-line @typescript-eslint/no-unused-vars
             ordenTrabajoId,
+            fotoBlob,
             fotoBase64,
             ...workOrderPayload
           } = pending;
@@ -333,9 +328,7 @@ export class OperatorSyncService {
           for (const [key, value] of Object.entries(workOrderPayload)) {
             if (value !== null && value !== undefined) formData.append(key, String(value));
           }
-          if (fotoBase64) {
-            formData.append('foto', this.dataURItoBlob(fotoBase64), 'evidencia.jpg');
-          }
+          this.appendPhoto(formData, fotoBlob, fotoBase64);
           await firstValueFrom(
             this.http.patch<any>(`${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`, formData, {
               withCredentials: true,
@@ -364,6 +357,7 @@ export class OperatorSyncService {
           syncState: _syncState, // eslint-disable-line @typescript-eslint/no-unused-vars
           errorMessage: _errorMessage, // eslint-disable-line @typescript-eslint/no-unused-vars
           _lecturaId,
+          fotoBlob,
           fotoBase64,
           ...payload
         } = pending;
@@ -374,10 +368,7 @@ export class OperatorSyncService {
             formData.append(key, String(value));
           }
         }
-        if (fotoBase64) {
-          const blob = this.dataURItoBlob(fotoBase64);
-          formData.append('foto', blob, 'foto.jpg');
-        }
+        this.appendPhoto(formData, fotoBlob, fotoBase64, 'foto', 'foto.jpg');
 
         if (_lecturaId === null || _lecturaId === undefined || String(_lecturaId).trim() === '') {
           await this.dbService.updatePendingReading(pending.id!, {
@@ -422,6 +413,7 @@ export class OperatorSyncService {
           id,
           syncState: _syncState2, // eslint-disable-line @typescript-eslint/no-unused-vars
           errorMessage: _errorMessage2, // eslint-disable-line @typescript-eslint/no-unused-vars
+          fotoBlob,
           fotoBase64,
           ...payload
         } = pending;
@@ -433,10 +425,7 @@ export class OperatorSyncService {
         if (payload['observacion']) {
           formData.append('observacion', String(payload['observacion']));
         }
-        if (fotoBase64) {
-          const blob = this.dataURItoBlob(fotoBase64);
-          formData.append('file', blob, 'evidencia.jpg');
-        }
+        this.appendPhoto(formData, fotoBlob, fotoBase64, 'file');
 
         await firstValueFrom(
           this.http.post<any>(this.ANOMALIES_API, formData, { withCredentials: true }),

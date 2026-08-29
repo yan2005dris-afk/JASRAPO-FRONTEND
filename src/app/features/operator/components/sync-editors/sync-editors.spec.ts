@@ -131,6 +131,30 @@ describe('Sync Editors', () => {
       expect(saved[0].fotoBase64).toBe('data:image/png;base64,existingphoto');
     });
 
+    it('preserves an existing Blob and revokes object URLs on destroy', () => {
+      const createObjectURL = vi.fn().mockReturnValue('blob:photo');
+      const revokeObjectURL = vi.fn();
+      vi.stubGlobal('URL', { createObjectURL, revokeObjectURL });
+      const blob = new Blob(['photo'], { type: 'image/jpeg' });
+      const record = { ...mockAnomalyRecord, fotoBase64: 'blob:old-preview', fotoBlob: blob };
+      const fixture = TestBed.createComponent(SyncAnomalyEditorComponent);
+      const comp = fixture.componentInstance;
+      fixture.componentRef.setInput('record', record);
+      fixture.detectChanges();
+
+      expect(comp.fotoPreview()).toBe('blob:photo');
+      const saved: AnomalyEditResult[] = [];
+      comp.saved.subscribe((r) => saved.push(r));
+      comp.observacion = 'Observacion corregida';
+      comp.save();
+
+      expect(saved[0].fotoBlob).toBe(blob);
+      expect(saved[0].fotoBase64).toBeNull();
+      fixture.destroy();
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:photo');
+      vi.unstubAllGlobals();
+    });
+
     it('supports photo removal', () => {
       const fixture = TestBed.createComponent(SyncAnomalyEditorComponent);
       const comp = fixture.componentInstance;
