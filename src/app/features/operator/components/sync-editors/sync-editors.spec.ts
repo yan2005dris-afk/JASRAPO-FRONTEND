@@ -22,7 +22,7 @@ describe('Sync Editors', () => {
     errorMessage: 'Tipo inválido',
     tipo: 'FUGA',
     observacion: 'Fuga visible en llave de paso',
-    fotoBase64: 'data:image/png;base64,existingphoto',
+    fotoBlob: new Blob(['photo'], { type: 'image/jpeg' }),
   };
 
   describe('SyncReadingEditorComponent', () => {
@@ -118,7 +118,7 @@ describe('Sync Editors', () => {
 
       expect(comp.tipo).toBe('FUGA');
       expect(comp.observacion).toBe('Fuga visible en llave de paso');
-      expect(comp.fotoPreview()).toBe('data:image/png;base64,existingphoto');
+      expect(typeof comp.fotoPreview()).toBe('string');
 
       const saved: AnomalyEditResult[] = [];
       comp.saved.subscribe((r) => saved.push(r));
@@ -128,7 +128,7 @@ describe('Sync Editors', () => {
 
       expect(saved).toHaveLength(1);
       expect(saved[0].observacion).toBe('Observacion corregida');
-      expect(saved[0].fotoBase64).toBe('data:image/png;base64,existingphoto');
+      expect(saved[0].fotoBlob).toBe(mockAnomalyRecord['fotoBlob']);
     });
 
     it('preserves an existing Blob and revokes object URLs on destroy', () => {
@@ -136,7 +136,7 @@ describe('Sync Editors', () => {
       const revokeObjectURL = vi.fn();
       vi.stubGlobal('URL', { createObjectURL, revokeObjectURL });
       const blob = new Blob(['photo'], { type: 'image/jpeg' });
-      const record = { ...mockAnomalyRecord, fotoBase64: 'blob:old-preview', fotoBlob: blob };
+      const record = { ...mockAnomalyRecord, fotoBlob: blob };
       const fixture = TestBed.createComponent(SyncAnomalyEditorComponent);
       const comp = fixture.componentInstance;
       fixture.componentRef.setInput('record', record);
@@ -149,7 +149,6 @@ describe('Sync Editors', () => {
       comp.save();
 
       expect(saved[0].fotoBlob).toBe(blob);
-      expect(saved[0].fotoBase64).toBeNull();
       fixture.destroy();
       expect(revokeObjectURL).toHaveBeenCalledWith('blob:photo');
       vi.unstubAllGlobals();
@@ -168,7 +167,7 @@ describe('Sync Editors', () => {
       comp.saved.subscribe((r) => saved.push(r));
       comp.save();
 
-      expect(saved[0].fotoBase64).toBeNull();
+      expect(saved[0].fotoBlob).toBeNull();
     });
 
     it('prevents saving when observation is empty whitespace', () => {

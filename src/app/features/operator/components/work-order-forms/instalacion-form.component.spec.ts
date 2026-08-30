@@ -36,35 +36,35 @@ describe('InstalacionFormComponent', () => {
     comp.submit();
     expect(comp['submitted']()).toBe(true);
 
-    comp['onPhotoChange']('data:image/jpeg;base64,captured');
+    comp['onPhotoChange'](new Blob(['photo'], { type: 'image/jpeg' }));
 
     expect(comp['submitted']()).toBe(false);
-    expect(comp.photoPreview()).toBe('data:image/jpeg;base64,captured');
+    expect(comp.photoPreview()).toBeInstanceOf(Blob);
   });
 
   it('should emit correct InstalacionFormPayload on valid submit', () => {
     const comp = createComponent();
     comp.form.patchValue({ observaciones: 'Instalación ejecutada sin incidencias.' });
-    comp.photoPreview.set('data:image/jpeg;base64,abc');
+    comp.photoPreview.set(new Blob(['photo'], { type: 'image/jpeg' }));
     const emitted: InstalacionFormPayload[] = [];
     comp.formSubmit.subscribe((v) => emitted.push(v));
     comp.submit();
     expect(emitted).toHaveLength(1);
     expect(emitted[0].tipoActividad).toBe('INSTALACION');
     expect(emitted[0].resultadoObservacion).toBe('Instalación ejecutada sin incidencias.');
-    expect(emitted[0].fotoBase64).toBe('data:image/jpeg;base64,abc');
+    expect(emitted[0].fotoBlob).toBeInstanceOf(Blob);
   });
 
   it('should omit empty installation observations from the payload', () => {
     const comp = createComponent();
-    comp.photoPreview.set('data:image/jpeg;base64,abc');
+    comp.photoPreview.set(new Blob(['photo'], { type: 'image/jpeg' }));
     const emitted: InstalacionFormPayload[] = [];
     comp.formSubmit.subscribe((v) => emitted.push(v));
     comp.submit();
 
     expect(emitted[0]).toEqual({
       tipoActividad: 'INSTALACION',
-      fotoBase64: 'data:image/jpeg;base64,abc',
+      fotoBlob: expect.any(Blob),
     });
   });
 });

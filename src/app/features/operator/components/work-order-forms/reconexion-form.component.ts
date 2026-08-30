@@ -41,7 +41,7 @@ import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
 
       <div class="form-field">
         <span class="field-label required">Fotografía Post-Retiro</span>
-        <app-photo-capture [preview]="photoPreview()" (previewChange)="onPhotoChange($event)" />
+        <app-photo-capture [preview]="null" (previewChange)="onPhotoChange($event)" />
         @if (submitted() && !photoPreview()) {
           <span class="field-error">La fotografía post-retiro es obligatoria.</span>
         }
@@ -82,12 +82,12 @@ export class ReconexionFormComponent extends BaseWorkOrderFormComponent<Reconexi
 
   protected buildPayload(
     formValue: Record<string, unknown>,
-    photo: string | null,
+    photo: Blob | null,
   ): ReconexionFormPayload {
     return {
       tipoActividad: 'RECONEXION',
       confirmacionRetiroSello: true,
-      fotoBase64: photo as string,
+      fotoBlob: photo as Blob,
     };
   }
 }

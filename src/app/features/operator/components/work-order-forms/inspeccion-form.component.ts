@@ -55,7 +55,7 @@ const ESTADO_SELLOS_OPTIONS: { value: InspeccionFormPayload['estadoSellos']; lab
 
       <div class="form-field">
         <span class="field-label required">Fotografía de Evidencia</span>
-        <app-photo-capture [preview]="photoPreview()" (previewChange)="onPhotoChange($event)" />
+        <app-photo-capture [preview]="null" (previewChange)="onPhotoChange($event)" />
         @if (submitted() && !photoPreview()) {
           <span class="field-error">La fotografía de evidencia es obligatoria.</span>
         }
@@ -96,14 +96,14 @@ export class InspeccionFormComponent extends BaseWorkOrderFormComponent<Inspecci
 
   protected buildPayload(
     formValue: Record<string, unknown>,
-    photo: string | null,
+    photo: Blob | null,
   ): InspeccionFormPayload {
     return {
       tipoActividad: 'INSPECCION',
       estadoSellos: formValue['estadoSellos'] as InspeccionFormPayload['estadoSellos'],
       hayFugas: !!formValue['hayFugas'],
       ...(formValue['observaciones'] ? { observaciones: String(formValue['observaciones']) } : {}),
-      fotoBase64: photo as string,
+      fotoBlob: photo as Blob,
     };
   }
 }

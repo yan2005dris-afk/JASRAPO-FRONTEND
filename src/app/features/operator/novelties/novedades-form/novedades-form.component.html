@@ -82,7 +82,7 @@
 
       <div class="field">
         <p class="field-label">Evidencia fotográfica <span class="optional">(opcional)</span></p>
-        <app-photo-capture [preview]="photoPreview()" (previewChange)="photoPreview.set($event)" />
+        <app-photo-capture [preview]="photoBlob()" (previewChange)="onPhotoChange($event)" />
       </div>
 
       <div class="form-actions">

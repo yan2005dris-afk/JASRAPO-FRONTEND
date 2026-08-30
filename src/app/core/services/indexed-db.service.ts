@@ -3,38 +3,6 @@ import { Injectable } from '@angular/core';
 
 export type SyncState = 'PENDIENTE_SYNC' | 'RECHAZADA';
 
-export function dataURItoBlob(dataURI: string): Blob {
-  const splitDataURI = dataURI.split(',');
-  if (splitDataURI.length < 2 || !splitDataURI[1]) {
-    throw new Error('Invalid photo data URI: missing payload separator.');
-  }
-  const byteString =
-    splitDataURI[0].indexOf('base64') >= 0 ? atob(splitDataURI[1]) : decodeURI(splitDataURI[1]);
-  const mimeString = splitDataURI[0].split(':')[1].split(';')[0];
-  const bytes = new Uint8Array(byteString.length);
-  for (let i = 0; i < byteString.length; i++) bytes[i] = byteString.charCodeAt(i);
-  return new Blob([bytes], { type: mimeString });
-}
-
-function normalizePendingPhoto<T extends Record<string, any>>(record: T): T {
-  const normalized: Record<string, any> = { ...record };
-  const legacyPhoto = normalized['fotoBase64'];
-
-  // Blobs are the canonical representation. Only migrate actual data URIs;
-  // remote URLs and object URLs belong to metadata/display and must not throw.
-  if (!(normalized['fotoBlob'] instanceof Blob) && typeof legacyPhoto === 'string') {
-    if (legacyPhoto.startsWith('data:')) {
-      try {
-        normalized['fotoBlob'] = dataURItoBlob(legacyPhoto);
-      } catch {
-        // Keep the record usable when legacy data is malformed.
-      }
-    }
-  }
-  delete normalized['fotoBase64'];
-  return normalized as T;
-}
-
 export interface PendingRecord {
   id?: number;
   syncState: SyncState;
@@ -195,11 +163,11 @@ export class IndexedDbService {
 
   async savePendingReading(reading: any): Promise<number> {
     const db = await this.initDb();
-    const record: PendingRecord = normalizePendingPhoto({
+    const record: PendingRecord = {
       ...reading,
       syncState: 'PENDIENTE_SYNC',
       errorMessage: null,
-    });
+    };
     return new Promise((resolve, reject) => {
       const transaction = db.transaction('lecturas_pendientes', 'readwrite');
       const store = transaction.objectStore('lecturas_pendientes');
@@ -248,7 +216,7 @@ export class IndexedDbService {
           reject(new Error(`Lectura pendiente con id ${id} no encontrada.`));
           return;
         }
-        const updated = normalizePendingPhoto({ ...existing, ...updates });
+        const updated = { ...existing, ...updates };
         store.put(updated);
       };
 
@@ -273,11 +241,11 @@ export class IndexedDbService {
 
   async savePendingAnomaly(anomaly: any): Promise<number> {
     const db = await this.initDb();
-    const record: PendingRecord = normalizePendingPhoto({
+    const record: PendingRecord = {
       ...anomaly,
       syncState: 'PENDIENTE_SYNC',
       errorMessage: null,
-    });
+    };
     return new Promise((resolve, reject) => {
       const transaction = db.transaction('anomalias_pendientes', 'readwrite');
       const store = transaction.objectStore('anomalias_pendientes');
@@ -326,7 +294,7 @@ export class IndexedDbService {
           reject(new Error(`Anomalía pendiente con id ${id} no encontrada.`));
           return;
         }
-        const updated = normalizePendingPhoto({ ...existing, ...updates });
+        const updated = { ...existing, ...updates };
         store.put(updated);
       };
 

@@ -34,22 +34,22 @@ describe('ReconexionFormComponent', () => {
     comp.submit();
     expect(comp['submitted']()).toBe(true);
 
-    comp['onPhotoChange']('data:image/jpeg;base64,captured');
+    comp['onPhotoChange'](new Blob(['photo'], { type: 'image/jpeg' }));
 
     expect(comp['submitted']()).toBe(false);
-    expect(comp.photoPreview()).toBe('data:image/jpeg;base64,captured');
+    expect(comp.photoPreview()).toBeInstanceOf(Blob);
   });
 
   it('should emit correct ReconexionFormPayload when form is fully valid', () => {
     const comp = createComponent();
     comp.form.patchValue({ confirmacionRetiroSello: true });
-    comp.photoPreview.set('data:image/jpeg;base64,rec');
+    comp.photoPreview.set(new Blob(['photo'], { type: 'image/jpeg' }));
     const emitted: ReconexionFormPayload[] = [];
     comp.formSubmit.subscribe((v) => emitted.push(v));
     comp.submit();
     expect(emitted).toHaveLength(1);
     expect(emitted[0].tipoActividad).toBe('RECONEXION');
     expect(emitted[0].confirmacionRetiroSello).toBe(true);
-    expect(emitted[0].fotoBase64).toBe('data:image/jpeg;base64,rec');
+    expect(emitted[0].fotoBlob).toBeInstanceOf(Blob);
   });
 });

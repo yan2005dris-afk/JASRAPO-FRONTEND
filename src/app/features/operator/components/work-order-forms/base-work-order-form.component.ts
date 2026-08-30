@@ -40,7 +40,7 @@ export abstract class BaseWorkOrderFormComponent<T extends WorkOrderFormPayload>
   form!: FormGroup;
 
   /** Data URI base64 de la foto capturada (null hasta que se captura). */
-  readonly photoPreview = signal<string | null>(null);
+  readonly photoPreview = signal<Blob | null>(null);
 
   /**
    * Gate "submitted": se prende al primer intento de submit y dirige la visibilidad
@@ -62,14 +62,14 @@ export abstract class BaseWorkOrderFormComponent<T extends WorkOrderFormPayload>
    * Hook concreto: cada sub-form mapea su form.value + foto a su payload tipado.
    * Garantiza discriminated union por `tipoActividad`.
    */
-  protected abstract buildPayload(formValue: Record<string, unknown>, photo: string | null): T;
+  protected abstract buildPayload(formValue: Record<string, unknown>, photo: Blob | null): T;
 
   /**
    * Resetea el flag `submitted` cuando el operador carga una foto nueva.
    * Sin esto, un submit fallido deja el gate prendido y la nueva foto no
    * "limpia" el error visible.
    */
-  protected onPhotoChange(val: string | null): void {
+  protected onPhotoChange(val: Blob | null): void {
     this.photoPreview.set(val);
     if (val) this.submitted.set(false);
   }

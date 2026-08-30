@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { NetworkService } from './network.service';
-import { dataURItoBlob, IndexedDbService } from './indexed-db.service';
+import { IndexedDbService } from './indexed-db.service';
 import { ToastService } from '../../shared/components/toast/toast.service';
 import { environment } from '../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
@@ -9,15 +9,21 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from './auth.service';
 
 type PayloadValue = string | number | boolean | Blob | null | undefined;
+type WorkOrderDtoField =
+  | 'estado'
+  | 'resultadoObservacion'
+  | 'completadoEn'
+  | 'estadoSellos'
+  | 'hayFugas'
+  | 'confirmacionRetiroSello';
+type WorkOrderDtoPayload = Partial<Record<WorkOrderDtoField, PayloadValue>>;
 export interface ReadingSubmission {
   _lecturaId?: string | number;
-  fotoBase64?: string | null;
   fotoBlob?: Blob | null;
   [key: string]: PayloadValue;
 }
 export interface WorkOrderSubmission {
   ordenTrabajoId?: string | number;
-  fotoBase64?: string | null;
   fotoBlob?: Blob | null;
   [key: string]: PayloadValue;
 }
@@ -95,18 +101,44 @@ export class OperatorSyncService {
   private appendPhoto(
     formData: FormData,
     photoBlob?: Blob | null,
-    fotoBase64?: string | null,
     field = 'foto',
     filename = 'evidencia.jpg',
   ): void {
-    if (photoBlob instanceof Blob) {
-      formData.append(field, photoBlob, filename);
-    } else if (typeof fotoBase64 === 'string' && fotoBase64.startsWith('data:')) {
-      try {
-        formData.append(field, dataURItoBlob(fotoBase64), filename);
-      } catch {
-        // Ignore malformed legacy values rather than treating display URLs as files.
-      }
+    if (photoBlob instanceof Blob) formData.append(field, photoBlob, filename);
+  }
+
+  /** Normaliza el contrato estricto aceptado por PATCH /operator/work-orders/:id. */
+  private normalizeWorkOrderPayload(workOrder: WorkOrderSubmission): WorkOrderDtoPayload {
+    const payload: WorkOrderDtoPayload = {};
+    const acceptedFields: WorkOrderDtoField[] = [
+      'estado',
+      'resultadoObservacion',
+      'completadoEn',
+      'estadoSellos',
+      'hayFugas',
+      'confirmacionRetiroSello',
+    ];
+
+    for (const field of acceptedFields) {
+      const value = workOrder[field];
+      if (value !== null && value !== undefined) payload[field] = value;
+    }
+
+    if (
+      (workOrder['resultadoObservacion'] === null ||
+        workOrder['resultadoObservacion'] === undefined) &&
+      workOrder['observaciones'] !== null &&
+      workOrder['observaciones'] !== undefined
+    ) {
+      payload.resultadoObservacion = workOrder['observaciones'];
+    }
+
+    return payload;
+  }
+
+  private appendWorkOrderPayload(formData: FormData, payload: WorkOrderDtoPayload): void {
+    for (const [key, value] of Object.entries(payload)) {
+      if (value !== null && value !== undefined) formData.append(key, String(value));
     }
   }
 
@@ -138,7 +170,7 @@ export class OperatorSyncService {
    * Wire format: multipart/form-data, con evidencia bajo el campo `foto`.
    */
   async submitReading(reading: ReadingSubmission & { fotoBlob?: Blob | null }): Promise<unknown> {
-    const { _lecturaId, fotoBlob, fotoBase64, ...payload } = reading;
+    const { _lecturaId, fotoBlob, ...payload } = reading;
     const hasId =
       _lecturaId !== null && _lecturaId !== undefined && String(_lecturaId).trim() !== '';
     if (this.networkService.isOnline() && !hasId) {
@@ -155,7 +187,7 @@ export class OperatorSyncService {
             formData.append(key, String(value));
           }
         }
-        this.appendPhoto(formData, fotoBlob, fotoBase64, 'foto', 'foto.jpg');
+        this.appendPhoto(formData, fotoBlob, 'foto', 'foto.jpg');
 
         const request$ = this.http.patch<unknown>(
           `${this.OPERATOR_API}/readings/${_lecturaId}`,
@@ -200,12 +232,7 @@ export class OperatorSyncService {
         if (anomaly['observacion']) {
           formData.append('observacion', String(anomaly['observacion']));
         }
-        this.appendPhoto(
-          formData,
-          (anomaly['fotoBlob'] as Blob) || null,
-          (anomaly['fotoBase64'] as string) || null,
-          'file',
-        );
+        this.appendPhoto(formData, (anomaly['fotoBlob'] as Blob) || null, 'file');
 
         const response = await firstValueFrom(
           this.http.post<unknown>(this.ANOMALIES_API, formData, { withCredentials: true }),
@@ -242,7 +269,7 @@ export class OperatorSyncService {
   async submitWorkOrder(
     workOrder: WorkOrderSubmission & { fotoBlob?: Blob | null },
   ): Promise<unknown> {
-    const { ordenTrabajoId, fotoBlob, fotoBase64, ...payload } = workOrder;
+    const { ordenTrabajoId, fotoBlob } = workOrder;
     if (
       ordenTrabajoId === null ||
       ordenTrabajoId === undefined ||
@@ -254,12 +281,8 @@ export class OperatorSyncService {
     if (this.networkService.isOnline()) {
       try {
         const formData = new FormData();
-        for (const [key, value] of Object.entries(payload)) {
-          if (value !== null && value !== undefined) {
-            formData.append(key, String(value));
-          }
-        }
-        this.appendPhoto(formData, fotoBlob, fotoBase64);
+        this.appendWorkOrderPayload(formData, this.normalizeWorkOrderPayload(workOrder));
+        this.appendPhoto(formData, fotoBlob);
 
         const url = `${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`;
         const request$ = this.http.patch<unknown>(url, formData, { withCredentials: true });
@@ -342,14 +365,11 @@ export class OperatorSyncService {
             recordType: _recordType, // eslint-disable-line @typescript-eslint/no-unused-vars
             ordenTrabajoId,
             fotoBlob,
-            fotoBase64,
             ...workOrderPayload
           } = pending;
           const formData = new FormData();
-          for (const [key, value] of Object.entries(workOrderPayload)) {
-            if (value !== null && value !== undefined) formData.append(key, String(value));
-          }
-          this.appendPhoto(formData, fotoBlob, fotoBase64);
+          this.appendWorkOrderPayload(formData, this.normalizeWorkOrderPayload(workOrderPayload));
+          this.appendPhoto(formData, fotoBlob);
           await firstValueFrom(
             this.http.patch<unknown>(
               `${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`,
@@ -383,7 +403,6 @@ export class OperatorSyncService {
           errorMessage: _errorMessage, // eslint-disable-line @typescript-eslint/no-unused-vars
           _lecturaId,
           fotoBlob,
-          fotoBase64,
           ...payload
         } = pending;
 
@@ -393,7 +412,7 @@ export class OperatorSyncService {
             formData.append(key, String(value));
           }
         }
-        this.appendPhoto(formData, fotoBlob, fotoBase64, 'foto', 'foto.jpg');
+        this.appendPhoto(formData, fotoBlob, 'foto', 'foto.jpg');
 
         if (_lecturaId === null || _lecturaId === undefined || String(_lecturaId).trim() === '') {
           await this.dbService.updatePendingReading(pending.id!, {
@@ -440,7 +459,6 @@ export class OperatorSyncService {
           syncState: _syncState2, // eslint-disable-line @typescript-eslint/no-unused-vars
           errorMessage: _errorMessage2, // eslint-disable-line @typescript-eslint/no-unused-vars
           fotoBlob,
-          fotoBase64,
           ...payload
         } = pending;
 
@@ -451,7 +469,7 @@ export class OperatorSyncService {
         if (payload['observacion']) {
           formData.append('observacion', String(payload['observacion']));
         }
-        this.appendPhoto(formData, fotoBlob, fotoBase64, 'file');
+        this.appendPhoto(formData, fotoBlob, 'file');
 
         await firstValueFrom(
           this.http.post<unknown>(this.ANOMALIES_API, formData, { withCredentials: true }),

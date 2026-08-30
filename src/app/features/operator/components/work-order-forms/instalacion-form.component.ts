@@ -26,7 +26,7 @@ import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
 
       <div class="form-field">
         <span class="field-label required">Fotografía del Medidor Instalado</span>
-        <app-photo-capture [preview]="photoPreview()" (previewChange)="onPhotoChange($event)" />
+        <app-photo-capture [preview]="null" (previewChange)="onPhotoChange($event)" />
         @if (submitted() && !photoPreview()) {
           <span class="field-error">La foto de instalación es obligatoria.</span>
         }
@@ -63,14 +63,14 @@ export class InstalacionFormComponent extends BaseWorkOrderFormComponent<Instala
 
   protected buildPayload(
     formValue: Record<string, unknown>,
-    photo: string | null,
+    photo: Blob | null,
   ): InstalacionFormPayload {
     const resultadoObservacion = String(formValue['observaciones'] ?? '').trim();
 
     return {
       tipoActividad: 'INSTALACION',
       ...(resultadoObservacion ? { resultadoObservacion } : {}),
-      fotoBase64: photo as string,
+      fotoBlob: photo as Blob,
     };
   }
 }

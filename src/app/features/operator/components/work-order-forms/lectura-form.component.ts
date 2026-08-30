@@ -84,7 +84,7 @@ import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
 
       <div class="form-field">
         <span class="field-label">Fotografía del Medidor</span>
-        <app-photo-capture [preview]="photoPreview()" (previewChange)="onPhotoChange($event)" />
+        <app-photo-capture [preview]="null" (previewChange)="onPhotoChange($event)" />
         <span class="field-hint">Recomendado para anomalías o lecturas altas.</span>
       </div>
 
@@ -138,7 +138,7 @@ export class LecturaFormComponent
 
   protected buildPayload(
     formValue: Record<string, unknown>,
-    photo: string | null,
+    photo: Blob | null,
   ): LecturaFormPayload {
     return {
       tipoActividad: 'LECTURA',
@@ -148,7 +148,7 @@ export class LecturaFormComponent
       ...(formValue['descripcionAnomalia']
         ? { descripcionAnomalia: String(formValue['descripcionAnomalia']) }
         : {}),
-      ...(photo ? { fotoBase64: photo } : {}),
+      ...(photo ? { fotoBlob: photo } : {}),
     };
   }
 

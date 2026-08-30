@@ -534,7 +534,7 @@ export class LecturasComponent implements OnInit {
           ...(formPayload.descripcionAnomalia
             ? { descripcionAnomalia: formPayload.descripcionAnomalia }
             : {}),
-          ...(formPayload.fotoBase64 ? { fotoBase64: formPayload.fotoBase64 } : {}),
+          ...(formPayload.fotoBlob ? { fotoBlob: formPayload.fotoBlob } : {}),
           ...(existingId ? { _lecturaId: existingId } : {}),
         };
         const response = await this.syncService.submitReading(lecturaPayload);
