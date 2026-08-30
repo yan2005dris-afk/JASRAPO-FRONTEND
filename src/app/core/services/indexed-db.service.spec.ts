@@ -64,6 +64,9 @@ describe('IndexedDbService - Multi-operator Snapshot Isolation', () => {
               clear: () => {
                 table.clear();
               },
+              delete: (key: any) => {
+                table.delete(key);
+              },
             };
           },
           abort: vi.fn(),
@@ -72,7 +75,7 @@ describe('IndexedDbService - Multi-operator Snapshot Isolation', () => {
         };
         setTimeout(() => {
           if (tx.oncomplete) tx.oncomplete();
-        }, 0);
+        }, 10);
         return tx;
       },
     };
@@ -169,6 +172,91 @@ describe('IndexedDbService - Multi-operator Snapshot Isolation', () => {
 
     expect((await service.getPendingReadings())[0]['fotoBlob']).toBeInstanceOf(Blob);
     expect((await service.getPendingAnomalies())[0]['fotoBlob']).toBeInstanceOf(Blob);
+  });
+
+  it('aplica cambios de tablas físicas y tombstones al snapshot', async () => {
+    await service.applyManifestPage('operator:1', {
+      mode: 'snapshot',
+      snapshotVersion: 'v1',
+      periodId: 'p1',
+      cursor: null,
+      complete: true,
+      nextCursor: 'c1',
+      routes: { items: [{ rutaId: 'r1' }], hasMore: false, nextCursor: null },
+      changes: [
+        { entityType: 'medidores', id: 'm1', operation: 'CREATE', data: { serie: 'S1' } },
+        { entityType: 'lecturas', id: 'l1', operation: 'CREATE', data: { estado: 'OK' } },
+        { entityType: 'medidores', id: 'm1', operation: 'DELETE' },
+      ],
+    } as any);
+    const snapshot = await service.getAssignedSnapshot('operator:1');
+    expect(snapshot?.routes).toEqual([{ rutaId: 'r1' }]);
+    expect(snapshot?.meters).toEqual([]);
+    expect(snapshot?.registeredReadings).toEqual([{ estado: 'OK', lecturaId: 'l1' }]);
+  });
+
+  it('preserva datos existentes para una página incremental vacía con cursor nulo', async () => {
+    await service.saveCompleteAssignedSnapshot({
+      scope: 'operator:1',
+      routes: [{ rutaId: 'r1' }],
+      meters: [{ medidorId: 'm1' }],
+      registeredReadings: [{ lecturaId: 'l1' }],
+    });
+
+    await service.applyManifestPage('operator:1', {
+      mode: 'incremental',
+      snapshotVersion: 'v1',
+      periodId: 'p1',
+      cursor: null,
+      complete: true,
+      nextCursor: 'c2',
+      changes: [],
+    });
+
+    const snapshot = await service.getAssignedSnapshot('operator:1');
+    expect(snapshot?.routes).toEqual([{ rutaId: 'r1' }]);
+    expect(snapshot?.meters).toEqual([{ medidorId: 'm1' }]);
+    expect(snapshot?.registeredReadings).toEqual([{ lecturaId: 'l1' }]);
+    expect(snapshot?.cursor).toBe('c2');
+  });
+
+  it('rechaza entityType desconocido y conserva el snapshot completo anterior', async () => {
+    await service.saveCompleteAssignedSnapshot({
+      scope: 'operator:1',
+      routes: [{ rutaId: 'old' }],
+      meters: [],
+      registeredReadings: [],
+    });
+    await expect(
+      service.applyManifestPage('operator:1', {
+        snapshotVersion: 'v2',
+        periodId: 'p1',
+        cursor: 'old-cursor',
+        complete: true,
+        nextCursor: null,
+        changes: [{ entityType: 'unknown_table', id: 'x', operation: 'DELETE' }],
+      } as any),
+    ).rejects.toThrow('Unknown manifest entityType: unknown_table');
+    expect((await service.getAssignedSnapshot('operator:1'))?.routes).toEqual([{ rutaId: 'old' }]);
+  });
+
+  it('no publica una página incompleta como snapshot activo', async () => {
+    await service.saveCompleteAssignedSnapshot({
+      scope: 'operator:1',
+      routes: [{ rutaId: 'old' }],
+      meters: [],
+      registeredReadings: [],
+    });
+    await service.applyManifestPage('operator:1', {
+      snapshotVersion: 'v2',
+      periodId: 'p1',
+      cursor: 'old-cursor',
+      complete: false,
+      nextCursor: 'next-cursor',
+      changes: [],
+      routes: { items: [{ rutaId: 'new' }], hasMore: true, nextCursor: 'next-cursor' },
+    } as any);
+    expect((await service.getAssignedSnapshot('operator:1'))?.routes).toEqual([{ rutaId: 'old' }]);
   });
 
   it('garantiza aislamiento total entre Operador A y Operador B sin sobreescritura de datos offline', async () => {
