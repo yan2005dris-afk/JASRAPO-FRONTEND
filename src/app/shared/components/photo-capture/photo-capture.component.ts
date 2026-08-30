@@ -1,12 +1,10 @@
 import {
   Component,
-  Input,
-  Output,
-  EventEmitter,
   ChangeDetectionStrategy,
   OnDestroy,
-  OnChanges,
-  SimpleChanges,
+  effect,
+  input,
+  output,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
@@ -78,7 +76,7 @@ import { CommonModule } from '@angular/common';
     <div class="photo-section">
       <label class="btn-photo">
         <i class="bi bi-camera-fill"></i>
-        <span>{{ preview ? 'Cambiar Foto' : 'Capturar Foto' }}</span>
+        <span>{{ preview() ? 'Cambiar Foto' : 'Capturar Foto' }}</span>
         <input
           type="file"
           accept="image/*"
@@ -103,21 +101,20 @@ import { CommonModule } from '@angular/common';
     </div>
   `,
 })
-export class PhotoCaptureComponent implements OnChanges, OnDestroy {
-  @Input() preview: Blob | null = null;
-  @Output() previewChange = new EventEmitter<Blob | null>();
+export class PhotoCaptureComponent implements OnDestroy {
+  readonly preview = input<Blob | null>(null);
+  readonly previewChange = output<Blob | null>();
   previewUrl: string | null = null;
   private ownsPreviewUrl = false;
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (!changes['preview']) return;
-    const blob = changes['preview'].currentValue as Blob | null;
+  private readonly previewEffect = effect(() => {
+    const blob = this.preview();
     if (blob instanceof Blob) {
       this.setPreview(blob);
     } else {
       this.revokePreview();
     }
-  }
+  });
 
   onCapture(event: Event): void {
     const file = (event.target as HTMLInputElement).files?.[0];

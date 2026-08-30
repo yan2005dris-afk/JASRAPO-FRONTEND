@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -68,12 +68,12 @@ import { CommonModule } from '@angular/common';
       <input
         type="text"
         class="search-input"
-        [placeholder]="placeholder"
-        [value]="value"
-        [disabled]="disabled"
+        [placeholder]="placeholder()"
+        [value]="value()"
+        [disabled]="disabled()"
         (input)="onInput($event)"
       />
-      @if (value) {
+      @if (value()) {
         <button
           type="button"
           class="btn-clear"
@@ -87,10 +87,10 @@ import { CommonModule } from '@angular/common';
   `,
 })
 export class MeterSearchBoxComponent {
-  @Input() value = '';
-  @Input() disabled = false;
-  @Input() placeholder = 'Buscar por serie, cliente, contrato...';
-  @Output() valueChange = new EventEmitter<string>();
+  readonly value = input('');
+  readonly disabled = input(false);
+  readonly placeholder = input('Buscar por serie, cliente, contrato...');
+  readonly valueChange = output<string>();
 
   onInput(event: Event): void {
     const target = event.target as HTMLInputElement | null;

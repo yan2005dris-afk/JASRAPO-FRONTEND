@@ -7,7 +7,7 @@ function createComponent(lecturaAnterior = 0): LecturaFormComponent {
   });
   const fixture = TestBed.createComponent(LecturaFormComponent);
   fixture.componentRef.setInput('lecturaAnterior', lecturaAnterior);
-  fixture.detectChanges(); // triggers ngOnInit with the @Input value
+  fixture.detectChanges(); // initializes the component input
   return fixture.componentInstance;
 }
 

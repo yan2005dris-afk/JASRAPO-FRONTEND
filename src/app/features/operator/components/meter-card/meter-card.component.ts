@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IMeterDto } from '../../../contracts/meters/interfaces/imeter.interface';
 
@@ -17,14 +17,14 @@ export interface MeterStatusInfo {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MeterCardComponent {
-  @Input({ required: true }) meter!: IMeterDto;
-  @Input() status: MeterStatusInfo | null = null;
-  @Input() showArrow = true;
-  @Input() isSelected = false;
+  readonly meter = input.required<IMeterDto>();
+  readonly status = input<MeterStatusInfo | null>(null);
+  readonly showArrow = input(true);
+  readonly isSelected = input(false);
 
-  @Output() meterSelect = new EventEmitter<IMeterDto>();
+  readonly meterSelect = output<IMeterDto>();
 
   onSelect(): void {
-    this.meterSelect.emit(this.meter);
+    this.meterSelect.emit(this.meter());
   }
 }
