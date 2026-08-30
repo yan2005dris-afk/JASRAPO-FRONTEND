@@ -121,33 +121,38 @@ describe('IndexedDbService - Multi-operator Snapshot Isolation', () => {
     expect(snapshot?.routes).toEqual(snapshotData.routes);
   });
 
-  it('guarda lecturas y anomalías pendientes con Blob sin conservar fotoBase64', async () => {
+  it('guarda lecturas y anomalías pendientes con Blob conservando Blob', async () => {
     const blob = new Blob(['photo'], { type: 'image/jpeg' });
 
-    await service.savePendingReading({ _lecturaId: 1, fotoBlob: blob, fotoBase64: 'blob:preview' });
-    await service.savePendingAnomaly({ lecturaId: 1, fotoBase64: 'https://example.com/photo.jpg' });
+    await service.savePendingReading({ _lecturaId: 1, fotoBlob: blob });
+    await service.savePendingAnomaly({
+      lecturaId: 1,
+      fotoBlob: new Blob(['photo'], { type: 'image/jpeg' }),
+    });
 
     const reading = (await service.getPendingReadings())[0];
     const anomaly = (await service.getPendingAnomalies())[0];
     expect(reading['fotoBlob']).toBe(blob);
-    expect(reading['fotoBase64']).toBeUndefined();
-    expect(anomaly['fotoBlob']).toBeUndefined();
-    expect(anomaly['fotoBase64']).toBeUndefined();
+    expect(reading['fotoBlob']).toBeInstanceOf(Blob);
+    expect(anomaly['fotoBlob']).toBeInstanceOf(Blob);
   });
 
-  it('migra una data URI válida y no toca URLs remotas u object URLs', async () => {
-    await service.savePendingReading({ _lecturaId: 1, fotoBase64: 'data:text/plain;base64,SGk=' });
+  it('conserva varios Blob pendientes sin convertirlos a metadata', async () => {
+    await service.savePendingReading({
+      _lecturaId: 1,
+      fotoBlob: new Blob(['photo'], { type: 'image/jpeg' }),
+    });
     await service.savePendingReading({
       _lecturaId: 2,
-      fotoBase64: 'https://example.com/photo.jpg',
+      fotoBlob: new Blob(['photo'], { type: 'image/jpeg' }),
     });
-    await service.savePendingReading({ _lecturaId: 3, fotoBase64: 'blob:preview' });
+    await service.savePendingReading({
+      _lecturaId: 3,
+      fotoBlob: new Blob(['photo'], { type: 'image/jpeg' }),
+    });
 
     const records = await service.getPendingReadings();
-    expect(records[0]['fotoBlob']).toBeInstanceOf(Blob);
-    expect(records[1]['fotoBlob']).toBeUndefined();
-    expect(records[2]['fotoBlob']).toBeUndefined();
-    expect(records.every((record) => record['fotoBase64'] === undefined)).toBe(true);
+    expect(records.every((record) => record['fotoBlob'] instanceof Blob)).toBe(true);
   });
 
   it('actualiza lecturas y anomalías conservando Blob y sin lanzar con URLs no válidas', async () => {
@@ -155,8 +160,12 @@ describe('IndexedDbService - Multi-operator Snapshot Isolation', () => {
     const readingId = await service.savePendingReading({ _lecturaId: 1, fotoBlob: blob });
     const anomalyId = await service.savePendingAnomaly({ lecturaId: 1, fotoBlob: blob });
 
-    await service.updatePendingReading(readingId, { fotoBase64: 'blob:preview' });
-    await service.updatePendingAnomaly(anomalyId, { fotoBase64: 'https://example.com/photo.jpg' });
+    await service.updatePendingReading(readingId, {
+      fotoBlob: new Blob(['photo'], { type: 'image/jpeg' }),
+    });
+    await service.updatePendingAnomaly(anomalyId, {
+      fotoBlob: new Blob(['photo'], { type: 'image/jpeg' }),
+    });
 
     expect((await service.getPendingReadings())[0]['fotoBlob']).toBeInstanceOf(Blob);
     expect((await service.getPendingAnomalies())[0]['fotoBlob']).toBeInstanceOf(Blob);

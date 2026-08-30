@@ -7,7 +7,6 @@ export interface AnomalyEditResult {
   recordId: number;
   tipo: string;
   observacion: string;
-  fotoBase64?: string | null;
   fotoBlob?: Blob | null;
 }
 
@@ -240,13 +239,6 @@ export class SyncAnomalyEditorComponent implements OnInit, OnDestroy {
 
     if (this.fotoBlob) {
       this.setBlobPreview(this.fotoBlob);
-    } else {
-      const legacyDataUri = rec['fotoBase64'];
-      this.fotoPreview.set(
-        typeof legacyDataUri === 'string' && legacyDataUri.startsWith('data:')
-          ? legacyDataUri
-          : (rec['fotoUrl'] as string) || null,
-      );
     }
   }
 
@@ -287,13 +279,11 @@ export class SyncAnomalyEditorComponent implements OnInit, OnDestroy {
     if (!this.observacion.trim() || rec.id == null) return;
 
     this.isSaving.set(true);
-    const preview = this.fotoPreview();
     this.saved.emit({
       recordId: rec.id,
       tipo: this.tipo,
       observacion: this.observacion.trim(),
       fotoBlob: this.fotoBlob,
-      fotoBase64: !this.fotoBlob && preview?.startsWith('data:') ? preview : null,
     });
   }
 }

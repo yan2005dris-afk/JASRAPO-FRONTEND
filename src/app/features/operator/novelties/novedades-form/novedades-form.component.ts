@@ -43,7 +43,7 @@ export class NovedadesFormComponent implements OnInit {
   readonly searchQuery = signal<string>('');
   readonly selectedMeter = signal<IMeterDto | null>(null);
   readonly isSaving = signal<boolean>(false);
-  readonly photoPreview = signal<string | null>(null);
+  readonly photoBlob = signal<Blob | null>(null);
   private presetLecturaId: string | null = null;
 
   readonly tiposAnomalia = [
@@ -99,12 +99,12 @@ export class NovedadesFormComponent implements OnInit {
     this.selectedMeter.set(meter);
     this.searchQuery.set('');
     this.noveltyForm.reset({ tipo: '', observacion: '' });
-    this.photoPreview.set(null);
+    this.photoBlob.set(null);
   }
 
   clearSelection(): void {
     this.selectedMeter.set(null);
-    this.photoPreview.set(null);
+    this.photoBlob.set(null);
     this.noveltyForm.reset();
   }
 
@@ -121,6 +121,10 @@ export class NovedadesFormComponent implements OnInit {
     );
     if (response?.data?.length) return response.data[0].lecturaId;
     throw new Error('No se encontró ninguna lectura asociada al contrato del medidor.');
+  }
+
+  onPhotoChange(photo: Blob | null): void {
+    this.photoBlob.set(photo);
   }
 
   async onSubmit(): Promise<void> {
@@ -152,7 +156,7 @@ export class NovedadesFormComponent implements OnInit {
       observacion,
       tipo,
       estado: 'PENDIENTE',
-      fotoBase64: this.photoPreview() ?? null,
+      fotoBlob: this.photoBlob(),
       medidorId: meter.medidorId.toString(),
       contratoId: meter.contratoId ? meter.contratoId.toString() : null,
     };

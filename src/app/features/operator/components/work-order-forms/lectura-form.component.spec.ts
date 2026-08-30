@@ -34,23 +34,25 @@ describe('LecturaFormComponent', () => {
     comp.submit();
     expect(comp['submitted']()).toBe(true);
 
-    comp['onPhotoChange']('data:image/jpeg;base64,captured');
+    const photoBlob = new Blob(['photo'], { type: 'image/jpeg' });
+    comp['onPhotoChange'](photoBlob);
 
     expect(comp['submitted']()).toBe(false);
-    expect(comp.photoPreview()).toBe('data:image/jpeg;base64,captured');
+    expect(comp.photoPreview()).toBe(photoBlob);
   });
 
   it('should emit correct LecturaFormPayload on valid submit (with photo)', () => {
     const comp = createComponent(10);
     comp.form.patchValue({ lecturaActual: 20 });
-    comp.photoPreview.set('data:image/jpeg;base64,abc');
+    const photoBlob = new Blob(['photo'], { type: 'image/jpeg' });
+    comp.photoPreview.set(photoBlob);
     const emitted: unknown[] = [];
     comp.formSubmit.subscribe((v) => emitted.push(v));
     comp.submit();
     expect(emitted).toHaveLength(1);
     expect((emitted[0] as { tipoActividad: string }).tipoActividad).toBe('LECTURA');
     expect((emitted[0] as { lecturaActual: number }).lecturaActual).toBe(20);
-    expect((emitted[0] as { fotoBase64: string }).fotoBase64).toBe('data:image/jpeg;base64,abc');
+    expect((emitted[0] as { fotoBlob: Blob }).fotoBlob).toBe(photoBlob);
   });
 
   it('should not emit if form is invalid', () => {

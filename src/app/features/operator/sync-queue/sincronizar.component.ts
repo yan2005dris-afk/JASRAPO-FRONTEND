@@ -209,7 +209,6 @@ export class SincronizarComponent implements OnInit {
     await this.dbService.updatePendingAnomaly(result.recordId, {
       observacion: result.observacion,
       tipo: result.tipo,
-      fotoBase64: result.fotoBase64 ?? null,
       fotoBlob: result.fotoBlob ?? null,
       syncState: 'PENDIENTE_SYNC',
       errorMessage: null,

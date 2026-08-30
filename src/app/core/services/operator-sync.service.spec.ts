@@ -7,11 +7,8 @@ import { IndexedDbService } from './indexed-db.service';
 import { ToastService } from '../../shared/components/toast/toast.service';
 import { AuthService } from './auth.service';
 
-// 1x1 PNG rojo en base64 — foto de prueba mínima y válida para dataURItoBlob.
-const TINY_PNG_BASE64 =
-  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
-const VALID_DATA_URI = `data:image/png;base64,${TINY_PNG_BASE64}`;
-const INVALID_DATA_URI = 'data:image/png;base64'; // sin coma → split length < 2
+const VALID_DATA_URI = new Blob(['photo'], { type: 'image/png' });
+const INVALID_DATA_URI = null;
 
 describe('OperatorSyncService', () => {
   let service: OperatorSyncService;
@@ -167,7 +164,7 @@ describe('OperatorSyncService', () => {
 
     it('sin _lecturaId y con foto en línea rechaza sin hacer ninguna petición', async () => {
       await expect(
-        service.submitReading({ medidorId: 1, lecturaActual: '123', fotoBase64: VALID_DATA_URI }),
+        service.submitReading({ medidorId: 1, lecturaActual: '123', fotoBlob: VALID_DATA_URI }),
       ).rejects.toThrow(/no expone un endpoint de creación/);
       expect(httpPost).not.toHaveBeenCalled();
       expect(httpPatch).not.toHaveBeenCalled();
@@ -179,7 +176,7 @@ describe('OperatorSyncService', () => {
         _lecturaId: 1,
         medidorId: 1,
         lecturaActual: '150',
-        fotoBase64: VALID_DATA_URI,
+        fotoBlob: VALID_DATA_URI,
       };
 
       await service.submitReading(reading);
@@ -211,7 +208,7 @@ describe('OperatorSyncService', () => {
           _lecturaId: 1,
           medidorId: 1,
           lecturaActual: '1',
-          fotoBase64: INVALID_DATA_URI,
+          fotoBlob: INVALID_DATA_URI,
         }),
       );
       expect(httpPost).not.toHaveBeenCalled();
@@ -228,7 +225,6 @@ describe('OperatorSyncService', () => {
       medidorId: 1,
       lecturaActual: '1',
       fotoBlob: blob,
-      fotoBase64: VALID_DATA_URI,
     });
 
     const fields = formDataToObject(httpPatch.mock.calls[0][1] as FormData);
@@ -245,7 +241,7 @@ describe('OperatorSyncService', () => {
         _lecturaId: 1,
         medidorId: 1,
         lecturaActual: '150',
-        fotoBase64: VALID_DATA_URI,
+        fotoBlob: VALID_DATA_URI,
       };
 
       const result = await service.submitReading(reading);
@@ -268,7 +264,7 @@ describe('OperatorSyncService', () => {
         ordenTrabajoId: 'wo-42',
         tipoActividad: 'INSPECCION',
         medidorId: 'meter-1',
-        fotoBase64: VALID_DATA_URI,
+        fotoBlob: VALID_DATA_URI,
       });
 
       expect(httpPatch).toHaveBeenCalledOnce();
@@ -286,7 +282,7 @@ describe('OperatorSyncService', () => {
         ordenTrabajoId: 'wo-42',
         tipoActividad: 'INSPECCION',
         medidorId: 'meter-1',
-        fotoBase64: VALID_DATA_URI,
+        fotoBlob: VALID_DATA_URI,
       };
 
       await expect(service.submitWorkOrder(workOrder)).resolves.toEqual({ offline: true });
@@ -319,7 +315,7 @@ describe('OperatorSyncService', () => {
         tipo: 'FILTRACION',
         estado: 'PENDIENTE',
         observacion: 'goteo',
-        fotoBase64: VALID_DATA_URI,
+        fotoBlob: VALID_DATA_URI,
       });
 
       const [url, formData] = httpPost.mock.calls[0];
@@ -415,7 +411,7 @@ describe('OperatorSyncService', () => {
           medidorId: 'meter-1',
           estadoSellos: 'INTEGRO',
           hayFugas: false,
-          fotoBase64: VALID_DATA_URI,
+          fotoBlob: VALID_DATA_URI,
         },
       ]);
       getPendingAnomaliesByState.mockResolvedValue([]);
@@ -525,7 +521,7 @@ describe('OperatorSyncService', () => {
           _lecturaId: 99,
           medidorId: 1,
           lecturaActual: '150',
-          fotoBase64: VALID_DATA_URI,
+          fotoBlob: VALID_DATA_URI,
         },
       ]);
       getPendingAnomaliesByState.mockResolvedValue([]);

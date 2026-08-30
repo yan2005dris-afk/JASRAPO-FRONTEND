@@ -1,4 +1,13 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  ChangeDetectionStrategy,
+  OnDestroy,
+  OnChanges,
+  SimpleChanges,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 @Component({
@@ -78,13 +87,13 @@ import { CommonModule } from '@angular/common';
           (change)="onCapture($event)"
         />
       </label>
-      @if (preview) {
+      @if (previewUrl) {
         <div class="photo-preview-box">
-          <img [src]="preview" alt="Foto del medidor" class="photo-img" />
+          <img [src]="previewUrl" alt="Foto del medidor" class="photo-img" />
           <button
             type="button"
             class="btn-remove-photo"
-            (click)="previewChange.emit(null)"
+            (click)="removePhoto()"
             title="Eliminar foto"
           >
             <i class="bi bi-trash-fill"></i>
@@ -94,16 +103,44 @@ import { CommonModule } from '@angular/common';
     </div>
   `,
 })
-export class PhotoCaptureComponent {
-  @Input() preview: string | null = null;
-  @Output() previewChange = new EventEmitter<string | null>();
+export class PhotoCaptureComponent implements OnChanges, OnDestroy {
+  @Input() preview: Blob | null = null;
+  @Output() previewChange = new EventEmitter<Blob | null>();
+  previewUrl: string | null = null;
+  private ownsPreviewUrl = false;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes['preview']) return;
+    const blob = changes['preview'].currentValue as Blob | null;
+    if (blob instanceof Blob) {
+      this.setPreview(blob);
+    } else {
+      this.revokePreview();
+    }
+  }
 
   onCapture(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
+    const file = (event.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => this.previewChange.emit(reader.result as string);
-    reader.readAsDataURL(file);
+    this.setPreview(file);
+    this.previewChange.emit(file);
+  }
+  removePhoto(): void {
+    this.revokePreview();
+    this.previewChange.emit(null);
+  }
+  ngOnDestroy(): void {
+    this.revokePreview();
+  }
+  private setPreview(blob: Blob): void {
+    this.revokePreview();
+    this.previewUrl = URL.createObjectURL(blob);
+    this.ownsPreviewUrl = true;
+  }
+
+  private revokePreview(): void {
+    if (this.previewUrl && this.ownsPreviewUrl) URL.revokeObjectURL(this.previewUrl);
+    this.previewUrl = null;
+    this.ownsPreviewUrl = false;
   }
 }
