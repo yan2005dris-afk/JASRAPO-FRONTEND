@@ -9,6 +9,14 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from './auth.service';
 
 type PayloadValue = string | number | boolean | Blob | null | undefined;
+type WorkOrderDtoField =
+  | 'estado'
+  | 'resultadoObservacion'
+  | 'completadoEn'
+  | 'estadoSellos'
+  | 'hayFugas'
+  | 'confirmacionRetiroSello';
+type WorkOrderDtoPayload = Partial<Record<WorkOrderDtoField, PayloadValue>>;
 export interface ReadingSubmission {
   _lecturaId?: string | number;
   fotoBlob?: Blob | null;
@@ -97,6 +105,41 @@ export class OperatorSyncService {
     filename = 'evidencia.jpg',
   ): void {
     if (photoBlob instanceof Blob) formData.append(field, photoBlob, filename);
+  }
+
+  /** Normaliza el contrato estricto aceptado por PATCH /operator/work-orders/:id. */
+  private normalizeWorkOrderPayload(workOrder: WorkOrderSubmission): WorkOrderDtoPayload {
+    const payload: WorkOrderDtoPayload = {};
+    const acceptedFields: WorkOrderDtoField[] = [
+      'estado',
+      'resultadoObservacion',
+      'completadoEn',
+      'estadoSellos',
+      'hayFugas',
+      'confirmacionRetiroSello',
+    ];
+
+    for (const field of acceptedFields) {
+      const value = workOrder[field];
+      if (value !== null && value !== undefined) payload[field] = value;
+    }
+
+    if (
+      (workOrder['resultadoObservacion'] === null ||
+        workOrder['resultadoObservacion'] === undefined) &&
+      workOrder['observaciones'] !== null &&
+      workOrder['observaciones'] !== undefined
+    ) {
+      payload.resultadoObservacion = workOrder['observaciones'];
+    }
+
+    return payload;
+  }
+
+  private appendWorkOrderPayload(formData: FormData, payload: WorkOrderDtoPayload): void {
+    for (const [key, value] of Object.entries(payload)) {
+      if (value !== null && value !== undefined) formData.append(key, String(value));
+    }
   }
 
   /**
@@ -226,7 +269,7 @@ export class OperatorSyncService {
   async submitWorkOrder(
     workOrder: WorkOrderSubmission & { fotoBlob?: Blob | null },
   ): Promise<unknown> {
-    const { ordenTrabajoId, fotoBlob, ...payload } = workOrder;
+    const { ordenTrabajoId, fotoBlob } = workOrder;
     if (
       ordenTrabajoId === null ||
       ordenTrabajoId === undefined ||
@@ -238,11 +281,7 @@ export class OperatorSyncService {
     if (this.networkService.isOnline()) {
       try {
         const formData = new FormData();
-        for (const [key, value] of Object.entries(payload)) {
-          if (value !== null && value !== undefined) {
-            formData.append(key, String(value));
-          }
-        }
+        this.appendWorkOrderPayload(formData, this.normalizeWorkOrderPayload(workOrder));
         this.appendPhoto(formData, fotoBlob);
 
         const url = `${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`;
@@ -329,9 +368,7 @@ export class OperatorSyncService {
             ...workOrderPayload
           } = pending;
           const formData = new FormData();
-          for (const [key, value] of Object.entries(workOrderPayload)) {
-            if (value !== null && value !== undefined) formData.append(key, String(value));
-          }
+          this.appendWorkOrderPayload(formData, this.normalizeWorkOrderPayload(workOrderPayload));
           this.appendPhoto(formData, fotoBlob);
           await firstValueFrom(
             this.http.patch<unknown>(

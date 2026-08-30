@@ -256,24 +256,57 @@ describe('OperatorSyncService', () => {
   // ── submitWorkOrder ──────────────────────────────────────────────────────
 
   describe('submitWorkOrder', () => {
-    it('usa PATCH con el ID de la orden asignada y foto', async () => {
+    it.each(['INSTALACION', 'INSPECCION', 'RECONEXION'])(
+      'envía solo campos DTO permitidos para %s',
+      async (tipoActividad) => {
+        isOnline.mockReturnValue(true);
+        httpPatch.mockReturnValue(of({ id: 'wo-42' }));
+
+        await service.submitWorkOrder({
+          ordenTrabajoId: 'wo-42',
+          tipoActividad,
+          medidorId: 'meter-1',
+          fecha: '2026-01-01',
+          estado: 'COMPLETADA',
+          estadoSellos: 'INTEGRO',
+          hayFugas: false,
+          confirmacionRetiroSello: true,
+          observaciones: 'sin novedades',
+          fotoBlob: VALID_DATA_URI,
+        });
+
+        const [url, formData] = httpPatch.mock.calls[0];
+        expect(url).toContain('/operator/work-orders/wo-42');
+        const fields = formDataToObject(formData as FormData);
+        expect(Object.keys(fields).sort()).toEqual([
+          'confirmacionRetiroSello',
+          'estado',
+          'estadoSellos',
+          'foto',
+          'hayFugas',
+          'resultadoObservacion',
+        ]);
+        expect(fields['resultadoObservacion']).toEqual(['sin novedades']);
+        expect(fields['hayFugas']).toEqual(['false']);
+        expect(fields['confirmacionRetiroSello']).toEqual(['true']);
+        expect(fields['foto']).toHaveLength(1);
+        expect(fields['foto'][0]).toBeInstanceOf(Blob);
+      },
+    );
+
+    it('preserva resultadoObservacion existente sin enviar observaciones', async () => {
       isOnline.mockReturnValue(true);
       httpPatch.mockReturnValue(of({ id: 'wo-42' }));
 
       await service.submitWorkOrder({
         ordenTrabajoId: 'wo-42',
-        tipoActividad: 'INSPECCION',
-        medidorId: 'meter-1',
-        fotoBlob: VALID_DATA_URI,
+        observaciones: 'texto del formulario',
+        resultadoObservacion: 'valor del DTO',
       });
 
-      expect(httpPatch).toHaveBeenCalledOnce();
-      expect(httpPost).not.toHaveBeenCalled();
-      const [url, formData] = httpPatch.mock.calls[0];
-      expect(url).toContain('/operator/work-orders/wo-42');
-      const fields = formDataToObject(formData as FormData);
-      expect(fields['foto']).toHaveLength(1);
-      expect(fields['file']).toBeUndefined();
+      const fields = formDataToObject(httpPatch.mock.calls[0][1] as FormData);
+      expect(fields['resultadoObservacion']).toEqual(['valor del DTO']);
+      expect(fields['observaciones']).toBeUndefined();
     });
 
     it('encola offline con discriminante y conserva el ID real', async () => {
@@ -409,6 +442,8 @@ describe('OperatorSyncService', () => {
           ordenTrabajoId: 'wo-42',
           tipoActividad: 'INSPECCION',
           medidorId: 'meter-1',
+          fecha: '2026-01-01',
+          observaciones: 'revisión completada',
           estadoSellos: 'INTEGRO',
           hayFugas: false,
           fotoBlob: VALID_DATA_URI,
@@ -422,8 +457,11 @@ describe('OperatorSyncService', () => {
       const [url, formData] = httpPatch.mock.calls[0];
       const fields = formDataToObject(formData as FormData);
       expect(url).toContain('/operator/work-orders/wo-42');
-      expect(fields['tipoActividad']).toEqual(['INSPECCION']);
-      expect(fields['medidorId']).toEqual(['meter-1']);
+      expect(fields['tipoActividad']).toBeUndefined();
+      expect(fields['medidorId']).toBeUndefined();
+      expect(fields['fecha']).toBeUndefined();
+      expect(fields['observaciones']).toBeUndefined();
+      expect(fields['resultadoObservacion']).toEqual(['revisión completada']);
       expect(fields['estadoSellos']).toEqual(['INTEGRO']);
       expect(fields['hayFugas']).toEqual(['false']);
       expect(fields['foto']).toHaveLength(1);
