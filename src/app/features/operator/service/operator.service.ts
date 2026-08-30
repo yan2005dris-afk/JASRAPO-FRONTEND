@@ -25,11 +25,6 @@ export class OperatorService {
   private readonly baseUrl = environment.apiUrl;
   private readonly endpoint = `${this.baseUrl}/operator`;
 
-  /** GET /api/v1/operator/sync — Sincronización offline de medidores */
-  syncAllMeters(): Observable<unknown[]> {
-    return this.http.get<unknown[]>(`${this.endpoint}/sync`);
-  }
-
   /** GET /api/v1/operator/routes — Listar rutas asignadas al operario */
   getRoutes(tipoRuta?: string): Observable<OperatorRouteResponse[]> {
     let params = new HttpParams();

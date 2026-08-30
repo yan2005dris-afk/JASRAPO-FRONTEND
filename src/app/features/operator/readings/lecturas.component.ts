@@ -1,7 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
-import { OperatorService } from '../service/operator.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { NetworkService } from '../../../core/services/network.service';
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
@@ -12,7 +11,6 @@ import { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
 import { MeterSearchComponent } from '../components/meter-search/meter-search.component';
 import { SelectedMeterCardComponent } from '../components/selected-meter-card/selected-meter-card.component';
 import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
-import { firstValueFrom } from 'rxjs';
 import {
   EstadoInfo,
   EstadoChip,
@@ -76,7 +74,6 @@ export class LecturasComponent implements OnInit {
   private readonly authService = inject(AuthService);
   private readonly meterCache = inject(MeterCacheService);
   private readonly toastService = inject(ToastService);
-  private readonly operatorService = inject(OperatorService);
   // State Machine única con estado discriminado
   readonly state = signal<LecturaState>({ kind: 'search' });
 
@@ -376,14 +373,14 @@ export class LecturasComponent implements OnInit {
     this.isLoadingMeters.set(true);
     try {
       // 1. Descargar catálogo completo de medidores para sincronización offline
-      const meters = await firstValueFrom(this.operatorService.syncAllMeters());
-      await this.dbService.saveMetersCache(meters);
+      await this.syncService.downloadAssignedData();
       await this.meterCache.load();
 
       // 2. Descargar lecturas ya registradas en el periodo actual
-      const readings = await this.syncService.getCurrentPeriodReadings();
-      await this.dbService.saveRegisteredReadingsCache(readings);
-      this.registeredReadings.set(readings);
+      const operatorId = this.authService.currentUser()?.id;
+      const scope = operatorId ? `operator:${operatorId}` : 'assigned';
+      const snapshot = await this.dbService.getAssignedSnapshot(scope);
+      this.registeredReadings.set(snapshot?.registeredReadings ?? []);
 
       this.toastService.success(
         'Catálogo y lecturas del período actual actualizados para uso offline.',

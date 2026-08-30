@@ -7,7 +7,6 @@ import { OperatorSyncService } from '../../../core/services/operator-sync.servic
 import { AuthService } from '../../../core/services/auth.service';
 import { MeterCacheService } from '../../../core/services/meter-cache.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
-import { OperatorService } from '../service/operator.service';
 import { signal } from '@angular/core';
 import { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
 
@@ -89,12 +88,6 @@ describe('LecturasComponent State Machine', () => {
           useValue: {
             success: vi.fn(),
             error: vi.fn(),
-          },
-        },
-        {
-          provide: OperatorService,
-          useValue: {
-            syncAllMeters: vi.fn(),
           },
         },
       ],

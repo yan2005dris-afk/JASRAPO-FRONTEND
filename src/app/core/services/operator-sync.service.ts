@@ -1,5 +1,5 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { NetworkService } from './network.service';
 import { IndexedDbService } from './indexed-db.service';
 import { ToastService } from '../../shared/components/toast/toast.service';
@@ -7,6 +7,10 @@ import { environment } from '../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from './auth.service';
+import {
+  MANIFEST_PROTOCOL_VERSION,
+  type OperatorManifestPage,
+} from '../../features/operator/models/operator.models';
 
 type PayloadValue = string | number | boolean | Blob | null | undefined;
 type WorkOrderDtoField =
@@ -81,6 +85,35 @@ export class OperatorSyncService {
     const next = !this.autoSyncEnabled();
     this.autoSyncEnabled.set(next);
     localStorage.setItem(this.AUTO_SYNC_KEY, next.toString());
+  }
+
+  private normalizeManifestCollection(collection: unknown): Record<string, unknown>[] | undefined {
+    if (collection === undefined) return undefined;
+    if (Array.isArray(collection)) return collection as Record<string, unknown>[];
+    if (typeof collection !== 'object' || collection === null) {
+      throw new Error('Invalid manifest collection: items must be an array');
+    }
+
+    const value = collection as Record<string, unknown>;
+    if (Array.isArray(value['items'])) return value['items'] as Record<string, unknown>[];
+    // Some backend adapters wrap paginated collections in a `data` envelope.
+    if (value['data'] !== undefined) return this.normalizeManifestCollection(value['data']);
+    throw new Error('Invalid manifest collection: items must be an array');
+  }
+
+  private normalizeManifestPage(page: OperatorManifestPage): OperatorManifestPage {
+    if (!page || (page.mode !== 'snapshot' && page.mode !== 'incremental')) {
+      throw new Error('Invalid manifest mode');
+    }
+
+    return {
+      ...page,
+      routes: this.normalizeManifestCollection(page.routes),
+      workOrders: this.normalizeManifestCollection(page.workOrders),
+      meters: this.normalizeManifestCollection(page.meters),
+      readings: this.normalizeManifestCollection(page.readings),
+      pendingAnomalies: this.normalizeManifestCollection(page.pendingAnomalies),
+    };
   }
 
   private saveLastDownloadDate(): void {
@@ -568,6 +601,8 @@ export class OperatorSyncService {
     routesCount: number;
     metersCount: number;
     readingsCount: number;
+    workOrdersCount: number;
+    pendingAnomaliesCount: number;
   }> {
     this.assignedDataError.set(null);
 
@@ -582,46 +617,55 @@ export class OperatorSyncService {
 
     this.isDownloading.set(true);
     try {
-      // Descargar todos los recursos en memoria en paralelo
-      const [routes, meters, readings, estados] = await Promise.all([
-        firstValueFrom(
-          this.http.get<Record<string, unknown>[]>(`${this.OPERATOR_API}/routes`, {
-            withCredentials: true,
-          }),
-        ),
-        firstValueFrom(
-          this.http.get<Record<string, unknown>[]>(`${this.OPERATOR_API}/sync`, {
-            withCredentials: true,
-          }),
-        ),
-        firstValueFrom(
-          this.http.get<Record<string, unknown>[]>(`${this.OPERATOR_API}/readings`, {
-            withCredentials: true,
-          }),
-        ),
-        this.getReadingEstados().catch(() => []),
-      ]);
-
       const currentUserId = this.authService.currentUser()?.id ?? null;
       const scope = currentUserId ? `operator:${currentUserId}` : 'assigned';
-
-      // Guardar de forma atómica en una única transacción IndexedDB
-      await this.dbService.saveCompleteAssignedSnapshot({
-        routes,
-        meters,
-        registeredReadings: readings,
-        estados,
-        scope,
-        operatorId: currentUserId ?? undefined,
-      });
+      const existing = await this.dbService.getAssignedSnapshot(scope);
+      // A previous failed run may have left an unpublished pending snapshot.
+      // Always retry from the last complete active cursor.
+      await this.dbService.discardPendingManifest(scope);
+      const needsFreshSnapshot =
+        !existing || existing.manifestProtocolVersion !== MANIFEST_PROTOCOL_VERSION;
+      let cursor: string | null = needsFreshSnapshot ? null : (existing.cursor ?? null);
+      let page: OperatorManifestPage | null = null;
+      let restarted = false;
+      do {
+        let params = new HttpParams().set('limit', '100');
+        if (cursor !== null) params = params.set('cursor', cursor);
+        try {
+          const response = await firstValueFrom(
+            this.http.get<OperatorManifestPage>(`${this.OPERATOR_API}/sync/manifest`, {
+              params,
+              withCredentials: true,
+            }),
+          );
+          page = this.normalizeManifestPage(response);
+          await this.dbService.applyManifestPage(scope, page, currentUserId ?? undefined);
+          cursor = page.nextCursor;
+          if (!page.complete && cursor === null)
+            throw new Error('Manifest page incomplete without nextCursor');
+        } catch (error: unknown) {
+          if (error instanceof HttpErrorResponse && error.status === 409 && !restarted) {
+            restarted = true;
+            cursor = null;
+            continue;
+          }
+          throw error;
+        }
+      } while (!page?.complete);
+      const snapshot = await this.dbService.getAssignedSnapshot(scope);
+      if (!snapshot) throw new Error('Manifest snapshot unavailable after download');
+      const estados = await this.getReadingEstados().catch(() => []);
+      if (estados.length > 0) await this.dbService.saveEstadosCache(estados);
 
       this.markInitialSyncDone();
       this.saveLastDownloadDate();
 
       const result = {
-        routesCount: routes.length,
-        metersCount: meters.length,
-        readingsCount: readings.length,
+        routesCount: snapshot.routes.length,
+        metersCount: snapshot.meters.length,
+        readingsCount: snapshot.registeredReadings.length,
+        workOrdersCount: snapshot.workOrders.length,
+        pendingAnomaliesCount: snapshot.pendingAnomalies.length,
       };
 
       this.toastService.success(
