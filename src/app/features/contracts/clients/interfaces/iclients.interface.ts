@@ -84,6 +84,7 @@ export interface SearchClientsParams {
   identificacion?: string;
   nombres?: string;
   apellidos?: string;
+  email?: string;
   activo?: boolean;
   page?: number;
   limit?: number;
