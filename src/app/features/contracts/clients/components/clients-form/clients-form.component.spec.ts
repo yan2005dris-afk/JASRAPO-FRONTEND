@@ -59,7 +59,7 @@ describe('ClientsFormComponent', () => {
             anterior: null,
             siguiente: null,
           },
-        })
+        }),
       ),
       createClient: vi.fn().mockReturnValue(of({})),
       updateClient: vi.fn().mockReturnValue(of({})),
