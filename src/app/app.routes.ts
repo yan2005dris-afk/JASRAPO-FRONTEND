@@ -10,6 +10,14 @@ export const routes: Routes = [
     canActivate: [guestGuard],
   },
   {
+    path: 'auth/invitations/accept',
+    loadComponent: () =>
+      import('./features/auth/accept-invitation/accept-invitation.component').then(
+        (m) => m.AcceptInvitationComponent,
+      ),
+    canActivate: [guestGuard],
+  },
+  {
     path: 'consulta-planilla',
     canActivate: [guestGuard],
     children: [
@@ -26,6 +34,71 @@ export const routes: Routes = [
           import('./features/consulta-planilla/preview-planilla/preview-planilla.component').then(
             (m) => m.PreviewPlanillaComponent,
           ),
+      },
+    ],
+  },
+  {
+    path: 'app/operador',
+    loadComponent: () =>
+      import('./layout/operator-layout/operator-layout.component').then(
+        (m) => m.OperatorLayoutComponent,
+      ),
+    canActivate: [authGuard],
+    children: [
+      {
+        // Redirect legacy URL para backward compatibility
+        path: 'tareas',
+        redirectTo: 'rutas',
+        pathMatch: 'full',
+      },
+      {
+        path: 'rutas',
+        data: { breadcrumb: 'Rutas' },
+        loadComponent: () =>
+          import('./features/operator/rutas/rutas.component').then((m) => m.RutasComponent),
+      },
+      {
+        path: 'lecturas',
+        data: { breadcrumb: 'Lecturas' },
+        loadComponent: () =>
+          import('./features/operator/readings/lecturas.component').then(
+            (m) => m.LecturasComponent,
+          ),
+      },
+      {
+        path: 'novedades',
+        data: { breadcrumb: 'Novedades' },
+        children: [
+          {
+            path: '',
+            pathMatch: 'full',
+            loadComponent: () =>
+              import('./features/operator/novelties/novedades.component').then(
+                (m) => m.NovedadesComponent,
+              ),
+          },
+          {
+            path: 'new',
+            data: { breadcrumb: 'Nueva Novedad' },
+            loadComponent: () =>
+              import('./features/operator/novelties/novedades-form/novedades-form.component').then(
+                (m) => m.NovedadesFormComponent,
+              ),
+          },
+        ],
+      },
+      {
+        path: 'sincronizar',
+        data: { breadcrumb: 'Sincronizar' },
+        loadComponent: () =>
+          import('./features/operator/sync-queue/sincronizar.component').then(
+            (m) => m.SincronizarComponent,
+          ),
+      },
+      {
+        path: '',
+        redirectTo: 'rutas',
+        pathMatch: 'full',
       },
     ],
   },
@@ -254,10 +327,24 @@ export const routes: Routes = [
           {
             path: 'ConveniosDePago',
             data: { breadcrumb: 'Convenios de Pago' },
-            loadComponent: () =>
-              import('./features/contracts/payment-agreements/payment-agreements').then(
-                (m) => m.PaymentAgreementsComponent,
-              ),
+            children: [
+              {
+                path: '',
+                pathMatch: 'full',
+                loadComponent: () =>
+                  import('./features/contracts/payment-agreements/payment-agreements').then(
+                    (m) => m.PaymentAgreementsComponent,
+                  ),
+              },
+              {
+                path: 'new',
+                data: { breadcrumb: 'Nuevo Convenio' },
+                loadComponent: () =>
+                  import('./features/contracts/payment-agreements/pages/payment-agreement-create/payment-agreement-create.component').then(
+                    (m) => m.PaymentAgreementCreateComponent,
+                  ),
+              },
+            ],
           },
           {
             path: 'RutasDeLectura',
@@ -295,6 +382,14 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/contracts/meters/components/meters-index/meters-index.component').then(
                 (m) => m.MetersIndexComponent,
+              ),
+          },
+          {
+            path: 'Medidores/:id/historial',
+            data: { breadcrumb: 'Historial de Medidor' },
+            loadComponent: () =>
+              import('./features/contracts/meters/pages/meter-history-detail/meter-history-detail.component').then(
+                (m) => m.MeterHistoryDetailComponent,
               ),
           },
           {

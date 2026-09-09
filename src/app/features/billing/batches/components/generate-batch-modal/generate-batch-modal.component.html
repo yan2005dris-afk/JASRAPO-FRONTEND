@@ -40,23 +40,14 @@
         <div class="row g-3 mb-4">
           <!-- Período -->
           <div class="col-md-4">
-            <label for="selectPeriodoLote" class="form-label fw-semibold text-dark small mb-1">
-              Período <span class="text-danger">*</span>
-            </label>
-            <select
-              id="selectPeriodoLote"
-              class="form-select shadow-none"
-              [ngModel]="periodoId()"
-              (ngModelChange)="onPeriodoChange($event)"
+            <app-period-picker
+              inputId="selectPeriodoLote"
+              label="Período"
+              [selectedPeriodId]="periodoId()"
+              [required]="true"
               [disabled]="isLoading()"
-            >
-              <option [ngValue]="null">Seleccione un período...</option>
-              @for (p of periodos(); track p.periodoId) {
-                <option [ngValue]="p.periodoId">
-                  {{ p.nombre || 'Período #' + p.periodoId }} ({{ p.estado }})
-                </option>
-              }
-            </select>
+              (periodSelected)="onPeriodoChange($event)"
+            />
           </div>
 
           <!-- Mes a Facturar -->
@@ -116,7 +107,8 @@
           } @else if (routes().length === 0) {
             <div class="text-center py-3 text-muted small">
               <i class="bi bi-info-circle me-1"></i>
-              No se encontraron rutas de toma de lectura planificadas para este período.
+              No se encontraron rutas de toma de lectura completadas disponibles para prefacturación
+              en este período.
             </div>
           } @else {
             <div class="table-responsive bg-white rounded-2 border">

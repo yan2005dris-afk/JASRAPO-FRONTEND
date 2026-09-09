@@ -1,4 +1,6 @@
+import '@angular/compiler';
 import { vi } from 'vitest';
+
 
 const localStorageMock = (() => {
   let store: Record<string, string> = {};

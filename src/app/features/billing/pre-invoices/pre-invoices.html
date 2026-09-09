@@ -153,22 +153,14 @@
           </div>
 
           <!-- Filter Periodo ID -->
-          <div class="input-group search-group" style="max-width: 200px">
-            <span class="input-group-text bg-white border-end-0 text-muted ps-2 pe-1">
-              <i class="bi bi-calendar3"></i>
-            </span>
-            <select
-              class="form-select form-select-sm border-start-0 ps-0 shadow-none"
-              [(ngModel)]="filterPeriodoId"
-              (change)="loadPreInvoices()"
-            >
-              <option [ngValue]="null">Período...</option>
-              @for (p of periodosCatalog; track p.periodoId) {
-                <option [ngValue]="p.periodoId">
-                  {{ periodoLabel(p) }}
-                </option>
-              }
-            </select>
+          <div class="input-group search-group" style="max-width: 220px">
+            <app-period-picker
+              inputId="filterPeriodoId"
+              label=""
+              placeholder="Buscar período..."
+              [selectedPeriodId]="filterPeriodoId"
+              (periodSelected)="onPeriodFilterChange($event)"
+            />
           </div>
         </div>
 

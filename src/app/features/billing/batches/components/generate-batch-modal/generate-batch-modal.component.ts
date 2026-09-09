@@ -18,11 +18,13 @@ import { ReadingRoutesService } from '../../../../contracts/reading-routes/servi
 import { IReadingRoute } from '../../../../contracts/reading-routes/interfaces/ireading-route.interface';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
+import { PeriodPickerComponent } from '../../../../../shared/components/period-picker/period-picker.component';
+import { PeriodsService } from '../../../../../shared/services/periods.service';
 
 @Component({
   selector: 'app-generate-batch-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, StatusBadgeComponent],
+  imports: [CommonModule, FormsModule, StatusBadgeComponent, PeriodPickerComponent],
   templateUrl: './generate-batch-modal.component.html',
   styleUrl: './generate-batch-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -31,6 +33,7 @@ export class GenerateBatchModalComponent implements OnInit {
   private readonly batchesService = inject(BatchesService);
   private readonly comunidadesService = inject(ComunidadesService);
   private readonly routesService = inject(ReadingRoutesService);
+  private readonly periodsService = inject(PeriodsService);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -61,13 +64,12 @@ export class GenerateBatchModalComponent implements OnInit {
     { id: 12, nombre: 'Diciembre' },
   ];
   readonly comunidades = signal<Comunidad[]>([]);
-  readonly periodos = signal<{ periodoId: number; nombre?: string; estado: string }[]>([]);
   readonly routes = signal<IReadingRoute[]>([]);
 
   readonly selectedRoute = computed(() => {
     const id = this.selectedRouteId();
     if (!id) return null;
-    return this.routes().find((r) => r.rutaId === id) || null;
+    return this.routes().find((r) => Number(r.rutaId) === Number(id)) || null;
   });
 
   readonly hasPendingRoutes = computed(() => {
@@ -93,11 +95,19 @@ export class GenerateBatchModalComponent implements OnInit {
       if (r.comunidadId && this.comunidadId() !== r.comunidadId) {
         this.comunidadId.set(r.comunidadId);
       }
+      const fechaRef = r.fechaPlanificada || r.fechaInicio;
+      if (fechaRef) {
+        const d = new Date(fechaRef);
+        if (!isNaN(d.getTime())) {
+          this.mes.set(d.getUTCMonth() + 1);
+        }
+      }
     }
   }
 
   ngOnInit(): void {
     this.loadCatalogs();
+    this.autoSelectActivePeriod();
   }
 
   private loadCatalogs(): void {
@@ -107,10 +117,18 @@ export class GenerateBatchModalComponent implements OnInit {
         this.cdr.markForCheck();
       },
     });
+  }
 
-    this.routesService.getPeriods().subscribe({
+  /**
+   * Auto-selecciona el período contable en estado ABIERTO. Es policy de
+   * negocio del feature: el modal siempre arranca proponiendo el período
+   * activo. Se hace en este componente (no dentro de `<app-period-picker>`)
+   * porque la convención de "arrancar con el activo" es específica del
+   * flujo de generar lote, no del selector genérico.
+   */
+  private autoSelectActivePeriod(): void {
+    this.periodsService.getPeriods().subscribe({
       next: (res) => {
-        this.periodos.set(res);
         const active = res.find((p) => p.estado === 'ABIERTO');
         if (active) {
           this.periodoId.set(active.periodoId);
@@ -121,18 +139,22 @@ export class GenerateBatchModalComponent implements OnInit {
     });
   }
 
-  onPeriodoChange(val: number | null): void {
-    this.periodoId.set(val);
+  onPeriodoChange(period: { periodoId: number; nombre?: string; estado: string } | null): void {
+    this.periodoId.set(period ? period.periodoId : null);
+    this.selectedRouteId.set(null);
     this.onFiltersChanged();
   }
 
   onComunidadChange(val: number | null): void {
     this.comunidadId.set(val);
+    this.selectedRouteId.set(null);
     this.onFiltersChanged();
   }
 
   onFiltersChanged(): void {
     const pId = this.periodoId();
+    this.selectedRouteId.set(null);
+
     if (!pId) {
       this.routes.set([]);
       return;
@@ -146,11 +168,12 @@ export class GenerateBatchModalComponent implements OnInit {
         periodoId: pId,
         comunidadId: this.comunidadId() || undefined,
         tipoRuta: 'TOMA_LECTURA',
+        estado: 'COMPLETADA',
         limit: 50,
       })
       .subscribe({
         next: (res) => {
-          this.routes.set(res.data);
+          this.routes.set(res.data || []);
           this.isLoadingRoutes.set(false);
           this.cdr.markForCheck();
         },

@@ -16,7 +16,6 @@ import {
 } from './interfaces/ipre-invoice.interface';
 import { BatchesService } from '../batches/services/batches.service';
 import { IBatch } from '../batches/interfaces/ibatch.interface';
-import { ReadingRoutesService } from '../../contracts/reading-routes/services/reading-routes.service';
 import type { IContract } from '../../contracts/service-contracts/interfaces/icontract.interface';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
@@ -28,6 +27,8 @@ import { SendEmailModalComponent } from './components/send-email-modal/send-emai
 import { RejectModalComponent } from './components/reject-modal/reject-modal.component';
 import { PdfViewerModalComponent } from './components/pdf-viewer-modal/pdf-viewer-modal.component';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
+import { PeriodPickerComponent } from '../../../shared/components/period-picker/period-picker.component';
+import type { IAccountingPeriod } from '../../../shared/services/periods.service';
 
 @Component({
   selector: 'app-pre-invoices',
@@ -43,6 +44,7 @@ import { DatePickerComponent } from '../../../shared/components/date-picker/date
     PdfViewerModalComponent,
     ContractPickerComponent,
     DatePickerComponent,
+    PeriodPickerComponent,
   ],
   templateUrl: './pre-invoices.html',
   styleUrl: './pre-invoices.scss',
@@ -55,7 +57,6 @@ export class PreInvoicesComponent implements OnInit {
   private readonly preInvoicesService = inject(PreInvoicesService);
   private readonly router = inject(Router);
   private readonly batchesService = inject(BatchesService);
-  private readonly routesService = inject(ReadingRoutesService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -84,7 +85,6 @@ export class PreInvoicesComponent implements OnInit {
   // Catalogs
   statesCatalog: IPreInvoiceStateOption[] = [];
   lotesCatalog: IBatch[] = [];
-  periodosCatalog: { periodoId: number; nombre?: string; estado: string }[] = [];
 
   // Contrato picker (mismo patrón que Convenios de Pago)
   isContractPickerOpen = false;
@@ -94,10 +94,6 @@ export class PreInvoicesComponent implements OnInit {
   // Template helpers
   loteLabel(l: IBatch): string {
     return `Lote #${l.loteId} · ${l.periodoRel?.nombre || 'Período ' + l.periodoId}`;
-  }
-
-  periodoLabel(p: { periodoId: number; nombre?: string }): string {
-    return p.nombre || `Período ${p.periodoId}`;
   }
 
   // Modals State
@@ -136,17 +132,12 @@ export class PreInvoicesComponent implements OnInit {
         this.cdr.markForCheck();
       },
     });
+  }
 
-    this.routesService.getPeriods().subscribe({
-      next: (periods) => {
-        this.periodosCatalog = periods;
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.periodosCatalog = [];
-        this.cdr.markForCheck();
-      },
-    });
+  onPeriodFilterChange(period: IAccountingPeriod | null): void {
+    this.filterPeriodoId = period ? period.periodoId : null;
+    this.currentPage = 1;
+    this.loadPreInvoices();
   }
 
   // ---------- Buscador de contratos ----------

@@ -80,6 +80,7 @@ export interface UpdateClientRequest {
 }
 
 export interface SearchClientsParams {
+  search?: string;
   nombreCompleto?: string;
   identificacion?: string;
   nombres?: string;

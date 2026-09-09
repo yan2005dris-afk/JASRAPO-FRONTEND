@@ -15,6 +15,7 @@ export interface IMeter {
   estado?: IMeterStatus;
   fechaInstalacion: string | null;
   contratoId: string | null;
+  clienteNombre?: string | null;
   latitud: number | null;
   longitud: number | null;
   motivo?: string;
@@ -151,8 +152,29 @@ export interface IReplaceMeterResponse {
   promedioCalculado?: number | null;
   porcentajeCobro?: number | null;
   estado: string;
+  estadoAprobacion?: 'PENDIENTE' | 'APROBADA' | 'RECHAZADA';
   solicitadoPorUsuarioId?: string | null;
   autorizadoPorUsuarioId?: string | null;
   autorizadoEn?: string | null;
   createdAt: string;
+}
+
+export interface IMeterHistory {
+  historialId: string;
+  medidorId: string;
+  serie: string;
+  marca: string;
+  modelo: string;
+  contratoId: string;
+  clienteNombre: string | null;
+  fechaDesde: string;
+  fechaHasta: string | null;
+  lecturaInicial: number;
+  lecturaFinal: number | null;
+  motivo: string | null;
+  observacion: string | null;
+  saldoPendienteCambio: number | null;
+  reemplazoSalienteId: string | null;
+  reemplazoEntranteId: string | null;
+  esReemplazo: boolean;
 }

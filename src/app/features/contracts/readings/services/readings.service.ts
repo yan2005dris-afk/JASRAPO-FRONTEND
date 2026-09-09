@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { IPaginatedResult } from '../../../billing/payments/interfaces/ipayments.interface';
 import {
-  ICreateReadingDto,
   IReading,
   IReadingFilterParams,
   IReadingStateCatalog,
@@ -31,6 +30,12 @@ export class ReadingsService {
     if (params?.contratoId) {
       httpParams = httpParams.set('contratoId', params.contratoId);
     }
+    if (params?.estado) {
+      httpParams = httpParams.set('estado', params.estado);
+    }
+    if (params?.search) {
+      httpParams = httpParams.set('search', params.search);
+    }
 
     return this.http.get<IPaginatedResult<IReading>>(this.endpoint, {
       params: httpParams,
@@ -45,31 +50,7 @@ export class ReadingsService {
     return this.http.get<IReadingStateCatalog[]>(`${this.endpoint}/estados`);
   }
 
-  createReading(dto: ICreateReadingDto, file?: File): Observable<IReading> {
-    if (file) {
-      const formData = new FormData();
-      Object.entries(dto).forEach(([key, val]) => {
-        if (val !== undefined && val !== null) {
-          formData.append(key, String(val));
-        }
-      });
-      formData.append('file', file, file.name);
-      return this.http.post<IReading>(this.endpoint, formData);
-    }
-    return this.http.post<IReading>(this.endpoint, dto);
-  }
-
-  updateReading(id: string | number, dto: IUpdateReadingDto, file?: File): Observable<IReading> {
-    if (file) {
-      const formData = new FormData();
-      Object.entries(dto).forEach(([key, val]) => {
-        if (val !== undefined && val !== null) {
-          formData.append(key, String(val));
-        }
-      });
-      formData.append('file', file, file.name);
-      return this.http.patch<IReading>(`${this.endpoint}/${id}`, formData);
-    }
+  updateReading(id: string | number, dto: IUpdateReadingDto): Observable<IReading> {
     return this.http.patch<IReading>(`${this.endpoint}/${id}`, dto);
   }
 

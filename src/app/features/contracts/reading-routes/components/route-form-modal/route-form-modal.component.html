@@ -83,23 +83,14 @@
 
           <!-- Período -->
           <div class="col-md-6">
-            <label for="selectPeriodoRuta" class="form-label fw-semibold text-dark small mb-1">
-              Período <span class="text-danger">*</span>
-            </label>
-            <select
-              id="selectPeriodoRuta"
-              class="form-select shadow-none"
-              [ngModel]="periodoId()"
-              (ngModelChange)="periodoId.set($event)"
+            <app-period-picker
+              inputId="selectPeriodoRuta"
+              label="Período"
+              [selectedPeriodId]="periodoId()"
+              [required]="true"
               [disabled]="isLoading()"
-            >
-              <option [ngValue]="null">Seleccione un período...</option>
-              @for (p of periodos(); track p.periodoId) {
-                <option [ngValue]="p.periodoId">
-                  {{ p.nombre || 'Período #' + p.periodoId }} ({{ p.estado }})
-                </option>
-              }
-            </select>
+              (periodSelected)="onPeriodSelected($event)"
+            />
           </div>
 
           <!-- Comunidad -->

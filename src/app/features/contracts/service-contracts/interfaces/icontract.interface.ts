@@ -9,14 +9,11 @@ export interface IContractState {
 }
 
 // Datos para actualizar un contrato (PATCH /contracts/{id}). Todos opcionales.
-// Si se envía medidorId, el backend reemplaza el medidor en una transacción.
+// Los medidores se gestionan exclusivamente mediante el flujo de reemplazo (POST /meters/replace).
 export interface IUpdateContractRequest {
   estado?: string;
   direccionSuministro?: string;
   sectorId?: string;
-  medidorId?: string;
-  lecturaInicial?: number;
-  // Edición completa: el backend acepta cambiar cliente, comunidad y tarifa.
   clienteId?: string;
   comunidadId?: string;
   categoriaTarifaId?: string;
@@ -119,6 +116,7 @@ export interface ISearchContractsParams {
   medidorSerie?: string;
   ubicacion?: string;
   estado?: string;
+  hasDebt?: boolean;
 }
 
 // Campos por los que se puede buscar texto en la tabla (debe coincidir con ISearchContractsParams).

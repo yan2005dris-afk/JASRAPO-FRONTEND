@@ -52,6 +52,9 @@ export class ContractsService {
     if (params.estado) {
       httpParams = httpParams.set('estado', params.estado);
     }
+    if (params.hasDebt !== undefined) {
+      httpParams = httpParams.set('hasDebt', String(params.hasDebt));
+    }
 
     return this.http.get<PaginatedResponse<IContract>>(this.endpoint, { params: httpParams });
   }
@@ -93,5 +96,22 @@ export class ContractsService {
     return this.http.get(`${this.endpoint}/${id}/pdf/responsibility-agreement`, {
       responseType: 'blob',
     });
+  }
+
+  /**
+   * Asigna el contrato a una ruta de instalación (SC-174).
+   * - Si `routeId` es undefined, el backend crea una nueva ruta INSTALACION
+   *   sin operario asignado.
+   * - Si se pasa `routeId`, se agrega a la ruta existente (que debe ser
+   *   INSTALACION y estar en PENDIENTE).
+   */
+  assignInstallationRoute(
+    contractId: string,
+    payload: { routeId?: number; fechaPlanificada?: string } = {},
+  ): Observable<unknown> {
+    return this.http.post<unknown>(
+      `${this.endpoint}/${contractId}/assign-installation-route`,
+      payload,
+    );
   }
 }

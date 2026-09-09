@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { TDocumentDefinitions, StyleDictionary, Margins } from 'pdfmake/interfaces';
 import { PdfGeneratorService } from '../../../shared/services/pdf-generator.service';
 import { LOGO_JASRAPO_BASE64 } from '../../../shared/constants/images.constant';
+import type { PlanillaPdfData } from '../../bill-inquiry/bill-inquiry.service';
 
 @Injectable({
   providedIn: 'root',
@@ -9,26 +10,22 @@ import { LOGO_JASRAPO_BASE64 } from '../../../shared/constants/images.constant';
 export class PlanillaPdfService {
   private pdfGenerator = inject(PdfGeneratorService);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async generatePlanillaBlob(data: any): Promise<Blob> {
+  async generatePlanillaBlob(data: PlanillaPdfData): Promise<Blob> {
     const definition = this.getPlanillaDefinition(data);
     return await this.pdfGenerator.generatePdfBlob(definition);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async generatePlanillaDataUrl(data: any): Promise<string> {
+  async generatePlanillaDataUrl(data: PlanillaPdfData): Promise<string> {
     const definition = this.getPlanillaDefinition(data);
     return await this.pdfGenerator.getPdfDataUrl(definition);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  downloadPlanilla(data: any, fileName = 'planilla.pdf'): void {
+  downloadPlanilla(data: PlanillaPdfData, fileName = 'planilla.pdf'): void {
     const definition = this.getPlanillaDefinition(data);
     this.pdfGenerator.downloadPdf(definition, fileName);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private getPlanillaDefinition(data: any): TDocumentDefinitions {
+  private getPlanillaDefinition(data: PlanillaPdfData): TDocumentDefinitions {
     const styles: StyleDictionary = {
       headerLogo: {
         alignment: 'left',
@@ -44,7 +41,7 @@ export class PlanillaPdfService {
       facturaTitle: {
         fontSize: 14,
         bold: true,
-        color: '#4F46E5',
+        color: '#0c9ea1',
         alignment: 'center',
         margin: [0, 5, 0, 5] as Margins,
         characterSpacing: 2,
@@ -68,7 +65,8 @@ export class PlanillaPdfService {
       tableHeader: {
         fontSize: 8,
         bold: true,
-        fillColor: '#F3F4F6',
+        fillColor: '#dbf7f8',
+        color: '#0e2728',
         alignment: 'center',
         margin: [0, 4, 0, 4] as Margins,
       },
@@ -100,7 +98,7 @@ export class PlanillaPdfService {
         margin: [0, 0, 0, 0] as Margins,
       },
       blueBanner: {
-        fillColor: '#5C6BC0',
+        fillColor: '#0c9ea1',
         color: 'white',
         margin: [0, 10, 0, 0] as Margins,
       },

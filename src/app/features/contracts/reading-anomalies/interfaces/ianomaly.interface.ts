@@ -37,6 +37,7 @@ export interface IUpdateReadingAnomalyDto {
 export interface IReadingAnomalyFilterParams {
   page?: number;
   limit?: number;
+  search?: string;
   lecturaId?: string;
   tipo?: string;
   estado?: string;

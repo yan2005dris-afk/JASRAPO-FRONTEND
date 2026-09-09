@@ -31,6 +31,16 @@
       <span class="input-group-text bg-white text-muted">
         <span class="spinner-border spinner-border-sm" role="status"></span>
       </span>
+    } @else if ((hasValue() || query()) && !disabled()) {
+      <button
+        type="button"
+        class="btn btn-outline-secondary border-start-0"
+        title="Limpiar selección"
+        aria-label="Limpiar selección"
+        (click)="onClearClick($event)"
+      >
+        <i class="bi bi-x"></i>
+      </button>
     }
   </div>
 

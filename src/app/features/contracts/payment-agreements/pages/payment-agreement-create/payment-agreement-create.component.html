@@ -1,0 +1,498 @@
+<div class="payment-agreement-create-page">
+  <div class="card border-0 shadow-sm rounded-3 overflow-hidden">
+    <!-- Header con Stepper -->
+    <div
+      class="card-header border-bottom px-4 py-3 bg-white d-flex flex-column align-items-stretch gap-3"
+    >
+      <div class="d-flex justify-content-between align-items-center gap-3 flex-wrap">
+        <div class="d-flex align-items-center gap-3">
+          <div class="header-icon-tile">
+            <i class="bi bi-file-earmark-medical"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold text-dark mb-0 fs-5">Nuevo Convenio de Pago</h5>
+            <p class="text-muted small mb-0">
+              Refinanciamiento y plan de cuotas para contratos con deuda acumulada.
+            </p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
+          (click)="cancel()"
+          [disabled]="isLoading"
+        >
+          <i class="bi bi-arrow-left"></i>
+          Volver a Convenios
+        </button>
+      </div>
+
+      <!-- Indicador de Pasos (Stepper) -->
+      <div class="stepper-nav d-flex align-items-center justify-content-between pt-2 border-top">
+        <button
+          type="button"
+          class="step-item btn p-0 border-0 bg-transparent d-flex align-items-center gap-2"
+          [class.active]="currentStep === 1"
+          [class.completed]="currentStep > 1"
+          [disabled]="isLoading"
+          (click)="backToContractSelection()"
+        >
+          <span class="step-badge">
+            @if (currentStep > 1) {
+              <i class="bi bi-check-lg"></i>
+            } @else {
+              1
+            }
+          </span>
+          <span class="step-label small fw-medium">Elegir Contrato</span>
+        </button>
+
+        <div class="step-divider flex-grow-1 mx-3" [class.completed]="currentStep > 1"></div>
+
+        <button
+          type="button"
+          class="step-item btn p-0 border-0 bg-transparent d-flex align-items-center gap-2"
+          [class.active]="currentStep === 2"
+          [disabled]="!step1Valid || isLoading"
+          (click)="goToStep(2)"
+        >
+          <span class="step-badge">2</span>
+          <span class="step-label small fw-medium">Plan de Pago y Amortización</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="card-body p-4 bg-white d-flex flex-column gap-4">
+      <!-- ═══════════ PASO 1: ELEGIR CONTRATO ═══════════ -->
+      @if (currentStep === 1) {
+        <div class="d-flex flex-column gap-3">
+          <div class="row align-items-center g-3">
+            <div class="col-md-6 col-lg-5">
+              <label
+                for="buscadorContratosConvenioPage"
+                class="form-label fw-semibold text-dark small mb-1"
+              >
+                Buscar contrato
+              </label>
+              <div class="input-group">
+                <span class="input-group-text bg-white text-muted">
+                  <i class="bi bi-search"></i>
+                </span>
+                <input
+                  id="buscadorContratosConvenioPage"
+                  type="text"
+                  class="form-control shadow-none"
+                  placeholder="Por guía, cliente, identificación o dirección..."
+                  autocomplete="off"
+                  [ngModel]="contractSearchTerm"
+                  (ngModelChange)="onContractSearchInput($event)"
+                  (keyup.enter)="loadContracts()"
+                />
+                @if (contractSearchTerm) {
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    title="Limpiar búsqueda"
+                    aria-label="Limpiar búsqueda"
+                    (click)="clearContractSearch()"
+                  >
+                    <i class="bi bi-x-lg"></i>
+                  </button>
+                }
+              </div>
+            </div>
+            <div class="col-md-6 col-lg-7 text-md-end">
+              <span class="badge bg-light text-secondary border px-3 py-2 fw-normal small">
+                <i class="bi bi-info-circle text-primary me-1"></i>
+                Listando contratos que registran planillas impagadas
+              </span>
+            </div>
+          </div>
+
+          @if (contractsError) {
+            <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-0" role="alert">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              <span class="small">{{ contractsError }}</span>
+            </div>
+          } @else if (isLoadingContracts) {
+            <div class="border rounded-3 overflow-hidden p-2">
+              <app-table-skeleton [rows]="contractsPageSize" [cols]="4" [showHeaders]="true" />
+            </div>
+          } @else if (contracts.length === 0) {
+            <div class="text-center py-5 text-muted border rounded-3 bg-light">
+              <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
+              <p class="fw-semibold mb-1 text-dark">Sin contratos encontrados</p>
+              <p class="text-muted small mb-0">
+                No se encontraron contratos para el término buscado.
+              </p>
+            </div>
+          } @else {
+            <div class="border rounded-3 overflow-hidden bg-white">
+              <app-contracts-table
+                [contracts]="contracts"
+                mode="select"
+                [selectedContract]="selectedContract"
+                (contractSelected)="markContract($event)"
+                (contractDoubleClicked)="chooseContract($event)"
+              />
+            </div>
+
+            <app-pagination
+              [totalItems]="totalContracts"
+              [currentPage]="contractsPage"
+              [pageSize]="contractsPageSize"
+              [pageSizeOptions]="[5, 10, 20]"
+              itemNameSingular="contrato"
+              itemNamePlural="contratos"
+              (pageChange)="onContractsPageChange($event)"
+              (pageSizeChange)="onContractsPageSizeChange($event)"
+            />
+          }
+
+          @if (selectedContract) {
+            <div
+              class="p-3 bg-light rounded-3 border d-flex align-items-center justify-content-between flex-wrap gap-2"
+            >
+              <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-person-check-fill text-success fs-5"></i>
+                <span class="small text-dark">
+                  Contrato seleccionado:
+                  <span class="fw-bold">{{ selectedContract.numeroGuia }}</span>
+                  · {{ formatClientName(selectedContract.cliente) }}
+                </span>
+              </div>
+              <button
+                type="button"
+                class="btn btn-primary d-flex align-items-center gap-2 px-4"
+                (click)="goToStep(2)"
+              >
+                <span>Continuar a Plan de Pago</span>
+                <i class="bi bi-arrow-right"></i>
+              </button>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- ═══════════ PASO 2: PLAN DE PAGO ═══════════ -->
+      @if (currentStep === 2 && selectedContract) {
+        <!-- Resumen del contrato elegido en el paso 1 -->
+        <div
+          class="d-flex justify-content-between align-items-center gap-3 p-3 rounded-3 border bg-light flex-wrap"
+        >
+          <div class="d-flex align-items-center gap-3">
+            <div class="header-icon-tile bg-white border">
+              <i class="bi bi-file-text text-primary"></i>
+            </div>
+            <div>
+              <div class="fw-bold text-dark fs-6">
+                {{ selectedContract.numeroGuia }} · {{ formatClientName(selectedContract.cliente) }}
+              </div>
+              <div class="text-muted small">
+                Identificación: {{ selectedContract.cliente.identificacion }} · Contrato ID #{{
+                  selectedContract.contratoId
+                }}
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary fw-medium flex-shrink-0"
+            [disabled]="isLoading"
+            (click)="backToContractSelection()"
+          >
+            <i class="bi bi-arrow-left-right me-1"></i>
+            Cambiar Contrato
+          </button>
+        </div>
+
+        @if (isSearchingDebt) {
+          <div class="text-center py-5 text-muted border rounded-3 bg-light">
+            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+            <span class="small">Consultando y calculando deuda del contrato...</span>
+          </div>
+        }
+
+        @if (searchError) {
+          <div class="alert alert-warning d-flex align-items-center gap-2 py-3" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+            <span>{{ searchError }}</span>
+          </div>
+        }
+
+        <!-- Grid de 2 Columnas Espacioso para Paso 2 -->
+        @if (debtSummary && debtSummary.deudaTotal > 0) {
+          <div class="row g-4">
+            <!-- Columna Izquierda: Parámetros del Formulario -->
+            <div class="col-xl-6 d-flex flex-column gap-3">
+              <!-- KPI Cards Grid -->
+              <div class="row g-3">
+                <div class="col-4">
+                  <div class="p-3 bg-light rounded-3 border h-100 text-center">
+                    <span class="text-muted extra-small text-uppercase fw-bold d-block mb-1"
+                      >Deuda Total</span
+                    >
+                    <span class="fs-5 fw-bold text-danger tabular-nums">
+                      ${{ debtSummary.deudaTotal | number: '1.2-2' }}
+                    </span>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="p-3 bg-light rounded-3 border h-100 text-center">
+                    <span class="text-muted extra-small text-uppercase fw-bold d-block mb-1"
+                      >Meses Mora</span
+                    >
+                    <span class="fs-5 fw-bold text-dark tabular-nums">
+                      {{ debtSummary.maxMesesAtrasado }} <small class="text-muted fs-6">m</small>
+                    </span>
+                  </div>
+                </div>
+                <div class="col-4">
+                  <div class="p-3 bg-light rounded-3 border h-100 text-center">
+                    <span class="text-muted extra-small text-uppercase fw-bold d-block mb-1"
+                      >Prefacturas</span
+                    >
+                    <span class="fs-5 fw-bold text-dark tabular-nums">
+                      {{ debtSummary.totalPrefacturasImpagadas }}
+                      <small class="text-muted fs-6">pend.</small>
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Formulario de Configuración -->
+              <div class="p-4 border rounded-3 bg-white shadow-xs">
+                <h6
+                  class="fw-bold text-dark small text-uppercase mb-3 d-flex align-items-center gap-2"
+                >
+                  <i class="bi bi-sliders text-primary"></i>
+                  Configuración de Cuotas y Financiamiento
+                </h6>
+
+                <div class="d-flex flex-column gap-3">
+                  <!-- Cuotas con chips -->
+                  <div>
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <label
+                        for="inputNumeroCuotasPage"
+                        class="form-label fw-semibold text-dark small mb-0"
+                      >
+                        Número de Cuotas <span class="text-danger">*</span>
+                      </label>
+                      <!-- Quick select chips -->
+                      <div class="d-flex gap-1">
+                        @for (preset of [3, 6, 12, 24]; track preset) {
+                          <button
+                            type="button"
+                            class="btn btn-xs rounded-pill px-2 py-0"
+                            [class.btn-primary]="numeroCuotas === preset"
+                            [class.btn-outline-secondary]="numeroCuotas !== preset"
+                            style="font-size: 0.75rem"
+                            (click)="numeroCuotas = preset"
+                          >
+                            {{ preset }}m
+                          </button>
+                        }
+                      </div>
+                    </div>
+                    <div class="input-group">
+                      <input
+                        id="inputNumeroCuotasPage"
+                        type="number"
+                        min="1"
+                        max="24"
+                        class="form-control shadow-none fw-bold text-dark tabular-nums"
+                        [(ngModel)]="numeroCuotas"
+                        [disabled]="isLoading"
+                      />
+                      <span class="input-group-text bg-light text-muted small">meses (1 - 24)</span>
+                    </div>
+                  </div>
+
+                  <!-- Abono Inicial -->
+                  <div>
+                    <label
+                      for="inputAbonoInicialConvenioPage"
+                      class="form-label fw-semibold text-dark small mb-1"
+                    >
+                      Abono Inicial Voluntario ($)
+                    </label>
+                    <div class="input-group">
+                      <span class="input-group-text bg-light fw-bold text-muted">$</span>
+                      <input
+                        id="inputAbonoInicialConvenioPage"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        [max]="debtSummary.deudaTotal"
+                        class="form-control shadow-none fw-bold text-dark tabular-nums"
+                        placeholder="0.00"
+                        [(ngModel)]="abonoInicial"
+                        [disabled]="isLoading"
+                      />
+                    </div>
+                    @if (abonoInicial > 0) {
+                      <div class="text-success extra-small mt-1">
+                        <i class="bi bi-info-circle me-1"></i>
+                        El abono inicial reduce directamente la base a financiar.
+                      </div>
+                    }
+                  </div>
+
+                  <!-- Fecha Primer Pago -->
+                  <div>
+                    <label
+                      for="inputFechaPrimerPagoPage"
+                      class="form-label fw-semibold text-dark small mb-1"
+                    >
+                      Fecha Primer Vencimiento <span class="text-danger">*</span>
+                    </label>
+                    <app-date-picker
+                      [inputId]="'inputFechaPrimerPagoPage'"
+                      [value]="fechaPrimerPago"
+                      [disabled]="isLoading"
+                      (valueChange)="fechaPrimerPago = $event"
+                    />
+                  </div>
+
+                  <!-- Motivo -->
+                  <div>
+                    <label
+                      for="inputMotivoConvenioPage"
+                      class="form-label fw-semibold text-dark small mb-1"
+                    >
+                      Motivo / Justificación
+                    </label>
+                    <input
+                      id="inputMotivoConvenioPage"
+                      type="text"
+                      class="form-control shadow-none"
+                      placeholder="Ej. Solicitud por calamidad doméstica..."
+                      [(ngModel)]="motivo"
+                      [disabled]="isLoading"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Columna Derecha: Proyección y Tabla de Amortización -->
+            <div class="col-xl-6 d-flex flex-column gap-3">
+              <!-- Highlight de Financiamiento -->
+              <div
+                class="d-flex justify-content-between align-items-center p-3 rounded-3 bg-light border"
+              >
+                <div>
+                  <span class="text-muted extra-small text-uppercase fw-bold d-block"
+                    >Neto a Financiar</span
+                  >
+                  <span class="fw-bold text-primary tabular-nums fs-4"
+                    >${{ netFinancedDebt | number: '1.2-2' }}</span
+                  >
+                </div>
+                <div class="text-end">
+                  <span class="text-muted extra-small text-uppercase fw-bold d-block"
+                    >Cuota Estimada</span
+                  >
+                  <span class="fw-bold text-success tabular-nums fs-4">
+                    ${{ (numeroCuotas > 0 ? netFinancedDebt / numeroCuotas : 0) | number: '1.2-2' }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Tabla de Amortización Estimada -->
+              @if (simulatedInstallments.length > 0) {
+                <div>
+                  <h6
+                    class="fw-bold text-dark small text-uppercase mb-2 d-flex align-items-center gap-1"
+                    style="letter-spacing: 0.5px"
+                  >
+                    <i class="bi bi-table text-primary"></i>
+                    Tabla de Amortización Estimada
+                  </h6>
+                  <div
+                    class="table-responsive rounded-3 border bg-white"
+                    style="max-height: 380px; overflow-y: auto"
+                  >
+                    <table class="table table-hover align-middle mb-0 custom-table">
+                      <caption class="visually-hidden">
+                        Simulación de cuotas del convenio
+                      </caption>
+                      <thead class="bg-light sticky-top">
+                        <tr>
+                          <th scope="col" class="ps-3 text-muted small"># Cuota</th>
+                          <th scope="col" class="text-muted small">Fecha Vencimiento</th>
+                          <th scope="col" class="text-end text-muted small">Valor</th>
+                          <th scope="col" class="text-end pe-3 text-muted small">Saldo</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (cuota of simulatedInstallments; track cuota.numeroCuota) {
+                          <tr>
+                            <td class="ps-3 small fw-bold text-dark">
+                              Cuota {{ cuota.numeroCuota }}
+                            </td>
+                            <td class="small text-muted">{{ cuota.fechaVencimiento }}</td>
+                            <td class="text-end small fw-bold text-dark tabular-nums">
+                              ${{ cuota.valorCuota | number: '1.2-2' }}
+                            </td>
+                            <td class="text-end pe-3 small text-muted tabular-nums">
+                              ${{ cuota.saldoRestante | number: '1.2-2' }}
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+    </div>
+
+    <!-- Footer: Acciones Finales -->
+    @if (currentStep === 2 && selectedContract && debtSummary && debtSummary.deudaTotal > 0) {
+      <div
+        class="card-footer bg-light border-top px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2"
+      >
+        <button
+          type="button"
+          class="btn btn-outline-secondary px-3"
+          [disabled]="isLoading"
+          (click)="backToContractSelection()"
+        >
+          <i class="bi bi-arrow-left me-1"></i>
+          Paso Anterior
+        </button>
+
+        <div class="d-flex align-items-center gap-2">
+          <button
+            type="button"
+            class="btn btn-outline-secondary px-3"
+            [disabled]="isLoading"
+            (click)="cancel()"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary d-flex align-items-center gap-2 px-4 fw-medium"
+            [disabled]="!isFormValid || isLoading"
+            (click)="submit()"
+          >
+            @if (isLoading) {
+              <span class="spinner-border spinner-border-sm" role="status"></span>
+              <span>Creando Convenio...</span>
+            } @else {
+              <i class="bi bi-check-circle-fill"></i>
+              <span>Confirmar y Crear Convenio</span>
+            }
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

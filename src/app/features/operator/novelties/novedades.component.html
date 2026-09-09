@@ -1,0 +1,69 @@
+<div class="novelties-screen">
+  <div class="novelties-header">
+    <h1 class="novelties-title">Novedades</h1>
+    <button class="new-btn" type="button" (click)="newNovedad()">
+      <i class="bi bi-plus-lg"></i> Nueva
+    </button>
+  </div>
+
+  @if (isOffline()) {
+    <div class="offline-banner">
+      <i class="bi bi-wifi-off"></i>
+      Sin conexión — las novedades se listan solo online.
+      <button class="retry-link" type="button" (click)="retry()">Reintentar</button>
+    </div>
+  } @else if (isLoading()) {
+    <div class="skeleton-list" aria-busy="true">
+      @for (i of [1, 2, 3]; track i) {
+        <div class="skeleton-card"></div>
+      }
+    </div>
+  } @else if (anomalies().length === 0) {
+    <div class="empty-state">
+      <i class="bi bi-check-circle"></i>
+      <p>Sin novedades registradas.</p>
+    </div>
+  } @else {
+    <div class="anomaly-list">
+      @for (item of anomalies(); track item.lecturaId) {
+        <div class="anomaly-card">
+          @if (item.meterDto) {
+            <app-meter-card [meter]="item.meterDto" [showArrow]="false" />
+          } @else {
+            <div class="meter-fallback">
+              <i class="bi bi-speedometer2"></i>
+              <span>Serie: {{ item.medidorSerie }}</span>
+            </div>
+          }
+
+          <div class="anomaly-footer">
+            <span class="anomaly-fecha">
+              <i class="bi bi-calendar3"></i>
+              {{ item.fecha | date: 'dd/MM/yyyy HH:mm' }}
+            </span>
+            <span class="anomaly-estado estado-{{ item.estado.toLowerCase() }}">
+              {{ item.estado }}
+            </span>
+          </div>
+
+          @if (item.anomalias.length) {
+            <div class="anomaly-chips">
+              @for (a of item.anomalias; track a.tipo) {
+                <span class="anomaly-chip">
+                  <i class="bi bi-exclamation-triangle-fill"></i>
+                  {{ a.tipo }}
+                </span>
+              }
+            </div>
+          }
+
+          <div class="anomaly-actions">
+            <button class="btn-edit" type="button" (click)="editNovedad(item)">
+              <i class="bi bi-pencil-fill"></i> Editar
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

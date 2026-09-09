@@ -13,18 +13,40 @@
       <span class="text-dark fw-semibold small"> Detalle de Ruta #{{ routeId }} </span>
     </div>
 
-    <!-- Status Action Controls -->
+    <!-- Status Action Controls & PDF Export -->
     @if (readingRoute(); as route) {
       <div class="d-flex align-items-center gap-2">
+        <button
+          type="button"
+          class="btn btn-sm btn-outline-dark d-flex align-items-center gap-1 shadow-sm"
+          id="btn-export-pdf"
+          (click)="exportFieldSheetPdf()"
+          [disabled]="isExportingPdf()"
+          title="Descargar Hoja de Campo en PDF para imprimir"
+        >
+          @if (!isExportingPdf()) {
+            <i class="bi bi-file-earmark-pdf-fill text-danger"></i>
+            <span>Exportar Hoja de Campo PDF</span>
+          } @else {
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            <span>Generando PDF...</span>
+          }
+        </button>
+
         @if (route.estado === 'PENDIENTE') {
           <button
             type="button"
             class="btn btn-sm btn-success d-flex align-items-center gap-1 shadow-sm"
             (click)="updateRouteStatus('EN_PROGRESO')"
-            [disabled]="isChangingStatus()"
+            [disabled]="isChangingStatus() || !route.operarioId"
+            [title]="!route.operarioId ? 'Debe asignar un operario antes de iniciar la ruta' : ''"
           >
             <i class="bi bi-play-circle-fill"></i>
-            Iniciar Ruta (Enviar a Campo)
+            {{
+              !route.operarioId
+                ? 'Iniciar Ruta (Requiere operario)'
+                : 'Iniciar Ruta (Enviar a Campo)'
+            }}
           </button>
         }
         @if (route.estado === 'EN_PROGRESO') {
@@ -110,10 +132,14 @@
                 Operario Asignado
               </div>
               <div class="fw-semibold text-dark">
-                {{ getOperarioNombre(route.operarioId) }}
+                {{
+                  route.operarioId ? getOperarioNombre(route.operarioId) : 'Sin operario asignado'
+                }}
               </div>
               <div class="text-muted" style="font-size: 0.75rem">
-                {{ 'Operario ID: ' + (route.operarioId || '—') }}
+                {{
+                  route.operarioId ? 'Operario ID: ' + route.operarioId : 'Pendiente de asignación'
+                }}
               </div>
             </div>
           </div>
@@ -462,13 +488,15 @@
     />
   }
 
-  <!-- Modal Registrar / Editar Lectura -->
-  @if (isFormModalOpen()) {
-    <app-reading-form-modal
-      [reading]="selectedReadingForEdit()"
-      (saved)="onReadingSaved()"
-      (closed)="closeFormModal()"
-    />
+  <!-- Modal Editar Lectura -->
+  @if (isFormModalOpen(); as isOpen) {
+    @if (selectedReadingForEdit(); as reading) {
+      <app-reading-form-modal
+        [reading]="reading"
+        (saved)="onReadingSaved()"
+        (closed)="closeFormModal()"
+      />
+    }
   }
 
   <!-- Modal Reportar Novedad para Orden de Trabajo -->

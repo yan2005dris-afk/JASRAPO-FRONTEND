@@ -21,6 +21,7 @@ describe('MainLayout', () => {
       sid: signal('mock-sid'),
       tokenCreatedAt: signal(new Date().toISOString()),
       tokenExpiresAt: signal(new Date().toISOString()),
+      isOperator: vi.fn(() => false),
     };
 
     const mockMenuService = {

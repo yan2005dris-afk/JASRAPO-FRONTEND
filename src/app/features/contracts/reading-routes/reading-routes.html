@@ -90,6 +90,16 @@
           <i class="bi bi-x-circle"></i>
           Limpiar
         </button>
+
+        <!-- Botón de Exportar Dropdown -->
+        <app-dropdown
+          label="Exportar"
+          icon="bi bi-download"
+          [items]="exportItems"
+          [disabled]="routes.length === 0"
+          buttonClass="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm px-3"
+          (actionSelected)="handleExportAction($event)"
+        ></app-dropdown>
       </div>
     </div>
 
@@ -155,10 +165,19 @@
                     }
                   </td>
                   <td>
-                    <span class="badge badge-soft-info d-inline-flex align-items-center gap-1">
-                      <i class="bi bi-person-badge"></i>
-                      {{ getOperarioNombre(route.operarioId) }}
-                    </span>
+                    @if (route.operarioId) {
+                      <span class="badge badge-soft-info d-inline-flex align-items-center gap-1">
+                        <i class="bi bi-person-badge"></i>
+                        {{ getOperarioNombre(route.operarioId) }}
+                      </span>
+                    } @else {
+                      <span
+                        class="badge bg-secondary bg-opacity-10 text-secondary d-inline-flex align-items-center gap-1"
+                      >
+                        <i class="bi bi-person-x"></i>
+                        Sin operario
+                      </span>
+                    }
                   </td>
                   <td class="small text-muted">
                     {{ route.fechaPlanificada || '—' }}
@@ -191,16 +210,30 @@
                         </li>
                         @if (route.estado === 'PENDIENTE') {
                           <li>
-                            <button
-                              class="dropdown-item d-flex align-items-center gap-2 text-success fw-medium"
-                              (click)="changeRouteStatus(route, 'EN_PROGRESO')"
-                            >
-                              <i
-                                class="bi bi-play-circle-fill text-success"
-                                style="font-size: 0.85rem"
-                              ></i>
-                              Iniciar / Enviar a Campo
-                            </button>
+                            @if (route.operarioId) {
+                              <button
+                                class="dropdown-item d-flex align-items-center gap-2 text-success fw-medium"
+                                (click)="changeRouteStatus(route, 'EN_PROGRESO')"
+                              >
+                                <i
+                                  class="bi bi-play-circle-fill text-success"
+                                  style="font-size: 0.85rem"
+                                ></i>
+                                Iniciar / Enviar a Campo
+                              </button>
+                            } @else {
+                              <button
+                                class="dropdown-item d-flex align-items-center gap-2 text-muted"
+                                disabled
+                                title="Debe asignar un operario antes de enviar la ruta a campo"
+                              >
+                                <i
+                                  class="bi bi-play-circle text-muted"
+                                  style="font-size: 0.85rem"
+                                ></i>
+                                Iniciar (Requiere operario)
+                              </button>
+                            }
                           </li>
                         }
                         @if (route.estado === 'EN_PROGRESO') {

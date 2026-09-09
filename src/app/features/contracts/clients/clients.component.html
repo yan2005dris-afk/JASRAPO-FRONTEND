@@ -26,7 +26,7 @@
       }
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
-        <!-- Input de búsqueda -->
+        <!-- Input de búsqueda con buscador global -->
         <div class="input-group search-group">
           <span class="input-group-text bg-white border-end-0 text-muted ps-3 pe-2">
             <i class="bi bi-search"></i>
@@ -35,20 +35,31 @@
           <input
             type="text"
             class="form-control border-start-0 ps-0 shadow-none"
-            placeholder="Buscar cliente..."
-            [(ngModel)]="searchTerm"
+            placeholder="Buscar por cédula, nombres, razón social, email o teléfono..."
+            [ngModel]="searchTerm()"
+            (ngModelChange)="onSearchTermChange($event)"
             (keyup.enter)="searchClients()"
           />
+          @if (searchTerm()) {
+            <button
+              type="button"
+              class="btn btn-outline-secondary border-start-0"
+              title="Limpiar búsqueda"
+              aria-label="Limpiar búsqueda"
+              (click)="onSearchTermChange('')"
+            >
+              <i class="bi bi-x-lg"></i>
+            </button>
+          }
         </div>
 
-        <!-- Tipo de búsqueda -->
-        <select class="form-select shadow-none" style="width: 190px" [(ngModel)]="searchType">
-          <option value="nombreCompleto">Nombres</option>
-          <option value="identificacion">Identificación</option>
-        </select>
-
         <!-- Estado -->
-        <select class="form-select shadow-none" style="width: 150px" [(ngModel)]="estadoBusqueda">
+        <select
+          class="form-select shadow-none"
+          style="width: 150px"
+          [ngModel]="estadoBusqueda()"
+          (ngModelChange)="onEstadoBusquedaChange($event)"
+        >
           <option value="todos">Todos</option>
           <option value="activos">Activos</option>
           <option value="inactivos">Inactivos</option>
@@ -58,39 +69,39 @@
         <button
           class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="searchClients()"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         >
-          @if (isLoading) {
+          @if (isLoading()) {
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
           }
 
-          @if (!isLoading) {
+          @if (!isLoading()) {
             <i class="bi bi-search"></i>
           }
 
-          {{ isLoading ? 'Buscando...' : 'Buscar' }}
+          {{ isLoading() ? 'Buscando...' : 'Buscar' }}
         </button>
 
         <!-- Botón Limpiar -->
         <button
           class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="limpiarBusqueda()"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         >
           <i class="bi bi-x-circle"></i>
           Limpiar
         </button>
 
-        <!-- Botón Exportar PDF: navega al reporte con los filtros actuales (solo fuera de modo selección) -->
+        <!-- Botón de Exportar Dropdown -->
         @if (!selectionMode()) {
-          <button
-            class="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium px-3"
-            (click)="exportarPdf()"
-            title="Generar el listado de clientes en PDF"
-          >
-            <i class="bi bi-file-earmark-pdf"></i>
-            Exportar PDF
-          </button>
+          <app-dropdown
+            label="Exportar"
+            icon="bi bi-download"
+            [items]="exportItems"
+            [disabled]="clients().length === 0"
+            buttonClass="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm px-3"
+            (actionSelected)="handleExportAction($event)"
+          ></app-dropdown>
         }
       </div>
     </div>
@@ -98,7 +109,7 @@
     <!-- Tabla -->
     <div class="pt-3">
       <!-- Estado inicial -->
-      @if (!hasFetched && !isLoading) {
+      @if (!hasFetched() && !isLoading()) {
         <div class="empty-state">
           <div class="empty-state-icon">
             <i class="bi bi-search"></i>
@@ -111,14 +122,14 @@
       }
 
       <!-- Cargando -->
-      @if (isLoading) {
+      @if (isLoading()) {
         <div class="p-3">
           <app-table-skeleton [rows]="5" [cols]="selectionMode() ? 4 : 8" />
         </div>
       }
 
       <!-- Tabla de clientes -->
-      @if (hasFetched && !isLoading) {
+      @if (hasFetched() && !isLoading()) {
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 custom-table">
             <thead>
@@ -147,7 +158,7 @@
             </thead>
 
             <tbody>
-              @for (client of pagedClients; track obtenerIdCliente(client) ?? $index) {
+              @for (client of clients(); track obtenerIdCliente(client) ?? $index) {
                 <tr
                   [class.selectable-row]="selectionMode()"
                   [attr.role]="selectionMode() ? 'button' : null"
@@ -224,7 +235,7 @@
                         </button>
                         <ul
                           class="dropdown-menu dropdown-menu-end shadow-sm border-0"
-                          [class.show]="openDropdownId === obtenerIdCliente(client)"
+                          [class.show]="openDropdownId() === obtenerIdCliente(client)"
                           style="min-width: 130px"
                         >
                           <li>
@@ -267,7 +278,7 @@
                 </tr>
               }
 
-              @if (pagedClients.length === 0) {
+              @if (clients().length === 0) {
                 <tr>
                   <td colspan="9" class="text-center py-5">
                     <i class="bi bi-person-x fs-2 d-block mb-2 text-muted opacity-50"></i>
@@ -286,9 +297,9 @@
     <!-- Footer / Paginación -->
     <div class="card-footer bg-white border-top px-4 py-3">
       <app-pagination
-        [totalItems]="totalItems"
-        [currentPage]="currentPage"
-        [pageSize]="pageSize"
+        [totalItems]="totalItems()"
+        [currentPage]="currentPage()"
+        [pageSize]="pageSize()"
         [pageSizeOptions]="pageSizeOptions"
         itemNameSingular="cliente"
         itemNamePlural="clientes"
@@ -300,12 +311,12 @@
 </div>
 
 <!-- Modal Crear / Editar Cliente -->
-@if (isModalOpen) {
+@if (isModalOpen()) {
   <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5)">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content border-0 shadow">
         <app-clients-form
-          [clienteAEditar]="objetoClienteAEditar"
+          [clienteAEditar]="objetoClienteAEditar()"
           (formSubmitted)="searchClients()"
           (formClosed)="cerrarModal()"
         ></app-clients-form>
@@ -315,7 +326,8 @@
 }
 
 <!-- Modal Ver Detalle Cliente -->
-@if (isDetalleModalOpen && clienteDetalleSeleccionado) {
+@if (isDetalleModalOpen() && clienteDetalleSeleccionado()) {
+  @let detalle = clienteDetalleSeleccionado()!;
   <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0, 0, 0, 0.5)">
     <div class="modal-dialog modal-dialog-centered modal-lg">
       <div class="modal-content border-0 shadow rounded-4">
@@ -341,11 +353,11 @@
 
             <div>
               <h5 class="fw-bold mb-1">
-                {{ obtenerNombreCliente(clienteDetalleSeleccionado) }}
+                {{ obtenerNombreCliente(detalle) }}
               </h5>
 
               <div>
-                @if (clienteDetalleSeleccionado.activo === false) {
+                @if (detalle.activo === false) {
                   <span class="badge rounded-pill text-bg-danger">Inactivo</span>
                 } @else {
                   <span class="badge rounded-pill text-bg-success">Activo</span>
@@ -363,9 +375,9 @@
                 </span>
                 <strong>
                   {{
-                    $any(clienteDetalleSeleccionado.tipoIdentificacion)?.nombre ||
-                      $any(clienteDetalleSeleccionado.tipoIdentificacion)?.codigo ||
-                      clienteDetalleSeleccionado.tipoIdentificacionId ||
+                    $any(detalle.tipoIdentificacion)?.nombre ||
+                      $any(detalle.tipoIdentificacion)?.codigo ||
+                      detalle.tipoIdentificacionId ||
                       'No registrado'
                   }}
                 </strong>
@@ -378,7 +390,7 @@
                   <i class="bi bi-fingerprint"></i>
                   Identificación
                 </span>
-                <strong>{{ clienteDetalleSeleccionado.identificacion || 'No registrada' }}</strong>
+                <strong>{{ detalle.identificacion || 'No registrada' }}</strong>
               </div>
             </div>
 
@@ -388,7 +400,7 @@
                   <i class="bi bi-envelope"></i>
                   Correo electrónico
                 </span>
-                <strong>{{ clienteDetalleSeleccionado.email || 'No registrado' }}</strong>
+                <strong>{{ detalle.email || 'No registrado' }}</strong>
               </div>
             </div>
 
@@ -398,7 +410,7 @@
                   <i class="bi bi-telephone"></i>
                   Teléfono
                 </span>
-                <strong>{{ clienteDetalleSeleccionado.telefono || 'No registrado' }}</strong>
+                <strong>{{ detalle.telefono || 'No registrado' }}</strong>
               </div>
             </div>
 
@@ -408,9 +420,7 @@
                   <i class="bi bi-telephone-plus"></i>
                   Teléfono secundario
                 </span>
-                <strong>{{
-                  clienteDetalleSeleccionado.telefonoSecundario || 'No registrado'
-                }}</strong>
+                <strong>{{ detalle.telefonoSecundario || 'No registrado' }}</strong>
               </div>
             </div>
 
@@ -422,18 +432,15 @@
                 </span>
 
                 <div class="d-flex gap-2 flex-wrap mt-1">
-                  @if (clienteDetalleSeleccionado.aplicaTerceraEdad) {
+                  @if (detalle.aplicaTerceraEdad) {
                     <span class="badge rounded-pill text-bg-info">Tercera edad</span>
                   }
 
-                  @if (clienteDetalleSeleccionado.aplicaDiscapacidad) {
+                  @if (detalle.aplicaDiscapacidad) {
                     <span class="badge rounded-pill text-bg-warning">Discapacidad</span>
                   }
 
-                  @if (
-                    !clienteDetalleSeleccionado.aplicaTerceraEdad &&
-                    !clienteDetalleSeleccionado.aplicaDiscapacidad
-                  ) {
+                  @if (!detalle.aplicaTerceraEdad && !detalle.aplicaDiscapacidad) {
                     <span class="text-muted small">No aplica</span>
                   }
                 </div>
@@ -446,9 +453,7 @@
                   <i class="bi bi-geo-alt"></i>
                   Dirección domiciliaria
                 </span>
-                <strong>{{
-                  clienteDetalleSeleccionado.direccionDomicilio || 'No registrada'
-                }}</strong>
+                <strong>{{ detalle.direccionDomicilio || 'No registrada' }}</strong>
               </div>
             </div>
           </div>
