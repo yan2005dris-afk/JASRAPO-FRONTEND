@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
+import { vi } from 'vitest';
 
 import { ClientsFormComponent } from './clients-form.component';
 import { ClientsService } from '../../services/clients.service';
@@ -8,7 +9,12 @@ import { IIdentificacion } from '../../interfaces/iclients.interface';
 describe('ClientsFormComponent', () => {
   let component: ClientsFormComponent;
   let fixture: ComponentFixture<ClientsFormComponent>;
-  let clientsServiceSpy: any;
+  let clientsServiceSpy: {
+    getIdentificationTypes: ReturnType<typeof vi.fn>;
+    searchClients: ReturnType<typeof vi.fn>;
+    createClient: ReturnType<typeof vi.fn>;
+    updateClient: ReturnType<typeof vi.fn>;
+  };
 
   const mockTiposIdentificacion: IIdentificacion[] = [
     {
@@ -39,8 +45,8 @@ describe('ClientsFormComponent', () => {
 
   beforeEach(async () => {
     clientsServiceSpy = {
-      getIdentificationTypes: () => of(mockTiposIdentificacion),
-      searchClients: () =>
+      getIdentificationTypes: vi.fn().mockReturnValue(of(mockTiposIdentificacion)),
+      searchClients: vi.fn().mockReturnValue(
         of({
           data: [],
           meta: {
@@ -53,9 +59,10 @@ describe('ClientsFormComponent', () => {
             anterior: null,
             siguiente: null,
           },
-        }),
-      createClient: () => of({}),
-      updateClient: () => of({}),
+        })
+      ),
+      createClient: vi.fn().mockReturnValue(of({})),
+      updateClient: vi.fn().mockReturnValue(of({})),
     };
 
     await TestBed.configureTestingModule({
