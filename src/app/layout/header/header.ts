@@ -3,9 +3,11 @@ import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { LayoutService } from '../../core/services/layout.service';
 
+import { SyncStatusWidgetComponent } from '../sync-status-widget/sync-status-widget.component';
+
 @Component({
   selector: 'app-header',
-  imports: [RouterModule],
+  imports: [RouterModule, SyncStatusWidgetComponent],
   templateUrl: './header.html',
   styleUrl: './header.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

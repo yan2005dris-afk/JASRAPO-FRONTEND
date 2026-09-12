@@ -1,0 +1,29 @@
+<nav class="operator-bottom-nav" aria-label="Navegación móvil principal">
+  <div class="nav-items-container">
+    @for (tab of bottomNavItems(); track tab.id) {
+      <a
+        [routerLink]="tab.route"
+        routerLinkActive="active"
+        class="nav-tab"
+        [id]="'tab-' + tab.id"
+        [attr.aria-label]="tab.name"
+      >
+        <div class="icon-wrapper position-relative">
+          @if (tab.icon?.startsWith('bi-')) {
+            <i class="bi" [ngClass]="tab.icon"></i>
+          } @else if (tab.icon) {
+            <span class="material-symbols-outlined">{{ tab.icon }}</span>
+          } @else {
+            <i class="bi bi-circle"></i>
+          }
+
+          <!-- Reactive badge -->
+          @if (tab.badgeSignalKey === 'syncQueued' && syncService.totalQueued() > 0) {
+            <span class="nav-badge">{{ syncService.totalQueued() }}</span>
+          }
+        </div>
+        <span class="tab-label">{{ tab.name }}</span>
+      </a>
+    }
+  </div>
+</nav>

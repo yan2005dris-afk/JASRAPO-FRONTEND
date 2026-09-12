@@ -24,14 +24,14 @@ export const authGuard: CanActivateFn = (_, state) => {
   const isOperatorRoute = url.startsWith('/app/operador');
   const isAdminRoute = url.startsWith('/app') && !isOperatorRoute;
 
-  // Operador intentando acceder a rutas del panel admin
+  // Si es un operador estricto intentando acceder a rutas administrativas
   if (isOperator && isAdminRoute) {
     router.navigate(['/app/operador/rutas']);
     return false;
   }
 
-  // No operador intentando acceder a rutas del operador
-  if (!isOperator && isOperatorRoute) {
+  // Si intenta acceder a rutas de operador pero no tiene capacidad de operador ni admin
+  if (isOperatorRoute && !authService.canAccessOperatorRoutes()) {
     router.navigate(['/app/dashboard']);
     return false;
   }

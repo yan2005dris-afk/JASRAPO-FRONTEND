@@ -1,0 +1,42 @@
+<div class="header-status d-flex align-items-center gap-2">
+  <!-- Network Badge Indicator -->
+  @if (networkService.isOnline()) {
+    <span class="status-badge online" title="Conexión Online">
+      <span class="status-dot animate-pulse"></span>
+      <span class="d-none d-sm-inline">Online</span>
+    </span>
+  } @else {
+    <span class="status-badge offline" title="Trabajando sin conexión">
+      <span class="status-dot"></span>
+      <span class="d-none d-sm-inline">Offline</span>
+    </span>
+  }
+
+  <!-- Offline Sync Badge -->
+  @if (syncService.totalPending() > 0) {
+    <button
+      type="button"
+      class="sync-badge border-0"
+      [class.syncing]="syncService.isSyncing()"
+      [disabled]="!networkService.isOnline() || syncService.isSyncing()"
+      (click)="forceSync()"
+      [title]="
+        networkService.isOnline()
+          ? 'Sincronizar ahora'
+          : 'Sincronización pendiente (sin conexión)'
+      "
+      aria-label="Sincronizar datos pendientes"
+    >
+      <i
+        class="bi"
+        [class.bi-arrow-repeat]="syncService.isSyncing()"
+        [class.bi-cloud-arrow-up-fill]="!syncService.isSyncing()"
+      ></i>
+      <span class="pending-count">{{ syncService.totalPending() }}</span>
+    </button>
+  } @else {
+    <span class="sync-badge synced" title="Todos los datos sincronizados" aria-label="Sincronizado">
+      <i class="bi bi-cloud-check-fill"></i>
+    </span>
+  }
+</div>

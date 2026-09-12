@@ -1,0 +1,113 @@
+.header-status {
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &.online {
+      background: rgba(16, 185, 129, 0.12);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+
+      .status-dot {
+        background-color: var(--success);
+        box-shadow: 0 0 6px var(--success);
+      }
+    }
+
+    &.offline {
+      background: rgba(245, 158, 11, 0.12);
+      color: var(--warning);
+      border: 1px solid rgba(245, 158, 11, 0.25);
+
+      .status-dot {
+        background-color: var(--warning);
+        box-shadow: 0 0 6px var(--warning);
+      }
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+  }
+
+  .sync-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &.synced {
+      color: var(--primary-color);
+      background: rgba(12, 158, 161, 0.08);
+      border: 1px solid var(--border-color);
+    }
+
+    &:not(.synced) {
+      background: linear-gradient(135deg, var(--warning), #d97706);
+      color: var(--white);
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+
+      &:active:not([disabled]) {
+        transform: scale(0.95);
+      }
+    }
+
+    &.syncing i {
+      animation: spin 1.2s linear infinite;
+    }
+
+    .pending-count {
+      background: rgba(0, 0, 0, 0.2);
+      color: var(--white);
+      font-size: 0.7rem;
+      padding: 1px 5px;
+      border-radius: 10px;
+      margin-left: 2px;
+    }
+
+    &[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.15);
+  }
+}

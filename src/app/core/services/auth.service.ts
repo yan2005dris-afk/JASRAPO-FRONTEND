@@ -280,9 +280,26 @@ export class AuthService {
   }
 
   /**
+   * Verifica si el usuario actual tiene rol de administrador o supervisor.
+   */
+  isAdminOrSupervisor(): boolean {
+    const role = this.currentUser()?.roleName?.toLowerCase() ?? '';
+    return role.includes('admin') || role.includes('super');
+  }
+
+  /**
+   * Determina si el usuario tiene capacidad de ingresar al módulo de campo / operador.
+   * Tanto el operador como el administrador/supervisor están autorizados.
+   */
+  canAccessOperatorRoutes(): boolean {
+    return this.isOperator() || this.isAdminOrSupervisor();
+  }
+
+  /**
    * Retorna la ruta por defecto según el rol del usuario.
    * Operadores → panel del operador. El resto → dashboard.
    */
+
   getDefaultRoute(): string {
     return this.isOperator() ? '/app/operador/rutas' : '/app/dashboard';
   }

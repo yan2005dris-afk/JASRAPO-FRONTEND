@@ -1,5 +1,5 @@
 <div class="layout-wrapper">
-  @if (layoutService.sidebarOpen() && !authService.isOperator()) {
+  @if (layoutService.sidebarOpen()) {
     <button
       type="button"
       class="sidebar-overlay border-0"
@@ -8,15 +8,13 @@
     ></button>
   }
 
-  <!-- El sidebar solo se muestra para roles que no son operador -->
-  @if (!authService.isOperator()) {
-    <app-sidebar class="layout-sidebar" [class.sidebar-hidden]="!layoutService.sidebarOpen()">
-    </app-sidebar>
-  }
+  <!-- Sidebar unificado para todos los roles con navegación adaptativa -->
+  <app-sidebar class="layout-sidebar" [class.sidebar-hidden]="!layoutService.sidebarOpen()">
+  </app-sidebar>
 
   <div
     class="layout-main-container"
-    [class.sidebar-collapsed]="!layoutService.sidebarOpen() || authService.isOperator()"
+    [class.sidebar-collapsed]="!layoutService.sidebarOpen()"
   >
     <app-header class="layout-header"></app-header>
 
@@ -25,4 +23,7 @@
       <router-outlet></router-outlet>
     </main>
   </div>
+
+  <!-- Bottom Navigation para dispositivos móviles -->
+  <app-bottom-nav></app-bottom-nav>
 </div>

@@ -2,54 +2,50 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
-
+import { BottomNavComponent } from './bottom-nav.component';
 import { AuthService } from '../../core/services/auth.service';
-import { NetworkService } from '../../core/services/network.service';
+import { MenuService } from '../../core/services/menu.service';
 import { OperatorSyncService } from '../../core/services/operator-sync.service';
 
-import { Header } from './header';
-
-describe('Header', () => {
-  let component: Header;
-  let fixture: ComponentFixture<Header>;
+describe('BottomNavComponent', () => {
+  let component: BottomNavComponent;
+  let fixture: ComponentFixture<BottomNavComponent>;
 
   beforeEach(async () => {
     const mockAuthService = {
-      logout: vi.fn(),
-      isAuthenticated: signal(true),
-      currentUser: signal({ name: 'Test User', roleName: 'Admin' }),
-      token: signal('mock-token'),
-      sid: signal('mock-sid'),
-      tokenCreatedAt: signal(new Date().toISOString()),
-      tokenExpiresAt: signal(new Date().toISOString()),
+      isOperator: vi.fn(() => true),
     };
 
-    const mockNetworkService = {
-      isOnline: signal(true),
+    const mockMenuService = {
+      menuItems: signal([]),
     };
 
     const mockSyncService = {
-      totalPending: signal(0),
-      isSyncing: signal(false),
-      syncPendingData: vi.fn().mockResolvedValue(undefined),
+      totalQueued: signal(0),
     };
 
     await TestBed.configureTestingModule({
-      imports: [Header],
+      imports: [BottomNavComponent],
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: mockAuthService },
-        { provide: NetworkService, useValue: mockNetworkService },
+        { provide: MenuService, useValue: mockMenuService },
         { provide: OperatorSyncService, useValue: mockSyncService },
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(Header);
+    fixture = TestBed.createComponent(BottomNavComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should return fallback operator tabs when menu is empty and user is operator', () => {
+    const items = component.bottomNavItems();
+    expect(items.length).toBe(4);
+    expect(items[0].route).toBe('/app/operador/rutas');
   });
 });
