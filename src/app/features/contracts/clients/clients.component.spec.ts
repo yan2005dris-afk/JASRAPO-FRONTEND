@@ -6,6 +6,7 @@ import { vi } from 'vitest';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { ClientsService } from './services/clients.service';
+import { IClient } from './interfaces/iclients.interface';
 import { ClientsComponent } from './clients.component';
 
 describe('ClientsComponent', () => {
@@ -75,5 +76,28 @@ describe('ClientsComponent', () => {
       page: 1,
       limit: 5,
     });
+  });
+
+  it('en modo selección elige automáticamente el cliente recién creado', () => {
+    fixture.componentRef.setInput('selectionMode', true);
+    fixture.detectChanges();
+
+    const seleccionado = vi.fn();
+    component.clientSelected.subscribe(seleccionado);
+
+    const nuevoCliente = { clienteId: '42', nombres: 'Ana', apellidos: 'Pérez' } as IClient;
+    component.onClientCreated(nuevoCliente);
+
+    expect(seleccionado).toHaveBeenCalledTimes(1);
+    expect(seleccionado).toHaveBeenCalledWith(nuevoCliente);
+  });
+
+  it('fuera del modo selección no emite el cliente recién creado', () => {
+    const seleccionado = vi.fn();
+    component.clientSelected.subscribe(seleccionado);
+
+    component.onClientCreated({ clienteId: '42' } as IClient);
+
+    expect(seleccionado).not.toHaveBeenCalled();
   });
 });
