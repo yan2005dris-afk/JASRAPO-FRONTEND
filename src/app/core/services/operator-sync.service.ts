@@ -44,7 +44,6 @@ export class OperatorSyncService {
 
   private readonly READINGS_API = `${environment.apiUrl}/readings`;
   private readonly OPERATOR_API = `${environment.apiUrl}/operator`;
-  private readonly ANOMALIES_API = `${environment.apiUrl}/reading-anomalies`;
   private readonly NOVELTIES_API = `${environment.apiUrl}/work-order-novelties`;
 
   // Signals para rastrear el estado de la cola
@@ -254,38 +253,34 @@ export class OperatorSyncService {
   }
 
   /**
-   * Envia una anomalía/novedad al backend o la encola si está offline.
-   * Si incluye `ordenTrabajoId`, usa el nuevo endpoint `/work-order-novelties`.
-   * En caso contrario mantiene fallback retrocompatible a `/reading-anomalies`.
+   * Envia una novedad al backend (/work-order-novelties) o la encola si está offline.
    */
   async submitAnomaly(anomaly: Record<string, unknown>): Promise<unknown> {
+    const ordenTrabajoId =
+      anomaly['ordenTrabajoId'] !== null && anomaly['ordenTrabajoId'] !== undefined
+        ? String(anomaly['ordenTrabajoId']).trim()
+        : '';
+
     if (this.networkService.isOnline()) {
+      if (!ordenTrabajoId) {
+        throw new Error(
+          'No se puede registrar la novedad: se requiere una orden de trabajo asociada.',
+        );
+      }
       try {
         const formData = new FormData();
-        const hasWorkOrder =
-          anomaly['ordenTrabajoId'] !== null &&
-          anomaly['ordenTrabajoId'] !== undefined &&
-          String(anomaly['ordenTrabajoId']).trim() !== '';
-
-        if (hasWorkOrder) {
-          formData.append('ordenTrabajoId', String(anomaly['ordenTrabajoId']));
-          if (anomaly['lecturaId']) {
-            formData.append('lecturaId', String(anomaly['lecturaId']));
-          }
-        } else {
+        formData.append('ordenTrabajoId', ordenTrabajoId);
+        if (anomaly['lecturaId']) {
           formData.append('lecturaId', String(anomaly['lecturaId']));
-          formData.append('estado', String(anomaly['estado'] ?? 'PENDIENTE'));
         }
-
         formData.append('tipo', String(anomaly['tipo']));
         if (anomaly['observacion']) {
           formData.append('observacion', String(anomaly['observacion']));
         }
         this.appendPhoto(formData, (anomaly['fotoBlob'] as Blob) || null, 'file');
 
-        const targetApi = hasWorkOrder ? this.NOVELTIES_API : this.ANOMALIES_API;
         const response = await firstValueFrom(
-          this.http.post<unknown>(targetApi, formData, { withCredentials: true }),
+          this.http.post<unknown>(this.NOVELTIES_API, formData, { withCredentials: true }),
         );
         this.toastService.success('Novedad registrada en el servidor.', 'Éxito');
         return response;
@@ -516,31 +511,34 @@ export class OperatorSyncService {
           ...payload
         } = pending;
 
-        const formData = new FormData();
-        const hasWorkOrder =
-          payload['ordenTrabajoId'] !== null &&
-          payload['ordenTrabajoId'] !== undefined &&
-          String(payload['ordenTrabajoId']).trim() !== '';
+        const ordenTrabajoId =
+          payload['ordenTrabajoId'] !== null && payload['ordenTrabajoId'] !== undefined
+            ? String(payload['ordenTrabajoId']).trim()
+            : '';
 
-        if (hasWorkOrder) {
-          formData.append('ordenTrabajoId', String(payload['ordenTrabajoId']));
-          if (payload['lecturaId']) {
-            formData.append('lecturaId', String(payload['lecturaId']));
-          }
-        } else {
-          formData.append('lecturaId', String(payload['lecturaId']));
-          formData.append('estado', String(payload['estado'] ?? 'PENDIENTE'));
+        if (!ordenTrabajoId) {
+          await this.dbService.updatePendingAnomaly(pending.id!, {
+            syncState: 'RECHAZADA',
+            errorMessage:
+              'Novedad rechazada: no tiene orden de trabajo asociada para registrar en el servidor.',
+          });
+          rejectedCount++;
+          continue;
         }
 
+        const formData = new FormData();
+        formData.append('ordenTrabajoId', ordenTrabajoId);
+        if (payload['lecturaId']) {
+          formData.append('lecturaId', String(payload['lecturaId']));
+        }
         formData.append('tipo', String(payload['tipo']));
         if (payload['observacion']) {
           formData.append('observacion', String(payload['observacion']));
         }
         this.appendPhoto(formData, fotoBlob, 'file');
 
-        const targetApi = hasWorkOrder ? this.NOVELTIES_API : this.ANOMALIES_API;
         await firstValueFrom(
-          this.http.post<unknown>(targetApi, formData, { withCredentials: true }),
+          this.http.post<unknown>(this.NOVELTIES_API, formData, { withCredentials: true }),
         );
         await this.dbService.deletePendingAnomaly(id!);
         successAnomaliesCount++;
