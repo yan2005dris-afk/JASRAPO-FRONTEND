@@ -1,7 +1,8 @@
 export type TipoAnomalia = 'FUGA' | 'MEDIDOR_DAÑADO' | 'LECTURA_ERRONEA' | 'OTRO';
 
 export type EstadoNovedad = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CANCELLED';
-export type EstadoAnomalia = 'PENDIENTE' | 'EN_REVISION' | 'RESUELTA' | 'DESCARTADA' | EstadoNovedad;
+export type EstadoAnomalia =
+  'PENDIENTE' | 'EN_REVISION' | 'RESUELTA' | 'DESCARTADA' | EstadoNovedad;
 
 export interface IReadingAnomalyReading {
   lecturaId: string;
@@ -54,4 +55,21 @@ export interface IReadingAnomalyFilterParams {
   lecturaId?: string;
   tipo?: string;
   estado?: string;
+}
+
+export interface IWorkOrderNoveltyRaw {
+  novedadId?: string | number;
+  anomaliaId?: string | number;
+  ordenTrabajoId?: string | number;
+  lecturaId?: string | number | null;
+  observacion?: string | null;
+  tipo: TipoAnomalia | string;
+  estado: EstadoAnomalia | string;
+  resolucionTipo?: string | null;
+  consumoAjustado?: number | null;
+  observacionResolucion?: string | null;
+  fotoUrl?: string | null;
+  lectura?: IReadingAnomalyReading | null;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 }

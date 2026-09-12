@@ -30,7 +30,9 @@
     <button
       type="button"
       class="btn btn-sm btn-filter"
-      [class.active]="activeStatusFilter() === 'IN_PROGRESS' || activeStatusFilter() === 'EN_REVISION'"
+      [class.active]="
+        activeStatusFilter() === 'IN_PROGRESS' || activeStatusFilter() === 'EN_REVISION'
+      "
       (click)="setStatusFilter('IN_PROGRESS')"
     >
       En Proceso
