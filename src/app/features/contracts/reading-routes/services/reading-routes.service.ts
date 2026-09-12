@@ -160,7 +160,7 @@ export class ReadingRoutesService {
       httpParams = httpParams.set('limit', String(params.limit));
     }
 
-    return this.http.get<PaginatedOrdenResponse>(`${this.endpoint}/${routeId}/ordenes`, {
+    return this.http.get<PaginatedOrdenResponse>(`${this.endpoint}/${routeId}/work-orders`, {
       params: httpParams,
     });
   }
@@ -170,7 +170,7 @@ export class ReadingRoutesService {
     estado: string,
     resultadoObservacion?: string,
   ): Observable<unknown> {
-    return this.http.patch(`${this.baseUrl}/ordenes/${ordenId}/estado`, {
+    return this.http.patch(`${this.baseUrl}/work-orders/${ordenId}/state`, {
       estado,
       resultadoObservacion,
     });
