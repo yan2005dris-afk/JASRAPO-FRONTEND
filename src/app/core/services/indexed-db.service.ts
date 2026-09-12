@@ -514,14 +514,14 @@ export class IndexedDbService {
         // 3. Medidores
         const meterStore = transaction.objectStore('medidores_cache');
         meterStore.clear();
-        for (const meter of data.meters) {
+        for (const meter of data.meters ?? []) {
           meterStore.put(meter);
         }
 
         // 4. Lecturas registradas
         const readingStore = transaction.objectStore('lecturas_registradas');
         readingStore.clear();
-        for (const reading of data.registeredReadings) {
+        for (const reading of data.registeredReadings ?? []) {
           readingStore.put(reading);
         }
 
@@ -567,6 +567,7 @@ export class IndexedDbService {
       [MANIFEST_PHYSICAL_ENTITY_TYPE.METERS]: 'meter',
       [MANIFEST_PHYSICAL_ENTITY_TYPE.READINGS]: 'reading',
       [MANIFEST_PHYSICAL_ENTITY_TYPE.READING_ANOMALY]: 'pendingAnomaly',
+      [MANIFEST_PHYSICAL_ENTITY_TYPE.WORK_ORDER_NOVELTY]: 'pendingAnomaly',
     };
     for (const change of page.changes ?? []) {
       if (!physicalTypes[change.entityType]) {
@@ -647,10 +648,11 @@ export class IndexedDbService {
             [MANIFEST_PHYSICAL_ENTITY_TYPE.METERS]: 'meter',
             [MANIFEST_PHYSICAL_ENTITY_TYPE.READINGS]: 'reading',
             [MANIFEST_PHYSICAL_ENTITY_TYPE.READING_ANOMALY]: 'pendingAnomaly',
+            [MANIFEST_PHYSICAL_ENTITY_TYPE.WORK_ORDER_NOVELTY]: 'pendingAnomaly',
           };
           const getEntityId = (type: string, value: any): string => {
             const field = fields[type];
-            return String(value[field] ?? value.id ?? value.lecturaAnomaliaId);
+            return String(value[field] ?? value.id ?? value.novedadId ?? value.lecturaAnomaliaId);
           };
           const upsert = (type: string, values: any[] | undefined) => {
             if (!values || !collections[type]) return;
@@ -752,13 +754,68 @@ export class IndexedDbService {
       const request = store.get(scope);
       request.onsuccess = () => {
         const snapshot = request.result as { items?: T[]; savedAt?: string } | undefined;
-        if (!snapshot?.items || !snapshot.savedAt) {
+        if (!snapshot || !snapshot.items || !snapshot.savedAt) {
           resolve(null);
           return;
         }
         resolve({ items: snapshot.items, savedAt: snapshot.savedAt });
       };
       request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getAssignedWorkOrders(scope?: string): Promise<any[]> {
+    const db = await this.initDb();
+    if (scope && db.objectStoreNames.contains('assigned_snapshots')) {
+      const snapshot = await this.getAssignedSnapshot(scope);
+      if (snapshot?.workOrders && snapshot.workOrders.length > 0) {
+        return snapshot.workOrders;
+      }
+    }
+    // Fallback: extraer órdenes desde rutas_cache si existen
+    if (scope && db.objectStoreNames.contains('rutas_cache')) {
+      const routesData = await this.getRoutesCache<any>(scope);
+      if (routesData?.items) {
+        const extracted: any[] = [];
+        const seenIds = new Set<string>();
+        for (const r of routesData.items) {
+          if (r.ordenesTrabajo && Array.isArray(r.ordenesTrabajo)) {
+            for (const ot of r.ordenesTrabajo) {
+              const id = String(ot.id ?? ot.ordenTrabajoId ?? '');
+              if (id && !seenIds.has(id)) {
+                seenIds.add(id);
+                extracted.push(ot);
+              } else if (!id) {
+                extracted.push(ot);
+              }
+            }
+          } else if (r.paradas && Array.isArray(r.paradas)) {
+            for (const p of r.paradas) {
+              const ot = p.ordenTrabajo ?? p;
+              const id = String(ot.id ?? ot.ordenTrabajoId ?? '');
+              if (id && !seenIds.has(id)) {
+                seenIds.add(id);
+                extracted.push(ot);
+              } else if (!id) {
+                extracted.push(ot);
+              }
+            }
+          }
+        }
+        if (extracted.length > 0) return extracted;
+      }
+    }
+    return [];
+  }
+
+  async clearPendingAnomalies(): Promise<void> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('anomalias_pendientes', 'readwrite');
+      const store = transaction.objectStore('anomalias_pendientes');
+      store.clear();
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
     });
   }
 }

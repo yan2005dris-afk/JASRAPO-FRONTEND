@@ -83,6 +83,24 @@
   margin-bottom: 1.25rem;
 }
 
+.work-order-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--soft-blue-bg, #eff6ff);
+  color: var(--primary-color, #1e40af);
+  border: 1px solid rgba(var(--primary-color-rgb, 30, 64, 175), 0.2);
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+
+  i {
+    font-size: 0.95rem;
+  }
+}
+
 // ── Form ───────────────────────────────────────────────────────────────────────
 
 .novelty-form {

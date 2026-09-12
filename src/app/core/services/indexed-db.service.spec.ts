@@ -303,4 +303,47 @@ describe('IndexedDbService - Multi-operator Snapshot Isolation', () => {
     expect(routesB?.items[0].nombre).toBe('Ruta de Operador B');
     expect(readingsB[0].lecturaId).toBe('lec-B1');
   });
+
+  it('getAssignedWorkOrders retorna ordenes desde assigned_snapshots o fallback a rutas_cache', async () => {
+    // 1. Snapshot con workOrders explícitas
+    await service.saveCompleteAssignedSnapshot({
+      scope: 'operator:501',
+      workOrders: [
+        { id: 'wo-1', tipo: 'INSPECCION' },
+        { id: 'wo-2', tipo: 'RECONEXION' },
+      ],
+    } as any);
+
+    const directOrders = await service.getAssignedWorkOrders('operator:501');
+    expect(directOrders).toHaveLength(2);
+    expect(directOrders[0].id).toBe('wo-1');
+
+    // 2. Snapshot sin workOrders pero con rutas con paradas / ordenes de trabajo
+    await service.saveCompleteAssignedSnapshot({
+      scope: 'operator:502',
+      routes: [
+        {
+          paradas: [
+            { ordenTrabajo: { id: 'wo-nested-1', numero: 'OT-001' } },
+            { ordenTrabajo: { id: 'wo-nested-2', numero: 'OT-002' } },
+            { ordenTrabajo: { id: 'wo-nested-1', numero: 'OT-001' } }, // duplicada
+          ],
+        },
+      ],
+    } as any);
+
+    const extractedOrders = await service.getAssignedWorkOrders('operator:502');
+    expect(extractedOrders).toHaveLength(2);
+    expect(extractedOrders.map((o) => o.id)).toEqual(['wo-nested-1', 'wo-nested-2']);
+  });
+
+  it('clearPendingAnomalies limpia store anomalias_pendientes', async () => {
+    await service.savePendingAnomaly({ tipo: 'FUGA', estado: 'PENDIENTE' });
+    const before = await service.getPendingAnomalies();
+    expect(before.length).toBeGreaterThan(0);
+
+    await service.clearPendingAnomalies();
+    const after = await service.getPendingAnomalies();
+    expect(after).toEqual([]);
+  });
 });
