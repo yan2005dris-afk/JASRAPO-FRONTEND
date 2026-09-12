@@ -73,7 +73,7 @@ export class AnomalyFormModalComponent implements OnInit {
   ngOnInit(): void {
     const a = this.anomaly();
     if (a) {
-      this.lecturaId = a.lecturaId;
+      this.lecturaId = a.lecturaId ? String(a.lecturaId) : '';
       this.tipo = a.tipo as TipoAnomalia;
       this.observacion = a.observacion || '';
       this.imagePreviewUrl = a.fotoUrl || null;
