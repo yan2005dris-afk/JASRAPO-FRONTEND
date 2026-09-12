@@ -371,6 +371,28 @@ describe('OperatorSyncService', () => {
       expect(fields['foto']).toBeUndefined();
     });
 
+    it('POST novedad con ordenTrabajoId: enruta a /work-order-novelties', async () => {
+      isOnline.mockReturnValue(true);
+      httpPost.mockReturnValue(of({ id: 99 }));
+      await service.submitAnomaly({
+        ordenTrabajoId: 'wo-123',
+        lecturaId: 5,
+        tipo: 'MEDIDOR_TRABADO',
+        observacion: 'reloj trabado',
+        fotoBlob: VALID_DATA_URI,
+      });
+
+      const [url, formData] = httpPost.mock.calls[0];
+      expect(url).toContain('/work-order-novelties');
+      const fields = formDataToObject(formData as FormData);
+      expect(fields['ordenTrabajoId']).toEqual(['wo-123']);
+      expect(fields['lecturaId']).toEqual(['5']);
+      expect(fields['tipo']).toEqual(['MEDIDOR_TRABADO']);
+      expect(fields['observacion']).toEqual(['reloj trabado']);
+      expect(fields['file']).toHaveLength(1);
+      expect(fields['estado']).toBeUndefined();
+    });
+
     it('offline: guarda en IndexedDB sin llamar backend', async () => {
       isOnline.mockReturnValue(false);
       const anomaly = { lecturaId: 1, tipo: 'FILTRACION', estado: 'PENDIENTE' };
@@ -580,6 +602,36 @@ describe('OperatorSyncService', () => {
       const fields = formDataToObject(formData as FormData);
       expect(fields['foto']).toHaveLength(1);
       expect(fields['file']).toBeUndefined();
+    });
+
+    it('sincroniza novedad pendiente con ordenTrabajoId via POST /work-order-novelties', async () => {
+      isOnline.mockReturnValue(true);
+      getPendingReadingsByState.mockResolvedValue([]);
+      getPendingAnomaliesByState.mockResolvedValue([
+        {
+          id: 42,
+          syncState: 'PENDIENTE_SYNC',
+          ordenTrabajoId: 'wo-999',
+          lecturaId: 'lec-1',
+          tipo: 'MEDIDOR_DANADO',
+          observacion: 'vidrio roto',
+          fotoBlob: VALID_DATA_URI,
+        },
+      ]);
+      httpPost.mockReturnValue(of({ id: 88 }));
+
+      await service.syncPendingData();
+
+      expect(httpPost).toHaveBeenCalledOnce();
+      const [url, formData] = httpPost.mock.calls[0];
+      expect(url).toContain('/work-order-novelties');
+      const fields = formDataToObject(formData as FormData);
+      expect(fields['ordenTrabajoId']).toEqual(['wo-999']);
+      expect(fields['lecturaId']).toEqual(['lec-1']);
+      expect(fields['tipo']).toEqual(['MEDIDOR_DANADO']);
+      expect(fields['observacion']).toEqual(['vidrio roto']);
+      expect(fields['file']).toHaveLength(1);
+      expect(deletePendingAnomaly).toHaveBeenCalledWith(42);
     });
   });
 

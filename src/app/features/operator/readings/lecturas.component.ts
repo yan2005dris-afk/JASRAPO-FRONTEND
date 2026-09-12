@@ -427,8 +427,14 @@ export class LecturasComponent implements OnInit {
     if (meter) {
       const existing = this.existingReadingMap().get(meter.medidorId.toString());
       const lecturaId = existing?.lecturaId ?? existing?._lecturaId ?? null;
+      const primaryOrder = this.primaryWorkOrderFor(meter);
+      const ordenTrabajoId = primaryOrder ? primaryOrder[1].id : null;
       this.router.navigate(['/app/operador/novedades/new'], {
-        queryParams: { medidorId: meter.medidorId, lecturaId },
+        queryParams: {
+          medidorId: meter.medidorId,
+          lecturaId,
+          ...(ordenTrabajoId ? { ordenTrabajoId } : {}),
+        },
       });
     }
   }
