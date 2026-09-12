@@ -87,7 +87,7 @@ export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
   readonly pageSize = signal(10);
 
   // Workqueue Filter Signals
-  readonly activeStatusFilter = signal('PENDIENTE');
+  readonly activeStatusFilter = signal('OPEN');
   readonly searchTerm = signal('');
   readonly filterLecturaId = signal('');
   readonly filterTipo = signal('');
@@ -203,7 +203,7 @@ export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
     if (this.searchTimer) {
       clearTimeout(this.searchTimer);
     }
-    this.activeStatusFilter.set('PENDIENTE');
+    this.activeStatusFilter.set('OPEN');
     this.searchTerm.set('');
     this.filterLecturaId.set('');
     this.filterTipo.set('');
