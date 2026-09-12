@@ -349,26 +349,39 @@ describe('OperatorSyncService', () => {
   // ── submitAnomaly ────────────────────────────────────────────────────────
 
   describe('submitAnomaly', () => {
-    it('POST con foto: usa field name "file"', async () => {
+    it('POST con ordenTrabajoId y foto: usa endpoint /work-order-novelties y field name "file"', async () => {
       isOnline.mockReturnValue(true);
       httpPost.mockReturnValue(of({ id: 7 }));
       await service.submitAnomaly({
+        ordenTrabajoId: 'wo-101',
         lecturaId: 1,
         tipo: 'FILTRACION',
-        estado: 'PENDIENTE',
         observacion: 'goteo',
         fotoBlob: VALID_DATA_URI,
       });
 
       const [url, formData] = httpPost.mock.calls[0];
-      expect(url).toContain('/reading-anomalies');
+      expect(url).toContain('/work-order-novelties');
       const fields = formDataToObject(formData as FormData);
+      expect(fields['ordenTrabajoId']).toEqual(['wo-101']);
       expect(fields['lecturaId']).toEqual(['1']);
       expect(fields['tipo']).toEqual(['FILTRACION']);
-      expect(fields['estado']).toEqual(['PENDIENTE']);
       expect(fields['observacion']).toEqual(['goteo']);
       expect(fields['file']).toHaveLength(1);
       expect(fields['foto']).toBeUndefined();
+    });
+
+    it('POST online sin ordenTrabajoId: rechaza con error descriptivo', async () => {
+      isOnline.mockReturnValue(true);
+      await expect(
+        service.submitAnomaly({
+          lecturaId: 1,
+          tipo: 'FILTRACION',
+        }),
+      ).rejects.toThrow(
+        'No se puede registrar la novedad: se requiere una orden de trabajo asociada.',
+      );
+      expect(httpPost).not.toHaveBeenCalled();
     });
 
     it('POST novedad con ordenTrabajoId: enruta a /work-order-novelties', async () => {
@@ -632,6 +645,28 @@ describe('OperatorSyncService', () => {
       expect(fields['observacion']).toEqual(['vidrio roto']);
       expect(fields['file']).toHaveLength(1);
       expect(deletePendingAnomaly).toHaveBeenCalledWith(42);
+    });
+
+    it('rechaza novedad pendiente sin ordenTrabajoId sin llamar al backend', async () => {
+      isOnline.mockReturnValue(true);
+      getPendingReadingsByState.mockResolvedValue([]);
+      getPendingAnomaliesByState.mockResolvedValue([
+        {
+          id: 43,
+          syncState: 'PENDIENTE_SYNC',
+          lecturaId: 'lec-2',
+          tipo: 'FUGA',
+        },
+      ]);
+
+      await service.syncPendingData();
+
+      expect(updatePendingAnomaly).toHaveBeenCalledWith(43, {
+        syncState: 'RECHAZADA',
+        errorMessage:
+          'Novedad rechazada: no tiene orden de trabajo asociada para registrar en el servidor.',
+      });
+      expect(httpPost).not.toHaveBeenCalled();
     });
   });
 
