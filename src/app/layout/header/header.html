@@ -11,42 +11,6 @@
       <i class="bi bi-list fs-4"></i>
     </button>
 
-    <!-- Context Switcher (visible when user has access to both Backoffice and Operator contexts) -->
-    @if (appContextService.hasDualContext()) {
-      <div class="context-switcher ms-2 ms-sm-3 d-flex align-items-center">
-        <div
-          class="btn-group btn-group-sm p-1 bg-light border rounded-pill"
-          role="group"
-          aria-label="Selector de contexto"
-        >
-          <button
-            type="button"
-            class="btn btn-sm rounded-pill px-2 px-md-3 d-flex align-items-center gap-1 border-0"
-            [class.btn-primary]="appContextService.isBackoffice()"
-            [class.text-dark]="!appContextService.isBackoffice()"
-            [class.bg-transparent]="!appContextService.isBackoffice()"
-            [attr.aria-pressed]="appContextService.isBackoffice()"
-            (click)="switchToBackoffice()"
-          >
-            <i class="bi bi-buildings"></i>
-            <span class="d-none d-sm-inline fw-semibold" style="font-size: 0.8125rem">Oficina</span>
-          </button>
-          <button
-            type="button"
-            class="btn btn-sm rounded-pill px-2 px-md-3 d-flex align-items-center gap-1 border-0"
-            [class.btn-primary]="appContextService.isOperator()"
-            [class.text-dark]="!appContextService.isOperator()"
-            [class.bg-transparent]="!appContextService.isOperator()"
-            [attr.aria-pressed]="appContextService.isOperator()"
-            (click)="switchToOperator()"
-          >
-            <i class="bi bi-phone"></i>
-            <span class="d-none d-sm-inline fw-semibold" style="font-size: 0.8125rem">Campo</span>
-          </button>
-        </div>
-      </div>
-    }
-
     <!-- Right Side Icons & Sync Widget -->
     <div class="d-flex align-items-center ms-auto gap-3">
       <!-- Widget reactivo de sincronización y conectividad (solo en contexto operator) -->
@@ -128,40 +92,7 @@
                 </a>
               </li>
             }
-            @if (appContextService.hasDualContext()) {
-              <li>
-                <hr class="dropdown-divider" />
-              </li>
-              <li>
-                <h6 class="dropdown-header text-uppercase" style="font-size: 0.6875rem">
-                  Contexto Activo
-                </h6>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  class="dropdown-item d-flex align-items-center gap-2"
-                  (click)="switchToBackoffice()"
-                >
-                  <i class="bi bi-buildings"></i> Modo Oficina
-                  @if (appContextService.isBackoffice()) {
-                    <i class="bi bi-check-lg ms-auto text-primary"></i>
-                  }
-                </button>
-              </li>
-              <li>
-                <button
-                  type="button"
-                  class="dropdown-item d-flex align-items-center gap-2"
-                  (click)="switchToOperator()"
-                >
-                  <i class="bi bi-phone"></i> Modo Campo
-                  @if (appContextService.isOperator()) {
-                    <i class="bi bi-check-lg ms-auto text-primary"></i>
-                  }
-                </button>
-              </li>
-            }
+
             <li>
               <hr class="dropdown-divider" />
             </li>

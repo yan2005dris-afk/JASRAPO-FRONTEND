@@ -41,14 +41,10 @@ describe('Header', () => {
       syncPendingData: vi.fn().mockResolvedValue(undefined),
     };
 
-    const hasDualContextSignal = signal(false);
     const mockAppContextService = {
       isOperator: isOperatorSignal,
       isBackoffice: signal(true),
       currentContext: signal('backoffice'),
-      hasDualContext: hasDualContextSignal,
-      switchToContext: vi.fn(),
-      _setHasDualContext: (val: boolean) => hasDualContextSignal.set(val),
     };
 
     await TestBed.configureTestingModule({
@@ -92,33 +88,5 @@ describe('Header', () => {
     isOperatorSignal.set(true);
     fixture.detectChanges();
     expect(fixture.debugElement.query(By.css('app-sync-status-widget'))).toBeTruthy();
-  });
-
-  it('should render context switcher when user has dual context', () => {
-    fixture.detectChanges();
-    expect(fixture.debugElement.query(By.css('.context-switcher'))).toBeFalsy();
-
-    (
-      component.appContextService as unknown as { _setHasDualContext: (v: boolean) => void }
-    )._setHasDualContext(true);
-    fixture.detectChanges();
-
-    const switcher = fixture.debugElement.query(By.css('.context-switcher'));
-    expect(switcher).toBeTruthy();
-    expect(switcher.nativeElement.textContent).toContain('Oficina');
-    expect(switcher.nativeElement.textContent).toContain('Campo');
-  });
-
-  it('delegates to appContextService.switchToContext when clicked', () => {
-    (
-      component.appContextService as unknown as { _setHasDualContext: (v: boolean) => void }
-    )._setHasDualContext(true);
-    fixture.detectChanges();
-
-    component.switchToOperator();
-    expect(component.appContextService.switchToContext).toHaveBeenCalledWith('operator');
-
-    component.switchToBackoffice();
-    expect(component.appContextService.switchToContext).toHaveBeenCalledWith('backoffice');
   });
 });

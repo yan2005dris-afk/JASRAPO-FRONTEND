@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
+import { RouterModule } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { LayoutService } from '../../core/services/layout.service';
 import { AppContextService } from '../../core/navigation/app-context.service';
@@ -20,21 +20,10 @@ export class Header {
   readonly authService = inject(AuthService);
   readonly layoutService = inject(LayoutService);
   readonly appContextService = inject(AppContextService);
-  readonly router = inject(Router);
   readonly userDropdownOpen = signal(false);
 
   toggleSidebar(): void {
     this.layoutService.toggleSidebar();
-  }
-
-  switchToBackoffice(): void {
-    this.closeUserDropdown();
-    this.appContextService.switchToContext('backoffice');
-  }
-
-  switchToOperator(): void {
-    this.closeUserDropdown();
-    this.appContextService.switchToContext('operator');
   }
 
   toggleUserDropdown(): void {
