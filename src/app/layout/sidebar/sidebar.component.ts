@@ -13,7 +13,6 @@ import { FormsModule } from '@angular/forms';
 import { MenuService } from '../../core/services/menu.service';
 import { LayoutService } from '../../core/services/layout.service';
 import { AuthService } from '../../core/services/auth.service';
-import { AppContextService } from '../../core/navigation/app-context.service';
 import { getVisibleSidebarRoutes } from '../../core/navigation/app-route.registry';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MenuItem } from '../../core/models/menu.model';
@@ -31,7 +30,6 @@ export class Sidebar {
   readonly menuService = inject(MenuService);
   readonly layoutService = inject(LayoutService);
   readonly authService = inject(AuthService);
-  readonly appContextService = inject(AppContextService);
   readonly router = inject(Router);
 
   readonly expandedItems = signal<Record<string | number, boolean>>({});
@@ -48,22 +46,9 @@ export class Sidebar {
   );
 
   readonly visibleMenuItems = computed<MenuItem[]>(() => {
-    const context = this.appContextService.currentContext();
     const capabilities = this.authService.capabilities();
 
-    if (context === 'operator') {
-      const routes = getVisibleSidebarRoutes('operator', capabilities);
-      return routes.map((r, index) => ({
-        id: index + 1,
-        name: r.label,
-        route: r.canonicalPath,
-        icon: r.icon,
-        is_active: true,
-        menu_order: index + 1,
-      }));
-    }
-
-    // Backoffice context: registry backoffice routes + unmigrated backoffice items
+    // Registry backoffice routes (e.g. backoffice-dashboard)
     const backofficeRoutes = getVisibleSidebarRoutes('backoffice', capabilities);
     const registryItems: MenuItem[] = backofficeRoutes.map((r, index) => ({
       id: 1000 + index,
@@ -74,22 +59,9 @@ export class Sidebar {
       menu_order: index + 1,
     }));
 
-    const isOperatorPath = (route?: string | null) => {
-      if (!route) return false;
-      return route.includes('/operator') || route.includes('/operador');
-    };
-
+    // Administrative menu items from backend, deduplicating dashboard
     const rawItems = this.menuService.menuItems();
-    const unmigrated = rawItems
-      .filter((item) => !isOperatorPath(item.route) && item.route !== '/app/dashboard')
-      .map((item) => {
-        if (!item.children || item.children.length === 0) return item;
-        return {
-          ...item,
-          children: item.children.filter((child) => !isOperatorPath(child.route)),
-        };
-      })
-      .filter((item) => (item.children ? item.children.length > 0 : true));
+    const unmigrated = rawItems.filter((item) => item.route !== '/app/dashboard');
 
     return [...registryItems, ...unmigrated];
   });

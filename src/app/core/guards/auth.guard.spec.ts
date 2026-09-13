@@ -112,7 +112,7 @@ describe('Guards', () => {
       expect(result).toBe(true);
     });
 
-    it('breaks infinite loop and redirects to /login if defaultRoute equals current failing route', () => {
+    it('redirects to /app/forbidden without logout if defaultRoute equals current failing route', () => {
       authServiceMock.isAuthenticated.mockReturnValue(true);
       authServiceMock.capabilities.mockReturnValue([]);
       authServiceMock.getDefaultRoute.mockReturnValue('/app/backoffice/dashboard');
@@ -124,7 +124,8 @@ describe('Guards', () => {
       const result = TestBed.runInInjectionContext(() =>
         capabilityGuard(route, state),
       ) as unknown as MockUrlTree;
-      expect(result.commands).toEqual(['/login']);
+      expect(result.commands).toEqual(['/app/forbidden']);
+      expect(authServiceMock.logout).not.toHaveBeenCalled();
     });
   });
 
@@ -148,6 +149,19 @@ describe('Guards', () => {
       ) as unknown as MockUrlTree;
       expect(result.commands).toEqual(['/app/backoffice/dashboard']);
     });
+
+    it('redirects to /app/forbidden if context mismatches and defaultRoute equals current route', () => {
+      authServiceMock.getDefaultRoute.mockReturnValue('/app/current');
+      const route = {
+        data: { routeId: 'operator-routes', context: 'backoffice' },
+      } as unknown as ActivatedRouteSnapshot;
+      const state = { url: '/app/current' } as RouterStateSnapshot;
+
+      const result = TestBed.runInInjectionContext(() =>
+        contextGuard(route, state),
+      ) as unknown as MockUrlTree;
+      expect(result.commands).toEqual(['/app/forbidden']);
+    });
   });
 
   describe('guestGuard', () => {
@@ -165,11 +179,14 @@ describe('Guards', () => {
       expect(result.commands).toEqual(['/app/backoffice/dashboard']);
     });
 
-    it('allows staying on login page if authenticated user has no capabilities and defaultRoute is /login', () => {
+    it('redirects to /app/forbidden if authenticated user has no capabilities and defaultRoute is /login', () => {
       authServiceMock.isAuthenticated.mockReturnValue(true);
       authServiceMock.getDefaultRoute.mockReturnValue('/login');
-      const result = TestBed.runInInjectionContext(() => guestGuard(dummyRoute, dummyState));
-      expect(result).toBe(true);
+      const result = TestBed.runInInjectionContext(() =>
+        guestGuard(dummyRoute, dummyState),
+      ) as unknown as MockUrlTree;
+      expect(result.commands).toEqual(['/app/forbidden']);
+      expect(authServiceMock.logout).not.toHaveBeenCalled();
     });
   });
 });

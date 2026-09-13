@@ -1,16 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, signal } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
-import { describe, beforeEach, it, expect } from 'vitest';
+import { describe, beforeEach, it, expect, vi } from 'vitest';
 
 import { Sidebar } from './sidebar.component';
 import { MenuService } from '../../core/services/menu.service';
 import { LayoutService } from '../../core/services/layout.service';
 import { AuthService } from '../../core/services/auth.service';
-import { AppContextService } from '../../core/navigation/app-context.service';
 import { MenuItem } from '../../core/models/menu.model';
 import { SessionCapabilityGrant } from '../../core/models/auth.model';
-import { AppContext } from '../../core/navigation/app-route.registry';
 
 @Component({ template: '' })
 class DummyComponent {}
@@ -19,35 +17,32 @@ describe('Sidebar', () => {
   let component: Sidebar;
   let fixture: ComponentFixture<Sidebar>;
   let router: Router;
-  let currentContextSignal = signal<AppContext>('operator');
   let capabilitiesSignal = signal<SessionCapabilityGrant[]>([]);
   let menuItemsSignal = signal<MenuItem[]>([]);
 
   beforeEach(async () => {
-    currentContextSignal = signal<AppContext>('operator');
     capabilitiesSignal = signal<SessionCapabilityGrant[]>([
-      { resource: 'routes', action: 'read' },
       { resource: 'dashboard', action: 'read' },
     ]);
     menuItemsSignal = signal<MenuItem[]>([
-      {
-        id: 10,
-        name: 'Legacy Operator',
-        route: '/app/operador/rutas',
-        is_active: true,
-        menu_order: 1,
-      },
       {
         id: 20,
         name: 'Administrative',
         route: '/app/admin/users',
         is_active: true,
-        menu_order: 2,
+        menu_order: 1,
       },
       {
         id: 30,
         name: 'Lectura de Consumo',
         route: '/app/Contratos/LecturaDeConsumo',
+        is_active: true,
+        menu_order: 2,
+      },
+      {
+        id: 40,
+        name: 'Dashboard Duplicate',
+        route: '/app/dashboard',
         is_active: true,
         menu_order: 3,
       },
@@ -67,14 +62,6 @@ describe('Sidebar', () => {
           },
         },
         { provide: AuthService, useValue: { capabilities: capabilitiesSignal } },
-        {
-          provide: AppContextService,
-          useValue: {
-            currentContext: currentContextSignal,
-            isOperator: signal(false),
-            isBackoffice: signal(true),
-          },
-        },
       ],
     }).compileComponents();
 
@@ -88,26 +75,15 @@ describe('Sidebar', () => {
     expect(component).toBeTruthy();
   });
 
-  it('renders operator registry routes when in operator context', () => {
-    currentContextSignal.set('operator');
-    fixture.detectChanges();
-
-    const items = component.visibleMenuItems();
-    expect(items.some((i) => i.route === '/app/operator/routes')).toBe(true);
-    expect(items.some((i) => i.route === '/app/backoffice/dashboard')).toBe(false);
-  });
-
-  it('renders backoffice routes and strips operator routes when in backoffice context', () => {
-    currentContextSignal.set('backoffice');
+  it('renders backoffice registry routes and unmigrated administrative items', () => {
     fixture.detectChanges();
 
     const items = component.visibleMenuItems();
     expect(items.some((i) => i.route === '/app/backoffice/dashboard')).toBe(true);
     expect(items.some((i) => i.route === '/app/admin/users')).toBe(true);
     expect(items.some((i) => i.route === '/app/Contratos/LecturaDeConsumo')).toBe(true);
-    expect(
-      items.some((i) => i.route?.includes('/operador') || i.route?.includes('/operator')),
-    ).toBe(false);
+    // Deduplicates legacy dashboard route
+    expect(items.some((i) => i.route === '/app/dashboard')).toBe(false);
   });
 
   describe('isParentActive', () => {

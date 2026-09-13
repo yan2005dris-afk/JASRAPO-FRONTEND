@@ -22,24 +22,27 @@ export interface SessionCapabilityGrant {
 
 export interface LoginResponse {
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string;
   sid: string;
   sub: number;
   email: string;
-  nombre: string;
+  nombre?: string;
   rolId: number | null;
-  nombreRol: string | null;
-  avatar: Avatar;
-  roles: number[];
-  accessTokenInfo: TokenInfo;
-  refreshTokenInfo: TokenInfo;
+  nombreRol?: string | null;
+  avatar?: Avatar | null;
+  roles?: number[];
+  createdAt?: string | Date;
+  expiresAt?: string | Date;
+  accessTokenInfo?: TokenInfo;
+  refreshTokenInfo?: TokenInfo;
   capabilities?: SessionCapabilityGrant[];
 }
 
 export interface RefreshTokenResponse {
+  message?: string;
   accessToken: string;
-  createdAt?: string;
-  expiresAt?: string;
+  createdAt?: string | Date;
+  expiresAt?: string | Date;
   capabilities?: SessionCapabilityGrant[];
 }
 

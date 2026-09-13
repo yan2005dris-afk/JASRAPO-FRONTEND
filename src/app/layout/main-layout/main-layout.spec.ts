@@ -1,26 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { signal, PLATFORM_ID } from '@angular/core';
+import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { vi, describe, beforeEach, it, expect } from 'vitest';
-import { of } from 'rxjs';
 import { By } from '@angular/platform-browser';
 
 import { MainLayout } from './main-layout.component';
 import { AuthService } from '../../core/services/auth.service';
-import { MenuService } from '../../core/services/menu.service';
 import { NetworkService } from '../../core/services/network.service';
 import { OperatorSyncService } from '../../core/services/operator-sync.service';
-import { LayoutService } from '../../core/services/layout.service';
 import { AppContextService } from '../../core/navigation/app-context.service';
 
-describe('MainLayout Component & Mobile Behavior', () => {
+describe('MainLayout Component (AuthenticatedAppShell)', () => {
   let component: MainLayout;
   let fixture: ComponentFixture<MainLayout>;
-  let layoutService: LayoutService;
-  let isOperatorSignal = signal<boolean>(false);
 
   beforeEach(async () => {
-    isOperatorSignal = signal<boolean>(false);
     const mockAuthService = {
       logout: vi.fn(),
       isAuthenticated: signal(true),
@@ -30,16 +24,8 @@ describe('MainLayout Component & Mobile Behavior', () => {
       tokenCreatedAt: signal(new Date().toISOString()),
       tokenExpiresAt: signal(new Date().toISOString()),
       capabilities: signal([]),
-      isOperator: vi.fn(() => false),
       isAdminOrSupervisor: vi.fn(() => true),
-      canAccessOperatorRoutes: vi.fn(() => true),
       getDefaultRoute: vi.fn(() => '/app/backoffice/dashboard'),
-    };
-
-    const mockMenuService = {
-      getMenuFromBackend: vi.fn(() => of([])),
-      clearMenu: vi.fn(),
-      menuItems: signal([]),
     };
 
     const mockNetworkService = {
@@ -54,7 +40,7 @@ describe('MainLayout Component & Mobile Behavior', () => {
     };
 
     const mockAppContextService = {
-      isOperator: isOperatorSignal,
+      isOperator: signal(false),
       isBackoffice: signal(true),
       currentContext: signal('backoffice'),
       hasDualContext: signal(false),
@@ -66,15 +52,12 @@ describe('MainLayout Component & Mobile Behavior', () => {
       providers: [
         provideRouter([]),
         { provide: AuthService, useValue: mockAuthService },
-        { provide: MenuService, useValue: mockMenuService },
         { provide: NetworkService, useValue: mockNetworkService },
         { provide: OperatorSyncService, useValue: mockSyncService },
         { provide: AppContextService, useValue: mockAppContextService },
-        { provide: PLATFORM_ID, useValue: 'browser' },
       ],
     }).compileComponents();
 
-    layoutService = TestBed.inject(LayoutService);
     fixture = TestBed.createComponent(MainLayout);
     component = fixture.componentInstance;
     await fixture.whenStable();
@@ -84,33 +67,8 @@ describe('MainLayout Component & Mobile Behavior', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should render overlay when sidebar is open and close sidebar on overlay click', () => {
-    layoutService.openSidebar();
-    fixture.detectChanges();
-
-    const overlay = fixture.debugElement.query(By.css('.sidebar-overlay'));
-    expect(overlay).toBeTruthy();
-
-    overlay.triggerEventHandler('click', null);
-    fixture.detectChanges();
-
-    expect(layoutService.sidebarOpen()).toBe(false);
-  });
-
-  it('should not render overlay when sidebar is closed', () => {
-    layoutService.closeSidebar();
-    fixture.detectChanges();
-
-    const overlay = fixture.debugElement.query(By.css('.sidebar-overlay'));
-    expect(overlay).toBeFalsy();
-  });
-
-  it('should omit bottom nav in backoffice context and render in operator context', () => {
-    fixture.detectChanges();
-    expect(fixture.debugElement.query(By.css('app-bottom-nav'))).toBeFalsy();
-
-    isOperatorSignal.set(true);
-    fixture.detectChanges();
-    expect(fixture.debugElement.query(By.css('app-bottom-nav'))).toBeTruthy();
+  it('renders shared header and router outlet', () => {
+    expect(fixture.debugElement.query(By.css('app-header'))).toBeTruthy();
+    expect(fixture.debugElement.query(By.css('router-outlet'))).toBeTruthy();
   });
 });

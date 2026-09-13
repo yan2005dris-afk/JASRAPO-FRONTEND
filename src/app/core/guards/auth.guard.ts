@@ -51,8 +51,7 @@ export const guestGuard: CanActivateFn = () => {
 
   const defaultRoute = authService.getDefaultRoute();
   if (!defaultRoute || defaultRoute === '/login') {
-    authService.logout();
-    return true;
+    return router.createUrlTree(['/app/forbidden']);
   }
 
   return router.createUrlTree([defaultRoute]);

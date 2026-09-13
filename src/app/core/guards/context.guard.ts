@@ -32,12 +32,11 @@ export const contextGuard: CanActivateFn = (
     const defaultRoute = authService.getDefaultRoute();
     const currentPath = state.url?.split('?')[0].split('#')[0];
 
-    if (!defaultRoute || defaultRoute === currentPath || defaultRoute === '/login') {
-      authService.logout();
-      return router.createUrlTree(['/login']);
+    if (defaultRoute && defaultRoute !== currentPath && defaultRoute !== '/app/forbidden') {
+      return router.createUrlTree([defaultRoute]);
     }
 
-    return router.createUrlTree([defaultRoute]);
+    return router.createUrlTree(['/app/forbidden']);
   }
 
   return true;

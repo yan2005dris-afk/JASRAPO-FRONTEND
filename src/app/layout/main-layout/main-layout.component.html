@@ -1,28 +1,9 @@
-<div class="layout-wrapper">
-  @if (layoutService.sidebarOpen()) {
-    <button
-      type="button"
-      class="sidebar-overlay border-0"
-      (click)="layoutService.closeSidebar()"
-      aria-label="Cerrar menú lateral"
-    ></button>
-  }
-
-  <!-- Sidebar unificado para todos los roles con navegación adaptativa -->
-  <app-sidebar class="layout-sidebar" [class.sidebar-hidden]="!layoutService.sidebarOpen()">
-  </app-sidebar>
-
-  <div class="layout-main-container" [class.sidebar-collapsed]="!layoutService.sidebarOpen()">
-    <app-header class="layout-header"></app-header>
-
-    <main class="layout-content">
-      <app-breadcrumb></app-breadcrumb>
-      <router-outlet></router-outlet>
-    </main>
+<div class="app-shell-root d-flex flex-column" style="height: 100vh; overflow: hidden">
+  <app-header class="layout-header"></app-header>
+  <div
+    class="app-shell-body flex-grow-1"
+    style="min-height: 0; overflow: hidden; display: flex; flex-direction: column"
+  >
+    <router-outlet></router-outlet>
   </div>
-
-  <!-- Bottom Navigation para dispositivos móviles (solo en contexto operator) -->
-  @if (appContextService.isOperator()) {
-    <app-bottom-nav></app-bottom-nav>
-  }
 </div>

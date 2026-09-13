@@ -126,9 +126,7 @@ export class AuthService {
   }
 
   constructor() {
-    if (this.tokenSignal() && this.capabilitiesSignal().length === 0) {
-      this.clearAuthData();
-    } else if (this.isAuthenticated()) {
+    if (this.isAuthenticated()) {
       this.startRefreshTimer();
     }
   }
@@ -161,9 +159,12 @@ export class AuthService {
     const { sub, accessToken, sid, email, nombre, rolId, nombreRol, avatar, accessTokenInfo } =
       response;
 
-    const createdAt = accessTokenInfo?.iatDate || new Date().toISOString();
-    const expiresAt =
-      accessTokenInfo?.expDate || new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    const createdAt = response.createdAt
+      ? String(response.createdAt)
+      : accessTokenInfo?.iatDate || new Date().toISOString();
+    const expiresAt = response.expiresAt
+      ? String(response.expiresAt)
+      : accessTokenInfo?.expDate || new Date(Date.now() + 15 * 60 * 1000).toISOString();
 
     const user: User = {
       id: String(sub),
@@ -189,8 +190,10 @@ export class AuthService {
 
   private handleRefreshSuccess(response: RefreshTokenResponse): void {
     const newAccessToken = response.accessToken;
-    const createdAt = response.createdAt || new Date().toISOString();
-    const expiresAt = response.expiresAt || new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    const createdAt = response.createdAt ? String(response.createdAt) : new Date().toISOString();
+    const expiresAt = response.expiresAt
+      ? String(response.expiresAt)
+      : new Date(Date.now() + 15 * 60 * 1000).toISOString();
     const capabilities = Array.isArray(response.capabilities) ? response.capabilities : [];
 
     this.tokenSignal.set(newAccessToken);
@@ -341,14 +344,14 @@ export class AuthService {
 
   /**
    * Retorna la ruta por defecto según las capacidades del usuario.
-   * Si no hay capacidades, devuelve fallback cerrado.
+   * Si no hay capacidades o no encuentra ruta, devuelve /app/forbidden si está autenticado.
    */
   getDefaultRoute(): string {
     if (!this.isAuthenticated()) {
       return '/login';
     }
     const route = getDefaultRouteByCapabilities(this.capabilitiesSignal());
-    return route ?? '/login';
+    return route ?? '/app/forbidden';
   }
 
   private handleError(error: { error?: { message?: string }; status?: number }): Observable<never> {

@@ -50,11 +50,13 @@ describe('AuthService', () => {
     expect(service.getDefaultRoute()).toBe('/login');
   });
 
-  it('clears stale session if token exists but capabilities are missing', () => {
-    store.set('token', 'stale-token');
-    const staleService = TestBed.runInInjectionContext(() => new AuthService());
-    expect(staleService.isAuthenticated()).toBe(false);
-    expect(store.get('token')).toBeUndefined();
+  it('preserves session for authenticated user with empty capabilities and falls back to /app/forbidden', () => {
+    store.set('token', 'valid-token');
+    store.set('capabilities', JSON.stringify([]));
+    const authService = TestBed.runInInjectionContext(() => new AuthService());
+    expect(authService.isAuthenticated()).toBe(true);
+    expect(authService.capabilities()).toEqual([]);
+    expect(authService.getDefaultRoute()).toBe('/app/forbidden');
   });
 
   it('updates capabilitiesSignal on successful login', () => {

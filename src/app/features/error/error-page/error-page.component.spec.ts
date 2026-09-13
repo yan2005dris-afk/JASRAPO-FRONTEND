@@ -3,6 +3,8 @@ import { provideRouter } from '@angular/router';
 
 import { ErrorPageComponent } from './error-page.component';
 
+import { AuthService } from '../../../core/services/auth.service';
+
 describe('ErrorPageComponent', () => {
   let component: ErrorPageComponent;
   let fixture: ComponentFixture<ErrorPageComponent>;
@@ -10,7 +12,16 @@ describe('ErrorPageComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [ErrorPageComponent],
-      providers: [provideRouter([])],
+      providers: [
+        provideRouter([]),
+        {
+          provide: AuthService,
+          useValue: {
+            isAuthenticated: () => false,
+            getDefaultRoute: () => '/login',
+          },
+        },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ErrorPageComponent);

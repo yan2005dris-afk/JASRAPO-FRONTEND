@@ -1,23 +1,12 @@
-import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
-import { RouterModule } from '@angular/router';
-import { Sidebar } from '../sidebar/sidebar.component';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
 import { Header } from '../header/header';
-import { LayoutService } from '../../core/services/layout.service';
-import { BreadcrumbComponent } from '../../shared/components/breadcrumb/breadcrumb.component';
-import { AuthService } from '../../core/services/auth.service';
-
-import { AppContextService } from '../../core/navigation/app-context.service';
-import { BottomNavComponent } from '../bottom-nav/bottom-nav.component';
 
 @Component({
   selector: 'app-main-layout',
-  imports: [RouterModule, Sidebar, Header, BreadcrumbComponent, BottomNavComponent],
+  imports: [RouterOutlet, Header],
   templateUrl: './main-layout.component.html',
   styleUrl: './main-layout.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MainLayout {
-  readonly layoutService = inject(LayoutService);
-  readonly authService = inject(AuthService);
-  readonly appContextService = inject(AppContextService);
-}
+export class MainLayout {}
