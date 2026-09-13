@@ -40,6 +40,7 @@ describe('AppRouteRegistry', () => {
     const opNav = getBottomNavRoutes('operator', allCaps);
     expect(opNav.length).toBeLessThanOrEqual(5);
     expect(opNav.every((r) => r.context === 'operator' && r.showInBottomNav)).toBe(true);
+    expect(opNav.map((r) => r.routeId)).toContain('operator-profile');
   });
 
   it('resolves default route by capabilities and falls back to null when missing', () => {

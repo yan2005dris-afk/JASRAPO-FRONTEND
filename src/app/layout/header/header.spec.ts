@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, RouterLink } from '@angular/router';
 import { By } from '@angular/platform-browser';
 import { vi, describe, beforeEach, it, expect } from 'vitest';
 
@@ -88,5 +88,36 @@ describe('Header', () => {
     isOperatorSignal.set(true);
     fixture.detectChanges();
     expect(fixture.debugElement.query(By.css('app-sync-status-widget'))).toBeTruthy();
+  });
+
+  it('should render hamburger toggle in backoffice and omit it with brand badge in operator context', () => {
+    isOperatorSignal.set(false);
+    fixture.detectChanges();
+    expect(fixture.debugElement.query(By.css('button i.bi-list'))).toBeTruthy();
+    expect(fixture.nativeElement.textContent).not.toContain('Operador');
+
+    isOperatorSignal.set(true);
+    fixture.detectChanges();
+    expect(fixture.debugElement.query(By.css('button i.bi-list'))).toBeFalsy();
+    expect(fixture.nativeElement.textContent).toContain('Operador');
+  });
+
+  it('should route to operator profile in operator context and standard profile in backoffice', () => {
+    component.userDropdownOpen.set(true);
+    isOperatorSignal.set(false);
+    fixture.detectChanges();
+
+    let links = fixture.debugElement.queryAll(By.directive(RouterLink));
+    let profileLink = links.find((l) => l.nativeElement.textContent.includes('Mi Perfil'));
+    expect(profileLink).toBeTruthy();
+    expect(profileLink?.nativeElement.getAttribute('href')).toBe('/app/profile');
+
+    isOperatorSignal.set(true);
+    fixture.detectChanges();
+
+    links = fixture.debugElement.queryAll(By.directive(RouterLink));
+    profileLink = links.find((l) => l.nativeElement.textContent.includes('Mi Perfil'));
+    expect(profileLink).toBeTruthy();
+    expect(profileLink?.nativeElement.getAttribute('href')).toBe('/app/operator/profile');
   });
 });

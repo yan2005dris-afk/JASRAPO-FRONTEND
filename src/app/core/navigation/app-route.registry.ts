@@ -8,6 +8,7 @@ export type AppRouteId =
   | 'operator-novelties'
   | 'operator-novelties-new'
   | 'operator-sync'
+  | 'operator-profile'
   | 'backoffice-dashboard';
 
 export interface RouteCapabilityRequirement {
@@ -93,6 +94,19 @@ export const APP_ROUTE_REGISTRY: Record<AppRouteId, AppRouteDefinition> = {
     showInBottomNav: true,
     bottomNavOrder: 40,
     syncBadge: true,
+  },
+  'operator-profile': {
+    routeId: 'operator-profile',
+    context: 'operator',
+    canonicalPath: '/app/operator/profile',
+    requiredCapability: { resource: 'users', action: 'read' },
+    label: 'Perfil',
+    icon: 'bi-person-circle',
+    breadcrumb: 'Perfil',
+    showInSidebar: false,
+    showInBottomNav: true,
+    bottomNavOrder: 50,
+    syncBadge: false,
   },
   'backoffice-dashboard': {
     routeId: 'backoffice-dashboard',

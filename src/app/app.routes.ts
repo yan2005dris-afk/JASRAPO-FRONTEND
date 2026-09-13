@@ -146,6 +146,17 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'profile',
+            data: {
+              routeId: 'operator-profile',
+              context: 'operator',
+              breadcrumb: 'Perfil',
+            },
+            canActivate: [capabilityGuard],
+            loadComponent: () =>
+              import('./features/profile/profile.component').then((m) => m.ProfileComponent),
+          },
+          {
             path: '',
             redirectTo: 'routes',
             pathMatch: 'full',

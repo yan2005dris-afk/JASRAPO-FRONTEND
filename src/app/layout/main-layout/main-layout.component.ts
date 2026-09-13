@@ -1,6 +1,7 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { Header } from '../header/header';
+import { AppContextService } from '../../core/navigation/app-context.service';
 
 @Component({
   selector: 'app-main-layout',
@@ -9,4 +10,6 @@ import { Header } from '../header/header';
   styleUrl: './main-layout.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MainLayout {}
+export class MainLayout {
+  readonly appContextService = inject(AppContextService);
+}

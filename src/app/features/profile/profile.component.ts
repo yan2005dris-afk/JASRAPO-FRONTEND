@@ -89,7 +89,7 @@ export class ProfileComponent implements OnInit {
       return;
     }
 
-    this.userId = Number(currentUser.id);
+    this.userId = Number(currentUser.id ?? (currentUser as { userId?: number | string }).userId);
 
     // Pre-populate avatar from cached signal immediately — avoids blank avatar during load
     if (currentUser.avatar?.url) {
@@ -172,5 +172,9 @@ export class ProfileComponent implements OnInit {
           this.isSaving.set(false);
         },
       });
+  }
+
+  logout(): void {
+    this.authService.logout();
   }
 }

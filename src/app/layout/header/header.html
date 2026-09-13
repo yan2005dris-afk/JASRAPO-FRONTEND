@@ -3,13 +3,29 @@
   style="background-color: var(--white); height: 64px"
 >
   <div class="container-fluid px-0">
-    <!-- Hamburger Menu toggle (for sidebar) -->
-    <button
-      class="btn btn-link link-dark px-0 text-decoration-none d-flex align-items-center"
-      (click)="toggleSidebar()"
-    >
-      <i class="bi bi-list fs-4"></i>
-    </button>
+    @if (!appContextService.isOperator()) {
+      <!-- Hamburger Menu toggle (for sidebar in backoffice) -->
+      <button
+        class="btn btn-link link-dark px-0 text-decoration-none d-flex align-items-center"
+        (click)="toggleSidebar()"
+      >
+        <i class="bi bi-list fs-4"></i>
+      </button>
+    } @else {
+      <!-- Brand in Operator Desktop View -->
+      <div class="d-flex align-items-center gap-2">
+        <img
+          src="https://i.imgur.com/oHyMUhU.png"
+          alt="AquaSync Olón Logo"
+          class="brand-logo"
+          style="height: 28px; width: auto"
+        />
+        <span class="fw-bold text-dark d-none d-sm-inline" style="font-size: 1rem"
+          >AquaSync Olón</span
+        >
+        <span class="badge bg-light text-primary border ms-2">Operador</span>
+      </div>
+    }
 
     <!-- Right Side Icons & Sync Widget -->
     <div class="d-flex align-items-center ms-auto gap-3">
@@ -77,7 +93,13 @@
             style="min-width: 200px"
           >
             <li>
-              <a class="dropdown-item" routerLink="/app/profile" (click)="closeUserDropdown()">
+              <a
+                class="dropdown-item"
+                [routerLink]="
+                  appContextService.isOperator() ? '/app/operator/profile' : '/app/profile'
+                "
+                (click)="closeUserDropdown()"
+              >
                 <i class="bi bi-person me-2"></i> Mi Perfil
               </a>
             </li>

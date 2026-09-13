@@ -13,6 +13,7 @@ import { AppContextService } from '../../core/navigation/app-context.service';
 describe('MainLayout Component (AuthenticatedAppShell)', () => {
   let component: MainLayout;
   let fixture: ComponentFixture<MainLayout>;
+  const isOperatorSignal = signal(false);
 
   beforeEach(async () => {
     const mockAuthService = {
@@ -39,8 +40,9 @@ describe('MainLayout Component (AuthenticatedAppShell)', () => {
       syncPendingData: vi.fn().mockResolvedValue(undefined),
     };
 
+    isOperatorSignal.set(false);
     const mockAppContextService = {
-      isOperator: signal(false),
+      isOperator: isOperatorSignal,
       isBackoffice: signal(true),
       currentContext: signal('backoffice'),
       hasDualContext: signal(false),
@@ -70,5 +72,18 @@ describe('MainLayout Component (AuthenticatedAppShell)', () => {
   it('renders shared header and router outlet', () => {
     expect(fixture.debugElement.query(By.css('app-header'))).toBeTruthy();
     expect(fixture.debugElement.query(By.css('router-outlet'))).toBeTruthy();
+  });
+
+  it('applies mobile hidden classes to header when in operator context', () => {
+    isOperatorSignal.set(false);
+    fixture.detectChanges();
+    let headerEl = fixture.debugElement.query(By.css('app-header'));
+    expect(headerEl.classes['d-none']).toBeFalsy();
+
+    isOperatorSignal.set(true);
+    fixture.detectChanges();
+    headerEl = fixture.debugElement.query(By.css('app-header'));
+    expect(headerEl.classes['d-none']).toBe(true);
+    expect(headerEl.classes['d-md-block']).toBe(true);
   });
 });
