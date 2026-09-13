@@ -95,7 +95,6 @@ export class MenuService {
     }
   }
 
-
   /**
    * Limpia el menú almacenado (útil en logout)
    */

@@ -12,10 +12,7 @@
   <app-sidebar class="layout-sidebar" [class.sidebar-hidden]="!layoutService.sidebarOpen()">
   </app-sidebar>
 
-  <div
-    class="layout-main-container"
-    [class.sidebar-collapsed]="!layoutService.sidebarOpen()"
-  >
+  <div class="layout-main-container" [class.sidebar-collapsed]="!layoutService.sidebarOpen()">
     <app-header class="layout-header"></app-header>
 
     <main class="layout-content">

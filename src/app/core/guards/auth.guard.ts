@@ -4,9 +4,10 @@ import { AuthService } from '../services/auth.service';
 
 /**
  * Guard para proteger rutas que requieren autenticación.
- * Implementa bloqueo cruzado por rol:
- *  - Operadores que intenten acceder a rutas /app (admin) → redirigen a /app/operador/rutas
- *  - No operadores que intenten acceder a /app/operador → redirigen a /app/dashboard
+ * Implementa control granular según capacidades y roles:
+ *  - Si no está autenticado → /login
+ *  - Operadores intentando acceder a rutas no operativas (/app/*) → /app/operador/rutas
+ *  - Usuarios sin capacidad de campo intentando acceder a /app/operador → /app/dashboard
  */
 export const authGuard: CanActivateFn = (_, state) => {
   const authService = inject(AuthService);
@@ -19,20 +20,39 @@ export const authGuard: CanActivateFn = (_, state) => {
     return false;
   }
 
-  const isOperator = authService.isOperator();
   const url = state.url;
   const isOperatorRoute = url.startsWith('/app/operador');
-  const isAdminRoute = url.startsWith('/app') && !isOperatorRoute;
+  const isOperator = authService.isOperator();
 
-  // Si es un operador estricto intentando acceder a rutas administrativas
-  if (isOperator && isAdminRoute) {
+  // Operador exclusivo intentando acceder a rutas administrativas o fuera de su contexto
+  if (isOperator && !isOperatorRoute) {
     router.navigate(['/app/operador/rutas']);
     return false;
   }
 
-  // Si intenta acceder a rutas de operador pero no tiene capacidad de operador ni admin
+  // Si intenta acceder a rutas de operador pero no tiene capacidad para ello
   if (isOperatorRoute && !authService.canAccessOperatorRoutes()) {
     router.navigate(['/app/dashboard']);
+    return false;
+  }
+
+  return true;
+};
+
+/**
+ * Guard específico para rutas administrativas que requieren capacidad de admin o supervisor.
+ */
+export const adminCapabilityGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (!authService.isAuthenticated()) {
+    router.navigate(['/login']);
+    return false;
+  }
+
+  if (!authService.isAdminOrSupervisor()) {
+    router.navigate([authService.getDefaultRoute()]);
     return false;
   }
 

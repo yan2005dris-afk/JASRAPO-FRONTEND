@@ -14,6 +14,7 @@ describe('Header', () => {
   let fixture: ComponentFixture<Header>;
 
   beforeEach(async () => {
+    const isAdminSignal = signal(true);
     const mockAuthService = {
       logout: vi.fn(),
       isAuthenticated: signal(true),
@@ -22,6 +23,8 @@ describe('Header', () => {
       sid: signal('mock-sid'),
       tokenCreatedAt: signal(new Date().toISOString()),
       tokenExpiresAt: signal(new Date().toISOString()),
+      isAdminOrSupervisor: vi.fn(() => isAdminSignal()),
+      _setIsAdmin: (val: boolean) => isAdminSignal.set(val),
     };
 
     const mockNetworkService = {
@@ -51,5 +54,20 @@ describe('Header', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should show Configuración dropdown item only when user is admin or supervisor', () => {
+    component.userDropdownOpen.set(true);
+    fixture.detectChanges();
+
+    let text = fixture.nativeElement.textContent;
+    expect(text).toContain('Configuración');
+
+    // Cambiar a operador (no admin)
+    (component.authService as unknown as { _setIsAdmin: (v: boolean) => void })._setIsAdmin(false);
+    fixture.detectChanges();
+
+    text = fixture.nativeElement.textContent;
+    expect(text).not.toContain('Configuración');
   });
 });

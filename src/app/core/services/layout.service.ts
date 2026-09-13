@@ -1,11 +1,31 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 @Injectable({
   providedIn: 'root',
 })
 export class LayoutService {
-  // Estado del sidebar (true = abierto, false = cerrado)
-  readonly sidebarOpen = signal<boolean>(true);
+  private readonly platformId = inject(PLATFORM_ID);
+
+  // Determinar estado inicial: cerrado en dispositivos móviles (<992px)
+  readonly sidebarOpen = signal<boolean>(this.getInitialSidebarState());
+
+  private getInitialSidebarState(): boolean {
+    if (isPlatformBrowser(this.platformId) && typeof window !== 'undefined') {
+      return window.innerWidth >= 992;
+    }
+    return true;
+  }
+
+  /**
+   * Indica si la pantalla actual corresponde al breakpoint móvil (<992px)
+   */
+  isMobile(): boolean {
+    if (isPlatformBrowser(this.platformId) && typeof window !== 'undefined') {
+      return window.innerWidth < 992;
+    }
+    return false;
+  }
 
   /**
    * Cambia el estado del sidebar
@@ -26,5 +46,14 @@ export class LayoutService {
    */
   closeSidebar(): void {
     this.sidebarOpen.set(false);
+  }
+
+  /**
+   * Cierra el sidebar si estamos en un dispositivo móvil (<992px)
+   */
+  closeSidebarOnMobileNavigation(): void {
+    if (this.isMobile() && this.sidebarOpen()) {
+      this.closeSidebar();
+    }
   }
 }

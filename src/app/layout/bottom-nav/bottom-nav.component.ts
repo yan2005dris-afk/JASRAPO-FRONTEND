@@ -19,7 +19,6 @@ export class BottomNavComponent {
   private readonly authService = inject(AuthService);
 
   readonly bottomNavItems = computed<MenuItem[]>(() => {
-    const isOp = this.authService.isOperator();
     const items = this.menuService.menuItems();
 
     // Extraer todos los ítems planos
@@ -34,16 +33,6 @@ export class BottomNavComponent {
 
     // Filtrar los que tienen showInBottomNav
     const eligible = flattened.filter((item) => item.showInBottomNav);
-
-    // Si no hay ninguno configurado explícitamente y es operador, fallback a rutas conocidas
-    if (eligible.length === 0 && isOp) {
-      return [
-        { id: 101, name: 'Rutas', route: '/app/operador/rutas', icon: 'bi-map-fill', menu_order: 1, is_active: true },
-        { id: 102, name: 'Órdenes', route: '/app/operador/lecturas', icon: 'bi-card-checklist', menu_order: 2, is_active: true },
-        { id: 103, name: 'Novedades', route: '/app/operador/novedades', icon: 'bi-exclamation-triangle', menu_order: 3, is_active: true },
-        { id: 104, name: 'Sync', route: '/app/operador/sincronizar', icon: 'bi-cloud-arrow-up', menu_order: 4, is_active: true, badgeSignalKey: 'syncQueued' },
-      ];
-    }
 
     return eligible.sort((a, b) => (a.bottomNavOrder ?? 99) - (b.bottomNavOrder ?? 99)).slice(0, 5);
   });

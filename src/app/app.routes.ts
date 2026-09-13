@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard } from './core/guards/auth.guard';
+import { adminCapabilityGuard, authGuard, guestGuard } from './core/guards/auth.guard';
 import { menuResolver } from './core/guards/menu.resolver';
 
 export const routes: Routes = [
@@ -113,10 +113,11 @@ export const routes: Routes = [
           ),
       },
 
-      // Sección Administración (Solo Admin)
+      // Sección Administración (Solo Admin / Supervisor)
       {
         path: 'admin',
         data: { breadcrumb: 'Administración' },
+        canActivate: [adminCapabilityGuard],
         loadComponent: () =>
           import('./features/admin/component/admin.component').then((m) => m.AdminComponent),
         children: [

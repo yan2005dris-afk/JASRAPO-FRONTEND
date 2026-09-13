@@ -67,7 +67,11 @@
             >
               <span class="nav-link-custom__icon-wrap text-dark d-flex align-items-center">
                 @if (item.icon) {
-                  <span class="material-symbols-outlined me-2 align-middle">{{ item.icon }}</span>
+                  @if (item.icon.startsWith('bi-') || item.icon.startsWith('bi ')) {
+                    <i class="bi me-2 align-middle fs-5" [ngClass]="item.icon"></i>
+                  } @else {
+                    <span class="material-symbols-outlined me-2 align-middle">{{ item.icon }}</span>
+                  }
                 }
                 <span class="link-text">{{ item.name }}</span>
               </span>
@@ -104,10 +108,14 @@
               matTooltipShowDelay="300"
             >
               @if (item.icon) {
-                <span
-                  class="nav-link-custom__icon-wrap material-symbols-outlined me-2 align-middle"
-                  >{{ item.icon }}</span
-                >
+                @if (item.icon.startsWith('bi-') || item.icon.startsWith('bi ')) {
+                  <i class="bi me-2 align-middle fs-5" [ngClass]="item.icon"></i>
+                } @else {
+                  <span
+                    class="nav-link-custom__icon-wrap material-symbols-outlined me-2 align-middle"
+                    >{{ item.icon }}</span
+                  >
+                }
               }
               <span class="link-text" [class.ps-4]="!item.icon">{{ item.name }}</span>
             </a>

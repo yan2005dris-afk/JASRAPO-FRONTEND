@@ -21,9 +21,7 @@
       [disabled]="!networkService.isOnline() || syncService.isSyncing()"
       (click)="forceSync()"
       [title]="
-        networkService.isOnline()
-          ? 'Sincronizar ahora'
-          : 'Sincronización pendiente (sin conexión)'
+        networkService.isOnline() ? 'Sincronizar ahora' : 'Sincronización pendiente (sin conexión)'
       "
       aria-label="Sincronizar datos pendientes"
     >

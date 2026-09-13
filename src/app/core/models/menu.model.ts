@@ -25,4 +25,3 @@ export interface MenuItem {
 export interface MenuConfig {
   items: MenuItem[];
 }
-

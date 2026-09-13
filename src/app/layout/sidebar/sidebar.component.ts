@@ -14,7 +14,7 @@ import { MenuService } from '../../core/services/menu.service';
 import { LayoutService } from '../../core/services/layout.service';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MenuItem } from '../../core/models/menu.model';
-import { filter, map } from 'rxjs/operators';
+import { filter, map, tap } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -34,6 +34,9 @@ export class Sidebar {
   readonly currentUrl = toSignal(
     this.router.events.pipe(
       filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      tap(() => {
+        this.layoutService.closeSidebarOnMobileNavigation();
+      }),
       map((e) => e.urlAfterRedirects),
     ),
     { initialValue: this.router.url },
