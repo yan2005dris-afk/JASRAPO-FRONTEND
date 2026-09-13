@@ -5,32 +5,58 @@
 */
 
 :root {
-  /* Brand Colors - Premium Turquoise/Teal Water Palette based on #0fc3c6 */
+  /* Brand Colors - JASRAPO Water & Ecological Heritage Palette */
   --primary-color: #0c9ea1;
   /* Deep corporate teal for excellent contrast and readability */
   --secondary-color: #0fc3c6;
-  /* The exact vibrant turquoise requested */
+  /* Vibrant turquoise water surface */
   --accent-color: #4ee6e9;
   /* Bright glow turquoise for active states and highlights */
   --info-color: #bff3f4;
   /* Softest highlight color */
 
+  /* El Grifo de Latón Dorado (The Golden Brass Tap from Logo) */
+  --brass-gold: #d97706;
+  --brass-gold-hover: #b45309;
+  --brass-gold-light: #fef3c7;
+  --brass-gold-border: #fde68a;
+  --brass-gold-rgb: 217, 119, 6;
+
+  /* El Árbol Ancestral y Cuenca (The Forest Tree Canopy from Logo) */
+  --forest-green: #15803d;
+  --forest-green-hover: #166534;
+  --forest-green-light: #dcfce7;
+  --forest-green-border: #bbf7d0;
+  --forest-green-rgb: 21, 128, 61;
+
+  /* Gotas de Agua Pura (Luminous Crystal Droplets from Logo) */
+  --pure-aqua: #0284c7;
+  --pure-aqua-light: #e0f2fe;
+  --pure-aqua-glow: rgba(14, 165, 233, 0.28);
+
   /* Neutrals & Backgrounds */
   --white: #ffffff;
-  --light-bg: #ffffff;
-  /* Off-white with a soft hint of teal */
+  --light-bg: #f8fafc;
+  /* Clean slate-white */
+  --surface-ground: #f0fdfa;
+  /* Softest lagoon mist */
   --soft-blue-bg: #dbf7f8;
   /* Soft background highlight for badges or cards */
 
   /* Text & Borders */
   --dark-text: #0e2728;
   /* Very dark slate teal instead of black/gray */
+  --marine-slate: #0b2938;
+  /* Institutional deep navy from circular seal */
   --muted-text: #597b7d;
   /* Soft slate teal for secondary text */
   --border-color: #cbdedf;
 
   /* Form & Interactive */
-  --input-focus-ring: rgba(15, 195, 198, 0.2);
+  --input-focus-ring: rgba(15, 195, 198, 0.25);
+  --brass-focus-ring: rgba(217, 119, 6, 0.25);
+  --water-card-shadow: 0 4px 20px -2px rgba(12, 158, 161, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  --water-glow-sm: 0 0 12px rgba(12, 158, 161, 0.18);
 
   /* State Colors */
   --success: #10b981;

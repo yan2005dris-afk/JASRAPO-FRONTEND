@@ -5,20 +5,17 @@
         <!-- Main Search Card -->
         <div class="card search-card shadow-sm border-0 mb-4">
           <div class="card-body p-4 p-md-5 text-center">
-            <div class="brand-logo-container mb-3">
-              <img
-                ngSrc="assets/JAPO.png"
-                alt="Logo JAPO"
-                width="160"
-                height="80"
-                priority
-                class="img-fluid brand-logo"
-              />
+            <app-brand-logo size="lg" [showText]="false" class="mb-3"></app-brand-logo>
+
+            <div>
+              <span class="badge badge-water-subtle mb-2 px-3 py-1">
+                <i class="bi bi-droplet-fill me-1"></i>JASRAPO · Sistema de Agua Potable de Olón
+              </span>
             </div>
 
-            <h1 class="page-title h3 fw-bold text-dark mb-2">Consulta de Planilla</h1>
+            <h1 class="page-title h3 fw-bold text-dark mb-2">Consulta Ciudadana de Planilla</h1>
             <p class="text-muted small mb-4">
-              Verifique el estado de su cuenta, saldo pendiente y contratos asociados
+              Consulte en línea el estado de su cuenta, saldo pendiente y detalle de contratos
             </p>
 
             <!-- Segmented Control Tabs -->

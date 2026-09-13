@@ -14,11 +14,58 @@
    --------------------------------------------------- */
 .sidebar-brand {
   height: 64px;
-  padding: 0 1.5rem 0 2rem;
+  padding: 0 1.25rem;
   transition: all var(--sidebar-transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
   box-sizing: border-box;
   max-width: 100%;
   overflow: hidden;
+
+  app-brand-logo {
+    display: flex;
+    align-items: center;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .brand-seal-wrapper {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 50%;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow:
+      0 2px 8px rgba(12, 158, 161, 0.16),
+      0 0 0 1px rgba(12, 158, 161, 0.15);
+    transition: all var(--sidebar-transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+  }
+
+  .brand-text-block {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    line-height: 1.15;
+  }
+
+  .brand-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    letter-spacing: -0.4px;
+    color: var(--marine-slate);
+    line-height: 1.1;
+  }
+
+  .brand-subtitle {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--muted-text);
+    letter-spacing: 0.1px;
+    line-height: 1.1;
+    white-space: nowrap;
+  }
 }
 
 .sidebar-nav {
@@ -47,8 +94,8 @@
 }
 
 .brand-logo {
-  width: 38px;
-  height: 38px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
   transition: all var(--sidebar-transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -100,15 +147,16 @@
   transform: rotate(-180deg);
 }
 
-/* Active in normal mode — no left bar, background only */
+/* Active in normal mode — refined left accent bar and soft aqua tint */
 .nav-link-custom.active,
 .nav-link.active {
   background-color: var(--sidebar-active-bg) !important;
   color: var(--primary-color) !important;
   font-weight: 600;
-  border-left: 3px solid transparent;
+  border-left: 3.5px solid var(--primary-color);
 
-  i {
+  i,
+  .material-symbols-outlined {
     color: var(--primary-color) !important;
   }
 }
@@ -292,7 +340,19 @@
       padding: 0;
       justify-content: center;
 
-      h5 {
+      app-brand-logo {
+        justify-content: center;
+      }
+
+      .brand-seal-wrapper {
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+        padding: 2px;
+        box-shadow: 0 2px 6px rgba(12, 158, 161, 0.18);
+      }
+
+      .brand-text-block {
         max-width: 0;
         margin: 0;
         overflow: hidden;

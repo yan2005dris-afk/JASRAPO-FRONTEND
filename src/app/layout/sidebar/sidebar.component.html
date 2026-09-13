@@ -1,9 +1,11 @@
 <nav class="h-100 d-flex flex-column bg-white">
-  <div class="sidebar-brand d-flex align-items-center gap-2 border-bottom">
-    <img src="https://i.imgur.com/oHyMUhU.png" alt="AquaSync Olón Logo" class="brand-logo" />
-    <h5 class="fw-bold mb-0 text-dark link-text" style="font-size: 1.05rem; letter-spacing: -0.5px">
-      AquaSync Olón
-    </h5>
+  <div class="sidebar-brand d-flex align-items-center border-bottom">
+    <app-brand-logo
+      size="sm"
+      [showText]="true"
+      [showSubtitle]="true"
+      textColor="dark"
+    ></app-brand-logo>
   </div>
 
   @if (layoutService.sidebarOpen()) {
