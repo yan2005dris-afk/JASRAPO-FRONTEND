@@ -21,6 +21,8 @@
     </main>
   </div>
 
-  <!-- Bottom Navigation para dispositivos móviles -->
-  <app-bottom-nav></app-bottom-nav>
+  <!-- Bottom Navigation para dispositivos móviles (solo en contexto operator) -->
+  @if (appContextService.isOperator()) {
+    <app-bottom-nav></app-bottom-nav>
+  }
 </div>

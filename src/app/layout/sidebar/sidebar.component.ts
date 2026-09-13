@@ -12,6 +12,9 @@ import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { MenuService } from '../../core/services/menu.service';
 import { LayoutService } from '../../core/services/layout.service';
+import { AuthService } from '../../core/services/auth.service';
+import { AppContextService } from '../../core/navigation/app-context.service';
+import { getVisibleSidebarRoutes } from '../../core/navigation/app-route.registry';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MenuItem } from '../../core/models/menu.model';
 import { filter, map, tap } from 'rxjs/operators';
@@ -27,9 +30,11 @@ import { toSignal } from '@angular/core/rxjs-interop';
 export class Sidebar {
   readonly menuService = inject(MenuService);
   readonly layoutService = inject(LayoutService);
+  readonly authService = inject(AuthService);
+  readonly appContextService = inject(AppContextService);
   readonly router = inject(Router);
 
-  readonly expandedItems = signal<Record<number, boolean>>({});
+  readonly expandedItems = signal<Record<string | number, boolean>>({});
   readonly searchQuery = signal('');
   readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -41,6 +46,53 @@ export class Sidebar {
     ),
     { initialValue: this.router.url },
   );
+
+  readonly visibleMenuItems = computed<MenuItem[]>(() => {
+    const context = this.appContextService.currentContext();
+    const capabilities = this.authService.capabilities();
+
+    if (context === 'operator') {
+      const routes = getVisibleSidebarRoutes('operator', capabilities);
+      return routes.map((r, index) => ({
+        id: index + 1,
+        name: r.label,
+        route: r.canonicalPath,
+        icon: r.icon,
+        is_active: true,
+        menu_order: index + 1,
+      }));
+    }
+
+    // Backoffice context: registry backoffice routes + unmigrated backoffice items
+    const backofficeRoutes = getVisibleSidebarRoutes('backoffice', capabilities);
+    const registryItems: MenuItem[] = backofficeRoutes.map((r, index) => ({
+      id: 1000 + index,
+      name: r.label,
+      route: r.canonicalPath,
+      icon: r.icon,
+      is_active: true,
+      menu_order: index + 1,
+    }));
+
+    const isOperatorPath = (route?: string | null) => {
+      if (!route) return false;
+      return route.includes('/operator') || route.includes('/operador');
+    };
+
+    const rawItems = this.menuService.menuItems();
+    const unmigrated = rawItems
+      .filter((item) => !isOperatorPath(item.route) && item.route !== '/app/dashboard')
+      .map((item) => {
+        if (!item.children || item.children.length === 0) return item;
+        return {
+          ...item,
+          children: item.children.filter((child) => !isOperatorPath(child.route)),
+        };
+      })
+      .filter((item) => (item.children ? item.children.length > 0 : true));
+
+    return [...registryItems, ...unmigrated];
+  });
 
   isParentActive(item: MenuItem): boolean {
     const url = this.currentUrl();
@@ -58,7 +110,7 @@ export class Sidebar {
 
   readonly filteredMenuItems = computed(() => {
     const query = this.normalize(this.searchQuery());
-    const items = this.menuService.menuItems();
+    const items = this.visibleMenuItems();
 
     if (!query) return items;
 
@@ -88,9 +140,9 @@ export class Sidebar {
     if (!query) return this.expandedItems();
 
     const normalizedQuery = this.normalize(query);
-    const expanded: Record<number, boolean> = { ...this.expandedItems() };
+    const expanded: Record<string | number, boolean> = { ...this.expandedItems() };
 
-    for (const item of this.menuService.menuItems()) {
+    for (const item of this.visibleMenuItems()) {
       if (item.children && item.children.length > 0) {
         const hasMatchingChild = item.children.some((child) =>
           this.normalize(child.name).includes(normalizedQuery),
@@ -102,7 +154,7 @@ export class Sidebar {
     return expanded;
   });
 
-  toggleItem(itemId: number): void {
+  toggleItem(itemId: string | number): void {
     if (!this.layoutService.sidebarOpen()) {
       this.layoutService.openSidebar();
       this.expandedItems.update((state) => ({ ...state, [itemId]: true }));

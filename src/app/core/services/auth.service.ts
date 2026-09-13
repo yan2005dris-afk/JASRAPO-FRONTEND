@@ -11,9 +11,16 @@ import {
   Subscription,
   shareReplay,
 } from 'rxjs';
-import { LoginRequest, LoginResponse, RefreshTokenResponse, User } from '../models/auth.model';
+import {
+  LoginRequest,
+  LoginResponse,
+  RefreshTokenResponse,
+  SessionCapabilityGrant,
+  User,
+} from '../models/auth.model';
 import { environment } from '../../../environments/environment';
 import { MenuService } from './menu.service';
+import { getDefaultRouteByCapabilities } from '../navigation/app-route.registry';
 
 @Injectable({
   providedIn: 'root',
@@ -30,6 +37,9 @@ export class AuthService {
   private readonly tokenCreatedAtSignal = signal<string | null>(this.getStoredTokenCreatedAt());
   private readonly tokenExpiresAtSignal = signal<string | null>(this.getStoredTokenExpiresAt());
   private readonly userSignal = signal<User | null>(this.getStoredUser());
+  private readonly capabilitiesSignal = signal<SessionCapabilityGrant[]>(
+    this.getStoredCapabilities(),
+  );
 
   readonly isAuthenticated = computed(() => !!this.tokenSignal());
   readonly currentUser = computed(() => this.userSignal());
@@ -37,6 +47,11 @@ export class AuthService {
   readonly sid = computed(() => this.sidSignal());
   readonly tokenCreatedAt = computed(() => this.tokenCreatedAtSignal());
   readonly tokenExpiresAt = computed(() => this.tokenExpiresAtSignal());
+  readonly capabilities = computed(() => this.capabilitiesSignal());
+
+  hasCapability(resource: string, action: string): boolean {
+    return this.capabilitiesSignal().some((c) => c.resource === resource && c.action === action);
+  }
 
   private refreshTimerSubscription: Subscription | null = null;
 
@@ -111,7 +126,9 @@ export class AuthService {
   }
 
   constructor() {
-    if (this.isAuthenticated()) {
+    if (this.tokenSignal() && this.capabilitiesSignal().length === 0) {
+      this.clearAuthData();
+    } else if (this.isAuthenticated()) {
       this.startRefreshTimer();
     }
   }
@@ -157,7 +174,16 @@ export class AuthService {
       avatar,
     };
 
-    this.updateSignalsAndStorage(accessToken, String(sid), createdAt, expiresAt, user);
+    const capabilities = Array.isArray(response.capabilities) ? response.capabilities : [];
+
+    this.updateSignalsAndStorage(
+      accessToken,
+      String(sid),
+      createdAt,
+      expiresAt,
+      user,
+      capabilities,
+    );
     this.startRefreshTimer();
   }
 
@@ -165,14 +191,17 @@ export class AuthService {
     const newAccessToken = response.accessToken;
     const createdAt = response.createdAt || new Date().toISOString();
     const expiresAt = response.expiresAt || new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    const capabilities = Array.isArray(response.capabilities) ? response.capabilities : [];
 
     this.tokenSignal.set(newAccessToken);
     this.tokenCreatedAtSignal.set(createdAt);
     this.tokenExpiresAtSignal.set(expiresAt);
+    this.capabilitiesSignal.set(capabilities);
 
     localStorage.setItem('token', newAccessToken);
     localStorage.setItem('tokenCreatedAt', createdAt);
     localStorage.setItem('tokenExpiresAt', expiresAt);
+    localStorage.setItem('capabilities', JSON.stringify(capabilities));
 
     this.startRefreshTimer();
   }
@@ -183,18 +212,21 @@ export class AuthService {
     created: string,
     expires: string,
     user: User,
+    capabilities: SessionCapabilityGrant[] = [],
   ): void {
     this.tokenSignal.set(token);
     this.sidSignal.set(sid);
     this.tokenCreatedAtSignal.set(created);
     this.tokenExpiresAtSignal.set(expires);
     this.userSignal.set(user);
+    this.capabilitiesSignal.set(capabilities);
 
     localStorage.setItem('token', token);
     localStorage.setItem('sid', sid);
     localStorage.setItem('tokenCreatedAt', created);
     localStorage.setItem('tokenExpiresAt', expires);
     localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('capabilities', JSON.stringify(capabilities));
   }
 
   private clearAuthData(): void {
@@ -203,8 +235,9 @@ export class AuthService {
     this.tokenCreatedAtSignal.set(null);
     this.tokenExpiresAtSignal.set(null);
     this.userSignal.set(null);
+    this.capabilitiesSignal.set([]);
 
-    const keys = ['token', 'sid', 'tokenCreatedAt', 'tokenExpiresAt', 'user'];
+    const keys = ['token', 'sid', 'tokenCreatedAt', 'tokenExpiresAt', 'user', 'capabilities'];
     keys.forEach((key) => this.removeStorageItem(key));
 
     this.cancelRefreshTimer();
@@ -263,6 +296,17 @@ export class AuthService {
     }
   }
 
+  private getStoredCapabilities(): SessionCapabilityGrant[] {
+    const raw = this.getStorageItem('capabilities');
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
   updateCurrentUser(patch: Partial<User>): void {
     const current = this.userSignal();
     if (!current) return;
@@ -296,12 +340,15 @@ export class AuthService {
   }
 
   /**
-   * Retorna la ruta por defecto según el rol del usuario.
-   * Operadores → panel del operador. El resto → dashboard.
+   * Retorna la ruta por defecto según las capacidades del usuario.
+   * Si no hay capacidades, devuelve fallback cerrado.
    */
-
   getDefaultRoute(): string {
-    return this.isOperator() ? '/app/operador/rutas' : '/app/dashboard';
+    if (!this.isAuthenticated()) {
+      return '/login';
+    }
+    const route = getDefaultRouteByCapabilities(this.capabilitiesSignal());
+    return route ?? '/login';
   }
 
   private handleError(error: { error?: { message?: string }; status?: number }): Observable<never> {

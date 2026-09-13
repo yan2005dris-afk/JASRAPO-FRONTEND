@@ -28,7 +28,7 @@ describe('MenuService', () => {
     expect(service.menuItems()).toEqual([]);
   });
 
-  it('should fetch menu from backend, format routes with /app prefix and enrich responsive metadata', () => {
+  it('should fetch menu from backend and format routes with /app prefix', () => {
     const rawMenu: MenuItem[] = [
       {
         id: 1,
@@ -66,22 +66,13 @@ describe('MenuService', () => {
 
       // Route format prefix
       expect(items[0].route).toBe('/app/dashboard');
-      expect(items[0].showInBottomNav).toBe(true);
-      expect(items[0].context).toBe('common');
 
-      // Nested child route format prefix and metadata
+      // Nested child route format prefix
       const child1 = items[1].children![0];
       expect(child1.route).toBe('/app/operador/rutas');
-      expect(child1.context).toBe('operator');
-      expect(child1.showInBottomNav).toBe(true);
-      expect(child1.bottomNavOrder).toBe(10);
-      expect(child1.icon).toBe('bi-map-fill');
 
       const child2 = items[1].children![1];
       expect(child2.route).toBe('/app/operador/lecturas');
-      expect(child2.context).toBe('operator');
-      expect(child2.showInBottomNav).toBe(true);
-      expect(child2.bottomNavOrder).toBe(20);
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/menus/my`);

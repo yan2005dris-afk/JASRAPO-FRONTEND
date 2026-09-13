@@ -11,13 +11,16 @@ import { MenuService } from '../../core/services/menu.service';
 import { NetworkService } from '../../core/services/network.service';
 import { OperatorSyncService } from '../../core/services/operator-sync.service';
 import { LayoutService } from '../../core/services/layout.service';
+import { AppContextService } from '../../core/navigation/app-context.service';
 
 describe('MainLayout Component & Mobile Behavior', () => {
   let component: MainLayout;
   let fixture: ComponentFixture<MainLayout>;
   let layoutService: LayoutService;
+  let isOperatorSignal = signal<boolean>(false);
 
   beforeEach(async () => {
+    isOperatorSignal = signal<boolean>(false);
     const mockAuthService = {
       logout: vi.fn(),
       isAuthenticated: signal(true),
@@ -26,10 +29,11 @@ describe('MainLayout Component & Mobile Behavior', () => {
       sid: signal('mock-sid'),
       tokenCreatedAt: signal(new Date().toISOString()),
       tokenExpiresAt: signal(new Date().toISOString()),
+      capabilities: signal([]),
       isOperator: vi.fn(() => false),
       isAdminOrSupervisor: vi.fn(() => true),
       canAccessOperatorRoutes: vi.fn(() => true),
-      getDefaultRoute: vi.fn(() => '/app/dashboard'),
+      getDefaultRoute: vi.fn(() => '/app/backoffice/dashboard'),
     };
 
     const mockMenuService = {
@@ -49,6 +53,14 @@ describe('MainLayout Component & Mobile Behavior', () => {
       syncPendingData: vi.fn().mockResolvedValue(undefined),
     };
 
+    const mockAppContextService = {
+      isOperator: isOperatorSignal,
+      isBackoffice: signal(true),
+      currentContext: signal('backoffice'),
+      hasDualContext: signal(false),
+      switchToContext: vi.fn(),
+    };
+
     await TestBed.configureTestingModule({
       imports: [MainLayout],
       providers: [
@@ -57,6 +69,7 @@ describe('MainLayout Component & Mobile Behavior', () => {
         { provide: MenuService, useValue: mockMenuService },
         { provide: NetworkService, useValue: mockNetworkService },
         { provide: OperatorSyncService, useValue: mockSyncService },
+        { provide: AppContextService, useValue: mockAppContextService },
         { provide: PLATFORM_ID, useValue: 'browser' },
       ],
     }).compileComponents();
@@ -90,5 +103,14 @@ describe('MainLayout Component & Mobile Behavior', () => {
 
     const overlay = fixture.debugElement.query(By.css('.sidebar-overlay'));
     expect(overlay).toBeFalsy();
+  });
+
+  it('should omit bottom nav in backoffice context and render in operator context', () => {
+    fixture.detectChanges();
+    expect(fixture.debugElement.query(By.css('app-bottom-nav'))).toBeFalsy();
+
+    isOperatorSignal.set(true);
+    fixture.detectChanges();
+    expect(fixture.debugElement.query(By.css('app-bottom-nav'))).toBeTruthy();
   });
 });

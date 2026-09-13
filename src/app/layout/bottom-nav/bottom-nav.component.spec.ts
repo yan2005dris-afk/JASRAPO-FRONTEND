@@ -1,24 +1,36 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
+import { By } from '@angular/platform-browser';
 import { describe, beforeEach, it, expect } from 'vitest';
 import { BottomNavComponent } from './bottom-nav.component';
-import { MenuService } from '../../core/services/menu.service';
 import { OperatorSyncService } from '../../core/services/operator-sync.service';
-import { MenuItem } from '../../core/models/menu.model';
+import { AuthService } from '../../core/services/auth.service';
+import { AppContextService } from '../../core/navigation/app-context.service';
+import { SessionCapabilityGrant } from '../../core/models/auth.model';
+import { AppContext } from '../../core/navigation/app-route.registry';
 
 describe('BottomNavComponent', () => {
   let component: BottomNavComponent;
   let fixture: ComponentFixture<BottomNavComponent>;
-  let menuItemsSignal: ReturnType<typeof signal<MenuItem[]>>;
-  let totalQueuedSignal: ReturnType<typeof signal<number>>;
+  let currentContextSignal = signal<AppContext>('operator');
+  let isOperatorSignal = signal<boolean>(true);
+  let capabilitiesSignal = signal<SessionCapabilityGrant[]>([]);
+  let totalQueuedSignal = signal<number>(0);
 
   beforeEach(async () => {
-    menuItemsSignal = signal<MenuItem[]>([]);
+    currentContextSignal = signal<AppContext>('operator');
+    isOperatorSignal = signal<boolean>(true);
+    capabilitiesSignal = signal<SessionCapabilityGrant[]>([]);
     totalQueuedSignal = signal<number>(0);
 
-    const mockMenuService = {
-      menuItems: menuItemsSignal,
+    const mockAuthService = {
+      capabilities: capabilitiesSignal,
+    };
+
+    const mockAppContextService = {
+      currentContext: currentContextSignal,
+      isOperator: isOperatorSignal,
     };
 
     const mockSyncService = {
@@ -29,7 +41,8 @@ describe('BottomNavComponent', () => {
       imports: [BottomNavComponent],
       providers: [
         provideRouter([]),
-        { provide: MenuService, useValue: mockMenuService },
+        { provide: AuthService, useValue: mockAuthService },
+        { provide: AppContextService, useValue: mockAppContextService },
         { provide: OperatorSyncService, useValue: mockSyncService },
       ],
     }).compileComponents();
@@ -43,69 +56,34 @@ describe('BottomNavComponent', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should filter, sort by bottomNavOrder and limit to 5 items strictly from MenuService', () => {
-    const mockMenu: MenuItem[] = [
-      {
-        id: 1,
-        name: 'Dashboard',
-        route: '/app/dashboard',
-        showInBottomNav: true,
-        bottomNavOrder: 5,
-        menu_order: 1,
-        is_active: true,
-      },
-      {
-        id: 2,
-        name: 'No Bottom',
-        route: '/app/admin',
-        showInBottomNav: false,
-        menu_order: 2,
-        is_active: true,
-      },
-      {
-        id: 3,
-        name: 'Operaciones',
-        menu_order: 3,
-        is_active: true,
-        children: [
-          {
-            id: 31,
-            name: 'Rutas',
-            route: '/app/operador/rutas',
-            showInBottomNav: true,
-            bottomNavOrder: 1,
-            menu_order: 1,
-            is_active: true,
-          },
-          {
-            id: 32,
-            name: 'Lecturas',
-            route: '/app/operador/lecturas',
-            showInBottomNav: true,
-            bottomNavOrder: 2,
-            menu_order: 2,
-            is_active: true,
-          },
-        ],
-      },
-    ];
+  it('should return empty items and omit nav when context is backoffice', () => {
+    currentContextSignal.set('backoffice');
+    isOperatorSignal.set(false);
+    capabilitiesSignal.set([
+      { resource: 'routes', action: 'read' },
+      { resource: 'lecturas', action: 'read' },
+    ]);
+    fixture.detectChanges();
 
-    menuItemsSignal.set(mockMenu);
-
-    const items = component.bottomNavItems();
-    expect(items.length).toBe(3);
-    // Ordered by bottomNavOrder: Rutas (1), Lecturas (2), Dashboard (5)
-    expect(items[0].name).toBe('Rutas');
-    expect(items[1].name).toBe('Lecturas');
-    expect(items[2].name).toBe('Dashboard');
+    expect(component.bottomNavItems()).toEqual([]);
+    expect(fixture.debugElement.query(By.css('nav.operator-bottom-nav'))).toBeFalsy();
   });
 
-  it('should return empty list when menu has no items flagged for bottom nav without hardcoded fallbacks', () => {
-    menuItemsSignal.set([
-      { id: 10, name: 'Admin Only', route: '/app/admin/roles', is_active: true, menu_order: 1 },
+  it('should filter by capabilities and limit to 5 items in operator context', () => {
+    currentContextSignal.set('operator');
+    isOperatorSignal.set(true);
+    capabilitiesSignal.set([
+      { resource: 'routes', action: 'read' },
+      { resource: 'lecturas', action: 'read' },
+      { resource: 'work-order-novelties', action: 'read' },
+      { resource: 'operator-sync', action: 'read' },
     ]);
+    fixture.detectChanges();
 
     const items = component.bottomNavItems();
-    expect(items.length).toBe(0);
+    expect(items.length).toBe(4);
+    expect(items[0].label).toBe('Rutas');
+    expect(items[1].label).toBe('Lecturas');
+    expect(fixture.debugElement.query(By.css('nav.operator-bottom-nav'))).toBeTruthy();
   });
 });

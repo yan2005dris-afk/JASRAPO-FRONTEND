@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 import { adminCapabilityGuard, authGuard, guestGuard } from './core/guards/auth.guard';
+import { capabilityGuard } from './core/guards/capability.guard';
+import { contextGuard } from './core/guards/context.guard';
 import { menuResolver } from './core/guards/menu.resolver';
 
 export const routes: Routes = [
@@ -44,36 +46,54 @@ export const routes: Routes = [
     canActivate: [authGuard],
     resolve: { menu: menuResolver },
     children: [
+      // ==========================================
+      // CANONICAL CONTEXT: OPERATOR
+      // ==========================================
       {
-        path: 'operador',
-        data: { breadcrumb: 'Operación en Campo' },
+        path: 'operator',
+        data: { context: 'operator', breadcrumb: 'Operación en Campo' },
+        canActivate: [contextGuard],
         children: [
           {
-            path: 'tareas',
-            redirectTo: 'rutas',
-            pathMatch: 'full',
-          },
-          {
-            path: 'rutas',
-            data: { breadcrumb: 'Rutas' },
+            path: 'routes',
+            data: {
+              routeId: 'operator-routes',
+              context: 'operator',
+              breadcrumb: 'Rutas',
+            },
+            canActivate: [capabilityGuard],
             loadComponent: () =>
               import('./features/operator/rutas/rutas.component').then((m) => m.RutasComponent),
           },
           {
-            path: 'lecturas',
-            data: { breadcrumb: 'Lecturas' },
+            path: 'readings',
+            data: {
+              routeId: 'operator-readings',
+              context: 'operator',
+              breadcrumb: 'Lecturas',
+            },
+            canActivate: [capabilityGuard],
             loadComponent: () =>
               import('./features/operator/readings/lecturas.component').then(
                 (m) => m.LecturasComponent,
               ),
           },
           {
-            path: 'novedades',
-            data: { breadcrumb: 'Novedades' },
+            path: 'novelties',
+            data: {
+              context: 'operator',
+              breadcrumb: 'Novedades',
+            },
             children: [
               {
                 path: '',
                 pathMatch: 'full',
+                data: {
+                  routeId: 'operator-novelties',
+                  context: 'operator',
+                  breadcrumb: 'Novedades',
+                },
+                canActivate: [capabilityGuard],
                 loadComponent: () =>
                   import('./features/operator/novelties/novedades.component').then(
                     (m) => m.NovedadesComponent,
@@ -81,7 +101,12 @@ export const routes: Routes = [
               },
               {
                 path: 'new',
-                data: { breadcrumb: 'Nueva Novedad' },
+                data: {
+                  routeId: 'operator-novelties-new',
+                  context: 'operator',
+                  breadcrumb: 'Nueva Novedad',
+                },
+                canActivate: [capabilityGuard],
                 loadComponent: () =>
                   import('./features/operator/novelties/novedades-form/novedades-form.component').then(
                     (m) => m.NovedadesFormComponent,
@@ -90,8 +115,13 @@ export const routes: Routes = [
             ],
           },
           {
-            path: 'sincronizar',
-            data: { breadcrumb: 'Sincronizar' },
+            path: 'sync',
+            data: {
+              routeId: 'operator-sync',
+              context: 'operator',
+              breadcrumb: 'Sincronizar',
+            },
+            canActivate: [capabilityGuard],
             loadComponent: () =>
               import('./features/operator/sync-queue/sincronizar.component').then(
                 (m) => m.SincronizarComponent,
@@ -99,18 +129,39 @@ export const routes: Routes = [
           },
           {
             path: '',
-            redirectTo: 'rutas',
+            redirectTo: 'routes',
             pathMatch: 'full',
           },
         ],
       },
+
+      // ==========================================
+      // CANONICAL CONTEXT: BACKOFFICE
+      // ==========================================
       {
-        path: 'dashboard',
-        data: { breadcrumb: 'Dashboard' },
-        loadComponent: () =>
-          import('./features/dashboard/dashboard/dashboard.component').then(
-            (m) => m.DashboardComponent,
-          ),
+        path: 'backoffice',
+        data: { context: 'backoffice' },
+        canActivate: [contextGuard],
+        children: [
+          {
+            path: 'dashboard',
+            data: {
+              routeId: 'backoffice-dashboard',
+              context: 'backoffice',
+              breadcrumb: 'Dashboard',
+            },
+            canActivate: [capabilityGuard],
+            loadComponent: () =>
+              import('./features/dashboard/dashboard/dashboard.component').then(
+                (m) => m.DashboardComponent,
+              ),
+          },
+          {
+            path: '',
+            redirectTo: 'dashboard',
+            pathMatch: 'full',
+          },
+        ],
       },
 
       // Sección Administración (Solo Admin / Supervisor)
@@ -597,7 +648,7 @@ export const routes: Routes = [
       },
       {
         path: '',
-        redirectTo: 'dashboard',
+        redirectTo: 'backoffice/dashboard',
         pathMatch: 'full',
       },
     ],

@@ -15,6 +15,11 @@ export interface TokenInfo {
   expDate: string;
 }
 
+export interface SessionCapabilityGrant {
+  resource: string;
+  action: string;
+}
+
 export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
@@ -28,12 +33,14 @@ export interface LoginResponse {
   roles: number[];
   accessTokenInfo: TokenInfo;
   refreshTokenInfo: TokenInfo;
+  capabilities?: SessionCapabilityGrant[];
 }
 
 export interface RefreshTokenResponse {
   accessToken: string;
   createdAt?: string;
   expiresAt?: string;
+  capabilities?: SessionCapabilityGrant[];
 }
 
 export interface User {
@@ -52,4 +59,5 @@ export interface AuthState {
   sid: string | null;
   tokenCreatedAt: string | null;
   tokenExpiresAt: string | null;
+  capabilities: SessionCapabilityGrant[];
 }

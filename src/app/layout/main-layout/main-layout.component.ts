@@ -6,6 +6,7 @@ import { LayoutService } from '../../core/services/layout.service';
 import { BreadcrumbComponent } from '../../shared/components/breadcrumb/breadcrumb.component';
 import { AuthService } from '../../core/services/auth.service';
 
+import { AppContextService } from '../../core/navigation/app-context.service';
 import { BottomNavComponent } from '../bottom-nav/bottom-nav.component';
 
 @Component({
@@ -18,4 +19,5 @@ import { BottomNavComponent } from '../bottom-nav/bottom-nav.component';
 export class MainLayout {
   readonly layoutService = inject(LayoutService);
   readonly authService = inject(AuthService);
+  readonly appContextService = inject(AppContextService);
 }

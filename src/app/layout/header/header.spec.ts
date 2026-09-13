@@ -1,19 +1,23 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { vi } from 'vitest';
+import { By } from '@angular/platform-browser';
+import { vi, describe, beforeEach, it, expect } from 'vitest';
 
 import { AuthService } from '../../core/services/auth.service';
 import { NetworkService } from '../../core/services/network.service';
 import { OperatorSyncService } from '../../core/services/operator-sync.service';
+import { AppContextService } from '../../core/navigation/app-context.service';
 
 import { Header } from './header';
 
 describe('Header', () => {
   let component: Header;
   let fixture: ComponentFixture<Header>;
+  let isOperatorSignal = signal(false);
 
   beforeEach(async () => {
+    isOperatorSignal = signal(false);
     const isAdminSignal = signal(true);
     const mockAuthService = {
       logout: vi.fn(),
@@ -37,6 +41,16 @@ describe('Header', () => {
       syncPendingData: vi.fn().mockResolvedValue(undefined),
     };
 
+    const hasDualContextSignal = signal(false);
+    const mockAppContextService = {
+      isOperator: isOperatorSignal,
+      isBackoffice: signal(true),
+      currentContext: signal('backoffice'),
+      hasDualContext: hasDualContextSignal,
+      switchToContext: vi.fn(),
+      _setHasDualContext: (val: boolean) => hasDualContextSignal.set(val),
+    };
+
     await TestBed.configureTestingModule({
       imports: [Header],
       providers: [
@@ -44,6 +58,7 @@ describe('Header', () => {
         { provide: AuthService, useValue: mockAuthService },
         { provide: NetworkService, useValue: mockNetworkService },
         { provide: OperatorSyncService, useValue: mockSyncService },
+        { provide: AppContextService, useValue: mockAppContextService },
       ],
     }).compileComponents();
 
@@ -63,11 +78,47 @@ describe('Header', () => {
     let text = fixture.nativeElement.textContent;
     expect(text).toContain('Configuración');
 
-    // Cambiar a operador (no admin)
     (component.authService as unknown as { _setIsAdmin: (v: boolean) => void })._setIsAdmin(false);
     fixture.detectChanges();
 
     text = fixture.nativeElement.textContent;
     expect(text).not.toContain('Configuración');
+  });
+
+  it('should omit sync widget in backoffice and render it in operator context', () => {
+    fixture.detectChanges();
+    expect(fixture.debugElement.query(By.css('app-sync-status-widget'))).toBeFalsy();
+
+    isOperatorSignal.set(true);
+    fixture.detectChanges();
+    expect(fixture.debugElement.query(By.css('app-sync-status-widget'))).toBeTruthy();
+  });
+
+  it('should render context switcher when user has dual context', () => {
+    fixture.detectChanges();
+    expect(fixture.debugElement.query(By.css('.context-switcher'))).toBeFalsy();
+
+    (
+      component.appContextService as unknown as { _setHasDualContext: (v: boolean) => void }
+    )._setHasDualContext(true);
+    fixture.detectChanges();
+
+    const switcher = fixture.debugElement.query(By.css('.context-switcher'));
+    expect(switcher).toBeTruthy();
+    expect(switcher.nativeElement.textContent).toContain('Oficina');
+    expect(switcher.nativeElement.textContent).toContain('Campo');
+  });
+
+  it('delegates to appContextService.switchToContext when clicked', () => {
+    (
+      component.appContextService as unknown as { _setHasDualContext: (v: boolean) => void }
+    )._setHasDualContext(true);
+    fixture.detectChanges();
+
+    component.switchToOperator();
+    expect(component.appContextService.switchToContext).toHaveBeenCalledWith('operator');
+
+    component.switchToBackoffice();
+    expect(component.appContextService.switchToContext).toHaveBeenCalledWith('backoffice');
   });
 });
