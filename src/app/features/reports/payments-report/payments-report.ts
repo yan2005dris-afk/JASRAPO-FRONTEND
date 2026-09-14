@@ -1,7 +1,15 @@
 import { A11yModule } from '@angular/cdk/a11y';
 import { DOCUMENT } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/pdf-previewer.component';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
@@ -88,7 +96,7 @@ export interface PaymentsReportData {
   styleUrl: './payments-report.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PaymentsReportComponent {
+export class PaymentsReportComponent implements OnDestroy {
   private readonly document = inject(DOCUMENT);
   private readonly reportsService = inject(ReportsService);
   private readonly clientsService = inject(ClientsService);
@@ -128,6 +136,10 @@ export class PaymentsReportComponent {
   readonly isClientPickerOpen = signal(false);
   private clientPickerTrigger: HTMLElement | null = null;
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  private dataRequest: Subscription | null = null;
+  private pdfRequest: Subscription | null = null;
+  private dataRequestId = 0;
+  private pdfRequestId = 0;
 
   // Modales
   readonly isEmailModalOpen = signal(false);
@@ -227,9 +239,9 @@ export class PaymentsReportComponent {
   });
 
   readonly workspaceStatusMessage = computed(() => {
-    if (this.workspaceError()) return this.workspaceError();
     if (this.isLoadingPdf()) return 'Generando el documento PDF oficial…';
     if (this.isLoadingData()) return 'Consultando datos autorizados del reporte…';
+    if (this.workspaceError()) return this.workspaceError();
     if (!this.reportData()) {
       return 'Ajuste los filtros y presione Consultar para cargar el reporte de abonos.';
     }
@@ -253,6 +265,18 @@ export class PaymentsReportComponent {
 
   // ---------- Presets rápidos de rango de fechas ----------
 
+  actualizarFechaDesde(value: string): void {
+    if (value === this.fechaDesde()) return;
+    this.fechaDesde.set(value);
+    this.invalidateFilterDependentState();
+  }
+
+  actualizarFechaHasta(value: string): void {
+    if (value === this.fechaHasta()) return;
+    this.fechaHasta.set(value);
+    this.invalidateFilterDependentState();
+  }
+
   aplicarPreset(preset: DatePreset): void {
     const hoy = new Date();
     const desde = new Date(hoy);
@@ -274,8 +298,13 @@ export class PaymentsReportComponent {
         break;
     }
 
-    this.fechaDesde.set(this.toIsoDate(desde));
-    this.fechaHasta.set(this.toIsoDate(hasta));
+    const nextDesde = this.toIsoDate(desde);
+    const nextHasta = this.toIsoDate(hasta);
+    if (nextDesde === this.fechaDesde() && nextHasta === this.fechaHasta()) return;
+
+    this.fechaDesde.set(nextDesde);
+    this.fechaHasta.set(nextHasta);
+    this.invalidateFilterDependentState();
   }
 
   private toIsoDate(date: Date): string {
@@ -351,6 +380,7 @@ export class PaymentsReportComponent {
     this.selectedClientLabel.set(`${nombre} · ${cliente.identificacion}`);
     this.selectedClientName.set(nombre);
     this.destinatario.set(cliente.email?.trim() ?? '');
+    this.invalidateFilterDependentState();
     this.cerrarBuscadorClientes();
   }
 
@@ -366,18 +396,25 @@ export class PaymentsReportComponent {
   consultar(): void {
     if (this.rangoFechaInvalido()) return;
 
+    this.cancelDataRequest();
+    this.cancelPdfRequest();
     this.reportData.set(null);
     this.pdfBlob.set(null);
     this.activeView.set('table');
 
+    const filters = this.buildFilters();
+    const contextKey = this.filterContextKey();
+    const requestId = ++this.dataRequestId;
     this.isLoadingData.set(true);
-    this.reportsService.getPaymentsReport(this.buildFilters()).subscribe({
+    this.dataRequest = this.reportsService.getPaymentsReport(filters).subscribe({
       next: (data) => {
+        if (requestId !== this.dataRequestId || contextKey !== this.filterContextKey()) return;
         this.reportData.set(data as unknown as PaymentsReportData);
         this.isLoadingData.set(false);
         this.clearWorkspaceError();
       },
       error: (err) => {
+        if (requestId !== this.dataRequestId || contextKey !== this.filterContextKey()) return;
         this.isLoadingData.set(false);
         this.setWorkspaceError(
           err,
@@ -392,7 +429,7 @@ export class PaymentsReportComponent {
 
   setView(view: ReportView): void {
     this.activeView.set(view);
-    if (view === 'pdf' && !this.pdfBlob()) {
+    if (view === 'pdf' && !this.pdfBlob() && !this.isLoadingPdf()) {
       this.generarPdf();
     }
   }
@@ -400,14 +437,23 @@ export class PaymentsReportComponent {
   // ---------- Generar PDF ----------
 
   generarPdf(): void {
+    if (this.isLoadingPdf()) return;
+
+    this.cancelPdfRequest();
+    this.activeView.set('pdf');
+    const filters = this.buildFilters();
+    const contextKey = this.filterContextKey();
+    const requestId = ++this.pdfRequestId;
     this.isLoadingPdf.set(true);
-    this.reportsService.getPaymentsReportPdf(this.buildFilters()).subscribe({
+    this.pdfRequest = this.reportsService.getPaymentsReportPdf(filters).subscribe({
       next: (blob) => {
+        if (requestId !== this.pdfRequestId || contextKey !== this.filterContextKey()) return;
         this.pdfBlob.set(blob);
         this.isLoadingPdf.set(false);
         this.clearWorkspaceError();
       },
       error: (err) => {
+        if (requestId !== this.pdfRequestId || contextKey !== this.filterContextKey()) return;
         this.isLoadingPdf.set(false);
         this.activeView.set('table');
         this.setWorkspaceError(err, 'No se pudo generar el PDF del reporte', 'pdf');
@@ -479,7 +525,7 @@ export class PaymentsReportComponent {
   retryLastAction(): void {
     switch (this.lastFailedAction()) {
       case 'pdf':
-this.setView('pdf');
+        this.setView('pdf');
         break;
       case 'email':
         this.abrirModalEmail();
@@ -491,6 +537,8 @@ this.setView('pdf');
   }
 
   limpiar(): void {
+    this.cancelDataRequest();
+    this.cancelPdfRequest();
     this.fechaDesde.set('');
     this.fechaHasta.set('');
     this.clienteId.set('');
@@ -508,6 +556,12 @@ this.setView('pdf');
     this.clearWorkspaceError();
   }
 
+  ngOnDestroy(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.cancelDataRequest();
+    this.cancelPdfRequest();
+  }
+
   private setWorkspaceError(err: unknown, fallback: string, action: FailedReportAction): void {
     this.workspaceError.set(this.getErrorMessage(err, fallback));
     this.lastFailedAction.set(action);
@@ -516,6 +570,34 @@ this.setView('pdf');
   private clearWorkspaceError(): void {
     this.workspaceError.set('');
     this.lastFailedAction.set(null);
+  }
+
+  private invalidateFilterDependentState(): void {
+    this.cancelDataRequest();
+    this.cancelPdfRequest();
+    this.reportData.set(null);
+    this.pdfBlob.set(null);
+    this.activeView.set('table');
+    this.clearWorkspaceError();
+  }
+
+  private cancelDataRequest(): void {
+    this.dataRequestId += 1;
+    this.dataRequest?.unsubscribe();
+    this.dataRequest = null;
+    this.isLoadingData.set(false);
+  }
+
+  private cancelPdfRequest(): void {
+    this.pdfRequestId += 1;
+    this.pdfRequest?.unsubscribe();
+    this.pdfRequest = null;
+    this.isLoadingPdf.set(false);
+  }
+
+  private filterContextKey(): string {
+    const filters = this.buildFilters();
+    return `${filters.clienteId ?? ''}|${filters.fechaDesde ?? ''}|${filters.fechaHasta ?? ''}`;
   }
 
   private getErrorMessage(err: unknown, fallback: string): string {

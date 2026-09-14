@@ -12,5 +12,5 @@ export class PdfPreviewerComponent {
   readonly src = input<Blob | string | Uint8Array | undefined>(undefined);
   readonly base64Src = input<string | undefined>(undefined);
   readonly height = input('700px');
-  readonly ariaLabel = input('Vista previa del documento PDF oficial');
+  readonly ariaLabel = input('Vista previa del documento PDF');
 }

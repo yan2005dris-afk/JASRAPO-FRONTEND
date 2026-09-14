@@ -29,4 +29,27 @@ describe('ReportEmailDialogComponent', () => {
     expect(document.activeElement).toBe(opener);
     opener.remove();
   });
+
+  it('references the validation description only while the recipient is invalid', async () => {
+    await TestBed.configureTestingModule({
+      imports: [ReportEmailDialogComponent],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(ReportEmailDialogComponent);
+    fixture.detectChanges();
+    const input = fixture.nativeElement.querySelector(
+      '#report-email-recipient',
+    ) as HTMLInputElement;
+
+    expect(input.hasAttribute('aria-describedby')).toBe(false);
+
+    fixture.componentInstance.form.controls.destinatario.markAsTouched();
+    fixture.detectChanges();
+    expect(input.getAttribute('aria-describedby')).toBe('report-email-recipient-error');
+    expect(fixture.nativeElement.querySelector('#report-email-recipient-error')).toBeTruthy();
+
+    fixture.componentInstance.form.controls.destinatario.setValue('usuario@example.com');
+    fixture.detectChanges();
+    expect(input.hasAttribute('aria-describedby')).toBe(false);
+    expect(fixture.nativeElement.querySelector('#report-email-recipient-error')).toBeNull();
+  });
 });

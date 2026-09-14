@@ -50,7 +50,11 @@
           formControlName="destinatario"
           autocomplete="email"
           cdkFocusInitial
-          aria-describedby="report-email-recipient-error"
+          [attr.aria-describedby]="
+            form.controls.destinatario.touched && form.controls.destinatario.invalid
+              ? 'report-email-recipient-error'
+              : null
+          "
         />
         @if (form.controls.destinatario.touched && form.controls.destinatario.invalid) {
           <p id="report-email-recipient-error" class="report-dialog__validation" role="alert">

@@ -27,7 +27,7 @@
     [attr.tabindex]="tabIndex('pdf')"
     data-report-format="pdf"
     aria-controls="report-results-panel"
-    [disabled]="pdfLoading()"
+    [attr.aria-busy]="pdfLoading()"
     (click)="activate('pdf', $event)"
     (keydown)="onKeydown($event)"
   >

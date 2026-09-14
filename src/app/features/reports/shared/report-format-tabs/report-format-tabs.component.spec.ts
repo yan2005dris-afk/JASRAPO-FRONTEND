@@ -27,6 +27,19 @@ describe('ReportFormatTabsComponent', () => {
     expect(tabs[1].tabIndex).toBe(0);
   });
 
+  it('keeps the active PDF tab focusable while the document is loading', () => {
+    const fixture = TestBed.createComponent(ReportFormatTabsComponent);
+    fixture.componentRef.setInput('activeFormat', 'pdf');
+    fixture.componentRef.setInput('pdfLoading', true);
+    fixture.detectChanges();
+    const root = fixture.nativeElement as HTMLElement;
+    const pdfTab = root.querySelector<HTMLButtonElement>('#report-pdf-tab');
+
+    expect(pdfTab?.disabled).toBe(false);
+    expect(pdfTab?.tabIndex).toBe(0);
+    expect(pdfTab?.getAttribute('aria-busy')).toBe('true');
+  });
+
   it('supports arrow, Home and End keyboard navigation', () => {
     const fixture = TestBed.createComponent(ReportFormatTabsComponent);
     const changeSpy = vi.spyOn(fixture.componentInstance.formatChange, 'emit');

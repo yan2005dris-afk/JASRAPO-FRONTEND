@@ -51,7 +51,7 @@
         <app-date-picker
           inputId="fechaDesde"
           [value]="fechaDesde()"
-          (valueChange)="fechaDesde.set($event)"
+          (valueChange)="actualizarFechaDesde($event)"
         />
       </div>
 
@@ -60,7 +60,7 @@
         <app-date-picker
           inputId="fechaHasta"
           [value]="fechaHasta()"
-          (valueChange)="fechaHasta.set($event)"
+          (valueChange)="actualizarFechaHasta($event)"
         />
       </div>
 
