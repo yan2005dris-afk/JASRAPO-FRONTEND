@@ -1,3 +1,5 @@
+import { A11yModule } from '@angular/cdk/a11y';
+import { DOCUMENT } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
@@ -73,6 +75,7 @@ export interface PaymentsReportData {
 @Component({
   selector: 'app-payments-report',
   imports: [
+    A11yModule,
     FormsModule,
     PdfPreviewerComponent,
     DatePickerComponent,
@@ -86,6 +89,7 @@ export interface PaymentsReportData {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PaymentsReportComponent {
+  private readonly document = inject(DOCUMENT);
   private readonly reportsService = inject(ReportsService);
   private readonly clientsService = inject(ClientsService);
   private readonly toast = inject(ToastService);
@@ -122,6 +126,7 @@ export class PaymentsReportComponent {
   readonly searchError = signal('');
   readonly searchPerformed = signal(false);
   readonly isClientPickerOpen = signal(false);
+  private clientPickerTrigger: HTMLElement | null = null;
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Modales
@@ -291,6 +296,7 @@ export class PaymentsReportComponent {
   }
 
   abrirBuscadorClientes(): void {
+    this.clientPickerTrigger = this.getFocusedElement();
     this.isClientPickerOpen.set(true);
     if (!this.searchPerformed()) {
       this.buscarClientes();
@@ -299,6 +305,13 @@ export class PaymentsReportComponent {
 
   cerrarBuscadorClientes(): void {
     this.isClientPickerOpen.set(false);
+    queueMicrotask(() => this.clientPickerTrigger?.focus());
+  }
+
+  onClientPickerBackdropClick(event: MouseEvent): void {
+    if (event.target === event.currentTarget) {
+      this.cerrarBuscadorClientes();
+    }
   }
 
   buscarClientes(): void {
@@ -338,7 +351,7 @@ export class PaymentsReportComponent {
     this.selectedClientLabel.set(`${nombre} · ${cliente.identificacion}`);
     this.selectedClientName.set(nombre);
     this.destinatario.set(cliente.email?.trim() ?? '');
-    this.isClientPickerOpen.set(false);
+    this.cerrarBuscadorClientes();
   }
 
   formatClientName(cliente: IClient): string {
@@ -516,5 +529,10 @@ export class PaymentsReportComponent {
       }
     }
     return fallback;
+  }
+
+  private getFocusedElement(): HTMLElement | null {
+    const activeElement = this.document.activeElement;
+    return activeElement instanceof HTMLElement ? activeElement : null;
   }
 }

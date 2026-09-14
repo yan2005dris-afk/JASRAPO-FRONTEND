@@ -194,8 +194,20 @@
 </app-report-workspace>
 
 @if (isClientPickerOpen()) {
-  <div class="picker-modal" role="dialog" aria-modal="true" aria-labelledby="picker-cliente-title">
-    <section class="picker-modal__dialog">
+  <div
+    class="picker-modal"
+    role="presentation"
+    (mousedown)="onClientPickerBackdropClick($event)"
+    (keydown.escape)="cerrarBuscadorClientes()"
+  >
+    <section
+      class="picker-modal__dialog"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="picker-cliente-title"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
+    >
       <header class="picker-modal__header">
         <div>
           <h2 id="picker-cliente-title">Buscar cliente</h2>
@@ -217,6 +229,7 @@
           <input
             type="search"
             class="form-control"
+            cdkFocusInitial
             aria-label="Buscar cliente"
             placeholder="Ej.: María o 1105123"
             [ngModel]="searchTerm()"
