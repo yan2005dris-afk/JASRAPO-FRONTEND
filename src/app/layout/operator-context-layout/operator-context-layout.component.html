@@ -1,8 +1,9 @@
 <div
   class="operator-layout-wrapper d-flex flex-column flex-grow-1"
-  style="height: 100%; min-height: 0; overflow-y: auto"
+  style="height: 100vh; min-height: 0; overflow: hidden"
 >
-  <main class="operator-content flex-grow-1 p-3 pb-5 pb-md-3">
+  <app-header class="layout-header d-none d-md-block"></app-header>
+  <main class="operator-content flex-grow-1 p-3 pb-5 pb-md-3" style="min-height: 0; overflow-y: auto">
     <router-outlet></router-outlet>
   </main>
   <app-bottom-nav></app-bottom-nav>

@@ -86,6 +86,40 @@ describe('Sidebar', () => {
     expect(items.some((i) => i.route === '/app/dashboard')).toBe(false);
   });
 
+  it('filters out operator routes and Operaciones from backoffice sidebar', () => {
+    menuItemsSignal.set([
+      {
+        id: 50,
+        name: 'Operaciones',
+        route: '/app/operator',
+        is_active: true,
+        menu_order: 1,
+        children: [
+          {
+            id: 51,
+            name: 'Toma de Lecturas',
+            route: '/app/operator/readings',
+            is_active: true,
+            menu_order: 1,
+          },
+        ],
+      },
+      {
+        id: 60,
+        name: 'Contratos',
+        route: '/app/Contratos',
+        is_active: true,
+        menu_order: 2,
+      },
+    ]);
+    fixture.detectChanges();
+
+    const items = component.visibleMenuItems();
+    expect(items.some((i) => i.name === 'Operaciones')).toBe(false);
+    expect(items.some((i) => i.route?.includes('/operator'))).toBe(false);
+    expect(items.some((i) => i.name === 'Contratos')).toBe(true);
+  });
+
   describe('isParentActive', () => {
     async function navigateTo(url: string): Promise<void> {
       await router.navigateByUrl(url);

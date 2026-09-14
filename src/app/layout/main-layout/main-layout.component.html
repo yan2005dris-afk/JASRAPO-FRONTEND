@@ -1,13 +1,3 @@
-<div class="app-shell-root d-flex flex-column" style="height: 100vh; overflow: hidden">
-  <app-header
-    class="layout-header"
-    [class.d-none]="appContextService.isOperator()"
-    [class.d-md-block]="appContextService.isOperator()"
-  ></app-header>
-  <div
-    class="app-shell-body flex-grow-1"
-    style="min-height: 0; overflow: hidden; display: flex; flex-direction: column"
-  >
-    <router-outlet></router-outlet>
-  </div>
+<div class="app-shell-root" style="height: 100vh; overflow: hidden">
+  <router-outlet></router-outlet>
 </div>

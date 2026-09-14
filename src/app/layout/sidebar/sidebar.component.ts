@@ -59,9 +59,30 @@ export class Sidebar {
       menu_order: index + 1,
     }));
 
-    // Administrative menu items from backend, deduplicating dashboard
+    const isOperatorItem = (item: MenuItem): boolean => {
+      const route = item.route?.toLowerCase() ?? '';
+      if (route.includes('/operator') || route.includes('/operador')) return true;
+      if (item.name?.toLowerCase().includes('operacion')) return true;
+      return false;
+    };
+
+    // Administrative menu items from backend, deduplicating dashboard and excluding operator items
     const rawItems = this.menuService.menuItems();
-    const unmigrated = rawItems.filter((item) => item.route !== '/app/dashboard');
+    const unmigrated = rawItems
+      .filter(
+        (item) =>
+          !isOperatorItem(item) &&
+          item.route !== '/app/dashboard' &&
+          item.route !== '/app/backoffice/dashboard',
+      )
+      .map((item) => {
+        if (!item.children || item.children.length === 0) return item;
+        return {
+          ...item,
+          children: item.children.filter((child) => !isOperatorItem(child)),
+        };
+      })
+      .filter((item) => (item.children ? item.children.length > 0 : true));
 
     return [...registryItems, ...unmigrated];
   });

@@ -69,21 +69,7 @@ describe('MainLayout Component (AuthenticatedAppShell)', () => {
     expect(component).toBeTruthy();
   });
 
-  it('renders shared header and router outlet', () => {
-    expect(fixture.debugElement.query(By.css('app-header'))).toBeTruthy();
+  it('renders shell router outlet', () => {
     expect(fixture.debugElement.query(By.css('router-outlet'))).toBeTruthy();
-  });
-
-  it('applies mobile hidden classes to header when in operator context', () => {
-    isOperatorSignal.set(false);
-    fixture.detectChanges();
-    let headerEl = fixture.debugElement.query(By.css('app-header'));
-    expect(headerEl.classes['d-none']).toBeFalsy();
-
-    isOperatorSignal.set(true);
-    fixture.detectChanges();
-    headerEl = fixture.debugElement.query(By.css('app-header'));
-    expect(headerEl.classes['d-none']).toBe(true);
-    expect(headerEl.classes['d-md-block']).toBe(true);
   });
 });
