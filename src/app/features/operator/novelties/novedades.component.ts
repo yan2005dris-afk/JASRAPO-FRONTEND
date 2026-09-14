@@ -62,12 +62,12 @@ export class NovedadesComponent implements OnInit {
   }
 
   newNovedad(): void {
-    this.router.navigate(['/app/operador/novedades/new']);
+    this.router.navigate(['/app/operator/novelties/new']);
   }
 
   editNovedad(item: AnomalyWithMeter): void {
     const first = item.anomalias[0];
-    this.router.navigate(['/app/operador/novedades/new'], {
+    this.router.navigate(['/app/operator/novelties/new'], {
       queryParams: {
         lecturaId: item.lecturaId,
         medidorId: item.meterDto?.medidorId ?? null,

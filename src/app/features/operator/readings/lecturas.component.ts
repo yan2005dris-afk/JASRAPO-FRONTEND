@@ -429,7 +429,7 @@ export class LecturasComponent implements OnInit {
       const lecturaId = existing?.lecturaId ?? existing?._lecturaId ?? null;
       const primaryOrder = this.primaryWorkOrderFor(meter);
       const ordenTrabajoId = primaryOrder ? primaryOrder[1].id : null;
-      this.router.navigate(['/app/operador/novedades/new'], {
+      this.router.navigate(['/app/operator/novelties/new'], {
         queryParams: {
           medidorId: meter.medidorId,
           lecturaId,

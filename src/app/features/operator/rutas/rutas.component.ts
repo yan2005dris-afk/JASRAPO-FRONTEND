@@ -347,7 +347,7 @@ export class RutasComponent implements OnInit, OnDestroy {
       queryParams['serie'] = task.medidor.serie;
     }
 
-    this.router.navigate(['/app/operador/lecturas'], { queryParams });
+    this.router.navigate(['/app/operator/readings'], { queryParams });
   }
 
   getStateLabel(estado: string): string {

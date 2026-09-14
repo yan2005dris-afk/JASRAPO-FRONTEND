@@ -9,7 +9,16 @@ export type AppRouteId =
   | 'operator-novelties-new'
   | 'operator-sync'
   | 'operator-profile'
-  | 'backoffice-dashboard';
+  | 'backoffice-dashboard'
+  | 'backoffice-clients'
+  | 'backoffice-contracts'
+  | 'backoffice-meters'
+  | 'backoffice-tariffs'
+  | 'backoffice-communities'
+  | 'backoffice-payments'
+  | 'backoffice-reports'
+  | 'backoffice-users'
+  | 'backoffice-roles';
 
 export interface RouteCapabilityRequirement {
   resource: string;
@@ -99,7 +108,7 @@ export const APP_ROUTE_REGISTRY: Record<AppRouteId, AppRouteDefinition> = {
     routeId: 'operator-profile',
     context: 'operator',
     canonicalPath: '/app/operator/profile',
-    requiredCapability: { resource: 'users', action: 'read' },
+    requiredCapability: { resource: 'profile', action: 'read' },
     label: 'Perfil',
     icon: 'bi-person-circle',
     breadcrumb: 'Perfil',
@@ -119,6 +128,105 @@ export const APP_ROUTE_REGISTRY: Record<AppRouteId, AppRouteDefinition> = {
     showInSidebar: true,
     showInBottomNav: false,
     syncBadge: false,
+  },
+  'backoffice-clients': {
+    routeId: 'backoffice-clients',
+    context: 'backoffice',
+    canonicalPath: '/app/contracts/clients',
+    requiredCapability: { resource: 'clientes', action: 'read' },
+    label: 'Clientes',
+    icon: 'bi-people',
+    breadcrumb: 'Clientes',
+    showInSidebar: true,
+    showInBottomNav: false,
+  },
+  'backoffice-contracts': {
+    routeId: 'backoffice-contracts',
+    context: 'backoffice',
+    canonicalPath: '/app/contracts/service-contracts',
+    requiredCapability: { resource: 'contracts', action: 'read' },
+    label: 'Contratos',
+    icon: 'bi-file-earmark-text',
+    breadcrumb: 'Contratos',
+    showInSidebar: true,
+    showInBottomNav: false,
+  },
+  'backoffice-meters': {
+    routeId: 'backoffice-meters',
+    context: 'backoffice',
+    canonicalPath: '/app/contracts/meters',
+    requiredCapability: { resource: 'meters', action: 'read' },
+    label: 'Medidores',
+    icon: 'bi-speedometer',
+    breadcrumb: 'Medidores',
+    showInSidebar: true,
+    showInBottomNav: false,
+  },
+  'backoffice-tariffs': {
+    routeId: 'backoffice-tariffs',
+    context: 'backoffice',
+    canonicalPath: '/app/contracts/tariffs',
+    requiredCapability: { resource: 'tarifas', action: 'read' },
+    label: 'Tarifas',
+    icon: 'bi-tags',
+    breadcrumb: 'Tarifas',
+    showInSidebar: true,
+    showInBottomNav: false,
+  },
+  'backoffice-communities': {
+    routeId: 'backoffice-communities',
+    context: 'backoffice',
+    canonicalPath: '/app/admin/comunidades',
+    requiredCapability: { resource: 'comunidades', action: 'read' },
+    label: 'Comunidades',
+    icon: 'bi-geo-alt',
+    breadcrumb: 'Comunidades',
+    showInSidebar: true,
+    showInBottomNav: false,
+  },
+  'backoffice-payments': {
+    routeId: 'backoffice-payments',
+    context: 'backoffice',
+    canonicalPath: '/app/billing/payments',
+    requiredCapability: { resource: 'payments', action: 'read' },
+    label: 'Cobros',
+    icon: 'bi-cash-coin',
+    breadcrumb: 'Cobros',
+    showInSidebar: true,
+    showInBottomNav: false,
+  },
+  'backoffice-reports': {
+    routeId: 'backoffice-reports',
+    context: 'backoffice',
+    canonicalPath: '/app/reports/zone-consumption',
+    requiredCapability: { resource: 'reportes', action: 'read' },
+    label: 'Reportes',
+    icon: 'bi-graph-up',
+    breadcrumb: 'Reportes',
+    showInSidebar: true,
+    showInBottomNav: false,
+  },
+  'backoffice-users': {
+    routeId: 'backoffice-users',
+    context: 'backoffice',
+    canonicalPath: '/app/admin/users',
+    requiredCapability: { resource: 'users', action: 'read' },
+    label: 'Usuarios',
+    icon: 'bi-person-badge',
+    breadcrumb: 'Usuarios',
+    showInSidebar: true,
+    showInBottomNav: false,
+  },
+  'backoffice-roles': {
+    routeId: 'backoffice-roles',
+    context: 'backoffice',
+    canonicalPath: '/app/admin/roles',
+    requiredCapability: { resource: 'roles', action: 'read' },
+    label: 'Roles',
+    icon: 'bi-shield-check',
+    breadcrumb: 'Roles',
+    showInSidebar: true,
+    showInBottomNav: false,
   },
 };
 
@@ -190,18 +298,13 @@ export function getDefaultRouteByCapabilities(
   return anyAllowed ? anyAllowed.canonicalPath : null;
 }
 
-const OPERATOR_RESOURCES = new Set(['routes', 'lecturas', 'work-order-novelties', 'operator-sync']);
-
 export function canAccessContext(
   context: AppContext,
   capabilities: SessionCapabilityGrant[] | undefined | null,
 ): boolean {
   if (!capabilities || !Array.isArray(capabilities) || capabilities.length === 0) return false;
-  if (context === 'operator') {
-    return capabilities.some((c) => OPERATOR_RESOURCES.has(c.resource));
-  }
-  return capabilities.some(
-    (c) => !OPERATOR_RESOURCES.has(c.resource) || c.resource === 'dashboard',
+  return getRoutesByContext(context).some((route) =>
+    hasCapability(capabilities, route.requiredCapability),
   );
 }
 

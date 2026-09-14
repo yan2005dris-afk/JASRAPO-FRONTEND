@@ -6,6 +6,7 @@ import {
   getVisibleSidebarRoutes,
   getBottomNavRoutes,
   getDefaultRouteByCapabilities,
+  canAccessContext,
   hasCapability,
   isRouteAllowed,
 } from './app-route.registry';
@@ -53,5 +54,21 @@ describe('AppRouteRegistry', () => {
     const opSidebar = getVisibleSidebarRoutes('operator', operatorCaps);
     expect(opSidebar.map((r) => r.routeId)).toContain('operator-routes');
     expect(opSidebar.map((r) => r.routeId)).not.toContain('backoffice-dashboard');
+  });
+
+  it('checks context access declaratively by required route capabilities without heuristics', () => {
+    expect(canAccessContext('operator', operatorCaps)).toBe(true);
+    expect(canAccessContext('backoffice', operatorCaps)).toBe(false);
+    expect(canAccessContext('backoffice', backofficeCaps)).toBe(true);
+    expect(canAccessContext('operator', backofficeCaps)).toBe(false);
+
+    // Dual area user
+    const dualCaps = [...operatorCaps, ...backofficeCaps];
+    expect(canAccessContext('operator', dualCaps)).toBe(true);
+    expect(canAccessContext('backoffice', dualCaps)).toBe(true);
+
+    // Empty capabilities fail closed
+    expect(canAccessContext('operator', [])).toBe(false);
+    expect(canAccessContext('backoffice', [])).toBe(false);
   });
 });

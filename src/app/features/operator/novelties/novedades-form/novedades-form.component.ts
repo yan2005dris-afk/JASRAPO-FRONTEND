@@ -130,7 +130,7 @@ export class NovedadesFormComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/app/operador/novedades']);
+    this.router.navigate(['/app/operator/novelties']);
   }
 
   private async resolveWorkOrderForMeter(meter: IMeterDto): Promise<void> {
@@ -212,7 +212,7 @@ export class NovedadesFormComponent implements OnInit {
     try {
       await this.syncService.submitAnomaly(payload);
       this.toastService.success('Novedad registrada correctamente.', 'Listo');
-      this.router.navigate(['/app/operador/novedades']);
+      this.router.navigate(['/app/operator/novelties']);
     } catch {
       this.toastService.error('No se pudo registrar la novedad.', 'Error');
     } finally {

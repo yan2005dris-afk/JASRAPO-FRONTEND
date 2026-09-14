@@ -46,14 +46,14 @@ describe('MenuService', () => {
           {
             id: 21,
             name: 'Rutas',
-            route: 'operador/rutas',
+            route: 'operator/routes',
             menu_order: 1,
             is_active: true,
           },
           {
             id: 22,
             name: 'Lecturas',
-            route: '/app/operador/lecturas',
+            route: '/app/operator/readings',
             menu_order: 2,
             is_active: true,
           },
@@ -69,10 +69,10 @@ describe('MenuService', () => {
 
       // Nested child route format prefix
       const child1 = items[1].children![0];
-      expect(child1.route).toBe('/app/operador/rutas');
+      expect(child1.route).toBe('/app/operator/routes');
 
       const child2 = items[1].children![1];
-      expect(child2.route).toBe('/app/operador/lecturas');
+      expect(child2.route).toBe('/app/operator/readings');
     });
 
     const req = httpMock.expectOne(`${environment.apiUrl}/menus/my`);
