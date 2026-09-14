@@ -479,7 +479,7 @@ export class PaymentsReportComponent {
   retryLastAction(): void {
     switch (this.lastFailedAction()) {
       case 'pdf':
-        this.generarPdf();
+this.setView('pdf');
         break;
       case 'email':
         this.abrirModalEmail();
