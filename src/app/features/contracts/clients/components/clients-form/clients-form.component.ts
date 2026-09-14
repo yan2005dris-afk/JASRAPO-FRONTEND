@@ -44,6 +44,13 @@ export class ClientsFormComponent implements OnInit {
   readonly formClosed = output<void>();
   readonly formSubmitted = output<void>();
 
+  /**
+   * Emite el cliente recién creado. Permite que quien abre el formulario como
+   * modal (por ejemplo el selector de cliente del contrato) lo use al vuelo sin
+   * volver a consultarlo al backend.
+   */
+  readonly clientCreated = output<IClient>();
+
   readonly clienteAEditar = input<IClient | null>(null);
 
   private readonly clientsService = inject(ClientsService);
@@ -243,12 +250,17 @@ export class ClientsFormComponent implements OnInit {
 
   crearCliente(cliente: CreateClientRequest): void {
     this.clientsService.createClient(cliente).subscribe({
-      next: () => {
+      next: (clienteCreado) => {
         this.isSaving = false;
         this.mostrarMensaje('Cliente creado correctamente.', 'success');
         this.formSubmitted.emit();
         this.onClose();
         this.cdr.markForCheck();
+        // Se emite al final: quien escucha puede cerrar el selector que contiene
+        // a este formulario, y con él destruir esta vista.
+        if (clienteCreado) {
+          this.clientCreated.emit(clienteCreado);
+        }
       },
       error: (err: HttpErrorResponse) => {
         this.isSaving = false;

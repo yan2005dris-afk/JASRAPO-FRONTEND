@@ -198,3 +198,10 @@
   font-size: 0.95rem;
   word-break: break-word;
 }
+
+/* Este listado se usa también como selector dentro de otros formularios, y en
+   ese caso su modal queda anidado dentro del modal selector. Bootstrap da el
+   mismo z-index a ambos, así que se eleva para que no quede por debajo. */
+.client-form-modal {
+  z-index: 1060;
+}
