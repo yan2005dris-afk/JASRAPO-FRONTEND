@@ -15,12 +15,15 @@
 .sidebar-brand {
   height: 64px;
   padding: 0 1.25rem;
-  background-color: var(--sidebar-brand-bg, #065b5e);
+  background: var(--topbar-bg);
   transition: all var(--sidebar-transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
   box-sizing: border-box;
   max-width: 100%;
   overflow: hidden;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--topbar-border);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  position: relative;
+  z-index: 10;
 
   app-brand-logo {
     display: flex;
@@ -72,6 +75,7 @@
 
 .sidebar-nav {
   background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
   padding-top: 0.75rem;
   overflow-y: auto;
   overflow-x: hidden;
@@ -288,7 +292,7 @@
 
 /* Search */
 .sidebar-search {
-  border-bottom: 1px solid var(--sidebar-border);
+  border-right: 1px solid var(--sidebar-border);
 
   .input-group-text,
   .form-control {
@@ -387,9 +391,9 @@
     .sidebar-brand {
       height: 64px;
       padding: 0;
-      background-color: var(--sidebar-brand-bg, #065b5e);
+      background-color: var(--topbar-bg);
       justify-content: center;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+      border-bottom: 1px solid var(--topbar-border);
 
       app-brand-logo {
         justify-content: center;

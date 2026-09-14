@@ -85,11 +85,11 @@
   --sidebar-hover-duration: 0.15s;
 
   /* Layout Theme Tokens — Propuesta 1: Topbar Turquesa Corporativo + Sidebar Niebla Marina */
-  --topbar-bg: linear-gradient(90deg, #066265 0%, #087a7d 100%);
+  --topbar-bg: #087a7d;
   --topbar-color: #ffffff;
-  --topbar-border: rgba(0, 0, 0, 0.1);
+  --topbar-border: rgba(0, 0, 0, 0.12);
 
-  --sidebar-brand-bg: #065b5e;
+  --sidebar-brand-bg: #087a7d;
   --sidebar-bg: #edf5f6; /* Gris Niebla Marina suave: tono claro con cuerpo que elimina la sensación de "muy blanco" */
   --sidebar-border: #cbdfe2;
   --sidebar-text: #0f2938; /* Azul Marino Pizarra Profundo para 11:1+ WCAG AAA de contraste */

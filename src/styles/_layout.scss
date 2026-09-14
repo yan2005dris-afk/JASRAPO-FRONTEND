@@ -20,7 +20,6 @@
   flex-shrink: 0;
   height: 100%;
   background-color: var(--sidebar-bg);
-  border-right: 1px solid var(--sidebar-border);
   box-shadow: 1px 0 10px rgba(15, 23, 42, 0.04);
   z-index: 1000;
   overflow: hidden;
@@ -55,7 +54,8 @@
   height: 64px;
   flex-shrink: 0;
   background: var(--topbar-bg, #087a7d);
-  box-shadow: 0 2px 8px rgba(6, 98, 101, 0.2);
+  border-bottom: 1px solid var(--topbar-border);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
   z-index: 900;
 }
 
