@@ -32,10 +32,10 @@
     ]
   },
   "private": true,
-  "packageManager": "pnpm@11.22.0",
+  "packageManager": "pnpm@12.3.4",
   "engines": {
-    "node": ">=22",
-    "pnpm": ">=8",
+    "node": ">=22.13.0",
+    "pnpm": ">=12.3.4",
     "npm": ">=999.0.0",
     "yarn": ">=999.0.0"
   },
@@ -80,7 +80,7 @@
     "tsx": "^4.21.0",
     "typescript": "~5.9.2",
     "typescript-eslint": "8.56.1",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.11"
   },
   "overrides": {
     "lodash": ">=4.17.24",
@@ -92,6 +92,9 @@
     "piscina": ">=5.1.5",
     "sigstore": ">=4.1.1",
     "cross-spawn": ">=7.0.6",
-    "picomatch": ">=4.0.2"
+    "picomatch": ">=4.0.2",
+    "fast-uri": "^3.1.6",
+    "qs": "^6.16.0",
+    "hono": "^4.13.5"
   }
 }
