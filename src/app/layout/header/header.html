@@ -25,6 +25,42 @@
         >
         <span class="badge bg-light text-primary border ms-2">Operador</span>
       </div>
+
+      <!-- Navigation links for Operator on Desktop/Tablet -->
+      <nav class="d-none d-md-flex align-items-center gap-1 ms-4">
+        <a
+          routerLink="/app/operator/routes"
+          routerLinkActive="btn-light text-primary fw-bold"
+          class="btn btn-sm btn-link text-decoration-none text-secondary d-flex align-items-center gap-1 px-3 py-1"
+        >
+          <i class="bi bi-signpost-2"></i>
+          <span>Rutas</span>
+        </a>
+        <a
+          routerLink="/app/operator/readings"
+          routerLinkActive="btn-light text-primary fw-bold"
+          class="btn btn-sm btn-link text-decoration-none text-secondary d-flex align-items-center gap-1 px-3 py-1"
+        >
+          <i class="bi bi-water"></i>
+          <span>Lecturas</span>
+        </a>
+        <a
+          routerLink="/app/operator/novelties"
+          routerLinkActive="btn-light text-primary fw-bold"
+          class="btn btn-sm btn-link text-decoration-none text-secondary d-flex align-items-center gap-1 px-3 py-1"
+        >
+          <i class="bi bi-exclamation-triangle"></i>
+          <span>Novedades</span>
+        </a>
+        <a
+          routerLink="/app/operator/sync"
+          routerLinkActive="btn-light text-primary fw-bold"
+          class="btn btn-sm btn-link text-decoration-none text-secondary d-flex align-items-center gap-1 px-3 py-1"
+        >
+          <i class="bi bi-arrow-repeat"></i>
+          <span>Sincronizar</span>
+        </a>
+      </nav>
     }
 
     <!-- Right Side Icons & Sync Widget -->

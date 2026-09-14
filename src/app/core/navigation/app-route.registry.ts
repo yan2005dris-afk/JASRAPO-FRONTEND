@@ -137,7 +137,7 @@ export const APP_ROUTE_REGISTRY: Record<AppRouteId, AppRouteDefinition> = {
     label: 'Clientes',
     icon: 'bi-people',
     breadcrumb: 'Clientes',
-    showInSidebar: true,
+    showInSidebar: false,
     showInBottomNav: false,
   },
   'backoffice-contracts': {
@@ -148,7 +148,7 @@ export const APP_ROUTE_REGISTRY: Record<AppRouteId, AppRouteDefinition> = {
     label: 'Contratos',
     icon: 'bi-file-earmark-text',
     breadcrumb: 'Contratos',
-    showInSidebar: true,
+    showInSidebar: false,
     showInBottomNav: false,
   },
   'backoffice-meters': {
@@ -159,7 +159,7 @@ export const APP_ROUTE_REGISTRY: Record<AppRouteId, AppRouteDefinition> = {
     label: 'Medidores',
     icon: 'bi-speedometer',
     breadcrumb: 'Medidores',
-    showInSidebar: true,
+    showInSidebar: false,
     showInBottomNav: false,
   },
   'backoffice-tariffs': {
@@ -170,7 +170,7 @@ export const APP_ROUTE_REGISTRY: Record<AppRouteId, AppRouteDefinition> = {
     label: 'Tarifas',
     icon: 'bi-tags',
     breadcrumb: 'Tarifas',
-    showInSidebar: true,
+    showInSidebar: false,
     showInBottomNav: false,
   },
   'backoffice-communities': {
@@ -181,7 +181,7 @@ export const APP_ROUTE_REGISTRY: Record<AppRouteId, AppRouteDefinition> = {
     label: 'Comunidades',
     icon: 'bi-geo-alt',
     breadcrumb: 'Comunidades',
-    showInSidebar: true,
+    showInSidebar: false,
     showInBottomNav: false,
   },
   'backoffice-payments': {
@@ -192,7 +192,7 @@ export const APP_ROUTE_REGISTRY: Record<AppRouteId, AppRouteDefinition> = {
     label: 'Cobros',
     icon: 'bi-cash-coin',
     breadcrumb: 'Cobros',
-    showInSidebar: true,
+    showInSidebar: false,
     showInBottomNav: false,
   },
   'backoffice-reports': {
@@ -203,7 +203,7 @@ export const APP_ROUTE_REGISTRY: Record<AppRouteId, AppRouteDefinition> = {
     label: 'Reportes',
     icon: 'bi-graph-up',
     breadcrumb: 'Reportes',
-    showInSidebar: true,
+    showInSidebar: false,
     showInBottomNav: false,
   },
   'backoffice-users': {
@@ -214,7 +214,7 @@ export const APP_ROUTE_REGISTRY: Record<AppRouteId, AppRouteDefinition> = {
     label: 'Usuarios',
     icon: 'bi-person-badge',
     breadcrumb: 'Usuarios',
-    showInSidebar: true,
+    showInSidebar: false,
     showInBottomNav: false,
   },
   'backoffice-roles': {
@@ -225,7 +225,7 @@ export const APP_ROUTE_REGISTRY: Record<AppRouteId, AppRouteDefinition> = {
     label: 'Roles',
     icon: 'bi-shield-check',
     breadcrumb: 'Roles',
-    showInSidebar: true,
+    showInSidebar: false,
     showInBottomNav: false,
   },
 };
