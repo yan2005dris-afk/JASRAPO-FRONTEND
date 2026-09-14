@@ -1,59 +1,27 @@
-<section class="login-wrapper vh-100 d-flex m-0 p-0 overflow-hidden anim-fade-in">
-  <!-- Left Side: Atmospheric Water Hero with JASRAPO Seal -->
+<section class="login-wrapper min-vh-100 d-flex m-0 p-0 overflow-hidden anim-fade-in">
+  <!-- Left Side: Atmospheric Water Canvas with Extracted Mascot -->
   <div
-    class="hero-side col-lg-6 col-xl-7 d-none d-lg-flex flex-column justify-content-between p-5 m-0"
+    class="hero-side col-lg-6 col-xl-7 d-none d-lg-flex flex-column justify-content-between p-5 m-0 position-relative"
   >
     <div class="hero-overlay-waves"></div>
 
-    <!-- Top Badge -->
-    <div class="position-relative z-2">
-      <div class="hero-location-badge">
-        <i class="bi bi-geo-alt-fill text-warning me-1"></i>
-        <span>Olón · Santa Elena, Ecuador</span>
-      </div>
+    <!-- Center: Extracted 2D Mascot (Unboxed, Pure Vector) -->
+    <div class="hero-center-content mx-auto my-auto position-relative z-2 w-100 text-center">
+      <app-jasrapo-mascot size="hero" [interactive]="true"></app-jasrapo-mascot>
+
+      <p class="hero-mascot-caption mx-auto mt-3 mb-0">¡Cuidemos cada gota de agua en Olón! 💧</p>
     </div>
 
-    <!-- Central Branding with Official Seal -->
-    <div class="hero-content mx-auto text-center my-auto">
-      <app-brand-logo
-        size="hero"
-        [showText]="true"
-        [showSubtitle]="true"
-        [stacked]="true"
-        textColor="light"
-        class="mb-3"
-      ></app-brand-logo>
-
-      <!-- Value Pillars (Inspired by the tree, golden tap, and pure water) -->
-      <div class="d-flex flex-column gap-3 text-start mt-4">
-        <div class="hero-feature-card">
-          <div class="feature-icon-box water">
-            <i class="bi bi-droplet-fill"></i>
-          </div>
-          <div>
-            <h6>Gestión Hídrica Responsable</h6>
-            <p>Monitoreo en tiempo real de consumo, lecturas y distribución regional.</p>
-          </div>
-        </div>
-
-        <div class="hero-feature-card">
-          <div class="feature-icon-box brass">
-            <i class="bi bi-shield-check"></i>
-          </div>
-          <div>
-            <h6>Infraestructura y Confiabilidad</h6>
-            <p>Mantenimiento preventivo, atención ciudadana y facturación transparente.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Bottom Footer Note -->
+    <!-- Bottom Link -->
     <div
-      class="position-relative z-2 d-flex justify-content-between align-items-center text-white-50 small"
+      class="position-relative z-2 d-flex justify-content-end align-items-center text-white-50 small"
     >
-      <span>© {{ '2026' }} JASRAPO · Todos los derechos reservados</span>
-      <span>Sistema Institucional v1.0</span>
+      <a
+        routerLink="/consulta-planilla"
+        class="text-white-50 text-decoration-underline hover-white"
+      >
+        Consulta pública de planillas
+      </a>
     </div>
 
     <!-- Subtle Wave Graphic at base -->
@@ -62,16 +30,17 @@
       viewBox="0 0 1440 320"
       preserveAspectRatio="none"
       xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
     >
       <path
         fill="#0c9ea1"
-        fill-opacity="0.3"
+        fill-opacity="0.25"
         d="M0,192L48,197.3C96,203,192,213,288,197.3C384,181,480,139,576,144C672,149,768,203,864,208C960,213,1056,171,1152,149.3C1248,128,1344,128,1392,128L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
       ></path>
     </svg>
   </div>
 
-  <!-- Right Side: Clean Form Container -->
+  <!-- Right Side: Clean Modern Form Container -->
   <div
     class="form-side col-12 col-lg-6 col-xl-5 d-flex flex-column justify-content-between p-4 p-md-5 h-100 anim-slide-up overflow-y-auto"
   >
@@ -87,13 +56,13 @@
       </a>
     </div>
 
-    <!-- Main Login Card -->
+    <!-- Main Login Form -->
     <div class="w-100 mx-auto my-auto" style="max-width: 360px">
-      <!-- Mobile Logo for smaller screens -->
+      <!-- Logo for all screens -->
       <div class="d-flex flex-column align-items-center text-center mb-4">
         <app-brand-logo size="lg" [showText]="false" class="mb-3"></app-brand-logo>
         <h2 class="form-title mb-1">Iniciar Sesión</h2>
-        <p class="form-subtitle mb-0">Accede al portal administrativo y operativo</p>
+        <p class="text-muted small mb-0">Accede al portal administrativo y operativo</p>
       </div>
 
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="anim-stagger-children">
@@ -199,7 +168,7 @@
         <div class="text-center">
           <span class="text-muted small">¿Problemas para acceder? </span>
           <a
-            href="mailto:soporte@jasrapo.com"
+            [href]="'mailto:' + brand.supportEmail"
             class="small text-decoration-none fw-semibold"
             style="color: var(--primary-color)"
           >
@@ -207,14 +176,6 @@
           </a>
         </div>
       </form>
-    </div>
-
-    <!-- Bottom Footer on form side -->
-    <div class="text-center text-muted small pt-3 border-top">
-      <span class="d-inline-flex align-items-center gap-1">
-        <i class="bi bi-shield-lock-fill text-muted"></i>
-        Acceso seguro protegido por JASRAPO
-      </span>
     </div>
   </div>
 </section>

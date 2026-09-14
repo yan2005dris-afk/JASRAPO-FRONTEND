@@ -15,10 +15,12 @@
 .sidebar-brand {
   height: 64px;
   padding: 0 1.25rem;
+  background-color: var(--sidebar-brand-bg, #065b5e);
   transition: all var(--sidebar-transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
   box-sizing: border-box;
   max-width: 100%;
   overflow: hidden;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 
   app-brand-logo {
     display: flex;
@@ -37,8 +39,8 @@
     align-items: center;
     justify-content: center;
     box-shadow:
-      0 2px 8px rgba(12, 158, 161, 0.16),
-      0 0 0 1px rgba(12, 158, 161, 0.15);
+      0 2px 8px rgba(0, 0, 0, 0.2),
+      0 0 0 1px rgba(255, 255, 255, 0.2);
     transition: all var(--sidebar-transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
     overflow: hidden;
   }
@@ -54,14 +56,14 @@
     font-size: 1.05rem;
     font-weight: 800;
     letter-spacing: -0.4px;
-    color: var(--marine-slate);
+    color: #ffffff;
     line-height: 1.1;
   }
 
   .brand-subtitle {
-    font-size: 0.7rem;
-    font-weight: 500;
-    color: var(--muted-text);
+    font-size: 0.725rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.85);
     letter-spacing: 0.1px;
     line-height: 1.1;
     white-space: nowrap;
@@ -69,13 +71,14 @@
 }
 
 .sidebar-nav {
+  background-color: var(--sidebar-bg);
   padding-top: 0.75rem;
   overflow-y: auto;
   overflow-x: hidden;
   max-width: 100%;
   box-sizing: border-box;
   scrollbar-width: thin;
-  scrollbar-color: var(--border-color) transparent;
+  scrollbar-color: #cbdfe2 transparent;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -85,11 +88,11 @@
     background: transparent;
   }
   &::-webkit-scrollbar-thumb {
-    background-color: var(--border-color);
+    background-color: #cbd5e1;
     border-radius: 3px;
   }
   &::-webkit-scrollbar-thumb:hover {
-    background-color: var(--muted-text);
+    background-color: #94a3b8;
   }
 }
 
@@ -100,75 +103,99 @@
   transition: all var(--sidebar-transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Nav links — base reutilizable */
+/* Nav links — base reutilizable, high contrast for elderly users */
 .nav-link-custom {
-  margin: 4px 14px;
-  padding: 0.7rem 1.1rem;
-  font-size: 0.925rem;
-  font-weight: 500;
-  color: var(--dark-text);
-  border-radius: 10px;
+  margin: 5px 12px;
+  padding: 0.78rem 1.1rem;
+  min-height: 48px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--sidebar-text);
+  border-radius: 12px;
   display: flex;
   align-items: center;
-  max-width: calc(100% - 28px);
+  max-width: calc(100% - 24px);
   box-sizing: border-box;
   overflow: hidden;
   transition:
     background-color var(--sidebar-hover-duration) ease-out,
     color var(--sidebar-hover-duration) ease-out,
+    box-shadow var(--sidebar-hover-duration) ease-out,
     width var(--sidebar-transition-duration) var(--sidebar-transition-timing),
     height var(--sidebar-transition-duration) var(--sidebar-transition-timing),
     padding var(--sidebar-transition-duration) var(--sidebar-transition-timing),
     margin var(--sidebar-transition-duration) var(--sidebar-transition-timing),
     border-radius var(--sidebar-transition-duration) var(--sidebar-transition-timing);
-  border-left: 3px solid transparent;
+
+  .nav-link-custom__icon-wrap {
+    color: inherit;
+  }
+
+  .link-text {
+    color: inherit;
+    letter-spacing: -0.2px;
+  }
+
+  .bi-chevron-down {
+    color: #475569;
+    font-size: 0.85rem;
+    margin-right: 0.25rem;
+    transition: transform 0.2s ease-in-out;
+  }
 }
 
 .nav-link-custom:hover {
-  background-color: var(--soft-blue-bg);
-  color: var(--primary-color) !important;
+  background-color: var(--sidebar-hover-bg);
+  color: var(--sidebar-text-hover) !important;
+
+  .nav-link-custom__icon-wrap,
+  .link-text {
+    color: var(--sidebar-text-hover) !important;
+  }
+
+  .bi-chevron-down {
+    color: var(--sidebar-text-hover) !important;
+  }
 }
 
 .nav-link-custom i,
 .nav-link-custom .material-symbols-outlined {
   display: inline-block;
-  font-size: 1.25rem;
+  font-size: 1.35rem;
   transition:
     transform 0.2s ease-in-out,
     color var(--sidebar-hover-duration) ease-out;
-}
-
-.nav-link-custom .bi-chevron-down {
-  font-size: 0.8rem;
-  margin-right: 0.75rem;
 }
 
 .rotate-icon {
   transform: rotate(-180deg);
 }
 
-/* Active in normal mode — refined left accent bar and soft aqua tint */
+/* Active in normal mode — Unmistakable Solid Corporate Turquoise Pill with Pure White Text & Icon */
 .nav-link-custom.active,
 .nav-link.active {
   background-color: var(--sidebar-active-bg) !important;
-  color: var(--primary-color) !important;
-  font-weight: 600;
-  border-left: 3.5px solid var(--primary-color);
+  color: var(--sidebar-active-color) !important;
+  font-weight: 700;
+  box-shadow: var(--sidebar-active-shadow) !important;
 
+  .nav-link-custom__icon-wrap,
+  .link-text,
+  .bi-chevron-down,
   i,
   .material-symbols-outlined {
-    color: var(--primary-color) !important;
+    color: var(--sidebar-active-color) !important;
   }
 }
 
 .nav-link-sub {
-  color: var(--muted-text);
+  color: #1e293b;
   text-decoration: none;
-  padding: 0.5rem 1rem 0.5rem 2.5rem;
-  margin: 1px 14px;
+  padding: 0.6rem 1rem 0.6rem 2.2rem;
+  margin: 2px 12px;
   display: block;
-  font-size: 0.825rem;
-  font-weight: 500;
+  font-size: 0.88rem;
+  font-weight: 600;
   border-radius: 8px;
   position: relative;
   transition:
@@ -177,14 +204,14 @@
 }
 
 .nav-link-sub:hover {
-  background-color: var(--soft-blue-bg);
+  background-color: var(--sidebar-hover-bg);
   color: var(--primary-color);
 }
 
 .nav-link-sub.active {
   background-color: var(--sidebar-sub-active-bg) !important;
-  color: var(--primary-color) !important;
-  font-weight: 600;
+  color: var(--sidebar-sub-active-color) !important;
+  font-weight: 700;
 }
 
 /* Submenu with left guide line — rendered/destroyed via Angular @if */
@@ -202,7 +229,7 @@
 .submenu-con-linea {
   margin: 0 0 0 2rem;
   padding: 0.25rem 0 0.4rem 0.5rem;
-  border-left: 1.5px solid var(--border-color);
+  border-left: 2px solid #cbd5e1;
   animation: fadeInSubmenu 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -253,31 +280,51 @@
   content: none !important;
 }
 
-/* Remove bottom strip/shadow from menu items when active/open */
+/* Remove bottom strip from menu items when active/open */
 .nav-link-custom.active,
 .nav-link-custom {
-  box-shadow: none !important;
   border-bottom: none !important;
 }
 
 /* Search */
 .sidebar-search {
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--sidebar-border);
 
   .input-group-text,
   .form-control {
-    border-color: var(--border-color);
-    background-color: transparent;
-    font-size: 0.875rem;
+    border-color: #cbd5e1;
+    background-color: #f8fafc;
+    color: var(--sidebar-text);
+    font-size: 0.9rem;
   }
-  .form-control:focus {
-    border-color: var(--primary-color);
+  .input-group-text {
+    color: #475569;
+
+    i {
+      color: inherit;
+    }
+  }
+  .form-control {
+    &::placeholder {
+      color: #64748b;
+    }
+
+    &:focus {
+      border-color: var(--primary-color);
+      background-color: #ffffff;
+      box-shadow: 0 0 0 3px rgba(12, 158, 161, 0.2);
+      color: var(--sidebar-text);
+    }
   }
   .sidebar-search-clear {
-    border-color: var(--border-color);
-    color: var(--muted-text);
-    font-size: 0.65rem;
+    border-color: #cbd5e1;
+    color: #475569;
+    font-size: 0.75rem;
     text-decoration: none;
+
+    &:hover {
+      color: var(--danger);
+    }
   }
 }
 
@@ -285,23 +332,25 @@
   width: var(--sidebar-rail-btn-size);
   height: var(--sidebar-rail-btn-size);
   border-radius: 50%;
-  color: var(--muted-text);
+  color: var(--sidebar-text);
   display: flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
 
   &:hover {
-    background-color: var(--soft-blue-bg);
+    background-color: var(--sidebar-hover-bg);
     color: var(--primary-color) !important;
   }
 }
 
 .sidebar-empty-state {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  color: #64748b !important;
+
   .bi-search {
-    font-size: 1.25rem;
-    opacity: 0.4;
+    font-size: 1.35rem;
+    opacity: 0.6;
   }
 }
 
@@ -338,7 +387,9 @@
     .sidebar-brand {
       height: 64px;
       padding: 0;
+      background-color: var(--sidebar-brand-bg, #065b5e);
       justify-content: center;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 
       app-brand-logo {
         justify-content: center;
@@ -349,7 +400,9 @@
         height: 38px;
         min-width: 38px;
         padding: 2px;
-        box-shadow: 0 2px 6px rgba(12, 158, 161, 0.18);
+        box-shadow:
+          0 2px 6px rgba(0, 0, 0, 0.25),
+          0 0 0 1px rgba(255, 255, 255, 0.2);
       }
 
       .brand-text-block {
@@ -396,40 +449,56 @@
         height: 100%;
         margin: 0;
         padding: 0;
+        color: inherit;
       }
 
       i,
       .material-symbols-outlined {
         margin: 0 !important;
         padding: 0 !important;
-        font-size: 1.25rem;
+        font-size: 1.35rem;
         line-height: 1;
         display: flex;
         align-items: center;
         justify-content: center;
+        color: inherit;
       }
 
       &:hover:not(.active) {
-        background-color: var(--soft-blue-bg);
+        background-color: var(--sidebar-hover-bg);
         color: var(--primary-color) !important;
+
+        .nav-link-custom__icon-wrap,
+        i,
+        .material-symbols-outlined {
+          color: var(--primary-color) !important;
+        }
       }
 
       &.active {
         background-color: var(--sidebar-rail-active-bg) !important;
         color: var(--sidebar-rail-active-color) !important;
         border-left: none !important;
-        font-weight: 600;
+        font-weight: 700;
+        box-shadow: var(--sidebar-active-shadow) !important;
 
+        .nav-link-custom__icon-wrap,
         i,
         .material-symbols-outlined {
           color: var(--sidebar-rail-active-color) !important;
-          font-weight: 600;
+          font-weight: 700;
         }
       }
 
       &.active:hover {
         background-color: var(--sidebar-rail-active-hover-bg) !important;
         color: var(--sidebar-rail-active-color) !important;
+
+        .nav-link-custom__icon-wrap,
+        i,
+        .material-symbols-outlined {
+          color: var(--sidebar-rail-active-color) !important;
+        }
       }
     }
   }

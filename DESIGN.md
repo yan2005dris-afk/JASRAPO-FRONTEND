@@ -81,6 +81,7 @@ components:
 **Creative North Star: "The Living Watershed & Corporate Lagoon"**
 
 Inspired directly by the official emblem of the **Junta Administradora del Sistema Regional de Agua Potable de Olón (JASRAPO)**, the visual identity harmonizes four symbolic and chromatic pillars:
+
 1. **The Corporate Lagoon (Deep Teal #0c9ea1 & Vivid Turquoise #0fc3c6)**: The tranquil, authoritative anchor representing community water delivery.
 2. **The Golden Brass Faucet (Warm Amber/Brass #d97706, surface #fef3c7)**: Human infrastructure, craftsmanship, and reliable service. Used for warm highlights, priority states, and distinctive badges.
 3. **The Sacred Guayacán Tree Canopy (Watershed Emerald #15803d, surface #dcfce7)**: Environmental stewardship, river basin preservation, active service indicators, and sustainable operations.
@@ -270,6 +271,19 @@ Borders are 1px `shoreline` except table headers, which use a 2px bottom border.
 ### Page Header (system signature)
 
 - Title (`h3 fw-bold`) + optional 48px square icon in a `12px` radius water-mist tile with Deep Lagoon glyph, aligned with `gap-1rem`.
+
+### Brand Logo (`<app-brand-logo>`)
+
+- **Single Source of Truth:** Centralized in `BRAND_CONFIG` (`src/app/shared/constants/brand.constant.ts`).
+- **Sizes:** `xs` (28px), `sm` (38px), `md` (48px), `lg` (68px), `hero` (120px).
+- **Features:** Automatic error-fallback from Imgur CDN (`https://i.imgur.com/oHyMUhU.png`) to local asset (`assets/logo-jasrapo.png`), stacked or horizontal layouts, text and subtitle toggles.
+
+### Jasrapo Official Mascot (`<app-jasrapo-mascot>`)
+
+- **Design:** Vector SVG extraction of the water droplet character (`/assets/images/error_mascot.jpg`).
+- **Sizes:** `sm` (100px), `md` (170px), `lg` (250px), `hero` (320px).
+- **Features:** Plump water droplet body, stubby feet with ground shadow, large expressive eyes with double white sparkle reflection, rosy cheeks, thumbs-up gesture, floating ambient bubbles, eye blinking and click bounce animation.
+- **Unboxed Integration:** Transparent background without boxy card borders, integrating naturally into atmospheric layouts.
 
 ### Empty States
 

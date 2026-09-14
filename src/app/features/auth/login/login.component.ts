@@ -4,10 +4,19 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-logo.component';
+import { JasrapoMascotComponent } from '../../../shared/components/jasrapo-mascot/jasrapo-mascot.component';
+import { BRAND_CONFIG } from '../../../shared/constants/brand.constant';
 
 @Component({
   selector: 'app-login',
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, BrandLogoComponent],
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterLink,
+    BrandLogoComponent,
+    JasrapoMascotComponent,
+  ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -18,7 +27,9 @@ export class LoginComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly authService = inject(AuthService);
 
-  // Tipado explícito para mejor soporte del linter
+  readonly brand = BRAND_CONFIG;
+
+  // Formulario de autenticación
   readonly loginForm: FormGroup;
   readonly submitted = signal(false);
   readonly loading = signal(false);
@@ -31,7 +42,7 @@ export class LoginComponent {
     });
   }
 
-  // Getter para facilitar el acceso a controles en el template
+  // Getter para controles del formulario
   get f() {
     return this.loginForm.controls;
   }
@@ -47,7 +58,6 @@ export class LoginComponent {
     this.loading.set(true);
 
     this.authService.login(this.loginForm.value).subscribe({
-      // Usamos () si no necesitamos el objeto response, evitando el error de lint
       next: () => {
         this.loading.set(false);
 

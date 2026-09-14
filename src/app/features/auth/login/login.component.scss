@@ -1,17 +1,10 @@
-.login-wrapper {
-  min-height: 100vh;
-}
-
 /* ==========================================================================
-   Left Hero Side - JASRAPO Identity & Water Metaphor
+   Left Hero Side - Pure Atmospheric Water Canvas with Extracted Mascot
    ========================================================================== */
 .hero-side {
   position: relative;
-  background:
-    radial-gradient(circle at 20% 20%, rgba(15, 195, 198, 0.25) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(217, 119, 6, 0.15) 0%, transparent 40%),
-    linear-gradient(145deg, #07252a 0%, #0b3d42 50%, #071f22 100%);
-  color: #ffffff;
+  background: radial-gradient(circle at 50% 45%, #145963 0%, #0b383f 55%, #061c20 100%);
+  color: #fff;
   overflow: hidden;
 }
 
@@ -19,10 +12,11 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image:
-    radial-gradient(ellipse 60% 50% at 50% 100%, rgba(12, 158, 161, 0.25), transparent 70%),
-    radial-gradient(ellipse 40% 30% at 80% 20%, rgba(78, 230, 233, 0.12), transparent 60%);
-  opacity: 0.8;
+  background: radial-gradient(
+    ellipse 60% 50% at 50% 100%,
+    rgba(12, 158, 161, 0.25),
+    transparent 70%
+  );
 }
 
 .hero-wave-svg {
@@ -30,125 +24,46 @@
   bottom: 0;
   left: 0;
   width: 100%;
-  height: 140px;
+  height: 130px;
   pointer-events: none;
-  opacity: 0.35;
+  opacity: 0.25;
 }
 
-.hero-content {
+.hero-center-content {
   position: relative;
   z-index: 2;
-  max-width: 540px;
+  max-width: 480px;
 }
 
-.hero-title {
-  font-size: 2.75rem;
-  font-weight: 800;
-  letter-spacing: -1.5px;
-  line-height: 1.05;
-  color: #ffffff;
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
-.hero-subtitle {
-  font-size: 1.15rem;
-  font-weight: 400;
-  color: #cffafe;
-  letter-spacing: -0.2px;
-  line-height: 1.4;
-}
-
-.hero-location-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.35rem 0.9rem;
-  border-radius: 9999px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+.hero-mascot-caption {
+  font-size: 1.05rem;
+  font-weight: 600;
   color: #e0f2fe;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-
-.hero-feature-card {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.9rem 1.15rem;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  transition: all 0.25s ease;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(78, 230, 233, 0.3);
-    transform: translateX(4px);
-  }
-
-  .feature-icon-box {
-    width: 44px;
-    height: 44px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.25rem;
-    flex-shrink: 0;
-
-    &.water {
-      background: rgba(14, 165, 233, 0.25);
-      color: #7dd3fc;
-      border: 1px solid rgba(14, 165, 233, 0.4);
-    }
-
-    &.brass {
-      background: rgba(217, 119, 6, 0.25);
-      color: #fcd34d;
-      border: 1px solid rgba(217, 119, 6, 0.4);
-    }
-  }
-
-  h6 {
-    color: #ffffff;
-    font-size: 0.95rem;
-    font-weight: 600;
-    margin-bottom: 0.15rem;
-  }
-
-  p {
-    color: #cbd5e1;
-    font-size: 0.8rem;
-    line-height: 1.35;
-    margin-bottom: 0;
-  }
+  letter-spacing: -0.2px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* ==========================================================================
-   Right Form Side
+   Right Form Side - Crisp & Minimalist
    ========================================================================== */
 .form-side {
   position: relative;
-  background-color: #ffffff;
+  background-color: #fff;
 }
 
 .citizen-portal-link {
   color: var(--primary-color);
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   font-weight: 600;
   text-decoration: none;
-  padding: 0.4rem 0.8rem;
+  padding: 0.35rem 0.75rem;
   border-radius: 8px;
   background: var(--soft-blue-bg);
   border: 1px solid rgba(12, 158, 161, 0.15);
-  transition: all 0.2s ease;
+  transition: background 0.2s ease;
 
   &:hover {
     background: #cffafe;
-    color: #087679;
-    box-shadow: 0 2px 8px rgba(12, 158, 161, 0.15);
   }
 }
 
@@ -157,11 +72,6 @@
   font-weight: 800;
   letter-spacing: -0.5px;
   color: var(--marine-slate);
-}
-
-.form-subtitle {
-  font-size: 0.9rem;
-  color: var(--muted-text);
 }
 
 .input-icon-wrapper {
@@ -175,7 +85,6 @@
     color: var(--muted-text);
     font-size: 1.05rem;
     pointer-events: none;
-    transition: color 0.2s ease;
   }
 
   .form-control-modern {
@@ -184,10 +93,12 @@
     height: 46px;
     border-radius: 10px;
     border: 1.5px solid var(--border-color);
-    background-color: #ffffff;
+    background-color: #fff;
     font-size: 0.925rem;
     color: var(--dark-text);
-    transition: all 0.2s ease;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
 
     &:focus {
       border-color: var(--primary-color);

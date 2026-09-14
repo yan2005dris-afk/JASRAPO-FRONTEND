@@ -6,11 +6,11 @@
 
 :root {
   /* Brand Colors - JASRAPO Water & Ecological Heritage Palette */
-  --primary-color: #0c9ea1;
-  /* Deep corporate teal for excellent contrast and readability */
-  --secondary-color: #0fc3c6;
+  --primary-color: #087a7d;
+  /* Deep corporate teal for authoritative contrast and readability */
+  --secondary-color: #0c9ea1;
   /* Vibrant turquoise water surface */
-  --accent-color: #4ee6e9;
+  --accent-color: #38d3d6;
   /* Bright glow turquoise for active states and highlights */
   --info-color: #bff3f4;
   /* Softest highlight color */
@@ -74,18 +74,33 @@
   --bs-primary-rgb: var(--primary-rgb);
 
   /* Primary RGB tuple — single source of truth for rgba() compositions */
-  --primary-rgb: 12, 158, 161;
+  --primary-rgb: 8, 122, 125;
 
   /* Sidebar Layout Tokens — single source of truth for dimensions/transitions */
-  --sidebar-width: 260px;
-  --sidebar-rail-width: 70px;
+  --sidebar-width: 265px;
+  --sidebar-rail-width: 72px;
   --sidebar-rail-btn-size: 48px;
   --sidebar-transition-duration: 0.3s;
   --sidebar-transition-timing: ease-in-out;
-  --sidebar-hover-duration: 0.12s;
-  --sidebar-active-bg: rgba(var(--primary-rgb), 0.12);
-  --sidebar-sub-active-bg: rgba(var(--primary-rgb), 0.1);
-  --sidebar-rail-active-bg: rgba(var(--primary-rgb), 0.2);
-  --sidebar-rail-active-hover-bg: rgba(var(--primary-rgb), 0.24);
-  --sidebar-rail-active-color: var(--primary-color);
+  --sidebar-hover-duration: 0.15s;
+
+  /* Layout Theme Tokens — Propuesta 1: Topbar Turquesa Corporativo + Sidebar Niebla Marina */
+  --topbar-bg: linear-gradient(90deg, #066265 0%, #087a7d 100%);
+  --topbar-color: #ffffff;
+  --topbar-border: rgba(0, 0, 0, 0.1);
+
+  --sidebar-brand-bg: #065b5e;
+  --sidebar-bg: #edf5f6; /* Gris Niebla Marina suave: tono claro con cuerpo que elimina la sensación de "muy blanco" */
+  --sidebar-border: #cbdfe2;
+  --sidebar-text: #0f2938; /* Azul Marino Pizarra Profundo para 11:1+ WCAG AAA de contraste */
+  --sidebar-text-hover: #044b4e;
+  --sidebar-hover-bg: #dbecee;
+  --sidebar-active-bg: #087a7d; /* Pastilla sólida Turquesa Oficial */
+  --sidebar-active-color: #ffffff; /* Texto e icono blanco nítido */
+  --sidebar-active-shadow: 0 3px 12px rgba(8, 122, 125, 0.35);
+  --sidebar-sub-active-bg: #c9e9ec;
+  --sidebar-sub-active-color: #043a40;
+  --sidebar-rail-active-bg: #087a7d;
+  --sidebar-rail-active-hover-bg: #066568;
+  --sidebar-rail-active-color: #ffffff;
 }

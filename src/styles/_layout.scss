@@ -19,8 +19,9 @@
   width: var(--sidebar-width);
   flex-shrink: 0;
   height: 100%;
-  background-color: var(--white);
-  border-right: 1px solid var(--border-color);
+  background-color: var(--sidebar-bg);
+  border-right: 1px solid var(--sidebar-border);
+  box-shadow: 1px 0 10px rgba(15, 23, 42, 0.04);
   z-index: 1000;
   overflow: hidden;
   box-sizing: border-box;
@@ -53,7 +54,8 @@
 .layout-header {
   height: 64px;
   flex-shrink: 0;
-  background-color: var(--light-bg);
+  background: var(--topbar-bg, #087a7d);
+  box-shadow: 0 2px 8px rgba(6, 98, 101, 0.2);
   z-index: 900;
 }
 
@@ -130,6 +132,15 @@
 .btn-icon:hover {
   background-color: var(--light-bg);
   color: var(--dark-text) !important;
+}
+
+.layout-header .btn-icon {
+  color: #ffffff;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.18);
+    color: #ffffff !important;
+  }
 }
 
 .dropdown {

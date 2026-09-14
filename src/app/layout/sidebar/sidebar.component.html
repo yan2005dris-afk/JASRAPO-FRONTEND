@@ -1,10 +1,10 @@
-<nav class="h-100 d-flex flex-column bg-white">
-  <div class="sidebar-brand d-flex align-items-center border-bottom">
+<nav class="h-100 d-flex flex-column">
+  <div class="sidebar-brand d-flex align-items-center">
     <app-brand-logo
       size="sm"
       [showText]="true"
       [showSubtitle]="true"
-      textColor="dark"
+      textColor="light"
     ></app-brand-logo>
   </div>
 
@@ -12,7 +12,7 @@
     <div class="sidebar-search px-3 pt-2 pb-2">
       <div class="input-group input-group-sm">
         <span class="input-group-text border-end-0">
-          <i class="bi bi-search text-muted"></i>
+          <i class="bi bi-search"></i>
         </span>
         <input
           #searchInput
@@ -67,7 +67,7 @@
               matTooltipPosition="right"
               matTooltipShowDelay="300"
             >
-              <span class="nav-link-custom__icon-wrap text-dark d-flex align-items-center">
+              <span class="nav-link-custom__icon-wrap d-flex align-items-center">
                 @if (item.icon) {
                   <span class="material-symbols-outlined me-2 align-middle">{{ item.icon }}</span>
                 }
@@ -100,7 +100,7 @@
             <a
               [routerLink]="item.route"
               routerLinkActive="active"
-              class="nav-link nav-link-custom d-flex align-items-center text-dark"
+              class="nav-link nav-link-custom d-flex align-items-center"
               [matTooltip]="!layoutService.sidebarOpen() ? item.name : ''"
               matTooltipPosition="right"
               matTooltipShowDelay="300"
@@ -118,7 +118,7 @@
       }
 
       @if (filteredMenuItems().length === 0 && searchQuery()) {
-        <li class="px-3 py-4 text-center text-muted sidebar-empty-state">
+        <li class="px-3 py-4 text-center sidebar-empty-state">
           <i class="bi bi-search d-block mb-2"></i>
           Sin resultados
         </li>
