@@ -1,0 +1,53 @@
+<section class="report-workspace" aria-labelledby="report-workspace-title">
+  <app-report-header
+    headingId="report-workspace-title"
+    [title]="title()"
+    [description]="description()"
+  />
+
+  <section class="report-workspace__filters" aria-label="Filtros del reporte">
+    <ng-content select="[reportFilters]" />
+  </section>
+
+  @if (contextItems().length > 0) {
+    <dl class="report-workspace__context" aria-label="Contexto aplicado al reporte">
+      @for (item of contextItems(); track item.label) {
+        <div class="report-workspace__context-item">
+          <dt>{{ item.label }}</dt>
+          <dd>{{ item.value }}</dd>
+        </div>
+      }
+    </dl>
+  }
+
+  <app-report-status [status]="status()" [message]="statusMessage()" (retry)="retry.emit()" />
+
+  @if (showSummary()) {
+    <section class="report-workspace__summary" aria-label="Resumen del reporte">
+      <ng-content select="[reportSummary]" />
+    </section>
+  }
+
+  @if (showToolbar()) {
+    <div class="report-workspace__toolbar">
+      <ng-content select="[reportFormats]" />
+      <div class="report-workspace__actions">
+        <ng-content select="[reportActions]" />
+      </div>
+    </div>
+  }
+
+  @if (showResults()) {
+    <section
+      id="report-results-panel"
+      class="report-workspace__results"
+      role="tabpanel"
+      tabindex="-1"
+      aria-label="Resultados del reporte"
+    >
+      <ng-content select="[reportResults]" />
+    </section>
+  }
+
+  <ng-content select="[reportDialog]" />
+</section>

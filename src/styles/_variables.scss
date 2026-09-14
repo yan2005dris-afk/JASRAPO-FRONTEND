@@ -62,4 +62,20 @@
   --sidebar-rail-active-bg: rgba(var(--primary-rgb), 0.2);
   --sidebar-rail-active-hover-bg: rgba(var(--primary-rgb), 0.24);
   --sidebar-rail-active-color: var(--primary-color);
+
+  /* Espacio de trabajo de reportes */
+  --report-section-gap: 1rem;
+  --report-radius-sm: 0.55rem;
+  --report-radius-md: 0.75rem;
+  --report-radius-lg: 0.9rem;
+  --report-surface-border: rgba(var(--primary-rgb), 0.14);
+  --report-surface-shadow: 0 0.25rem 1rem rgba(14, 39, 40, 0.06);
+  --report-dialog-shadow: 0 1.25rem 3rem rgba(14, 39, 40, 0.22);
+  --report-backdrop: rgba(14, 39, 40, 0.55);
+  --report-info-bg: rgba(var(--primary-rgb), 0.06);
+  --report-row-border: rgba(89, 123, 125, 0.16);
+  --report-danger-bg: rgba(239, 68, 68, 0.08);
+  --report-danger-border: rgba(239, 68, 68, 0.3);
+  --report-danger-text: #a91d1d;
+  --report-focus-outline: 3px solid rgba(var(--primary-rgb), 0.42);
 }

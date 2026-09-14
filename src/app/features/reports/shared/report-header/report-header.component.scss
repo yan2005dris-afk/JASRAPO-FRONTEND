@@ -1,0 +1,31 @@
+.report-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.report-header__icon {
+  display: grid;
+  flex: 0 0 2.75rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border-radius: var(--report-radius-md);
+  background: var(--soft-blue-bg);
+  color: var(--primary-color);
+  font-size: 1.25rem;
+}
+
+.report-header__title {
+  margin: 0;
+  color: var(--dark-text);
+  font-size: clamp(1.25rem, 2vw, 1.6rem);
+  font-weight: 700;
+}
+
+.report-header__description {
+  max-width: 52rem;
+  margin: 0.25rem 0 0;
+  color: var(--muted-text);
+  font-size: 0.875rem;
+}
