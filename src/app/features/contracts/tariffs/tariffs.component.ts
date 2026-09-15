@@ -4,6 +4,7 @@ import {
   computed,
   inject,
   input,
+  OnDestroy,
   OnInit,
   output,
   signal,
@@ -11,6 +12,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
+import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
 
 import { TariffsService } from './services/tariffs.service';
 import { ITariffCategory } from './interfaces/itariff.interface';
@@ -22,11 +24,18 @@ import { IRubro } from '../../billing/rubros/interfaces/irubro.interface';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
+import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
 import { TableExportService } from '../../../shared/services/table-export.service';
 import {
   DropdownComponent,
   DropdownItem,
 } from '../../../shared/components/dropdown/dropdown.component';
+
+/** Espera tras la última tecla antes de consultar el backend. */
+const SEARCH_DEBOUNCE_MS = 400;
+
+/** Tamaño de página al descargar el listado completo: el backend topa `limit` en 50. */
+const EXPORT_PAGE_SIZE = 50;
 
 @Component({
   selector: 'app-tariffs',
@@ -37,6 +46,7 @@ import {
     RubroFormModalComponent,
     RubroTableComponent,
     PaginationComponent,
+    TableSkeletonComponent,
     DropdownComponent,
   ],
   templateUrl: './tariffs.component.html',
@@ -46,7 +56,7 @@ import {
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class TariffsComponent implements OnInit {
+export class TariffsComponent implements OnInit, OnDestroy {
   private readonly tariffsService = inject(TariffsService);
   private readonly rubrosService = inject(RubrosService);
   private readonly toast = inject(ToastService);
@@ -81,7 +91,8 @@ export class TariffsComponent implements OnInit {
   // Estado con Signals
   readonly tariffs = signal<ITariffCategory[]>([]);
   readonly isLoading = signal(false);
-  readonly searchNombre = signal('');
+  readonly totalItems = signal(0);
+  readonly searchTerm = signal('');
   readonly isModalOpen = signal(false);
   readonly selectedTariff = signal<ITariffCategory | null>(null);
   readonly openDropdownId = signal<number | null>(null);
@@ -129,43 +140,58 @@ export class TariffsComponent implements OnInit {
   readonly pageSize = signal(10);
   readonly currentPage = signal(1);
 
-  readonly filteredTariffs = computed(() => {
-    const term = this.searchNombre().toLowerCase().trim();
-    const list = this.tariffs();
-    if (!term) return list;
-    return list.filter(
-      (t) =>
-        t.nombre.toLowerCase().includes(term) ||
-        (t.descripcion && t.descripcion.toLowerCase().includes(term)),
-    );
-  });
-
-  readonly totalPages = computed(() =>
-    Math.max(1, Math.ceil(this.filteredTariffs().length / this.pageSize())),
-  );
-
-  readonly pagedTariffs = computed(() => {
-    const start = (this.currentPage() - 1) * this.pageSize();
-    return this.filteredTariffs().slice(start, start + this.pageSize());
-  });
+  private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnInit(): void {
     this.loadTariffs();
   }
 
+  ngOnDestroy(): void {
+    this.clearSearchTimer();
+  }
+
   loadTariffs(): void {
+    this.clearSearchTimer();
     this.isLoading.set(true);
 
-    this.tariffsService.getTariffs().subscribe({
-      next: (data) => {
-        this.tariffs.set(data);
-        this.isLoading.set(false);
-      },
-      error: (err) => {
-        console.error('Error cargando tarifas:', err);
-        this.isLoading.set(false);
-      },
-    });
+    const term = this.searchTerm().trim();
+
+    this.tariffsService
+      .getTariffs({
+        page: this.currentPage(),
+        limit: this.pageSize(),
+        search: term || undefined,
+      })
+      .subscribe({
+        next: (res) => {
+          const data = res.data ?? [];
+          this.tariffs.set(data);
+          this.totalItems.set(res.meta?.total ?? data.length);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.tariffs.set([]);
+          this.totalItems.set(0);
+          this.isLoading.set(false);
+          this.toast.show('No se pudieron cargar las tarifas', 'error');
+        },
+      });
+  }
+
+  onSearchTermChange(term: string): void {
+    this.searchTerm.set(term);
+    this.clearSearchTimer();
+    this.searchTimer = setTimeout(() => {
+      this.currentPage.set(1);
+      this.loadTariffs();
+    }, SEARCH_DEBOUNCE_MS);
+  }
+
+  private clearSearchTimer(): void {
+    if (this.searchTimer) {
+      clearTimeout(this.searchTimer);
+      this.searchTimer = null;
+    }
   }
 
   openCreateModal(): void {
@@ -174,7 +200,7 @@ export class TariffsComponent implements OnInit {
   }
 
   clearFilters(): void {
-    this.searchNombre.set('');
+    this.searchTerm.set('');
     this.currentPage.set(1);
     this.loadTariffs();
   }
@@ -182,11 +208,13 @@ export class TariffsComponent implements OnInit {
   setPageSize(size: number): void {
     this.pageSize.set(size);
     this.currentPage.set(1);
+    this.loadTariffs();
   }
 
   goToPage(page: number): void {
-    if (page < 1 || page > this.totalPages()) return;
+    if (page < 1) return;
     this.currentPage.set(page);
+    this.loadTariffs();
   }
 
   toggleDropdown(id: number, event: MouseEvent): void {
@@ -345,7 +373,55 @@ export class TariffsComponent implements OnInit {
   private readonly tableExportService = inject(TableExportService);
 
   exportToPdf(): void {
-    const list = this.tariffs();
+    this.withAllTariffs((list) => this.buildPdfExport(list));
+  }
+
+  exportToExcel(): void {
+    this.withAllTariffs((list) => this.buildExcelExport(list));
+  }
+
+  exportToCsv(): void {
+    this.withAllTariffs((list) => this.buildCsvExport(list));
+  }
+
+  private withAllTariffs(run: (list: ITariffCategory[]) => void): void {
+    this.fetchAllTariffs().subscribe({
+      next: run,
+      error: () => this.toast.show('No se pudieron obtener las tarifas para exportar', 'error'),
+    });
+  }
+
+  /**
+   * La tabla ahora pagina contra el backend, así que exportar solo la página
+   * visible dejaría fuera al resto. Esto recorre todas las páginas que
+   * coincidan con la búsqueda activa para exportar el listado completo.
+   */
+  private fetchAllTariffs(): Observable<ITariffCategory[]> {
+    const search = this.searchTerm().trim() || undefined;
+    const limit = EXPORT_PAGE_SIZE;
+
+    return this.tariffsService.getTariffs({ page: 1, limit, search }).pipe(
+      switchMap((first) => {
+        const rows = first.data ?? [];
+        const total = first.meta?.total ?? rows.length;
+        const pages = Math.ceil(total / limit);
+        if (pages <= 1) return of(rows);
+
+        const rest: Observable<ITariffCategory[]>[] = [];
+        for (let page = 2; page <= pages; page++) {
+          rest.push(
+            this.tariffsService
+              .getTariffs({ page, limit, search })
+              .pipe(map((res) => res.data ?? [])),
+          );
+        }
+
+        return forkJoin(rest).pipe(map((pagesData) => rows.concat(...pagesData)));
+      }),
+    );
+  }
+
+  private buildPdfExport(list: ITariffCategory[]): void {
     if (list.length === 0) return;
 
     this.tableExportService.exportToPdf({
@@ -378,8 +454,7 @@ export class TariffsComponent implements OnInit {
     });
   }
 
-  exportToExcel(): void {
-    const list = this.tariffs();
+  private buildExcelExport(list: ITariffCategory[]): void {
     if (list.length === 0) return;
 
     this.tableExportService.exportToExcel({
@@ -406,8 +481,7 @@ export class TariffsComponent implements OnInit {
     });
   }
 
-  exportToCsv(): void {
-    const list = this.tariffs();
+  private buildCsvExport(list: ITariffCategory[]): void {
     if (list.length === 0) return;
 
     this.tableExportService.exportToCsv({
