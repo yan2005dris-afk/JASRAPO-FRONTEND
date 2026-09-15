@@ -1,2 +1,16 @@
-// Estilos heredados del patrón de reassign-route-modal.
-// Si necesitás overrides específicos, agregalos acá.
+.modal-dialog {
+  max-width: 720px;
+}
+
+.header-icon-tile {
+  width: 42px;
+  height: 42px;
+}
+
+.modal-backdrop {
+  z-index: 1060;
+}
+
+.modal {
+  z-index: 1065;
+}

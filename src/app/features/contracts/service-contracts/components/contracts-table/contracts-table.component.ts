@@ -53,6 +53,10 @@ export class ContractsTableComponent {
     return this.selectedContract()?.contratoId === contract.contratoId;
   }
 
+  canAssignInstallationRoute(contract: IContract): boolean {
+    return contract.estadoServicio === 'PENDIENTE_INSTALACION';
+  }
+
   onRowClick(contract: IContract): void {
     if (this.mode() === 'select') {
       this.contractSelected.emit(contract);

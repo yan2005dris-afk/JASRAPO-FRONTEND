@@ -2,6 +2,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  ElementRef,
+  effect,
   inject,
   input,
   output,
@@ -20,7 +22,11 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 
-type Mode = 'new' | 'existing';
+const ASSIGNMENT_MODE = {
+  EXISTING: 'existing',
+  NEW: 'new',
+} as const;
+type AssignmentMode = (typeof ASSIGNMENT_MODE)[keyof typeof ASSIGNMENT_MODE];
 
 @Component({
   selector: 'app-assign-installation-route-modal',
@@ -31,23 +37,33 @@ type Mode = 'new' | 'existing';
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '(keydown.escape)': 'close()',
+    '(document:keydown.escape)': 'close()',
   },
 })
 export class AssignInstallationRouteModalComponent {
   private readonly contractsService = inject(ContractsService);
   private readonly routesService = inject(ReadingRoutesService);
   private readonly toastService = inject(ToastService);
+  private readonly elementRef = inject(ElementRef<HTMLElement>);
 
   readonly contract = input.required<IContract>();
   readonly assigned = output<IReadingRoute>();
   readonly closed = output<void>();
 
-  readonly mode = signal<Mode>('new');
+  readonly mode = signal<AssignmentMode>(ASSIGNMENT_MODE.EXISTING);
   readonly selectedRouteId = signal<string | number | null>(null);
   readonly fechaPlanificada = signal<string>(new Date().toISOString().split('T')[0]);
   readonly availableRoutes = signal<IReadingRoute[]>([]);
   readonly isLoading = signal(false);
   readonly isLoadingRoutes = signal(false);
+  readonly routeError = signal('');
+
+  constructor() {
+    effect(() => {
+      const communityId = this.contract().comunidadId;
+      this.loadAvailableRoutes(communityId);
+    });
+  }
 
   selectRoute(r: IReadingRoute): void {
     if (this.selectedRouteId() === r.rutaId) {
@@ -64,15 +80,16 @@ export class AssignInstallationRouteModalComponent {
     return this.selectedRouteId() !== null;
   });
 
-  setMode(mode: Mode): void {
+  setMode(mode: AssignmentMode): void {
     this.mode.set(mode);
     if (mode === 'existing' && this.availableRoutes().length === 0) {
-      this.loadAvailableRoutes();
+      this.loadAvailableRoutes(this.contract().comunidadId);
     }
   }
 
-  private loadAvailableRoutes(): void {
+  private loadAvailableRoutes(comunidadId: number): void {
     this.isLoadingRoutes.set(true);
+    this.routeError.set('');
     // Cargar rutas INSTALACION en estado PENDIENTE (sin filtro de fecha
     // para que la secretaria pueda ver rutas de hoy y de días anteriores
     // que aún no se despacharon)
@@ -80,6 +97,7 @@ export class AssignInstallationRouteModalComponent {
       .getRoutes({
         tipoRuta: 'INSTALACION',
         estado: 'PENDIENTE',
+        comunidadId,
         page: 1,
         limit: 50,
       } satisfies IFindAllRoutesParams)
@@ -91,6 +109,7 @@ export class AssignInstallationRouteModalComponent {
         error: () => {
           this.availableRoutes.set([]);
           this.isLoadingRoutes.set(false);
+          this.routeError.set('No se pudieron cargar las rutas pendientes. Intentá nuevamente.');
         },
       });
   }
@@ -107,7 +126,7 @@ export class AssignInstallationRouteModalComponent {
     this.contractsService
       .assignInstallationRoute(String(this.contract().contratoId), payload)
       .subscribe({
-        next: (route: unknown) => {
+        next: (route) => {
           this.isLoading.set(false);
           this.toastService.show(
             this.mode() === 'new'
@@ -115,7 +134,7 @@ export class AssignInstallationRouteModalComponent {
               : 'Contrato asignado a la ruta seleccionada',
             'success',
           );
-          this.assigned.emit(route as IReadingRoute);
+          this.assigned.emit(route);
         },
         error: (err) => {
           this.isLoading.set(false);
@@ -126,6 +145,29 @@ export class AssignInstallationRouteModalComponent {
   }
 
   close(): void {
-    this.closed.emit();
+    if (!this.isLoading()) {
+      this.closed.emit();
+    }
+  }
+
+  onKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Tab') return;
+
+    const focusable = Array.from(
+      this.elementRef.nativeElement.querySelectorAll(
+        'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ) as NodeListOf<HTMLElement>,
+    );
+    if (focusable.length < 2) return;
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      last.focus();
+      event.preventDefault();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      first.focus();
+      event.preventDefault();
+    }
   }
 }
