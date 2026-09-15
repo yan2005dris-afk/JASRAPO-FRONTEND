@@ -3,9 +3,9 @@ import {
   Component,
   computed,
   ElementRef,
-  effect,
   inject,
   input,
+  OnInit,
   output,
   signal,
 } from '@angular/core';
@@ -40,7 +40,7 @@ type AssignmentMode = (typeof ASSIGNMENT_MODE)[keyof typeof ASSIGNMENT_MODE];
     '(document:keydown.escape)': 'close()',
   },
 })
-export class AssignInstallationRouteModalComponent {
+export class AssignInstallationRouteModalComponent implements OnInit {
   private readonly contractsService = inject(ContractsService);
   private readonly routesService = inject(ReadingRoutesService);
   private readonly toastService = inject(ToastService);
@@ -58,11 +58,8 @@ export class AssignInstallationRouteModalComponent {
   readonly isLoadingRoutes = signal(false);
   readonly routeError = signal('');
 
-  constructor() {
-    effect(() => {
-      const communityId = this.contract().comunidadId;
-      this.loadAvailableRoutes(communityId);
-    });
+  ngOnInit(): void {
+    this.loadAvailableRoutes(this.contract().comunidadId);
   }
 
   selectRoute(r: IReadingRoute): void {

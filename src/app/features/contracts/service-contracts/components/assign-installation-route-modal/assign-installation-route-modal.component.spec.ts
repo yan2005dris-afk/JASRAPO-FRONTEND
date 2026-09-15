@@ -67,6 +67,7 @@ describe('AssignInstallationRouteModalComponent', () => {
     expect(getRoutes).toHaveBeenCalledWith(
       expect.objectContaining({ tipoRuta: 'INSTALACION', estado: 'PENDIENTE', comunidadId: 3 }),
     );
+    expect(getRoutes).toHaveBeenCalledTimes(1);
     expect(component.isValid()).toBe(false);
   });
 
