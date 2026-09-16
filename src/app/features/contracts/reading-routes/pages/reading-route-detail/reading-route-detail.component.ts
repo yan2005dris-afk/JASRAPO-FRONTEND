@@ -423,9 +423,15 @@ export class ReadingRouteDetailComponent implements OnInit {
         this.processingOrdenId.set(null);
         this.toastService.success('Orden iniciada');
       },
-      error: () => {
+      error: (err) => {
         this.processingOrdenId.set(null);
-        this.toastService.error('Error al iniciar la orden');
+        const message = err?.error?.message;
+        this.toastService.error(
+          Array.isArray(message)
+            ? message.join(', ')
+            : message ||
+                'No puedes iniciar esta operación porque no estás asignado como operario a esta orden de trabajo.',
+        );
       },
     });
   }
