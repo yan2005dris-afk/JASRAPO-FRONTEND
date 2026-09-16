@@ -8,6 +8,7 @@ import {
   IHistorialMedidor,
   ISearchContractsParams,
   SearchContractField,
+  getContractServiceState,
 } from './interfaces/icontract.interface';
 import { ServiceContractFormComponent } from './components/service-contract-form/service-contract-form.component';
 import { ReplaceMeterModalComponent } from '../meters/components/replace-meter-modal/replace-meter-modal.component';
@@ -142,6 +143,10 @@ export class ServiceContractsComponent implements OnInit {
     return this.contractStates().find((s) => s.codigo === estado)?.nombre ?? estado;
   }
 
+  getServiceState(contract: IContract): string {
+    return getContractServiceState(contract);
+  }
+
   /** Carga la página actual de contratos desde el backend, aplicando los filtros. */
   loadContracts(): void {
     this.isLoading.set(true);
@@ -161,7 +166,7 @@ export class ServiceContractsComponent implements OnInit {
     // Filtro por estado (si no es "todos").
     const estado = this.estadoFilter();
     if (estado) {
-      params.estado = estado;
+      params.estadoServicio = estado;
     }
 
     this.contractsService.getContracts(params).subscribe({
@@ -287,7 +292,7 @@ export class ServiceContractsComponent implements OnInit {
         { header: 'Ubicación', key: 'direccionSuministro', width: 110 },
         {
           header: 'Estado',
-          transform: (c) => (c as unknown as IContract).estado || '—',
+          transform: (c) => this.getServiceState(c as unknown as IContract) || '—',
           width: 60,
           align: 'center',
         },
@@ -321,7 +326,7 @@ export class ServiceContractsComponent implements OnInit {
         { header: 'Ubicación', key: 'direccionSuministro' },
         {
           header: 'Estado',
-          transform: (c) => (c as unknown as IContract).estado || '—',
+          transform: (c) => this.getServiceState(c as unknown as IContract) || '—',
         },
       ],
       data: data as unknown as Record<string, unknown>[],
@@ -353,7 +358,7 @@ export class ServiceContractsComponent implements OnInit {
         { header: 'Ubicación', key: 'direccionSuministro' },
         {
           header: 'Estado',
-          transform: (c) => (c as unknown as IContract).estado || '—',
+          transform: (c) => this.getServiceState(c as unknown as IContract) || '—',
         },
       ],
       data: data as unknown as Record<string, unknown>[],

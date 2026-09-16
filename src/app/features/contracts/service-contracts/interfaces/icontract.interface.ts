@@ -1,6 +1,8 @@
 // Estado del contrato (el valor real lo define el backend).
 export type EstadoContrato = string;
 
+const LEGACY_CONVENIO_STATE = 'EN_CONVENIO';
+
 // Item del catálogo de estados de contrato (GET /contracts/states).
 export interface IContractState {
   codigo: string; // código del estado (ej. ACTIVO)
@@ -12,6 +14,7 @@ export interface IContractState {
 // Los medidores se gestionan exclusivamente mediante el flujo de reemplazo (POST /meters/replace).
 export interface IUpdateContractRequest {
   estado?: string;
+  estadoServicio?: EstadoContrato;
   direccionSuministro?: string;
   sectorId?: string;
   clienteId?: string;
@@ -92,8 +95,12 @@ export interface IContract {
   fechaInicio: string;
   direccionSuministro: string;
   estado: EstadoContrato;
-  /** Lifecycle state used by installation planning. `estado` is a legacy field. */
+  /** Service lifecycle state. `estado` is retained for older deployments. */
   estadoServicio?: EstadoContrato;
+  /** Collection state, independent from the service lifecycle. */
+  estadoCobranza?: EstadoContrato;
+  /** Whether the contract currently has an active payment agreement. */
+  tieneConvenioActivo?: boolean;
   comunidadId: number;
 
   // Relaciones anidadas (vienen por JOIN/include)
@@ -117,6 +124,8 @@ export interface ISearchContractsParams {
   numeroGuia?: string;
   medidorSerie?: string;
   ubicacion?: string;
+  estadoServicio?: EstadoContrato;
+  estadoCobranza?: EstadoContrato;
   estado?: string;
   hasDebt?: boolean;
 }
@@ -137,5 +146,29 @@ export interface ICreateContractRequest {
   sectorId?: string;
   lecturaInicial?: number;
   estado?: string;
+  estadoServicio?: EstadoContrato;
   creadoPor?: string;
+}
+
+/** Returns the service state while supporting legacy API responses. */
+export function getContractServiceState(
+  contract: Pick<IContract, 'estado' | 'estadoServicio'>,
+): string {
+  const state = contract.estadoServicio ?? contract.estado;
+  return state === LEGACY_CONVENIO_STATE ? 'ACTIVO' : state;
+}
+
+/** Returns collection state without exposing the legacy combined value. */
+export function getContractCollectionState(
+  contract: Pick<IContract, 'estado' | 'estadoCobranza'>,
+): string | undefined {
+  const state = contract.estadoCobranza;
+  return state === LEGACY_CONVENIO_STATE ? undefined : state;
+}
+
+/** Uses the derived flag when present and falls back to the legacy state. */
+export function hasActivePaymentAgreement(
+  contract: Pick<IContract, 'estado' | 'tieneConvenioActivo'>,
+): boolean {
+  return contract.tieneConvenioActivo ?? contract.estado === LEGACY_CONVENIO_STATE;
 }

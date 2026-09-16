@@ -2,6 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ContractsService } from './contracts.service';
+import type { ISearchContractsParams } from '../interfaces/icontract.interface';
 
 describe('ContractsService', () => {
   let service: ContractsService;
@@ -36,5 +37,20 @@ describe('ContractsService', () => {
     );
     expect(request.request.body).toEqual({ fechaPlanificada: '2026-09-20' });
     request.flush({ rutaId: 43 });
+  });
+
+  it('serializes separated contract status filters', () => {
+    const params: ISearchContractsParams = {
+      estadoServicio: 'ACTIVO',
+      estadoCobranza: 'EN_MORA',
+    };
+
+    service.getContracts(params).subscribe();
+
+    const request = http.expectOne((req) => req.url.endsWith('/contracts'));
+    expect(request.request.params.get('estadoServicio')).toBe('ACTIVO');
+    expect(request.request.params.get('estadoCobranza')).toBe('EN_MORA');
+    expect(request.request.params.has('estado')).toBe(false);
+    request.flush({ data: [], meta: { total: 0 } });
   });
 });

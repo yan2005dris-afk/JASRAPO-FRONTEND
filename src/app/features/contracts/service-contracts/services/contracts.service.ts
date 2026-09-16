@@ -55,6 +55,12 @@ export class ContractsService {
     if (params.ubicacion) {
       httpParams = httpParams.set('ubicacion', params.ubicacion);
     }
+    if (params.estadoServicio) {
+      httpParams = httpParams.set('estadoServicio', params.estadoServicio);
+    }
+    if (params.estadoCobranza) {
+      httpParams = httpParams.set('estadoCobranza', params.estadoCobranza);
+    }
     if (params.estado) {
       httpParams = httpParams.set('estado', params.estado);
     }

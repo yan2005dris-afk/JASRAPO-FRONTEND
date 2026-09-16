@@ -97,15 +97,23 @@ describe('ContractsTableComponent', () => {
     expect(mockEvent.stopPropagation).toHaveBeenCalled();
   });
 
-  it('only enables installation planning from estadoServicio', () => {
+  it('uses estadoServicio and safely falls back to estado for older responses', () => {
     expect(
       component.canAssignInstallationRoute({ ...dummyContract, estado: 'PENDIENTE_INSTALACION' }),
-    ).toBe(false);
+    ).toBe(true);
     expect(
       component.canAssignInstallationRoute({
         ...dummyContract,
         estadoServicio: 'PENDIENTE_INSTALACION',
       }),
     ).toBe(true);
+  });
+
+  it('does not expose legacy EN_CONVENIO as a collection status', () => {
+    expect(component.getServiceState({ ...dummyContract, estado: 'EN_CONVENIO' })).toBe('ACTIVO');
+    expect(component.hasActiveAgreement({ ...dummyContract, estado: 'EN_CONVENIO' })).toBe(true);
+    expect(
+      component.getCollectionState({ ...dummyContract, estado: 'EN_CONVENIO' }),
+    ).toBeUndefined();
   });
 });

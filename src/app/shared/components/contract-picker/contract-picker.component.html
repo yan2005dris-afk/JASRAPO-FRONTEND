@@ -129,11 +129,14 @@
                       <td class="text-center">
                         <span
                           class="badge"
-                          [class.badge-soft-success]="contract.estado === 'ACTIVO'"
-                          [class.badge-soft-warning]="contract.estado !== 'ACTIVO'"
+                          [class.badge-soft-success]="getServiceState(contract) === 'ACTIVO'"
+                          [class.badge-soft-warning]="getServiceState(contract) !== 'ACTIVO'"
                         >
-                          {{ contract.estado }}
+                          {{ getServiceState(contract) }}
                         </span>
+                        @if (hasActiveAgreement(contract)) {
+                          <span class="badge badge-soft-info ms-1">Convenio activo</span>
+                        }
                       </td>
                       <td class="text-center" (click)="$event.stopPropagation()">
                         <button

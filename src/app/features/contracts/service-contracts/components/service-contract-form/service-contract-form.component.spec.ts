@@ -111,7 +111,7 @@ describe('ServiceContractFormComponent', () => {
     expect(component.isEditing()).toBeTruthy();
     expect(component.form.get('numeroGuia')?.value).toBe('CTR-001');
     expect(component.form.get('direccionSuministro')?.value).toBe('Calle Principal 123');
-    expect(component.form.get('estado')?.value).toBe('ACTIVO');
+    expect(component.form.get('estadoServicio')?.value).toBe('ACTIVO');
     expect(component.selectedClient()?.identificacion).toBe('0999999999');
     expect(component.selectedMeter()?.serie).toBe('METER-200');
   });
@@ -125,12 +125,13 @@ describe('ServiceContractFormComponent', () => {
 
     component.form.patchValue({
       direccionSuministro: 'Nueva Direccion 456',
-      estado: 'SUSPENDIDO',
+      estadoServicio: 'SUSPENDIDO',
     });
 
     component.save();
 
     expect(mockContractsService.updateContract).toHaveBeenCalledWith('10', {
+      estadoServicio: 'SUSPENDIDO',
       estado: 'SUSPENDIDO',
       direccionSuministro: 'Nueva Direccion 456',
       clienteId: '100',

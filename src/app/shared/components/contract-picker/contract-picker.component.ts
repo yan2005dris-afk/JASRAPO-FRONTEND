@@ -16,9 +16,11 @@ import { PaginationComponent } from '../pagination/pagination.component';
 import { TableSkeletonComponent } from '../table-skeleton/table-skeleton.component';
 
 import { ContractsService } from '../../../features/contracts/service-contracts/services/contracts.service';
-import type {
-  IContract,
-  ISearchContractsParams,
+import {
+  getContractServiceState,
+  hasActivePaymentAgreement,
+  type IContract,
+  type ISearchContractsParams,
 } from '../../../features/contracts/service-contracts/interfaces/icontract.interface';
 
 @Component({
@@ -107,7 +109,7 @@ export class ContractPickerComponent {
     };
     const estadoVal = this.estado();
     if (estadoVal) {
-      params.estado = estadoVal;
+      params.estadoServicio = estadoVal;
     }
     this.contractsService.getContracts(params).subscribe({
       next: (res) => {
@@ -144,6 +146,14 @@ export class ContractPickerComponent {
   seleccionar(contract: IContract): void {
     this.contractSelected.emit(contract);
     this.cerrar();
+  }
+
+  getServiceState(contract: IContract): string {
+    return getContractServiceState(contract);
+  }
+
+  hasActiveAgreement(contract: IContract): boolean {
+    return hasActivePaymentAgreement(contract);
   }
 
   private getErrorMessage(err: unknown, fallback: string): string {
