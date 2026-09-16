@@ -130,6 +130,17 @@ export class ClientsComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Cliente recién creado desde el modal. En modo selección se elige solo, para
+   * que quien abrió el selector (el formulario de contrato) continúe sin tener
+   * que buscarlo a mano. Fuera del modo selección basta con refrescar el listado.
+   */
+  onClientCreated(cliente: IClient): void {
+    if (this.selectionMode()) {
+      this.clientSelected.emit(cliente);
+    }
+  }
+
   toggleDropdown(id: string | number, event: MouseEvent): void {
     event.stopPropagation();
     this.openDropdownId.update((current) => (current === id ? null : id));

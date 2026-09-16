@@ -1,5 +1,15 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { A11yModule } from '@angular/cdk/a11y';
+import { DOCUMENT } from '@angular/common';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/pdf-previewer.component';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
@@ -8,9 +18,21 @@ import { IPaymentsReportFilters, ISendReportEmailBody } from '../interfaces/irep
 import { ReportsService } from '../services/reports.service';
 import { ClientsService } from '../../contracts/clients/services/clients.service';
 import type { IClient } from '../../contracts/clients/interfaces/iclients.interface';
+import { ReportEmailDialogComponent } from '../shared/report-email-dialog/report-email-dialog.component';
+import { ReportFormatTabsComponent } from '../shared/report-format-tabs/report-format-tabs.component';
+import {
+  IReportContextItem,
+  IReportEmailRequest,
+  IReportResultColumn,
+  IReportResultRow,
+  ReportStatus,
+} from '../shared/models/report-workspace.model';
+import { ReportResponsiveResultsComponent } from '../shared/report-responsive-results/report-responsive-results.component';
+import { ReportWorkspaceComponent } from '../shared/report-workspace/report-workspace.component';
 
 type DatePreset = 'currentMonth' | 'lastMonth' | 'last3Months' | 'lastYear';
 type ReportView = 'table' | 'pdf';
+type FailedReportAction = 'data' | 'pdf' | 'email';
 
 interface PaymentRow {
   factura: string;
@@ -60,12 +82,22 @@ export interface PaymentsReportData {
 
 @Component({
   selector: 'app-payments-report',
-  imports: [FormsModule, PdfPreviewerComponent, DatePickerComponent],
+  imports: [
+    A11yModule,
+    FormsModule,
+    PdfPreviewerComponent,
+    DatePickerComponent,
+    ReportEmailDialogComponent,
+    ReportFormatTabsComponent,
+    ReportResponsiveResultsComponent,
+    ReportWorkspaceComponent,
+  ],
   templateUrl: './payments-report.html',
   styleUrl: './payments-report.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PaymentsReportComponent {
+export class PaymentsReportComponent implements OnDestroy {
+  private readonly document = inject(DOCUMENT);
   private readonly reportsService = inject(ReportsService);
   private readonly clientsService = inject(ClientsService);
   private readonly toast = inject(ToastService);
@@ -87,6 +119,8 @@ export class PaymentsReportComponent {
   // Estados de carga
   readonly isLoadingData = signal(false);
   readonly isLoadingPdf = signal(false);
+  readonly workspaceError = signal('');
+  readonly lastFailedAction = signal<FailedReportAction | null>(null);
 
   // Envío por email
   readonly destinatario = signal('');
@@ -100,7 +134,12 @@ export class PaymentsReportComponent {
   readonly searchError = signal('');
   readonly searchPerformed = signal(false);
   readonly isClientPickerOpen = signal(false);
+  private clientPickerTrigger: HTMLElement | null = null;
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  private dataRequest: Subscription | null = null;
+  private pdfRequest: Subscription | null = null;
+  private dataRequestId = 0;
+  private pdfRequestId = 0;
 
   // Modales
   readonly isEmailModalOpen = signal(false);
@@ -109,12 +148,6 @@ export class PaymentsReportComponent {
   readonly rangoFechaInvalido = computed(
     () => !!this.fechaDesde() && !!this.fechaHasta() && this.fechaDesde() > this.fechaHasta(),
   );
-
-  // Email de destino inválido (vacío o con formato incorrecto)
-  readonly esEmailInvalido = computed(() => {
-    const email = this.destinatario().trim();
-    return email === '' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  });
 
   readonly tableRows = computed(() => {
     const data = this.reportData();
@@ -155,6 +188,69 @@ export class PaymentsReportComponent {
     return data.totalRegistros ?? data.pagos?.length ?? 0;
   });
 
+  readonly contextItems = computed<readonly IReportContextItem[]>(() => [
+    {
+      label: 'Entidad',
+      value: this.selectedClientName() || 'Todos los clientes',
+    },
+    {
+      label: 'Período',
+      value: `${this.fechaDesde() || 'Inicio'} a ${this.fechaHasta() || 'Hoy'}`,
+    },
+    {
+      label: 'Filtros',
+      value: this.clienteId() ? 'Cliente seleccionado' : 'Sin filtro de cliente',
+    },
+  ]);
+
+  readonly resultColumns: readonly IReportResultColumn[] = [
+    { key: 'factura', label: 'Factura' },
+    { key: 'fecha', label: 'Fecha Pago' },
+    { key: 'cliente', label: 'Cliente' },
+    { key: 'cuenta', label: 'Cuenta', align: 'center' },
+    { key: 'medidor', label: 'Medidor', align: 'center' },
+    { key: 'emision', label: 'Emisión', align: 'center' },
+    { key: 'valor', label: 'Valor', align: 'end' },
+  ];
+
+  readonly resultRows = computed<readonly IReportResultRow[]>(() =>
+    this.tableRows().map((row, index) => ({
+      id: `${row.factura}-${row.fecha}-${index}`,
+      cells: {
+        factura: row.factura,
+        fecha: row.fecha,
+        cliente: row.clienteNombre,
+        cuenta: row.cuenta,
+        medidor: row.medidor,
+        emision: row.emision,
+        valor: `$${row.valor}`,
+      },
+    })),
+  );
+
+  readonly workspaceStatus = computed<ReportStatus>(() => {
+    if (this.isLoadingData() || this.isLoadingPdf()) return 'loading';
+    if (this.workspaceError()) return 'error';
+    if (!this.reportData()) return 'empty';
+    if (this.reportData() && this.activeView() === 'table' && this.resultRows().length === 0) {
+      return 'empty';
+    }
+    return 'idle';
+  });
+
+  readonly workspaceStatusMessage = computed(() => {
+    if (this.isLoadingPdf()) return 'Generando el documento PDF oficial…';
+    if (this.isLoadingData()) return 'Consultando datos autorizados del reporte…';
+    if (this.workspaceError()) return this.workspaceError();
+    if (!this.reportData()) {
+      return 'Ajuste los filtros y presione Consultar para cargar el reporte de abonos.';
+    }
+    if (this.workspaceStatus() === 'empty') {
+      return 'No se encontraron abonos para el contexto seleccionado.';
+    }
+    return '';
+  });
+
   private buildFilters(): IPaymentsReportFilters {
     const filters: IPaymentsReportFilters = {};
     const desde = this.fechaDesde();
@@ -168,6 +264,18 @@ export class PaymentsReportComponent {
   }
 
   // ---------- Presets rápidos de rango de fechas ----------
+
+  actualizarFechaDesde(value: string): void {
+    if (value === this.fechaDesde()) return;
+    this.fechaDesde.set(value);
+    this.invalidateFilterDependentState();
+  }
+
+  actualizarFechaHasta(value: string): void {
+    if (value === this.fechaHasta()) return;
+    this.fechaHasta.set(value);
+    this.invalidateFilterDependentState();
+  }
 
   aplicarPreset(preset: DatePreset): void {
     const hoy = new Date();
@@ -190,8 +298,13 @@ export class PaymentsReportComponent {
         break;
     }
 
-    this.fechaDesde.set(this.toIsoDate(desde));
-    this.fechaHasta.set(this.toIsoDate(hasta));
+    const nextDesde = this.toIsoDate(desde);
+    const nextHasta = this.toIsoDate(hasta);
+    if (nextDesde === this.fechaDesde() && nextHasta === this.fechaHasta()) return;
+
+    this.fechaDesde.set(nextDesde);
+    this.fechaHasta.set(nextHasta);
+    this.invalidateFilterDependentState();
   }
 
   private toIsoDate(date: Date): string {
@@ -212,6 +325,7 @@ export class PaymentsReportComponent {
   }
 
   abrirBuscadorClientes(): void {
+    this.clientPickerTrigger = this.getFocusedElement();
     this.isClientPickerOpen.set(true);
     if (!this.searchPerformed()) {
       this.buscarClientes();
@@ -220,6 +334,13 @@ export class PaymentsReportComponent {
 
   cerrarBuscadorClientes(): void {
     this.isClientPickerOpen.set(false);
+    queueMicrotask(() => this.clientPickerTrigger?.focus());
+  }
+
+  onClientPickerBackdropClick(event: MouseEvent): void {
+    if (event.target === event.currentTarget) {
+      this.cerrarBuscadorClientes();
+    }
   }
 
   buscarClientes(): void {
@@ -259,7 +380,8 @@ export class PaymentsReportComponent {
     this.selectedClientLabel.set(`${nombre} · ${cliente.identificacion}`);
     this.selectedClientName.set(nombre);
     this.destinatario.set(cliente.email?.trim() ?? '');
-    this.isClientPickerOpen.set(false);
+    this.invalidateFilterDependentState();
+    this.cerrarBuscadorClientes();
   }
 
   formatClientName(cliente: IClient): string {
@@ -274,21 +396,30 @@ export class PaymentsReportComponent {
   consultar(): void {
     if (this.rangoFechaInvalido()) return;
 
+    this.cancelDataRequest();
+    this.cancelPdfRequest();
     this.reportData.set(null);
     this.pdfBlob.set(null);
     this.activeView.set('table');
 
+    const filters = this.buildFilters();
+    const contextKey = this.filterContextKey();
+    const requestId = ++this.dataRequestId;
     this.isLoadingData.set(true);
-    this.reportsService.getPaymentsReport(this.buildFilters()).subscribe({
+    this.dataRequest = this.reportsService.getPaymentsReport(filters).subscribe({
       next: (data) => {
+        if (requestId !== this.dataRequestId || contextKey !== this.filterContextKey()) return;
         this.reportData.set(data as unknown as PaymentsReportData);
         this.isLoadingData.set(false);
+        this.clearWorkspaceError();
       },
       error: (err) => {
+        if (requestId !== this.dataRequestId || contextKey !== this.filterContextKey()) return;
         this.isLoadingData.set(false);
-        this.toast.error(
-          this.getErrorMessage(err, 'No se pudieron cargar los datos del reporte de abonos'),
-          'Error',
+        this.setWorkspaceError(
+          err,
+          'No se pudieron cargar los datos del reporte de abonos',
+          'data',
         );
       },
     });
@@ -298,7 +429,7 @@ export class PaymentsReportComponent {
 
   setView(view: ReportView): void {
     this.activeView.set(view);
-    if (view === 'pdf' && !this.pdfBlob()) {
+    if (view === 'pdf' && !this.pdfBlob() && !this.isLoadingPdf()) {
       this.generarPdf();
     }
   }
@@ -306,19 +437,26 @@ export class PaymentsReportComponent {
   // ---------- Generar PDF ----------
 
   generarPdf(): void {
+    if (this.isLoadingPdf()) return;
+
+    this.cancelPdfRequest();
+    this.activeView.set('pdf');
+    const filters = this.buildFilters();
+    const contextKey = this.filterContextKey();
+    const requestId = ++this.pdfRequestId;
     this.isLoadingPdf.set(true);
-    this.reportsService.getPaymentsReportPdf(this.buildFilters()).subscribe({
+    this.pdfRequest = this.reportsService.getPaymentsReportPdf(filters).subscribe({
       next: (blob) => {
+        if (requestId !== this.pdfRequestId || contextKey !== this.filterContextKey()) return;
         this.pdfBlob.set(blob);
         this.isLoadingPdf.set(false);
+        this.clearWorkspaceError();
       },
       error: (err) => {
+        if (requestId !== this.pdfRequestId || contextKey !== this.filterContextKey()) return;
         this.isLoadingPdf.set(false);
         this.activeView.set('table');
-        this.toast.error(
-          this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'),
-          'Error',
-        );
+        this.setWorkspaceError(err, 'No se pudo generar el PDF del reporte', 'pdf');
       },
     });
   }
@@ -349,17 +487,21 @@ export class PaymentsReportComponent {
     this.isEmailModalOpen.set(false);
   }
 
-  enviarEmail(): void {
+  enviarEmail(request: IReportEmailRequest): void {
     const cliente = this.clienteId().trim();
     if (!cliente) {
       this.toast.error('Seleccione un cliente para enviar el reporte', 'Error');
       return;
     }
 
+    this.destinatario.set(request.destinatario);
+    this.subject.set(request.subject ?? '');
+    const filters = this.buildFilters();
     const body: ISendReportEmailBody = {
+      ...filters,
       clienteId: cliente,
-      destinatario: this.destinatario().trim() || undefined,
-      subject: this.subject().trim() || undefined,
+      destinatario: request.destinatario,
+      subject: request.subject,
     };
 
     this.isSendingEmail.set(true);
@@ -369,19 +511,34 @@ export class PaymentsReportComponent {
         this.isEmailModalOpen.set(false);
         this.destinatario.set('');
         this.subject.set('');
+        this.clearWorkspaceError();
         this.toast.success('Reporte enviado por email', 'Éxito');
       },
       error: (err) => {
         this.isSendingEmail.set(false);
-        this.toast.error(
-          this.getErrorMessage(err, 'No se pudo enviar el reporte por email'),
-          'Error',
-        );
+        this.isEmailModalOpen.set(false);
+        this.setWorkspaceError(err, 'No se pudo enviar el reporte por email', 'email');
       },
     });
   }
 
+  retryLastAction(): void {
+    switch (this.lastFailedAction()) {
+      case 'pdf':
+        this.setView('pdf');
+        break;
+      case 'email':
+        this.abrirModalEmail();
+        break;
+      case 'data':
+      default:
+        this.consultar();
+    }
+  }
+
   limpiar(): void {
+    this.cancelDataRequest();
+    this.cancelPdfRequest();
     this.fechaDesde.set('');
     this.fechaHasta.set('');
     this.clienteId.set('');
@@ -396,6 +553,51 @@ export class PaymentsReportComponent {
     this.destinatario.set('');
     this.subject.set('');
     this.activeView.set('table');
+    this.clearWorkspaceError();
+  }
+
+  ngOnDestroy(): void {
+    if (this.searchTimer) clearTimeout(this.searchTimer);
+    this.cancelDataRequest();
+    this.cancelPdfRequest();
+  }
+
+  private setWorkspaceError(err: unknown, fallback: string, action: FailedReportAction): void {
+    this.workspaceError.set(this.getErrorMessage(err, fallback));
+    this.lastFailedAction.set(action);
+  }
+
+  private clearWorkspaceError(): void {
+    this.workspaceError.set('');
+    this.lastFailedAction.set(null);
+  }
+
+  private invalidateFilterDependentState(): void {
+    this.cancelDataRequest();
+    this.cancelPdfRequest();
+    this.reportData.set(null);
+    this.pdfBlob.set(null);
+    this.activeView.set('table');
+    this.clearWorkspaceError();
+  }
+
+  private cancelDataRequest(): void {
+    this.dataRequestId += 1;
+    this.dataRequest?.unsubscribe();
+    this.dataRequest = null;
+    this.isLoadingData.set(false);
+  }
+
+  private cancelPdfRequest(): void {
+    this.pdfRequestId += 1;
+    this.pdfRequest?.unsubscribe();
+    this.pdfRequest = null;
+    this.isLoadingPdf.set(false);
+  }
+
+  private filterContextKey(): string {
+    const filters = this.buildFilters();
+    return `${filters.clienteId ?? ''}|${filters.fechaDesde ?? ''}|${filters.fechaHasta ?? ''}`;
   }
 
   private getErrorMessage(err: unknown, fallback: string): string {
@@ -409,5 +611,10 @@ export class PaymentsReportComponent {
       }
     }
     return fallback;
+  }
+
+  private getFocusedElement(): HTMLElement | null {
+    const activeElement = this.document.activeElement;
+    return activeElement instanceof HTMLElement ? activeElement : null;
   }
 }
