@@ -75,6 +75,18 @@ describe('ServiceContractsComponent', () => {
     });
   });
 
+  it('loads the NO_APLICA collection state filter independently', () => {
+    component.estadoCobranzaFilter.set('NO_APLICA');
+
+    component.loadContracts();
+
+    expect(contractsServiceMock.getContracts).toHaveBeenCalledWith({
+      page: 1,
+      limit: 10,
+      estadoCobranza: 'NO_APLICA',
+    });
+  });
+
   it('loads both state filters without the legacy estado parameter', () => {
     component.estadoServicioFilter.set('SUSPENDIDO');
     component.estadoCobranzaFilter.set('AL_DIA');
@@ -118,7 +130,8 @@ describe('ServiceContractsComponent', () => {
     ).toBe(false);
     expect(
       Array.from<HTMLOptionElement>(collectionFilter.options).map((option) => option.value),
-    ).toEqual(['', 'AL_DIA', 'EN_MORA']);
+    ).toEqual(['', 'NO_APLICA', 'AL_DIA', 'EN_MORA']);
+    expect(collectionFilter.options[1].text).toBe('No aplica');
 
     expect(
       fixture.nativeElement.querySelector('label[for="contractSearch"]').textContent.trim(),

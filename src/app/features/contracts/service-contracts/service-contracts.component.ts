@@ -7,6 +7,7 @@ import {
   IContractState,
   IHistorialMedidor,
   ISearchContractsParams,
+  type EstadoCobranza,
   getContractServiceState,
 } from './interfaces/icontract.interface';
 import { ServiceContractFormComponent } from './components/service-contract-form/service-contract-form.component';
@@ -30,6 +31,7 @@ const SERVICE_STATE_OPTIONS = [
 ] as const;
 
 const COLLECTION_STATE_OPTIONS = [
+  { value: 'NO_APLICA', label: 'No aplica' },
   { value: 'AL_DIA', label: 'Al día' },
   { value: 'EN_MORA', label: 'En mora' },
 ] as const;
@@ -124,7 +126,7 @@ export class ServiceContractsComponent implements OnInit {
   // Búsqueda global + estados independientes
   readonly searchTerm = signal('');
   readonly estadoServicioFilter = signal('');
-  readonly estadoCobranzaFilter = signal('');
+  readonly estadoCobranzaFilter = signal<EstadoCobranza | ''>('');
 
   readonly serviceStateOptions = SERVICE_STATE_OPTIONS;
   readonly collectionStateOptions = COLLECTION_STATE_OPTIONS;

@@ -4,7 +4,6 @@ import { StatusBadgeComponent } from '../../../../../shared/components/status-ba
 import {
   getContractCollectionState,
   getContractServiceState,
-  hasActivePaymentAgreement,
   type IContract,
   type IHistorialMedidor,
 } from '../../interfaces/icontract.interface';
@@ -69,10 +68,6 @@ export class ContractsTableComponent {
 
   getCollectionState(contract: IContract): string | undefined {
     return getContractCollectionState(contract);
-  }
-
-  hasActiveAgreement(contract: IContract): boolean {
-    return hasActivePaymentAgreement(contract);
   }
 
   onRowClick(contract: IContract): void {

@@ -87,9 +87,7 @@
             <app-status-badge [status]="getServiceState(contract)" />
           </td>
           <td class="text-center small">
-            @if (hasActiveAgreement(contract)) {
-              <app-status-badge customLabel="Convenio activo" customTone="info" />
-            } @else if (getCollectionState(contract); as collectionState) {
+            @if (getCollectionState(contract); as collectionState) {
               <app-status-badge [status]="collectionState" />
             } @else {
               <span class="text-muted">—</span>

@@ -111,9 +111,41 @@ describe('ContractsTableComponent', () => {
 
   it('does not expose legacy EN_CONVENIO as a collection status', () => {
     expect(component.getServiceState({ ...dummyContract, estado: 'EN_CONVENIO' })).toBe('ACTIVO');
-    expect(component.hasActiveAgreement({ ...dummyContract, estado: 'EN_CONVENIO' })).toBe(true);
     expect(
       component.getCollectionState({ ...dummyContract, estado: 'EN_CONVENIO' }),
     ).toBeUndefined();
+  });
+
+  it.each(['PENDIENTE_PAGO', 'PENDIENTE_INSTALACION'])(
+    'falls back to NO_APLICA for legacy %s service responses',
+    (serviceState) => {
+      expect(component.getCollectionState({ ...dummyContract, estado: serviceState })).toBe(
+        'NO_APLICA',
+      );
+    },
+  );
+
+  it.each(['NO_APLICA', 'AL_DIA', 'EN_MORA'])(
+    'renders %s in the Cobranza column',
+    (collectionState) => {
+      fixture.componentRef.setInput('contracts', [
+        { ...dummyContract, estadoCobranza: collectionState },
+      ]);
+      fixture.detectChanges();
+
+      const cells = fixture.nativeElement.querySelectorAll('tbody td');
+      expect(cells[6].textContent).toContain(collectionState.replace('_', ' '));
+    },
+  );
+
+  it('does not render a Convenio column', () => {
+    fixture.componentRef.setInput('contracts', [
+      { ...dummyContract, estadoCobranza: 'AL_DIA', tieneConvenioActivo: true },
+    ]);
+    fixture.detectChanges();
+
+    const headers = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('thead th'));
+    expect(headers.map((header) => header.textContent?.trim())).not.toContain('Convenio');
+    expect(fixture.nativeElement.textContent).not.toContain('Convenio activo');
   });
 });

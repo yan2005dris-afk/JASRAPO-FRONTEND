@@ -3,6 +3,14 @@ export type EstadoContrato = string;
 
 const LEGACY_CONVENIO_STATE = 'EN_CONVENIO';
 
+export const COLLECTION_STATUS = {
+  NO_APLICA: 'NO_APLICA',
+  AL_DIA: 'AL_DIA',
+  EN_MORA: 'EN_MORA',
+} as const;
+
+export type EstadoCobranza = (typeof COLLECTION_STATUS)[keyof typeof COLLECTION_STATUS];
+
 // Item del catálogo de estados de contrato (GET /contracts/states).
 export interface IContractState {
   codigo: string; // código del estado (ej. ACTIVO)
@@ -98,7 +106,7 @@ export interface IContract {
   /** Service lifecycle state. `estado` is retained for older deployments. */
   estadoServicio?: EstadoContrato;
   /** Collection state, independent from the service lifecycle. */
-  estadoCobranza?: EstadoContrato;
+  estadoCobranza?: EstadoCobranza;
   /** Whether the contract currently has an active payment agreement. */
   tieneConvenioActivo?: boolean;
   comunidadId: number;
@@ -124,7 +132,7 @@ export interface ISearchContractsParams {
   medidorSerie?: string;
   ubicacion?: string;
   estadoServicio?: EstadoContrato;
-  estadoCobranza?: EstadoContrato;
+  estadoCobranza?: EstadoCobranza;
   estado?: string;
   hasDebt?: boolean;
 }
@@ -156,10 +164,28 @@ export function getContractServiceState(
 
 /** Returns collection state without exposing the legacy combined value. */
 export function getContractCollectionState(
-  contract: Pick<IContract, 'estado' | 'estadoCobranza'>,
-): string | undefined {
-  const state = contract.estadoCobranza;
-  return state === LEGACY_CONVENIO_STATE ? undefined : state;
+  contract: Pick<IContract, 'estado' | 'estadoServicio' | 'estadoCobranza'>,
+): EstadoCobranza | undefined {
+  const state = contract.estadoCobranza as string | undefined;
+  if (
+    state === COLLECTION_STATUS.NO_APLICA ||
+    state === COLLECTION_STATUS.AL_DIA ||
+    state === COLLECTION_STATUS.EN_MORA
+  ) {
+    return state;
+  }
+
+  // Older responses used the combined estado field. Pending services never enter collection.
+  const legacyServiceState = contract.estadoServicio ?? contract.estado;
+  if (legacyServiceState === 'PENDIENTE_PAGO' || legacyServiceState === 'PENDIENTE_INSTALACION') {
+    return COLLECTION_STATUS.NO_APLICA;
+  }
+
+  if (legacyServiceState === COLLECTION_STATUS.AL_DIA) return COLLECTION_STATUS.AL_DIA;
+  if (legacyServiceState === COLLECTION_STATUS.EN_MORA) return COLLECTION_STATUS.EN_MORA;
+
+  // EN_CONVENIO is a legacy agreement state, never a collection state.
+  return undefined;
 }
 
 /** Uses the derived flag when present and falls back to the legacy state. */
