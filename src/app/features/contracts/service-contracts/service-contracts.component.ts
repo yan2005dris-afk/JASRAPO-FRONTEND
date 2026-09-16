@@ -155,11 +155,7 @@ export class ServiceContractsComponent implements OnInit {
     });
   }
 
-  /** Devuelve la etiqueta legible de un estado según el catálogo del backend. */
-  getEstadoLabel(estado: string): string {
-    return this.contractStates().find((s) => s.codigo === estado)?.nombre ?? estado;
-  }
-
+  /** Returns the service lifecycle state shown by the contracts table. */
   getServiceState(contract: IContract): string {
     return getContractServiceState(contract);
   }
@@ -313,8 +309,14 @@ export class ServiceContractsComponent implements OnInit {
         },
         { header: 'Ubicación', key: 'direccionSuministro', width: 110 },
         {
-          header: 'Estado',
+          header: 'Estado del servicio',
           transform: (c) => this.getServiceState(c as unknown as IContract) || '—',
+          width: 60,
+          align: 'center',
+        },
+        {
+          header: 'Cobranza',
+          transform: (c) => (c as unknown as IContract).estadoCobranza ?? '—',
           width: 60,
           align: 'center',
         },
@@ -347,8 +349,12 @@ export class ServiceContractsComponent implements OnInit {
         },
         { header: 'Ubicación', key: 'direccionSuministro' },
         {
-          header: 'Estado',
+          header: 'Estado del servicio',
           transform: (c) => this.getServiceState(c as unknown as IContract) || '—',
+        },
+        {
+          header: 'Cobranza',
+          transform: (c) => (c as unknown as IContract).estadoCobranza ?? '—',
         },
       ],
       data: data as unknown as Record<string, unknown>[],
@@ -379,8 +385,12 @@ export class ServiceContractsComponent implements OnInit {
         },
         { header: 'Ubicación', key: 'direccionSuministro' },
         {
-          header: 'Estado',
+          header: 'Estado del servicio',
           transform: (c) => this.getServiceState(c as unknown as IContract) || '—',
+        },
+        {
+          header: 'Cobranza',
+          transform: (c) => (c as unknown as IContract).estadoCobranza ?? '—',
         },
       ],
       data: data as unknown as Record<string, unknown>[],

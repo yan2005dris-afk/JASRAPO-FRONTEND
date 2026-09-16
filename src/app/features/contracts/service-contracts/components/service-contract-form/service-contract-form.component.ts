@@ -356,9 +356,7 @@ export class ServiceContractFormComponent implements OnInit {
     const value = this.form.value;
     // Solo se actualizan datos contractuales. El medidor se gestiona por POST /meters/replace.
     const payload: IUpdateContractRequest = {
-      ...(value.estadoServicio
-        ? { estadoServicio: value.estadoServicio, estado: value.estadoServicio }
-        : {}),
+      ...(value.estadoServicio ? { estadoServicio: value.estadoServicio } : {}),
       direccionSuministro: value.direccionSuministro,
       clienteId: String(clientId),
       comunidadId: String(comunidad.id),

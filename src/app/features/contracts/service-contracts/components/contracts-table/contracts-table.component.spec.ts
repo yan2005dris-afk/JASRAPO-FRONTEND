@@ -9,7 +9,8 @@ describe('ContractsTableComponent', () => {
   const dummyContract: IContract = {
     contratoId: '101',
     numeroGuia: 'GUIA-001',
-    estado: 'ACTIVO',
+    estadoServicio: 'ACTIVO',
+    estadoCobranza: 'AL_DIA',
     clienteId: '1',
     direccionSuministro: 'Calle Principal',
     fechaInicio: '2025-01-01',
@@ -97,10 +98,7 @@ describe('ContractsTableComponent', () => {
     expect(mockEvent.stopPropagation).toHaveBeenCalled();
   });
 
-  it('uses estadoServicio and safely falls back to estado for older responses', () => {
-    expect(
-      component.canAssignInstallationRoute({ ...dummyContract, estado: 'PENDIENTE_INSTALACION' }),
-    ).toBe(true);
+  it('uses estadoServicio for service lifecycle decisions', () => {
     expect(
       component.canAssignInstallationRoute({
         ...dummyContract,
@@ -109,21 +107,12 @@ describe('ContractsTableComponent', () => {
     ).toBe(true);
   });
 
-  it('does not expose legacy EN_CONVENIO as a collection status', () => {
-    expect(component.getServiceState({ ...dummyContract, estado: 'EN_CONVENIO' })).toBe('ACTIVO');
+  it('does not infer contract states from legacy fields', () => {
+    expect(component.getServiceState({ ...dummyContract, estadoServicio: undefined })).toBe('—');
     expect(
-      component.getCollectionState({ ...dummyContract, estado: 'EN_CONVENIO' }),
+      component.getCollectionState({ ...dummyContract, estadoCobranza: undefined }),
     ).toBeUndefined();
   });
-
-  it.each(['PENDIENTE_PAGO', 'PENDIENTE_INSTALACION'])(
-    'falls back to NO_APLICA for legacy %s service responses',
-    (serviceState) => {
-      expect(component.getCollectionState({ ...dummyContract, estado: serviceState })).toBe(
-        'NO_APLICA',
-      );
-    },
-  );
 
   it.each(['NO_APLICA', 'AL_DIA', 'EN_MORA'])(
     'renders %s in the Cobranza column',

@@ -36,7 +36,7 @@ export class ContractPickerComponent {
 
   readonly open = input(false);
   readonly title = input('Buscar Contrato Activo');
-  readonly estado = input<string | undefined>(undefined);
+  readonly estadoServicio = input<string | undefined>(undefined);
 
   readonly contractSelected = output<IContract>();
   readonly closed = output<void>();
@@ -107,7 +107,7 @@ export class ContractPickerComponent {
       page: this.currentPage(),
       limit: this.pageSize(),
     };
-    const estadoVal = this.estado();
+    const estadoVal = this.estadoServicio();
     if (estadoVal) {
       params.estadoServicio = estadoVal;
     }

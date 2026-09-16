@@ -26,7 +26,8 @@ describe('ServiceContractFormComponent', () => {
     fechaInicio: '2026-01-01',
     numeroGuia: 'CTR-001',
     direccionSuministro: 'Calle Principal 123',
-    estado: 'ACTIVO',
+    estadoServicio: 'ACTIVO',
+    estadoCobranza: 'AL_DIA',
     categoriaTarifa: {
       categoriaTarifaId: 1,
       nombre: 'Residencial',
@@ -132,7 +133,6 @@ describe('ServiceContractFormComponent', () => {
 
     expect(mockContractsService.updateContract).toHaveBeenCalledWith('10', {
       estadoServicio: 'SUSPENDIDO',
-      estado: 'SUSPENDIDO',
       direccionSuministro: 'Nueva Direccion 456',
       clienteId: '100',
       comunidadId: '5',
@@ -153,6 +153,7 @@ describe('ServiceContractFormComponent', () => {
       'Contrato actualizado correctamente',
       'Éxito',
     );
+    expect(mockContractsService.updateContract.mock.calls[0][1]).not.toHaveProperty('estado');
   });
 
   it('should open and close replace meter modal in edit mode', () => {
@@ -250,6 +251,7 @@ describe('ServiceContractFormComponent', () => {
       comunidadId: '3',
       lecturaInicial: 0,
     });
+    expect(mockContractsService.createContract.mock.calls[0][0]).not.toHaveProperty('estado');
     expect(savedEmitSpy).toHaveBeenCalled();
   });
 });

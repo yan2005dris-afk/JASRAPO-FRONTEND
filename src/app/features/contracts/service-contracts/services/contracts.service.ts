@@ -61,9 +61,6 @@ export class ContractsService {
     if (params.estadoCobranza) {
       httpParams = httpParams.set('estadoCobranza', params.estadoCobranza);
     }
-    if (params.estado) {
-      httpParams = httpParams.set('estado', params.estado);
-    }
     if (params.hasDebt !== undefined) {
       httpParams = httpParams.set('hasDebt', String(params.hasDebt));
     }
@@ -81,7 +78,7 @@ export class ContractsService {
     return this.http.post<IContract>(this.endpoint, payload);
   }
 
-  /** Actualiza un contrato (estado, dirección, sector, medidor, lectura). */
+  /** Actualiza los datos contractuales y los estados separados administrables. */
   updateContract(id: string, payload: IUpdateContractRequest): Observable<IContract> {
     return this.http.patch<IContract>(`${this.endpoint}/${id}`, payload);
   }

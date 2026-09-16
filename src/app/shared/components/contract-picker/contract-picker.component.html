@@ -87,7 +87,8 @@
                     <th class="fw-semibold text-muted text-uppercase text-center">
                       Identificación
                     </th>
-                    <th class="fw-semibold text-muted text-uppercase text-center">Estado</th>
+                    <th class="fw-semibold text-muted text-uppercase text-center">Servicio</th>
+                    <th class="fw-semibold text-muted text-uppercase text-center">Cobranza</th>
                     <th class="text-center" style="width: 100px">Acción</th>
                   </tr>
                 </thead>
@@ -133,6 +134,11 @@
                           [class.badge-soft-warning]="getServiceState(contract) !== 'ACTIVO'"
                         >
                           {{ getServiceState(contract) }}
+                        </span>
+                      </td>
+                      <td class="text-center">
+                        <span class="badge badge-soft-secondary">
+                          {{ contract.estadoCobranza || '—' }}
                         </span>
                         @if (hasActiveAgreement(contract)) {
                           <span class="badge badge-soft-info ms-1">Convenio activo</span>

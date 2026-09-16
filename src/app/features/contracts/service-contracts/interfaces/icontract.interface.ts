@@ -1,7 +1,5 @@
-// Estado del contrato (el valor real lo define el backend).
-export type EstadoContrato = string;
-
-const LEGACY_CONVENIO_STATE = 'EN_CONVENIO';
+// Estado del servicio (el valor real lo define el backend).
+export type EstadoServicio = string;
 
 export const COLLECTION_STATUS = {
   NO_APLICA: 'NO_APLICA',
@@ -21,8 +19,8 @@ export interface IContractState {
 // Datos para actualizar un contrato (PATCH /contracts/{id}). Todos opcionales.
 // Los medidores se gestionan exclusivamente mediante el flujo de reemplazo (POST /meters/replace).
 export interface IUpdateContractRequest {
-  estado?: string;
-  estadoServicio?: EstadoContrato;
+  estadoServicio?: EstadoServicio;
+  estadoCobranza?: EstadoCobranza;
   direccionSuministro?: string;
   sectorId?: string;
   clienteId?: string;
@@ -102,9 +100,7 @@ export interface IContract {
   numeroGuia: string;
   fechaInicio: string;
   direccionSuministro: string;
-  estado: EstadoContrato;
-  /** Service lifecycle state. `estado` is retained for older deployments. */
-  estadoServicio?: EstadoContrato;
+  estadoServicio?: EstadoServicio;
   /** Collection state, independent from the service lifecycle. */
   estadoCobranza?: EstadoCobranza;
   /** Whether the contract currently has an active payment agreement. */
@@ -131,9 +127,8 @@ export interface ISearchContractsParams {
   numeroGuia?: string;
   medidorSerie?: string;
   ubicacion?: string;
-  estadoServicio?: EstadoContrato;
+  estadoServicio?: EstadoServicio;
   estadoCobranza?: EstadoCobranza;
-  estado?: string;
   hasDebt?: boolean;
 }
 
@@ -149,48 +144,25 @@ export interface ICreateContractRequest {
   comunidadId: string;
   sectorId?: string;
   lecturaInicial?: number;
-  estado?: string;
-  estadoServicio?: EstadoContrato;
+  estadoServicio?: EstadoServicio;
   creadoPor?: string;
 }
 
-/** Returns the service state while supporting legacy API responses. */
-export function getContractServiceState(
-  contract: Pick<IContract, 'estado' | 'estadoServicio'>,
-): string {
-  const state = contract.estadoServicio ?? contract.estado;
-  return state === LEGACY_CONVENIO_STATE ? 'ACTIVO' : state;
+/** Returns the service lifecycle state used by contract consumers. */
+export function getContractServiceState(contract: Pick<IContract, 'estadoServicio'>): string {
+  return contract.estadoServicio ?? '—';
 }
 
-/** Returns collection state without exposing the legacy combined value. */
+/** Returns the collection state without mixing it with service lifecycle. */
 export function getContractCollectionState(
-  contract: Pick<IContract, 'estado' | 'estadoServicio' | 'estadoCobranza'>,
+  contract: Pick<IContract, 'estadoCobranza'>,
 ): EstadoCobranza | undefined {
-  const state = contract.estadoCobranza as string | undefined;
-  if (
-    state === COLLECTION_STATUS.NO_APLICA ||
-    state === COLLECTION_STATUS.AL_DIA ||
-    state === COLLECTION_STATUS.EN_MORA
-  ) {
-    return state;
-  }
-
-  // Older responses used the combined estado field. Pending services never enter collection.
-  const legacyServiceState = contract.estadoServicio ?? contract.estado;
-  if (legacyServiceState === 'PENDIENTE_PAGO' || legacyServiceState === 'PENDIENTE_INSTALACION') {
-    return COLLECTION_STATUS.NO_APLICA;
-  }
-
-  if (legacyServiceState === COLLECTION_STATUS.AL_DIA) return COLLECTION_STATUS.AL_DIA;
-  if (legacyServiceState === COLLECTION_STATUS.EN_MORA) return COLLECTION_STATUS.EN_MORA;
-
-  // EN_CONVENIO is a legacy agreement state, never a collection state.
-  return undefined;
+  return contract.estadoCobranza;
 }
 
-/** Uses the derived flag when present and falls back to the legacy state. */
+/** Returns whether the contract has an active payment agreement. */
 export function hasActivePaymentAgreement(
-  contract: Pick<IContract, 'estado' | 'tieneConvenioActivo'>,
+  contract: Pick<IContract, 'tieneConvenioActivo'>,
 ): boolean {
-  return contract.tieneConvenioActivo ?? contract.estado === LEGACY_CONVENIO_STATE;
+  return contract.tieneConvenioActivo === true;
 }
