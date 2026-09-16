@@ -1,8 +1,8 @@
-<form [formGroup]="clienteForm" (ngSubmit)="onSubmit()">
+<form [formGroup]="clienteForm" (ngSubmit)="onSubmit()" novalidate>
   <div class="modal-header">
     <div>
       <h5 class="modal-title fw-bold">
-        {{ isEditMode ? 'Editar Cliente' : 'Agregar Nuevo Cliente' }}
+        {{ isEditMode() ? 'Editar Cliente' : 'Agregar Nuevo Cliente' }}
       </h5>
       <p class="text-muted mb-0 small">
         Complete los campos para registrar o actualizar la información del cliente.
@@ -18,19 +18,20 @@
   </div>
 
   <div class="modal-body">
-    @if (mensajeFormulario) {
+    @if (mensajeFormulario()) {
       <div
         class="form-message"
         [ngClass]="{
-          'form-message-success': tipoMensajeFormulario === 'success',
-          'form-message-error': tipoMensajeFormulario === 'error',
+          'form-message-success': tipoMensajeFormulario() === 'success',
+          'form-message-error': tipoMensajeFormulario() === 'error',
         }"
       >
-        {{ mensajeFormulario }}
+        {{ mensajeFormulario() }}
       </div>
     }
 
     <div class="row g-3">
+      <!-- Tipo de Identificación -->
       <div class="col-md-6">
         <label for="tipoIdentificacionId" class="form-label"
           >Tipo de identificación <span class="text-dark fw-bold ms-1">*</span></label
@@ -39,11 +40,14 @@
         <select
           id="tipoIdentificacionId"
           class="form-select"
+          [class.is-invalid]="campoInvalido('tipoIdentificacionId')"
           formControlName="tipoIdentificacionId"
+          (change)="onTipoIdentificacionChange()"
+          required
         >
           <option value="">Seleccione un tipo de identificación</option>
 
-          @for (tipo of tiposIdentificacion; track tipo.identificacionId || tipo.id) {
+          @for (tipo of tiposIdentificacion(); track tipo.identificacionId || tipo.id) {
             <option [value]="tipo.identificacionId || tipo.id">
               {{ tipo.nombre || tipo.descripcion }}
             </option>
@@ -51,10 +55,13 @@
         </select>
 
         @if (campoInvalido('tipoIdentificacionId')) {
-          <small class="text-danger">El tipo de identificación es obligatorio.</small>
+          <div class="invalid-feedback d-block">
+            {{ obtenerErrorCampo('tipoIdentificacionId') }}
+          </div>
         }
       </div>
 
+      <!-- Identificación -->
       <div class="col-md-6">
         <label for="identificacion" class="form-label"
           >Identificación <span class="text-dark fw-bold ms-1">*</span></label
@@ -67,14 +74,15 @@
           [class.is-invalid]="campoInvalido('identificacion')"
           formControlName="identificacion"
           placeholder="Ej. 0923456789"
+          required
+          minlength="5"
+          maxlength="13"
+          autocomplete="off"
+          (input)="!esPasaporte() ? soloNumeros($event, 'identificacion') : null"
         />
 
         @if (campoInvalido('identificacion')) {
-          @if (clienteForm.get('identificacion')?.hasError('required')) {
-            <small class="text-danger">La identificación es obligatoria.</small>
-          } @else if (clienteForm.get('identificacion')?.hasError('minlength')) {
-            <small class="text-danger">La identificación es demasiado corta.</small>
-          } @else if (clienteForm.get('identificacion')?.hasError('identificacionInvalida')) {
+          @if (clienteForm.get('identificacion')?.hasError('identificacionInvalida')) {
             <small class="text-danger"
               >{{ etiquetaTipoIdentificacion }} inválida. Verifique el número ingresado.</small
             >
@@ -82,20 +90,35 @@
             <small class="text-danger">{{
               clienteForm.get('identificacion')?.getError('servidor')
             }}</small>
+          } @else {
+            <div class="invalid-feedback d-block">{{ obtenerErrorCampo('identificacion') }}</div>
           }
         }
       </div>
 
+      <!-- Nombres & Apellidos (Persona Natural) -->
       @if (!esPersonaJuridica()) {
         <div class="col-md-6">
           <label for="nombres" class="form-label"
             >Nombres <span class="text-dark fw-bold ms-1">*</span></label
           >
 
-          <input id="nombres" type="text" class="form-control" formControlName="nombres" />
+          <input
+            id="nombres"
+            type="text"
+            class="form-control"
+            [class.is-invalid]="campoInvalido('nombres')"
+            formControlName="nombres"
+            placeholder="Ej. Juan Carlos"
+            required
+            maxlength="100"
+            pattern="^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s-]+$"
+            autocomplete="given-name"
+            (input)="validarNombreCompleto($event, 'nombres')"
+          />
 
           @if (campoInvalido('nombres')) {
-            <small class="text-danger">Los nombres son obligatorios.</small>
+            <div class="invalid-feedback d-block">{{ obtenerErrorCampo('nombres') }}</div>
           }
         </div>
 
@@ -104,10 +127,22 @@
             >Apellidos <span class="text-dark fw-bold ms-1">*</span></label
           >
 
-          <input id="apellidos" type="text" class="form-control" formControlName="apellidos" />
+          <input
+            id="apellidos"
+            type="text"
+            class="form-control"
+            [class.is-invalid]="campoInvalido('apellidos')"
+            formControlName="apellidos"
+            placeholder="Ej. Pérez Gómez"
+            required
+            maxlength="100"
+            pattern="^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s-]+$"
+            autocomplete="family-name"
+            (input)="validarNombreCompleto($event, 'apellidos')"
+          />
 
           @if (campoInvalido('apellidos')) {
-            <small class="text-danger">Los apellidos son obligatorios.</small>
+            <div class="invalid-feedback d-block">{{ obtenerErrorCampo('apellidos') }}</div>
           }
         </div>
 
@@ -126,6 +161,7 @@
         </div>
       }
 
+      <!-- Razón Social (Persona Jurídica) -->
       @if (esPersonaJuridica()) {
         <div class="col-12">
           <label for="razonSocial" class="form-label"
@@ -136,16 +172,21 @@
             id="razonSocial"
             type="text"
             class="form-control"
+            [class.is-invalid]="campoInvalido('razonSocial')"
             formControlName="razonSocial"
             placeholder="Ingrese la razón social"
+            required
+            maxlength="150"
+            autocomplete="organization"
           />
 
           @if (campoInvalido('razonSocial')) {
-            <small class="text-danger">La razón social es obligatoria.</small>
+            <div class="invalid-feedback d-block">{{ obtenerErrorCampo('razonSocial') }}</div>
           }
         </div>
       }
 
+      <!-- Correo Electrónico -->
       <div class="col-md-6">
         <label for="email" class="form-label"
           >Correo electrónico <span class="text-dark fw-bold ms-1">*</span></label
@@ -155,15 +196,21 @@
           id="email"
           type="email"
           class="form-control"
+          [class.is-invalid]="campoInvalido('email')"
           formControlName="email"
           placeholder="usuario@correo.com"
+          required
+          maxlength="100"
+          autocomplete="email"
+          (blur)="verificarUnicidadCorreo()"
         />
 
         @if (campoInvalido('email')) {
-          <small class="text-danger">Ingrese un correo electrónico válido.</small>
+          <div class="invalid-feedback d-block">{{ obtenerErrorCampo('email') }}</div>
         }
       </div>
 
+      <!-- Teléfono -->
       <div class="col-md-6">
         <label for="telefono" class="form-label"
           >Teléfono <span class="text-dark fw-bold ms-1">*</span></label
@@ -171,29 +218,49 @@
 
         <input
           id="telefono"
-          type="text"
+          type="tel"
           class="form-control"
+          [class.is-invalid]="campoInvalido('telefono')"
           formControlName="telefono"
           placeholder="Ej. 0987654321"
+          required
+          minlength="10"
+          maxlength="10"
+          pattern="^[0-9]{10}$"
+          inputmode="numeric"
+          autocomplete="tel"
+          (input)="soloNumeros($event, 'telefono')"
         />
 
         @if (campoInvalido('telefono')) {
-          <small class="text-danger">El teléfono es obligatorio.</small>
+          <div class="invalid-feedback d-block">{{ obtenerErrorCampo('telefono') }}</div>
         }
       </div>
 
+      <!-- Teléfono Secundario -->
       <div class="col-md-6">
         <label for="telefonoSecundario" class="form-label">Teléfono secundario</label>
 
         <input
           id="telefonoSecundario"
-          type="text"
+          type="tel"
           class="form-control"
+          [class.is-invalid]="campoInvalido('telefonoSecundario')"
           formControlName="telefonoSecundario"
-          placeholder="Opcional"
+          placeholder="Opcional (Ej. 022345678)"
+          minlength="7"
+          maxlength="10"
+          pattern="^[0-9]{7,10}$"
+          inputmode="numeric"
+          (input)="soloNumeros($event, 'telefonoSecundario')"
         />
+
+        @if (campoInvalido('telefonoSecundario')) {
+          <div class="invalid-feedback d-block">{{ obtenerErrorCampo('telefonoSecundario') }}</div>
+        }
       </div>
 
+      <!-- Condiciones especiales -->
       <div class="col-md-6">
         <p class="form-label mb-2">Condiciones especiales</p>
 
@@ -220,6 +287,7 @@
         </div>
       </div>
 
+      <!-- Dirección domiciliaria -->
       <div class="col-12">
         <label for="direccionDomicilio" class="form-label"
           >Dirección domiciliaria <span class="text-dark fw-bold ms-1">*</span></label
@@ -228,13 +296,17 @@
         <textarea
           id="direccionDomicilio"
           class="form-control"
+          [class.is-invalid]="campoInvalido('direccionDomicilio')"
           formControlName="direccionDomicilio"
           placeholder="Ingrese la dirección del cliente"
           rows="3"
+          required
+          maxlength="250"
+          autocomplete="street-address"
         ></textarea>
 
         @if (campoInvalido('direccionDomicilio')) {
-          <small class="text-danger">La dirección domiciliaria es obligatoria.</small>
+          <div class="invalid-feedback d-block">{{ obtenerErrorCampo('direccionDomicilio') }}</div>
         }
       </div>
     </div>
@@ -245,8 +317,8 @@
       Cancelar
     </button>
 
-    <button type="submit" class="btn btn-primary" [disabled]="isSaving">
-      {{ isSaving ? 'Guardando...' : 'Guardar' }}
+    <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
+      {{ isSaving() ? 'Guardando...' : 'Guardar' }}
     </button>
   </div>
 </form>
