@@ -1,22 +1,26 @@
 <header
-  class="navbar navbar-expand-lg border-bottom px-4"
-  style="background-color: var(--white); height: 64px"
+  class="navbar navbar-expand-lg px-4"
+  style="background: var(--topbar-bg); height: 64px; border-bottom: 1px solid var(--topbar-border)"
 >
   <div class="container-fluid px-0">
     <!-- Hamburger Menu toggle (for sidebar) -->
     <button
-      class="btn btn-link link-dark px-0 text-decoration-none d-flex align-items-center"
+      class="btn btn-link text-white px-0 text-decoration-none d-flex align-items-center"
       (click)="toggleSidebar()"
+      aria-label="Alternar menú lateral"
     >
       <i class="bi bi-list fs-4"></i>
     </button>
 
     <!-- Right Side Icons -->
     <div class="d-flex align-items-center ms-auto gap-3">
-      <button class="btn btn-link link-dark text-muted btn-icon p-1">
+      <button class="btn btn-link text-white btn-icon p-1" aria-label="Buscar">
         <i class="bi bi-search fs-5"></i>
       </button>
-      <button class="btn btn-link link-dark text-muted btn-icon p-1 position-relative">
+      <button
+        class="btn btn-link text-white btn-icon p-1 position-relative"
+        aria-label="Notificaciones"
+      >
         <i class="bi bi-bell fs-5"></i>
         <!-- Optional notification dot -->
         <span
@@ -25,7 +29,7 @@
           <span class="visually-hidden">New alerts</span>
         </span>
       </button>
-      <button class="btn btn-link link-dark text-muted btn-icon p-1">
+      <button class="btn btn-link text-white btn-icon p-1" aria-label="Cambiar tema">
         <i class="bi bi-moon fs-5"></i>
       </button>
 
@@ -33,13 +37,13 @@
       @if (authService.currentUser(); as user) {
         <div class="dropdown position-relative">
           <button
-            class="btn btn-link link-dark text-decoration-none d-flex align-items-center gap-2 p-0"
+            class="btn btn-link text-white text-decoration-none d-flex align-items-center gap-2 p-0"
             type="button"
             (click)="toggleUserDropdown()"
           >
             <div class="d-flex align-items-center gap-2">
               <div
-                class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center overflow-hidden"
+                class="avatar bg-white text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center overflow-hidden shadow-sm"
                 style="width: 36px; height: 36px"
               >
                 @if (user.avatar?.url) {
@@ -53,13 +57,15 @@
                 }
               </div>
               <div class="d-none d-md-block text-start">
-                <div class="fw-semibold text-dark" style="font-size: 0.875rem">{{ user.name }}</div>
-                <div class="text-muted" style="font-size: 0.75rem">
+                <div class="fw-semibold text-white" style="font-size: 0.875rem">
+                  {{ user.name }}
+                </div>
+                <div class="text-white-50" style="font-size: 0.75rem">
                   {{ user.roleName || 'Usuario' }}
                 </div>
               </div>
               <i
-                class="bi text-muted"
+                class="bi text-white-50"
                 [class.bi-chevron-down]="!userDropdownOpen()"
                 [class.bi-chevron-up]="userDropdownOpen()"
                 style="font-size: 0.75rem"

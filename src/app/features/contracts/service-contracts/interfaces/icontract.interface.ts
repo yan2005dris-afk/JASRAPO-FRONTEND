@@ -1,5 +1,13 @@
-// Estado del contrato (el valor real lo define el backend).
-export type EstadoContrato = string;
+// Estado del servicio (el valor real lo define el backend).
+export type EstadoServicio = string;
+
+export const COLLECTION_STATUS = {
+  NO_APLICA: 'NO_APLICA',
+  AL_DIA: 'AL_DIA',
+  EN_MORA: 'EN_MORA',
+} as const;
+
+export type EstadoCobranza = (typeof COLLECTION_STATUS)[keyof typeof COLLECTION_STATUS];
 
 // Item del catálogo de estados de contrato (GET /contracts/states).
 export interface IContractState {
@@ -11,7 +19,8 @@ export interface IContractState {
 // Datos para actualizar un contrato (PATCH /contracts/{id}). Todos opcionales.
 // Los medidores se gestionan exclusivamente mediante el flujo de reemplazo (POST /meters/replace).
 export interface IUpdateContractRequest {
-  estado?: string;
+  estadoServicio?: EstadoServicio;
+  estadoCobranza?: EstadoCobranza;
   direccionSuministro?: string;
   sectorId?: string;
   clienteId?: string;
@@ -91,9 +100,11 @@ export interface IContract {
   numeroGuia: string;
   fechaInicio: string;
   direccionSuministro: string;
-  estado: EstadoContrato;
-  /** Lifecycle state used by installation planning. `estado` is a legacy field. */
-  estadoServicio?: EstadoContrato;
+  estadoServicio?: EstadoServicio;
+  /** Collection state, independent from the service lifecycle. */
+  estadoCobranza?: EstadoCobranza;
+  /** Whether the contract currently has an active payment agreement. */
+  tieneConvenioActivo?: boolean;
   comunidadId: number;
 
   // Relaciones anidadas (vienen por JOIN/include)
@@ -110,19 +121,16 @@ export interface ISearchContractsParams {
   limit?: number;
   contratoId?: string;
   medidorId?: string;
-  // Búsqueda libre por número de guía, nombre/razón social o identificación del cliente.
+  // Búsqueda libre sobre los campos visibles y relacionados del contrato.
   search?: string;
-  // Filtros sobre las columnas visibles de la tabla (búsqueda de texto + estado).
-  // El backend los irá soportando; hoy solo numeroGuia está implementado.
+  // Filtros de texto específicos, conservados para consumidores de la API.
   numeroGuia?: string;
   medidorSerie?: string;
   ubicacion?: string;
-  estado?: string;
+  estadoServicio?: EstadoServicio;
+  estadoCobranza?: EstadoCobranza;
   hasDebt?: boolean;
 }
-
-// Campos por los que se puede buscar texto en la tabla (debe coincidir con ISearchContractsParams).
-export type SearchContractField = 'numeroGuia' | 'medidorSerie' | 'ubicacion';
 
 // Datos para registrar un contrato (según el POST /contracts actualizado).
 // Obligatorios: clienteId, medidorId, categoriaTarifaId, numeroGuia, direccionSuministro, comunidadId.
@@ -136,6 +144,25 @@ export interface ICreateContractRequest {
   comunidadId: string;
   sectorId?: string;
   lecturaInicial?: number;
-  estado?: string;
+  estadoServicio?: EstadoServicio;
   creadoPor?: string;
+}
+
+/** Returns the service lifecycle state used by contract consumers. */
+export function getContractServiceState(contract: Pick<IContract, 'estadoServicio'>): string {
+  return contract.estadoServicio ?? '—';
+}
+
+/** Returns the collection state without mixing it with service lifecycle. */
+export function getContractCollectionState(
+  contract: Pick<IContract, 'estadoCobranza'>,
+): EstadoCobranza | undefined {
+  return contract.estadoCobranza;
+}
+
+/** Returns whether the contract has an active payment agreement. */
+export function hasActivePaymentAgreement(
+  contract: Pick<IContract, 'tieneConvenioActivo'>,
+): boolean {
+  return contract.tieneConvenioActivo === true;
 }

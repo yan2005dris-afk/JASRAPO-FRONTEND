@@ -60,9 +60,15 @@
 }
 
 .date-picker-label {
+  border: none;
+  background: transparent;
   font-size: 0.9rem;
   font-weight: 600;
   color: var(--dark-text);
+}
+
+.date-picker-label:hover {
+  color: var(--primary-color);
 }
 
 .date-picker-nav {
@@ -103,6 +109,35 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 2px;
+}
+
+.date-picker-month-grid {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.date-picker-year-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.date-picker-period {
+  min-height: 38px;
+  border: none;
+  border-radius: 8px;
+  background-color: transparent;
+  color: var(--dark-text);
+  font-size: 0.78rem;
+  transition: all 0.15s ease;
+}
+
+.date-picker-period:hover {
+  background-color: var(--soft-blue-bg);
+  color: var(--primary-color);
+}
+
+.date-picker-period.is-selected {
+  background-color: var(--primary-color);
+  color: var(--white);
+  font-weight: 600;
 }
 
 .date-picker-day {
