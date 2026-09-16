@@ -53,4 +53,35 @@ describe('ContractsService', () => {
     expect(request.request.params.has('estado')).toBe(false);
     request.flush({ data: [], meta: { total: 0 } });
   });
+
+  it('serializes global contract search', () => {
+    service.getContracts({ search: 'tarifa residencial' }).subscribe();
+
+    const request = http.expectOne((req) => req.url.endsWith('/contracts'));
+    expect(request.request.params.get('search')).toBe('tarifa residencial');
+    expect(request.request.params.has('numeroGuia')).toBe(false);
+    expect(request.request.params.has('medidorSerie')).toBe(false);
+    expect(request.request.params.has('ubicacion')).toBe(false);
+    request.flush({ data: [], meta: { total: 0 } });
+  });
+
+  it('serializes only the service state filter when selected independently', () => {
+    service.getContracts({ estadoServicio: 'ACTIVO' }).subscribe();
+
+    const request = http.expectOne((req) => req.url.endsWith('/contracts'));
+    expect(request.request.params.get('estadoServicio')).toBe('ACTIVO');
+    expect(request.request.params.has('estadoCobranza')).toBe(false);
+    expect(request.request.params.has('estado')).toBe(false);
+    request.flush({ data: [], meta: { total: 0 } });
+  });
+
+  it('serializes only the collection state filter when selected independently', () => {
+    service.getContracts({ estadoCobranza: 'AL_DIA' }).subscribe();
+
+    const request = http.expectOne((req) => req.url.endsWith('/contracts'));
+    expect(request.request.params.get('estadoCobranza')).toBe('AL_DIA');
+    expect(request.request.params.has('estadoServicio')).toBe(false);
+    expect(request.request.params.has('estado')).toBe(false);
+    request.flush({ data: [], meta: { total: 0 } });
+  });
 });

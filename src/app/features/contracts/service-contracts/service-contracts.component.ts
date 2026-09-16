@@ -7,7 +7,6 @@ import {
   IContractState,
   IHistorialMedidor,
   ISearchContractsParams,
-  SearchContractField,
   getContractServiceState,
 } from './interfaces/icontract.interface';
 import { ServiceContractFormComponent } from './components/service-contract-form/service-contract-form.component';
@@ -21,6 +20,19 @@ import {
   DropdownComponent,
   DropdownItem,
 } from '../../../shared/components/dropdown/dropdown.component';
+
+const SERVICE_STATE_OPTIONS = [
+  { value: 'PENDIENTE_PAGO', label: 'Pendiente de pago' },
+  { value: 'PENDIENTE_INSTALACION', label: 'Pendiente de instalación' },
+  { value: 'ACTIVO', label: 'Activo' },
+  { value: 'SUSPENDIDO', label: 'Suspendido' },
+  { value: 'RETIRADO', label: 'Retirado' },
+] as const;
+
+const COLLECTION_STATE_OPTIONS = [
+  { value: 'AL_DIA', label: 'Al día' },
+  { value: 'EN_MORA', label: 'En mora' },
+] as const;
 
 @Component({
   selector: 'app-service-contracts',
@@ -109,10 +121,13 @@ export class ServiceContractsComponent implements OnInit {
   readonly isLoading = signal(false);
   readonly hasFetched = signal(false);
 
-  // Búsqueda: texto + campo a buscar (columna visible) + filtro de estado
+  // Búsqueda global + estados independientes
   readonly searchTerm = signal('');
-  readonly searchField = signal<SearchContractField>('numeroGuia');
-  readonly estadoFilter = signal(''); // '' = todos los estados
+  readonly estadoServicioFilter = signal('');
+  readonly estadoCobranzaFilter = signal('');
+
+  readonly serviceStateOptions = SERVICE_STATE_OPTIONS;
+  readonly collectionStateOptions = COLLECTION_STATE_OPTIONS;
 
   // Paginación (servidor)
   readonly pageSizeOptions = [5, 10, 15];
@@ -157,16 +172,21 @@ export class ServiceContractsComponent implements OnInit {
       limit: this.pageSize(),
     };
 
-    // Filtro de texto: se manda según el campo (columna) seleccionado.
+    // Búsqueda global sobre los campos soportados por el backend.
     const term = this.searchTerm().trim();
     if (term) {
-      params[this.searchField()] = term;
+      params.search = term;
     }
 
-    // Filtro por estado (si no es "todos").
-    const estado = this.estadoFilter();
-    if (estado) {
-      params.estadoServicio = estado;
+    // Estados independientes (si no se seleccionó "todos").
+    const estadoServicio = this.estadoServicioFilter();
+    if (estadoServicio) {
+      params.estadoServicio = estadoServicio;
+    }
+
+    const estadoCobranza = this.estadoCobranzaFilter();
+    if (estadoCobranza) {
+      params.estadoCobranza = estadoCobranza;
     }
 
     this.contractsService.getContracts(params).subscribe({
@@ -192,8 +212,8 @@ export class ServiceContractsComponent implements OnInit {
   /** Limpia los filtros y vuelve al estado inicial (sin resultados). */
   limpiarBusqueda(): void {
     this.searchTerm.set('');
-    this.searchField.set('numeroGuia');
-    this.estadoFilter.set('');
+    this.estadoServicioFilter.set('');
+    this.estadoCobranzaFilter.set('');
     this.currentPage.set(1);
     this.contracts.set([]);
     this.totalItems.set(0);
