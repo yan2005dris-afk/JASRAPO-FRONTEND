@@ -16,6 +16,7 @@ import { IOverdueAccountsFilters } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
 import { ClientsService } from '../../contracts/clients/services/clients.service';
 import type { IClient } from '../../contracts/clients/interfaces/iclients.interface';
+import { resolveClientDisplayName } from '../../../shared/utils/client-display-name';
 
 interface MorosoItem {
   contratoId: string;
@@ -191,10 +192,7 @@ export class OverdueAccountsComponent implements OnInit {
   }
 
   formatClientName(cliente: IClient): string {
-    if (cliente.razonSocial) {
-      return cliente.razonSocial;
-    }
-    return `${cliente.nombres ?? ''} ${cliente.apellidos ?? ''}`.trim();
+    return resolveClientDisplayName(cliente);
   }
 
   // ---------- Consultar ----------

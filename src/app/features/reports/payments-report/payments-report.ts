@@ -14,6 +14,7 @@ import { Subscription } from 'rxjs';
 import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/pdf-previewer.component';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { resolveClientDisplayName } from '../../../shared/utils/client-display-name';
 import { IPaymentsReportFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
 import { ClientsService } from '../../contracts/clients/services/clients.service';
@@ -385,10 +386,7 @@ export class PaymentsReportComponent implements OnDestroy {
   }
 
   formatClientName(cliente: IClient): string {
-    if (cliente.razonSocial) {
-      return cliente.razonSocial;
-    }
-    return `${cliente.nombres ?? ''} ${cliente.apellidos ?? ''}`.trim();
+    return resolveClientDisplayName(cliente);
   }
 
   // ---------- Consultar (carga JSON -> tabla) ----------
