@@ -9,7 +9,8 @@ describe('ContractsTableComponent', () => {
   const dummyContract: IContract = {
     contratoId: '101',
     numeroGuia: 'GUIA-001',
-    estado: 'ACTIVO',
+    estadoServicio: 'ACTIVO',
+    estadoCobranza: 'AL_DIA',
     clienteId: '1',
     direccionSuministro: 'Calle Principal',
     fechaInicio: '2025-01-01',
@@ -95,5 +96,45 @@ describe('ContractsTableComponent', () => {
     component.onEditClick(dummyContract, mockEvent);
     expect(edited).toBe(dummyContract);
     expect(mockEvent.stopPropagation).toHaveBeenCalled();
+  });
+
+  it('uses estadoServicio for service lifecycle decisions', () => {
+    expect(
+      component.canAssignInstallationRoute({
+        ...dummyContract,
+        estadoServicio: 'PENDIENTE_INSTALACION',
+      }),
+    ).toBe(true);
+  });
+
+  it('does not infer contract states from legacy fields', () => {
+    expect(component.getServiceState({ ...dummyContract, estadoServicio: undefined })).toBe('—');
+    expect(
+      component.getCollectionState({ ...dummyContract, estadoCobranza: undefined }),
+    ).toBeUndefined();
+  });
+
+  it.each(['NO_APLICA', 'AL_DIA', 'EN_MORA'])(
+    'renders %s in the Cobranza column',
+    (collectionState) => {
+      fixture.componentRef.setInput('contracts', [
+        { ...dummyContract, estadoCobranza: collectionState },
+      ]);
+      fixture.detectChanges();
+
+      const cells = fixture.nativeElement.querySelectorAll('tbody td');
+      expect(cells[6].textContent).toContain(collectionState.replace('_', ' '));
+    },
+  );
+
+  it('does not render a Convenio column', () => {
+    fixture.componentRef.setInput('contracts', [
+      { ...dummyContract, estadoCobranza: 'AL_DIA', tieneConvenioActivo: true },
+    ]);
+    fixture.detectChanges();
+
+    const headers = Array.from<HTMLElement>(fixture.nativeElement.querySelectorAll('thead th'));
+    expect(headers.map((header) => header.textContent?.trim())).not.toContain('Convenio');
+    expect(fixture.nativeElement.textContent).not.toContain('Convenio activo');
   });
 });

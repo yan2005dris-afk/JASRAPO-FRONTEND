@@ -1,5 +1,163 @@
-/* Custom Logo */
-.custom-logo-small {
-  max-height: 200px;
-  object-fit: contain;
+/* ==========================================================================
+   Left Hero Side - Pure Atmospheric Water Canvas with Extracted Mascot
+   ========================================================================== */
+.hero-side {
+  position: relative;
+  background: radial-gradient(circle at 50% 45%, #145963 0%, #0b383f 55%, #061c20 100%);
+  color: #fff;
+  overflow: hidden;
+}
+
+.hero-overlay-waves {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 60% 50% at 50% 100%,
+    rgba(12, 158, 161, 0.25),
+    transparent 70%
+  );
+}
+
+.hero-wave-svg {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 130px;
+  pointer-events: none;
+  opacity: 0.25;
+}
+
+.hero-center-content {
+  position: relative;
+  z-index: 2;
+  max-width: 480px;
+}
+
+.hero-mascot-caption {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #e0f2fe;
+  letter-spacing: -0.2px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ==========================================================================
+   Right Form Side - Crisp & Minimalist
+   ========================================================================== */
+.form-side {
+  position: relative;
+  background-color: #fff;
+}
+
+.citizen-portal-link {
+  color: var(--primary-color);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  background: var(--soft-blue-bg);
+  border: 1px solid rgba(12, 158, 161, 0.15);
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: #cffafe;
+  }
+}
+
+.form-title {
+  font-size: 1.65rem;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--marine-slate);
+}
+
+.input-icon-wrapper {
+  position: relative;
+
+  .input-icon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted-text);
+    font-size: 1.05rem;
+    pointer-events: none;
+    transition: color 0.2s ease;
+  }
+
+  .form-control-modern {
+    padding-left: 2.75rem;
+    padding-right: 1rem;
+    height: 46px;
+    border-radius: 10px;
+    border: 1.5px solid var(--border-color);
+    background-color: #fff;
+    font-size: 0.925rem;
+    color: var(--dark-text);
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
+
+    &:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3.5px var(--input-focus-ring);
+    }
+
+    &.has-toggle {
+      padding-right: 2.85rem;
+
+      &.is-invalid {
+        background-image: none;
+      }
+    }
+  }
+
+  &:focus-within .input-icon {
+    color: var(--primary-color);
+  }
+
+  .password-toggle-btn {
+    position: absolute;
+    right: 0.65rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    padding: 0.35rem 0.45rem;
+    color: var(--muted-text);
+    cursor: pointer;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    line-height: 1;
+    transition:
+      color 0.2s ease,
+      background-color 0.2s ease,
+      transform 0.15s ease;
+
+    &:hover {
+      color: var(--primary-color);
+      background-color: rgba(12, 158, 161, 0.08);
+    }
+
+    &:active {
+      transform: translateY(-50%) scale(0.92);
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--primary-color);
+      outline-offset: 1px;
+      color: var(--primary-color);
+    }
+
+    &.active {
+      color: var(--primary-color);
+      background-color: rgba(12, 158, 161, 0.12);
+    }
+  }
 }

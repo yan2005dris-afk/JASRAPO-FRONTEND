@@ -10,14 +10,13 @@ export interface LecturaFormPayload {
   lecturaActual: number;
   lecturaInicial: boolean;
   descripcionAnomalia?: string;
-  fotoBase64?: string | null;
+  fotoBlob?: Blob | null;
 }
 
 export interface InstalacionFormPayload {
   tipoActividad: 'INSTALACION';
-  nuevoSerie: string;
-  lecturaInicial: number;
-  fotoBase64: string;
+  resultadoObservacion?: string;
+  fotoBlob: Blob;
 }
 
 export interface InspeccionFormPayload {
@@ -25,13 +24,13 @@ export interface InspeccionFormPayload {
   estadoSellos: 'INTACTO' | 'VIOLADO' | 'AUSENTE';
   hayFugas: boolean;
   observaciones?: string;
-  fotoBase64: string;
+  fotoBlob: Blob;
 }
 
 export interface ReconexionFormPayload {
   tipoActividad: 'RECONEXION';
   confirmacionRetiroSello: true;
-  fotoBase64: string;
+  fotoBlob: Blob;
 }
 
 export type WorkOrderFormPayload =

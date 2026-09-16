@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 
 import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/pdf-previewer.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { resolveClientDisplayName } from '../../../shared/utils/client-display-name';
 import { IPaymentAgreementFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
 import { AgreementsService } from '../../contracts/service-agreements/services/agreements.service';
@@ -91,9 +92,7 @@ export class PaymentAgreementComponent {
     if (!c) return null;
 
     const cliente = c.cliente;
-    const nombre = cliente
-      ? [cliente.nombres, cliente.apellidos].filter(Boolean).join(' ') || cliente.razonSocial || '—'
-      : '—';
+    const nombre = cliente ? resolveClientDisplayName(cliente) : 'Cliente sin nombre registrado';
 
     const fechaInicioRaw = c.periodoInicio || c.fechaInicio;
     return {

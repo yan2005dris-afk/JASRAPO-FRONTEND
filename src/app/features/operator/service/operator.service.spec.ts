@@ -2,9 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { of } from 'rxjs';
 import { OperatorService } from './operator.service';
-import type { TaskResponse, ReadingWithAnomaly } from '../models/operator.models';
+import type { OperatorRouteResponse, ReadingWithAnomaly } from '../models/operator.models';
 
-const mockTask: TaskResponse = {
+const mockTask: OperatorRouteResponse = {
   rutaId: 'r-001',
   tipoRuta: 'TOMA_LECTURA',
   nombre: 'Ruta Norte',
@@ -48,7 +48,7 @@ describe('OperatorService', () => {
     it('calls GET /api/v1/operator/routes and returns tasks array', () => {
       httpGetSpy.mockReturnValue(of([mockTask]));
 
-      let result: TaskResponse[] = [];
+      let result: OperatorRouteResponse[] = [];
       service.getTasks().subscribe((tasks) => (result = tasks));
 
       expect(httpGetSpy).toHaveBeenCalledOnce();

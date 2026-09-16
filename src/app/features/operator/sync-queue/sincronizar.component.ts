@@ -1,26 +1,52 @@
-import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+  computed,
+  OnInit,
+} from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { IndexedDbService, PendingRecord } from '../../../core/services/indexed-db.service';
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
 import { NetworkService } from '../../../core/services/network.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { firstValueFrom } from 'rxjs';
+import {
+  SyncReadingEditorComponent,
+  type ReadingEditResult,
+} from '../components/sync-editors/sync-reading-editor.component';
+import {
+  SyncAnomalyEditorComponent,
+  type AnomalyEditResult,
+} from '../components/sync-editors/sync-anomaly-editor.component';
 
 type QueueTab = 'pendientes' | 'rechazados' | 'sincronizados';
 
 @Component({
   selector: 'app-sincronizar',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePipe],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DatePipe,
+    RouterLink,
+    SyncReadingEditorComponent,
+    SyncAnomalyEditorComponent,
+  ],
   templateUrl: './sincronizar.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './sincronizar.component.scss',
 })
 export class SincronizarComponent implements OnInit {
   private readonly dbService = inject(IndexedDbService);
   readonly syncService = inject(OperatorSyncService);
   readonly networkService = inject(NetworkService);
+  private readonly authService = inject(AuthService);
   private readonly toastService = inject(ToastService);
   private readonly confirmService = inject(ConfirmDialogService);
 
@@ -30,19 +56,17 @@ export class SincronizarComponent implements OnInit {
   readonly pendingAnomalies = signal<PendingRecord[]>([]);
   readonly rejectedReadings = signal<PendingRecord[]>([]);
   readonly rejectedAnomalies = signal<PendingRecord[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  readonly syncedReadings = signal<any[]>([]);
+  readonly syncedReadings = signal<PendingRecord[]>([]);
+
+  // Offline storage metrics
+  readonly cachedMetersCount = signal<number>(0);
+  readonly cachedRoutesCount = signal<number>(0);
+  readonly cachedReadingsCount = signal<number>(0);
+  readonly authorizationWarning = signal(false);
 
   // Editing state
   readonly editingRecord = signal<PendingRecord | null>(null);
   readonly editingType = signal<'lectura' | 'anomalia' | null>(null);
-
-  // Edit form model values
-  editLecturaActual = 0;
-  editLecturaAnterior = 0;
-  editLecturaInicial = false;
-  editObservacion = '';
-  editTipo = '';
 
   readonly totalPendientes = computed(
     () => this.pendingReadings().length + this.pendingAnomalies().length,
@@ -55,23 +79,52 @@ export class SincronizarComponent implements OnInit {
     this.loadQueue();
   }
 
+  async downloadData(): Promise<void> {
+    try {
+      await this.syncService.downloadAssignedData();
+      this.authorizationWarning.set(false);
+      await this.loadQueue();
+    } catch (error: unknown) {
+      const status =
+        error && typeof error === 'object' && 'status' in error
+          ? (error as { status?: number }).status
+          : undefined;
+      this.authorizationWarning.set(status === 401 || status === 403);
+      // El servicio ya informa si es offline, red o autorización.
+    }
+  }
+
   async loadQueue(): Promise<void> {
     try {
-      const [pendR, rejR, pendA, rejA, synced, meters] = await Promise.all([
-        this.dbService.getPendingReadingsByState('PENDIENTE_SYNC'),
-        this.dbService.getPendingReadingsByState('RECHAZADA'),
-        this.dbService.getPendingAnomaliesByState('PENDIENTE_SYNC'),
-        this.dbService.getPendingAnomaliesByState('RECHAZADA'),
-        this.dbService.getSyncedReadings(),
-        this.dbService.getMetersCache(),
-      ]);
+      const operatorId = this.authService.currentUser()?.id;
+      const scope = operatorId ? `operator:${operatorId}` : 'assigned';
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const metersMap = new Map<string, any>(meters.map((m: any) => [m.medidorId?.toString(), m]));
+      const [pendR, rejR, pendA, rejA, synced, meters, routesCache, registeredReadings] =
+        await Promise.all([
+          this.dbService.getPendingReadingsByState('PENDIENTE_SYNC'),
+          this.dbService.getPendingReadingsByState('RECHAZADA'),
+          this.dbService.getPendingAnomaliesByState('PENDIENTE_SYNC'),
+          this.dbService.getPendingAnomaliesByState('RECHAZADA'),
+          this.dbService.getSyncedReadings(),
+          this.dbService.getMetersCache(scope),
+          this.dbService.getRoutesCache(scope),
+          this.dbService.getRegisteredReadingsCache(scope),
+        ]);
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const enrich = (record: any) => {
-        const meter = metersMap.get(record.medidorId?.toString());
+      this.cachedMetersCount.set(meters.length);
+      this.cachedRoutesCount.set(routesCache?.items?.length ?? 0);
+      this.cachedReadingsCount.set(registeredReadings.length);
+
+      const metersMap = new Map<string, { clienteNombre?: string | null; serie?: string }>(
+        meters.map((m: { medidorId?: number; clienteNombre?: string | null; serie?: string }) => [
+          m.medidorId?.toString() ?? '',
+          m,
+        ]),
+      );
+
+      const enrich = (record: PendingRecord): PendingRecord => {
+        const mId = record['medidorId'];
+        const meter = mId != null ? metersMap.get(mId.toString()) : undefined;
         return meter
           ? { ...record, clienteNombre: meter.clienteNombre, serie: meter.serie }
           : record;
@@ -116,16 +169,15 @@ export class SincronizarComponent implements OnInit {
   startEditReading(record: PendingRecord): void {
     this.editingRecord.set(record);
     this.editingType.set('lectura');
-    this.editLecturaActual = record['lecturaActual'] ?? 0;
-    this.editLecturaAnterior = record['lecturaAnterior'] ?? 0;
-    this.editLecturaInicial = record['lecturaInicial'] ?? false;
   }
 
   startEditAnomaly(record: PendingRecord): void {
     this.editingRecord.set(record);
     this.editingType.set('anomalia');
-    this.editObservacion = record['observacion'] ?? '';
-    this.editTipo = record['tipo'] ?? '';
+  }
+
+  isWorkOrder(record: PendingRecord): boolean {
+    return record['recordType'] === 'WORK_ORDER';
   }
 
   cancelEdit(): void {
@@ -133,19 +185,12 @@ export class SincronizarComponent implements OnInit {
     this.editingType.set(null);
   }
 
-  async saveEditReading(): Promise<void> {
-    const record = this.editingRecord();
-    if (!record?.id) return;
-
-    const consumo = this.editLecturaInicial
-      ? this.editLecturaActual
-      : this.editLecturaActual - this.editLecturaAnterior;
-
-    await this.dbService.updatePendingReading(record.id, {
-      lecturaActual: this.editLecturaActual,
-      lecturaAnterior: this.editLecturaAnterior,
-      lecturaInicial: this.editLecturaInicial,
-      consumoCalculado: consumo,
+  async onReadingEditorSaved(result: ReadingEditResult): Promise<void> {
+    await this.dbService.updatePendingReading(result.recordId, {
+      lecturaActual: result.lecturaActual,
+      lecturaAnterior: result.lecturaAnterior,
+      lecturaInicial: result.lecturaInicial,
+      consumoCalculado: result.consumoCalculado,
       syncState: 'PENDIENTE_SYNC',
       errorMessage: null,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -160,13 +205,11 @@ export class SincronizarComponent implements OnInit {
     await this.syncService.refreshPendingCounts();
   }
 
-  async saveEditAnomaly(): Promise<void> {
-    const record = this.editingRecord();
-    if (!record?.id) return;
-
-    await this.dbService.updatePendingAnomaly(record.id, {
-      observacion: this.editObservacion,
-      tipo: this.editTipo,
+  async onAnomalyEditorSaved(result: AnomalyEditResult): Promise<void> {
+    await this.dbService.updatePendingAnomaly(result.recordId, {
+      observacion: result.observacion,
+      tipo: result.tipo,
+      fotoBlob: result.fotoBlob ?? null,
       syncState: 'PENDIENTE_SYNC',
       errorMessage: null,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

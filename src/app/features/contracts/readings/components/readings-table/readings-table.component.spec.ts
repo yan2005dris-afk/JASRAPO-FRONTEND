@@ -56,6 +56,15 @@ describe('ReadingsTableComponent', () => {
       expect(spy).toHaveBeenCalledWith(validReading);
     });
 
+    it('should emit editReading when editing an existing reading', () => {
+      const spy = vi.fn();
+      component.editReading.subscribe(spy);
+
+      component.editReading.emit(validReading);
+
+      expect(spy).toHaveBeenCalledWith(validReading);
+    });
+
     it('should emit approveReading when reading is approved', () => {
       const spy = vi.fn();
       component.approveReading.subscribe(spy);

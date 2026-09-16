@@ -38,7 +38,6 @@ export interface IReading {
   contratoId: string;
   descripcionAnomalia?: string | null;
   fechaValidacion?: string | Date | null;
-  fotoUrl?: string | null;
   isValidada: boolean;
   lecturaInicial: boolean;
   periodoId: number;
@@ -49,25 +48,12 @@ export interface IReading {
   periodoRel?: IReadingPeriod | null;
 }
 
-export interface ICreateReadingDto {
-  fecha: string;
-  lecturaAnterior: number;
-  lecturaActual: number;
-  consumoCalculado?: number;
-  medidorId: string | number;
-  descripcionAnomalia?: string;
-  fotoUrl?: string;
-  lecturaInicial: boolean;
-  periodoId?: number;
-}
-
 export interface IUpdateReadingDto {
   fecha?: string;
   lecturaAnterior?: number;
   lecturaActual?: number;
   consumoCalculado?: number;
   descripcionAnomalia?: string;
-  fotoUrl?: string;
   isValidada?: boolean;
   lecturaInicial?: boolean;
   periodoId?: number;

@@ -9,7 +9,8 @@
  *   3. GET  /api/v1/contracts    (Bearer admin)      → 200
  *
  * Exit 0 si los 3 devuelven 200; exit 1 + stderr en cualquier fallo.
- * Requiere: backend Up en :3000 + DB con seed (`pnpm --filter backend seed`).
+ * Requiere: backend Up en :3000 + DB con seed (`pnpm --filter backend seed`) +
+ * `TEST_ADMIN_PASSWORD` configurada en el entorno.
  *
  * Si el cliente generado de orval está disponible en `src/app/generated/api/`,
  * el smoke también valida que los métodos tipados existen (import dinámico con
@@ -18,7 +19,7 @@
 
 const BASE_URL = 'http://localhost:3000';
 const ADMIN_EMAIL = 'admin@jasrapo.com';
-const ADMIN_PASSWORD = 'Admin123#';
+const ADMIN_PASSWORD = process.env.TEST_ADMIN_PASSWORD;
 
 function die(msg: string): never {
   console.error(`[gen-api-smoke] ${msg}`);
@@ -31,6 +32,10 @@ async function check(label: string, res: Response): Promise<void> {
 }
 
 async function main(): Promise<void> {
+  if (!ADMIN_PASSWORD) {
+    die('TEST_ADMIN_PASSWORD environment variable is required');
+  }
+
   // 1. Login
   const loginRes = await fetch(`${BASE_URL}/api/v1/auth/login`, {
     method: 'POST',

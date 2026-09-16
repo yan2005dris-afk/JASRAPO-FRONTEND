@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
@@ -91,6 +92,15 @@ describe('OperatorRouteOfflineService', () => {
 
     expect(result.source).toBe('cache');
     expect(result.routes).toEqual([route]);
+  });
+
+  it('does not mask authorization failures with a cached snapshot', async () => {
+    isOnline.mockReturnValue(true);
+    getRoutes.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 403 })));
+    getRoutesCache.mockResolvedValue({ items: [route], savedAt: '2026-08-25T12:00:00.000Z' });
+
+    await expect(service.loadAssignedRoutes()).rejects.toMatchObject({ status: 403 });
+    expect(getRoutesCache).not.toHaveBeenCalled();
   });
 
   it('reports that no offline routes are available on a first offline visit', async () => {

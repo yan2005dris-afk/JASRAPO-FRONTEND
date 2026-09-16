@@ -1,39 +1,49 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
-import { OperatorService } from '../service/operator.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { NetworkService } from '../../../core/services/network.service';
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { MeterCacheService } from '../../../core/services/meter-cache.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
-import { MeterSearchBoxComponent } from '../components/meter-search-box/meter-search-box.component';
-import { MeterCardComponent } from '../components/meter-card/meter-card.component';
+import { MeterSearchComponent } from '../components/meter-search/meter-search.component';
 import { SelectedMeterCardComponent } from '../components/selected-meter-card/selected-meter-card.component';
 import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
-import { firstValueFrom } from 'rxjs';
 import {
   EstadoInfo,
   EstadoChip,
   MeterGroup,
   MobileStep,
+  LecturaState,
   READING_STATE_ORDER,
   ESTADOS_FALLBACK,
 } from './readings.models';
-import { LecturaFormComponent } from '../components/work-order-forms/lectura-form.component';
-import { InstalacionFormComponent } from '../components/work-order-forms/instalacion-form.component';
-import { InspeccionFormComponent } from '../components/work-order-forms/inspeccion-form.component';
-import { ReconexionFormComponent } from '../components/work-order-forms/reconexion-form.component';
+import { WorkOrderDispatcherComponent } from '../components/work-order-dispatcher/work-order-dispatcher.component';
 import { calculateConsumo, type WorkOrderFormPayload } from '../models/work-order-form.models';
-import type { WorkOrderActivityType } from '../models/operator.models';
+import type { WorkOrderActivityType, WorkOrderState } from '../models/operator.models';
 
-/** Registro de lectura proveniente del backend o IndexedDB. */
+type AssignedWorkOrderType = Exclude<WorkOrderActivityType, 'LECTURA'>;
+
+interface AssignedWorkOrder {
+  id: string;
+  estado: WorkOrderState;
+}
+
+interface SubmissionFeedback {
+  kind: 'error' | 'queued' | 'synced';
+  title: string;
+  message: string;
+}
+
 interface ReadingRecord {
   lecturaId?: string;
   _lecturaId?: string;
   medidorId?: string | number;
   medidor?: { medidorId?: string | number };
+  lecturaActual?: number;
+  lecturaAnterior?: number;
   estado?: string;
   syncState?: string;
   [key: string]: unknown;
@@ -47,14 +57,10 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
   imports: [
     CommonModule,
     ScrollingModule,
-    MeterSearchBoxComponent,
-    MeterCardComponent,
+    MeterSearchComponent,
     SelectedMeterCardComponent,
     RouteTypePipe,
-    LecturaFormComponent,
-    InstalacionFormComponent,
-    InspeccionFormComponent,
-    ReconexionFormComponent,
+    WorkOrderDispatcherComponent,
   ],
   templateUrl: './lecturas.component.html',
   styleUrl: './lecturas.component.scss',
@@ -65,25 +71,35 @@ export class LecturasComponent implements OnInit {
   private readonly dbService = inject(IndexedDbService);
   readonly networkService = inject(NetworkService);
   readonly syncService = inject(OperatorSyncService);
+  private readonly authService = inject(AuthService);
   private readonly meterCache = inject(MeterCacheService);
   private readonly toastService = inject(ToastService);
-  private readonly operatorService = inject(OperatorService);
-  // Mobile step flow
-  readonly currentStep = signal<MobileStep>('search');
+  // State Machine única con estado discriminado
+  readonly state = signal<LecturaState>({ kind: 'search' });
 
-  /** Active work-order activity type — drives which sub-form is rendered */
-  readonly activeTipoActividad = signal<WorkOrderActivityType>('LECTURA');
+  // Selectores derivados para compatibilidad y template
+  readonly currentStep = computed<MobileStep>(() => this.state().kind);
+  readonly selectedMeter = computed<IMeterDto | null>(() => {
+    const s = this.state();
+    return s.kind === 'search' ? null : s.meter;
+  });
+  readonly activeTipoActividad = computed<WorkOrderActivityType>(() => {
+    const s = this.state();
+    return s.kind === 'form' ? s.tipo : 'LECTURA';
+  });
 
-  /** Series of the work orders available for the current route context (for type resolution) */
   /** Tipos de orden pendientes por medidor (un medidor puede tener varios). */
-  private workOrdersByMeter = new Map<string, Set<WorkOrderActivityType>>();
+  private readonly workOrdersByMeter = signal<
+    Map<string, Map<WorkOrderActivityType, AssignedWorkOrder>>
+  >(new Map());
 
   // Catálogo de medidores cargado (memoria local)
   readonly metersList = this.meterCache.metersList;
   readonly searchQuery = signal<string>('');
-  readonly selectedMeter = signal<IMeterDto | null>(null);
   readonly isLoadingMeters = signal<boolean>(false);
   readonly isSaving = signal<boolean>(false);
+  readonly submissionFeedback = signal<SubmissionFeedback | null>(null);
+  private readonly failedSubmission = signal<WorkOrderFormPayload | null>(null);
 
   // Lecturas registradas en el período activo (memoria local/caché)
   readonly registeredReadings = signal<ReadingRecord[]>([]);
@@ -126,22 +142,20 @@ export class LecturasComponent implements OnInit {
   readonly selectedEstadoFilter = signal<string>('todas');
 
   // Mapa medidorId → lectura existente (de registeredReadings + pendingReadings)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  readonly existingReadingMap = computed<Map<string, any>>(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const map = new Map<string, any>();
+  readonly existingReadingMap = computed<Map<string, ReadingRecord>>(() => {
+    const map = new Map<string, ReadingRecord>();
     for (const r of this.registeredReadings()) {
       // Backend response nests medidorId inside medidor object
       const mId = r.medidor?.medidorId ?? r.medidorId;
-      if (mId != null) map.set(mId.toString(), r);
+      if (mId != null) map.set(mId.toString(), r as ReadingRecord);
     }
     for (const p of this.pendingReadings()) {
-      const mId = p.medidorId;
+      const mId = p['medidorId'];
       if (mId != null) {
         map.set(mId.toString(), {
           ...map.get(mId.toString()),
           ...p,
-          estado: p.estado || 'POR_REVISION',
+          estado: (p['estado'] as string) || 'POR_REVISION',
         });
       }
     }
@@ -162,6 +176,8 @@ export class LecturasComponent implements OnInit {
 
     for (const meter of meters) {
       const existing = readingMap.get(meter.medidorId.toString());
+      // La lista se filtra y etiqueta por estado de lectura. El estado de la orden
+      // se muestra por separado en el paso de acciones.
       const estado = existing?.estado ?? '__SIN_LECTURA__';
 
       if (filter !== 'todas' && estado !== filter) continue;
@@ -200,9 +216,6 @@ export class LecturasComponent implements OnInit {
     return items;
   });
 
-  // Previsualización de la foto capturada en Base64
-  readonly photoPreview = signal<string | null>(null);
-
   // When navigated from a route: restricts list to those series only
   readonly allowedSeries = signal<Set<string> | null>(null);
   readonly routeContext = signal<{ nombre: string; tipo: string } | null>(null);
@@ -230,6 +243,7 @@ export class LecturasComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    this.autoSelectFromQueryParam();
     this.loadCachedMeters();
     this.loadPendingReadings();
     this.loadEstadosCatalog();
@@ -238,13 +252,17 @@ export class LecturasComponent implements OnInit {
   private async loadCachedMeters(): Promise<void> {
     try {
       await this.meterCache.load();
-      if (this.networkService.isOnline()) {
-        await this.fetchAndCacheMeters();
-      } else {
-        const cachedReadings = await this.dbService.getRegisteredReadingsCache();
-        this.registeredReadings.set(cachedReadings);
+      const operatorId = this.authService.currentUser()?.id;
+      const scope = operatorId ? `operator:${operatorId}` : undefined;
+      const cachedReadings = await this.dbService.getRegisteredReadingsCache(scope);
+      this.registeredReadings.set(cachedReadings);
+
+      // Si se pasó una serie específica en la query URL y no estaba seleccionada
+      const singleSerie = this.activatedRoute.snapshot.queryParamMap.get('serie');
+      if (singleSerie && !this.selectedMeter()) {
+        const meter = this.metersList().find((m) => m.serie === singleSerie);
+        if (meter) this.selectMeter(meter);
       }
-      this.autoSelectFromQueryParam();
     } catch (e) {
       console.error('Error al cargar caché offline:', e);
     }
@@ -262,21 +280,26 @@ export class LecturasComponent implements OnInit {
       this.routeContext.set({ nombre: rutaNombre, tipo: rutaTipo });
     }
 
-    // Build a lookup map: serie → tipoActividad from serialised work-orders query param
-    // Expected format: "SERIE1:LECTURA,SERIE2:INSTALACION"
+    // Build a lookup map: serie → activity type → assigned work-order ID.
+    // Format: "SERIE1:INSTALACION:ORDER_ID:ESTADO;INSPECCION:OTHER_ID:ESTADO".
+    // Legacy assignments without estado default to PENDIENTE.
     if (workOrdersParam) {
-      this.workOrdersByMeter.clear();
-      // Formato: "SERIE1:TIPO1;TIPO2,SERIE2:TIPO1" — un medidor puede tener varias ordenes.
+      const workOrdersByMeter = new Map<string, Map<WorkOrderActivityType, AssignedWorkOrder>>();
       for (const entry of workOrdersParam.split(',')) {
-        const [serie, tiposCsv] = entry.split(':');
-        if (!serie || !tiposCsv) continue;
-        const set = new Set<WorkOrderActivityType>();
-        for (const tipo of tiposCsv.split(';')) {
+        const [serie, assignmentsCsv] = entry.split(/:(.*)/s);
+        if (!serie || !assignmentsCsv) continue;
+        const assignments = new Map<WorkOrderActivityType, AssignedWorkOrder>();
+        for (const assignment of assignmentsCsv.split(';')) {
+          const [tipo, ordenTrabajoId = '', estado = 'PENDIENTE'] = assignment.split(':');
           const t = tipo.trim() as WorkOrderActivityType;
-          if (t) set.add(t);
+          const workOrderState = estado.trim() as WorkOrderState;
+          if (t && ordenTrabajoId.trim()) {
+            assignments.set(t, { id: ordenTrabajoId.trim(), estado: workOrderState });
+          }
         }
-        if (set.size) this.workOrdersByMeter.set(serie.trim(), set);
+        if (assignments.size) workOrdersByMeter.set(serie.trim(), assignments);
       }
+      this.workOrdersByMeter.set(workOrdersByMeter);
     }
 
     if (seriesParam) {
@@ -350,14 +373,14 @@ export class LecturasComponent implements OnInit {
     this.isLoadingMeters.set(true);
     try {
       // 1. Descargar catálogo completo de medidores para sincronización offline
-      const meters = await firstValueFrom(this.operatorService.syncAllMeters());
-      await this.dbService.saveMetersCache(meters);
+      await this.syncService.downloadAssignedData();
       await this.meterCache.load();
 
       // 2. Descargar lecturas ya registradas en el periodo actual
-      const readings = await this.syncService.getCurrentPeriodReadings();
-      await this.dbService.saveRegisteredReadingsCache(readings);
-      this.registeredReadings.set(readings);
+      const operatorId = this.authService.currentUser()?.id;
+      const scope = operatorId ? `operator:${operatorId}` : 'assigned';
+      const snapshot = await this.dbService.getAssignedSnapshot(scope);
+      this.registeredReadings.set(snapshot?.registeredReadings ?? []);
 
       this.toastService.success(
         'Catálogo y lecturas del período actual actualizados para uso offline.',
@@ -374,27 +397,29 @@ export class LecturasComponent implements OnInit {
     }
   }
 
-  // --- Step Navigation ---
+  // --- Step Navigation & State Machine Transitions ---
 
   selectMeter(meter: IMeterDto): void {
-    this.selectedMeter.set(meter);
     this.searchQuery.set('');
-    this.currentStep.set('actions');
-
-    // Resolve activity type from work-orders map; default to LECTURA
-    // Si el medidor tiene ordenes pendientes, abrimos con el primer tipo.
-    // Si no, fallback a LECTURA (caso del operador que entra manualmente a /lecturas).
-    const tipos = this.workOrdersByMeter.get(meter.serie);
-    this.activeTipoActividad.set(tipos?.values().next().value ?? 'LECTURA');
+    this.state.set({ kind: 'actions', meter });
 
     // Pre-load previous reading value for the Lectura sub-form
     const existing = this.existingReadingMap().get(meter.medidorId.toString());
     this.lecturaAnteriorPreloaded.set(existing?.lecturaActual ?? 0);
-    this.photoPreview.set(null);
   }
 
   goToReadingForm(): void {
-    this.currentStep.set('form');
+    const s = this.state();
+    if (s.kind === 'actions' || s.kind === 'form') {
+      this.state.set({ kind: 'form', meter: s.meter, tipo: 'LECTURA' });
+    }
+  }
+
+  goToWorkOrderForm(tipo: WorkOrderActivityType): void {
+    const s = this.state();
+    if (s.kind === 'actions' || s.kind === 'form') {
+      this.state.set({ kind: 'form', meter: s.meter, tipo });
+    }
   }
 
   goToNoveltyForm(): void {
@@ -402,8 +427,14 @@ export class LecturasComponent implements OnInit {
     if (meter) {
       const existing = this.existingReadingMap().get(meter.medidorId.toString());
       const lecturaId = existing?.lecturaId ?? existing?._lecturaId ?? null;
+      const primaryOrder = this.primaryWorkOrderFor(meter);
+      const ordenTrabajoId = primaryOrder ? primaryOrder[1].id : null;
       this.router.navigate(['/app/operador/novedades/new'], {
-        queryParams: { medidorId: meter.medidorId, lecturaId },
+        queryParams: {
+          medidorId: meter.medidorId,
+          lecturaId,
+          ...(ordenTrabajoId ? { ordenTrabajoId } : {}),
+        },
       });
     }
   }
@@ -413,26 +444,52 @@ export class LecturasComponent implements OnInit {
    * Devuelve un Set para que el template use @if (set.has(...)) con un solo lookup.
    */
   workOrderTypesFor(meter: IMeterDto): Set<WorkOrderActivityType> {
-    return this.workOrdersByMeter.get(meter.serie) ?? new Set();
+    return new Set(this.actionableWorkOrdersFor(meter).map(([type]) => type));
   }
 
-  /**
-   * Navega al form del tipo de orden seleccionado.
-   * El @switch del template renderiza el componente correcto.
-   */
-  goToWorkOrderForm(tipo: WorkOrderActivityType): void {
-    this.activeTipoActividad.set(tipo);
-    this.currentStep.set('form');
+  actionableWorkOrdersFor(meter: IMeterDto): [WorkOrderActivityType, AssignedWorkOrder][] {
+    return [...(this.workOrdersByMeter().get(meter.serie)?.entries() ?? [])].filter(
+      ([, workOrder]) => workOrder.estado === 'PENDIENTE' || workOrder.estado === 'EN_PROGRESO',
+    );
+  }
+
+  primaryWorkOrderFor(meter: IMeterDto): [WorkOrderActivityType, AssignedWorkOrder] | undefined {
+    return this.actionableWorkOrdersFor(meter)[0];
+  }
+
+  workOrderStateLabel(state: WorkOrderState): string {
+    return {
+      PENDIENTE: 'Pendiente de ejecución',
+      EN_PROGRESO: 'En progreso',
+      COMPLETADA: 'Completada',
+      CANCELADA: 'Cancelada',
+      FALLIDA: 'Fallida',
+    }[state];
+  }
+
+  readingStateLabel(meter: IMeterDto): string {
+    const state = this.existingReadingMap().get(meter.medidorId.toString())?.estado;
+    if (!state) return 'Sin lectura';
+    return this.estadosCatalog().find((item) => item.codigo === state)?.nombre ?? state;
+  }
+
+  private workOrderIdFor(meter: IMeterDto, tipo: AssignedWorkOrderType): string | undefined {
+    const workOrder = this.workOrdersByMeter().get(meter.serie)?.get(tipo);
+    if (workOrder?.estado !== 'PENDIENTE' && workOrder?.estado !== 'EN_PROGRESO') {
+      return undefined;
+    }
+    return workOrder.id;
   }
 
   goBackToSearch(): void {
-    this.selectedMeter.set(null);
-    this.photoPreview.set(null);
-    this.currentStep.set('search');
+    this.state.set({ kind: 'search' });
   }
 
   goBackToActions(): void {
-    this.currentStep.set('actions');
+    const s = this.state();
+    if (s.kind === 'form') {
+      this.state.set({ kind: 'actions', meter: s.meter });
+    }
   }
 
   clearSelection(): void {
@@ -454,6 +511,8 @@ export class LecturasComponent implements OnInit {
     const meter = this.selectedMeter();
     if (!meter) return;
 
+    this.submissionFeedback.set(null);
+    this.failedSubmission.set(null);
     this.isSaving.set(true);
     const existingReading = this.existingReadingMap().get(meter.medidorId.toString());
     // Cubrimos ambos nombres del id (`lecturaId` para backend actual, `_lecturaId` para
@@ -478,25 +537,27 @@ export class LecturasComponent implements OnInit {
           ...(formPayload.descripcionAnomalia
             ? { descripcionAnomalia: formPayload.descripcionAnomalia }
             : {}),
-          ...(formPayload.fotoBase64 ? { fotoBase64: formPayload.fotoBase64 } : {}),
+          ...(formPayload.fotoBlob ? { fotoBlob: formPayload.fotoBlob } : {}),
           ...(existingId ? { _lecturaId: existingId } : {}),
         };
         const response = await this.syncService.submitReading(lecturaPayload);
         await this.updateReadingsCacheAfterSubmit(response);
+        this.setSubmissionSuccess(response as { offline?: boolean });
       } else {
         // INSTALACION / INSPECCION / RECONEXION → endpoint dedicado (#261)
+        const ordenTrabajoId = this.workOrderIdFor(
+          meter,
+          formPayload.tipoActividad as AssignedWorkOrderType,
+        );
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const workOrderPayload: any = {
-          ordenTrabajoId: existingId ?? null, // pendiente de resolver cuando backend exponga ordenId
+          ordenTrabajoId,
           ...formPayload,
           medidorId: meter.medidorId.toString(),
           fecha: new Date().toISOString(),
         };
-        await this.syncService.submitWorkOrder(workOrderPayload);
-        this.toastService.info(
-          'Orden registrada. Se sincronizará al recuperar conexión si estás offline.',
-          'Enviado',
-        );
+        const response = await this.syncService.submitWorkOrder(workOrderPayload);
+        this.setSubmissionSuccess(response as { offline?: boolean });
       }
 
       this.goBackToSearch();
@@ -504,9 +565,32 @@ export class LecturasComponent implements OnInit {
       await this.loadCachedMeters();
     } catch (e) {
       console.error('Error al registrar orden de trabajo:', e);
+      this.failedSubmission.set(formPayload);
+      this.submissionFeedback.set({
+        kind: 'error',
+        title: 'No se pudo enviar',
+        message: 'Tus datos se conservaron. Revisa la conexión y reintenta el envío.',
+      });
+      this.toastService.error('Los datos se conservaron. Puedes reintentar el envío.', 'Error');
     } finally {
       this.isSaving.set(false);
     }
+  }
+
+  private setSubmissionSuccess(response: { offline?: boolean } | null): void {
+    const queued = response?.offline === true;
+    this.submissionFeedback.set({
+      kind: queued ? 'queued' : 'synced',
+      title: queued ? 'Guardado en cola' : 'Enviado y sincronizado',
+      message: queued
+        ? 'Se enviará automáticamente cuando vuelva la conexión.'
+        : 'El registro fue enviado correctamente al servidor.',
+    });
+  }
+
+  retryFailedSubmission(): void {
+    const payload = this.failedSubmission();
+    if (payload) void this.onWorkOrderSubmit(payload);
   }
 
   /**
@@ -533,8 +617,6 @@ export class LecturasComponent implements OnInit {
   async forceSync(): Promise<void> {
     await this.syncService.syncPendingData();
     await this.loadPendingReadings();
-    if (this.networkService.isOnline()) {
-      await this.fetchAndCacheMeters();
-    }
+    await this.loadCachedMeters();
   }
 }

@@ -1,0 +1,23 @@
+@if (src() || base64Src()) {
+  <div class="pdf-container" role="region" [attr.aria-label]="ariaLabel()">
+    @if (base64Src(); as base64) {
+      <ngx-extended-pdf-viewer
+        [base64Src]="base64"
+        [height]="height()"
+        [textLayer]="true"
+        [showHandToolButton]="true"
+      />
+    } @else if (src(); as source) {
+      <ngx-extended-pdf-viewer
+        [src]="source"
+        [height]="height()"
+        [textLayer]="true"
+        [showHandToolButton]="true"
+      />
+    }
+  </div>
+} @else {
+  <div class="pdf-empty" role="status" aria-live="polite">
+    Esperando documento para previsualización…
+  </div>
+}

@@ -20,10 +20,12 @@ import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { InvitationsService } from '../../../core/services/invitations.service';
 import { InvitationPreviewResponse } from '../../../core/models/invitation.model';
 
+import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-logo.component';
+
 @Component({
   selector: 'app-accept-invitation',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, BrandLogoComponent],
   templateUrl: './accept-invitation.component.html',
   styleUrls: ['./accept-invitation.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -1,9 +1,9 @@
 import {
   Component,
   ChangeDetectionStrategy,
-  Input,
   DestroyRef,
   inject,
+  input,
   OnInit,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -84,21 +84,21 @@ import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
 
       <div class="form-field">
         <span class="field-label">Fotografía del Medidor</span>
-        <app-photo-capture [preview]="photoPreview" (previewChange)="onPhotoChange($event)" />
+        <app-photo-capture [preview]="null" (previewChange)="onPhotoChange($event)" />
         <span class="field-hint">Recomendado para anomalías o lecturas altas.</span>
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn-cancel" (click)="cancel()" [disabled]="isSaving">
+        <button type="button" class="btn-cancel" (click)="cancel()" [disabled]="isSaving()">
           Cancelar
         </button>
         <button
           type="submit"
           class="btn-submit"
-          [disabled]="form.invalid || isSaving"
+          [disabled]="form.invalid || isSaving()"
           id="btn-submit-lectura"
         >
-          @if (isSaving) {
+          @if (isSaving()) {
             <span class="spinner" role="status" aria-hidden="true"></span>
             Guardando...
           } @else {
@@ -115,7 +115,7 @@ export class LecturaFormComponent
   implements OnInit
 {
   /** Lectura anterior pre-cargada por el padre desde el caché. */
-  @Input() lecturaAnterior = 0;
+  readonly lecturaAnterior = input(0);
 
   // Necesario porque ngOnInit debe llamar buildForm + suscribir valueChanges,
   // pero el base también implementa ngOnInit (que llama buildForm). Resolvemos
@@ -129,7 +129,7 @@ export class LecturaFormComponent
 
   protected buildForm(): FormGroup {
     return this.fb.group({
-      lecturaAnterior: [{ value: this.lecturaAnterior, disabled: true }],
+      lecturaAnterior: [{ value: this.lecturaAnterior(), disabled: true }],
       lecturaActual: [0, [Validators.required, Validators.min(0)]],
       lecturaInicial: [false],
       descripcionAnomalia: [''],
@@ -138,7 +138,7 @@ export class LecturaFormComponent
 
   protected buildPayload(
     formValue: Record<string, unknown>,
-    photo: string | null,
+    photo: Blob | null,
   ): LecturaFormPayload {
     return {
       tipoActividad: 'LECTURA',
@@ -148,7 +148,7 @@ export class LecturaFormComponent
       ...(formValue['descripcionAnomalia']
         ? { descripcionAnomalia: String(formValue['descripcionAnomalia']) }
         : {}),
-      ...(photo ? { fotoBase64: photo } : {}),
+      ...(photo ? { fotoBlob: photo } : {}),
     };
   }
 
@@ -170,7 +170,7 @@ export class LecturaFormComponent
 
   private validateCrossField(): void {
     const actual = this.form.get('lecturaActual')?.value;
-    const anterior = this.lecturaAnterior;
+    const anterior = this.lecturaAnterior();
     const isInicial = this.form.get('lecturaInicial')?.value;
 
     const ctrl = this.form.get('lecturaActual');

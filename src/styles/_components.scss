@@ -72,3 +72,139 @@
 .spinner-border.text-primary {
   color: var(--primary-color) !important;
 }
+
+/* ==========================================================================
+   JASRAPO Logo & Brand Extensions
+   ========================================================================== */
+
+/* Brand Primary Button (used in login and core CTAs) */
+.btn-brand-primary {
+  background-color: var(--primary-color) !important;
+  border: 1px solid var(--primary-color) !important;
+  color: var(--white) !important;
+  font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    background-color: #0a888b !important;
+    border-color: #0a888b !important;
+    box-shadow: 0 4px 14px -2px rgba(12, 158, 161, 0.35);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.65;
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Brass Gold Button (inspired by the golden faucet in the logo) */
+.btn-brass {
+  background-color: var(--brass-gold) !important;
+  border-color: var(--brass-gold) !important;
+  color: var(--white) !important;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out !important;
+
+  &:hover,
+  &:focus {
+    background-color: var(--brass-gold-hover) !important;
+    border-color: var(--brass-gold-hover) !important;
+    color: var(--white) !important;
+    box-shadow: 0 4px 12px -2px var(--brass-focus-ring) !important;
+  }
+}
+
+/* Forest Green Button (inspired by the watershed tree in the logo) */
+.btn-forest {
+  background-color: var(--forest-green) !important;
+  border-color: var(--forest-green) !important;
+  color: var(--white) !important;
+  font-weight: 600;
+  transition: all 0.2s ease-in-out !important;
+
+  &:hover,
+  &:focus {
+    background-color: var(--forest-green-hover) !important;
+    border-color: var(--forest-green-hover) !important;
+    color: var(--white) !important;
+    box-shadow: 0 4px 12px -2px rgba(21, 128, 61, 0.25) !important;
+  }
+}
+
+/* Official JASRAPO Seal Wrapper */
+.brand-seal-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--white);
+  border-radius: 50%;
+  padding: 3px;
+  box-shadow:
+    0 2px 8px rgba(12, 158, 161, 0.14),
+    0 0 0 1px rgba(12, 158, 161, 0.12);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.seal-hero {
+    padding: 6px;
+    box-shadow:
+      0 12px 30px -4px rgba(12, 158, 161, 0.22),
+      0 0 0 2px rgba(217, 119, 6, 0.3),
+      0 0 0 6px rgba(12, 158, 161, 0.12);
+    background: linear-gradient(135deg, #ffffff 0%, #f0fdfa 100%);
+  }
+
+  &:hover {
+    transform: scale(1.02);
+    box-shadow:
+      0 4px 14px rgba(12, 158, 161, 0.22),
+      0 0 0 1px var(--primary-color);
+  }
+
+  img {
+    border-radius: 50%;
+    object-fit: contain;
+    display: block;
+  }
+}
+
+/* Water Themed Card */
+.card-water {
+  background: var(--white);
+  border: 1px solid var(--border-color);
+  border-radius: 1rem;
+  box-shadow: var(--water-card-shadow);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    border-color: rgba(12, 158, 161, 0.35);
+    box-shadow: 0 8px 24px -4px rgba(12, 158, 161, 0.12);
+  }
+}
+
+/* Subtle Badges derived from logo elements */
+.badge-brass-subtle {
+  background-color: var(--brass-gold-light) !important;
+  color: var(--brass-gold) !important;
+  border: 1px solid var(--brass-gold-border);
+  font-weight: 600;
+}
+
+.badge-forest-subtle {
+  background-color: var(--forest-green-light) !important;
+  color: var(--forest-green) !important;
+  border: 1px solid var(--forest-green-border);
+  font-weight: 600;
+}
+
+.badge-water-subtle {
+  background-color: var(--soft-blue-bg) !important;
+  color: var(--primary-color) !important;
+  border: 1px solid rgba(12, 158, 161, 0.2);
+  font-weight: 600;
+}

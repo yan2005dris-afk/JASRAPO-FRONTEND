@@ -1,27 +1,56 @@
 import { Component, ChangeDetectionStrategy, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Router, ActivatedRoute } from '@angular/router';
+import {
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  FormControl,
+  Validators,
+} from '@angular/forms';
+import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { BrandLogoComponent } from '../../../shared/components/brand-logo/brand-logo.component';
+import { JasrapoMascotComponent } from '../../../shared/components/jasrapo-mascot/jasrapo-mascot.component';
+import { BRAND_CONFIG } from '../../../shared/constants/brand.constant';
+
+/** Controles fuertemente tipados del formulario de autenticación */
+export interface LoginFormGroup {
+  email: FormControl<string>;
+  password: FormControl<string>;
+}
 
 @Component({
   selector: 'app-login',
-  imports: [CommonModule, ReactiveFormsModule],
+  standalone: true,
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    RouterLink,
+    BrandLogoComponent,
+    JasrapoMascotComponent,
+  ],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginComponent {
-  private readonly formBuilder = inject(FormBuilder);
+  private readonly formBuilder = inject(FormBuilder).nonNullable;
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly authService = inject(AuthService);
 
-  // Tipado explícito para mejor soporte del linter
-  readonly loginForm: FormGroup;
+  readonly brand = BRAND_CONFIG;
+
+  // Formulario de autenticación fuertemente tipado
+  readonly loginForm: FormGroup<LoginFormGroup>;
   readonly submitted = signal(false);
   readonly loading = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly showPassword = signal(false);
+
+  togglePasswordVisibility(): void {
+    this.showPassword.update((visible) => !visible);
+  }
 
   constructor() {
     this.loginForm = this.formBuilder.group({
@@ -30,8 +59,8 @@ export class LoginComponent {
     });
   }
 
-  // Getter para facilitar el acceso a controles en el template
-  get f() {
+  // Getter con tipado estricto para controles del formulario
+  get f(): LoginFormGroup {
     return this.loginForm.controls;
   }
 
@@ -45,8 +74,7 @@ export class LoginComponent {
 
     this.loading.set(true);
 
-    this.authService.login(this.loginForm.value).subscribe({
-      // Usamos () si no necesitamos el objeto response, evitando el error de lint
+    this.authService.login(this.loginForm.getRawValue()).subscribe({
       next: () => {
         this.loading.set(false);
 

@@ -505,19 +505,11 @@ export const routes: Routes = [
         data: { breadcrumb: 'Reportes' },
         children: [
           {
-            path: 'consumo-zonas',
-            data: { breadcrumb: 'Consumo por Zonas' },
+            path: '',
+            pathMatch: 'full',
             loadComponent: () =>
-              import('./features/reports/zone-consumption/zone-consumption').then(
-                (m) => m.ZoneConsumptionComponent,
-              ),
-          },
-          {
-            path: 'dashboard',
-            data: { breadcrumb: 'Dashboard KPI' },
-            loadComponent: () =>
-              import('./features/reports/kpi-dashboard/kpi-dashboard').then(
-                (m) => m.KpiDashboardComponent,
+              import('./features/reports/reports-index/reports-index.component').then(
+                (m) => m.ReportsIndexComponent,
               ),
           },
           {
@@ -526,14 +518,6 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/reports/client-statement/client-statement').then(
                 (m) => m.ClientStatementComponent,
-              ),
-          },
-          {
-            path: 'recaudacion-morosidad',
-            data: { breadcrumb: 'Recaudación y Morosidad' },
-            loadComponent: () =>
-              import('./features/reports/overdue-accounts/overdue-accounts').then(
-                (m) => m.OverdueAccountsComponent,
               ),
           },
           {

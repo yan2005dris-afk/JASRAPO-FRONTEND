@@ -37,12 +37,12 @@ import {
 } from '../../../readings/components/readings-table/readings-table.component';
 import { ReadingDetailModalComponent } from '../../../readings/components/reading-detail-modal/reading-detail-modal.component';
 import { ReadingFormModalComponent } from '../../../readings/components/reading-form-modal/reading-form-modal.component';
+
 import { ReadingsService } from '../../../readings/services/readings.service';
 import { IReading } from '../../../readings/interfaces/ireading.interface';
 import { PeriodsService } from '../../../../../shared/services/periods.service';
 
 type ReadingSource = IReadingRowItem | IReading;
-
 type FilterOrdenTab = 'TODAS' | 'PENDIENTES' | 'COMPLETADAS' | 'NOVEDAD';
 
 @Component({
@@ -631,7 +631,6 @@ export class ReadingRouteDetailComponent implements OnInit {
           contratoId: String(reading.contratoId ?? ''),
           descripcionAnomalia: null,
           fechaValidacion: null,
-          fotoUrl: null,
           isValidada: false,
           lecturaInicial: false,
           periodoId: 0,
@@ -666,17 +665,13 @@ export class ReadingRouteDetailComponent implements OnInit {
   onEditLectura(reading: ReadingSource): void {
     this.openDropdownId.set(null);
     this.selectedReadingForDetail.set(null);
-    const lecturaId = String(reading.lecturaId);
-
-    this.readingsService.getReadingById(lecturaId).subscribe({
+    this.readingsService.getReadingById(String(reading.lecturaId)).subscribe({
       next: (full) => {
         this.selectedReadingForEdit.set(full);
         this.isFormModalOpen.set(true);
         this.cdr.markForCheck();
       },
-      error: () => {
-        this.toastService.error('No se pudo obtener la información de la lectura');
-      },
+      error: () => this.toastService.error('No se pudo obtener la información de la lectura'),
     });
   }
 

@@ -2,7 +2,7 @@
   <!-- Header -->
   <div class="queue-header">
     <h1 class="queue-title">
-      <i class="bi bi-cloud-arrow-up"></i>
+      <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i>
       Cola de Sincronización
     </h1>
 
@@ -37,12 +37,96 @@
           @if (syncService.isSyncing()) {
             <span class="spinner-border spinner-border-sm" role="status"></span>
           } @else {
-            <i class="bi bi-arrow-repeat"></i>
+            <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
           }
-          Sincronizar
+          Sincronizar Subida
         </button>
       }
     </div>
+  </div>
+
+  <!-- Offline Data Hub / Download Section -->
+  <div class="download-hub-card">
+    <div class="hub-main-info">
+      <div class="hub-icon-wrapper">
+        <i class="bi bi-cloud-download" aria-hidden="true"></i>
+      </div>
+      <div class="hub-text">
+        <h2 class="hub-title">Datos asignados offline</h2>
+        <p class="hub-subtitle">
+          @if (syncService.lastDownloadTimestamp()) {
+            Última descarga: {{ syncService.lastDownloadTimestamp() | date: 'dd/MM/yyyy HH:mm' }}
+          } @else {
+            Aún no se han descargado datos para tu jornada.
+          }
+        </p>
+      </div>
+    </div>
+
+    <!-- Metrics -->
+    <div class="hub-metrics">
+      <div class="metric-badge">
+        <i class="bi bi-map" aria-hidden="true"></i>
+        <span
+          ><strong>{{ cachedRoutesCount() }}</strong> Rutas</span
+        >
+      </div>
+      <div class="metric-badge">
+        <i class="bi bi-speedometer2" aria-hidden="true"></i>
+        <span
+          ><strong>{{ cachedMetersCount() }}</strong> Medidores</span
+        >
+      </div>
+      <div class="metric-badge">
+        <i class="bi bi-journal-check" aria-hidden="true"></i>
+        <span
+          ><strong>{{ cachedReadingsCount() }}</strong> Lecturas</span
+        >
+      </div>
+    </div>
+
+    @if (authorizationWarning()) {
+      <div class="authorization-warning" role="alert">
+        <i class="bi bi-shield-exclamation"></i>
+        <span
+          >No tenés autorización para actualizar los datos asignados. Los datos guardados siguen
+          visibles.</span
+        >
+      </div>
+    }
+
+    <!-- Download Action -->
+    <div class="hub-action">
+      <button
+        class="btn-download"
+        (click)="downloadData()"
+        [disabled]="syncService.isDownloading() || !networkService.isOnline()"
+        id="btn-download-data"
+      >
+        @if (syncService.isDownloading()) {
+          <span class="spinner-border spinner-border-sm" role="status"></span>
+          <span>Descargando...</span>
+        } @else {
+          <i class="bi bi-arrow-down-circle" aria-hidden="true"></i>
+          <span>Descargar / Actualizar Datos</span>
+        }
+      </button>
+      <a class="routes-link" routerLink="/app/operador/rutas">
+        <i class="bi bi-signpost-2"></i> Ver rutas asignadas
+      </a>
+      @if (!networkService.isOnline()) {
+        <small class="offline-hint"
+          ><i class="bi bi-wifi-off" aria-hidden="true"></i> Sin conexión: podés consultar los datos
+          guardados</small
+        >
+      }
+    </div>
+  </div>
+
+  <!-- Local upload queue -->
+  <div class="local-changes-heading">
+    <h2 id="local-changes-title">Cambios locales por subir</h2>
+    <p>Lecturas, novedades y órdenes de trabajo guardadas en este dispositivo.</p>
   </div>
 
   <!-- Tab Switcher -->
@@ -75,7 +159,7 @@
       (click)="switchTab('sincronizados')"
       id="tab-sincronizados"
     >
-      Sincronizados
+      Enviados
       @if (syncedReadings().length > 0) {
         <span class="tab-count synced">{{ syncedReadings().length }}</span>
       }
@@ -87,7 +171,7 @@
     <div class="queue-section">
       @if (totalPendientes() === 0) {
         <div class="empty-state">
-          <i class="bi bi-check-circle"></i>
+          <i class="bi bi-check-circle" aria-hidden="true"></i>
           <p>No hay registros pendientes de envío.</p>
         </div>
       }
@@ -95,7 +179,9 @@
       <!-- Lecturas Pendientes -->
       @for (record of pendingReadings(); track record.id) {
         <div class="queue-card reading-card">
-          <div class="card-type-badge reading">Lectura</div>
+          <div class="card-type-badge reading">
+            {{ isWorkOrder(record) ? 'Orden de trabajo' : 'Lectura' }}
+          </div>
           <div class="card-body-content">
             @if (record['clienteNombre']) {
               <div class="card-info">
@@ -119,7 +205,9 @@
             </div>
           </div>
           <div class="card-status">
-            <span class="status-tag pending-tag"> <i class="bi bi-clock"></i> Pendiente </span>
+            <span class="status-tag pending-tag">
+              <i class="bi bi-clock" aria-hidden="true"></i> Pendiente
+            </span>
           </div>
         </div>
       }
@@ -143,7 +231,9 @@
             </div>
           </div>
           <div class="card-status">
-            <span class="status-tag pending-tag"> <i class="bi bi-clock"></i> Pendiente </span>
+            <span class="status-tag pending-tag">
+              <i class="bi bi-clock" aria-hidden="true"></i> Pendiente
+            </span>
           </div>
         </div>
       }
@@ -155,7 +245,7 @@
     <div class="queue-section">
       @if (totalRechazados() === 0) {
         <div class="empty-state">
-          <i class="bi bi-hand-thumbs-up"></i>
+          <i class="bi bi-hand-thumbs-up" aria-hidden="true"></i>
           <p>No hay registros rechazados. ¡Todo bien!</p>
         </div>
       }
@@ -163,7 +253,9 @@
       <!-- Lecturas Rechazadas -->
       @for (record of rejectedReadings(); track record.id) {
         <div class="queue-card rejected-card">
-          <div class="card-type-badge reading">Lectura</div>
+          <div class="card-type-badge reading">
+            {{ isWorkOrder(record) ? 'Orden de trabajo' : 'Lectura' }}
+          </div>
           <div class="card-body-content">
             <div class="card-info">
               <span class="info-label">Medidor:</span>
@@ -177,59 +269,23 @@
             </div>
             <!-- Error Message -->
             <div class="error-banner">
-              <i class="bi bi-exclamation-octagon-fill"></i>
+              <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
               <span>{{ record.errorMessage }}</span>
             </div>
           </div>
           <div class="card-actions">
             @if (editingRecord()?.id === record.id && editingType() === 'lectura') {
-              <!-- Edit Form Inline -->
-              <div class="edit-form">
-                <div class="edit-row">
-                  <label [attr.for]="'edit-ant-' + record.id" class="edit-label"
-                    >Lectura Anterior</label
-                  >
-                  <input
-                    [attr.id]="'edit-ant-' + record.id"
-                    type="number"
-                    class="edit-input"
-                    [(ngModel)]="editLecturaAnterior"
-                  />
-                </div>
-                <div class="edit-row">
-                  <label [attr.for]="'edit-act-' + record.id" class="edit-label"
-                    >Lectura Actual</label
-                  >
-                  <input
-                    [attr.id]="'edit-act-' + record.id"
-                    type="number"
-                    class="edit-input"
-                    [(ngModel)]="editLecturaActual"
-                  />
-                </div>
-                <div class="edit-row-check">
-                  <input
-                    type="checkbox"
-                    id="editLecturaInicial-{{ record.id }}"
-                    [(ngModel)]="editLecturaInicial"
-                  />
-                  <label [for]="'editLecturaInicial-' + record.id" class="edit-label"
-                    >¿Lectura Inicial?</label
-                  >
-                </div>
-                <div class="edit-actions">
-                  <button class="btn-save" (click)="saveEditReading()">
-                    <i class="bi bi-check-lg"></i> Guardar
-                  </button>
-                  <button class="btn-cancel" (click)="cancelEdit()">Cancelar</button>
-                </div>
-              </div>
+              <app-sync-reading-editor
+                [record]="record"
+                (saved)="onReadingEditorSaved($event)"
+                (canceled)="cancelEdit()"
+              />
             } @else {
-              <button class="btn-edit" (click)="startEditReading(record)">
-                <i class="bi bi-pencil-square"></i> Editar
+              <button type="button" class="btn-edit" (click)="startEditReading(record)">
+                <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
               </button>
-              <button class="btn-discard" (click)="discardReading(record)">
-                <i class="bi bi-trash3"></i> Descartar
+              <button type="button" class="btn-discard" (click)="discardReading(record)">
+                <i class="bi bi-trash3" aria-hidden="true"></i> Descartar
               </button>
             }
           </div>
@@ -251,48 +307,23 @@
             </div>
             <!-- Error Message -->
             <div class="error-banner">
-              <i class="bi bi-exclamation-octagon-fill"></i>
+              <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
               <span>{{ record.errorMessage }}</span>
             </div>
           </div>
           <div class="card-actions">
             @if (editingRecord()?.id === record.id && editingType() === 'anomalia') {
-              <div class="edit-form">
-                <div class="edit-row">
-                  <label [attr.for]="'edit-tipo-' + record.id" class="edit-label">Tipo</label>
-                  <select
-                    [attr.id]="'edit-tipo-' + record.id"
-                    class="edit-input"
-                    [(ngModel)]="editTipo"
-                  >
-                    <option value="FUGA">Fuga de Agua</option>
-                    <option value="MEDIDOR_DAÑADO">Medidor Dañado / Roto</option>
-                    <option value="LECTURA_ERRONEA">Lectura Errónea</option>
-                    <option value="OTRO">Otro Problema</option>
-                  </select>
-                </div>
-                <div class="edit-row">
-                  <label [attr.for]="'edit-obs-' + record.id" class="edit-label">Observación</label>
-                  <textarea
-                    [attr.id]="'edit-obs-' + record.id"
-                    class="edit-input edit-textarea"
-                    [(ngModel)]="editObservacion"
-                    rows="3"
-                  ></textarea>
-                </div>
-                <div class="edit-actions">
-                  <button class="btn-save" (click)="saveEditAnomaly()">
-                    <i class="bi bi-check-lg"></i> Guardar
-                  </button>
-                  <button class="btn-cancel" (click)="cancelEdit()">Cancelar</button>
-                </div>
-              </div>
+              <app-sync-anomaly-editor
+                [record]="record"
+                (saved)="onAnomalyEditorSaved($event)"
+                (canceled)="cancelEdit()"
+              />
             } @else {
-              <button class="btn-edit" (click)="startEditAnomaly(record)">
-                <i class="bi bi-pencil-square"></i> Editar
+              <button type="button" class="btn-edit" (click)="startEditAnomaly(record)">
+                <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
               </button>
-              <button class="btn-discard" (click)="discardAnomaly(record)">
-                <i class="bi bi-trash3"></i> Descartar
+              <button type="button" class="btn-discard" (click)="discardAnomaly(record)">
+                <i class="bi bi-trash3" aria-hidden="true"></i> Descartar
               </button>
             }
           </div>
@@ -301,27 +332,34 @@
     </div>
   }
 
-  <!-- TAB: Sincronizados -->
+  <!-- TAB: Enviados -->
   @if (activeTab() === 'sincronizados') {
     <div class="queue-section">
       <div class="section-toolbar">
         @if (syncedReadings().length > 0) {
-          <button class="btn-clear-history" (click)="clearHistory()" id="btn-clear-history">
-            <i class="bi bi-trash3"></i> Limpiar historial
+          <button
+            type="button"
+            class="btn-clear-history"
+            (click)="clearHistory()"
+            id="btn-clear-history"
+          >
+            <i class="bi bi-trash3" aria-hidden="true"></i> Limpiar historial
           </button>
         }
       </div>
 
       @if (syncedReadings().length === 0) {
         <div class="empty-state">
-          <i class="bi bi-cloud-check"></i>
-          <p>No hay registros sincronizados aún.</p>
+          <i class="bi bi-cloud-check" aria-hidden="true"></i>
+          <p>No hay registros enviados al servidor aún.</p>
         </div>
       }
 
       @for (record of syncedReadings(); track record.id) {
         <div class="queue-card synced-card">
-          <div class="card-type-badge reading">Lectura</div>
+          <div class="card-type-badge reading">
+            {{ isWorkOrder(record) ? 'Orden de trabajo' : 'Lectura' }}
+          </div>
           <div class="card-body-content">
             @if (record['clienteNombre']) {
               <div class="card-info">
@@ -345,14 +383,14 @@
             </div>
             @if (record['syncedAt']) {
               <div class="card-info">
-                <span class="info-label">Sincronizado:</span>
+                <span class="info-label">Enviado:</span>
                 <span class="info-value">{{ record['syncedAt'] | date: 'dd/MM/yyyy HH:mm' }}</span>
               </div>
             }
           </div>
           <div class="card-status">
             <span class="status-tag synced-tag">
-              <i class="bi bi-cloud-check-fill"></i> Sincronizado
+              <i class="bi bi-cloud-check-fill" aria-hidden="true"></i> Enviado al servidor
             </span>
           </div>
         </div>

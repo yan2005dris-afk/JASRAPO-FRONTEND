@@ -87,7 +87,8 @@
                     <th class="fw-semibold text-muted text-uppercase text-center">
                       Identificación
                     </th>
-                    <th class="fw-semibold text-muted text-uppercase text-center">Estado</th>
+                    <th class="fw-semibold text-muted text-uppercase text-center">Servicio</th>
+                    <th class="fw-semibold text-muted text-uppercase text-center">Cobranza</th>
                     <th class="text-center" style="width: 100px">Acción</th>
                   </tr>
                 </thead>
@@ -129,11 +130,19 @@
                       <td class="text-center">
                         <span
                           class="badge"
-                          [class.badge-soft-success]="contract.estado === 'ACTIVO'"
-                          [class.badge-soft-warning]="contract.estado !== 'ACTIVO'"
+                          [class.badge-soft-success]="getServiceState(contract) === 'ACTIVO'"
+                          [class.badge-soft-warning]="getServiceState(contract) !== 'ACTIVO'"
                         >
-                          {{ contract.estado }}
+                          {{ getServiceState(contract) }}
                         </span>
+                      </td>
+                      <td class="text-center">
+                        <span class="badge badge-soft-secondary">
+                          {{ contract.estadoCobranza || '—' }}
+                        </span>
+                        @if (hasActiveAgreement(contract)) {
+                          <span class="badge badge-soft-info ms-1">Convenio activo</span>
+                        }
                       </td>
                       <td class="text-center" (click)="$event.stopPropagation()">
                         <button

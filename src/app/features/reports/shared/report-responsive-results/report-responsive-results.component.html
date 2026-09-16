@@ -1,0 +1,40 @@
+<div class="report-results-table table-responsive">
+  <table class="table table-sm table-hover align-middle mb-0">
+    <caption class="visually-hidden">
+      {{
+        caption()
+      }}
+    </caption>
+    <thead>
+      <tr>
+        @for (column of columns(); track column.key) {
+          <th scope="col" [attr.data-align]="column.align ?? 'start'">{{ column.label }}</th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (row of rows(); track row.id) {
+        <tr>
+          @for (column of columns(); track column.key) {
+            <td [attr.data-align]="column.align ?? 'start'">
+              {{ row.cells[column.key] }}
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+
+<div class="report-results-cards" role="list" [attr.aria-label]="caption()">
+  @for (row of rows(); track row.id) {
+    <article class="report-result-card" role="listitem">
+      @for (column of columns(); track column.key) {
+        <div class="report-result-card__field">
+          <span class="report-result-card__label">{{ column.label }}</span>
+          <span class="report-result-card__value">{{ row.cells[column.key] }}</span>
+        </div>
+      }
+    </article>
+  }
+</div>

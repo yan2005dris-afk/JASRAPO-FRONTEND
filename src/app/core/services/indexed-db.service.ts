@@ -1,5 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Injectable } from '@angular/core';
+import {
+  MANIFEST_PHYSICAL_ENTITY_TYPE,
+  MANIFEST_PROTOCOL_VERSION,
+  type OperatorManifestPage,
+} from '../../features/operator/models/operator.models';
 
 export type SyncState = 'PENDIENTE_SYNC' | 'RECHAZADA';
 
@@ -10,8 +15,20 @@ export interface PendingRecord {
   [key: string]: any;
 }
 
-export interface CachedCollection<T> {
-  items: T[];
+export interface AssignedSnapshot {
+  scope: string;
+  operatorId?: string | number | null;
+  routes: any[];
+  meters: any[];
+  registeredReadings: any[];
+  workOrders: any[];
+  pendingAnomalies: any[];
+  snapshotVersion?: string;
+  manifestProtocolVersion?: number;
+  periodId?: string;
+  cursor?: string | null;
+  complete?: boolean;
+  estados?: any[];
   savedAt: string;
 }
 
@@ -20,7 +37,7 @@ export interface CachedCollection<T> {
 })
 export class IndexedDbService {
   private readonly dbName = 'jasrapo-operator-db';
-  private readonly dbVersion = 7;
+  private readonly dbVersion = 9;
   private db: IDBDatabase | null = null;
 
   constructor() {
@@ -39,6 +56,11 @@ export class IndexedDbService {
       request.onupgradeneeded = (event) => {
         const db = request.result;
         const oldVersion = event.oldVersion;
+
+        // Almacén para snapshot completo unificado por operador (aislamiento total)
+        if (!db.objectStoreNames.contains('assigned_snapshots')) {
+          db.createObjectStore('assigned_snapshots', { keyPath: 'scope' });
+        }
 
         // Almacén para caché de medidores
         if (!db.objectStoreNames.contains('medidores_cache')) {
@@ -116,7 +138,9 @@ export class IndexedDbService {
       const transaction = db.transaction('medidores_cache', 'readwrite');
       const store = transaction.objectStore('medidores_cache');
 
-      // Realizar upsert (merge por medidorId): actualiza existentes y añade nuevos
+      // Reemplazo completo del snapshot para no dejar medidores obsoletos
+      store.clear();
+
       for (const meter of meters) {
         store.put(meter);
       }
@@ -126,8 +150,17 @@ export class IndexedDbService {
     });
   }
 
-  async getMetersCache(): Promise<any[]> {
+  async getMetersCache(scope?: string): Promise<any[]> {
     const db = await this.initDb();
+
+    // Si se pasa scope (e.g. 'operator:42'), buscar primero en el snapshot del operador
+    if (scope && db.objectStoreNames.contains('assigned_snapshots')) {
+      const snapshot = await this.getAssignedSnapshot(scope);
+      if (snapshot?.meters) {
+        return snapshot.meters;
+      }
+    }
+
     return new Promise((resolve, reject) => {
       const transaction = db.transaction('medidores_cache', 'readonly');
       const store = transaction.objectStore('medidores_cache');
@@ -313,8 +346,17 @@ export class IndexedDbService {
     });
   }
 
-  async getRegisteredReadingsCache(): Promise<any[]> {
+  async getRegisteredReadingsCache(scope?: string): Promise<any[]> {
     const db = await this.initDb();
+
+    // Si se pasa scope (e.g. 'operator:42'), buscar primero en el snapshot del operador
+    if (scope && db.objectStoreNames.contains('assigned_snapshots')) {
+      const snapshot = await this.getAssignedSnapshot(scope);
+      if (snapshot?.registeredReadings) {
+        return snapshot.registeredReadings;
+      }
+    }
+
     return new Promise((resolve, reject) => {
       const transaction = db.transaction('lecturas_registradas', 'readonly');
       const store = transaction.objectStore('lecturas_registradas');
@@ -385,6 +427,299 @@ export class IndexedDbService {
       request.onerror = () => reject(request.error);
     });
   }
+
+  // --- SNAPSHOTS UNIFICADOS POR OPERADOR ---
+
+  async discardPendingManifest(scope: string): Promise<void> {
+    const db = await this.initDb();
+    if (!db.objectStoreNames.contains('assigned_snapshots')) return;
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('assigned_snapshots', 'readwrite');
+      transaction.objectStore('assigned_snapshots').delete(`${scope}:pending`);
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  async getAssignedSnapshot(scope: string): Promise<AssignedSnapshot | null> {
+    const db = await this.initDb();
+    if (!db.objectStoreNames.contains('assigned_snapshots')) {
+      return null;
+    }
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('assigned_snapshots', 'readonly');
+      const store = transaction.objectStore('assigned_snapshots');
+      const request = store.get(scope);
+      request.onsuccess = () => resolve(request.result ?? null);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  /**
+   * Guarda un snapshot completo de forma atómica en una única transacción IndexedDB.
+   * Almacena todo el conjunto en `assigned_snapshots` con scope por operador (aislamiento total),
+   * y sincroniza las tablas individuales para compatibilidad.
+   */
+  async saveCompleteAssignedSnapshot(data: {
+    routes: any[];
+    meters: any[];
+    registeredReadings: any[];
+    workOrders?: any[];
+    pendingAnomalies?: any[];
+    estados?: any[];
+    scope?: string;
+    operatorId?: number | string;
+  }): Promise<void> {
+    const db = await this.initDb();
+    const scope = data.scope ?? (data.operatorId ? `operator:${data.operatorId}` : 'assigned');
+    const savedAt = new Date().toISOString();
+
+    const snapshotRecord: AssignedSnapshot = {
+      scope,
+      operatorId: data.operatorId ?? null,
+      routes: data.routes,
+      meters: data.meters,
+      registeredReadings: data.registeredReadings,
+      workOrders: data.workOrders ?? [],
+      pendingAnomalies: data.pendingAnomalies ?? [],
+      manifestProtocolVersion: MANIFEST_PROTOCOL_VERSION,
+      estados: data.estados ?? [],
+      savedAt,
+    };
+
+    return new Promise((resolve, reject) => {
+      const stores = [
+        'assigned_snapshots',
+        'rutas_cache',
+        'medidores_cache',
+        'lecturas_registradas',
+        'estados_cache',
+      ];
+      const transaction = db.transaction(stores, 'readwrite');
+
+      try {
+        // 1. Snapshot unificado aislado por operador
+        const snapshotStore = transaction.objectStore('assigned_snapshots');
+        snapshotStore.put(snapshotRecord);
+
+        // 2. Rutas
+        const routeStore = transaction.objectStore('rutas_cache');
+        routeStore.put({
+          scope,
+          operatorId: data.operatorId ?? null,
+          items: data.routes,
+          savedAt,
+        });
+
+        // 3. Medidores
+        const meterStore = transaction.objectStore('medidores_cache');
+        meterStore.clear();
+        for (const meter of data.meters ?? []) {
+          meterStore.put(meter);
+        }
+
+        // 4. Lecturas registradas
+        const readingStore = transaction.objectStore('lecturas_registradas');
+        readingStore.clear();
+        for (const reading of data.registeredReadings ?? []) {
+          readingStore.put(reading);
+        }
+
+        // 5. Estados de lectura
+        if (data.estados && data.estados.length > 0) {
+          const estadosStore = transaction.objectStore('estados_cache');
+          estadosStore.put({ tipo: 'estados_lectura', items: data.estados });
+        }
+      } catch (err) {
+        transaction.abort();
+        reject(err);
+        return;
+      }
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  private normalizeManifestCollection(collection: unknown): any[] | undefined {
+    if (collection === undefined) return undefined;
+    if (Array.isArray(collection)) return collection;
+    if (typeof collection !== 'object' || collection === null) {
+      throw new Error('Invalid manifest collection: items must be an array');
+    }
+    const value = collection as Record<string, unknown>;
+    if (Array.isArray(value['items'])) return value['items'];
+    if (value['data'] !== undefined) return this.normalizeManifestCollection(value['data']);
+    throw new Error('Invalid manifest collection: items must be an array');
+  }
+
+  /** Applies one manifest page and its tombstones in one IndexedDB transaction. */
+  async applyManifestPage(
+    scope: string,
+    page: OperatorManifestPage,
+    operatorId?: number | string,
+  ): Promise<AssignedSnapshot> {
+    const db = await this.initDb();
+    const pendingScope = `${scope}:pending`;
+    const physicalTypes: Record<string, string> = {
+      [MANIFEST_PHYSICAL_ENTITY_TYPE.ROUTES]: 'route',
+      [MANIFEST_PHYSICAL_ENTITY_TYPE.WORK_ORDERS]: 'workOrder',
+      [MANIFEST_PHYSICAL_ENTITY_TYPE.METERS]: 'meter',
+      [MANIFEST_PHYSICAL_ENTITY_TYPE.READINGS]: 'reading',
+      [MANIFEST_PHYSICAL_ENTITY_TYPE.READING_ANOMALY]: 'pendingAnomaly',
+      [MANIFEST_PHYSICAL_ENTITY_TYPE.WORK_ORDER_NOVELTY]: 'pendingAnomaly',
+    };
+    for (const change of page.changes ?? []) {
+      if (!physicalTypes[change.entityType]) {
+        throw new Error(`Unknown manifest entityType: ${change.entityType}`);
+      }
+    }
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('assigned_snapshots', 'readwrite');
+      const store = transaction.objectStore('assigned_snapshots');
+      const request = store.get(pendingScope);
+      let resultSnapshot: AssignedSnapshot | undefined;
+      request.onsuccess = () => {
+        const pending = request.result as AssignedSnapshot | undefined;
+        const activeRequest = pending ? null : store.get(scope);
+        const continueWith = (activeResult?: AssignedSnapshot) => {
+          // IndexedDB returns structured clones; clone explicitly for test doubles and
+          // to ensure an incomplete page can never mutate the active snapshot in memory.
+          const existing = pending
+            ? structuredClone(pending)
+            : activeResult
+              ? structuredClone(activeResult)
+              : undefined;
+          // Only a snapshot page at the initial cursor replaces active arrays.
+          // Incremental pages may legitimately use cursor:null and must preserve them.
+          const fresh = page.mode === 'snapshot' && page.cursor === null;
+          if (
+            !fresh &&
+            (!existing ||
+              (existing.snapshotVersion !== undefined &&
+                (existing.snapshotVersion !== page.snapshotVersion ||
+                  (page.cursor !== null && existing.cursor !== page.cursor))))
+          ) {
+            transaction.abort();
+            reject(new Error('Manifest cursor/snapshot conflict'));
+            return;
+          }
+          const snapshot: AssignedSnapshot = fresh
+            ? {
+                scope: pendingScope,
+                operatorId: operatorId ?? null,
+                snapshotVersion: page.snapshotVersion,
+                manifestProtocolVersion: MANIFEST_PROTOCOL_VERSION,
+                periodId: page.periodId,
+                cursor: page.nextCursor,
+                complete: page.complete,
+                routes: [],
+                workOrders: [],
+                meters: [],
+                registeredReadings: [],
+                pendingAnomalies: [],
+                savedAt: new Date().toISOString(),
+              }
+            : {
+                ...existing!,
+                scope: pendingScope,
+                cursor: page.nextCursor,
+                complete: page.complete,
+                workOrders: existing!.workOrders ?? [],
+                pendingAnomalies: existing!.pendingAnomalies ?? [],
+              };
+          const collections: Record<string, any[]> = {
+            route: snapshot.routes,
+            workOrder: snapshot.workOrders,
+            meter: snapshot.meters,
+            reading: snapshot.registeredReadings,
+            pendingAnomaly: snapshot.pendingAnomalies,
+          };
+          const fields: Record<string, string> = {
+            route: 'rutaId',
+            workOrder: 'ordenTrabajoId',
+            meter: 'medidorId',
+            reading: 'lecturaId',
+            pendingAnomaly: 'anomaliaId',
+          };
+          const physicalTypes: Record<string, string> = {
+            [MANIFEST_PHYSICAL_ENTITY_TYPE.ROUTES]: 'route',
+            [MANIFEST_PHYSICAL_ENTITY_TYPE.WORK_ORDERS]: 'workOrder',
+            [MANIFEST_PHYSICAL_ENTITY_TYPE.METERS]: 'meter',
+            [MANIFEST_PHYSICAL_ENTITY_TYPE.READINGS]: 'reading',
+            [MANIFEST_PHYSICAL_ENTITY_TYPE.READING_ANOMALY]: 'pendingAnomaly',
+            [MANIFEST_PHYSICAL_ENTITY_TYPE.WORK_ORDER_NOVELTY]: 'pendingAnomaly',
+          };
+          const getEntityId = (type: string, value: any): string => {
+            const field = fields[type];
+            return String(value[field] ?? value.id ?? value.novedadId ?? value.lecturaAnomaliaId);
+          };
+          const upsert = (type: string, values: any[] | undefined) => {
+            if (!values || !collections[type]) return;
+            const field = fields[type];
+            for (const value of values) {
+              const item = { ...value, [field]: getEntityId(type, value) };
+              const index = collections[type].findIndex(
+                (current) => getEntityId(type, current) === item[field],
+              );
+              if (index < 0) collections[type].push(item);
+              else collections[type][index] = { ...collections[type][index], ...item };
+            }
+          };
+          upsert('route', this.normalizeManifestCollection(page.routes));
+          upsert('workOrder', this.normalizeManifestCollection(page.workOrders));
+          upsert('meter', this.normalizeManifestCollection(page.meters));
+          upsert('reading', this.normalizeManifestCollection(page.readings));
+          upsert('pendingAnomaly', this.normalizeManifestCollection(page.pendingAnomalies));
+          for (const change of page.changes ?? []) {
+            const type = physicalTypes[change.entityType];
+            const collection = type ? collections[type] : undefined;
+            const field = type ? fields[type] : undefined;
+            if (!collection || !field) {
+              transaction.abort();
+              reject(new Error(`Unknown manifest entityType: ${change.entityType}`));
+              return;
+            }
+            const index = collection.findIndex(
+              (item) => getEntityId(type!, item) === String(change.id),
+            );
+            if (change.operation === 'DELETE') {
+              if (index >= 0) collection.splice(index, 1);
+            } else if (change.data) {
+              const item = { ...change.data, [field]: String(change.id) };
+              if (index < 0) collection.push(item);
+              else collection[index] = { ...collection[index], ...item };
+            }
+          }
+          snapshot.savedAt = new Date().toISOString();
+          resultSnapshot = snapshot;
+          if (page.complete) {
+            snapshot.scope = scope;
+            store.put(snapshot);
+            store.delete(pendingScope);
+          } else {
+            store.put(snapshot);
+          }
+        };
+        if (activeRequest) {
+          activeRequest.onsuccess = () =>
+            continueWith(activeRequest.result as AssignedSnapshot | undefined);
+          activeRequest.onerror = () => reject(activeRequest.error);
+        } else {
+          continueWith();
+        }
+      };
+      request.onerror = () => reject(request.error);
+      transaction.oncomplete = () => {
+        if (resultSnapshot) resolve(resultSnapshot);
+
+        //
+        else reject(new Error('Manifest snapshot was not persisted'));
+      };
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
   // --- RUTAS CACHE (snapshot offline) ---
 
   async saveRoutesCache<T>(scope: string, routes: T[]): Promise<void> {
@@ -402,21 +737,85 @@ export class IndexedDbService {
     });
   }
 
-  async getRoutesCache<T>(scope: string): Promise<CachedCollection<T> | null> {
+  async getRoutesCache<T>(scope: string): Promise<{ items: T[]; savedAt: string } | null> {
     const db = await this.initDb();
+
+    // Si existe en assigned_snapshots, preferir ese snapshot
+    if (db.objectStoreNames.contains('assigned_snapshots')) {
+      const snapshot = await this.getAssignedSnapshot(scope);
+      if (snapshot?.routes) {
+        return { items: snapshot.routes as T[], savedAt: snapshot.savedAt };
+      }
+    }
+
     return new Promise((resolve, reject) => {
       const transaction = db.transaction('rutas_cache', 'readonly');
       const store = transaction.objectStore('rutas_cache');
       const request = store.get(scope);
       request.onsuccess = () => {
         const snapshot = request.result as { items?: T[]; savedAt?: string } | undefined;
-        if (!snapshot?.items || !snapshot.savedAt) {
+        if (!snapshot || !snapshot.items || !snapshot.savedAt) {
           resolve(null);
           return;
         }
         resolve({ items: snapshot.items, savedAt: snapshot.savedAt });
       };
       request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getAssignedWorkOrders(scope?: string): Promise<any[]> {
+    const db = await this.initDb();
+    if (scope && db.objectStoreNames.contains('assigned_snapshots')) {
+      const snapshot = await this.getAssignedSnapshot(scope);
+      if (snapshot?.workOrders && snapshot.workOrders.length > 0) {
+        return snapshot.workOrders;
+      }
+    }
+    // Fallback: extraer órdenes desde rutas_cache si existen
+    if (scope && db.objectStoreNames.contains('rutas_cache')) {
+      const routesData = await this.getRoutesCache<any>(scope);
+      if (routesData?.items) {
+        const extracted: any[] = [];
+        const seenIds = new Set<string>();
+        for (const r of routesData.items) {
+          if (r.ordenesTrabajo && Array.isArray(r.ordenesTrabajo)) {
+            for (const ot of r.ordenesTrabajo) {
+              const id = String(ot.id ?? ot.ordenTrabajoId ?? '');
+              if (id && !seenIds.has(id)) {
+                seenIds.add(id);
+                extracted.push(ot);
+              } else if (!id) {
+                extracted.push(ot);
+              }
+            }
+          } else if (r.paradas && Array.isArray(r.paradas)) {
+            for (const p of r.paradas) {
+              const ot = p.ordenTrabajo ?? p;
+              const id = String(ot.id ?? ot.ordenTrabajoId ?? '');
+              if (id && !seenIds.has(id)) {
+                seenIds.add(id);
+                extracted.push(ot);
+              } else if (!id) {
+                extracted.push(ot);
+              }
+            }
+          }
+        }
+        if (extracted.length > 0) return extracted;
+      }
+    }
+    return [];
+  }
+
+  async clearPendingAnomalies(): Promise<void> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('anomalias_pendientes', 'readwrite');
+      const store = transaction.objectStore('anomalias_pendientes');
+      store.clear();
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
     });
   }
 }

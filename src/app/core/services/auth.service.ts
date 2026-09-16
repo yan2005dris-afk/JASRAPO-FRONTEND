@@ -14,7 +14,6 @@ import {
 import { LoginRequest, LoginResponse, RefreshTokenResponse, User } from '../models/auth.model';
 import { environment } from '../../../environments/environment';
 import { MenuService } from './menu.service';
-import { OperatorSyncService } from './operator-sync.service';
 
 @Injectable({
   providedIn: 'root',
@@ -23,7 +22,6 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly menuService = inject(MenuService);
-  private readonly operatorSyncService = inject(OperatorSyncService);
 
   private readonly API_URL = `${environment.apiUrl}/auth`;
 
@@ -62,7 +60,7 @@ export class AuthService {
   private executeLocalLogout(): void {
     this.clearAuthData();
     this.menuService.clearMenu();
-    this.operatorSyncService.clearInitialSyncFlag();
+    sessionStorage.removeItem('jasrapo_operator_synced');
     this.router.navigate(['/login']);
   }
 
@@ -207,29 +205,56 @@ export class AuthService {
     this.userSignal.set(null);
 
     const keys = ['token', 'sid', 'tokenCreatedAt', 'tokenExpiresAt', 'user'];
-    keys.forEach((key) => localStorage.removeItem(key));
+    keys.forEach((key) => this.removeStorageItem(key));
 
     this.cancelRefreshTimer();
   }
 
+  private getStorageItem(key: string): string | null {
+    if (typeof localStorage === 'undefined' || !localStorage) return null;
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  }
+
+  private setStorageItem(key: string, value: string): void {
+    if (typeof localStorage === 'undefined' || !localStorage) return;
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // Ignorar fallos de cuota o sandbox
+    }
+  }
+
+  private removeStorageItem(key: string): void {
+    if (typeof localStorage === 'undefined' || !localStorage) return;
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // Ignorar fallos de sandbox
+    }
+  }
+
   private getStoredToken(): string | null {
-    return localStorage.getItem('token');
+    return this.getStorageItem('token');
   }
 
   private getStoredSid(): string | null {
-    return localStorage.getItem('sid');
+    return this.getStorageItem('sid');
   }
 
   private getStoredTokenCreatedAt(): string | null {
-    return localStorage.getItem('tokenCreatedAt');
+    return this.getStorageItem('tokenCreatedAt');
   }
 
   private getStoredTokenExpiresAt(): string | null {
-    return localStorage.getItem('tokenExpiresAt');
+    return this.getStorageItem('tokenExpiresAt');
   }
 
   private getStoredUser(): User | null {
-    const userJson = localStorage.getItem('user');
+    const userJson = this.getStorageItem('user');
     if (!userJson) return null;
     try {
       return JSON.parse(userJson);
@@ -243,7 +268,7 @@ export class AuthService {
     if (!current) return;
     const updated: User = { ...current, ...patch };
     this.userSignal.set(updated);
-    localStorage.setItem('user', JSON.stringify(updated));
+    this.setStorageItem('user', JSON.stringify(updated));
   }
 
   /**

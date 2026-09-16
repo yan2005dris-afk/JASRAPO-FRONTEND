@@ -27,6 +27,18 @@ describe('InspeccionFormComponent', () => {
     expect(emitted).toHaveLength(0);
   });
 
+  it('should reset submitted state when a photo is captured after a failed submit', () => {
+    const comp = createComponent();
+
+    comp.submit();
+    expect(comp['submitted']()).toBe(true);
+
+    comp['onPhotoChange'](new Blob(['photo'], { type: 'image/jpeg' }));
+
+    expect(comp['submitted']()).toBe(false);
+    expect(comp.photoPreview()).toBeInstanceOf(Blob);
+  });
+
   it('should emit correct InspeccionFormPayload with foto and hayFugas', () => {
     const comp = createComponent();
     comp.form.patchValue({
@@ -34,7 +46,7 @@ describe('InspeccionFormComponent', () => {
       hayFugas: true,
       observaciones: 'Fuga detectada en la conexión',
     });
-    comp.photoPreview = 'data:image/jpeg;base64,xyz';
+    comp.photoPreview.set(new Blob(['photo'], { type: 'image/jpeg' }));
     const emitted: InspeccionFormPayload[] = [];
     comp.formSubmit.subscribe((v) => emitted.push(v));
     comp.submit();
@@ -43,6 +55,6 @@ describe('InspeccionFormComponent', () => {
     expect(emitted[0].estadoSellos).toBe('AUSENTE');
     expect(emitted[0].hayFugas).toBe(true);
     expect(emitted[0].observaciones).toBe('Fuga detectada en la conexión');
-    expect(emitted[0].fotoBase64).toBe('data:image/jpeg;base64,xyz');
+    expect(emitted[0].fotoBlob).toBeInstanceOf(Blob);
   });
 });

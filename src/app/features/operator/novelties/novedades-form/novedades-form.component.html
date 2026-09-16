@@ -1,7 +1,7 @@
 <div class="form-screen">
   <div class="form-header">
-    <button class="back-btn" type="button" (click)="goBack()">
-      <i class="bi bi-arrow-left"></i>
+    <button type="button" class="back-btn" type="button" (click)="goBack()">
+      <i class="bi bi-arrow-left" aria-hidden="true"></i>
     </button>
     <h1 class="form-title">Reportar Novedad</h1>
   </div>
@@ -28,7 +28,7 @@
         </div>
       } @else if (searchQuery()) {
         <div class="empty-search">
-          <i class="bi bi-search"></i>
+          <i class="bi bi-search" aria-hidden="true"></i>
           <p>Sin resultados para "{{ searchQuery() }}"</p>
         </div>
       }
@@ -37,6 +37,12 @@
     <!-- Selected meter -->
     <div class="selected-section">
       <app-selected-meter-card [meter]="selectedMeter()!" (clear)="clearSelection()" />
+      @if (resolvedOrdenTrabajoId() || presetOrdenTrabajoId(); as otId) {
+        <div class="work-order-badge" role="status">
+          <i class="bi bi-clipboard-check-fill" aria-hidden="true"></i>
+          <span>Orden de Trabajo asignada: #{{ otId }}</span>
+        </div>
+      }
     </div>
 
     <!-- Form -->
@@ -82,7 +88,7 @@
 
       <div class="field">
         <p class="field-label">Evidencia fotográfica <span class="optional">(opcional)</span></p>
-        <app-photo-capture [preview]="photoPreview()" (previewChange)="photoPreview.set($event)" />
+        <app-photo-capture [preview]="photoBlob()" (previewChange)="onPhotoChange($event)" />
       </div>
 
       <div class="form-actions">
@@ -94,7 +100,7 @@
             <span class="spinner" role="status" aria-hidden="true"></span>
             Guardando...
           } @else {
-            <i class="bi bi-exclamation-octagon-fill"></i>
+            <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
             Reportar
           }
         </button>
