@@ -505,6 +505,14 @@ export const routes: Routes = [
         data: { breadcrumb: 'Reportes' },
         children: [
           {
+            path: '',
+            pathMatch: 'full',
+            loadComponent: () =>
+              import('./features/reports/reports-index/reports-index.component').then(
+                (m) => m.ReportsIndexComponent,
+              ),
+          },
+          {
             path: 'consumo-zonas',
             data: { breadcrumb: 'Consumo por Zonas' },
             loadComponent: () =>
