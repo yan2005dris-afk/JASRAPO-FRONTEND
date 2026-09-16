@@ -1,7 +1,12 @@
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
-import type { IContract, IHistorialMedidor } from '../../interfaces/icontract.interface';
+import {
+  getContractCollectionState,
+  getContractServiceState,
+  type IContract,
+  type IHistorialMedidor,
+} from '../../interfaces/icontract.interface';
 
 export type ContractsTableMode = 'manage' | 'select';
 
@@ -51,6 +56,18 @@ export class ContractsTableComponent {
 
   isContractSelected(contract: IContract): boolean {
     return this.selectedContract()?.contratoId === contract.contratoId;
+  }
+
+  canAssignInstallationRoute(contract: IContract): boolean {
+    return getContractServiceState(contract) === 'PENDIENTE_INSTALACION';
+  }
+
+  getServiceState(contract: IContract): string {
+    return getContractServiceState(contract);
+  }
+
+  getCollectionState(contract: IContract): string | undefined {
+    return getContractCollectionState(contract);
   }
 
   onRowClick(contract: IContract): void {

@@ -18,9 +18,12 @@
 .layout-sidebar {
   width: var(--sidebar-width);
   flex-shrink: 0;
-  height: 100%;
-  background-color: var(--white);
-  border-right: 1px solid var(--border-color);
+  height: 100vh;
+  max-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--sidebar-bg);
+  box-shadow: 1px 0 10px rgba(15, 23, 42, 0.04);
   z-index: 1000;
   overflow: hidden;
   box-sizing: border-box;
@@ -52,8 +55,13 @@
 
 .layout-header {
   height: 64px;
+  min-height: 64px;
+  max-height: 64px;
   flex-shrink: 0;
-  background-color: var(--light-bg);
+  box-sizing: border-box;
+  background: var(--topbar-bg, #087a7d);
+  border-bottom: 1px solid var(--topbar-border);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
   z-index: 900;
 }
 
@@ -130,6 +138,15 @@
 .btn-icon:hover {
   background-color: var(--light-bg);
   color: var(--dark-text) !important;
+}
+
+.layout-header .btn-icon {
+  color: #ffffff;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.18);
+    color: #ffffff !important;
+  }
 }
 
 .dropdown {

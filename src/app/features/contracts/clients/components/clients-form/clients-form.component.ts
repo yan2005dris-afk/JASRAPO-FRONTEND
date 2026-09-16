@@ -24,6 +24,10 @@ import {
   IClient,
   IIdentificacion,
 } from '../../interfaces/iclients.interface';
+import { identificacionValidator } from '../../validators/identificacion.validator';
+import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
+
+const EDAD_TERCERA_EDAD = 65;
 
 type TipoMensajeFormulario = 'success' | 'error' | null;
 
@@ -35,7 +39,7 @@ interface BackendErrorResponse {
 
 @Component({
   selector: 'app-clients-form',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, DatePickerComponent],
   templateUrl: './clients-form.component.html',
   styleUrl: './clients-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -77,7 +81,7 @@ export class ClientsFormComponent implements OnInit {
     telefono: ['', [Validators.required, Validators.minLength(7)]],
     telefonoSecundario: [''],
 
-    aplicaTerceraEdad: [false],
+    fechaNacimiento: [''],
     aplicaDiscapacidad: [false],
 
     direccionDomicilio: ['', Validators.required],
@@ -137,7 +141,6 @@ export class ClientsFormComponent implements OnInit {
       telefono: cliente.telefono ?? '',
       telefonoSecundario: cliente.telefonoSecundario ?? '',
 
-      aplicaTerceraEdad: cliente.aplicaTerceraEdad ?? false,
       aplicaDiscapacidad: cliente.aplicaDiscapacidad ?? false,
 
       direccionDomicilio: cliente.direccionDomicilio ?? '',
@@ -175,11 +178,58 @@ export class ClientsFormComponent implements OnInit {
 
   aplicarValidacionesPorTipo(): void {
     this.actualizarValidacionesPersona();
+    this.actualizarValidacionIdentificacion();
 
     this.tipoIdentificacionId?.valueChanges.subscribe(() => {
       this.actualizarValidacionesPersona();
+      this.actualizarValidacionIdentificacion();
       this.cdr.markForCheck();
     });
+  }
+
+  actualizarValidacionIdentificacion(): void {
+    const identificacion = this.clienteForm.get('identificacion');
+    const codigo = this.obtenerTipoIdentificacionSeleccionado()?.codigo ?? '';
+
+    identificacion?.setValidators([
+      Validators.required,
+      Validators.minLength(5),
+      identificacionValidator(codigo),
+    ]);
+    identificacion?.updateValueAndValidity({ emitEvent: false });
+  }
+
+  get esTerceraEdad(): boolean {
+    const valor = this.clienteForm.get('fechaNacimiento')?.value;
+    if (!valor) return false;
+    const fecha = new Date(valor);
+    if (Number.isNaN(fecha.getTime())) return false;
+
+    const hoy = new Date();
+    let edad = hoy.getFullYear() - fecha.getFullYear();
+    const diferenciaMes = hoy.getMonth() - fecha.getMonth();
+    if (diferenciaMes < 0 || (diferenciaMes === 0 && hoy.getDate() < fecha.getDate())) {
+      edad--;
+    }
+    return edad >= EDAD_TERCERA_EDAD;
+  }
+
+  get fechaNacimiento(): string {
+    return this.clienteForm.get('fechaNacimiento')?.value ?? '';
+  }
+
+  onFechaNacimientoChange(fecha: string): void {
+    this.clienteForm.get('fechaNacimiento')?.setValue(fecha);
+  }
+
+  get identificacionInvalida(): boolean {
+    const control = this.clienteForm.get('identificacion');
+    return !!control?.hasError('identificacionInvalida') && (control.dirty || control.touched);
+  }
+
+  get etiquetaTipoIdentificacion(): string {
+    const tipo = this.obtenerTipoIdentificacionSeleccionado();
+    return tipo?.nombre || tipo?.descripcion || 'identificación';
   }
 
   actualizarValidacionesPersona(): void {
@@ -270,6 +320,7 @@ export class ClientsFormComponent implements OnInit {
           'No se pudo crear el cliente. Revise los datos ingresados.',
         );
 
+        this.aplicarErrorBackendAControl(mensajeError);
         this.mostrarMensaje(mensajeError, 'error');
         this.cdr.markForCheck();
       },
@@ -314,6 +365,7 @@ export class ClientsFormComponent implements OnInit {
           'No se pudo actualizar el cliente. Revise los datos ingresados.',
         );
 
+        this.aplicarErrorBackendAControl(mensajeError);
         this.mostrarMensaje(mensajeError, 'error');
         this.cdr.markForCheck();
       },
@@ -336,11 +388,15 @@ export class ClientsFormComponent implements OnInit {
       telefono: String(formValue.telefono).trim(),
       telefonoSecundario: String(formValue.telefonoSecundario ?? '').trim() || null,
 
-      aplicaTerceraEdad: Boolean(formValue.aplicaTerceraEdad),
       aplicaDiscapacidad: Boolean(formValue.aplicaDiscapacidad),
 
       direccionDomicilio: String(formValue.direccionDomicilio).trim(),
     };
+
+    const fechaNacimiento = String(formValue.fechaNacimiento ?? '').trim();
+    if (fechaNacimiento) {
+      cliente.fechaNacimiento = fechaNacimiento;
+    }
 
     if (this.esPersonaJuridica()) {
       cliente.nombres = undefined;
@@ -371,6 +427,14 @@ export class ClientsFormComponent implements OnInit {
   limpiarMensaje(): void {
     this.mensajeFormulario = '';
     this.tipoMensajeFormulario = null;
+  }
+
+  private aplicarErrorBackendAControl(mensaje: string): void {
+    if (mensaje.toLowerCase().includes('identificaci')) {
+      const control = this.clienteForm.get('identificacion');
+      control?.setErrors({ ...(control.errors ?? {}), servidor: mensaje });
+      control?.markAsTouched();
+    }
   }
 
   private obtenerMensajeErrorBackend(err: HttpErrorResponse, mensajePorDefecto: string): string {

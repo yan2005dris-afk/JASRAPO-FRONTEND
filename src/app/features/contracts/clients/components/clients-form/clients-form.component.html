@@ -64,12 +64,25 @@
           id="identificacion"
           type="text"
           class="form-control"
+          [class.is-invalid]="campoInvalido('identificacion')"
           formControlName="identificacion"
           placeholder="Ej. 0923456789"
         />
 
         @if (campoInvalido('identificacion')) {
-          <small class="text-danger">La identificación es obligatoria.</small>
+          @if (clienteForm.get('identificacion')?.hasError('required')) {
+            <small class="text-danger">La identificación es obligatoria.</small>
+          } @else if (clienteForm.get('identificacion')?.hasError('minlength')) {
+            <small class="text-danger">La identificación es demasiado corta.</small>
+          } @else if (clienteForm.get('identificacion')?.hasError('identificacionInvalida')) {
+            <small class="text-danger"
+              >{{ etiquetaTipoIdentificacion }} inválida. Verifique el número ingresado.</small
+            >
+          } @else if (clienteForm.get('identificacion')?.hasError('servidor')) {
+            <small class="text-danger">{{
+              clienteForm.get('identificacion')?.getError('servidor')
+            }}</small>
+          }
         }
       </div>
 
@@ -96,6 +109,20 @@
           @if (campoInvalido('apellidos')) {
             <small class="text-danger">Los apellidos son obligatorios.</small>
           }
+        </div>
+
+        <div class="col-md-6">
+          <label for="fechaNacimiento" class="form-label">Fecha de nacimiento</label>
+
+          <app-date-picker
+            inputId="fechaNacimiento"
+            placeholder="Seleccione la fecha de nacimiento"
+            [value]="fechaNacimiento"
+            [allowPeriodNavigation]="true"
+            (valueChange)="onFechaNacimientoChange($event)"
+          />
+
+          <small class="text-muted">Determina automáticamente el beneficio de tercera edad.</small>
         </div>
       }
 
@@ -170,15 +197,15 @@
       <div class="col-md-6">
         <p class="form-label mb-2">Condiciones especiales</p>
 
-        <div class="form-check mb-2">
-          <input
-            id="aplicaTerceraEdad"
-            type="checkbox"
-            class="form-check-input"
-            formControlName="aplicaTerceraEdad"
-          />
-
-          <label for="aplicaTerceraEdad" class="form-check-label"> Aplica tercera edad </label>
+        <div class="mb-2">
+          <span class="d-block small text-muted mb-1">Tercera edad</span>
+          @if (esTerceraEdad) {
+            <span class="badge bg-warning text-dark">
+              <i class="bi bi-check-circle-fill me-1"></i>Aplica beneficio de tercera edad
+            </span>
+          } @else {
+            <span class="text-muted small">Se calcula desde la fecha de nacimiento</span>
+          }
         </div>
 
         <div class="form-check">

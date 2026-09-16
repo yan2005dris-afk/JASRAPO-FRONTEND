@@ -11,6 +11,12 @@ import {
   ISearchContractsParams,
   IUpdateContractRequest,
 } from '../interfaces/icontract.interface';
+import type { IReadingRoute } from '../../reading-routes/interfaces/ireading-route.interface';
+
+export interface IAssignInstallationRoutePayload {
+  routeId?: number;
+  fechaPlanificada?: string;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -49,8 +55,11 @@ export class ContractsService {
     if (params.ubicacion) {
       httpParams = httpParams.set('ubicacion', params.ubicacion);
     }
-    if (params.estado) {
-      httpParams = httpParams.set('estado', params.estado);
+    if (params.estadoServicio) {
+      httpParams = httpParams.set('estadoServicio', params.estadoServicio);
+    }
+    if (params.estadoCobranza) {
+      httpParams = httpParams.set('estadoCobranza', params.estadoCobranza);
     }
     if (params.hasDebt !== undefined) {
       httpParams = httpParams.set('hasDebt', String(params.hasDebt));
@@ -69,7 +78,7 @@ export class ContractsService {
     return this.http.post<IContract>(this.endpoint, payload);
   }
 
-  /** Actualiza un contrato (estado, dirección, sector, medidor, lectura). */
+  /** Actualiza los datos contractuales y los estados separados administrables. */
   updateContract(id: string, payload: IUpdateContractRequest): Observable<IContract> {
     return this.http.patch<IContract>(`${this.endpoint}/${id}`, payload);
   }
@@ -107,9 +116,9 @@ export class ContractsService {
    */
   assignInstallationRoute(
     contractId: string,
-    payload: { routeId?: number; fechaPlanificada?: string } = {},
-  ): Observable<unknown> {
-    return this.http.post<unknown>(
+    payload: IAssignInstallationRoutePayload = {},
+  ): Observable<IReadingRoute> {
+    return this.http.post<IReadingRoute>(
       `${this.endpoint}/${contractId}/assign-installation-route`,
       payload,
     );

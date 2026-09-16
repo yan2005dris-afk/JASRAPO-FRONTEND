@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
-import { CommonModule, NgOptimizedImage } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import {
@@ -9,10 +9,11 @@ import {
   SearchType,
 } from './bill-inquiry.service';
 import { PlanillaPdfService } from '../consulta-planilla/genera-planilla/planilla-pdf.service';
+import { BrandLogoComponent } from '../../shared/components/brand-logo/brand-logo.component';
 
 @Component({
   selector: 'app-bill-inquiry',
-  imports: [CommonModule, FormsModule, RouterLink, NgOptimizedImage],
+  imports: [CommonModule, FormsModule, RouterLink, BrandLogoComponent],
   templateUrl: './bill-inquiry.component.html',
   styleUrl: './bill-inquiry.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

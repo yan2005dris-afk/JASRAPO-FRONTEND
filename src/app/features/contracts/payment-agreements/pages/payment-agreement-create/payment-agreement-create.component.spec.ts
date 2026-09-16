@@ -27,7 +27,7 @@ describe('PaymentAgreementCreateComponent', () => {
   const dummyContract: IContract = {
     contratoId: '101',
     numeroGuia: 'GUIA-001',
-    estado: 'ACTIVO',
+    estadoServicio: 'ACTIVO',
     clienteId: '1',
     direccionSuministro: 'Calle Principal',
     fechaInicio: '2025-01-01',
