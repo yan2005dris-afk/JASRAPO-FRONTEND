@@ -21,6 +21,7 @@ import {
   IReportEmailRequest,
   ReportStatus,
 } from '../shared/models/report-workspace.model';
+import { ReportEmailAttemptTracker } from '../shared/report-email-attempt-tracker';
 import { ReportWorkspaceComponent } from '../shared/report-workspace/report-workspace.component';
 
 type DatePreset = 'currentYear' | 'currentMonth' | 'lastMonth' | 'last3Months';
@@ -60,6 +61,7 @@ export class ClientsListComponent implements OnInit, OnDestroy {
   private routeSubscription: Subscription | null = null;
   private pdfRequest: Subscription | null = null;
   private pdfRequestId = 0;
+  private readonly emailAttempt = new ReportEmailAttemptTracker();
 
   readonly rangoFechaInvalido = computed(
     () => !!this.fechaDesde() && !!this.fechaHasta() && this.fechaDesde() > this.fechaHasta(),
@@ -205,10 +207,14 @@ export class ClientsListComponent implements OnInit, OnDestroy {
 
   enviarEmail(request: IReportEmailRequest): void {
     const filters = this.buildFilters();
-    const body: ISendClientsListEmailBody = {
+    const requestBody = {
       destinatario: request.destinatario,
       subject: request.subject,
       filtros: filters,
+    };
+    const body: ISendClientsListEmailBody = {
+      ...requestBody,
+      idempotencyKey: this.emailAttempt.keyFor(requestBody),
     };
 
     this.destinatario.set(request.destinatario);
@@ -216,6 +222,7 @@ export class ClientsListComponent implements OnInit, OnDestroy {
     this.isSendingEmail.set(true);
     this.reportsService.sendClientsListEmail(body).subscribe({
       next: () => {
+        this.emailAttempt.clear();
         this.isSendingEmail.set(false);
         this.isEmailModalOpen.set(false);
         this.destinatario.set('');
@@ -246,6 +253,7 @@ export class ClientsListComponent implements OnInit, OnDestroy {
     this.pdfBlob.set(null);
     this.destinatario.set('');
     this.subject.set('');
+    this.emailAttempt.clear();
     this.clearWorkspaceError();
   }
 
@@ -285,6 +293,7 @@ export class ClientsListComponent implements OnInit, OnDestroy {
   }
 
   private clearWorkspaceError(): void {
+    if (this.lastFailedAction() === 'email') this.emailAttempt.clear();
     this.workspaceError.set('');
     this.lastFailedAction.set(null);
   }

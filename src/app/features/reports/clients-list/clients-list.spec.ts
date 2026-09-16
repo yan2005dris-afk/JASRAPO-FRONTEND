@@ -73,6 +73,7 @@ describe('ClientsListComponent', () => {
     };
     expect(reportsService.getClientsListPdf).toHaveBeenCalledWith(expectedFilters);
     expect(reportsService.sendClientsListEmail).toHaveBeenCalledWith({
+      idempotencyKey: expect.any(String),
       destinatario: 'reportes@example.com',
       subject: 'Clientes inactivos',
       filtros: expectedFilters,
@@ -80,6 +81,29 @@ describe('ClientsListComponent', () => {
 
     fixture.componentInstance.actualizarEstado('true');
     expect(fixture.componentInstance.pdfBlob()).toBeNull();
+  });
+
+  it('emailRetryReusesIdempotencyKeyWithoutDuplicatingReport', () => {
+    reportsService.sendClientsListEmail.mockReturnValue(
+      throwError(() => ({ error: { message: 'Respuesta incierta' } })),
+    );
+    const request = {
+      destinatario: 'reportes@example.com',
+      subject: 'Listado de clientes',
+    };
+
+    fixture.componentInstance.enviarEmail(request);
+    const firstBody = reportsService.sendClientsListEmail.mock.calls[0][0];
+    fixture.componentInstance.retryLastAction();
+    fixture.componentInstance.enviarEmail(request);
+    const retryBody = reportsService.sendClientsListEmail.mock.calls[1][0];
+
+    expect(retryBody.idempotencyKey).toBe(firstBody.idempotencyKey);
+
+    fixture.componentInstance.actualizarEstado('false');
+    fixture.componentInstance.enviarEmail(request);
+    const changedContextBody = reportsService.sendClientsListEmail.mock.calls[2][0];
+    expect(changedContextBody.idempotencyKey).not.toBe(firstBody.idempotencyKey);
   });
 
   it('reportScreensUseSharedAsyncStatesWithoutInlineStyles', () => {

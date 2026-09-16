@@ -57,6 +57,7 @@ export interface ISendReportEmailBody {
 
 /** Cuerpo de envío por email del listado de clientes (destinatario obligatorio). */
 export interface ISendClientsListEmailBody {
+  idempotencyKey?: string;
   destinatario: string;
   subject?: string;
   filtros?: IClientsListFilters;

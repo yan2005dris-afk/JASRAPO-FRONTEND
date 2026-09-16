@@ -13,10 +13,12 @@ export function isUnfinishedReportRoute(route: string | undefined): boolean {
 }
 
 export function filterUnavailableReportMenuItems(items: readonly MenuItem[]): MenuItem[] {
-  return items
-    .filter((item) => !isUnfinishedReportRoute(item.route))
-    .map((item) => ({
-      ...item,
-      children: item.children ? filterUnavailableReportMenuItems(item.children) : undefined,
-    }));
+  return items.flatMap((item) => {
+    if (isUnfinishedReportRoute(item.route)) return [];
+
+    const children = filterUnavailableReportMenuItems(item.children ?? []);
+    if (!item.route && children.length === 0) return [];
+
+    return [{ ...item, children: children.length > 0 ? children : undefined }];
+  });
 }
