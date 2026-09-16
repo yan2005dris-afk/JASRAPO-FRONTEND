@@ -1,8 +1,12 @@
 <div
+  #containerRef
   class="jasrapo-mascot-container"
   [class]="'size-' + size()"
   [class.interactive]="interactive()"
   [class.bouncing]="isBouncing()"
+  [class.is-blinking]="isBlinking()"
+  [class.is-wiggling]="isWiggling()"
+  [class.is-curious]="isCurious()"
   (click)="handleClick()"
   (keydown.enter)="handleClick()"
   (keydown.space)="handleClick()"
@@ -10,7 +14,14 @@
   role="img"
   aria-label="Mascota oficial de JASRAPO"
 >
-  <svg viewBox="0 0 800 800" width="100%" height="100%" class="mascot-svg" aria-hidden="true">
+  <svg
+    #svgRef
+    viewBox="0 0 800 800"
+    width="100%"
+    height="100%"
+    class="mascot-svg"
+    aria-hidden="true"
+  >
     <defs>
       <!-- Fondo radial suavizado en la gama Teal/Lagoon institucional de JASRAPO -->
       <radialGradient id="bgGrad" cx="50%" cy="45%" r="65%">
@@ -31,6 +42,14 @@
         <stop offset="0%" stop-color="#0a383e" />
         <stop offset="100%" stop-color="#135a63" />
       </linearGradient>
+
+      <!-- Máscaras de recorte anatómicas para los ojos -->
+      <clipPath id="leftEyeClip">
+        <ellipse cx="316" cy="485" rx="39.5" ry="49.5" />
+      </clipPath>
+      <clipPath id="rightEyeClip">
+        <ellipse cx="484" cy="485" rx="39.5" ry="49.5" />
+      </clipPath>
     </defs>
 
     <!-- Fondo opcional si se requiere marco propio -->
@@ -56,103 +75,133 @@
     </g>
 
     <!-- CONTENEDOR DE LA GOTA (Proporción equilibrada & estilizada) -->
-    <g id="gota" class="mascot-character">
-      <!-- Borde exterior suave en tono Teal Oscuro -->
-      <path
-        d="M 400 114
+    <g class="mascot-float-wrapper">
+      <g id="gota" class="mascot-character">
+        <!-- Borde exterior suave en tono Teal Oscuro -->
+        <path
+          d="M 400 114
            C 422 145 612 360 622 495
            C 632 630 518 720 400 720
            C 282 720 168 630 178 495
            C 188 360 378 145 400 114 Z"
-        fill="none"
-        stroke="#10575e"
-        stroke-width="8"
-        stroke-linejoin="round"
-      />
+          fill="none"
+          stroke="#10575e"
+          stroke-width="8"
+          stroke-linejoin="round"
+        />
 
-      <!-- Cuerpo principal de la gota -->
-      <path
-        d="M 400 119
+        <!-- Cuerpo principal de la gota -->
+        <path
+          d="M 400 119
            C 422 148 607 360 617 495
            C 627 625 514 715 400 715
            C 286 715 173 625 183 495
            C 193 360 378 148 400 119 Z"
-        fill="url(#dropGrad)"
-      />
-
-      <!-- Brillos minimalistas superiores izquierdos en tono foam agua -->
-      <!-- Línea larga -->
-      <path
-        d="M 370 225 C 348 268 326 314 310 348"
-        stroke="#d8f8fa"
-        stroke-width="11"
-        stroke-linecap="round"
-        fill="none"
-      />
-      <!-- Línea media -->
-      <path
-        d="M 302 364 C 295 378 288 392 283 404"
-        stroke="#d8f8fa"
-        stroke-width="10"
-        stroke-linecap="round"
-        fill="none"
-      />
-      <!-- Segmento corto -->
-      <path
-        d="M 277 418 C 273 426 269 433 266 438"
-        stroke="#d8f8fa"
-        stroke-width="9.5"
-        stroke-linecap="round"
-        fill="none"
-      />
-
-      <!-- ==================== ROSTRO ==================== -->
-      <!-- OJO IZQUIERDO -->
-      <g id="ojo-izquierdo">
-        <!-- Esclerótica suave agua -->
-        <ellipse
-          cx="316"
-          cy="485"
-          rx="42"
-          ry="52"
-          fill="#d2f4f6"
-          stroke="#125c64"
-          stroke-width="4.5"
+          fill="url(#dropGrad)"
         />
-        <!-- Pupila -->
-        <ellipse cx="328" cy="486" rx="27" ry="34" fill="url(#eyePupil)" />
-        <!-- Destellos de luz -->
-        <circle cx="336" cy="466" r="12" fill="#ffffff" />
-        <circle cx="317" cy="502" r="5" fill="#ffffff" />
-      </g>
 
-      <!-- OJO DERECHO -->
-      <g id="ojo-derecho">
-        <!-- Esclerótica suave agua -->
-        <ellipse
-          cx="484"
-          cy="485"
-          rx="42"
-          ry="52"
-          fill="#d2f4f6"
-          stroke="#125c64"
-          stroke-width="4.5"
+        <!-- Brillos minimalistas superiores izquierdos en tono foam agua -->
+        <!-- Línea larga -->
+        <path
+          d="M 370 225 C 348 268 326 314 310 348"
+          stroke="#d8f8fa"
+          stroke-width="11"
+          stroke-linecap="round"
+          fill="none"
         />
-        <!-- Pupila -->
-        <ellipse cx="472" cy="486" rx="27" ry="34" fill="url(#eyePupil)" />
-        <!-- Destellos de luz -->
-        <circle cx="464" cy="466" r="12" fill="#ffffff" />
-        <circle cx="483" cy="502" r="5" fill="#ffffff" />
-      </g>
+        <!-- Línea media -->
+        <path
+          d="M 302 364 C 295 378 288 392 283 404"
+          stroke="#d8f8fa"
+          stroke-width="10"
+          stroke-linecap="round"
+          fill="none"
+        />
+        <!-- Segmento corto -->
+        <path
+          d="M 277 418 C 273 426 269 433 266 438"
+          stroke="#d8f8fa"
+          stroke-width="9.5"
+          stroke-linecap="round"
+          fill="none"
+        />
 
-      <!-- BOCA (Sonrisa simple y limpia en Deep Teal) -->
-      <path
-        d="M 365 550 C 378 575 422 575 435 550"
-        fill="none"
-        stroke="#0d4248"
-        stroke-width="9"
-        stroke-linecap="round"
-      />
+        <!-- ==================== ROSTRO ==================== -->
+        <!-- OJO IZQUIERDO -->
+        <g id="ojo-izquierdo" class="mascot-eye-socket eye-left">
+          <!-- Esclerótica suave agua -->
+          <ellipse
+            cx="316"
+            cy="485"
+            rx="42"
+            ry="52"
+            fill="#d2f4f6"
+            stroke="#125c64"
+            stroke-width="4.5"
+          />
+          <!-- Contenedor estático con máscara para recortar la pupila dentro de la cuenca -->
+          <g clip-path="url(#leftEyeClip)">
+            <!-- Pupila y destellos móviles -->
+            <g class="mascot-pupil pupil-left">
+              <ellipse cx="316" cy="485" rx="27" ry="34" fill="url(#eyePupil)" />
+              <!-- Destellos de luz -->
+              <circle cx="324" cy="465" r="12" fill="#ffffff" />
+              <circle cx="305" cy="501" r="5" fill="#ffffff" />
+            </g>
+          </g>
+        </g>
+
+        <!-- OJO DERECHO -->
+        <g id="ojo-derecho" class="mascot-eye-socket eye-right">
+          <!-- Esclerótica suave agua -->
+          <ellipse
+            cx="484"
+            cy="485"
+            rx="42"
+            ry="52"
+            fill="#d2f4f6"
+            stroke="#125c64"
+            stroke-width="4.5"
+          />
+          <!-- Contenedor estático con máscara para recortar la pupila dentro de la cuenca -->
+          <g clip-path="url(#rightEyeClip)">
+            <!-- Pupila y destellos móviles -->
+            <g class="mascot-pupil pupil-right">
+              <ellipse cx="484" cy="485" rx="27" ry="34" fill="url(#eyePupil)" />
+              <!-- Destellos de luz -->
+              <circle cx="476" cy="465" r="12" fill="#ffffff" />
+              <circle cx="495" cy="501" r="5" fill="#ffffff" />
+            </g>
+          </g>
+        </g>
+
+
+        <!-- BOCAS -->
+        <!-- Boca normal (Sonrisa simple y limpia) -->
+        <path
+          class="mascot-mouth mouth-normal"
+          d="M 365 550 C 378 575 422 575 435 550"
+          fill="none"
+          stroke="#0d4248"
+          stroke-width="9"
+          stroke-linecap="round"
+        />
+        <!-- Boca abierta alegre (Se muestra en click / salto) -->
+        <path
+          class="mascot-mouth mouth-happy"
+          d="M 362 546 C 376 578 424 578 438 546 C 426 564 374 564 362 546 Z"
+          fill="#0d4248"
+        />
+      </g>
+    </g>
+
+    <!-- PARTÍCULAS SPLASH DE AGUA AL HACER CLIC -->
+    <g class="click-splash-particles" aria-hidden="true">
+      <circle cx="400" cy="90" r="9" class="splash-drop drop-top" />
+      <circle cx="640" cy="450" r="11" class="splash-drop drop-right-top" />
+      <circle cx="620" cy="620" r="10" class="splash-drop drop-right-bot" />
+      <circle cx="160" cy="450" r="11" class="splash-drop drop-left-top" />
+      <circle cx="180" cy="620" r="10" class="splash-drop drop-left-bot" />
     </g>
   </svg>
 </div>

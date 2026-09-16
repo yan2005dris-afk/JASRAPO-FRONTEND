@@ -147,7 +147,7 @@
                   (click)="showPassword.set(!showPassword())"
                   [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Ver contraseña'"
                 >
-                  <i class="bi" [ngClass]="showPassword() ? 'bi-eye-slash' : 'bi-eye'"></i>
+                  <i class="bi" [ngClass]="showPassword() ? 'bi-eye' : 'bi-eye-slash'"></i>
                 </button>
               </div>
 
@@ -255,7 +255,7 @@
                     showPasswordConfirm() ? 'Ocultar contraseña' : 'Ver contraseña'
                   "
                 >
-                  <i class="bi" [ngClass]="showPasswordConfirm() ? 'bi-eye-slash' : 'bi-eye'"></i>
+                  <i class="bi" [ngClass]="showPasswordConfirm() ? 'bi-eye' : 'bi-eye-slash'"></i>
                 </button>
               </div>
               @if (form.touched && form.errors?.['mismatch']) {

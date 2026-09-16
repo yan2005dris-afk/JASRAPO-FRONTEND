@@ -8,16 +8,15 @@
   justify-content: center;
   position: relative;
   user-select: none;
-  transition: transform 0.25s ease;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 
   &.interactive {
     cursor: pointer;
     &:hover .mascot-character {
-      filter: brightness(1.05) drop-shadow(0 10px 24px rgba(78, 230, 233, 0.35));
+      filter: brightness(1.05) drop-shadow(0 12px 28px rgba(78, 230, 233, 0.45));
     }
   }
 
-  /* Responsive Sizes */
   &.size-sm {
     width: 120px;
     height: 120px;
@@ -43,24 +42,194 @@
   display: block;
 }
 
-/* Character Idle Floating Animation (Smooth 60fps) */
-.mascot-character {
-  animation: mascotFloat 3.8s ease-in-out infinite;
-  transform-origin: 400px 415px;
-  transition: filter 0.3s ease;
+.mascot-float-wrapper {
+  animation: mascotFloat 4s ease-in-out infinite;
+  transform-origin: 400px 520px;
 }
 
 @keyframes mascotFloat {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translateY(0) scale(1, 1);
+  }
+  25% {
+    transform: translateY(-4px) scale(1.015, 0.985);
   }
   50% {
-    transform: translateY(-12px);
+    transform: translateY(-13px) scale(0.985, 1.02);
+  }
+  75% {
+    transform: translateY(-5px) scale(1.01, 0.99);
   }
 }
 
-/* Ambient Floating Bubbles */
+.mascot-character {
+  transform-origin: 400px 520px;
+  transform: rotate(var(--mascot-tilt, 0deg));
+  transition:
+    transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+    filter 0.3s ease;
+  will-change: transform;
+}
+
+.interactive:hover:not(.bouncing) .mascot-character {
+  animation: waterRipple 2.4s ease-in-out infinite;
+}
+
+@keyframes waterRipple {
+  0%,
+  100% {
+    transform: rotate(var(--mascot-tilt, 0deg)) scale(1, 1);
+  }
+  35% {
+    transform: rotate(var(--mascot-tilt, 0deg)) scale(1.02, 0.98);
+  }
+  70% {
+    transform: rotate(var(--mascot-tilt, 0deg)) scale(0.985, 1.015);
+  }
+}
+
+.is-curious .mascot-character {
+  transform: rotate(var(--mascot-tilt, 0deg)) scale(0.99, 1.01);
+}
+
+.mascot-eye-socket {
+  transform-box: fill-box;
+  transform-origin: center center;
+  transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mascot-pupil {
+  will-change: transform;
+}
+
+.pupil-left {
+  transform: translate(var(--pupil-lx, 0px), var(--pupil-ly, 0px));
+}
+
+.pupil-right {
+  transform: translate(var(--pupil-rx, 0px), var(--pupil-ry, 0px));
+}
+
+
+.is-blinking .mascot-eye-socket {
+  transform: scaleY(0.06) !important;
+}
+
+.mascot-mouth {
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  transform-origin: 400px 550px;
+}
+
+.mouth-normal {
+  opacity: 1;
+}
+.mouth-happy {
+  opacity: 0;
+}
+.bouncing .mouth-normal {
+  opacity: 0;
+}
+.bouncing .mouth-happy {
+  opacity: 1;
+}
+
+.is-wiggling .mascot-character {
+  animation: mascotWiggle 0.65s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes mascotWiggle {
+  0%,
+  100% {
+    transform: rotate(var(--mascot-tilt, 0deg)) scale(1, 1);
+  }
+  20% {
+    transform: rotate(calc(var(--mascot-tilt, 0deg) - 3deg)) scale(1.07, 0.93);
+  }
+  40% {
+    transform: rotate(calc(var(--mascot-tilt, 0deg) + 2.5deg)) scale(0.94, 1.06);
+  }
+  65% {
+    transform: rotate(calc(var(--mascot-tilt, 0deg) - 1.5deg)) scale(1.03, 0.98);
+  }
+  85% {
+    transform: rotate(calc(var(--mascot-tilt, 0deg) + 0.8deg)) scale(0.99, 1.01);
+  }
+}
+
+.bouncing .mascot-character {
+  animation: mascotBounce 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+
+@keyframes mascotBounce {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.15, 0.84) translateY(8px);
+  }
+  50% {
+    transform: translateY(-32px) scale(0.9, 1.14);
+  }
+  75% {
+    transform: translateY(2px) scale(1.05, 0.96);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.click-splash-particles {
+  pointer-events: none;
+
+  .splash-drop {
+    fill: #58d9de;
+    opacity: 0;
+    transform-origin: center;
+  }
+}
+
+.bouncing .click-splash-particles .splash-drop {
+  animation: splashBurst 0.68s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes splashBurst {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.2);
+  }
+  40% {
+    opacity: 0.95;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.4) translate(var(--splash-x, 0px), var(--splash-y, 0px));
+  }
+}
+
+.drop-top {
+  --splash-x: 0;
+  --splash-y: -35px;
+}
+.drop-right-top {
+  --splash-x: 32px;
+  --splash-y: -22px;
+}
+.drop-right-bot {
+  --splash-x: 28px;
+  --splash-y: 20px;
+}
+.drop-left-top {
+  --splash-x: -32px;
+  --splash-y: -22px;
+}
+.drop-left-bot {
+  --splash-x: -28px;
+  --splash-y: 20px;
+}
+
 .ambient-bubbles circle {
   animation: bubbleDrift 4s ease-in-out infinite;
   transform-origin: center;
@@ -92,25 +261,19 @@
   }
 }
 
-/* Interactive Click Bounce */
-.bouncing .mascot-character {
-  animation: mascotBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-}
+@media (prefers-reduced-motion: reduce) {
+  .mascot-float-wrapper,
+  .ambient-bubbles circle,
+  .interactive:hover .mascot-character,
+  .is-wiggling .mascot-character,
+  .bouncing .mascot-character,
+  .bouncing .click-splash-particles .splash-drop {
+    animation: none !important;
+  }
 
-@keyframes mascotBounce {
-  0% {
-    transform: scale(1);
-  }
-  35% {
-    transform: scale(1.08, 0.94);
-  }
-  55% {
-    transform: translateY(-20px) scale(0.95, 1.06);
-  }
-  75% {
-    transform: translateY(0) scale(1.03, 0.98);
-  }
-  100% {
-    transform: scale(1);
+  .mascot-character,
+  .mascot-eye-socket,
+  .mascot-pupil {
+    transition: none !important;
   }
 }

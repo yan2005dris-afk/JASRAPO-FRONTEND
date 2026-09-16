@@ -1,5 +1,5 @@
-<nav class="h-100 d-flex flex-column">
-  <div class="sidebar-brand d-flex align-items-center">
+<nav class="h-100 d-flex flex-column overflow-hidden">
+  <div class="sidebar-brand d-flex align-items-center flex-shrink-0">
     <app-brand-logo
       size="sm"
       [showText]="true"
@@ -9,7 +9,7 @@
   </div>
 
   @if (layoutService.sidebarOpen()) {
-    <div class="sidebar-search px-3 pt-2 pb-2">
+    <div class="sidebar-search px-3 pt-2 pb-2 flex-shrink-0">
       <div class="input-group input-group-sm">
         <span class="input-group-text border-end-0">
           <i class="bi bi-search"></i>
@@ -36,7 +36,7 @@
       </div>
     </div>
   } @else {
-    <div class="d-flex justify-content-center pt-2 pb-2">
+    <div class="d-flex justify-content-center pt-2 pb-2 flex-shrink-0">
       <button
         type="button"
         class="btn btn-link sidebar-search-icon"
@@ -51,7 +51,7 @@
     </div>
   }
 
-  <div class="sidebar-nav grow overflow-auto">
+  <div class="sidebar-nav flex-grow-1 overflow-y-auto overflow-x-hidden">
     <ul class="nav flex-column mb-auto">
       @for (item of filteredMenuItems(); track item.id) {
         <li class="nav-item">

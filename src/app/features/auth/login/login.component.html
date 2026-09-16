@@ -93,16 +93,16 @@
               class="form-control form-control-modern"
               formControlName="email"
               placeholder="admin@jasrapo.com"
-              [ngClass]="{ 'is-invalid': submitted() && f['email'].errors }"
+              [ngClass]="{ 'is-invalid': submitted() && f.email.errors }"
               autocomplete="username"
             />
           </div>
-          @if (submitted() && f['email'].errors) {
+          @if (submitted() && f.email.errors) {
             <div class="invalid-feedback d-block mt-1">
-              @if (f['email'].errors['required']) {
+              @if (f.email.errors['required']) {
                 <div>El usuario es requerido</div>
               }
-              @if (f['email'].errors['email']) {
+              @if (f.email.errors['email']) {
                 <div>Debe ser un correo válido</div>
               }
             </div>
@@ -117,23 +117,42 @@
             </label>
           </div>
           <div class="input-icon-wrapper">
-            <i class="bi bi-lock input-icon"></i>
+            <i class="bi bi-lock input-icon" aria-hidden="true"></i>
             <input
-              type="password"
+              [type]="showPassword() ? 'text' : 'password'"
               id="password"
-              class="form-control form-control-modern"
+              class="form-control form-control-modern has-toggle"
               formControlName="password"
               placeholder="••••••••"
-              [ngClass]="{ 'is-invalid': submitted() && f['password'].errors }"
+              [ngClass]="{ 'is-invalid': submitted() && f.password.errors }"
               autocomplete="current-password"
             />
+            <button
+              type="button"
+              class="password-toggle-btn"
+              [class.active]="showPassword()"
+              (click)="togglePasswordVisibility()"
+              [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Ver contraseña'"
+              [attr.aria-pressed]="showPassword()"
+              aria-controls="password"
+              [title]="showPassword() ? 'Contraseña visible (clic para ocultar)' : 'Contraseña oculta (clic para ver)'"
+            >
+              <i
+                class="bi"
+                [ngClass]="showPassword() ? 'bi-eye' : 'bi-eye-slash'"
+                aria-hidden="true"
+              ></i>
+              <span class="visually-hidden" aria-live="polite">
+                {{ showPassword() ? 'Contraseña visible en pantalla' : 'Contraseña protegida y oculta' }}
+              </span>
+            </button>
           </div>
-          @if (submitted() && f['password'].errors) {
+          @if (submitted() && f.password.errors) {
             <div class="invalid-feedback d-block mt-1">
-              @if (f['password'].errors['required']) {
+              @if (f.password.errors['required']) {
                 <div>La contraseña es requerida</div>
               }
-              @if (f['password'].errors['minlength']) {
+              @if (f.password.errors['minlength']) {
                 <div>Mínimo 6 caracteres</div>
               }
             </div>

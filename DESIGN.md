@@ -282,7 +282,7 @@ Borders are 1px `shoreline` except table headers, which use a 2px bottom border.
 
 - **Design:** Vector SVG extraction of the water droplet character (`/assets/images/error_mascot.jpg`).
 - **Sizes:** `sm` (100px), `md` (170px), `lg` (250px), `hero` (320px).
-- **Features:** Plump water droplet body, stubby feet with ground shadow, large expressive eyes with double white sparkle reflection, rosy cheeks, thumbs-up gesture, floating ambient bubbles, eye blinking and click bounce animation.
+- **Features:** Plump water droplet body, fluid surface-tension physics, large expressive eyes with double white sparkle reflection, floating ambient bubbles, eye blinking, water wobble, and click splash bounce animation.
 - **Unboxed Integration:** Transparent background without boxy card borders, integrating naturally into atmospheric layouts.
 
 ### Empty States
