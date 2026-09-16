@@ -224,7 +224,10 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     if (this.isLoadingData() || this.isLoadingPdf()) return 'loading';
     if (this.workspaceError()) return 'error';
     if (!this.reportData()) return 'empty';
-    if (this.activeView() === 'table' && this.resultRows().length === 0) {
+    // El estado vacío del workspace se basa en el universo del backend (morosos),
+    // no en la búsqueda local de la tabla: filtrar sin coincidencias no debe
+    // ocultar los totales ni marcar el reporte como vacío.
+    if (this.activeView() === 'table' && this.morosos().length === 0) {
       return 'empty';
     }
     return 'idle';

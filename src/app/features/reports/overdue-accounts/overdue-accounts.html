@@ -141,6 +141,10 @@
           [columns]="resultColumns"
           [rows]="resultRows()"
         />
+      } @else if (searchTermTable().trim()) {
+        <p class="results-empty" role="status">
+          No hay coincidencias para «{{ searchTermTable() }}» en las cuentas en mora.
+        </p>
       } @else {
         <p class="results-empty" role="status">
           No se encontraron cuentas en mora para el contexto seleccionado.

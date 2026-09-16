@@ -160,4 +160,15 @@ describe('OverdueAccountsComponent', () => {
     clickSpy.mockRestore();
     vi.unstubAllGlobals();
   });
+
+  it('collectionDelinquencyTableSearchDoesNotEmptyWorkspace', () => {
+    component.consultar();
+    // Búsqueda local sin coincidencias: la tabla queda vacía…
+    component.searchTermTable.set('zzz-sin-coincidencias');
+
+    expect(component.resultRows()).toHaveLength(0);
+    // …pero el workspace NO se marca como vacío (el backend sí trajo filas y KPIs).
+    expect(component.workspaceStatus()).toBe('idle');
+    expect(component.totalMorosidad()).toBe('1234.56');
+  });
 });
