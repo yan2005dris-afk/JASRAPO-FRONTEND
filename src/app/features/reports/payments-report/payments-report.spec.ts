@@ -126,4 +126,23 @@ describe('PaymentsReportComponent', () => {
     expect(fixture.componentInstance.activeView()).toBe('table');
     expect(fixture.componentInstance.isLoadingPdf()).toBe(false);
   });
+
+  it('reuses the idempotency key when an email attempt is retried', () => {
+    reportsService.sendPaymentsReportEmail.mockReturnValue(
+      throwError(() => ({ error: { message: 'Respuesta incierta' } })),
+    );
+    fixture.componentInstance.clienteId.set('42');
+    const request = {
+      destinatario: 'reportes@example.com',
+      subject: 'Reporte de abonos',
+    };
+
+    fixture.componentInstance.enviarEmail(request);
+    const firstBody = reportsService.sendPaymentsReportEmail.mock.calls[0][0];
+    fixture.componentInstance.retryLastAction();
+    fixture.componentInstance.enviarEmail(request);
+    const retryBody = reportsService.sendPaymentsReportEmail.mock.calls[1][0];
+
+    expect(retryBody.idempotencyKey).toBe(firstBody.idempotencyKey);
+  });
 });

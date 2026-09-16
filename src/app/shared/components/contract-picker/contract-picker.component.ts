@@ -22,6 +22,7 @@ import {
   type IContract,
   type ISearchContractsParams,
 } from '../../../features/contracts/service-contracts/interfaces/icontract.interface';
+import { resolveClientDisplayName } from '../../utils/client-display-name';
 
 @Component({
   selector: 'app-contract-picker',
@@ -73,10 +74,7 @@ export class ContractPickerComponent {
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   static formatClientName(cliente: IContract['cliente']): string {
-    if (cliente.razonSocial) {
-      return cliente.razonSocial;
-    }
-    return `${cliente.nombres} ${cliente.apellidos}`.trim();
+    return resolveClientDisplayName(cliente);
   }
 
   formatClientName(cliente: IContract['cliente']): string {
