@@ -16,6 +16,7 @@ export interface IReadingRowItem {
   lecturaActual?: number;
   consumoCalculado?: number;
   estado: string;
+  routeEstado?: string | null;
   tieneAnomalia?: boolean;
 }
 

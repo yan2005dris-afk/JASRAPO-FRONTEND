@@ -285,6 +285,7 @@ export class ReadingRouteDetailComponent implements OnInit {
             lecturaActual: r.lecturaActual,
             consumoCalculado: r.consumoCalculado,
             estado: r.estadoLectura ?? 'PENDIENTE',
+            routeEstado: this.readingRoute()?.estado,
           }));
           this.readings.set(rows);
           this.totalReadings.set(res.meta?.totalItems ?? res.data.length);
@@ -513,7 +514,7 @@ export class ReadingRouteDetailComponent implements OnInit {
 
   // Route status transitions
   async updateRouteStatus(
-    nuevoEstado: 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA',
+    nuevoEstado: 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'PARCIAL' | 'CANCELADA',
   ): Promise<void> {
     const route = this.readingRoute();
     if (!route) return;
@@ -636,6 +637,7 @@ export class ReadingRouteDetailComponent implements OnInit {
           periodoId: 0,
           tieneAnomalia: reading.tieneAnomalia ?? false,
           estado: reading.estado,
+          routeEstado: this.readingRoute()?.estado,
           contrato: reading.clienteNombre
             ? {
                 contratoId: String(reading.contratoId ?? ''),
@@ -663,6 +665,7 @@ export class ReadingRouteDetailComponent implements OnInit {
   }
 
   onEditLectura(reading: ReadingSource): void {
+    if (this.readingRoute()?.estado !== 'EN_PROGRESO') return;
     this.openDropdownId.set(null);
     this.selectedReadingForDetail.set(null);
     this.readingsService.getReadingById(String(reading.lecturaId)).subscribe({
@@ -676,6 +679,7 @@ export class ReadingRouteDetailComponent implements OnInit {
   }
 
   onEditLecturaFromDetail(reading: IReading): void {
+    if (this.readingRoute()?.estado !== 'EN_PROGRESO') return;
     this.selectedReadingForDetail.set(null);
     this.selectedReadingForEdit.set(reading);
     this.isFormModalOpen.set(true);

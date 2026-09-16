@@ -65,6 +65,28 @@ describe('ReadingsTableComponent', () => {
       expect(spy).toHaveBeenCalledWith(validReading);
     });
 
+    it('should hide edit and validation actions outside an in-progress route', () => {
+      fixture.componentRef.setInput('readings', [validReading]);
+      fixture.componentRef.setInput('allowEditing', true);
+      fixture.componentRef.setInput('allowValidation', true);
+      fixture.componentRef.setInput('openDropdownId', '1');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).not.toContain('Editar Lectura');
+      expect(fixture.nativeElement.textContent).not.toContain('Aprobar Lectura');
+    });
+
+    it('should show edit and validation actions for an in-progress route', () => {
+      fixture.componentRef.setInput('readings', [{ ...validReading, routeEstado: 'EN_PROGRESO' }]);
+      fixture.componentRef.setInput('allowEditing', true);
+      fixture.componentRef.setInput('allowValidation', true);
+      fixture.componentRef.setInput('openDropdownId', '1');
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.textContent).toContain('Editar Lectura');
+      expect(fixture.nativeElement.textContent).toContain('Aprobar Lectura');
+    });
+
     it('should emit approveReading when reading is approved', () => {
       const spy = vi.fn();
       component.approveReading.subscribe(spy);

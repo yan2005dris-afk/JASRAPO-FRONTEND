@@ -60,6 +60,18 @@
             Marcar como Completada
           </button>
         }
+        @if (route.estado === 'PARCIAL') {
+          <button
+            type="button"
+            class="btn btn-sm btn-warning d-flex align-items-center gap-1 shadow-sm"
+            (click)="updateRouteStatus('EN_PROGRESO')"
+            [disabled]="isChangingStatus() || !route.operarioId"
+            [title]="!route.operarioId ? 'Debe asignar un operario antes de reanudar la ruta' : ''"
+          >
+            <i class="bi bi-play-circle-fill"></i>
+            Reanudar Ruta
+          </button>
+        }
         @if (
           route.estado !== 'CANCELADA' &&
           route.estado !== 'COMPLETADA' &&
@@ -488,6 +500,7 @@
   @if (selectedReadingForDetail(); as detail) {
     <app-reading-detail-modal
       [reading]="detail"
+      [allowEditing]="readingRoute()?.estado === 'EN_PROGRESO'"
       (editRequested)="onEditLecturaFromDetail($event)"
       (closed)="onCloseReadingDetail()"
     />

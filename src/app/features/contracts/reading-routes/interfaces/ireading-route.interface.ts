@@ -23,7 +23,7 @@ export interface IReadingRoute {
   comunidadId: number;
   sectorId?: number | null;
   periodoId: number | null;
-  estado: string;
+  estado: 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'PARCIAL' | 'CANCELADA' | string;
   fechaPlanificada?: string | null;
   fechaInicio?: string | null;
   fechaFin?: string | null;

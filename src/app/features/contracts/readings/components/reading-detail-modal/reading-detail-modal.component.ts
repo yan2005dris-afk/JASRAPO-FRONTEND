@@ -17,8 +17,13 @@ import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
 })
 export class ReadingDetailModalComponent {
   readonly reading = input.required<IReading>();
+  readonly allowEditing = input(false);
   readonly closed = output<void>();
   readonly editRequested = output<IReading>();
+
+  requestEdit(): void {
+    if (this.allowEditing()) this.editRequested.emit(this.reading());
+  }
 
   close(): void {
     this.closed.emit();

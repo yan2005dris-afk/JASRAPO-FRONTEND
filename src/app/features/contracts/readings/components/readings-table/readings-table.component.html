@@ -116,6 +116,7 @@
                     </li>
                     @if (
                       allowEditing() &&
+                      r.routeEstado === 'EN_PROGRESO' &&
                       (r.estado === 'PENDIENTE' ||
                         r.estado === 'POR_REVISION' ||
                         r.estado === 'EN_REVISION')
@@ -130,6 +131,7 @@
                       </li>
                       @if (
                         allowValidation() &&
+                        r.routeEstado === 'EN_PROGRESO' &&
                         (r.estado === 'POR_REVISION' ||
                           r.estado === 'EN_REVISION' ||
                           r.estado === 'PENDIENTE')
