@@ -4,7 +4,6 @@ import { Observable, map } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { MenuItem } from '../models/menu.model';
 import { environment } from '../../../environments/environment';
-import { filterUnavailableReportMenuItems } from '../constants/report-route-availability';
 
 @Injectable({
   providedIn: 'root',
@@ -38,7 +37,7 @@ export class MenuService {
    * Asegura que todas las rutas del menú comiencen con el prefijo /app
    */
   private formatRoutes(items: MenuItem[]): MenuItem[] {
-    const formattedItems = items.map((item) => {
+    return items.map((item) => {
       const formattedItem = { ...item };
 
       if (formattedItem.route && !formattedItem.route.startsWith('/app')) {
@@ -52,8 +51,6 @@ export class MenuService {
 
       return formattedItem;
     });
-
-    return filterUnavailableReportMenuItems(formattedItems);
   }
 
   /**
