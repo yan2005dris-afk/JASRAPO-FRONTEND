@@ -16,6 +16,7 @@ import {
   IContractState,
   ICreateContractRequest,
   IUpdateContractRequest,
+  getContractServiceState,
 } from '../../interfaces/icontract.interface';
 import { ClientsComponent } from '../../../clients/clients.component';
 import { TariffsComponent } from '../../../tariffs/tariffs.component';
@@ -85,7 +86,7 @@ export class ServiceContractFormComponent implements OnInit {
     numeroGuia: ['', [Validators.required, Validators.maxLength(15)]],
     direccionSuministro: ['', [Validators.required, Validators.maxLength(200)]],
     lecturaInicial: ['0', [Validators.required, Validators.pattern(/^\d{1,10}$/)]],
-    estado: [''],
+    estadoServicio: [''],
   });
 
   ngOnInit(): void {
@@ -100,7 +101,7 @@ export class ServiceContractFormComponent implements OnInit {
     this.form.patchValue({
       numeroGuia: contract.numeroGuia,
       direccionSuministro: contract.direccionSuministro,
-      estado: contract.estado,
+      estadoServicio: getContractServiceState(contract),
     });
 
     // Cliente, tarifa y comunidad (vienen anidados en el contrato)
@@ -355,7 +356,7 @@ export class ServiceContractFormComponent implements OnInit {
     const value = this.form.value;
     // Solo se actualizan datos contractuales. El medidor se gestiona por POST /meters/replace.
     const payload: IUpdateContractRequest = {
-      estado: value.estado,
+      ...(value.estadoServicio ? { estadoServicio: value.estadoServicio } : {}),
       direccionSuministro: value.direccionSuministro,
       clienteId: String(clientId),
       comunidadId: String(comunidad.id),
