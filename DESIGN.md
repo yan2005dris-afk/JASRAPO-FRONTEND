@@ -280,7 +280,7 @@ Borders are 1px `shoreline` except table headers, which use a 2px bottom border.
 
 ### Jasrapo Official Mascot (`<app-jasrapo-mascot>`)
 
-- **Design:** Vector SVG extraction of the water droplet character (`/assets/images/error_mascot.jpg`).
+- **Design:** Reusable inline SVG component representing the JASRAPO water droplet character.
 - **Sizes:** `sm` (100px), `md` (170px), `lg` (250px), `hero` (320px).
 - **Features:** Plump water droplet body, fluid surface-tension physics, large expressive eyes with double white sparkle reflection, floating ambient bubbles, eye blinking, water wobble, and click splash bounce animation.
 - **Unboxed Integration:** Transparent background without boxy card borders, integrating naturally into atmospheric layouts.
