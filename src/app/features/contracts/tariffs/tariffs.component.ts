@@ -4,7 +4,6 @@ import {
   computed,
   inject,
   input,
-  OnDestroy,
   OnInit,
   output,
   signal,
@@ -31,9 +30,6 @@ import {
   DropdownItem,
 } from '../../../shared/components/dropdown/dropdown.component';
 
-/** Espera tras la última tecla antes de consultar el backend. */
-const SEARCH_DEBOUNCE_MS = 400;
-
 /** Tamaño de página al descargar el listado completo: el backend topa `limit` en 50. */
 const EXPORT_PAGE_SIZE = 50;
 
@@ -56,7 +52,7 @@ const EXPORT_PAGE_SIZE = 50;
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class TariffsComponent implements OnInit, OnDestroy {
+export class TariffsComponent implements OnInit {
   private readonly tariffsService = inject(TariffsService);
   private readonly rubrosService = inject(RubrosService);
   private readonly toast = inject(ToastService);
@@ -93,6 +89,7 @@ export class TariffsComponent implements OnInit, OnDestroy {
   readonly isLoading = signal(false);
   readonly totalItems = signal(0);
   readonly searchTerm = signal('');
+  readonly appliedSearchTerm = signal('');
   readonly isModalOpen = signal(false);
   readonly selectedTariff = signal<ITariffCategory | null>(null);
   readonly openDropdownId = signal<number | null>(null);
@@ -140,21 +137,14 @@ export class TariffsComponent implements OnInit, OnDestroy {
   readonly pageSize = signal(10);
   readonly currentPage = signal(1);
 
-  private searchTimer: ReturnType<typeof setTimeout> | null = null;
-
   ngOnInit(): void {
     this.loadTariffs();
   }
 
-  ngOnDestroy(): void {
-    this.clearSearchTimer();
-  }
-
   loadTariffs(): void {
-    this.clearSearchTimer();
     this.isLoading.set(true);
 
-    const term = this.searchTerm().trim();
+    const term = this.appliedSearchTerm().trim();
 
     this.tariffsService
       .getTariffs({
@@ -180,18 +170,12 @@ export class TariffsComponent implements OnInit, OnDestroy {
 
   onSearchTermChange(term: string): void {
     this.searchTerm.set(term);
-    this.clearSearchTimer();
-    this.searchTimer = setTimeout(() => {
-      this.currentPage.set(1);
-      this.loadTariffs();
-    }, SEARCH_DEBOUNCE_MS);
   }
 
-  private clearSearchTimer(): void {
-    if (this.searchTimer) {
-      clearTimeout(this.searchTimer);
-      this.searchTimer = null;
-    }
+  applySearch(): void {
+    this.appliedSearchTerm.set(this.searchTerm().trim());
+    this.currentPage.set(1);
+    this.loadTariffs();
   }
 
   openCreateModal(): void {
@@ -201,6 +185,7 @@ export class TariffsComponent implements OnInit, OnDestroy {
 
   clearFilters(): void {
     this.searchTerm.set('');
+    this.appliedSearchTerm.set('');
     this.currentPage.set(1);
     this.loadTariffs();
   }
@@ -397,7 +382,7 @@ export class TariffsComponent implements OnInit, OnDestroy {
    * coincidan con la búsqueda activa para exportar el listado completo.
    */
   private fetchAllTariffs(): Observable<ITariffCategory[]> {
-    const search = this.searchTerm().trim() || undefined;
+    const search = this.appliedSearchTerm().trim() || undefined;
     const limit = EXPORT_PAGE_SIZE;
 
     return this.tariffsService.getTariffs({ page: 1, limit, search }).pipe(

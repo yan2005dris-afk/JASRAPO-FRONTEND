@@ -31,8 +31,6 @@ describe('TariffsComponent', () => {
     tariffsServiceSpy.getTariffs.mock.calls[tariffsServiceSpy.getTariffs.mock.calls.length - 1][0];
 
   beforeEach(async () => {
-    vi.useFakeTimers();
-
     tariffsServiceSpy = { getTariffs: vi.fn().mockReturnValue(of(page(3, 3))) };
     toastSpy = { show: vi.fn() };
     exportSpy = { exportToPdf: vi.fn(), exportToExcel: vi.fn(), exportToCsv: vi.fn() };
@@ -56,10 +54,6 @@ describe('TariffsComponent', () => {
     fixture.detectChanges();
   });
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   it('should create', () => {
     expect(component).toBeTruthy();
   });
@@ -78,31 +72,53 @@ describe('TariffsComponent', () => {
     expect(component.totalItems()).toBe(42);
   });
 
-  it('espera al debounce antes de buscar en el backend', () => {
+  it('no consulta mientras se escribe el término de búsqueda', () => {
     component.onSearchTermChange('comercial');
 
     expect(tariffsServiceSpy.getTariffs).toHaveBeenCalledTimes(1);
+    expect(component.searchTerm()).toBe('comercial');
+    expect(component.appliedSearchTerm()).toBe('');
+  });
 
-    vi.advanceTimersByTime(400);
+  it('consulta una sola vez al aplicar la búsqueda', () => {
+    component.onSearchTermChange(' comercial ');
+    component.applySearch();
+
+    expect(tariffsServiceSpy.getTariffs).toHaveBeenCalledTimes(2);
+    expect(lastQuery().search).toBe('comercial');
+    expect(component.appliedSearchTerm()).toBe('comercial');
+  });
+
+  it('consulta al presionar Enter en el campo de búsqueda', () => {
+    const input = fixture.nativeElement.querySelector(
+      'input[aria-label="Buscar tarifas por nombre o descripción"]',
+    ) as HTMLInputElement;
+    input.value = 'comercial';
+    input.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    input.dispatchEvent(new KeyboardEvent('keyup', { key: 'Enter' }));
 
     expect(tariffsServiceSpy.getTariffs).toHaveBeenCalledTimes(2);
     expect(lastQuery().search).toBe('comercial');
   });
 
-  it('agrupa las teclas seguidas en una sola consulta', () => {
-    component.onSearchTermChange('co');
-    vi.advanceTimersByTime(200);
-    component.onSearchTermChange('comer');
-    vi.advanceTimersByTime(400);
+  it('consulta al hacer clic en el botón Buscar', () => {
+    component.onSearchTermChange('comercial');
+    fixture.detectChanges();
+
+    const button = fixture.nativeElement.querySelector(
+      'button[aria-label="Buscar tarifas"]',
+    ) as HTMLButtonElement;
+    button.click();
 
     expect(tariffsServiceSpy.getTariffs).toHaveBeenCalledTimes(2);
-    expect(lastQuery().search).toBe('comer');
+    expect(lastQuery().search).toBe('comercial');
   });
 
   it('vuelve a la primera página al buscar', () => {
     component.goToPage(3);
     component.onSearchTermChange('residencial');
-    vi.advanceTimersByTime(400);
+    component.applySearch();
 
     expect(component.currentPage()).toBe(1);
     expect(lastQuery().page).toBe(1);
@@ -110,15 +126,18 @@ describe('TariffsComponent', () => {
 
   it('omite search cuando el término queda en blanco', () => {
     component.onSearchTermChange('   ');
-    vi.advanceTimersByTime(400);
+    component.applySearch();
 
     expect(lastQuery().search).toBeUndefined();
   });
 
-  it('pide la página al backend en vez de cortar en memoria', () => {
+  it('usa el término aplicado al pedir otra página', () => {
+    component.onSearchTermChange('comercial');
+    component.applySearch();
+
     component.goToPage(2);
 
-    expect(lastQuery().page).toBe(2);
+    expect(lastQuery()).toEqual({ page: 2, limit: 10, search: 'comercial' });
   });
 
   it('recarga al cambiar el tamaño de página y vuelve a la primera', () => {
@@ -131,11 +150,14 @@ describe('TariffsComponent', () => {
 
   it('limpia el término y recarga', () => {
     component.onSearchTermChange('algo');
-    vi.advanceTimersByTime(400);
+    component.applySearch();
+    tariffsServiceSpy.getTariffs.mockClear();
 
     component.clearFilters();
 
     expect(component.searchTerm()).toBe('');
+    expect(component.appliedSearchTerm()).toBe('');
+    expect(tariffsServiceSpy.getTariffs).toHaveBeenCalledTimes(1);
     expect(lastQuery().search).toBeUndefined();
   });
 
@@ -174,7 +196,7 @@ describe('TariffsComponent', () => {
 
   it('arrastra la búsqueda activa a la exportación', () => {
     component.onSearchTermChange('comercial');
-    vi.advanceTimersByTime(400);
+    component.applySearch();
     tariffsServiceSpy.getTariffs.mockClear();
 
     component.exportToExcel();

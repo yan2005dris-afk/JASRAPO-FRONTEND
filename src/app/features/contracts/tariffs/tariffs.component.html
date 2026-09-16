@@ -40,7 +40,7 @@
             autocomplete="off"
             [ngModel]="searchTerm()"
             (ngModelChange)="onSearchTermChange($event)"
-            (keyup.enter)="goToPage(1)"
+            (keyup.enter)="applySearch()"
           />
           @if (searchTerm()) {
             <button
@@ -57,9 +57,11 @@
 
         <!-- Botón Buscar -->
         <button
+          type="button"
           class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
-          (click)="goToPage(1)"
+          (click)="applySearch()"
           [disabled]="isLoading()"
+          aria-label="Buscar tarifas"
         >
           @if (isLoading()) {
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -104,8 +106,8 @@
       } @else if (tariffs().length === 0) {
         <div class="alert alert-info m-4">
           <i class="bi bi-info-circle me-2"></i>
-          @if (searchTerm()) {
-            No se encontraron tarifas que coincidan con "<strong>{{ searchTerm() }}</strong
+          @if (appliedSearchTerm()) {
+            No se encontraron tarifas que coincidan con "<strong>{{ appliedSearchTerm() }}</strong
             >".
           } @else {
             No hay tarifas registradas.
