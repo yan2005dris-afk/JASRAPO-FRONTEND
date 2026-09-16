@@ -96,4 +96,16 @@ describe('ContractsTableComponent', () => {
     expect(edited).toBe(dummyContract);
     expect(mockEvent.stopPropagation).toHaveBeenCalled();
   });
+
+  it('only enables installation planning from estadoServicio', () => {
+    expect(
+      component.canAssignInstallationRoute({ ...dummyContract, estado: 'PENDIENTE_INSTALACION' }),
+    ).toBe(false);
+    expect(
+      component.canAssignInstallationRoute({
+        ...dummyContract,
+        estadoServicio: 'PENDIENTE_INSTALACION',
+      }),
+    ).toBe(true);
+  });
 });

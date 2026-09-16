@@ -11,6 +11,12 @@ import {
   ISearchContractsParams,
   IUpdateContractRequest,
 } from '../interfaces/icontract.interface';
+import type { IReadingRoute } from '../../reading-routes/interfaces/ireading-route.interface';
+
+export interface IAssignInstallationRoutePayload {
+  routeId?: number;
+  fechaPlanificada?: string;
+}
 
 @Injectable({
   providedIn: 'root',
@@ -107,9 +113,9 @@ export class ContractsService {
    */
   assignInstallationRoute(
     contractId: string,
-    payload: { routeId?: number; fechaPlanificada?: string } = {},
-  ): Observable<unknown> {
-    return this.http.post<unknown>(
+    payload: IAssignInstallationRoutePayload = {},
+  ): Observable<IReadingRoute> {
+    return this.http.post<IReadingRoute>(
       `${this.endpoint}/${contractId}/assign-installation-route`,
       payload,
     );

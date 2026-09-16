@@ -92,6 +92,8 @@ export interface IContract {
   fechaInicio: string;
   direccionSuministro: string;
   estado: EstadoContrato;
+  /** Lifecycle state used by installation planning. `estado` is a legacy field. */
+  estadoServicio?: EstadoContrato;
   comunidadId: number;
 
   // Relaciones anidadas (vienen por JOIN/include)
