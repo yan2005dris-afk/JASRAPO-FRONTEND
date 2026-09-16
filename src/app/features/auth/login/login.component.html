@@ -135,7 +135,11 @@
               [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Ver contraseña'"
               [attr.aria-pressed]="showPassword()"
               aria-controls="password"
-              [title]="showPassword() ? 'Contraseña visible (clic para ocultar)' : 'Contraseña oculta (clic para ver)'"
+              [title]="
+                showPassword()
+                  ? 'Contraseña visible (clic para ocultar)'
+                  : 'Contraseña oculta (clic para ver)'
+              "
             >
               <i
                 class="bi"
@@ -143,7 +147,11 @@
                 aria-hidden="true"
               ></i>
               <span class="visually-hidden" aria-live="polite">
-                {{ showPassword() ? 'Contraseña visible en pantalla' : 'Contraseña protegida y oculta' }}
+                {{
+                  showPassword()
+                    ? 'Contraseña visible en pantalla'
+                    : 'Contraseña protegida y oculta'
+                }}
               </span>
             </button>
           </div>
