@@ -114,11 +114,11 @@
         <div class="col-md-6">
           <label for="fechaNacimiento" class="form-label">Fecha de nacimiento</label>
 
-          <input
-            id="fechaNacimiento"
-            type="date"
-            class="form-control"
-            formControlName="fechaNacimiento"
+          <app-date-picker
+            inputId="fechaNacimiento"
+            placeholder="Seleccione la fecha de nacimiento"
+            [value]="fechaNacimiento"
+            (valueChange)="onFechaNacimientoChange($event)"
           />
 
           <small class="text-muted">Determina automáticamente el beneficio de tercera edad.</small>

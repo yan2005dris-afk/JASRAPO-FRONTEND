@@ -25,6 +25,7 @@ import {
   IIdentificacion,
 } from '../../interfaces/iclients.interface';
 import { identificacionValidator } from '../../validators/identificacion.validator';
+import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 
 const EDAD_TERCERA_EDAD = 65;
 
@@ -38,7 +39,7 @@ interface BackendErrorResponse {
 
 @Component({
   selector: 'app-clients-form',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, DatePickerComponent],
   templateUrl: './clients-form.component.html',
   styleUrl: './clients-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -211,6 +212,14 @@ export class ClientsFormComponent implements OnInit {
       edad--;
     }
     return edad >= EDAD_TERCERA_EDAD;
+  }
+
+  get fechaNacimiento(): string {
+    return this.clienteForm.get('fechaNacimiento')?.value ?? '';
+  }
+
+  onFechaNacimientoChange(fecha: string): void {
+    this.clienteForm.get('fechaNacimiento')?.setValue(fecha);
   }
 
   get identificacionInvalida(): boolean {
