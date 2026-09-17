@@ -25,6 +25,22 @@ export class AgreementDetailModalComponent {
 
   isLoadingPdf = false;
   isCancelling = false;
+  isActivating = false;
+
+  /**
+   * Un convenio se aprueba desde PREPARADO o PENDIENTE_ABONO. El backend
+   * rechaza la transición desde ACTIVO, PAGADO y ANULADO, así que la acción
+   * solo se ofrece cuando puede prosperar.
+   */
+  get canActivate(): boolean {
+    const codigo = this.agreement().estado.codigo;
+    return codigo === 'PREPARADO' || codigo === 'PENDIENTE_ABONO';
+  }
+
+  /** El convenio se pactó con un abono inicial que aún no consta como cobrado. */
+  get hasPendingInitialPayment(): boolean {
+    return this.agreement().estado.codigo === 'PENDIENTE_ABONO';
+  }
 
   get paidInstallmentsCount(): number {
     if (!this.agreement().cuotas) return 0;
@@ -74,6 +90,40 @@ export class AgreementDetailModalComponent {
         this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
       },
     });
+  }
+
+  activateAgreement(): void {
+    if (this.isActivating || !this.canActivate) return;
+
+    const convenioId = this.agreement().convenioId;
+    const aviso = this.hasPendingInitialPayment
+      ? ` Este convenio se pactó con un abono inicial de $${this.agreement().abonoInicial} que aún no consta como cobrado.`
+      : '';
+
+    this.dialogService
+      .confirm({
+        title: 'Activar Convenio de Pago',
+        message: `¿Aprobar y activar el convenio #${convenioId}? Las cuotas quedarán vigentes y la deuda pasará a cobrarse según el plan acordado.${aviso}`,
+        confirmText: 'Activar Convenio',
+        cancelText: 'Cancelar',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+
+        this.isActivating = true;
+        this.agreementsService.updateAgreement(convenioId, { estado: 'ACTIVO' }).subscribe({
+          next: () => {
+            this.isActivating = false;
+            this.toastService.show('Convenio activado exitosamente', 'success');
+            this.updated.emit();
+          },
+          error: (err) => {
+            this.isActivating = false;
+            const msg = err?.error?.message || 'Error al activar convenio';
+            this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
+          },
+        });
+      });
   }
 
   cancelAgreement(): void {
