@@ -16,6 +16,7 @@ export interface IReadingRowItem {
   lecturaActual?: number;
   consumoCalculado?: number;
   estado: string;
+  routeEstado?: string | null;
   tieneAnomalia?: boolean;
 }
 
@@ -33,6 +34,7 @@ export class ReadingsTableComponent {
   readonly showActions = input(true);
   readonly allowValidation = input(false);
   readonly allowReReading = input(true);
+  readonly allowEditing = input(true);
   readonly openDropdownId = input<string | null>(null);
 
   readonly viewDetail = output<IReadingRowItem>();

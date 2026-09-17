@@ -113,6 +113,7 @@
           [showSector]="true"
           [showActions]="true"
           [allowValidation]="true"
+          [allowEditing]="true"
           [openDropdownId]="openDropdownId()"
           (viewDetail)="openDetailModal($event)"
           (editReading)="openEditModal($event)"
@@ -147,6 +148,7 @@
   @if (selectedReadingForDetail()) {
     <app-reading-detail-modal
       [reading]="selectedReadingForDetail()!"
+      [allowEditing]="selectedReadingForDetail()?.routeEstado === 'EN_PROGRESO'"
       (editRequested)="openEditModal($event)"
       (closed)="closeDetailModal()"
     />

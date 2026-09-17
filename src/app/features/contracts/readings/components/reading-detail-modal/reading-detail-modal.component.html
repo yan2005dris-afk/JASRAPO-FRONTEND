@@ -111,14 +111,16 @@
 
       <!-- Footer -->
       <div class="modal-footer border-top px-4 py-3 bg-light d-flex justify-content-between">
-        <button
-          type="button"
-          class="btn btn-outline-primary d-flex align-items-center gap-1"
-          (click)="editRequested.emit(reading())"
-        >
-          <i class="bi bi-pencil"></i>
-          Editar Lectura
-        </button>
+        @if (allowEditing()) {
+          <button
+            type="button"
+            class="btn btn-outline-primary d-flex align-items-center gap-1"
+            (click)="requestEdit()"
+          >
+            <i class="bi bi-pencil"></i>
+            Editar Lectura
+          </button>
+        }
         <button type="button" class="btn btn-secondary fw-medium px-4" (click)="close()">
           Cerrar
         </button>

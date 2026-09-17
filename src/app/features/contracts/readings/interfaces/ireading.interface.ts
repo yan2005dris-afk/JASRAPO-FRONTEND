@@ -43,6 +43,7 @@ export interface IReading {
   periodoId: number;
   tieneAnomalia: boolean;
   estado: string;
+  routeEstado?: string | null;
   contrato?: IReadingContract | null;
   medidor?: IReadingMeter | null;
   periodoRel?: IReadingPeriod | null;

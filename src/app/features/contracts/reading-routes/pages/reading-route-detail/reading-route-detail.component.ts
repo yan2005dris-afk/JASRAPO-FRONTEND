@@ -285,6 +285,7 @@ export class ReadingRouteDetailComponent implements OnInit {
             lecturaActual: r.lecturaActual,
             consumoCalculado: r.consumoCalculado,
             estado: r.estadoLectura ?? 'PENDIENTE',
+            routeEstado: this.readingRoute()?.estado,
           }));
           this.readings.set(rows);
           this.totalReadings.set(res.meta?.totalItems ?? res.data.length);
@@ -422,9 +423,15 @@ export class ReadingRouteDetailComponent implements OnInit {
         this.processingOrdenId.set(null);
         this.toastService.success('Orden iniciada');
       },
-      error: () => {
+      error: (err) => {
         this.processingOrdenId.set(null);
-        this.toastService.error('Error al iniciar la orden');
+        const message = err?.error?.message;
+        this.toastService.error(
+          Array.isArray(message)
+            ? message.join(', ')
+            : message ||
+                'No puedes iniciar esta operación porque no estás asignado como operario a esta orden de trabajo.',
+        );
       },
     });
   }
@@ -513,22 +520,29 @@ export class ReadingRouteDetailComponent implements OnInit {
 
   // Route status transitions
   async updateRouteStatus(
-    nuevoEstado: 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA',
+    nuevoEstado: 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'PARCIAL' | 'CANCELADA',
   ): Promise<void> {
     const route = this.readingRoute();
     if (!route) return;
 
     if (nuevoEstado === 'COMPLETADA') {
-      const pendientes = this.ordenes().filter(
-        (o) => o.estado === 'PENDIENTE' || o.estado === 'EN_PROGRESO',
-      );
-      if (pendientes.length > 0) {
+      const noAprobadas = this.isLecturaRoute()
+        ? (this.routeKpis()?.total ?? 0) - (this.routeKpis()?.completadas ?? 0)
+        : this.ordenes().filter((o) => o.estado === 'PENDIENTE' || o.estado === 'EN_PROGRESO')
+            .length;
+
+      if (noAprobadas > 0) {
+        const message = this.isLecturaRoute()
+          ? `Atención: Existen ${noAprobadas} lecturas pendientes o en revisión. La ruta quedará marcada como PARCIAL. ¿Desea continuar?`
+          : `Esta ruta tiene ${noAprobadas} órdenes pendientes. ¿Deseas completarla de todas formas?`;
         const confirmed = await new Promise<boolean>((resolve) => {
           this.dialogService
             .confirm({
-              title: 'Ruta con órdenes pendientes',
-              message: `Esta ruta tiene ${pendientes.length} órdenes pendientes. ¿Deseas completarla de todas formas?`,
-              confirmText: 'Sí, completar',
+              title: this.isLecturaRoute()
+                ? 'Ruta con lecturas pendientes'
+                : 'Ruta con órdenes pendientes',
+              message,
+              confirmText: 'Sí, continuar',
               cancelText: 'Cancelar',
               isDanger: true,
             })
@@ -555,7 +569,7 @@ export class ReadingRouteDetailComponent implements OnInit {
           next: (updated) => {
             this.readingRoute.set({ ...route, ...updated });
             this.isChangingStatus.set(false);
-            this.toastService.success(`Ruta actualizada a ${nuevoEstado}`);
+            this.toastService.success(`Ruta actualizada a ${updated.estado ?? nuevoEstado}`);
           },
           error: () => {
             this.isChangingStatus.set(false);
@@ -629,6 +643,7 @@ export class ReadingRouteDetailComponent implements OnInit {
           periodoId: 0,
           tieneAnomalia: reading.tieneAnomalia ?? false,
           estado: reading.estado,
+          routeEstado: this.readingRoute()?.estado,
           contrato: reading.clienteNombre
             ? {
                 contratoId: String(reading.contratoId ?? ''),
@@ -656,6 +671,7 @@ export class ReadingRouteDetailComponent implements OnInit {
   }
 
   onEditLectura(reading: ReadingSource): void {
+    if (this.readingRoute()?.estado !== 'EN_PROGRESO') return;
     this.openDropdownId.set(null);
     this.selectedReadingForDetail.set(null);
     this.readingsService.getReadingById(String(reading.lecturaId)).subscribe({
@@ -669,6 +685,7 @@ export class ReadingRouteDetailComponent implements OnInit {
   }
 
   onEditLecturaFromDetail(reading: IReading): void {
+    if (this.readingRoute()?.estado !== 'EN_PROGRESO') return;
     this.selectedReadingForDetail.set(null);
     this.selectedReadingForEdit.set(reading);
     this.isFormModalOpen.set(true);
