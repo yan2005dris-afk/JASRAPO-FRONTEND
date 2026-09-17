@@ -14,6 +14,7 @@ import { Subscription } from 'rxjs';
 import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/pdf-previewer.component';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
+import { resolveClientDisplayName } from '../../../shared/utils/client-display-name';
 import { IPaymentsReportFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
 import { ClientsService } from '../../contracts/clients/services/clients.service';
@@ -27,6 +28,7 @@ import {
   IReportResultRow,
   ReportStatus,
 } from '../shared/models/report-workspace.model';
+import { ReportEmailAttemptTracker } from '../shared/report-email-attempt-tracker';
 import { ReportResponsiveResultsComponent } from '../shared/report-responsive-results/report-responsive-results.component';
 import { ReportWorkspaceComponent } from '../shared/report-workspace/report-workspace.component';
 
@@ -140,6 +142,7 @@ export class PaymentsReportComponent implements OnDestroy {
   private pdfRequest: Subscription | null = null;
   private dataRequestId = 0;
   private pdfRequestId = 0;
+  private readonly emailAttempt = new ReportEmailAttemptTracker();
 
   // Modales
   readonly isEmailModalOpen = signal(false);
@@ -385,10 +388,7 @@ export class PaymentsReportComponent implements OnDestroy {
   }
 
   formatClientName(cliente: IClient): string {
-    if (cliente.razonSocial) {
-      return cliente.razonSocial;
-    }
-    return `${cliente.nombres ?? ''} ${cliente.apellidos ?? ''}`.trim();
+    return resolveClientDisplayName(cliente);
   }
 
   // ---------- Consultar (carga JSON -> tabla) ----------
@@ -497,16 +497,21 @@ export class PaymentsReportComponent implements OnDestroy {
     this.destinatario.set(request.destinatario);
     this.subject.set(request.subject ?? '');
     const filters = this.buildFilters();
-    const body: ISendReportEmailBody = {
+    const requestBody = {
       ...filters,
       clienteId: cliente,
       destinatario: request.destinatario,
       subject: request.subject,
     };
+    const body: ISendReportEmailBody = {
+      ...requestBody,
+      idempotencyKey: this.emailAttempt.keyFor(requestBody),
+    };
 
     this.isSendingEmail.set(true);
     this.reportsService.sendPaymentsReportEmail(body).subscribe({
       next: () => {
+        this.emailAttempt.clear();
         this.isSendingEmail.set(false);
         this.isEmailModalOpen.set(false);
         this.destinatario.set('');
@@ -552,6 +557,7 @@ export class PaymentsReportComponent implements OnDestroy {
     this.searchPerformed.set(false);
     this.destinatario.set('');
     this.subject.set('');
+    this.emailAttempt.clear();
     this.activeView.set('table');
     this.clearWorkspaceError();
   }
@@ -568,6 +574,7 @@ export class PaymentsReportComponent implements OnDestroy {
   }
 
   private clearWorkspaceError(): void {
+    if (this.lastFailedAction() === 'email') this.emailAttempt.clear();
     this.workspaceError.set('');
     this.lastFailedAction.set(null);
   }

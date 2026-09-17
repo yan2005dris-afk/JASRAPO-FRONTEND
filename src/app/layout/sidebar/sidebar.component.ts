@@ -16,10 +16,11 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MenuItem } from '../../core/models/menu.model';
 import { filter, map } from 'rxjs/operators';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { BrandLogoComponent } from '../../shared/components/brand-logo/brand-logo.component';
 
 @Component({
   selector: 'app-sidebar',
-  imports: [CommonModule, RouterModule, MatTooltipModule, FormsModule],
+  imports: [CommonModule, RouterModule, MatTooltipModule, FormsModule, BrandLogoComponent],
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

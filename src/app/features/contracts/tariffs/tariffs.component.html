@@ -35,18 +35,33 @@
           <input
             type="text"
             class="form-control border-start-0 ps-0 shadow-none"
-            placeholder="Buscar tarifa..."
-            [ngModel]="searchNombre()"
-            (ngModelChange)="searchNombre.set($event)"
-            (keyup.enter)="goToPage(1)"
+            placeholder="Buscar por nombre o descripción..."
+            aria-label="Buscar tarifas por nombre o descripción"
+            autocomplete="off"
+            [ngModel]="searchTerm()"
+            (ngModelChange)="onSearchTermChange($event)"
+            (keyup.enter)="applySearch()"
           />
+          @if (searchTerm()) {
+            <button
+              type="button"
+              class="btn btn-outline-secondary border-start-0 shadow-none px-2"
+              title="Limpiar búsqueda"
+              aria-label="Limpiar búsqueda"
+              (click)="clearFilters()"
+            >
+              <i class="bi bi-x"></i>
+            </button>
+          }
         </div>
 
         <!-- Botón Buscar -->
         <button
+          type="button"
           class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
-          (click)="goToPage(1)"
+          (click)="applySearch()"
           [disabled]="isLoading()"
+          aria-label="Buscar tarifas"
         >
           @if (isLoading()) {
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
@@ -85,16 +100,14 @@
     <!-- Table Body -->
     <div class="card-body p-0">
       @if (isLoading()) {
-        <div class="d-flex justify-content-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Cargando...</span>
-          </div>
+        <div class="p-3">
+          <app-table-skeleton [rows]="pageSize()" [cols]="selectionMode() ? 5 : 6" />
         </div>
-      } @else if (filteredTariffs().length === 0) {
+      } @else if (tariffs().length === 0) {
         <div class="alert alert-info m-4">
           <i class="bi bi-info-circle me-2"></i>
-          @if (searchNombre()) {
-            No se encontraron tarifas que coincidan con "<strong>{{ searchNombre() }}</strong
+          @if (appliedSearchTerm()) {
+            No se encontraron tarifas que coincidan con "<strong>{{ appliedSearchTerm() }}</strong
             >".
           } @else {
             No hay tarifas registradas.
@@ -116,7 +129,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (tariff of pagedTariffs(); track tariff.categoriaTarifaId) {
+              @for (tariff of tariffs(); track tariff.categoriaTarifaId) {
                 <!-- Fila Principal de la Categoría -->
                 <tr
                   class="tariff-row"
@@ -386,10 +399,10 @@
       }
     </div>
 
-    @if (!isLoading() && filteredTariffs().length > 0) {
+    @if (!isLoading() && tariffs().length > 0) {
       <footer class="card-footer bg-white border-top px-4 py-3">
         <app-pagination
-          [totalItems]="filteredTariffs().length"
+          [totalItems]="totalItems()"
           [currentPage]="currentPage()"
           [pageSize]="pageSize()"
           [pageSizeOptions]="pageSizeOptions"

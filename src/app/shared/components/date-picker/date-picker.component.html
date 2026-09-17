@@ -20,38 +20,99 @@
   @if (isOpen()) {
     <div class="date-picker-popover" [class.open-upwards]="openUpwards()">
       <div class="date-picker-header">
-        <button type="button" class="date-picker-nav" title="Mes anterior" (click)="prevMonth()">
+        <button
+          type="button"
+          class="date-picker-nav"
+          [title]="
+            activeView() === 'day'
+              ? 'Mes anterior'
+              : activeView() === 'month'
+                ? 'Año anterior'
+                : 'Años anteriores'
+          "
+          (click)="prevMonth()"
+        >
           <i class="bi bi-chevron-left"></i>
         </button>
-        <span class="date-picker-label">{{ viewLabel() }}</span>
-        <button type="button" class="date-picker-nav" title="Mes siguiente" (click)="nextMonth()">
+        @if (allowPeriodNavigation() && activeView() !== 'year') {
+          <button type="button" class="date-picker-label" (click)="showParentPeriod()">
+            {{ viewLabel() }}
+          </button>
+        } @else {
+          <span class="date-picker-label">{{ viewLabel() }}</span>
+        }
+        <button
+          type="button"
+          class="date-picker-nav"
+          [title]="
+            activeView() === 'day'
+              ? 'Mes siguiente'
+              : activeView() === 'month'
+                ? 'Año siguiente'
+                : 'Años siguientes'
+          "
+          (click)="nextMonth()"
+        >
           <i class="bi bi-chevron-right"></i>
         </button>
       </div>
 
-      <div class="date-picker-weekdays">
-        @for (dia of diasSemana; track $index) {
-          <span class="date-picker-weekday">{{ dia }}</span>
+      @switch (activeView()) {
+        @case ('day') {
+          <div class="date-picker-weekdays">
+            @for (dia of diasSemana; track $index) {
+              <span class="date-picker-weekday">{{ dia }}</span>
+            }
+          </div>
+          <div class="date-picker-grid">
+            @for (cell of celdas(); track $index) {
+              @if (cell) {
+                <button
+                  type="button"
+                  class="date-picker-day"
+                  [class.is-selected]="isSelected(cell)"
+                  [class.is-today]="isToday(cell) && !isSelected(cell)"
+                  (click)="select(cell)"
+                >
+                  {{ cell.getDate() }}
+                </button>
+              } @else {
+                <span class="date-picker-day date-picker-day-empty"></span>
+              }
+            }
+          </div>
         }
-      </div>
-
-      <div class="date-picker-grid">
-        @for (cell of celdas(); track $index) {
-          @if (cell) {
-            <button
-              type="button"
-              class="date-picker-day"
-              [class.is-selected]="isSelected(cell)"
-              [class.is-today]="isToday(cell) && !isSelected(cell)"
-              (click)="select(cell)"
-            >
-              {{ cell.getDate() }}
-            </button>
-          } @else {
-            <span class="date-picker-day date-picker-day-empty"></span>
-          }
+        @case ('month') {
+          <div class="date-picker-grid date-picker-month-grid">
+            @for (month of meses(); track month.date.getMonth()) {
+              <button
+                type="button"
+                class="date-picker-period"
+                [class.is-selected]="
+                  allowPeriodNavigation() ? isSelectedMonth(month.date) : isSelected(month.date)
+                "
+                (click)="select(month.date)"
+              >
+                {{ month.nombre }}
+              </button>
+            }
+          </div>
         }
-      </div>
+        @case ('year') {
+          <div class="date-picker-grid date-picker-year-grid">
+            @for (year of years(); track year) {
+              <button
+                type="button"
+                class="date-picker-period"
+                [class.is-selected]="isSelectedYear(year)"
+                (click)="selectYear(year)"
+              >
+                {{ year }}
+              </button>
+            }
+          </div>
+        }
+      }
     </div>
   }
 </div>

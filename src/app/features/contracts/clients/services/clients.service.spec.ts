@@ -151,7 +151,6 @@ describe('ClientsService', () => {
       email: 'luis@example.com',
       telefono: '0987654321',
       telefonoSecundario: null,
-      aplicaTerceraEdad: false,
       aplicaDiscapacidad: false,
       direccionDomicilio: 'Playas',
     };

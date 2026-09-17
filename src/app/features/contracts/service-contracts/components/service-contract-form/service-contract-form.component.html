@@ -334,8 +334,10 @@
           <!-- Estado: solo en modo edición (en creación lo asigna el backend) -->
           @if (isEditing()) {
             <div class="col-md-6">
-              <label for="estado" class="form-label fw-semibold text-dark">Estado</label>
-              <select id="estado" class="form-select" formControlName="estado">
+              <label for="estadoServicio" class="form-label fw-semibold text-dark"
+                >Estado del servicio</label
+              >
+              <select id="estadoServicio" class="form-select" formControlName="estadoServicio">
                 @for (state of states(); track state.codigo) {
                   <option [value]="state.codigo">{{ state.nombre }}</option>
                 }

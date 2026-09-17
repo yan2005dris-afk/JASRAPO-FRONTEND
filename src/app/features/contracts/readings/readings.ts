@@ -94,6 +94,7 @@ export class ReadingsComponent implements OnInit, OnDestroy {
         lecturaActual: r.lecturaActual,
         consumoCalculado: r.consumoCalculado,
         estado: r.estado,
+        routeEstado: r.routeEstado,
         tieneAnomalia: r.tieneAnomalia,
       };
     });
@@ -197,6 +198,7 @@ export class ReadingsComponent implements OnInit, OnDestroy {
   // Modals Actions
 
   openEditModal(reading: IReadingRowItem | IReading): void {
+    if (reading.routeEstado !== 'EN_PROGRESO') return;
     this.openDropdownId.set(null);
     const full =
       this.readings().find((item) => String(item.lecturaId) === String(reading.lecturaId)) ||
@@ -244,6 +246,7 @@ export class ReadingsComponent implements OnInit, OnDestroy {
   }
 
   approveReading(reading: IReading): void {
+    if (reading.routeEstado !== 'EN_PROGRESO') return;
     this.openDropdownId.set(null);
     this.readingsService.updateReading(reading.lecturaId, { estado: 'APROBADA' }).subscribe({
       next: () => {

@@ -513,35 +513,11 @@ export const routes: Routes = [
               ),
           },
           {
-            path: 'consumo-zonas',
-            data: { breadcrumb: 'Consumo por Zonas' },
-            loadComponent: () =>
-              import('./features/reports/zone-consumption/zone-consumption').then(
-                (m) => m.ZoneConsumptionComponent,
-              ),
-          },
-          {
-            path: 'dashboard',
-            data: { breadcrumb: 'Dashboard KPI' },
-            loadComponent: () =>
-              import('./features/reports/kpi-dashboard/kpi-dashboard').then(
-                (m) => m.KpiDashboardComponent,
-              ),
-          },
-          {
             path: 'estado-cuenta',
             data: { breadcrumb: 'Estado de Cuenta' },
             loadComponent: () =>
               import('./features/reports/client-statement/client-statement').then(
                 (m) => m.ClientStatementComponent,
-              ),
-          },
-          {
-            path: 'recaudacion-morosidad',
-            data: { breadcrumb: 'Recaudación y Morosidad' },
-            loadComponent: () =>
-              import('./features/reports/overdue-accounts/overdue-accounts').then(
-                (m) => m.OverdueAccountsComponent,
               ),
           },
           {

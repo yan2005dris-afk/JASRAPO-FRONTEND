@@ -5,32 +5,58 @@
 */
 
 :root {
-  /* Brand Colors - Premium Turquoise/Teal Water Palette based on #0fc3c6 */
-  --primary-color: #0c9ea1;
-  /* Deep corporate teal for excellent contrast and readability */
-  --secondary-color: #0fc3c6;
-  /* The exact vibrant turquoise requested */
-  --accent-color: #4ee6e9;
+  /* Brand Colors - JASRAPO Water & Ecological Heritage Palette */
+  --primary-color: #087a7d;
+  /* Deep corporate teal for authoritative contrast and readability */
+  --secondary-color: #0c9ea1;
+  /* Vibrant turquoise water surface */
+  --accent-color: #38d3d6;
   /* Bright glow turquoise for active states and highlights */
   --info-color: #bff3f4;
   /* Softest highlight color */
 
+  /* El Grifo de Latón Dorado (The Golden Brass Tap from Logo) */
+  --brass-gold: #d97706;
+  --brass-gold-hover: #b45309;
+  --brass-gold-light: #fef3c7;
+  --brass-gold-border: #fde68a;
+  --brass-gold-rgb: 217, 119, 6;
+
+  /* El Árbol Ancestral y Cuenca (The Forest Tree Canopy from Logo) */
+  --forest-green: #15803d;
+  --forest-green-hover: #166534;
+  --forest-green-light: #dcfce7;
+  --forest-green-border: #bbf7d0;
+  --forest-green-rgb: 21, 128, 61;
+
+  /* Gotas de Agua Pura (Luminous Crystal Droplets from Logo) */
+  --pure-aqua: #0284c7;
+  --pure-aqua-light: #e0f2fe;
+  --pure-aqua-glow: rgba(14, 165, 233, 0.28);
+
   /* Neutrals & Backgrounds */
   --white: #ffffff;
-  --light-bg: #ffffff;
-  /* Off-white with a soft hint of teal */
+  --light-bg: #f8fafc;
+  /* Clean slate-white */
+  --surface-ground: #f0fdfa;
+  /* Softest lagoon mist */
   --soft-blue-bg: #dbf7f8;
   /* Soft background highlight for badges or cards */
 
   /* Text & Borders */
   --dark-text: #0e2728;
   /* Very dark slate teal instead of black/gray */
+  --marine-slate: #0b2938;
+  /* Institutional deep navy from circular seal */
   --muted-text: #597b7d;
   /* Soft slate teal for secondary text */
   --border-color: #cbdedf;
 
   /* Form & Interactive */
-  --input-focus-ring: rgba(15, 195, 198, 0.2);
+  --input-focus-ring: rgba(15, 195, 198, 0.25);
+  --brass-focus-ring: rgba(217, 119, 6, 0.25);
+  --water-card-shadow: 0 4px 20px -2px rgba(12, 158, 161, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  --water-glow-sm: 0 0 12px rgba(12, 158, 161, 0.18);
 
   /* State Colors */
   --success: #10b981;
@@ -48,20 +74,35 @@
   --bs-primary-rgb: var(--primary-rgb);
 
   /* Primary RGB tuple — single source of truth for rgba() compositions */
-  --primary-rgb: 12, 158, 161;
+  --primary-rgb: 8, 122, 125;
 
   /* Sidebar Layout Tokens — single source of truth for dimensions/transitions */
-  --sidebar-width: 260px;
-  --sidebar-rail-width: 70px;
+  --sidebar-width: 265px;
+  --sidebar-rail-width: 72px;
   --sidebar-rail-btn-size: 48px;
   --sidebar-transition-duration: 0.3s;
   --sidebar-transition-timing: ease-in-out;
-  --sidebar-hover-duration: 0.12s;
-  --sidebar-active-bg: rgba(var(--primary-rgb), 0.12);
-  --sidebar-sub-active-bg: rgba(var(--primary-rgb), 0.1);
-  --sidebar-rail-active-bg: rgba(var(--primary-rgb), 0.2);
-  --sidebar-rail-active-hover-bg: rgba(var(--primary-rgb), 0.24);
-  --sidebar-rail-active-color: var(--primary-color);
+  --sidebar-hover-duration: 0.15s;
+
+  /* Layout Theme Tokens — Propuesta 1: Topbar Turquesa Corporativo + Sidebar Niebla Marina */
+  --topbar-bg: #087a7d;
+  --topbar-color: #ffffff;
+  --topbar-border: rgba(0, 0, 0, 0.12);
+
+  --sidebar-brand-bg: #087a7d;
+  --sidebar-bg: #edf5f6; /* Gris Niebla Marina suave: tono claro con cuerpo que elimina la sensación de "muy blanco" */
+  --sidebar-border: #cbdfe2;
+  --sidebar-text: #0f2938; /* Azul Marino Pizarra Profundo para 11:1+ WCAG AAA de contraste */
+  --sidebar-text-hover: #044b4e;
+  --sidebar-hover-bg: #dbecee;
+  --sidebar-active-bg: #087a7d; /* Pastilla sólida Turquesa Oficial */
+  --sidebar-active-color: #ffffff; /* Texto e icono blanco nítido */
+  --sidebar-active-shadow: 0 3px 12px rgba(8, 122, 125, 0.35);
+  --sidebar-sub-active-bg: #c9e9ec;
+  --sidebar-sub-active-color: #043a40;
+  --sidebar-rail-active-bg: #087a7d;
+  --sidebar-rail-active-hover-bg: #066568;
+  --sidebar-rail-active-color: #ffffff;
 
   /* Espacio de trabajo de reportes */
   --report-section-gap: 1rem;

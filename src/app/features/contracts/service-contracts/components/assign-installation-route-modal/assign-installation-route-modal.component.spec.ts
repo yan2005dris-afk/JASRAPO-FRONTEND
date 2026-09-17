@@ -19,7 +19,6 @@ describe('AssignInstallationRouteModalComponent', () => {
     numeroGuia: 'GUIA-001',
     fechaInicio: '2026-01-01',
     direccionSuministro: 'Calle Principal',
-    estado: 'ACTIVO',
     estadoServicio: 'PENDIENTE_INSTALACION',
     comunidadId: 3,
     sectorId: null,
