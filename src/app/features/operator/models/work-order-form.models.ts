@@ -21,15 +21,12 @@ export interface InstalacionFormPayload {
 
 export interface InspeccionFormPayload {
   tipoActividad: 'INSPECCION';
-  estadoSellos: 'INTACTO' | 'VIOLADO' | 'AUSENTE';
-  hayFugas: boolean;
   observaciones?: string;
   fotoBlob: Blob;
 }
 
 export interface ReconexionFormPayload {
   tipoActividad: 'RECONEXION';
-  confirmacionRetiroSello: true;
   fotoBlob: Blob;
 }
 
