@@ -277,9 +277,6 @@ describe('OperatorSyncService', () => {
           medidorId: 'meter-1',
           fecha: '2026-01-01',
           estado: 'COMPLETADA',
-          estadoSellos: 'INTEGRO',
-          hayFugas: false,
-          confirmacionRetiroSello: true,
           observaciones: 'sin novedades',
           fotoBlob: VALID_DATA_URI,
         });
@@ -287,17 +284,8 @@ describe('OperatorSyncService', () => {
         const [url, formData] = httpPatch.mock.calls[0];
         expect(url).toContain('/operator/work-orders/wo-42');
         const fields = formDataToObject(formData as FormData);
-        expect(Object.keys(fields).sort()).toEqual([
-          'confirmacionRetiroSello',
-          'estado',
-          'estadoSellos',
-          'foto',
-          'hayFugas',
-          'resultadoObservacion',
-        ]);
+        expect(Object.keys(fields).sort()).toEqual(['estado', 'foto', 'resultadoObservacion']);
         expect(fields['resultadoObservacion']).toEqual(['sin novedades']);
-        expect(fields['hayFugas']).toEqual(['false']);
-        expect(fields['confirmacionRetiroSello']).toEqual(['true']);
         expect(fields['foto']).toHaveLength(1);
         expect(fields['foto'][0]).toBeInstanceOf(Blob);
       },
@@ -488,8 +476,6 @@ describe('OperatorSyncService', () => {
           medidorId: 'meter-1',
           fecha: '2026-01-01',
           observaciones: 'revisión completada',
-          estadoSellos: 'INTEGRO',
-          hayFugas: false,
           fotoBlob: VALID_DATA_URI,
         },
       ]);
@@ -506,8 +492,6 @@ describe('OperatorSyncService', () => {
       expect(fields['fecha']).toBeUndefined();
       expect(fields['observaciones']).toBeUndefined();
       expect(fields['resultadoObservacion']).toEqual(['revisión completada']);
-      expect(fields['estadoSellos']).toEqual(['INTEGRO']);
-      expect(fields['hayFugas']).toEqual(['false']);
       expect(fields['foto']).toHaveLength(1);
       expect(httpPost).not.toHaveBeenCalled();
       expect(saveSyncedReading).not.toHaveBeenCalled();
