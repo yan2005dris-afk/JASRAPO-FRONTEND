@@ -12,7 +12,6 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
-import { PdfPreviewerComponent } from '../../../shared/components/pdf-previewer/pdf-previewer.component';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { IOverdueAccountsFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
@@ -21,19 +20,16 @@ import { ClientsService } from '../../contracts/clients/services/clients.service
 import type { IClient } from '../../contracts/clients/interfaces/iclients.interface';
 import { resolveClientDisplayName } from '../../../shared/utils/client-display-name';
 import { ReportEmailDialogComponent } from '../shared/report-email-dialog/report-email-dialog.component';
-import { ReportFormatTabsComponent } from '../shared/report-format-tabs/report-format-tabs.component';
 import {
   IReportContextItem,
   IReportEmailRequest,
-  IReportResultColumn,
-  IReportResultRow,
   ReportStatus,
 } from '../shared/models/report-workspace.model';
-import { ReportResponsiveResultsComponent } from '../shared/report-responsive-results/report-responsive-results.component';
+import { ReportEmailAttemptTracker } from '../shared/report-email-attempt-tracker';
+import { ReportPdfModalComponent } from '../shared/report-pdf-modal/report-pdf-modal.component';
 import { ReportWorkspaceComponent } from '../shared/report-workspace/report-workspace.component';
 
-type ReportView = 'table' | 'pdf';
-type FailedReportAction = 'data' | 'pdf' | 'email';
+type FailedReportAction = 'data' | 'email';
 
 interface MorosoItem {
   contratoId: string;
@@ -72,11 +68,9 @@ interface OverdueAccountsData {
   imports: [
     A11yModule,
     FormsModule,
-    PdfPreviewerComponent,
     DatePickerComponent,
     ReportEmailDialogComponent,
-    ReportFormatTabsComponent,
-    ReportResponsiveResultsComponent,
+    ReportPdfModalComponent,
     ReportWorkspaceComponent,
   ],
   templateUrl: './overdue-accounts.html',
@@ -96,24 +90,33 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   readonly selectedClientName = signal('');
   readonly searchTermTable = signal('');
 
-  // Vista activa: tabla o PDF
-  readonly activeView = signal<ReportView>('table');
-
-  // Resultados
+  // Resultados JSON (tabla)
   readonly reportData = signal<OverdueAccountsData | null>(null);
-  readonly pdfBlob = signal<Blob | null>(null);
-
-  // Estados de carga
   readonly isLoadingData = signal(false);
-  readonly isLoadingPdf = signal(false);
   readonly workspaceError = signal('');
   readonly lastFailedAction = signal<FailedReportAction | null>(null);
 
-  // Envío por email
+  // Modal PDF general
+  readonly isGeneralPdfOpen = signal(false);
+  readonly generalPdfBlob = signal<Blob | null>(null);
+  readonly isLoadingGeneralPdf = signal(false);
+  readonly generalPdfError = signal('');
+
+  // Modal PDF individual (detalle por contrato)
+  readonly isDetalleOpen = signal(false);
+  readonly detallePdfBlob = signal<Blob | null>(null);
+  readonly isLoadingDetalle = signal(false);
+  readonly detalleError = signal('');
+  readonly detalleTitulo = signal('');
+  readonly detalleFileName = signal('reporte-morosidad.pdf');
+  private detalleContratoId = '';
+
+  // Envío por email (reporte general)
   readonly destinatario = signal('');
   readonly subject = signal('');
   readonly isSendingEmail = signal(false);
   readonly isEmailModalOpen = signal(false);
+  private readonly emailAttempt = new ReportEmailAttemptTracker();
 
   // Buscador de clientes
   readonly searchTerm = signal('');
@@ -125,9 +128,11 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   private clientPickerTrigger: HTMLElement | null = null;
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
   private dataRequest: Subscription | null = null;
-  private pdfRequest: Subscription | null = null;
+  private generalPdfRequest: Subscription | null = null;
+  private detalleRequest: Subscription | null = null;
   private dataRequestId = 0;
-  private pdfRequestId = 0;
+  private generalPdfRequestId = 0;
+  private detalleRequestId = 0;
 
   ngOnInit(): void {
     // Consulta inicial con la fecha de corte por defecto (hoy en el backend).
@@ -137,7 +142,8 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.searchTimer) clearTimeout(this.searchTimer);
     this.cancelDataRequest();
-    this.cancelPdfRequest();
+    this.cancelGeneralPdfRequest();
+    this.cancelDetalleRequest();
   }
 
   // ---------- Totales canónicos (provienen del backend, no se recalculan aquí) ----------
@@ -179,31 +185,6 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     );
   });
 
-  readonly resultColumns: readonly IReportResultColumn[] = [
-    { key: 'numeroGuia', label: 'N° Guía' },
-    { key: 'cliente', label: 'Cliente' },
-    { key: 'identificacion', label: 'Identificación' },
-    { key: 'sector', label: 'Sector' },
-    { key: 'mesesVencidos', label: 'Meses Mora', align: 'center' },
-    { key: 'ultimaEmision', label: 'Última Emisión', align: 'center' },
-    { key: 'saldoPendiente', label: 'Deuda Total', align: 'end' },
-  ];
-
-  readonly resultRows = computed<readonly IReportResultRow[]>(() =>
-    this.filteredMorosos().map((item, index) => ({
-      id: `${item.contratoId || item.numeroGuia}-${index}`,
-      cells: {
-        numeroGuia: item.numeroGuia,
-        cliente: item.clienteNombre,
-        identificacion: item.identificacion,
-        sector: item.sectorNombre,
-        mesesVencidos: `${item.mesesVencidos} ${item.mesesVencidos === 1 ? 'mes' : 'meses'}`,
-        ultimaEmision: item.ultimaEmision,
-        saldoPendiente: `$${item.saldoPendiente}`,
-      },
-    })),
-  );
-
   // ---------- Contexto y estado del workspace ----------
 
   readonly contextItems = computed<readonly IReportContextItem[]>(() => [
@@ -222,26 +203,20 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   ]);
 
   readonly workspaceStatus = computed<ReportStatus>(() => {
-    if (this.isLoadingData() || this.isLoadingPdf()) return 'loading';
+    if (this.isLoadingData()) return 'loading';
     if (this.workspaceError()) return 'error';
     if (!this.reportData()) return 'empty';
-    // El estado vacío del workspace se basa en el universo del backend (morosos),
-    // no en la búsqueda local de la tabla: filtrar sin coincidencias no debe
-    // ocultar los totales ni marcar el reporte como vacío.
-    if (this.activeView() === 'table' && this.morosos().length === 0) {
-      return 'empty';
-    }
+    if (this.morosos().length === 0) return 'empty';
     return 'idle';
   });
 
   readonly workspaceStatusMessage = computed(() => {
-    if (this.isLoadingPdf()) return 'Generando el documento PDF oficial…';
     if (this.isLoadingData()) return 'Consultando datos autorizados del reporte…';
     if (this.workspaceError()) return this.workspaceError();
     if (!this.reportData()) {
       return 'Ajuste los filtros y presione Consultar para cargar el reporte de recaudación y morosidad.';
     }
-    if (this.workspaceStatus() === 'empty') {
+    if (this.morosos().length === 0) {
       return 'No se encontraron cuentas en mora para el contexto seleccionado.';
     }
     return '';
@@ -353,10 +328,7 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
 
   consultar(): void {
     this.cancelDataRequest();
-    this.cancelPdfRequest();
     this.reportData.set(null);
-    this.pdfBlob.set(null);
-    this.activeView.set('table');
 
     const filters = this.buildFilters();
     const contextKey = this.filterContextKey();
@@ -383,75 +355,107 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
 
   limpiar(): void {
     this.cancelDataRequest();
-    this.cancelPdfRequest();
+    this.cancelGeneralPdfRequest();
     this.fechaCorte.set('');
     this.clienteId.set('');
     this.selectedClientLabel.set('');
     this.selectedClientName.set('');
     this.searchTermTable.set('');
     this.reportData.set(null);
-    this.pdfBlob.set(null);
+    this.generalPdfBlob.set(null);
     this.searchTerm.set('');
     this.searchResults.set([]);
     this.searchError.set('');
     this.searchPerformed.set(false);
     this.destinatario.set('');
     this.subject.set('');
-    this.activeView.set('table');
+    this.emailAttempt.clear();
     this.clearWorkspaceError();
     this.consultar();
   }
 
-  // ---------- Toggle de vista ----------
+  // ---------- PDF general (reporte de toda la ventana) ----------
 
-  setView(view: ReportView): void {
-    this.activeView.set(view);
-    if (view === 'pdf' && !this.pdfBlob() && !this.isLoadingPdf()) {
-      this.generarPdf();
-    }
-  }
+  generarPdfGeneral(): void {
+    this.cancelGeneralPdfRequest();
+    this.generalPdfBlob.set(null);
+    this.generalPdfError.set('');
+    this.isGeneralPdfOpen.set(true);
 
-  // ---------- Generar PDF ----------
-
-  generarPdf(): void {
-    if (this.isLoadingPdf()) return;
-
-    this.cancelPdfRequest();
-    this.activeView.set('pdf');
     const filters = this.buildFilters();
     const contextKey = this.filterContextKey();
-    const requestId = ++this.pdfRequestId;
-    this.isLoadingPdf.set(true);
-    this.pdfRequest = this.reportsService.getOverdueAccountsPdf(filters).subscribe({
+    const requestId = ++this.generalPdfRequestId;
+    this.isLoadingGeneralPdf.set(true);
+    this.generalPdfRequest = this.reportsService.getOverdueAccountsPdf(filters).subscribe({
       next: (blob) => {
-        if (requestId !== this.pdfRequestId || contextKey !== this.filterContextKey()) return;
-        this.pdfBlob.set(blob);
-        this.isLoadingPdf.set(false);
-        this.clearWorkspaceError();
+        if (requestId !== this.generalPdfRequestId || contextKey !== this.filterContextKey())
+          return;
+        this.generalPdfBlob.set(blob);
+        this.isLoadingGeneralPdf.set(false);
       },
       error: (err) => {
-        if (requestId !== this.pdfRequestId || contextKey !== this.filterContextKey()) return;
-        this.isLoadingPdf.set(false);
-        this.activeView.set('table');
-        this.setWorkspaceError(err, 'No se pudo generar el PDF del reporte', 'pdf');
+        if (requestId !== this.generalPdfRequestId || contextKey !== this.filterContextKey())
+          return;
+        this.isLoadingGeneralPdf.set(false);
+        this.generalPdfError.set(
+          this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'),
+        );
       },
     });
   }
 
-  // ---------- Descargar PDF ----------
-
-  descargarPdf(): void {
-    const blob = this.pdfBlob();
-    if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const a = this.document.createElement('a');
-    a.href = url;
-    a.download = `reporte-recaudacion-morosidad-${this.clienteId() || 'general'}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
+  cerrarGeneralPdf(): void {
+    this.cancelGeneralPdfRequest();
+    this.isGeneralPdfOpen.set(false);
   }
 
-  // ---------- Envío por email (modal) ----------
+  get generalPdfFileName(): string {
+    return `reporte-recaudacion-morosidad-${this.clienteId() || 'general'}.pdf`;
+  }
+
+  // ---------- PDF individual (detalle por contrato) ----------
+
+  abrirDetalle(item: MorosoItem): void {
+    this.cancelDetalleRequest();
+    this.detallePdfBlob.set(null);
+    this.detalleError.set('');
+    this.detalleContratoId = item.contratoId;
+    this.detalleTitulo.set(`Detalle de morosidad — ${item.clienteNombre}`);
+    this.detalleFileName.set(`morosidad-${item.numeroGuia || item.contratoId}.pdf`);
+    this.isDetalleOpen.set(true);
+    this.cargarDetalle();
+  }
+
+  private cargarDetalle(): void {
+    const filters: IOverdueAccountsFilters = { contratoId: this.detalleContratoId };
+    if (this.fechaCorte()) filters.fechaCorte = this.fechaCorte();
+    const requestId = ++this.detalleRequestId;
+    this.isLoadingDetalle.set(true);
+    this.detalleRequest = this.reportsService.getOverdueAccountsPdf(filters).subscribe({
+      next: (blob) => {
+        if (requestId !== this.detalleRequestId) return;
+        this.detallePdfBlob.set(blob);
+        this.isLoadingDetalle.set(false);
+      },
+      error: (err) => {
+        if (requestId !== this.detalleRequestId) return;
+        this.isLoadingDetalle.set(false);
+        this.detalleError.set(this.getErrorMessage(err, 'No se pudo generar el detalle en PDF'));
+      },
+    });
+  }
+
+  retryDetalle(): void {
+    this.detalleError.set('');
+    this.cargarDetalle();
+  }
+
+  cerrarDetalle(): void {
+    this.cancelDetalleRequest();
+    this.isDetalleOpen.set(false);
+  }
+
+  // ---------- Envío por email (reporte general) ----------
 
   abrirModalEmail(): void {
     this.isEmailModalOpen.set(true);
@@ -474,15 +478,20 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     this.destinatario.set(destinatario);
     this.subject.set(request.subject ?? '');
     const filters = this.buildFilters();
-    const body: ISendReportEmailBody = {
+    const requestBody: ISendReportEmailBody = {
       ...filters,
       destinatario,
       subject: request.subject,
+    };
+    const body: ISendReportEmailBody = {
+      ...requestBody,
+      idempotencyKey: this.emailAttempt.keyFor(requestBody),
     };
 
     this.isSendingEmail.set(true);
     this.reportsService.sendOverdueAccountsEmail(body).subscribe({
       next: () => {
+        this.emailAttempt.clear();
         this.isSendingEmail.set(false);
         this.isEmailModalOpen.set(false);
         this.subject.set('');
@@ -498,17 +507,11 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   }
 
   retryLastAction(): void {
-    switch (this.lastFailedAction()) {
-      case 'pdf':
-        this.setView('pdf');
-        break;
-      case 'email':
-        this.abrirModalEmail();
-        break;
-      case 'data':
-      default:
-        this.consultar();
+    if (this.lastFailedAction() === 'email') {
+      this.abrirModalEmail();
+      return;
     }
+    this.consultar();
   }
 
   // ---------- Helpers privados ----------
@@ -519,6 +522,7 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   }
 
   private clearWorkspaceError(): void {
+    if (this.lastFailedAction() === 'email') this.emailAttempt.clear();
     this.workspaceError.set('');
     this.lastFailedAction.set(null);
   }
@@ -527,10 +531,9 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     // Al cambiar un filtro, tabla/PDF/correo deben regenerarse desde el mismo
     // universo: se descartan los resultados previos y se exige volver a consultar.
     this.cancelDataRequest();
-    this.cancelPdfRequest();
+    this.cancelGeneralPdfRequest();
     this.reportData.set(null);
-    this.pdfBlob.set(null);
-    this.activeView.set('table');
+    this.generalPdfBlob.set(null);
     this.clearWorkspaceError();
   }
 
@@ -541,11 +544,18 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     this.isLoadingData.set(false);
   }
 
-  private cancelPdfRequest(): void {
-    this.pdfRequestId += 1;
-    this.pdfRequest?.unsubscribe();
-    this.pdfRequest = null;
-    this.isLoadingPdf.set(false);
+  private cancelGeneralPdfRequest(): void {
+    this.generalPdfRequestId += 1;
+    this.generalPdfRequest?.unsubscribe();
+    this.generalPdfRequest = null;
+    this.isLoadingGeneralPdf.set(false);
+  }
+
+  private cancelDetalleRequest(): void {
+    this.detalleRequestId += 1;
+    this.detalleRequest?.unsubscribe();
+    this.detalleRequest = null;
+    this.isLoadingDetalle.set(false);
   }
 
   private getErrorMessage(err: unknown, fallback: string): string {

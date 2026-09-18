@@ -1,0 +1,78 @@
+<div
+  class="report-dialog-backdrop"
+  role="presentation"
+  (mousedown)="onBackdropClick($event)"
+  (keydown.escape)="requestClose()"
+>
+  <section
+    class="report-dialog report-dialog--wide"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="report-pdf-modal-title"
+    cdkTrapFocus
+    [cdkTrapFocusAutoCapture]="true"
+  >
+    <header class="report-dialog__header">
+      <div>
+        <h2 id="report-pdf-modal-title" class="report-dialog__title">{{ title() }}</h2>
+        @if (description()) {
+          <p class="report-dialog__description">{{ description() }}</p>
+        }
+      </div>
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="Cerrar diálogo"
+        (click)="requestClose()"
+      ></button>
+    </header>
+
+    @if (contextItems().length > 0) {
+      <dl class="report-dialog__context" aria-label="Contexto del documento">
+        @for (item of contextItems(); track item.label) {
+          <div>
+            <dt>{{ item.label }}</dt>
+            <dd>{{ item.value }}</dd>
+          </div>
+        }
+      </dl>
+    }
+
+    <div class="report-dialog__body">
+      @if (isLoading()) {
+        <div class="report-pdf-modal__state" role="status" aria-live="polite">
+          <span class="spinner-border" aria-hidden="true"></span>
+          <p>Generando el documento PDF oficial…</p>
+        </div>
+      } @else if (errorMessage()) {
+        <div class="report-pdf-modal__state" role="alert">
+          <i class="bi bi-exclamation-triangle-fill text-danger" aria-hidden="true"></i>
+          <p>{{ errorMessage() }}</p>
+          <button type="button" class="btn btn-sm btn-outline-primary" (click)="retry.emit()">
+            Reintentar
+          </button>
+        </div>
+      } @else if (pdfBlob(); as pdf) {
+        <app-pdf-previewer
+          [src]="pdf"
+          height="clamp(24rem, 65vh, 44rem)"
+          [ariaLabel]="'Vista previa de ' + title()"
+        />
+      }
+    </div>
+
+    <footer class="report-dialog__actions">
+      <button type="button" class="btn btn-light" (click)="requestClose()">Cerrar</button>
+      @if (pdfBlob() && !isLoading() && !errorMessage()) {
+        <button type="button" class="btn btn-outline-primary" (click)="descargar()">
+          <i class="bi bi-download" aria-hidden="true"></i>
+          Descargar
+        </button>
+        <button type="button" class="btn btn-primary" (click)="imprimir()">
+          <i class="bi bi-printer" aria-hidden="true"></i>
+          Imprimir
+        </button>
+      }
+    </footer>
+  </section>
+</div>

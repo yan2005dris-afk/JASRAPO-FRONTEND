@@ -1,6 +1,6 @@
 <app-report-workspace
   title="Recaudación y Morosidad"
-  description="Monitoree las cuentas por cobrar y la deuda acumulada, y entregue el mismo contexto en tabla, PDF o correo."
+  description="Monitoree las cuentas por cobrar y la deuda acumulada, revise el detalle por cliente y genere el documento oficial."
   [contextItems]="contextItems()"
   [status]="workspaceStatus()"
   [statusMessage]="workspaceStatusMessage()"
@@ -97,61 +97,96 @@
     </div>
   </div>
 
-  <app-report-format-tabs
-    reportFormats
-    [activeFormat]="activeView()"
-    [pdfLoading]="isLoadingPdf()"
-    (formatChange)="setView($event)"
-  />
-
   <div reportActions>
-    @if (pdfBlob()) {
-      <button type="button" class="btn btn-sm btn-outline-primary" (click)="descargarPdf()">
-        <i class="bi bi-download" aria-hidden="true"></i>
-        Descargar PDF
-      </button>
-    }
-    @if (reportData()) {
-      <button type="button" class="btn btn-sm btn-outline-secondary" (click)="abrirModalEmail()">
-        <i class="bi bi-envelope" aria-hidden="true"></i>
-        Enviar por correo
-      </button>
-    }
+    <button
+      type="button"
+      class="btn btn-sm btn-primary"
+      [disabled]="isLoadingGeneralPdf()"
+      (click)="generarPdfGeneral()"
+    >
+      <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>
+      Generar PDF
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="abrirModalEmail()">
+      <i class="bi bi-envelope" aria-hidden="true"></i>
+      Enviar por correo
+    </button>
   </div>
 
   <div reportResults>
-    @if (activeView() === 'table') {
-      <div class="results-search input-group mb-3">
-        <span class="input-group-text bg-white">
-          <i class="bi bi-search" aria-hidden="true"></i>
-        </span>
-        <input
-          type="search"
-          class="form-control"
-          aria-label="Filtrar cuentas en mora"
-          placeholder="Filtrar por cliente, guía o sector…"
-          [ngModel]="searchTermTable()"
-          (ngModelChange)="onTableSearchInput($event)"
-        />
-      </div>
+    <div class="results-search input-group mb-3">
+      <span class="input-group-text bg-white">
+        <i class="bi bi-search" aria-hidden="true"></i>
+      </span>
+      <input
+        type="search"
+        class="form-control"
+        aria-label="Filtrar cuentas en mora"
+        placeholder="Filtrar por cliente, guía o sector…"
+        [ngModel]="searchTermTable()"
+        (ngModelChange)="onTableSearchInput($event)"
+      />
+    </div>
 
-      @if (resultRows().length > 0) {
-        <app-report-responsive-results
-          caption="Cuentas con valores pendientes para el contexto seleccionado"
-          [columns]="resultColumns"
-          [rows]="resultRows()"
-        />
-      } @else if (searchTermTable().trim()) {
-        <p class="results-empty" role="status">
-          No hay coincidencias para «{{ searchTermTable() }}» en las cuentas en mora.
-        </p>
-      } @else {
-        <p class="results-empty" role="status">
-          No se encontraron cuentas en mora para el contexto seleccionado.
-        </p>
-      }
-    } @else if (activeView() === 'pdf' && pdfBlob(); as pdf) {
-      <app-pdf-previewer [src]="pdf" height="clamp(28rem, 70vh, 48rem)" />
+    @if (filteredMorosos().length > 0) {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 custom-table">
+          <thead>
+            <tr>
+              <th scope="col" class="custom-table__guide-column">N° Guía</th>
+              <th scope="col">Cliente</th>
+              <th scope="col">Identificación</th>
+              <th scope="col">Sector</th>
+              <th scope="col" class="text-center">Meses Mora</th>
+              <th scope="col">Última Emisión</th>
+              <th scope="col" class="text-end">Deuda Total</th>
+              <th scope="col" class="text-center">Detalles</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of filteredMorosos(); track item.contratoId) {
+              <tr>
+                <td class="font-monospace fw-semibold text-primary">{{ item.numeroGuia }}</td>
+                <td class="fw-semibold text-dark">{{ item.clienteNombre }}</td>
+                <td class="font-monospace text-muted">{{ item.identificacion }}</td>
+                <td>{{ item.sectorNombre }}</td>
+                <td class="text-center">
+                  <span
+                    class="badge rounded-pill"
+                    [class.text-bg-warning]="item.mesesVencidos <= 2"
+                    [class.text-bg-danger]="item.mesesVencidos > 2"
+                  >
+                    {{ item.mesesVencidos }} {{ item.mesesVencidos === 1 ? 'mes' : 'meses' }}
+                  </span>
+                </td>
+                <td>{{ item.ultimaEmision }}</td>
+                <td class="text-end font-monospace fw-bold text-danger">
+                  ${{ item.saldoPendiente }}
+                </td>
+                <td class="text-center">
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1"
+                    [attr.aria-label]="'Ver detalle de ' + item.clienteNombre"
+                    (click)="abrirDetalle(item)"
+                  >
+                    <i class="bi bi-eye" aria-hidden="true"></i>
+                    Detalles
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else if (searchTermTable().trim()) {
+      <p class="results-empty" role="status">
+        No hay coincidencias para «{{ searchTermTable() }}» en las cuentas en mora.
+      </p>
+    } @else {
+      <p class="results-empty" role="status">
+        No se encontraron cuentas en mora para el contexto seleccionado.
+      </p>
     }
   </div>
 
@@ -165,6 +200,35 @@
       [isSubmitting]="isSendingEmail()"
       (closed)="cerrarModalEmail()"
       (submitted)="enviarEmail($event)"
+    />
+  }
+
+  @if (isGeneralPdfOpen()) {
+    <app-report-pdf-modal
+      reportDialog
+      title="Reporte de recaudación y morosidad"
+      description="Documento oficial con el mismo universo filtrado que la tabla."
+      [contextItems]="contextItems()"
+      [pdfBlob]="generalPdfBlob()"
+      [isLoading]="isLoadingGeneralPdf()"
+      [errorMessage]="generalPdfError()"
+      [fileName]="generalPdfFileName"
+      (retry)="generarPdfGeneral()"
+      (closed)="cerrarGeneralPdf()"
+    />
+  }
+
+  @if (isDetalleOpen()) {
+    <app-report-pdf-modal
+      reportDialog
+      [title]="detalleTitulo()"
+      description="Detalle de morosidad del contrato seleccionado."
+      [pdfBlob]="detallePdfBlob()"
+      [isLoading]="isLoadingDetalle()"
+      [errorMessage]="detalleError()"
+      [fileName]="detalleFileName()"
+      (retry)="retryDetalle()"
+      (closed)="cerrarDetalle()"
     />
   }
 </app-report-workspace>

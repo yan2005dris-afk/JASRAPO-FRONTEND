@@ -27,6 +27,8 @@ const canonicalResponse = {
   kpis: { totalMorosidad: '1234.56', totalMorosos: 7, mayorDeuda: '300.00' },
 };
 
+const firstMoroso = canonicalResponse.data[0];
+
 describe('OverdueAccountsComponent', () => {
   let fixture: ComponentFixture<OverdueAccountsComponent>;
   let component: OverdueAccountsComponent;
@@ -81,8 +83,7 @@ describe('OverdueAccountsComponent', () => {
 
     // Sin acceso autorizado no se exponen datos ni documento.
     expect(component.reportData()).toBeNull();
-    expect(component.pdfBlob()).toBeNull();
-    expect(component.resultRows()).toHaveLength(0);
+    expect(component.filteredMorosos()).toHaveLength(0);
     expect(component.workspaceStatus()).toBe('error');
     expect(component.workspaceError()).toBe('No autorizado');
   });
@@ -92,7 +93,7 @@ describe('OverdueAccountsComponent', () => {
     component.clienteId.set('42');
 
     component.consultar();
-    component.generarPdf();
+    component.generarPdfGeneral();
     component.enviarEmail({ destinatario: 'tesoreria@jasrapo.ec', subject: 'Morosidad' });
 
     const jsonFilters = reportsService.getOverdueAccounts.mock.calls.at(-1)?.[0];
@@ -112,7 +113,7 @@ describe('OverdueAccountsComponent', () => {
     component.clienteId.set('42');
     component.selectedClientName.set('Ana Pérez');
 
-    component.generarPdf();
+    component.generarPdfGeneral();
 
     // El período/filtros viajan al documento oficial (los renderiza la plantilla del backend).
     expect(reportsService.getOverdueAccountsPdf).toHaveBeenCalledWith({
@@ -128,37 +129,38 @@ describe('OverdueAccountsComponent', () => {
   });
 
   it('collectionDelinquencyWorkspacePreviewsDownloadsAndEmails', () => {
-    const createObjectURL = vi.fn(() => 'blob:overdue');
-    const revokeObjectURL = vi.fn();
-    vi.stubGlobal('URL', { ...URL, createObjectURL, revokeObjectURL });
-    const clickSpy = vi
-      .spyOn(HTMLAnchorElement.prototype, 'click')
-      .mockImplementation(() => undefined);
-
     // Consulta (JSON/tabla)
     component.consultar();
     expect(component.reportData()).not.toBeNull();
-    expect(component.resultRows()).toHaveLength(1);
+    expect(component.filteredMorosos()).toHaveLength(1);
 
-    // Vista previa (PDF)
-    component.setView('pdf');
-    expect(component.activeView()).toBe('pdf');
-    expect(component.pdfBlob()).toBeInstanceOf(Blob);
+    // Genera y previsualiza el PDF general en el modal
+    component.generarPdfGeneral();
+    expect(component.isGeneralPdfOpen()).toBe(true);
+    expect(reportsService.getOverdueAccountsPdf).toHaveBeenCalledOnce();
+    expect(component.generalPdfBlob()).toBeInstanceOf(Blob);
 
-    // Descarga
-    component.descargarPdf();
-    expect(createObjectURL).toHaveBeenCalledOnce();
-    expect(clickSpy).toHaveBeenCalledOnce();
-    expect(revokeObjectURL).toHaveBeenCalledWith('blob:overdue');
-
-    // Correo
+    // Correo del reporte general
     component.enviarEmail({ destinatario: 'tesoreria@jasrapo.ec' });
     expect(reportsService.sendOverdueAccountsEmail).toHaveBeenCalledOnce();
     expect(toast.success).toHaveBeenCalled();
     expect(component.isEmailModalOpen()).toBe(false);
+  });
 
-    clickSpy.mockRestore();
-    vi.unstubAllGlobals();
+  it('collectionDelinquencyRowDetailPreviewsIndividualContract', () => {
+    component.fechaCorte.set('2026-09-15');
+    component.consultar();
+
+    component.abrirDetalle(firstMoroso);
+
+    // El detalle individual filtra por el contrato de la fila (mismo endpoint canónico).
+    expect(reportsService.getOverdueAccountsPdf).toHaveBeenCalledWith({
+      contratoId: 'c1',
+      fechaCorte: '2026-09-15',
+    });
+    expect(component.isDetalleOpen()).toBe(true);
+    expect(component.detallePdfBlob()).toBeInstanceOf(Blob);
+    expect(component.detalleTitulo()).toContain('Ana Pérez');
   });
 
   it('collectionDelinquencyTableSearchDoesNotEmptyWorkspace', () => {
@@ -166,7 +168,7 @@ describe('OverdueAccountsComponent', () => {
     // Búsqueda local sin coincidencias: la tabla queda vacía…
     component.searchTermTable.set('zzz-sin-coincidencias');
 
-    expect(component.resultRows()).toHaveLength(0);
+    expect(component.filteredMorosos()).toHaveLength(0);
     // …pero el workspace NO se marca como vacío (el backend sí trajo filas y KPIs).
     expect(component.workspaceStatus()).toBe('idle');
     expect(component.totalMorosidad()).toBe('1234.56');
