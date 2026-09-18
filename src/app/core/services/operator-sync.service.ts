@@ -13,13 +13,7 @@ import {
 } from '../../features/operator/models/operator.models';
 
 type PayloadValue = string | number | boolean | Blob | null | undefined;
-type WorkOrderDtoField =
-  | 'estado'
-  | 'resultadoObservacion'
-  | 'completadoEn'
-  | 'estadoSellos'
-  | 'hayFugas'
-  | 'confirmacionRetiroSello';
+type WorkOrderDtoField = 'estado' | 'resultadoObservacion' | 'completadoEn';
 type WorkOrderDtoPayload = Partial<Record<WorkOrderDtoField, PayloadValue>>;
 export interface ReadingSubmission {
   _lecturaId?: string | number;
@@ -143,14 +137,7 @@ export class OperatorSyncService {
   /** Normaliza el contrato estricto aceptado por PATCH /operator/work-orders/:id. */
   private normalizeWorkOrderPayload(workOrder: WorkOrderSubmission): WorkOrderDtoPayload {
     const payload: WorkOrderDtoPayload = {};
-    const acceptedFields: WorkOrderDtoField[] = [
-      'estado',
-      'resultadoObservacion',
-      'completadoEn',
-      'estadoSellos',
-      'hayFugas',
-      'confirmacionRetiroSello',
-    ];
+    const acceptedFields: WorkOrderDtoField[] = ['estado', 'resultadoObservacion', 'completadoEn'];
 
     for (const field of acceptedFields) {
       const value = workOrder[field];

@@ -14,32 +14,6 @@ import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
   template: `
     <form [formGroup]="form" (ngSubmit)="submit()" class="reading-form">
       <div class="form-field">
-        <span class="field-label required">Confirmación de Retiro de Sello</span>
-        <div class="confirmation-box">
-          <i class="bi bi-shield-check"></i>
-          <p>
-            Confirmo que retiré el sello de seguridad del medidor antes de la reconexión. Entiendo
-            que esta acción queda registrada con mi firma digital.
-          </p>
-        </div>
-        <div class="switch-field">
-          <input
-            type="checkbox"
-            id="rec-confirm"
-            formControlName="confirmacionRetiroSello"
-            class="switch-input"
-          />
-          <label for="rec-confirm" class="switch-label">Confirmo el retiro del sello</label>
-        </div>
-        @if (
-          form.get('confirmacionRetiroSello')?.touched &&
-          form.get('confirmacionRetiroSello')?.invalid
-        ) {
-          <span class="field-error">Debe confirmar el retiro del sello.</span>
-        }
-      </div>
-
-      <div class="form-field">
         <span class="field-label required">Fotografía Post-Retiro</span>
         <app-photo-capture [preview]="null" (previewChange)="onPhotoChange($event)" />
         @if (submitted() && !photoPreview()) {
@@ -71,13 +45,7 @@ import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
 })
 export class ReconexionFormComponent extends BaseWorkOrderFormComponent<ReconexionFormPayload> {
   protected buildForm(): FormGroup {
-    return this.fb.group({
-      // Validador custom: el checkbox debe ser true (no solo truthy).
-      confirmacionRetiroSello: [
-        false,
-        (control: { value: boolean }) => (control.value === true ? null : { required: true }),
-      ],
-    });
+    return this.fb.group({});
   }
 
   protected buildPayload(
@@ -86,7 +54,6 @@ export class ReconexionFormComponent extends BaseWorkOrderFormComponent<Reconexi
   ): ReconexionFormPayload {
     return {
       tipoActividad: 'RECONEXION',
-      confirmacionRetiroSello: true,
       fotoBlob: photo as Blob,
     };
   }
