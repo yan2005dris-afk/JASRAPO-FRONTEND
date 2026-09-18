@@ -1,0 +1,53 @@
+name: Refactor de órdenes de trabajo
+description: Reporta un cambio de contrato o comportamiento relacionado con órdenes de trabajo
+title: "[Orders] "
+labels: []
+body:
+  - type: dropdown
+    id: request-type
+    attributes:
+      label: Tipo de solicitud
+      options:
+        - Refactor de contrato
+        - Corrección de comportamiento
+        - Mejora funcional
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema o necesidad
+      description: Describe el comportamiento actual y por qué debe cambiarse.
+      placeholder: Explica el problema y el impacto para los operadores o usuarios.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Solución propuesta
+      description: Detalla el comportamiento esperado después del cambio.
+      placeholder: Describe el contrato, pantalla o flujo esperado.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Criterios de aceptación
+      description: Lista las condiciones verificables para considerar completa la solicitud.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: input
+    id: affected-area
+    attributes:
+      label: Área afectada
+      description: Indica la pantalla, servicio, formulario o componente involucrado.
+      placeholder: Sincronización offline de órdenes de trabajo
+    validations:
+      required: true
