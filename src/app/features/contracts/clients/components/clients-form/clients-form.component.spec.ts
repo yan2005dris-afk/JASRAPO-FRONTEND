@@ -160,6 +160,24 @@ describe('ClientsFormComponent', () => {
     expect(telefonoSecControl?.valid).toBe(true);
   });
 
+  it('agrupa las condiciones especiales dentro de un card con título y checkbox accesible', () => {
+    const host = fixture.nativeElement as HTMLElement;
+
+    const cardHeaders = Array.from(host.querySelectorAll('.card .card-header'));
+    const condicionesHeader = cardHeaders.find((el) =>
+      el.textContent?.includes('Condiciones especiales'),
+    );
+    expect(condicionesHeader).toBeTruthy();
+
+    const card = condicionesHeader?.closest('.card');
+    const checkbox = card?.querySelector<HTMLInputElement>('#aplicaDiscapacidad');
+    const label = card?.querySelector<HTMLLabelElement>('label[for="aplicaDiscapacidad"]');
+
+    expect(checkbox).toBeTruthy();
+    expect(checkbox?.type).toBe('checkbox');
+    expect(label?.textContent?.trim()).toBe('Aplica discapacidad');
+  });
+
   it('emite el cliente creado para que el selector lo use sin volver a buscarlo', () => {
     const clienteCreado = { clienteId: '77', nombres: 'Luis', apellidos: 'Vera' } as IClient;
     const clientsService = TestBed.inject(ClientsService);
