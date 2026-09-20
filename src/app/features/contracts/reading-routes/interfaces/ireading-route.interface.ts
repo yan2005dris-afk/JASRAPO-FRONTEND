@@ -41,6 +41,15 @@ export interface ICreateRouteDto {
   fechaPlanificada?: string;
 }
 
+export interface ICreateRouteAssignmentsDto {
+  periodoId: number;
+  operarioId: number;
+  comunidadId: number;
+  sectorIds?: number[];
+  fechaPlanificada?: string;
+  nombreBase?: string;
+}
+
 export interface IUpdateRouteDto {
   nombre?: string;
   descripcion?: string;

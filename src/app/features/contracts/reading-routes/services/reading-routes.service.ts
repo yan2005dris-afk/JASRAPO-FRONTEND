@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { IPaginatedResult } from '../../../billing/payments/interfaces/ipayments.interface';
 import {
+  ICreateRouteAssignmentsDto,
   ICreateRouteDto,
   IFilterOrdenParams,
   IFilterReadingsParams,
@@ -66,6 +67,10 @@ export class ReadingRoutesService {
 
   createRoute(dto: ICreateRouteDto): Observable<IReadingRoute> {
     return this.http.post<IReadingRoute>(this.endpoint, dto);
+  }
+
+  createAssignments(dto: ICreateRouteAssignmentsDto): Observable<IReadingRoute[]> {
+    return this.http.post<IReadingRoute[]>(`${this.endpoint}/assignments`, dto);
   }
 
   updateRoute(id: string | number, dto: IUpdateRouteDto): Observable<IReadingRoute> {
