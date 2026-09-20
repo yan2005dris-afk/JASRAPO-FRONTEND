@@ -65,17 +65,15 @@
               <span class="fw-bold text-dark small text-uppercase">1. Seleccionar Operario</span>
               <span class="badge bg-primary-subtle text-primary">{{ filteredOperarios().length }} disponibles</span>
             </div>
-            <div class="input-group input-group-sm">
-              <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
-              <input
-                type="text"
-                class="form-control border-start-0 shadow-none"
-                placeholder="Buscar por nombre..."
-                [ngModel]="workerSearch()"
-                (ngModelChange)="workerSearch.set($event)"
-                [disabled]="isLoading()"
-              />
-            </div>
+            <app-picker-input
+              inputId="workspacePageWorkerSearch"
+              placeholder="Buscar por nombre o correo..."
+              icon="bi-search"
+              [query]="workerSearch()"
+              [disabled]="isLoading()"
+              (queryChange)="workerSearch.set($event)"
+              (clear)="workerSearch.set('')"
+            />
           </div>
 
           <div class="column-body">
@@ -246,16 +244,16 @@
 
             <!-- Configuración adicional -->
             <div class="bg-light p-3 rounded-3 border mb-3">
-              <div class="mb-2">
-                <label for="inputWorkspacePageNombreBase" class="form-label fw-semibold text-dark small mb-1">Nombre base de la ruta:</label>
-                <input
-                  id="inputWorkspacePageNombreBase"
-                  type="text"
-                  class="form-control form-control-sm shadow-none"
+              <div class="mb-3">
+                <app-picker-input
+                  inputId="inputWorkspacePageNombreBase"
+                  label="Nombre base de la ruta:"
                   placeholder="Ej. Ruta Lectura"
-                  [ngModel]="nombreBase()"
-                  (ngModelChange)="nombreBase.set($event)"
+                  icon="bi-card-text"
+                  [query]="nombreBase()"
                   [disabled]="isLoading()"
+                  (queryChange)="nombreBase.set($event)"
+                  (clear)="nombreBase.set('')"
                 />
               </div>
 

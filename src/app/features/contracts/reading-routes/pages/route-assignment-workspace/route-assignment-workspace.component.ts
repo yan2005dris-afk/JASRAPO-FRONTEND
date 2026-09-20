@@ -21,12 +21,19 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 import { PeriodPickerComponent } from '../../../../../shared/components/period-picker/period-picker.component';
+import { PickerInputComponent } from '../../../../../shared/components/picker-input/picker-input.component';
 import type { IAccountingPeriod } from '../../../../../shared/services/periods.service';
 
 @Component({
   selector: 'app-route-assignment-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, DatePickerComponent, PeriodPickerComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    DatePickerComponent,
+    PeriodPickerComponent,
+    PickerInputComponent,
+  ],
   templateUrl: './route-assignment-workspace.component.html',
   styleUrl: './route-assignment-workspace.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
