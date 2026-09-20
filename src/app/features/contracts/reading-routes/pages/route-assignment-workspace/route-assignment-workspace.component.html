@@ -1,7 +1,7 @@
 <div class="assignment-workspace-page">
   <!-- Top Navigation & Header -->
   <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
       <!-- Izquierda: Título y descripción -->
       <div class="d-flex align-items-center gap-3">
         <div class="header-icon-tile">
@@ -17,8 +17,8 @@
         </div>
       </div>
 
-      <!-- Derecha: Selector de período, Estado y Botón Volver al fondo a la derecha -->
-      <div class="d-flex align-items-center gap-3 flex-wrap ms-auto">
+      <!-- Centro: Selector de período y Estado -->
+      <div class="d-flex align-items-center gap-3 flex-wrap">
         <div style="min-width: 260px">
           <app-period-picker
             inputId="workspacePagePeriodPicker"
@@ -39,9 +39,10 @@
             {{ selectedPeriod() ? selectedPeriod()!.estado : 'Seleccione período' }}
           </span>
         </div>
+      </div>
 
-        <div class="vr mx-1 d-none d-md-block" style="height: 38px"></div>
-
+      <!-- Derecha al fondo: Solo el botón de volver -->
+      <div class="ms-auto ms-lg-0">
         <button
           type="button"
           class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 rounded-3 px-3 py-2"
