@@ -213,7 +213,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
           `Se generaron exitosamente ${routes.length} ruta(s) de lectura.`,
           'success',
         );
-        this.router.navigate(['/RutasDeLectura']);
+        this.router.navigate(['/app/Contratos/RutasDeLectura']);
       },
       error: (err) => {
         this.isLoading.set(false);
@@ -226,6 +226,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/RutasDeLectura']);
+    this.router.navigate(['/app/Contratos/RutasDeLectura']);
   }
 }

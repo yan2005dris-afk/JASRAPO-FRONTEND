@@ -181,7 +181,7 @@ describe('RouteAssignmentWorkspaceComponent', () => {
       fechaPlanificada: expect.any(String),
       nombreBase: 'Ruta Lectura',
     });
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/RutasDeLectura']);
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/app/Contratos/RutasDeLectura']);
     expect(mockToastService.show).toHaveBeenCalledWith(
       expect.stringContaining('Se generaron exitosamente 1 ruta(s)'),
       'success',
@@ -210,6 +210,6 @@ describe('RouteAssignmentWorkspaceComponent', () => {
 
   it('should navigate back on goBack()', () => {
     component.goBack();
-    expect(mockRouter.navigate).toHaveBeenCalledWith(['/RutasDeLectura']);
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/app/Contratos/RutasDeLectura']);
   });
 });

@@ -250,7 +250,7 @@ export class ReadingRoutesComponent implements OnInit {
   }
 
   goToAssignment(): void {
-    this.router.navigate(['/RutasDeLectura/asignar']);
+    this.router.navigate(['/app/Contratos/RutasDeLectura/asignar']);
   }
 
   onRouteSaved(): void {
