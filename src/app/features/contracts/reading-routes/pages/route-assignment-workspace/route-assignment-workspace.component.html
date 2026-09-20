@@ -1,0 +1,299 @@
+<div class="assignment-workspace-page">
+  <!-- Top Navigation & Header -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 rounded-3 px-3 py-2"
+          (click)="goBack()"
+        >
+          <i class="bi bi-arrow-left"></i>
+          Volver a Rutas
+        </button>
+        <div class="header-icon-tile">
+          <i class="bi bi-grid-3x3-gap-fill"></i>
+        </div>
+        <div>
+          <h4 class="fw-bold text-dark mb-0 fs-5">
+            Asignación de Rutas de Lectura por Periodo
+          </h4>
+          <p class="text-muted small mb-0">
+            Workspace para asignar sectores o comunidades completas a operarios en el periodo operativo.
+          </p>
+        </div>
+      </div>
+
+      <div class="d-flex align-items-center gap-3 flex-wrap">
+        <div style="min-width: 260px">
+          <app-period-picker
+            inputId="workspacePagePeriodPicker"
+            label="Período Operativo"
+            [selectedPeriodId]="selectedPeriodId()"
+            [required]="true"
+            [disabled]="isLoading()"
+            (periodSelected)="onPeriodSelected($event)"
+          />
+        </div>
+
+        <div class="text-end">
+          <div class="small text-muted">Estado del Período</div>
+          <span
+            class="badge px-3 py-2 fw-semibold"
+            [ngClass]="selectedPeriod()?.estado === 'ABIERTO' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'"
+          >
+            {{ selectedPeriod() ? selectedPeriod()!.estado : 'Seleccione período' }}
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main 3-Column Grid -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <div class="row g-4">
+      <!-- Columna 1: Trabajadores (Operarios) -->
+      <div class="col-lg-4 col-md-12">
+        <div class="workspace-column">
+          <div class="column-header d-flex flex-column gap-2">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="fw-bold text-dark small text-uppercase">1. Seleccionar Operario</span>
+              <span class="badge bg-primary-subtle text-primary">{{ filteredOperarios().length }} disponibles</span>
+            </div>
+            <div class="input-group input-group-sm">
+              <span class="input-group-text bg-white border-end-0 text-muted"><i class="bi bi-search"></i></span>
+              <input
+                type="text"
+                class="form-control border-start-0 shadow-none"
+                placeholder="Buscar por nombre..."
+                [ngModel]="workerSearch()"
+                (ngModelChange)="workerSearch.set($event)"
+                [disabled]="isLoading()"
+              />
+            </div>
+          </div>
+
+          <div class="column-body">
+            @if (filteredOperarios().length === 0) {
+              <div class="text-center py-5 text-muted small">
+                <i class="bi bi-person-x fs-2 d-block mb-1 text-secondary"></i>
+                No se encontraron operarios.
+              </div>
+            }
+            @for (op of filteredOperarios(); track op.usuarioId) {
+              <div
+                class="worker-card d-flex align-items-center justify-content-between"
+                [class.selected]="selectedOperarioId() === op.usuarioId"
+                (click)="selectOperario(op.usuarioId)"
+              >
+                <div class="d-flex align-items-center gap-3">
+                  <div class="rounded-circle bg-light d-flex align-items-center justify-content-center text-primary fw-bold" style="width: 38px; height: 38px; font-size: 0.85rem">
+                    {{ op.nombres.charAt(0) }}{{ op.apellidos.charAt(0) }}
+                  </div>
+                  <div>
+                    <div class="fw-semibold text-dark small">{{ op.nombres }} {{ op.apellidos }}</div>
+                    <div class="text-muted" style="font-size: 0.75rem">{{ op.email }}</div>
+                  </div>
+                </div>
+                <div>
+                  <input
+                    type="radio"
+                    class="form-check-input"
+                    name="selectedWorkerRadioPage"
+                    [checked]="selectedOperarioId() === op.usuarioId"
+                    [disabled]="isLoading()"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna 2: Comunidades y Sectores -->
+      <div class="col-lg-4 col-md-12">
+        <div class="workspace-column">
+          <div class="column-header d-flex flex-column gap-2">
+            <div class="d-flex justify-content-between align-items-center">
+              <span class="fw-bold text-dark small text-uppercase">2. Comunidad & Sectores</span>
+              <span class="badge bg-info-subtle text-info">{{ selectedSectorIds().length }} selec.</span>
+            </div>
+            <select
+              class="form-select form-select-sm shadow-none"
+              [ngModel]="selectedComunidadId()"
+              (ngModelChange)="onComunidadChange($event)"
+              [disabled]="isLoading()"
+            >
+              <option [ngValue]="null">Seleccione una comunidad...</option>
+              @for (com of comunidades(); track com.id) {
+                <option [ngValue]="com.id">{{ com.nombre }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="column-body">
+            @if (!selectedComunidadId()) {
+              <div class="text-center py-5 text-muted small">
+                <i class="bi bi-geo-alt fs-2 d-block mb-1 text-secondary"></i>
+                Seleccione una comunidad para ver sus sectores.
+              </div>
+            } @else {
+              <!-- Opción: Toda la Comunidad -->
+              <div class="sector-item mb-3 bg-light border-primary-subtle" [class.selected]="isAllCommunitySelected()">
+                <div class="form-check form-switch mb-0 d-flex align-items-center justify-content-between">
+                  <label class="form-check-label fw-bold text-primary small" for="switchAllCommunityPage">
+                    <i class="bi bi-globe me-1"></i> Toda la comunidad
+                  </label>
+                  <input
+                    class="form-check-input"
+                    type="checkbox"
+                    id="switchAllCommunityPage"
+                    [checked]="isAllCommunitySelected()"
+                    (change)="toggleAllCommunity()"
+                    [disabled]="isLoading()"
+                  />
+                </div>
+                <div class="text-muted mt-1" style="font-size: 0.72rem">
+                  Asigna la totalidad de los contratos de la comunidad sin subdividir por sector.
+                </div>
+              </div>
+
+              @if (!isAllCommunitySelected()) {
+                <div class="fw-semibold text-muted small mb-2">Sectores disponibles:</div>
+                @if (filteredSectores().length === 0) {
+                  <div class="text-center py-3 text-muted small">
+                    Esta comunidad no tiene sectores registrados. Aplica sobre toda la comunidad.
+                  </div>
+                }
+                @for (sec of filteredSectores(); track sec.sectorId ?? sec.codigo) {
+                  <div
+                    class="sector-item d-flex align-items-center justify-content-between"
+                    [class.selected]="sec.sectorId ? isSectorSelected(sec.sectorId) : false"
+                  >
+                    <label class="form-check-label fw-medium text-dark small flex-grow-1" [for]="'sectorCheckPage_' + (sec.sectorId ?? sec.codigo)">
+                      <span class="badge bg-light text-secondary border me-1">{{ sec.codigo }}</span>
+                      {{ sec.nombre }}
+                    </label>
+                    <input
+                      class="form-check-input"
+                      type="checkbox"
+                      [id]="'sectorCheckPage_' + (sec.sectorId ?? sec.codigo)"
+                      [checked]="sec.sectorId ? isSectorSelected(sec.sectorId) : false"
+                      (change)="sec.sectorId ? toggleSector(sec.sectorId) : null"
+                      [disabled]="isLoading() || !sec.sectorId"
+                    />
+                  </div>
+                }
+              }
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna 3: Resumen & Confirmación -->
+      <div class="col-lg-4 col-md-12">
+        <div class="workspace-column">
+          <div class="column-header">
+            <span class="fw-bold text-dark small text-uppercase">3. Resumen de Asignación</span>
+          </div>
+
+          <div class="column-body d-flex flex-column justify-content-between">
+            <div class="summary-card mb-3">
+              <div class="summary-item">
+                <span class="label">Período:</span>
+                <span class="value">{{ selectedPeriod() ? selectedPeriod()!.nombre || ('Período #' + selectedPeriod()!.periodoId) : 'Sin seleccionar' }}</span>
+              </div>
+
+              <div class="summary-item">
+                <span class="label">Operario:</span>
+                <span class="value text-primary">{{ getOperarioName() }}</span>
+              </div>
+
+              <div class="summary-item">
+                <span class="label">Comunidad:</span>
+                <span class="value">{{ getComunidadName() }}</span>
+              </div>
+
+              <div class="summary-item">
+                <span class="label">Alcance:</span>
+                <span class="value">
+                  @if (isAllCommunitySelected()) {
+                    <span class="badge bg-primary text-white">Toda la Comunidad</span>
+                  } @else if (selectedSectorIds().length > 0) {
+                    <span class="badge bg-success-subtle text-success">{{ selectedSectorIds().length }} sectores seleccionados</span>
+                  } @else {
+                    <span class="text-muted">Ninguno</span>
+                  }
+                </span>
+              </div>
+
+              @if (!isAllCommunitySelected() && selectedSectorIds().length > 0) {
+                <div class="mt-2 pt-2 border-top">
+                  <div class="label small mb-1">Sectores incluidos:</div>
+                  <div class="d-flex flex-wrap gap-1">
+                    @for (s of getSelectedSectorsList(); track s.sectorId) {
+                      <span class="badge bg-light text-dark border small">{{ s.nombre }}</span>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+
+            <!-- Configuración adicional -->
+            <div class="bg-light p-3 rounded-3 border mb-3">
+              <div class="mb-2">
+                <label for="inputWorkspacePageNombreBase" class="form-label fw-semibold text-dark small mb-1">Nombre base de la ruta:</label>
+                <input
+                  id="inputWorkspacePageNombreBase"
+                  type="text"
+                  class="form-control form-control-sm shadow-none"
+                  placeholder="Ej. Ruta Lectura"
+                  [ngModel]="nombreBase()"
+                  (ngModelChange)="nombreBase.set($event)"
+                  [disabled]="isLoading()"
+                />
+              </div>
+
+              <div>
+                <label for="workspacePageFechaPlanificada" class="form-label fw-semibold text-dark small mb-1">Fecha Planificada:</label>
+                <app-date-picker
+                  inputId="workspacePageFechaPlanificada"
+                  [value]="fechaPlanificada()"
+                  [disabled]="isLoading()"
+                  (valueChange)="fechaPlanificada.set($event)"
+                />
+              </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="d-flex flex-column gap-2 pt-2 border-top">
+              <button
+                type="button"
+                class="btn btn-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2 shadow-sm"
+                [disabled]="!isFormValid() || isLoading()"
+                (click)="confirmAndSave()"
+              >
+                @if (isLoading()) {
+                  <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                  <span>Generando asignaciones...</span>
+                } @else {
+                  <i class="bi bi-check2-circle fs-5"></i>
+                  <span>Confirmar Asignación</span>
+                }
+              </button>
+
+              <button
+                type="button"
+                class="btn btn-outline-secondary w-100 py-2 fw-medium"
+                (click)="goBack()"
+                [disabled]="isLoading()"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

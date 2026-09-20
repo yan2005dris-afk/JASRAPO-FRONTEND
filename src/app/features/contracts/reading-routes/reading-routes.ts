@@ -31,7 +31,6 @@ import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/
 import { Router } from '@angular/router';
 import { RouteFormModalComponent } from './components/route-form-modal/route-form-modal.component';
 import { ReassignRouteModalComponent } from './components/reassign-route-modal/reassign-route-modal.component';
-import { RouteAssignmentWorkspaceModalComponent } from './components/route-assignment-workspace-modal/route-assignment-workspace-modal.component';
 
 @Component({
   selector: 'app-reading-routes',
@@ -45,7 +44,6 @@ import { RouteAssignmentWorkspaceModalComponent } from './components/route-assig
     PaginationComponent,
     RouteFormModalComponent,
     ReassignRouteModalComponent,
-    RouteAssignmentWorkspaceModalComponent,
     DropdownComponent,
   ],
   templateUrl: './reading-routes.html',
@@ -102,7 +100,6 @@ export class ReadingRoutesComponent implements OnInit {
 
   // Modals
   isFormModalOpen = false;
-  isWorkspaceModalOpen = false;
   selectedRouteForEdit: IReadingRoute | null = null;
   selectedRouteForReassign: IReadingRoute | null = null;
 
@@ -252,19 +249,8 @@ export class ReadingRoutesComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  openWorkspaceModal(): void {
-    this.isWorkspaceModalOpen = true;
-    this.cdr.markForCheck();
-  }
-
-  closeWorkspaceModal(): void {
-    this.isWorkspaceModalOpen = false;
-    this.cdr.markForCheck();
-  }
-
-  onWorkspaceSaved(): void {
-    this.isWorkspaceModalOpen = false;
-    this.loadRoutes();
+  goToAssignment(): void {
+    this.router.navigate(['/RutasDeLectura/asignar']);
   }
 
   onRouteSaved(): void {

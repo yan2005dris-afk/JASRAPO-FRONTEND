@@ -20,7 +20,7 @@
         <button
           type="button"
           class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
-          (click)="openWorkspaceModal()"
+          (click)="goToAssignment()"
         >
           <i class="bi bi-grid-3x3-gap-fill"></i>
           Asignar por Periodo
@@ -346,13 +346,6 @@
   </div>
 
   <!-- MODALS -->
-  @if (isWorkspaceModalOpen) {
-    <app-route-assignment-workspace-modal
-      (saved)="onWorkspaceSaved()"
-      (closed)="closeWorkspaceModal()"
-    />
-  }
-
   @if (isFormModalOpen) {
     <app-route-form-modal
       [route]="selectedRouteForEdit"

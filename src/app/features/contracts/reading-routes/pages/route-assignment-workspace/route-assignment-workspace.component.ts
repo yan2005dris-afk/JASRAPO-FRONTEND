@@ -4,11 +4,11 @@ import {
   OnInit,
   computed,
   inject,
-  output,
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ReadingRoutesService } from '../../services/reading-routes.service';
 import { ICreateRouteAssignmentsDto } from '../../interfaces/ireading-route.interface';
 import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
@@ -24,26 +24,21 @@ import { PeriodPickerComponent } from '../../../../../shared/components/period-p
 import type { IAccountingPeriod } from '../../../../../shared/services/periods.service';
 
 @Component({
-  selector: 'app-route-assignment-workspace-modal',
+  selector: 'app-route-assignment-workspace',
   standalone: true,
   imports: [CommonModule, FormsModule, DatePickerComponent, PeriodPickerComponent],
-  templateUrl: './route-assignment-workspace-modal.component.html',
-  styleUrl: './route-assignment-workspace-modal.component.scss',
+  templateUrl: './route-assignment-workspace.component.html',
+  styleUrl: './route-assignment-workspace.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: {
-    '(keydown.escape)': 'close()',
-  },
 })
-export class RouteAssignmentWorkspaceModalComponent implements OnInit {
+export class RouteAssignmentWorkspaceComponent implements OnInit {
+  private readonly router = inject(Router);
   private readonly routesService = inject(ReadingRoutesService);
   private readonly comunidadesService = inject(ComunidadesService);
   private readonly sectoresService = inject(SectoresService);
   private readonly usersService = inject(UsersService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
-
-  readonly saved = output<void>();
-  readonly closed = output<void>();
 
   // Catalogs
   readonly operarios = signal<User[]>([]);
@@ -218,7 +213,7 @@ export class RouteAssignmentWorkspaceModalComponent implements OnInit {
           `Se generaron exitosamente ${routes.length} ruta(s) de lectura.`,
           'success',
         );
-        this.saved.emit();
+        this.router.navigate(['/RutasDeLectura']);
       },
       error: (err) => {
         this.isLoading.set(false);
@@ -230,7 +225,7 @@ export class RouteAssignmentWorkspaceModalComponent implements OnInit {
     });
   }
 
-  close(): void {
-    this.closed.emit();
+  goBack(): void {
+    this.router.navigate(['/RutasDeLectura']);
   }
 }

@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
-import { RouteAssignmentWorkspaceModalComponent } from './route-assignment-workspace-modal.component';
+import { RouteAssignmentWorkspaceComponent } from './route-assignment-workspace.component';
 import { ReadingRoutesService } from '../../services/reading-routes.service';
 import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
 import { SectoresService } from '../../../../admin/sectores-prueba/services/sectores';
@@ -10,9 +11,13 @@ import { UsersService } from '../../../../users/services/users.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
 
-describe('RouteAssignmentWorkspaceModalComponent', () => {
-  let component: RouteAssignmentWorkspaceModalComponent;
-  let fixture: ComponentFixture<RouteAssignmentWorkspaceModalComponent>;
+describe('RouteAssignmentWorkspaceComponent', () => {
+  let component: RouteAssignmentWorkspaceComponent;
+  let fixture: ComponentFixture<RouteAssignmentWorkspaceComponent>;
+
+  const mockRouter = {
+    navigate: vi.fn(),
+  };
 
   const mockReadingRoutesService = {
     createAssignments: vi.fn(),
@@ -78,10 +83,11 @@ describe('RouteAssignmentWorkspaceModalComponent', () => {
     vi.clearAllMocks();
 
     await TestBed.configureTestingModule({
-      imports: [RouteAssignmentWorkspaceModalComponent],
+      imports: [RouteAssignmentWorkspaceComponent],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
+        { provide: Router, useValue: mockRouter },
         { provide: ReadingRoutesService, useValue: mockReadingRoutesService },
         { provide: ComunidadesService, useValue: mockComunidadesService },
         { provide: SectoresService, useValue: mockSectoresService },
@@ -91,7 +97,7 @@ describe('RouteAssignmentWorkspaceModalComponent', () => {
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(RouteAssignmentWorkspaceModalComponent);
+    fixture = TestBed.createComponent(RouteAssignmentWorkspaceComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
@@ -149,8 +155,7 @@ describe('RouteAssignmentWorkspaceModalComponent', () => {
     expect(component.isAllCommunitySelected()).toBe(false);
   });
 
-  it('should execute assignment and emit saved event when confirmed', async () => {
-    const savedSpy = vi.spyOn(component.saved, 'emit');
+  it('should execute assignment and navigate back when confirmed', async () => {
     mockReadingRoutesService.createAssignments.mockReturnValue(
       of([{ rutaId: '100', nombre: 'Ruta Lectura - Sector A' }]),
     );
@@ -176,7 +181,7 @@ describe('RouteAssignmentWorkspaceModalComponent', () => {
       fechaPlanificada: expect.any(String),
       nombreBase: 'Ruta Lectura',
     });
-    expect(savedSpy).toHaveBeenCalled();
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/RutasDeLectura']);
     expect(mockToastService.show).toHaveBeenCalledWith(
       expect.stringContaining('Se generaron exitosamente 1 ruta(s)'),
       'success',
@@ -203,9 +208,8 @@ describe('RouteAssignmentWorkspaceModalComponent', () => {
     expect(mockToastService.show).toHaveBeenCalledWith('Error de prueba', 'error');
   });
 
-  it('should emit closed when close() is called', () => {
-    const closeSpy = vi.spyOn(component.closed, 'emit');
-    component.close();
-    expect(closeSpy).toHaveBeenCalled();
+  it('should navigate back on goBack()', () => {
+    component.goBack();
+    expect(mockRouter.navigate).toHaveBeenCalledWith(['/RutasDeLectura']);
   });
 });
