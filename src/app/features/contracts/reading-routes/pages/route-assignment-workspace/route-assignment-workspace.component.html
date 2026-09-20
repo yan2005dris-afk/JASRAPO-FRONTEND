@@ -142,49 +142,72 @@
               </div>
             } @else {
               <!-- Opción: Toda la Comunidad -->
-              <div class="sector-item mb-3 bg-light border-primary-subtle" [class.selected]="isAllCommunitySelected()">
-                <div class="form-check form-switch mb-0 d-flex align-items-center justify-content-between">
-                  <label class="form-check-label fw-bold text-primary small" for="switchAllCommunityPage">
-                    <i class="bi bi-globe me-1"></i> Toda la comunidad
-                  </label>
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    id="switchAllCommunityPage"
-                    [checked]="isAllCommunitySelected()"
-                    (change)="toggleAllCommunity()"
-                    [disabled]="isLoading()"
-                  />
-                </div>
-                <div class="text-muted mt-1" style="font-size: 0.72rem">
-                  Asigna la totalidad de los contratos de la comunidad sin subdividir por sector.
+              <div
+                class="sector-card mb-3 p-3"
+                [class.selected]="isAllCommunitySelected()"
+                (click)="toggleAllCommunity()"
+                role="button"
+                tabindex="0"
+                (keydown.enter)="toggleAllCommunity()"
+                (keydown.space)="toggleAllCommunity(); $event.preventDefault()"
+              >
+                <div class="d-flex align-items-center justify-content-between">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="sector-icon-tile" [class.active]="isAllCommunitySelected()">
+                      <i class="bi bi-globe"></i>
+                    </div>
+                    <div>
+                      <div class="fw-bold text-dark small">Toda la comunidad</div>
+                      <div class="text-muted" style="font-size: 0.72rem">
+                        Asigna la totalidad de los contratos de la comunidad.
+                      </div>
+                    </div>
+                  </div>
+                  <div class="selection-indicator" [class.active]="isAllCommunitySelected()">
+                    <i class="bi" [ngClass]="isAllCommunitySelected() ? 'bi-check-circle-fill text-primary' : 'bi-circle text-muted'"></i>
+                  </div>
                 </div>
               </div>
 
               @if (!isAllCommunitySelected()) {
-                <div class="fw-semibold text-muted small mb-2">Sectores disponibles:</div>
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                  <span class="fw-semibold text-muted small">Sectores disponibles:</span>
+                  <span class="text-muted" style="font-size: 0.75rem">Click en una card para seleccionar</span>
+                </div>
                 @if (filteredSectores().length === 0) {
-                  <div class="text-center py-3 text-muted small">
-                    Esta comunidad no tiene sectores registrados. Aplica sobre toda la comunidad.
+                  <div class="text-center py-4 text-muted small bg-light rounded-3 border">
+                    <i class="bi bi-info-circle fs-4 d-block mb-1 text-secondary"></i>
+                    Esta comunidad no tiene sectores registrados.
                   </div>
                 }
                 @for (sec of filteredSectores(); track sec.sectorId ?? sec.codigo) {
                   <div
-                    class="sector-item d-flex align-items-center justify-content-between"
+                    class="sector-card d-flex align-items-center justify-content-between p-3"
                     [class.selected]="sec.sectorId ? isSectorSelected(sec.sectorId) : false"
+                    (click)="sec.sectorId ? toggleSector(sec.sectorId) : null"
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="sec.sectorId ? toggleSector(sec.sectorId) : null"
+                    (keydown.space)="sec.sectorId ? toggleSector(sec.sectorId) : null; $event.preventDefault()"
                   >
-                    <label class="form-check-label fw-medium text-dark small flex-grow-1" [for]="'sectorCheckPage_' + (sec.sectorId ?? sec.codigo)">
-                      <span class="badge bg-light text-secondary border me-1">{{ sec.codigo }}</span>
-                      {{ sec.nombre }}
-                    </label>
-                    <input
-                      class="form-check-input"
-                      type="checkbox"
-                      [id]="'sectorCheckPage_' + (sec.sectorId ?? sec.codigo)"
-                      [checked]="sec.sectorId ? isSectorSelected(sec.sectorId) : false"
-                      (change)="sec.sectorId ? toggleSector(sec.sectorId) : null"
-                      [disabled]="isLoading() || !sec.sectorId"
-                    />
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="sector-icon-tile" [class.active]="sec.sectorId ? isSectorSelected(sec.sectorId) : false">
+                        <i class="bi bi-geo-alt-fill"></i>
+                      </div>
+                      <div>
+                        <div class="d-flex align-items-center gap-2">
+                          <span class="badge bg-light text-secondary border small">{{ sec.codigo }}</span>
+                          <span class="fw-semibold text-dark small">{{ sec.nombre }}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="selection-indicator">
+                      <i
+                        class="bi fs-5"
+                        [ngClass]="(sec.sectorId && isSectorSelected(sec.sectorId)) ? 'bi-check-circle-fill text-success' : 'bi-circle text-muted'"
+                      ></i>
+                    </div>
                   </div>
                 }
               }
