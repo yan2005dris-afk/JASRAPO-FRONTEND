@@ -1,8 +1,8 @@
 <div class="assignment-workspace-page">
   <!-- Top Navigation & Header -->
-  <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+  <div class="card border-0 shadow-sm rounded-4 p-4 bg-white d-flex flex-column gap-3">
+    <!-- Fila 1: Título a la izquierda, Botón volver a la derecha -->
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
-      <!-- Izquierda: Título y descripción -->
       <div class="d-flex align-items-center gap-3">
         <div class="header-icon-tile">
           <i class="bi bi-grid-3x3-gap-fill"></i>
@@ -17,9 +17,20 @@
         </div>
       </div>
 
-      <!-- Centro: Selector de período y Estado -->
+      <button
+        type="button"
+        class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 rounded-3 px-3 py-2"
+        (click)="goBack()"
+      >
+        <i class="bi bi-arrow-left"></i>
+        Volver a Rutas
+      </button>
+    </div>
+
+    <!-- Fila 2: Período Operativo y Estado -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 pt-3 border-top">
       <div class="d-flex align-items-center gap-3 flex-wrap">
-        <div style="min-width: 260px">
+        <div style="min-width: 280px">
           <app-period-picker
             inputId="workspacePagePeriodPicker"
             label="Período Operativo"
@@ -29,28 +40,16 @@
             (periodSelected)="onPeriodSelected($event)"
           />
         </div>
-
-        <div class="text-end">
-          <div class="small text-muted">Estado del Período</div>
-          <span
-            class="badge px-3 py-2 fw-semibold"
-            [ngClass]="selectedPeriod()?.estado === 'ABIERTO' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'"
-          >
-            {{ selectedPeriod() ? selectedPeriod()!.estado : 'Seleccione período' }}
-          </span>
-        </div>
       </div>
 
-      <!-- Derecha al fondo: Solo el botón de volver -->
-      <div class="ms-auto ms-lg-0">
-        <button
-          type="button"
-          class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 rounded-3 px-3 py-2"
-          (click)="goBack()"
+      <div class="d-flex align-items-center gap-2">
+        <span class="small text-muted fw-medium">Estado del Período:</span>
+        <span
+          class="badge px-3 py-2 fw-semibold"
+          [ngClass]="selectedPeriod()?.estado === 'ABIERTO' ? 'bg-success-subtle text-success' : 'bg-secondary-subtle text-secondary'"
         >
-          <i class="bi bi-arrow-left"></i>
-          Volver a Rutas
-        </button>
+          {{ selectedPeriod() ? selectedPeriod()!.estado : 'Seleccione período' }}
+        </span>
       </div>
     </div>
   </div>
