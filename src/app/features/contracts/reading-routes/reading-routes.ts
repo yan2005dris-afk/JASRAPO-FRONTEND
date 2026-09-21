@@ -252,7 +252,7 @@ export class ReadingRoutesComponent implements OnInit {
     this.openDropdownId = null;
     this.dialogService
       .confirm({
-        title: '¿Eliminar ruta de lectura?',
+        title: '¿Eliminar ruta de trabajo?',
         message: `¿Estás seguro de que deseas eliminar la ruta "${route.nombre}"? Esta acción no se puede deshacer.`,
         confirmText: 'Eliminar',
         cancelText: 'Cancelar',
@@ -315,8 +315,8 @@ export class ReadingRoutesComponent implements OnInit {
     if (this.routes.length === 0) return;
 
     this.tableExportService.exportToPdf({
-      title: 'LISTADO DE RUTAS DE TRABAJO Y LECTURA',
-      fileName: `Rutas_Lectura_${new Date().toISOString().slice(0, 10)}`,
+      title: 'LISTADO DE RUTAS DE TRABAJO',
+      fileName: `Rutas_Trabajo_${new Date().toISOString().slice(0, 10)}`,
       columns: [
         { header: 'ID', key: 'rutaId', width: 35, align: 'center' },
         { header: 'Nombre de Ruta', key: 'nombre', width: 110 },
@@ -357,8 +357,8 @@ export class ReadingRoutesComponent implements OnInit {
     if (this.routes.length === 0) return;
 
     this.tableExportService.exportToExcel({
-      title: 'LISTADO DE RUTAS DE TRABAJO Y LECTURA',
-      fileName: `Rutas_Lectura_${new Date().toISOString().slice(0, 10)}`,
+      title: 'LISTADO DE RUTAS DE TRABAJO',
+      fileName: `Rutas_Trabajo_${new Date().toISOString().slice(0, 10)}`,
       columns: [
         { header: 'ID', key: 'rutaId' },
         { header: 'Nombre de Ruta', key: 'nombre' },
@@ -394,8 +394,8 @@ export class ReadingRoutesComponent implements OnInit {
     if (this.routes.length === 0) return;
 
     this.tableExportService.exportToCsv({
-      title: 'LISTADO DE RUTAS DE TRABAJO Y LECTURA',
-      fileName: `Rutas_Lectura_${new Date().toISOString().slice(0, 10)}`,
+      title: 'LISTADO DE RUTAS DE TRABAJO',
+      fileName: `Rutas_Trabajo_${new Date().toISOString().slice(0, 10)}`,
       columns: [
         { header: 'ID', key: 'rutaId' },
         { header: 'Nombre de Ruta', key: 'nombre' },

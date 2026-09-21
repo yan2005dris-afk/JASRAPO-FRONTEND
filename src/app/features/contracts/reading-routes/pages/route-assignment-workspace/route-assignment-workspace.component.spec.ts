@@ -126,6 +126,23 @@ describe('RouteAssignmentWorkspaceComponent', () => {
     expect(component.filteredSectores()[0].sectorId).toBe(20);
   });
 
+  it('should update suggested route name when activity type changes', () => {
+    component.onPeriodSelected({
+      periodoId: 1,
+      nombre: '2026',
+      estado: 'ABIERTO',
+    });
+    component.onFechaPlanificadaChange('2026-09');
+
+    expect(component.sugeridoNombreBase()).toBe('Ruta Lectura - 2026 - Septiembre');
+
+    component.onTipoActividadChange('CORTE');
+    expect(component.sugeridoNombreBase()).toBe('Ruta Corte - 2026 - Septiembre');
+
+    component.onTipoActividadChange('INSPECCION');
+    expect(component.sugeridoNombreBase()).toBe('Ruta Inspección - 2026 - Septiembre');
+  });
+
   it('should compute isFormValid correctly based on selected inputs', () => {
     expect(component.isFormValid()).toBe(false);
 
@@ -177,6 +194,7 @@ describe('RouteAssignmentWorkspaceComponent', () => {
       periodoId: 1,
       operarioId: 5,
       comunidadId: 1,
+      tipoRuta: 'TOMA_LECTURA',
       sectorIds: [10],
       fechaPlanificada: expect.any(String),
       nombreBase: expect.stringContaining('Ruta Lectura'),

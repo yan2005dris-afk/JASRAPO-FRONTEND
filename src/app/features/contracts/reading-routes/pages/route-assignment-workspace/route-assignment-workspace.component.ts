@@ -10,7 +10,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ReadingRoutesService } from '../../services/reading-routes.service';
-import { ICreateRouteAssignmentsDto } from '../../interfaces/ireading-route.interface';
+import {
+  ICreateRouteAssignmentsDto,
+  TipoRuta,
+} from '../../interfaces/ireading-route.interface';
 import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
 import { SectoresService } from '../../../../admin/sectores-prueba/services/sectores';
 import { UsersService } from '../../../../users/services/users.service';
@@ -59,12 +62,21 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   readonly selectedComunidadId = signal<number | null>(null);
   readonly selectedSectorIds = signal<number[]>([]);
   readonly isAllCommunitySelected = signal<boolean>(false);
+  readonly tipoActividadSeleccionada = signal<TipoRuta>('TOMA_LECTURA');
   readonly fechaPlanificada = signal<string>(
     new Date().toISOString().slice(0, 7), // 'YYYY-MM'
   );
   readonly customNombreBase = signal<string | null>(null);
   readonly workerSearch = signal<string>('');
   readonly isLoading = signal<boolean>(false);
+
+  readonly tiposActividad: { value: TipoRuta; label: string; icon: string }[] = [
+    { value: 'TOMA_LECTURA', label: 'Toma de Lectura', icon: 'bi-speedometer2' },
+    { value: 'CORTE', label: 'Corte de Servicio', icon: 'bi-slash-circle' },
+    { value: 'RECONEXION', label: 'Reconexión', icon: 'bi-arrow-repeat' },
+    { value: 'INSPECCION', label: 'Inspección', icon: 'bi-search' },
+    { value: 'INSTALACION', label: 'Instalación', icon: 'bi-tools' },
+  ];
 
   // Nombres de meses para armado descriptivo del nombre sugerido
   private readonly MONTH_NAMES = [
@@ -82,10 +94,28 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     'Diciembre',
   ];
 
+  private getTipoActividadPrefix(tipo: TipoRuta): string {
+    switch (tipo) {
+      case 'TOMA_LECTURA':
+        return 'Ruta Lectura';
+      case 'CORTE':
+        return 'Ruta Corte';
+      case 'RECONEXION':
+        return 'Ruta Reconexión';
+      case 'INSPECCION':
+        return 'Ruta Inspección';
+      case 'INSTALACION':
+        return 'Ruta Instalación';
+      default:
+        return 'Ruta de Trabajo';
+    }
+  }
+
   readonly sugeridoNombreBase = computed(() => {
     const periodoSeleccionado = this.selectedPeriod();
     const fechaObjetivo = this.fechaPlanificada();
-    const fragmentosNombre: string[] = ['Ruta Lectura'];
+    const tipoActividad = this.tipoActividadSeleccionada();
+    const fragmentosNombre: string[] = [this.getTipoActividadPrefix(tipoActividad)];
 
     if (periodoSeleccionado?.nombre) {
       fragmentosNombre.push(periodoSeleccionado.nombre);
@@ -106,6 +136,10 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     const valorPersonalizado = this.customNombreBase();
     return valorPersonalizado !== null ? valorPersonalizado : this.sugeridoNombreBase();
   });
+
+  onTipoActividadChange(nuevoTipo: TipoRuta): void {
+    this.tipoActividadSeleccionada.set(nuevoTipo);
+  }
 
   onNombreBaseInput(valorIngresado: string): void {
     this.customNombreBase.set(valorIngresado);
@@ -269,6 +303,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       periodoId: this.selectedPeriodId()!,
       operarioId: this.selectedOperarioId()!,
       comunidadId: this.selectedComunidadId()!,
+      tipoRuta: this.tipoActividadSeleccionada(),
       sectorIds: this.isAllCommunitySelected() ? undefined : this.selectedSectorIds(),
       fechaPlanificada: fechaToSend,
       nombreBase: this.nombreBase().trim() || undefined,
@@ -278,7 +313,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       next: (routes) => {
         this.isLoading.set(false);
         this.toastService.show(
-          `Se generaron exitosamente ${routes.length} ruta(s) de lectura.`,
+          `Se generaron exitosamente ${routes.length} ruta(s) de trabajo.`,
           'success',
         );
         this.router.navigate(['/app/Contratos/RutasDeLectura']);

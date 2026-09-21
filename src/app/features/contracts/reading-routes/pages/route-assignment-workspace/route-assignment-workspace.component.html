@@ -9,10 +9,10 @@
         </div>
         <div>
           <h4 class="fw-bold text-dark mb-0 fs-5">
-            Asignación de Rutas de Lectura por Periodo
+            Asignación de Rutas de Trabajo por Periodo
           </h4>
           <p class="text-muted small mb-0">
-            Workspace para asignar sectores o comunidades completas a operarios en el periodo operativo.
+            Workspace para planificar y asignar rutas de trabajo por sectores o comunidades a los operarios en el periodo operativo.
           </p>
         </div>
       </div>
@@ -267,6 +267,24 @@
 
             <!-- Configuración adicional -->
             <div class="bg-light p-3 rounded-3 border mb-3">
+              <!-- Selector Tipo de Actividad -->
+              <div class="mb-3">
+                <label for="workspacePageTipoActividad" class="form-label fw-semibold text-dark small mb-1">Tipo de Actividad:</label>
+                <select
+                  id="workspacePageTipoActividad"
+                  class="form-select shadow-none"
+                  [ngModel]="tipoActividadSeleccionada()"
+                  (ngModelChange)="onTipoActividadChange($event)"
+                  [disabled]="isLoading()"
+                >
+                  @for (tipo of tiposActividad; track tipo.value) {
+                    <option [value]="tipo.value">
+                      {{ tipo.label }}
+                    </option>
+                  }
+                </select>
+              </div>
+
               <div class="mb-3">
                 <app-picker-input
                   inputId="inputWorkspacePageNombreBase"
@@ -279,7 +297,7 @@
                   (clear)="onNombreBaseClear()"
                 />
                 <div class="text-muted mt-1" style="font-size: 0.72rem">
-                  Se autogenera como: "Ruta Lectura - [Período] - [Mes]". Podés personalizarlo si lo deseás.
+                  Se autogenera como: "Ruta [Tipo] - [Período] - [Mes]". Podés personalizarlo si lo deseás.
                 </div>
               </div>
 
