@@ -220,7 +220,22 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   });
 
   readonly filteredMorosos = computed(() => {
-    const list = this.morosos();
+    let list = this.morosos();
+
+    // Filtro por Sector seleccionado
+    if (this.sectorId()) {
+      const selectedSector = this.sectores().find((s) => String(s.sectorId) === this.sectorId());
+      if (selectedSector) {
+        list = list.filter((m) => m.sectorNombre.toLowerCase() === selectedSector.nombre.toLowerCase());
+      }
+    } else if (this.comunidadId()) {
+      // Si seleccionó Comunidad pero no un Sector específico, filtrar por los sectores de esa comunidad
+      const nombresSectoresComunidad = this.sectoresDisponibles().map((s) => s.nombre.toLowerCase());
+      if (nombresSectoresComunidad.length > 0) {
+        list = list.filter((m) => nombresSectoresComunidad.includes(m.sectorNombre.toLowerCase()));
+      }
+    }
+
     const term = this.searchTermTable().trim().toLowerCase();
     if (!term) return list;
 
@@ -295,7 +310,6 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     if (value === this.sectorId()) return;
     this.sectorId.set(value);
     this.invalidateFilterDependentState();
-    this.consultar();
   }
 
   actualizarComunidad(value: string): void {
@@ -309,7 +323,6 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
       if (!sigueValido) {
         this.sectorId.set('');
         this.invalidateFilterDependentState();
-        this.consultar();
       }
     }
   }
