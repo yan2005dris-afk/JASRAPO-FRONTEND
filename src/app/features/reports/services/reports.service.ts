@@ -157,4 +157,19 @@ export class ReportsService {
     const params = this.buildParams(filters);
     return this.http.get<IReportResponse>(`${this.endpoint}/overdue-accounts`, { params });
   }
+
+  /** Obtiene el reporte de recaudación y morosidad en PDF. */
+  getOverdueAccountsPdf(filters: IOverdueAccountsFilters = {}): Observable<Blob> {
+    const params = this.buildParams(filters);
+    return this.http.get(`${this.endpoint}/overdue-accounts`, {
+      params,
+      headers: { Accept: 'application/pdf' },
+      responseType: 'blob',
+    });
+  }
+
+  /** Envía por email el reporte de recaudación y morosidad (destinatario obligatorio). */
+  sendOverdueAccountsEmail(body: ISendReportEmailBody): Observable<unknown> {
+    return this.http.post(`${this.endpoint}/overdue-accounts/email`, body);
+  }
 }

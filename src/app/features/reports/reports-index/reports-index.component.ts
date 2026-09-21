@@ -37,6 +37,12 @@ export const REPORT_NAVIGATION_GROUPS: readonly IReportNavigationGroup[] = [
         route: '/app/reportes/listado-clientes',
         icon: 'bi bi-people',
       },
+      {
+        title: 'Recaudación y Morosidad',
+        description: 'Cuentas en mora, métricas de morosidad y detalle por contrato.',
+        route: '/app/reportes/recaudacion-morosidad',
+        icon: 'bi bi-exclamation-octagon',
+      },
     ],
   },
 ];

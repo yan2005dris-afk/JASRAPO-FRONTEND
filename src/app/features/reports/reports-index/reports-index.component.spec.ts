@@ -17,7 +17,7 @@ describe('ReportsIndexComponent', () => {
     );
     expect(configuredRoutes).not.toContain('/app/reportes/consumo-zonas');
     expect(configuredRoutes).not.toContain('/app/reportes/dashboard');
-    expect(configuredRoutes).not.toContain('/app/reportes/recaudacion-morosidad');
+    expect(configuredRoutes).toContain('/app/reportes/recaudacion-morosidad');
 
     const element = fixture.nativeElement as HTMLElement;
     const links = Array.from(element.querySelectorAll<HTMLAnchorElement>('a[href]'), (link) =>
@@ -26,5 +26,6 @@ describe('ReportsIndexComponent', () => {
     expect(links).toHaveLength(configuredRoutes.length);
     expect(links).toContain('/app/reportes/estado-cuenta');
     expect(links).toContain('/app/reportes/listado-clientes');
+    expect(links).toContain('/app/reportes/recaudacion-morosidad');
   });
 });

@@ -48,9 +48,11 @@ export interface ISendReportEmailBody {
   idempotencyKey?: string;
   fechaDesde?: string;
   fechaHasta?: string;
+  fechaCorte?: string;
   clienteId?: string;
   contratoId?: string;
   convenioId?: string;
+  sectorId?: string;
   destinatario?: string;
   subject?: string;
 }
