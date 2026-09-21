@@ -545,14 +545,6 @@ export const routes: Routes = [
               ),
           },
           {
-            path: 'convenio-pago',
-            data: { breadcrumb: 'Convenio de Pago' },
-            loadComponent: () =>
-              import('./features/reports/payment-agreement/payment-agreement').then(
-                (m) => m.PaymentAgreementComponent,
-              ),
-          },
-          {
             path: 'listado-clientes',
             data: { breadcrumb: 'Listado de Clientes' },
             loadComponent: () =>

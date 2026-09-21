@@ -26,12 +26,6 @@ export const REPORT_NAVIGATION_GROUPS: readonly IReportNavigationGroup[] = [
         route: '/app/reportes/historial-conexion',
         icon: 'bi bi-clock-history',
       },
-      {
-        title: 'Convenio de Pago',
-        description: 'Condiciones vigentes de un convenio autorizado.',
-        route: '/app/reportes/convenio-pago',
-        icon: 'bi bi-file-earmark-check',
-      },
     ],
   },
   {
