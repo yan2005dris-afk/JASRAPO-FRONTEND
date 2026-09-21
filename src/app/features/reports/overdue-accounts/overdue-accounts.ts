@@ -15,6 +15,10 @@ import { DatePickerComponent } from '../../../shared/components/date-picker/date
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { IOverdueAccountsFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
+import { SectoresService } from '../../admin/sectores-prueba/services/sectores';
+import type { Sectores } from '../../admin/sectores-prueba/models/sectores.interface';
+import { ComunidadesService } from '../../admin/comunidades/services/comunidades.service';
+import type { Comunidad } from '../../admin/comunidades/models/comunidad.interface';
 import { ReportEmailDialogComponent } from '../shared/report-email-dialog/report-email-dialog.component';
 import {
   IReportContextItem,
@@ -75,12 +79,20 @@ interface OverdueAccountsData {
 })
 export class OverdueAccountsComponent implements OnInit, OnDestroy {
   private readonly reportsService = inject(ReportsService);
+  private readonly sectoresService = inject(SectoresService);
+  private readonly comunidadesService = inject(ComunidadesService);
   private readonly toast = inject(ToastService);
 
   // Filtros del reporte de recaudación y morosidad
   readonly fechaCorte = signal('');
+  readonly sectorId = signal('');
+  readonly comunidadId = signal('');
   readonly contratoId = signal('');
   readonly searchTermTable = signal('');
+
+  // Catálogos para los dropdowns
+  readonly sectores = signal<Sectores[]>([]);
+  readonly comunidades = signal<Comunidad[]>([]);
 
   // Resultados JSON (tabla)
   readonly reportData = signal<OverdueAccountsData | null>(null);
@@ -118,8 +130,20 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   private detalleRequestId = 0;
 
   ngOnInit(): void {
+    this.cargarCatalogos();
     // Consulta inicial con la fecha de corte por defecto (hoy en el backend).
     this.consultar();
+  }
+
+  private cargarCatalogos(): void {
+    this.sectoresService.getAllSectores(1, 100).subscribe({
+      next: (res) => this.sectores.set(res.data || []),
+      error: () => {},
+    });
+    this.comunidadesService.getAllComunidades(1, 100).subscribe({
+      next: (res) => this.comunidades.set(res.data || []),
+      error: () => {},
+    });
   }
 
   ngOnDestroy(): void {
@@ -213,16 +237,18 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   private buildFilters(): IOverdueAccountsFilters {
     const filters: IOverdueAccountsFilters = {};
     const corte = this.fechaCorte();
+    const sector = this.sectorId().trim();
     const contrato = this.contratoId().trim();
 
     if (corte) filters.fechaCorte = corte;
+    if (sector) filters.sectorId = sector;
     if (contrato) filters.contratoId = contrato;
     return filters;
   }
 
   private filterContextKey(): string {
     const filters = this.buildFilters();
-    return `${filters.contratoId ?? ''}|${filters.fechaCorte ?? ''}`;
+    return `${filters.contratoId ?? ''}|${filters.sectorId ?? ''}|${filters.fechaCorte ?? ''}`;
   }
 
   // ---------- Filtros ----------
@@ -231,6 +257,19 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     if (value === this.fechaCorte()) return;
     this.fechaCorte.set(value);
     this.invalidateFilterDependentState();
+  }
+
+  actualizarSector(value: string): void {
+    if (value === this.sectorId()) return;
+    this.sectorId.set(value);
+    this.invalidateFilterDependentState();
+    this.consultar();
+  }
+
+  actualizarComunidad(value: string): void {
+    if (value === this.comunidadId()) return;
+    this.comunidadId.set(value);
+    // Filtro reactivo en la vista/búsqueda
   }
 
   onTableSearchInput(value: string): void {
@@ -270,6 +309,8 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     this.cancelDataRequest();
     this.cancelGeneralPdfRequest();
     this.fechaCorte.set('');
+    this.sectorId.set('');
+    this.comunidadId.set('');
     this.contratoId.set('');
     this.searchTermTable.set('');
     this.reportData.set(null);

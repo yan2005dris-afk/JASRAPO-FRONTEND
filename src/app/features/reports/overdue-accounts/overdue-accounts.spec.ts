@@ -51,6 +51,8 @@ describe('OverdueAccountsComponent', () => {
       providers: [
         { provide: ReportsService, useValue: reportsService },
         { provide: ToastService, useValue: toast },
+        { provide: (await import('../../admin/sectores-prueba/services/sectores')).SectoresService, useValue: { getAllSectores: () => of({ data: [] }) } },
+        { provide: (await import('../../admin/comunidades/services/comunidades.service')).ComunidadesService, useValue: { getAllComunidades: () => of({ data: [] }) } },
       ],
     }).compileComponents();
 

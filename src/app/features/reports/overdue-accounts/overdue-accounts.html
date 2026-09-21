@@ -11,7 +11,7 @@
 >
   <div reportFilters>
     <div class="row g-3 align-items-end">
-      <div class="col-lg-5 col-md-6">
+      <div class="col-lg-3 col-md-6">
         <label class="form-label small fw-semibold" for="filtroBusqueda">Buscar cuenta en mora</label>
         <div class="input-group">
           <span class="input-group-text bg-white">
@@ -21,7 +21,7 @@
             id="filtroBusqueda"
             type="search"
             class="form-control"
-            placeholder="Buscar por guía, cliente, cédula, sector o medidor…"
+            placeholder="Guía, cliente, cédula, medidor…"
             [ngModel]="searchTermTable()"
             (ngModelChange)="onTableSearchInput($event)"
           />
@@ -38,7 +38,37 @@
         </div>
       </div>
 
-      <div class="col-lg-3 col-md-6">
+      <div class="col-lg-2 col-md-6">
+        <label class="form-label small fw-semibold" for="filtroSector">Sector</label>
+        <select
+          id="filtroSector"
+          class="form-select"
+          [ngModel]="sectorId()"
+          (ngModelChange)="actualizarSector($event)"
+        >
+          <option value="">Todos los sectores</option>
+          @for (s of sectores(); track s.sectorId) {
+            <option [value]="s.sectorId">{{ s.nombre }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="col-lg-2 col-md-6">
+        <label class="form-label small fw-semibold" for="filtroComunidad">Comunidad</label>
+        <select
+          id="filtroComunidad"
+          class="form-select"
+          [ngModel]="comunidadId()"
+          (ngModelChange)="actualizarComunidad($event)"
+        >
+          <option value="">Todas las comunidades</option>
+          @for (c of comunidades(); track c.id) {
+            <option [value]="c.id">{{ c.nombre }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="col-lg-2 col-md-6">
         <label class="form-label small fw-semibold" for="fechaCorte">Fecha de corte</label>
         <app-date-picker
           inputId="fechaCorte"
@@ -47,7 +77,7 @@
         />
       </div>
 
-      <div class="col-lg-4 col-md-12 d-flex flex-wrap gap-2">
+      <div class="col-lg-3 col-md-12 d-flex flex-wrap gap-2">
         <button
           type="button"
           class="btn btn-primary d-inline-flex align-items-center gap-2"
