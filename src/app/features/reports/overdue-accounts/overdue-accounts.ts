@@ -316,6 +316,7 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     if (value === this.sectorId()) return;
     this.sectorId.set(value);
     this.invalidateFilterDependentState();
+    this.consultar();
   }
 
   actualizarComunidad(value: string): void {
@@ -329,6 +330,7 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
       if (!sigueValido) {
         this.sectorId.set('');
         this.invalidateFilterDependentState();
+        this.consultar();
       }
     }
   }
@@ -341,7 +343,6 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
 
   consultar(): void {
     this.cancelDataRequest();
-    this.reportData.set(null);
 
     const filters = this.buildFilters();
     const contextKey = this.filterContextKey();
