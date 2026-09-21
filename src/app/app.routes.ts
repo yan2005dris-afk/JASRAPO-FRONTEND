@@ -348,10 +348,18 @@ export const routes: Routes = [
           },
           {
             path: 'RutasDeLectura',
-            data: { breadcrumb: 'Rutas de Lectura' },
+            data: { breadcrumb: 'Rutas de Trabajo' },
             loadComponent: () =>
               import('./features/contracts/reading-routes/reading-routes').then(
                 (m) => m.ReadingRoutesComponent,
+              ),
+          },
+          {
+            path: 'RutasDeLectura/asignar',
+            data: { breadcrumb: 'Asignación por Periodo' },
+            loadComponent: () =>
+              import('./features/contracts/reading-routes/pages/route-assignment-workspace/route-assignment-workspace.component').then(
+                (m) => m.RouteAssignmentWorkspaceComponent,
               ),
           },
           {
@@ -534,14 +542,6 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./features/reports/connection-history/connection-history').then(
                 (m) => m.ConnectionHistoryComponent,
-              ),
-          },
-          {
-            path: 'convenio-pago',
-            data: { breadcrumb: 'Convenio de Pago' },
-            loadComponent: () =>
-              import('./features/reports/payment-agreement/payment-agreement').then(
-                (m) => m.PaymentAgreementComponent,
               ),
           },
           {
