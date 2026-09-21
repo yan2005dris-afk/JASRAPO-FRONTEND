@@ -103,6 +103,15 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   readonly sectores = signal<Sectores[]>([]);
   readonly comunidades = signal<Comunidad[]>([]);
 
+  // Sectores dependientes de la comunidad seleccionada
+  readonly sectoresDisponibles = computed<Sectores[]>(() => {
+    const comId = this.comunidadId();
+    if (!comId) {
+      return this.sectores();
+    }
+    return this.sectores().filter((s) => String(s.comunidadId) === comId);
+  });
+
   // Resultados JSON (tabla)
   readonly reportData = signal<OverdueAccountsData | null>(null);
   readonly isLoadingData = signal(false);
@@ -117,17 +126,17 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
       },
     ];
 
-    if (this.sectorId()) {
-      const sec = this.sectores().find((s) => String(s.sectorId) === this.sectorId());
-      if (sec) {
-        items.push({ label: 'Sector', value: sec.nombre });
-      }
-    }
-
     if (this.comunidadId()) {
       const com = this.comunidades().find((c) => String(c.id) === this.comunidadId());
       if (com) {
         items.push({ label: 'Comunidad', value: com.nombre });
+      }
+    }
+
+    if (this.sectorId()) {
+      const sec = this.sectores().find((s) => String(s.sectorId) === this.sectorId());
+      if (sec) {
+        items.push({ label: 'Sector', value: sec.nombre });
       }
     }
 
@@ -292,7 +301,17 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   actualizarComunidad(value: string): void {
     if (value === this.comunidadId()) return;
     this.comunidadId.set(value);
-    // Filtro reactivo en la vista/búsqueda
+    // Si el sector actualmente seleccionado no pertenece a la comunidad elegida, resetearlo
+    if (this.sectorId()) {
+      const sigueValido = this.sectoresDisponibles().some(
+        (s) => String(s.sectorId) === this.sectorId(),
+      );
+      if (!sigueValido) {
+        this.sectorId.set('');
+        this.invalidateFilterDependentState();
+        this.consultar();
+      }
+    }
   }
 
   onTableSearchInput(value: string): void {

@@ -85,21 +85,6 @@
       <div class="advanced-filters-panel p-3 mt-3 rounded-3 border bg-light">
         <div class="row g-3 align-items-end">
           <div class="col-lg-4 col-md-6">
-            <label class="form-label small fw-semibold" for="filtroSector">Sector</label>
-            <select
-              id="filtroSector"
-              class="form-select"
-              [ngModel]="sectorId()"
-              (ngModelChange)="actualizarSector($event)"
-            >
-              <option value="">Todos los sectores</option>
-              @for (s of sectores(); track s.sectorId) {
-                <option [value]="s.sectorId">{{ s.nombre }}</option>
-              }
-            </select>
-          </div>
-
-          <div class="col-lg-4 col-md-6">
             <label class="form-label small fw-semibold" for="filtroComunidad">Comunidad</label>
             <select
               id="filtroComunidad"
@@ -113,6 +98,23 @@
               }
             </select>
           </div>
+
+          @if (sectoresDisponibles().length > 0) {
+            <div class="col-lg-4 col-md-6">
+              <label class="form-label small fw-semibold" for="filtroSector">Sector</label>
+              <select
+                id="filtroSector"
+                class="form-select"
+                [ngModel]="sectorId()"
+                (ngModelChange)="actualizarSector($event)"
+              >
+                <option value="">Todos los sectores</option>
+                @for (s of sectoresDisponibles(); track s.sectorId) {
+                  <option [value]="s.sectorId">{{ s.nombre }}</option>
+                }
+              </select>
+            </div>
+          }
 
           <div class="col-lg-4 col-md-6">
             <label class="form-label small fw-semibold" for="fechaCorte">Fecha de corte</label>
