@@ -62,7 +62,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   readonly selectedComunidadId = signal<number | null>(null);
   readonly selectedSectorIds = signal<number[]>([]);
   readonly isAllCommunitySelected = signal<boolean>(false);
-  readonly tipoActividadSeleccionada = signal<TipoRuta>('TOMA_LECTURA');
+  readonly tipoActividadSeleccionada = signal<TipoRuta | null>(null);
   readonly fechaPlanificada = signal<string>(
     new Date().toISOString().slice(0, 7), // 'YYYY-MM'
   );
@@ -94,7 +94,8 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     'Diciembre',
   ];
 
-  private getTipoActividadPrefix(tipo: TipoRuta): string {
+  private getTipoActividadPrefix(tipo: TipoRuta | null): string {
+    if (!tipo) return 'Ruta de Trabajo';
     switch (tipo) {
       case 'TOMA_LECTURA':
         return 'Ruta Lectura';
@@ -137,7 +138,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     return valorPersonalizado !== null ? valorPersonalizado : this.sugeridoNombreBase();
   });
 
-  onTipoActividadChange(nuevoTipo: TipoRuta): void {
+  onTipoActividadChange(nuevoTipo: TipoRuta | null): void {
     this.tipoActividadSeleccionada.set(nuevoTipo);
   }
 
@@ -175,18 +176,20 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
 
   // Validity
   readonly isFormValid = computed(() => {
+    const tipo = this.tipoActividadSeleccionada();
     const period = this.selectedPeriod();
     const opId = this.selectedOperarioId();
     const comId = this.selectedComunidadId();
     const allCom = this.isAllCommunitySelected();
     const sectors = this.selectedSectorIds();
 
+    const hasTipo = tipo !== null;
     const hasValidPeriod = period !== null && period.periodoId > 0 && period.estado === 'ABIERTO';
     const hasWorker = opId !== null && opId > 0;
     const hasComunidad = comId !== null && comId > 0;
     const hasCoverage = allCom || sectors.length > 0;
 
-    return hasValidPeriod && hasWorker && hasComunidad && hasCoverage;
+    return hasTipo && hasValidPeriod && hasWorker && hasComunidad && hasCoverage;
   });
 
   ngOnInit(): void {
@@ -303,7 +306,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       periodoId: this.selectedPeriodId()!,
       operarioId: this.selectedOperarioId()!,
       comunidadId: this.selectedComunidadId()!,
-      tipoRuta: this.tipoActividadSeleccionada(),
+      tipoRuta: this.tipoActividadSeleccionada() ?? undefined,
       sectorIds: this.isAllCommunitySelected() ? undefined : this.selectedSectorIds(),
       fechaPlanificada: fechaToSend,
       nombreBase: this.nombreBase().trim() || undefined,

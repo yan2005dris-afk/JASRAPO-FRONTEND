@@ -27,9 +27,31 @@
       </button>
     </div>
 
-    <!-- Fila 2: Período Operativo y Estado -->
+    <!-- Fila 2: Tipo de Actividad, Período Operativo y Estado -->
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 pt-3 border-top">
       <div class="d-flex align-items-center gap-3 flex-wrap">
+        <!-- Selector Tipo de Actividad -->
+        <div style="min-width: 260px">
+          <label for="workspacePageHeaderTipoActividad" class="form-label fw-semibold text-dark small mb-1">
+            Tipo de Actividad <span class="text-danger">*</span>
+          </label>
+          <select
+            id="workspacePageHeaderTipoActividad"
+            class="form-select shadow-none"
+            [ngModel]="tipoActividadSeleccionada()"
+            (ngModelChange)="onTipoActividadChange($event)"
+            [disabled]="isLoading()"
+          >
+            <option [ngValue]="null" disabled selected>Seleccione tipo de actividad...</option>
+            @for (tipo of tiposActividad; track tipo.value) {
+              <option [value]="tipo.value">
+                {{ tipo.label }}
+              </option>
+            }
+          </select>
+        </div>
+
+        <!-- Período Operativo -->
         <div style="min-width: 280px">
           <app-period-picker
             inputId="workspacePagePeriodPicker"
@@ -54,6 +76,22 @@
     </div>
   </div>
 
+  @if (!tipoActividadSeleccionada()) {
+    <div class="card border-0 shadow-sm rounded-4 p-5 bg-white text-center">
+      <div class="py-4">
+        <div
+          class="rounded-circle bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center mb-3"
+          style="width: 64px; height: 64px"
+        >
+          <i class="bi bi-list-check fs-2"></i>
+        </div>
+        <h5 class="fw-bold text-dark mb-1">Seleccioná un tipo de actividad para comenzar</h5>
+        <p class="text-muted small mx-auto mb-0" style="max-width: 520px">
+          Elegí en el selector superior si vas a planificar una ruta de <strong>Toma de Lectura</strong>, <strong>Corte</strong>, <strong>Reconexión</strong>, <strong>Inspección</strong> o <strong>Instalación</strong> para habilitar la asignación de operarios y sectores.
+        </p>
+      </div>
+    </div>
+  } @else {
   <!-- Main 3-Column Grid -->
   <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
     <div class="row g-4">
@@ -267,24 +305,6 @@
 
             <!-- Configuración adicional -->
             <div class="bg-light p-3 rounded-3 border mb-3">
-              <!-- Selector Tipo de Actividad -->
-              <div class="mb-3">
-                <label for="workspacePageTipoActividad" class="form-label fw-semibold text-dark small mb-1">Tipo de Actividad:</label>
-                <select
-                  id="workspacePageTipoActividad"
-                  class="form-select shadow-none"
-                  [ngModel]="tipoActividadSeleccionada()"
-                  (ngModelChange)="onTipoActividadChange($event)"
-                  [disabled]="isLoading()"
-                >
-                  @for (tipo of tiposActividad; track tipo.value) {
-                    <option [value]="tipo.value">
-                      {{ tipo.label }}
-                    </option>
-                  }
-                </select>
-              </div>
-
               <div class="mb-3">
                 <app-picker-input
                   inputId="inputWorkspacePageNombreBase"
@@ -345,4 +365,5 @@
       </div>
     </div>
   </div>
+  }
 </div>

@@ -134,6 +134,9 @@ describe('RouteAssignmentWorkspaceComponent', () => {
     });
     component.onFechaPlanificadaChange('2026-09');
 
+    expect(component.sugeridoNombreBase()).toBe('Ruta de Trabajo - 2026 - Septiembre');
+
+    component.onTipoActividadChange('TOMA_LECTURA');
     expect(component.sugeridoNombreBase()).toBe('Ruta Lectura - 2026 - Septiembre');
 
     component.onTipoActividadChange('CORTE');
@@ -144,6 +147,10 @@ describe('RouteAssignmentWorkspaceComponent', () => {
   });
 
   it('should compute isFormValid correctly based on selected inputs', () => {
+    expect(component.isFormValid()).toBe(false);
+
+    // Set activity type
+    component.onTipoActividadChange('TOMA_LECTURA');
     expect(component.isFormValid()).toBe(false);
 
     // Set open period
@@ -177,6 +184,7 @@ describe('RouteAssignmentWorkspaceComponent', () => {
       of([{ rutaId: '100', nombre: 'Ruta Lectura - Sector A' }]),
     );
 
+    component.onTipoActividadChange('TOMA_LECTURA');
     component.onPeriodSelected({
       periodoId: 1,
       nombre: 'Enero 2026',
@@ -211,6 +219,7 @@ describe('RouteAssignmentWorkspaceComponent', () => {
       throwError(() => ({ error: { message: 'Error de prueba' } })),
     );
 
+    component.onTipoActividadChange('TOMA_LECTURA');
     component.onPeriodSelected({
       periodoId: 1,
       nombre: 'Enero 2026',
