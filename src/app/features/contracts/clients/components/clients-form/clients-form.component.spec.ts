@@ -160,6 +160,26 @@ describe('ClientsFormComponent', () => {
     expect(telefonoSecControl?.valid).toBe(true);
   });
 
+  it('muestra las condiciones especiales en cards individuales y accesibles con estado visual', () => {
+    const host = fixture.nativeElement as HTMLElement;
+
+    const cards = Array.from(host.querySelectorAll('.condition-card'));
+    expect(cards.length).toBe(2);
+
+    const terceraEdadCard = cards[0];
+    expect(terceraEdadCard.textContent).toContain('Tercera edad');
+
+    const discapacidadCard = cards[1];
+    expect(discapacidadCard.textContent).toContain('Aplica discapacidad');
+
+    const checkbox = host.querySelector<HTMLInputElement>('#aplicaDiscapacidad');
+    const label = host.querySelector<HTMLLabelElement>('label[for="aplicaDiscapacidad"]');
+
+    expect(checkbox).toBeTruthy();
+    expect(checkbox?.type).toBe('checkbox');
+    expect(label).toBeTruthy();
+  });
+
   it('emite el cliente creado para que el selector lo use sin volver a buscarlo', () => {
     const clienteCreado = { clienteId: '77', nombres: 'Luis', apellidos: 'Vera' } as IClient;
     const clientsService = TestBed.inject(ClientsService);
