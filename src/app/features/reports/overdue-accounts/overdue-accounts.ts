@@ -195,20 +195,35 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     this.cancelDetalleRequest();
   }
 
-  // ---------- Totales canónicos (provienen del backend, no se recalculan aquí) ----------
+  // ---------- Totales canónicos del universo consultado ----------
 
   readonly totalMorosidad = computed(() => {
     const d = this.reportData();
+    // Si se aplicó un filtro de comunidad en frontend y no hay sectorId de backend, recalcular sobre la comunidad
+    if (this.comunidadId() && !this.sectorId()) {
+      const list = this.filteredMorosos();
+      const sum = list.reduce((acc, item) => acc + (item.saldoPendienteNum || 0), 0);
+      return sum.toFixed(2);
+    }
     return d?.kpis?.totalMorosidad ?? d?.totalMorosidad ?? '0.00';
   });
 
   readonly totalMorososCount = computed(() => {
     const d = this.reportData();
+    if (this.comunidadId() && !this.sectorId()) {
+      return this.filteredMorosos().length;
+    }
     return d?.kpis?.totalMorosos ?? d?.meta?.total ?? d?.totalMorosos ?? 0;
   });
 
   readonly mayorDeuda = computed(() => {
     const d = this.reportData();
+    if (this.comunidadId() && !this.sectorId()) {
+      const list = this.filteredMorosos();
+      if (list.length === 0) return '0.00';
+      const max = Math.max(...list.map((item) => item.saldoPendienteNum || 0));
+      return max.toFixed(2);
+    }
     return d?.kpis?.mayorDeuda ?? d?.mayorDeuda ?? '0.00';
   });
 
