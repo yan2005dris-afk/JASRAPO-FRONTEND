@@ -248,8 +248,9 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     const hasWorker = opId !== null && opId > 0;
     const hasComunidad = comId !== null && comId > 0;
 
-    const hasCoverage =
-      this.isLecturaActivity(tipo) ? allCom || sectors.length > 0 : contracts.length > 0;
+    const hasCoverage = this.isLecturaActivity(tipo)
+      ? allCom || sectors.length > 0
+      : contracts.length > 0;
 
     return hasTipo && hasValidPeriod && hasWorker && hasComunidad && hasCoverage;
   });
@@ -371,17 +372,13 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     const filtered = this.filteredContratos();
     const current = this.selectedContratoIds();
     const allSelected =
-      filtered.length > 0 &&
-      filtered.every((c) => current.includes(Number(c.contratoId)));
+      filtered.length > 0 && filtered.every((c) => current.includes(Number(c.contratoId)));
 
     if (allSelected) {
       const filteredIds = new Set(filtered.map((c) => Number(c.contratoId)));
       this.selectedContratoIds.set(current.filter((id) => !filteredIds.has(id)));
     } else {
-      const combined = new Set([
-        ...current,
-        ...filtered.map((c) => Number(c.contratoId)),
-      ]);
+      const combined = new Set([...current, ...filtered.map((c) => Number(c.contratoId))]);
       this.selectedContratoIds.set(Array.from(combined));
     }
   }
