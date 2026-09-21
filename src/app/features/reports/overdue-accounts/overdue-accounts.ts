@@ -181,11 +181,9 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   private cargarCatalogos(): void {
     this.sectoresService.getAllSectores(1, 100).subscribe({
       next: (res) => this.sectores.set(res.data || []),
-      error: () => {},
     });
     this.comunidadesService.getAllComunidades(1, 100).subscribe({
       next: (res) => this.comunidades.set(res.data || []),
-      error: () => {},
     });
   }
 
