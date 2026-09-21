@@ -160,22 +160,24 @@ describe('ClientsFormComponent', () => {
     expect(telefonoSecControl?.valid).toBe(true);
   });
 
-  it('agrupa las condiciones especiales dentro de un card con título y checkbox accesible', () => {
+  it('muestra las condiciones especiales en cards individuales y accesibles con estado visual', () => {
     const host = fixture.nativeElement as HTMLElement;
 
-    const cardHeaders = Array.from(host.querySelectorAll('.card .card-header'));
-    const condicionesHeader = cardHeaders.find((el) =>
-      el.textContent?.includes('Condiciones especiales'),
-    );
-    expect(condicionesHeader).toBeTruthy();
+    const cards = Array.from(host.querySelectorAll('.condition-card'));
+    expect(cards.length).toBe(2);
 
-    const card = condicionesHeader?.closest('.card');
-    const checkbox = card?.querySelector<HTMLInputElement>('#aplicaDiscapacidad');
-    const label = card?.querySelector<HTMLLabelElement>('label[for="aplicaDiscapacidad"]');
+    const terceraEdadCard = cards[0];
+    expect(terceraEdadCard.textContent).toContain('Tercera edad');
+
+    const discapacidadCard = cards[1];
+    expect(discapacidadCard.textContent).toContain('Aplica discapacidad');
+
+    const checkbox = host.querySelector<HTMLInputElement>('#aplicaDiscapacidad');
+    const label = host.querySelector<HTMLLabelElement>('label[for="aplicaDiscapacidad"]');
 
     expect(checkbox).toBeTruthy();
     expect(checkbox?.type).toBe('checkbox');
-    expect(label?.textContent?.trim()).toBe('Aplica discapacidad');
+    expect(label).toBeTruthy();
   });
 
   it('emite el cliente creado para que el selector lo use sin volver a buscarlo', () => {

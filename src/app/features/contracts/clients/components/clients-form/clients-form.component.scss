@@ -71,3 +71,39 @@ textarea {
   background-color: #f8d7da;
   border: 1px solid #f5c2c7;
 }
+
+.condition-card {
+  background-color: #f8f9fa;
+  border-color: #e9ecef !important;
+  transition: all 0.2s ease-in-out;
+
+  &.condition-card-clickable {
+    cursor: pointer;
+
+    &:hover {
+      background-color: #f1f3f5;
+      border-color: #ced4da !important;
+    }
+  }
+
+  &.condition-card-active {
+    background-color: #f0fdf4;
+    border-color: #86efac !important;
+    box-shadow: 0 1px 3px rgba(34, 197, 94, 0.1);
+  }
+}
+
+.condition-icon-box {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+}
+
+.condition-switch {
+  cursor: pointer;
+
+  &:checked {
+    background-color: #198754;
+    border-color: #198754;
+  }
+}
