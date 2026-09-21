@@ -3,7 +3,6 @@ import {
   Component,
   OnInit,
   computed,
-  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -60,15 +59,14 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   readonly selectedComunidadId = signal<number | null>(null);
   readonly selectedSectorIds = signal<number[]>([]);
   readonly isAllCommunitySelected = signal<boolean>(false);
-  readonly nombreBase = signal<string>('Ruta Lectura');
   readonly fechaPlanificada = signal<string>(
     new Date().toISOString().slice(0, 7), // 'YYYY-MM'
   );
+  readonly customNombreBase = signal<string | null>(null);
   readonly workerSearch = signal<string>('');
   readonly isLoading = signal<boolean>(false);
-  readonly nombreBaseManual = signal<boolean>(false);
 
-  // Month names for name generation
+  // Nombres de meses para armado descriptivo del nombre sugerido
   private readonly MONTH_NAMES = [
     'Enero',
     'Febrero',
@@ -84,48 +82,41 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     'Diciembre',
   ];
 
-  constructor() {
-    // Generar nombre automático sugerido si el usuario no editó manualmente el input
-    effect(
-      () => {
-        const period = this.selectedPeriod();
-        const fecha = this.fechaPlanificada();
-        const isManual = this.nombreBaseManual();
+  readonly sugeridoNombreBase = computed(() => {
+    const periodoSeleccionado = this.selectedPeriod();
+    const fechaObjetivo = this.fechaPlanificada();
+    const fragmentosNombre: string[] = ['Ruta Lectura'];
 
-        if (!isManual) {
-          const parts: string[] = ['Ruta Lectura'];
+    if (periodoSeleccionado?.nombre) {
+      fragmentosNombre.push(periodoSeleccionado.nombre);
+    }
 
-          if (period?.nombre) {
-            parts.push(period.nombre);
-          }
+    if (fechaObjetivo && /^\d{4}-\d{2}/.test(fechaObjetivo)) {
+      const [, mesString] = fechaObjetivo.split('-');
+      const indiceMes = parseInt(mesString, 10) - 1;
+      if (indiceMes >= 0 && indiceMes < this.MONTH_NAMES.length) {
+        fragmentosNombre.push(this.MONTH_NAMES[indiceMes]);
+      }
+    }
 
-          if (fecha && /^\d{4}-\d{2}/.test(fecha)) {
-            const [, monthStr] = fecha.split('-');
-            const monthIdx = parseInt(monthStr, 10) - 1;
-            if (monthIdx >= 0 && monthIdx < 12) {
-              parts.push(this.MONTH_NAMES[monthIdx]);
-            }
-          }
+    return fragmentosNombre.join(' - ');
+  });
 
-          this.nombreBase.set(parts.join(' - '));
-        }
-      },
-      { allowSignalWrites: true },
-    );
-  }
+  readonly nombreBase = computed(() => {
+    const valorPersonalizado = this.customNombreBase();
+    return valorPersonalizado !== null ? valorPersonalizado : this.sugeridoNombreBase();
+  });
 
-  onNombreBaseInput(value: string): void {
-    this.nombreBaseManual.set(true);
-    this.nombreBase.set(value);
+  onNombreBaseInput(valorIngresado: string): void {
+    this.customNombreBase.set(valorIngresado);
   }
 
   onNombreBaseClear(): void {
-    this.nombreBaseManual.set(false);
-    this.nombreBase.set('Ruta Lectura');
+    this.customNombreBase.set(null);
   }
 
-  onFechaPlanificadaChange(value: string): void {
-    this.fechaPlanificada.set(value);
+  onFechaPlanificadaChange(nuevaFecha: string): void {
+    this.fechaPlanificada.set(nuevaFecha);
   }
 
   // Filtered Workers
