@@ -1,0 +1,130 @@
+.assignment-workspace-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.header-icon-tile {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #e0f2fe;
+  color: #0284c7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+}
+
+.workspace-column {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  height: 600px;
+  overflow: hidden;
+}
+
+.column-header {
+  padding: 14px 18px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.column-body {
+  padding: 14px 18px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.worker-card {
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  border: 1px solid #e2e8f0;
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+
+  &:hover {
+    border-color: #38bdf8;
+    background: #f0f9ff;
+  }
+
+  &.selected {
+    border-color: #0284c7;
+    background: #e0f2fe;
+    box-shadow: 0 0 0 1px #0284c7;
+  }
+}
+
+.sector-card {
+  cursor: pointer;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  transition: all 0.2s ease-in-out;
+  user-select: none;
+
+  &:hover {
+    border-color: #38bdf8;
+    background: #f8fafc;
+    transform: translateY(-1px);
+  }
+
+  &.selected {
+    background: #f0fdf4;
+    border-color: #22c55e;
+    box-shadow: 0 0 0 1px #22c55e;
+  }
+}
+
+.sector-icon-tile {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+
+  &.active {
+    background: #dcfce7;
+    color: #16a34a;
+  }
+}
+
+.summary-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px dashed #e2e8f0;
+  font-size: 0.9rem;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .label {
+    color: #64748b;
+    font-weight: 500;
+  }
+
+  .value {
+    color: #1e293b;
+    font-weight: 600;
+    text-align: right;
+  }
+}

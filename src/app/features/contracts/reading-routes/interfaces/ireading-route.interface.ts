@@ -1,4 +1,13 @@
-export type TipoRuta = 'TOMA_LECTURA' | 'RECONEXION' | 'INSTALACION' | 'INSPECCION';
+export type TipoRuta =
+  'TOMA_LECTURA' | 'LECTURA' | 'CORTE' | 'RECONEXION' | 'INSTALACION' | 'INSPECCION';
+
+export interface ITipoActividad {
+  tipoActividadId: number;
+  codigo: TipoRuta | string;
+  nombre: string;
+  descripcion?: string | null;
+  activo: boolean;
+}
 
 export interface IReadingForRoute {
   lecturaId: string | number;
@@ -39,6 +48,17 @@ export interface ICreateRouteDto {
   sectorId?: number;
   periodoId: number;
   fechaPlanificada?: string;
+}
+
+export interface ICreateRouteAssignmentsDto {
+  periodoId: number;
+  operarioId: number;
+  comunidadId: number;
+  tipoRuta?: TipoRuta | string;
+  sectorIds?: number[];
+  contratoIds?: number[];
+  fechaPlanificada?: string;
+  nombreBase?: string;
 }
 
 export interface IUpdateRouteDto {
