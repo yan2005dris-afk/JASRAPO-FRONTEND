@@ -179,7 +179,7 @@ describe('RouteAssignmentWorkspaceComponent', () => {
       comunidadId: 1,
       sectorIds: [10],
       fechaPlanificada: expect.any(String),
-      nombreBase: 'Ruta Lectura',
+      nombreBase: expect.stringContaining('Ruta Lectura'),
     });
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/app/Contratos/RutasDeLectura']);
     expect(mockToastService.show).toHaveBeenCalledWith(

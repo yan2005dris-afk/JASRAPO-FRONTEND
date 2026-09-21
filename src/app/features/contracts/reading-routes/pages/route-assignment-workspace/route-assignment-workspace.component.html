@@ -271,19 +271,24 @@
                 <app-picker-input
                   inputId="inputWorkspacePageNombreBase"
                   label="Nombre base de la ruta:"
-                  placeholder="Ej. Ruta Lectura"
+                  placeholder="Ej. Ruta Lectura - 2026 - Septiembre"
                   icon="bi-card-text"
                   [query]="nombreBase()"
                   [disabled]="isLoading()"
-                  (queryChange)="nombreBase.set($event)"
-                  (clear)="nombreBase.set('')"
+                  (queryChange)="onNombreBaseInput($event)"
+                  (clear)="onNombreBaseClear()"
                 />
+                <div class="text-muted mt-1" style="font-size: 0.72rem">
+                  Se autogenera como: "Ruta Lectura - [Período] - [Mes]". Podés personalizarlo si lo deseás.
+                </div>
               </div>
 
               <div>
-                <label for="workspacePageFechaPlanificada" class="form-label fw-semibold text-dark small mb-1">Fecha Planificada:</label>
+                <label for="workspacePageFechaPlanificada" class="form-label fw-semibold text-dark small mb-1">Mes Planificado:</label>
                 <app-date-picker
                   inputId="workspacePageFechaPlanificada"
+                  placeholder="Seleccione el mes"
+                  selectionMode="month"
                   [value]="fechaPlanificada()"
                   [disabled]="isLoading()"
                   (valueChange)="fechaPlanificada.set($event)"

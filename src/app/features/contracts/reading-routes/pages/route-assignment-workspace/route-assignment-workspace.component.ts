@@ -3,6 +3,7 @@ import {
   Component,
   OnInit,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -60,9 +61,72 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   readonly selectedSectorIds = signal<number[]>([]);
   readonly isAllCommunitySelected = signal<boolean>(false);
   readonly nombreBase = signal<string>('Ruta Lectura');
-  readonly fechaPlanificada = signal<string>(new Date().toISOString().split('T')[0]);
+  readonly fechaPlanificada = signal<string>(
+    new Date().toISOString().slice(0, 7), // 'YYYY-MM'
+  );
   readonly workerSearch = signal<string>('');
   readonly isLoading = signal<boolean>(false);
+  readonly nombreBaseManual = signal<boolean>(false);
+
+  // Month names for name generation
+  private readonly MONTH_NAMES = [
+    'Enero',
+    'Febrero',
+    'Marzo',
+    'Abril',
+    'Mayo',
+    'Junio',
+    'Julio',
+    'Agosto',
+    'Septiembre',
+    'Octubre',
+    'Noviembre',
+    'Diciembre',
+  ];
+
+  constructor() {
+    // Generar nombre automático sugerido si el usuario no editó manualmente el input
+    effect(
+      () => {
+        const period = this.selectedPeriod();
+        const fecha = this.fechaPlanificada();
+        const isManual = this.nombreBaseManual();
+
+        if (!isManual) {
+          const parts: string[] = ['Ruta Lectura'];
+
+          if (period?.nombre) {
+            parts.push(period.nombre);
+          }
+
+          if (fecha && /^\d{4}-\d{2}/.test(fecha)) {
+            const [, monthStr] = fecha.split('-');
+            const monthIdx = parseInt(monthStr, 10) - 1;
+            if (monthIdx >= 0 && monthIdx < 12) {
+              parts.push(this.MONTH_NAMES[monthIdx]);
+            }
+          }
+
+          this.nombreBase.set(parts.join(' - '));
+        }
+      },
+      { allowSignalWrites: true },
+    );
+  }
+
+  onNombreBaseInput(value: string): void {
+    this.nombreBaseManual.set(true);
+    this.nombreBase.set(value);
+  }
+
+  onNombreBaseClear(): void {
+    this.nombreBaseManual.set(false);
+    this.nombreBase.set('Ruta Lectura');
+  }
+
+  onFechaPlanificadaChange(value: string): void {
+    this.fechaPlanificada.set(value);
+  }
 
   // Filtered Workers
   readonly filteredOperarios = computed(() => {
@@ -204,12 +268,18 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   executeAssignment(): void {
     this.isLoading.set(true);
 
+    // Si fechaPlanificada viene como 'YYYY-MM', normalizar a 'YYYY-MM-01' para compatibilidad con Date ISO en backend
+    let fechaToSend = this.fechaPlanificada() || undefined;
+    if (fechaToSend && /^\d{4}-\d{2}$/.test(fechaToSend)) {
+      fechaToSend = `${fechaToSend}-01`;
+    }
+
     const dto: ICreateRouteAssignmentsDto = {
       periodoId: this.selectedPeriodId()!,
       operarioId: this.selectedOperarioId()!,
       comunidadId: this.selectedComunidadId()!,
       sectorIds: this.isAllCommunitySelected() ? undefined : this.selectedSectorIds(),
-      fechaPlanificada: this.fechaPlanificada() || undefined,
+      fechaPlanificada: fechaToSend,
       nombreBase: this.nombreBase().trim() || undefined,
     };
 
