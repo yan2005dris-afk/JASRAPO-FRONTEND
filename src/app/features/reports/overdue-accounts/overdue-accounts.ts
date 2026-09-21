@@ -89,6 +89,15 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   readonly comunidadId = signal('');
   readonly contratoId = signal('');
   readonly searchTermTable = signal('');
+  readonly isFiltersExpanded = signal(false);
+
+  readonly activeAdvancedFiltersCount = computed(() => {
+    let count = 0;
+    if (this.sectorId()) count++;
+    if (this.comunidadId()) count++;
+    if (this.fechaCorte()) count++;
+    return count;
+  });
 
   // Catálogos para los dropdowns
   readonly sectores = signal<Sectores[]>([]);
@@ -99,6 +108,31 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   readonly isLoadingData = signal(false);
   readonly workspaceError = signal('');
   readonly lastFailedAction = signal<FailedReportAction | null>(null);
+
+  readonly contextItems = computed<readonly IReportContextItem[]>(() => {
+    const items: IReportContextItem[] = [
+      {
+        label: 'Fecha de corte',
+        value: this.fechaCorte() || 'Hoy',
+      },
+    ];
+
+    if (this.sectorId()) {
+      const sec = this.sectores().find((s) => String(s.sectorId) === this.sectorId());
+      if (sec) {
+        items.push({ label: 'Sector', value: sec.nombre });
+      }
+    }
+
+    if (this.comunidadId()) {
+      const com = this.comunidades().find((c) => String(c.id) === this.comunidadId());
+      if (com) {
+        items.push({ label: 'Comunidad', value: com.nombre });
+      }
+    }
+
+    return items;
+  });
 
   // Modal PDF general
   readonly isGeneralPdfOpen = signal(false);
@@ -200,18 +234,7 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     });
   });
 
-  // ---------- Contexto y estado del workspace ----------
 
-  readonly contextItems = computed<readonly IReportContextItem[]>(() => [
-    {
-      label: 'Fecha de corte',
-      value: this.fechaCorte() || 'Hoy',
-    },
-    {
-      label: 'Cuentas en mora',
-      value: String(this.totalMorososCount()),
-    },
-  ]);
 
   readonly workspaceStatus = computed<ReportStatus>(() => {
     if (this.isLoadingData()) return 'loading';

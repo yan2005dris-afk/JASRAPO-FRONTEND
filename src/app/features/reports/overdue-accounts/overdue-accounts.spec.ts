@@ -121,7 +121,6 @@ describe('OverdueAccountsComponent', () => {
     // Y quedan visibles en pantalla como contexto trazable del reporte.
     const context = component.contextItems();
     expect(context).toContainEqual({ label: 'Fecha de corte', value: '2026-09-15' });
-    expect(context).toContainEqual({ label: 'Cuentas en mora', value: '7' });
   });
 
   it('collectionDelinquencyWorkspacePreviewsDownloadsAndEmails', () => {
