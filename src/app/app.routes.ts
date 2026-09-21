@@ -552,6 +552,14 @@ export const routes: Routes = [
                 (m) => m.ClientsListComponent,
               ),
           },
+          {
+            path: 'recaudacion-morosidad',
+            data: { breadcrumb: 'Recaudación y Morosidad' },
+            loadComponent: () =>
+              import('./features/reports/overdue-accounts/overdue-accounts').then(
+                (m) => m.OverdueAccountsComponent,
+              ),
+          },
         ],
       },
 
