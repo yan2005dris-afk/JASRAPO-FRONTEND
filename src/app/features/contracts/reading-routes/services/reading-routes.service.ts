@@ -13,6 +13,7 @@ import {
   IReadingForRoute,
   IReadingRoute,
   IReassignRouteDto,
+  ITipoActividad,
   IUpdateRouteDto,
   PaginatedOrdenResponse,
 } from '../interfaces/ireading-route.interface';
@@ -53,6 +54,10 @@ export class ReadingRoutesService {
     return this.http.get<IPaginatedResult<IReadingRoute>>(this.endpoint, {
       params: httpParams,
     });
+  }
+
+  getActivityTypes(): Observable<ITipoActividad[]> {
+    return this.http.get<ITipoActividad[]>(`${this.endpoint}/activity-types`);
   }
 
   getRouteById(id: string | number): Observable<IReadingRoute> {

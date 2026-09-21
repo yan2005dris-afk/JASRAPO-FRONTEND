@@ -45,9 +45,9 @@
             [disabled]="isLoading()"
           >
             <option [ngValue]="null" disabled selected>Seleccione tipo de actividad...</option>
-            @for (tipo of tiposActividad; track tipo.value) {
-              <option [value]="tipo.value">
-                {{ tipo.label }}
+            @for (tipo of tiposActividad(); track tipo.codigo) {
+              <option [value]="tipo.codigo">
+                {{ tipo.nombre }}
               </option>
             }
           </select>
@@ -175,7 +175,7 @@
         <div class="col-lg-4 col-md-12">
           <div class="workspace-column">
             <!-- Modo A: Toma de Lectura (Sectores) -->
-            @if (tipoActividadSeleccionada() === 'TOMA_LECTURA') {
+            @if (isLecturaActivity(tipoActividadSeleccionada())) {
               <div class="column-header d-flex flex-column gap-2">
                 <div class="d-flex justify-content-between align-items-center">
                   <span class="fw-bold text-dark small text-uppercase"
@@ -467,7 +467,7 @@
                 <div class="summary-item">
                   <span class="label">Alcance:</span>
                   <span class="value">
-                    @if (tipoActividadSeleccionada() === 'TOMA_LECTURA') {
+                    @if (isLecturaActivity(tipoActividadSeleccionada())) {
                       @if (isAllCommunitySelected()) {
                         <span class="badge bg-primary text-white">Toda la Comunidad</span>
                       } @else if (selectedSectorIds().length > 0) {

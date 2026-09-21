@@ -58,4 +58,23 @@ describe('ReadingRoutesService', () => {
     expect(req.request.body).toEqual(dto);
     req.flush(mockResponse);
   });
+
+  it('getActivityTypes should send GET to /routes/activity-types and return activity types', () => {
+    const mockTipos = [
+      {
+        tipoActividadId: 1,
+        codigo: 'LECTURA',
+        nombre: 'Lectura',
+        activo: true,
+      },
+    ];
+
+    service.getActivityTypes().subscribe((res) => {
+      expect(res).toEqual(mockTipos);
+    });
+
+    const req = httpMock.expectOne(`${baseUrl}/routes/activity-types`);
+    expect(req.request.method).toBe('GET');
+    req.flush(mockTipos);
+  });
 });

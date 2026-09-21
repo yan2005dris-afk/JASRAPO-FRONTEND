@@ -10,7 +10,11 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ReadingRoutesService } from '../../services/reading-routes.service';
-import { ICreateRouteAssignmentsDto, TipoRuta } from '../../interfaces/ireading-route.interface';
+import {
+  ICreateRouteAssignmentsDto,
+  ITipoActividad,
+  TipoRuta,
+} from '../../interfaces/ireading-route.interface';
 import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
 import { SectoresService } from '../../../../admin/sectores-prueba/services/sectores';
 import { UsersService } from '../../../../users/services/users.service';
@@ -55,6 +59,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   readonly comunidades = signal<Comunidad[]>([]);
   readonly sectores = signal<Sectores[]>([]);
   readonly contratos = signal<IContract[]>([]);
+  readonly tiposActividad = signal<ITipoActividad[]>([]);
 
   // Selection & Form State
   readonly selectedPeriod = signal<IAccountingPeriod | null>(null);
@@ -64,7 +69,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   readonly selectedSectorIds = signal<number[]>([]);
   readonly selectedContratoIds = signal<number[]>([]);
   readonly isAllCommunitySelected = signal<boolean>(false);
-  readonly tipoActividadSeleccionada = signal<TipoRuta | null>(null);
+  readonly tipoActividadSeleccionada = signal<TipoRuta | string | null>(null);
   readonly fechaPlanificada = signal<string>(
     new Date().toISOString().slice(0, 7), // 'YYYY-MM'
   );
@@ -73,14 +78,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   readonly contractSearch = signal<string>('');
   readonly isLoading = signal<boolean>(false);
   readonly isLoadingContracts = signal<boolean>(false);
-
-  readonly tiposActividad: { value: TipoRuta; label: string; icon: string }[] = [
-    { value: 'TOMA_LECTURA', label: 'Toma de Lectura', icon: 'bi-speedometer2' },
-    { value: 'CORTE', label: 'Corte de Servicio', icon: 'bi-slash-circle' },
-    { value: 'RECONEXION', label: 'Reconexión', icon: 'bi-arrow-repeat' },
-    { value: 'INSPECCION', label: 'Inspección', icon: 'bi-search' },
-    { value: 'INSTALACION', label: 'Instalación', icon: 'bi-tools' },
-  ];
 
   // Nombres de meses para armado descriptivo del nombre sugerido
   private readonly MONTH_NAMES = [
@@ -98,9 +95,34 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     'Diciembre',
   ];
 
-  private getTipoActividadPrefix(tipo: TipoRuta | null): string {
+  isLecturaActivity(tipo: TipoRuta | string | null): boolean {
+    return tipo === 'LECTURA' || tipo === 'TOMA_LECTURA';
+  }
+
+  getActivityIcon(codigo: string): string {
+    switch (codigo) {
+      case 'LECTURA':
+      case 'TOMA_LECTURA':
+        return 'bi-speedometer2';
+      case 'CORTE':
+        return 'bi-slash-circle';
+      case 'RECONEXION':
+        return 'bi-arrow-repeat';
+      case 'INSPECCION':
+        return 'bi-search';
+      case 'INSTALACION':
+        return 'bi-tools';
+      default:
+        return 'bi-clipboard-check';
+    }
+  }
+
+  private getTipoActividadPrefix(tipo: TipoRuta | string | null): string {
     if (!tipo) return 'Ruta de Trabajo';
+    const found = this.tiposActividad().find((t) => t.codigo === tipo);
+    if (found) return `Ruta ${found.nombre}`;
     switch (tipo) {
+      case 'LECTURA':
       case 'TOMA_LECTURA':
         return 'Ruta Lectura';
       case 'CORTE':
@@ -112,7 +134,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       case 'INSTALACION':
         return 'Ruta Instalación';
       default:
-        return 'Ruta de Trabajo';
+        return `Ruta ${tipo}`;
     }
   }
 
@@ -142,7 +164,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     return valorPersonalizado !== null ? valorPersonalizado : this.sugeridoNombreBase();
   });
 
-  onTipoActividadChange(nuevoTipo: TipoRuta | null): void {
+  onTipoActividadChange(nuevoTipo: TipoRuta | string | null): void {
     this.tipoActividadSeleccionada.set(nuevoTipo);
   }
 
@@ -227,7 +249,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     const hasComunidad = comId !== null && comId > 0;
 
     const hasCoverage =
-      tipo === 'TOMA_LECTURA' ? allCom || sectors.length > 0 : contracts.length > 0;
+      this.isLecturaActivity(tipo) ? allCom || sectors.length > 0 : contracts.length > 0;
 
     return hasTipo && hasValidPeriod && hasWorker && hasComunidad && hasCoverage;
   });
@@ -237,6 +259,10 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   }
 
   loadCatalogs(): void {
+    this.routesService.getActivityTypes().subscribe({
+      next: (res) => this.tiposActividad.set(res),
+    });
+
     this.comunidadesService.getAllComunidades(1, 100).subscribe({
       next: (res) => this.comunidades.set(res.data),
     });
@@ -345,13 +371,17 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     const filtered = this.filteredContratos();
     const current = this.selectedContratoIds();
     const allSelected =
-      filtered.length > 0 && filtered.every((c) => current.includes(Number(c.contratoId)));
+      filtered.length > 0 &&
+      filtered.every((c) => current.includes(Number(c.contratoId)));
 
     if (allSelected) {
       const filteredIds = new Set(filtered.map((c) => Number(c.contratoId)));
       this.selectedContratoIds.set(current.filter((id) => !filteredIds.has(id)));
     } else {
-      const combined = new Set([...current, ...filtered.map((c) => Number(c.contratoId))]);
+      const combined = new Set([
+        ...current,
+        ...filtered.map((c) => Number(c.contratoId)),
+      ]);
       this.selectedContratoIds.set(Array.from(combined));
     }
   }
@@ -379,12 +409,11 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     if (!this.isFormValid() || this.isLoading()) return;
 
     const tipo = this.tipoActividadSeleccionada();
-    const coverageDescription =
-      tipo === 'TOMA_LECTURA'
-        ? this.isAllCommunitySelected()
-          ? 'toda la comunidad'
-          : `${this.selectedSectorIds().length} sector(es)`
-        : `${this.selectedContratoIds().length} contrato(s)`;
+    const coverageDescription = this.isLecturaActivity(tipo)
+      ? this.isAllCommunitySelected()
+        ? 'toda la comunidad'
+        : `${this.selectedSectorIds().length} sector(es)`
+      : `${this.selectedContratoIds().length} contrato(s)`;
 
     this.dialogService
       .confirm({
@@ -410,18 +439,18 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     }
 
     const tipo = this.tipoActividadSeleccionada();
+    const isLectura = this.isLecturaActivity(tipo);
     const dto: ICreateRouteAssignmentsDto = {
       periodoId: this.selectedPeriodId()!,
       operarioId: this.selectedOperarioId()!,
       comunidadId: this.selectedComunidadId()!,
       tipoRuta: tipo ?? undefined,
-      sectorIds:
-        tipo === 'TOMA_LECTURA'
-          ? this.isAllCommunitySelected()
-            ? undefined
-            : this.selectedSectorIds()
-          : undefined,
-      contratoIds: tipo !== 'TOMA_LECTURA' ? this.selectedContratoIds() : undefined,
+      sectorIds: isLectura
+        ? this.isAllCommunitySelected()
+          ? undefined
+          : this.selectedSectorIds()
+        : undefined,
+      contratoIds: !isLectura ? this.selectedContratoIds() : undefined,
       fechaPlanificada: fechaToSend,
       nombreBase: this.nombreBase().trim() || undefined,
     };

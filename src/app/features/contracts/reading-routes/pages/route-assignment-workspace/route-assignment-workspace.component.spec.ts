@@ -22,6 +22,15 @@ describe('RouteAssignmentWorkspaceComponent', () => {
 
   const mockReadingRoutesService = {
     createAssignments: vi.fn(),
+    getActivityTypes: vi.fn().mockReturnValue(
+      of([
+        { tipoActividadId: 1, codigo: 'LECTURA', nombre: 'Lectura', activo: true },
+        { tipoActividadId: 2, codigo: 'CORTE', nombre: 'Corte', activo: true },
+        { tipoActividadId: 3, codigo: 'RECONEXION', nombre: 'Reconexión', activo: true },
+        { tipoActividadId: 4, codigo: 'INSPECCION', nombre: 'Inspección', activo: true },
+        { tipoActividadId: 5, codigo: 'INSTALACION', nombre: 'Instalación', activo: true },
+      ]),
+    ),
   };
 
   const mockComunidadesService = {
