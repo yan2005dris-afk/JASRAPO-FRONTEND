@@ -12,15 +12,13 @@ function createComponent(): InspeccionFormComponent {
 }
 
 describe('InspeccionFormComponent', () => {
-  it('should be invalid when estadoSellos is empty', () => {
+  it('should be valid without activity-specific inspection fields', () => {
     const comp = createComponent();
-    expect(comp.form.get('estadoSellos')?.hasError('required')).toBe(true);
-    expect(comp.form.valid).toBe(false);
+    expect(comp.form.valid).toBe(true);
   });
 
   it('should not emit if photo is missing', () => {
     const comp = createComponent();
-    comp.form.patchValue({ estadoSellos: 'VIOLADO' });
     const emitted: unknown[] = [];
     comp.formSubmit.subscribe((v) => emitted.push(v));
     comp.submit();
@@ -39,11 +37,9 @@ describe('InspeccionFormComponent', () => {
     expect(comp.photoPreview()).toBeInstanceOf(Blob);
   });
 
-  it('should emit correct InspeccionFormPayload with foto and hayFugas', () => {
+  it('should emit correct InspeccionFormPayload with foto and observations', () => {
     const comp = createComponent();
     comp.form.patchValue({
-      estadoSellos: 'AUSENTE',
-      hayFugas: true,
       observaciones: 'Fuga detectada en la conexión',
     });
     comp.photoPreview.set(new Blob(['photo'], { type: 'image/jpeg' }));
@@ -52,8 +48,6 @@ describe('InspeccionFormComponent', () => {
     comp.submit();
     expect(emitted).toHaveLength(1);
     expect(emitted[0].tipoActividad).toBe('INSPECCION');
-    expect(emitted[0].estadoSellos).toBe('AUSENTE');
-    expect(emitted[0].hayFugas).toBe(true);
     expect(emitted[0].observaciones).toBe('Fuga detectada en la conexión');
     expect(emitted[0].fotoBlob).toBeInstanceOf(Blob);
   });

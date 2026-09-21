@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
 import { IPaginatedResult } from '../../../billing/payments/interfaces/ipayments.interface';
 import {
+  ICreateRouteAssignmentsDto,
   ICreateRouteDto,
   IFilterOrdenParams,
   IFilterReadingsParams,
@@ -12,6 +13,7 @@ import {
   IReadingForRoute,
   IReadingRoute,
   IReassignRouteDto,
+  ITipoActividad,
   IUpdateRouteDto,
   PaginatedOrdenResponse,
 } from '../interfaces/ireading-route.interface';
@@ -54,6 +56,10 @@ export class ReadingRoutesService {
     });
   }
 
+  getActivityTypes(): Observable<ITipoActividad[]> {
+    return this.http.get<ITipoActividad[]>(`${this.endpoint}/activity-types`);
+  }
+
   getRouteById(id: string | number): Observable<IReadingRoute> {
     return this.http.get<IReadingRoute>(`${this.endpoint}/${id}`);
   }
@@ -66,6 +72,10 @@ export class ReadingRoutesService {
 
   createRoute(dto: ICreateRouteDto): Observable<IReadingRoute> {
     return this.http.post<IReadingRoute>(this.endpoint, dto);
+  }
+
+  createAssignments(dto: ICreateRouteAssignmentsDto): Observable<IReadingRoute[]> {
+    return this.http.post<IReadingRoute[]>(`${this.endpoint}/assignments`, dto);
   }
 
   updateRoute(id: string | number, dto: IUpdateRouteDto): Observable<IReadingRoute> {
