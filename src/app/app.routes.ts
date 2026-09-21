@@ -358,9 +358,9 @@ export const routes: Routes = [
             path: 'RutasDeLectura/asignar',
             data: { breadcrumb: 'Asignación por Periodo' },
             loadComponent: () =>
-              import(
-                './features/contracts/reading-routes/pages/route-assignment-workspace/route-assignment-workspace.component'
-              ).then((m) => m.RouteAssignmentWorkspaceComponent),
+              import('./features/contracts/reading-routes/pages/route-assignment-workspace/route-assignment-workspace.component').then(
+                (m) => m.RouteAssignmentWorkspaceComponent,
+              ),
           },
           {
             path: 'RutasDeLectura/:id',

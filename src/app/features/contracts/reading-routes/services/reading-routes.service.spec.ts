@@ -50,7 +50,7 @@ describe('ReadingRoutesService', () => {
     ];
 
     service.createAssignments(dto).subscribe((res) => {
-      expect(res).toEqual(mockResponse as any);
+      expect(res).toEqual(mockResponse);
     });
 
     const req = httpMock.expectOne(`${baseUrl}/routes/assignments`);

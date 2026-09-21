@@ -8,6 +8,7 @@ import { ReadingRoutesService } from '../../services/reading-routes.service';
 import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
 import { SectoresService } from '../../../../admin/sectores-prueba/services/sectores';
 import { UsersService } from '../../../../users/services/users.service';
+import { ContractsService } from '../../../service-contracts/services/contracts.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
 
@@ -71,6 +72,51 @@ describe('RouteAssignmentWorkspaceComponent', () => {
     ),
   };
 
+  const mockContractsService = {
+    getContracts: vi.fn().mockReturnValue(
+      of({
+        data: [
+          {
+            contratoId: 101,
+            numeroGuia: 'GUI-001',
+            comunidad: { comunidadId: 1, nombre: 'Comuna Centro' },
+            cliente: { nombres: 'Juan', apellidos: 'Perez', identificacion: '1101234567' },
+            historialMedidores: [
+              {
+                fechaHasta: null,
+                medidor: { serie: 'MED-101' },
+              },
+            ],
+          },
+          {
+            contratoId: 102,
+            numeroGuia: 'GUI-002',
+            comunidad: { comunidadId: 1, nombre: 'Comuna Centro' },
+            cliente: { nombres: 'Ana', apellidos: 'Gomez', identificacion: '1109876543' },
+            historialMedidores: [
+              {
+                fechaHasta: null,
+                medidor: { serie: 'MED-102' },
+              },
+            ],
+          },
+          {
+            contratoId: 201,
+            numeroGuia: 'GUI-003',
+            comunidad: { comunidadId: 2, nombre: 'Comuna Norte' },
+            cliente: { nombres: 'Pedro', apellidos: 'Ramirez', identificacion: '1105555555' },
+            historialMedidores: [
+              {
+                fechaHasta: null,
+                medidor: { serie: 'MED-201' },
+              },
+            ],
+          },
+        ],
+      }),
+    ),
+  };
+
   const mockToastService = {
     show: vi.fn(),
   };
@@ -92,6 +138,7 @@ describe('RouteAssignmentWorkspaceComponent', () => {
         { provide: ComunidadesService, useValue: mockComunidadesService },
         { provide: SectoresService, useValue: mockSectoresService },
         { provide: UsersService, useValue: mockUsersService },
+        { provide: ContractsService, useValue: mockContractsService },
         { provide: ToastService, useValue: mockToastService },
         { provide: ConfirmDialogService, useValue: mockConfirmDialogService },
       ],
@@ -116,14 +163,55 @@ describe('RouteAssignmentWorkspaceComponent', () => {
     expect(component.filteredOperarios().length).toBe(0);
   });
 
-  it('should filter sectors according to selected community', () => {
+  it('should filter sectors and load contracts according to selected community', () => {
     component.onComunidadChange(1);
     expect(component.filteredSectores().length).toBe(2);
     expect(component.filteredSectores()[0].sectorId).toBe(10);
+    expect(component.contratos().length).toBe(2);
+    expect(component.contratos()[0].contratoId).toBe(101);
 
     component.onComunidadChange(2);
     expect(component.filteredSectores().length).toBe(1);
     expect(component.filteredSectores()[0].sectorId).toBe(20);
+    expect(component.contratos().length).toBe(1);
+    expect(component.contratos()[0].contratoId).toBe(201);
+  });
+
+  it('should filter contracts by search query', () => {
+    component.onComunidadChange(1);
+    expect(component.filteredContratos().length).toBe(2);
+
+    component.contractSearch.set('Juan');
+    expect(component.filteredContratos().length).toBe(1);
+    expect(component.filteredContratos()[0].contratoId).toBe(101);
+
+    component.contractSearch.set('MED-102');
+    expect(component.filteredContratos().length).toBe(1);
+    expect(component.filteredContratos()[0].contratoId).toBe(102);
+
+    component.contractSearch.set('inexistente');
+    expect(component.filteredContratos().length).toBe(0);
+  });
+
+  it('should toggle individual contracts and select all filtered contracts', () => {
+    component.onComunidadChange(1);
+
+    expect(component.isContratoSelected(101)).toBe(false);
+    component.toggleContrato(101);
+    expect(component.isContratoSelected(101)).toBe(true);
+
+    component.toggleContrato(101);
+    expect(component.isContratoSelected(101)).toBe(false);
+
+    // Toggle all
+    component.toggleAllFilteredContratos();
+    expect(component.areAllFilteredContratosSelected()).toBe(true);
+    expect(component.selectedContratoIds().length).toBe(2);
+
+    // Toggle all again deselects
+    component.toggleAllFilteredContratos();
+    expect(component.areAllFilteredContratosSelected()).toBe(false);
+    expect(component.selectedContratoIds().length).toBe(0);
   });
 
   it('should update suggested route name when activity type changes', () => {
@@ -146,7 +234,7 @@ describe('RouteAssignmentWorkspaceComponent', () => {
     expect(component.sugeridoNombreBase()).toBe('Ruta Inspección - 2026 - Septiembre');
   });
 
-  it('should compute isFormValid correctly based on selected inputs', () => {
+  it('should compute isFormValid correctly based on selected inputs for TOMA_LECTURA', () => {
     expect(component.isFormValid()).toBe(false);
 
     // Set activity type
@@ -179,7 +267,24 @@ describe('RouteAssignmentWorkspaceComponent', () => {
     expect(component.isAllCommunitySelected()).toBe(false);
   });
 
-  it('should execute assignment and navigate back when confirmed', async () => {
+  it('should compute isFormValid correctly for non-reading activity types with contracts', () => {
+    component.onTipoActividadChange('CORTE');
+    component.onPeriodSelected({
+      periodoId: 1,
+      nombre: 'Enero 2026',
+      estado: 'ABIERTO',
+    });
+    component.selectOperario(5);
+    component.onComunidadChange(1);
+
+    expect(component.isFormValid()).toBe(false);
+
+    // Selecting a contract makes it valid
+    component.toggleContrato(101);
+    expect(component.isFormValid()).toBe(true);
+  });
+
+  it('should execute assignment and navigate back when confirmed for TOMA_LECTURA', async () => {
     mockReadingRoutesService.createAssignments.mockReturnValue(
       of([{ rutaId: '100', nombre: 'Ruta Lectura - Sector A' }]),
     );
@@ -212,6 +317,37 @@ describe('RouteAssignmentWorkspaceComponent', () => {
       expect.stringContaining('Se generaron exitosamente 1 ruta(s)'),
       'success',
     );
+  });
+
+  it('should execute assignment with contratoIds when non-reading activity is chosen', async () => {
+    mockReadingRoutesService.createAssignments.mockReturnValue(
+      of([{ rutaId: '101', nombre: 'Ruta Corte - Contrato 101' }]),
+    );
+
+    component.onTipoActividadChange('CORTE');
+    component.onPeriodSelected({
+      periodoId: 1,
+      nombre: 'Enero 2026',
+      estado: 'ABIERTO',
+    });
+    component.selectOperario(5);
+    component.onComunidadChange(1);
+    component.toggleContrato(101);
+    component.toggleContrato(102);
+
+    component.confirmAndSave();
+    await fixture.whenStable();
+
+    expect(mockConfirmDialogService.confirm).toHaveBeenCalled();
+    expect(mockReadingRoutesService.createAssignments).toHaveBeenCalledWith({
+      periodoId: 1,
+      operarioId: 5,
+      comunidadId: 1,
+      tipoRuta: 'CORTE',
+      contratoIds: [101, 102],
+      fechaPlanificada: expect.any(String),
+      nombreBase: expect.stringContaining('Ruta Corte'),
+    });
   });
 
   it('should handle error when createAssignments fails', async () => {

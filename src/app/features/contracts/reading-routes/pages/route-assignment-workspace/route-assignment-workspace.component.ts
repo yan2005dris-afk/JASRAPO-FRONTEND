@@ -10,16 +10,15 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ReadingRoutesService } from '../../services/reading-routes.service';
-import {
-  ICreateRouteAssignmentsDto,
-  TipoRuta,
-} from '../../interfaces/ireading-route.interface';
+import { ICreateRouteAssignmentsDto, TipoRuta } from '../../interfaces/ireading-route.interface';
 import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
 import { SectoresService } from '../../../../admin/sectores-prueba/services/sectores';
 import { UsersService } from '../../../../users/services/users.service';
+import { ContractsService } from '../../../service-contracts/services/contracts.service';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { Sectores } from '../../../../admin/sectores-prueba/models/sectores.interface';
 import { User } from '../../../../users/models/user.interface';
+import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
@@ -47,6 +46,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   private readonly comunidadesService = inject(ComunidadesService);
   private readonly sectoresService = inject(SectoresService);
   private readonly usersService = inject(UsersService);
+  private readonly contractsService = inject(ContractsService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
 
@@ -54,6 +54,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   readonly operarios = signal<User[]>([]);
   readonly comunidades = signal<Comunidad[]>([]);
   readonly sectores = signal<Sectores[]>([]);
+  readonly contratos = signal<IContract[]>([]);
 
   // Selection & Form State
   readonly selectedPeriod = signal<IAccountingPeriod | null>(null);
@@ -61,6 +62,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   readonly selectedOperarioId = signal<number | null>(null);
   readonly selectedComunidadId = signal<number | null>(null);
   readonly selectedSectorIds = signal<number[]>([]);
+  readonly selectedContratoIds = signal<number[]>([]);
   readonly isAllCommunitySelected = signal<boolean>(false);
   readonly tipoActividadSeleccionada = signal<TipoRuta | null>(null);
   readonly fechaPlanificada = signal<string>(
@@ -68,7 +70,9 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   );
   readonly customNombreBase = signal<string | null>(null);
   readonly workerSearch = signal<string>('');
+  readonly contractSearch = signal<string>('');
   readonly isLoading = signal<boolean>(false);
+  readonly isLoadingContracts = signal<boolean>(false);
 
   readonly tiposActividad: { value: TipoRuta; label: string; icon: string }[] = [
     { value: 'TOMA_LECTURA', label: 'Toma de Lectura', icon: 'bi-speedometer2' },
@@ -174,6 +178,39 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     return this.sectores().filter((s) => s.comunidadId === comId);
   });
 
+  getMedidorSerie(contrato: IContract): string | null {
+    const medidorActivo = contrato.historialMedidores?.find(
+      (historial) => historial.fechaHasta === null,
+    );
+    return medidorActivo?.medidor?.serie || null;
+  }
+
+  // Filtered Contracts for selected Comunidad
+  readonly filteredContratos = computed(() => {
+    const q = this.contractSearch().toLowerCase().trim();
+    const list = this.contratos();
+
+    return list.filter((c) => {
+      const serie = this.getMedidorSerie(c);
+      const matchSearch =
+        !q ||
+        c.contratoId?.toString().includes(q) ||
+        c.cliente?.nombres?.toLowerCase().includes(q) ||
+        c.cliente?.apellidos?.toLowerCase().includes(q) ||
+        c.cliente?.identificacion?.toLowerCase().includes(q) ||
+        c.numeroGuia?.toLowerCase().includes(q) ||
+        (serie && serie.toLowerCase().includes(q));
+
+      return matchSearch;
+    });
+  });
+
+  readonly areAllFilteredContratosSelected = computed(() => {
+    const filtered = this.filteredContratos();
+    const current = this.selectedContratoIds();
+    return filtered.length > 0 && filtered.every((c) => current.includes(Number(c.contratoId)));
+  });
+
   // Validity
   readonly isFormValid = computed(() => {
     const tipo = this.tipoActividadSeleccionada();
@@ -182,12 +219,15 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     const comId = this.selectedComunidadId();
     const allCom = this.isAllCommunitySelected();
     const sectors = this.selectedSectorIds();
+    const contracts = this.selectedContratoIds();
 
     const hasTipo = tipo !== null;
     const hasValidPeriod = period !== null && period.periodoId > 0 && period.estado === 'ABIERTO';
     const hasWorker = opId !== null && opId > 0;
     const hasComunidad = comId !== null && comId > 0;
-    const hasCoverage = allCom || sectors.length > 0;
+
+    const hasCoverage =
+      tipo === 'TOMA_LECTURA' ? allCom || sectors.length > 0 : contracts.length > 0;
 
     return hasTipo && hasValidPeriod && hasWorker && hasComunidad && hasCoverage;
   });
@@ -216,6 +256,28 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     });
   }
 
+  loadContractsForComunidad(comunidadId: number): void {
+    this.isLoadingContracts.set(true);
+    this.contractsService
+      .getContracts({
+        limit: 200,
+      })
+      .subscribe({
+        next: (res) => {
+          const filtered = res.data.filter(
+            (c) =>
+              c.comunidad?.comunidadId === comunidadId ||
+              (c as unknown as { comunidadId?: number }).comunidadId === comunidadId,
+          );
+          this.contratos.set(filtered);
+          this.isLoadingContracts.set(false);
+        },
+        error: () => {
+          this.isLoadingContracts.set(false);
+        },
+      });
+  }
+
   onPeriodSelected(period: IAccountingPeriod | null): void {
     this.selectedPeriod.set(period);
     this.selectedPeriodId.set(period ? period.periodoId : null);
@@ -228,7 +290,13 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   onComunidadChange(comunidadId: number | null): void {
     this.selectedComunidadId.set(comunidadId);
     this.selectedSectorIds.set([]);
+    this.selectedContratoIds.set([]);
     this.isAllCommunitySelected.set(false);
+    if (comunidadId) {
+      this.loadContractsForComunidad(comunidadId);
+    } else {
+      this.contratos.set([]);
+    }
   }
 
   toggleAllCommunity(): void {
@@ -257,6 +325,37 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     this.selectedSectorIds.set(list);
   }
 
+  isContratoSelected(contratoId: number | string): boolean {
+    return this.selectedContratoIds().includes(Number(contratoId));
+  }
+
+  toggleContrato(contratoId: number | string): void {
+    const idNum = Number(contratoId);
+    const list = [...this.selectedContratoIds()];
+    const index = list.indexOf(idNum);
+    if (index > -1) {
+      list.splice(index, 1);
+    } else {
+      list.push(idNum);
+    }
+    this.selectedContratoIds.set(list);
+  }
+
+  toggleAllFilteredContratos(): void {
+    const filtered = this.filteredContratos();
+    const current = this.selectedContratoIds();
+    const allSelected =
+      filtered.length > 0 && filtered.every((c) => current.includes(Number(c.contratoId)));
+
+    if (allSelected) {
+      const filteredIds = new Set(filtered.map((c) => Number(c.contratoId)));
+      this.selectedContratoIds.set(current.filter((id) => !filteredIds.has(id)));
+    } else {
+      const combined = new Set([...current, ...filtered.map((c) => Number(c.contratoId))]);
+      this.selectedContratoIds.set(Array.from(combined));
+    }
+  }
+
   getOperarioName(): string {
     const opId = this.selectedOperarioId();
     if (!opId) return 'Sin seleccionar';
@@ -279,10 +378,18 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   confirmAndSave(): void {
     if (!this.isFormValid() || this.isLoading()) return;
 
+    const tipo = this.tipoActividadSeleccionada();
+    const coverageDescription =
+      tipo === 'TOMA_LECTURA'
+        ? this.isAllCommunitySelected()
+          ? 'toda la comunidad'
+          : `${this.selectedSectorIds().length} sector(es)`
+        : `${this.selectedContratoIds().length} contrato(s)`;
+
     this.dialogService
       .confirm({
         title: 'Confirmar Asignación de Rutas',
-        message: `¿Estás seguro de asignar ${this.isAllCommunitySelected() ? 'toda la comunidad' : this.selectedSectorIds().length + ' sector(es)'} a ${this.getOperarioName()} para el período ${this.selectedPeriod()?.nombre}?`,
+        message: `¿Estás seguro de asignar ${coverageDescription} a ${this.getOperarioName()} para el período ${this.selectedPeriod()?.nombre}?`,
         confirmText: 'Sí, Asignar',
         cancelText: 'Revisar',
       })
@@ -302,12 +409,19 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       fechaToSend = `${fechaToSend}-01`;
     }
 
+    const tipo = this.tipoActividadSeleccionada();
     const dto: ICreateRouteAssignmentsDto = {
       periodoId: this.selectedPeriodId()!,
       operarioId: this.selectedOperarioId()!,
       comunidadId: this.selectedComunidadId()!,
-      tipoRuta: this.tipoActividadSeleccionada() ?? undefined,
-      sectorIds: this.isAllCommunitySelected() ? undefined : this.selectedSectorIds(),
+      tipoRuta: tipo ?? undefined,
+      sectorIds:
+        tipo === 'TOMA_LECTURA'
+          ? this.isAllCommunitySelected()
+            ? undefined
+            : this.selectedSectorIds()
+          : undefined,
+      contratoIds: tipo !== 'TOMA_LECTURA' ? this.selectedContratoIds() : undefined,
       fechaPlanificada: fechaToSend,
       nombreBase: this.nombreBase().trim() || undefined,
     };

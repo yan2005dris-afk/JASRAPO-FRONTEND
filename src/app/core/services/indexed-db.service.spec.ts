@@ -75,7 +75,7 @@ describe('IndexedDbService - Multi-operator Snapshot Isolation', () => {
         };
         setTimeout(() => {
           if (tx.oncomplete) tx.oncomplete();
-        }, 10);
+        }, 50);
         return tx;
       },
     };
