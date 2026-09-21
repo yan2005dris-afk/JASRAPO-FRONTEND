@@ -11,12 +11,10 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
-import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { IOverdueAccountsFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
-import type { IContract } from '../../contracts/service-contracts/interfaces/icontract.interface';
 import { ReportEmailDialogComponent } from '../shared/report-email-dialog/report-email-dialog.component';
 import {
   IReportContextItem,
@@ -67,7 +65,6 @@ interface OverdueAccountsData {
     A11yModule,
     FormsModule,
     DatePickerComponent,
-    ContractPickerComponent,
     ReportEmailDialogComponent,
     ReportPdfModalComponent,
     ReportWorkspaceComponent,
@@ -83,8 +80,6 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   // Filtros del reporte de recaudación y morosidad
   readonly fechaCorte = signal('');
   readonly contratoId = signal('');
-  readonly selectedContractNumber = signal('');
-  readonly selectedContractName = signal('');
   readonly searchTermTable = signal('');
 
   // Resultados JSON (tabla)
@@ -115,8 +110,6 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   readonly isEmailModalOpen = signal(false);
   private readonly emailAttempt = new ReportEmailAttemptTracker();
 
-  // Buscador de contratos
-  readonly isContractPickerOpen = signal(false);
   private dataRequest: Subscription | null = null;
   private generalPdfRequest: Subscription | null = null;
   private detalleRequest: Subscription | null = null;
@@ -164,32 +157,35 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     const term = this.searchTermTable().trim().toLowerCase();
     if (!term) return list;
 
-    return list.filter(
-      (m) =>
-        m.clienteNombre.toLowerCase().includes(term) ||
-        m.identificacion.toLowerCase().includes(term) ||
-        m.numeroGuia.toLowerCase().includes(term) ||
-        m.sectorNombre.toLowerCase().includes(term) ||
-        m.medidorSerie.toLowerCase().includes(term),
-    );
+    // Soporte para búsqueda por múltiples términos (ej.: "andy vera", "001 norte")
+    const terms = term.split(/\s+/).filter(Boolean);
+
+    return list.filter((m) => {
+      const fullText = [
+        m.clienteNombre,
+        m.identificacion,
+        m.numeroGuia,
+        m.sectorNombre,
+        m.medidorSerie,
+        m.contratoId,
+      ]
+        .join(' ')
+        .toLowerCase();
+
+      return terms.every((t) => fullText.includes(t));
+    });
   });
 
   // ---------- Contexto y estado del workspace ----------
 
   readonly contextItems = computed<readonly IReportContextItem[]>(() => [
     {
-      label: 'Entidad',
-      value: this.selectedContractNumber()
-        ? `${this.selectedContractNumber()} — ${this.selectedContractName()}`
-        : 'Todos los contratos',
-    },
-    {
       label: 'Fecha de corte',
       value: this.fechaCorte() || 'Hoy',
     },
     {
-      label: 'Filtros',
-      value: this.contratoId() ? 'Contrato seleccionado' : 'Sin filtro de contrato',
+      label: 'Cuentas en mora',
+      value: String(this.totalMorososCount()),
     },
   ]);
 
@@ -205,10 +201,10 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     if (this.isLoadingData()) return 'Consultando datos autorizados del reporte…';
     if (this.workspaceError()) return this.workspaceError();
     if (!this.reportData()) {
-      return 'Ajuste los filtros y presione Consultar para cargar el reporte de recaudación y morosidad.';
+      return 'Ajuste la fecha de corte y presione Actualizar para cargar el reporte de recaudación y morosidad.';
     }
     if (this.morosos().length === 0) {
-      return 'No se encontraron cuentas en mora para el contexto seleccionado.';
+      return 'No se encontraron cuentas en mora para la fecha de corte seleccionada.';
     }
     return '';
   });
@@ -239,25 +235,6 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
 
   onTableSearchInput(value: string): void {
     this.searchTermTable.set(value);
-  }
-
-  // ---------- Buscador de contratos ----------
-
-  abrirBuscadorContratos(): void {
-    this.isContractPickerOpen.set(true);
-  }
-
-  onContractSelected(contract: IContract): void {
-    this.contratoId.set(String(contract.contratoId));
-    this.selectedContractNumber.set(contract.numeroGuia);
-    this.selectedContractName.set(ContractPickerComponent.formatClientName(contract.cliente));
-    this.destinatario.set(contract.cliente.email?.trim() ?? '');
-    this.invalidateFilterDependentState();
-    this.isContractPickerOpen.set(false);
-  }
-
-  onContractPickerClosed(): void {
-    this.isContractPickerOpen.set(false);
   }
 
   // ---------- Consultar (carga JSON -> tabla) ----------
@@ -294,8 +271,6 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     this.cancelGeneralPdfRequest();
     this.fechaCorte.set('');
     this.contratoId.set('');
-    this.selectedContractNumber.set('');
-    this.selectedContractName.set('');
     this.searchTermTable.set('');
     this.reportData.set(null);
     this.generalPdfBlob.set(null);

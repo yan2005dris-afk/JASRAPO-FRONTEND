@@ -11,44 +11,28 @@
 >
   <div reportFilters>
     <div class="row g-3 align-items-end">
-      <div class="col-lg-4 col-md-6">
-        <label class="form-label small fw-semibold" for="contratoId">Contrato específico</label>
+      <div class="col-lg-5 col-md-6">
+        <label class="form-label small fw-semibold" for="filtroBusqueda">Buscar cuenta en mora</label>
         <div class="input-group">
+          <span class="input-group-text bg-white">
+            <i class="bi bi-search text-muted" aria-hidden="true"></i>
+          </span>
           <input
-            id="contratoId"
-            type="text"
-            class="form-control contract-input text-truncate"
-            placeholder="Todos los contratos"
-            [value]="
-              selectedContractNumber()
-                ? selectedContractNumber() + ' — ' + selectedContractName()
-                : ''
-            "
-            [title]="
-              selectedContractNumber()
-                ? selectedContractNumber() + ' — ' + selectedContractName()
-                : 'Todos los contratos'
-            "
-            readonly
-            (click)="abrirBuscadorContratos()"
+            id="filtroBusqueda"
+            type="search"
+            class="form-control"
+            placeholder="Buscar por guía, cliente, cédula, sector o medidor…"
+            [ngModel]="searchTermTable()"
+            (ngModelChange)="onTableSearchInput($event)"
           />
-          @if (selectedContractNumber()) {
+          @if (searchTermTable()) {
             <button
               type="button"
               class="btn btn-outline-secondary"
-              aria-label="Quitar contrato seleccionado"
-              (click)="limpiar(); $event.stopPropagation()"
+              aria-label="Limpiar búsqueda"
+              (click)="onTableSearchInput('')"
             >
               <i class="bi bi-x" aria-hidden="true"></i>
-            </button>
-          } @else {
-            <button
-              type="button"
-              class="btn btn-outline-primary"
-              aria-label="Buscar contrato"
-              (click)="abrirBuscadorContratos()"
-            >
-              <i class="bi bi-search" aria-hidden="true"></i>
             </button>
           }
         </div>
@@ -63,15 +47,15 @@
         />
       </div>
 
-      <div class="col-lg-5 col-md-12 d-flex flex-wrap gap-2">
+      <div class="col-lg-4 col-md-12 d-flex flex-wrap gap-2">
         <button
           type="button"
           class="btn btn-primary d-inline-flex align-items-center gap-2"
           [disabled]="isLoadingData()"
           (click)="consultar()"
         >
-          <i class="bi bi-search" aria-hidden="true"></i>
-          Consultar
+          <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+          Actualizar
         </button>
         <button
           type="button"
@@ -88,8 +72,8 @@
 
   <div reportSummary class="summary-grid">
     <div>
-      <span>Entidad / Contrato</span>
-      <strong>{{ selectedContractNumber() ? selectedContractNumber() + ' — ' + selectedContractName() : 'Todos los contratos' }}</strong>
+      <span>Fecha de corte</span>
+      <strong>{{ fechaCorte() || 'Hoy' }}</strong>
     </div>
     <div>
       <span>Cuentas en mora</span>
@@ -122,20 +106,6 @@
   </div>
 
   <div reportResults>
-    <div class="results-search input-group mb-3">
-      <span class="input-group-text bg-white">
-        <i class="bi bi-search" aria-hidden="true"></i>
-      </span>
-      <input
-        type="search"
-        class="form-control"
-        aria-label="Filtrar cuentas en mora"
-        placeholder="Filtrar por cliente, guía o sector…"
-        [ngModel]="searchTermTable()"
-        (ngModelChange)="onTableSearchInput($event)"
-      />
-    </div>
-
     @if (filteredMorosos().length > 0) {
       <div class="table-responsive">
         <table class="table table-hover align-middle mb-0 custom-table">
@@ -240,10 +210,3 @@
     />
   }
 </app-report-workspace>
-
-<app-contract-picker
-  [open]="isContractPickerOpen()"
-  title="Buscar Contrato"
-  (contractSelected)="onContractSelected($event)"
-  (closed)="onContractPickerClosed()"
-/>
