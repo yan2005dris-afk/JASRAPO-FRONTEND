@@ -222,17 +222,25 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   readonly filteredMorosos = computed(() => {
     let list = this.morosos();
 
+    const normalize = (str: string) =>
+      str
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+        .toLowerCase();
+
     // Filtro por Sector seleccionado
     if (this.sectorId()) {
       const selectedSector = this.sectores().find((s) => String(s.sectorId) === this.sectorId());
       if (selectedSector) {
-        list = list.filter((m) => m.sectorNombre.toLowerCase() === selectedSector.nombre.toLowerCase());
+        const targetSector = normalize(selectedSector.nombre);
+        list = list.filter((m) => normalize(m.sectorNombre) === targetSector);
       }
     } else if (this.comunidadId()) {
       // Si seleccionó Comunidad pero no un Sector específico, filtrar por los sectores de esa comunidad
-      const nombresSectoresComunidad = this.sectoresDisponibles().map((s) => s.nombre.toLowerCase());
+      const nombresSectoresComunidad = this.sectoresDisponibles().map((s) => normalize(s.nombre));
       if (nombresSectoresComunidad.length > 0) {
-        list = list.filter((m) => nombresSectoresComunidad.includes(m.sectorNombre.toLowerCase()));
+        list = list.filter((m) => nombresSectoresComunidad.includes(normalize(m.sectorNombre)));
       }
     }
 
@@ -243,18 +251,16 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     const terms = term.split(/\s+/).filter(Boolean);
 
     return list.filter((m) => {
-      const fullText = [
+      const fullText = normalize([
         m.clienteNombre,
         m.identificacion,
         m.numeroGuia,
         m.sectorNombre,
         m.medidorSerie,
         m.contratoId,
-      ]
-        .join(' ')
-        .toLowerCase();
+      ].join(' '));
 
-      return terms.every((t) => fullText.includes(t));
+      return terms.every((t) => fullText.includes(normalize(t)));
     });
   });
 
