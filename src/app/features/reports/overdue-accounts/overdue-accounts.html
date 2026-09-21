@@ -12,7 +12,9 @@
   <div reportFilters>
     <div class="row g-3 align-items-end">
       <div class="col-lg-6 col-md-12">
-        <label class="form-label small fw-semibold" for="filtroBusqueda">Buscar cuenta en mora</label>
+        <label class="form-label small fw-semibold" for="filtroBusqueda"
+          >Buscar cuenta en mora</label
+        >
         <div class="input-group">
           <span class="input-group-text bg-white">
             <i class="bi bi-search text-muted" aria-hidden="true"></i>
@@ -52,12 +54,16 @@
             ></i>
           </button>
           @if (activeAdvancedFiltersCount() > 0) {
-            <span class="badge text-bg-primary rounded-pill">{{ activeAdvancedFiltersCount() }}</span>
+            <span class="badge text-bg-primary rounded-pill">{{
+              activeAdvancedFiltersCount()
+            }}</span>
           }
         </div>
       </div>
 
-      <div class="col-lg-6 col-md-12 d-flex flex-wrap align-items-center justify-content-lg-end gap-2">
+      <div
+        class="col-lg-6 col-md-12 d-flex flex-wrap align-items-center justify-content-lg-end gap-2"
+      >
         <button
           type="button"
           class="btn btn-primary d-inline-flex align-items-center gap-2"

@@ -266,20 +266,20 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     const terms = term.split(/\s+/).filter(Boolean);
 
     return list.filter((m) => {
-      const fullText = normalize([
-        m.clienteNombre,
-        m.identificacion,
-        m.numeroGuia,
-        m.sectorNombre,
-        m.medidorSerie,
-        m.contratoId,
-      ].join(' '));
+      const fullText = normalize(
+        [
+          m.clienteNombre,
+          m.identificacion,
+          m.numeroGuia,
+          m.sectorNombre,
+          m.medidorSerie,
+          m.contratoId,
+        ].join(' '),
+      );
 
       return terms.every((t) => fullText.includes(normalize(t)));
     });
   });
-
-
 
   readonly workspaceStatus = computed<ReportStatus>(() => {
     if (this.isLoadingData()) return 'loading';
