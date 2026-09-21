@@ -25,15 +25,6 @@
           <i class="bi bi-grid-3x3-gap-fill"></i>
           Asignar por Periodo
         </button>
-
-        <button
-          type="button"
-          class="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium px-3"
-          (click)="openCreateModal()"
-        >
-          <i class="bi bi-plus-lg"></i>
-          Nueva Ruta Individual
-        </button>
       </div>
 
       <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -127,9 +118,9 @@
           icon="bi bi-map"
           title="No hay rutas registradas"
           description="No se encontraron rutas de lectura con los filtros seleccionados."
-          actionLabel="Crear primera ruta"
-          actionIcon="bi bi-plus-lg"
-          (actionClicked)="openCreateModal()"
+          actionLabel="Asignar por Periodo"
+          actionIcon="bi bi-grid-3x3-gap-fill"
+          (actionClicked)="goToAssignment()"
         />
       }
 
@@ -292,15 +283,6 @@
                         <li>
                           <button
                             class="dropdown-item d-flex align-items-center gap-2"
-                            (click)="openEditModal(route)"
-                          >
-                            <i class="bi bi-pencil text-primary" style="font-size: 0.85rem"></i>
-                            Editar ruta
-                          </button>
-                        </li>
-                        <li>
-                          <button
-                            class="dropdown-item d-flex align-items-center gap-2"
                             (click)="openReassignModal(route)"
                           >
                             <i
@@ -346,14 +328,6 @@
   </div>
 
   <!-- MODALS -->
-  @if (isFormModalOpen) {
-    <app-route-form-modal
-      [route]="selectedRouteForEdit"
-      (saved)="onRouteSaved()"
-      (closed)="closeFormModal()"
-    />
-  }
-
   @if (selectedRouteForReassign) {
     <app-reassign-route-modal
       [route]="selectedRouteForReassign"

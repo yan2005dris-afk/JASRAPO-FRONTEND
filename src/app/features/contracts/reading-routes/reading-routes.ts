@@ -29,7 +29,6 @@ import {
 } from '../../../shared/components/dropdown/dropdown.component';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Router } from '@angular/router';
-import { RouteFormModalComponent } from './components/route-form-modal/route-form-modal.component';
 import { ReassignRouteModalComponent } from './components/reassign-route-modal/reassign-route-modal.component';
 
 @Component({
@@ -42,7 +41,6 @@ import { ReassignRouteModalComponent } from './components/reassign-route-modal/r
     EmptyStateComponent,
     TableSkeletonComponent,
     PaginationComponent,
-    RouteFormModalComponent,
     ReassignRouteModalComponent,
     DropdownComponent,
   ],
@@ -99,8 +97,6 @@ export class ReadingRoutesComponent implements OnInit {
   filterComunidadId: number | null = null;
 
   // Modals
-  isFormModalOpen = false;
-  selectedRouteForEdit: IReadingRoute | null = null;
   selectedRouteForReassign: IReadingRoute | null = null;
 
   ngOnInit(): void {
@@ -227,42 +223,12 @@ export class ReadingRoutesComponent implements OnInit {
     }
   }
 
-  // Modals Actions
-  openCreateModal(): void {
-    this.selectedRouteForReassign = null;
-    this.selectedRouteForEdit = null;
-    this.isFormModalOpen = true;
-    this.cdr.markForCheck();
-  }
-
-  openEditModal(route: IReadingRoute): void {
-    this.openDropdownId = null;
-    this.selectedRouteForReassign = null;
-    this.selectedRouteForEdit = route;
-    this.isFormModalOpen = true;
-    this.cdr.markForCheck();
-  }
-
-  closeFormModal(): void {
-    this.isFormModalOpen = false;
-    this.selectedRouteForEdit = null;
-    this.cdr.markForCheck();
-  }
-
   goToAssignment(): void {
     this.router.navigate(['/app/Contratos/RutasDeLectura/asignar']);
   }
 
-  onRouteSaved(): void {
-    this.isFormModalOpen = false;
-    this.selectedRouteForEdit = null;
-    this.selectedRouteForReassign = null;
-    this.loadRoutes();
-  }
-
   openReassignModal(route: IReadingRoute): void {
     this.openDropdownId = null;
-    this.isFormModalOpen = false;
     this.selectedRouteForReassign = route;
     this.cdr.markForCheck();
   }
