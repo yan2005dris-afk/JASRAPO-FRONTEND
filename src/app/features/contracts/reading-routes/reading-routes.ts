@@ -29,7 +29,6 @@ import {
 } from '../../../shared/components/dropdown/dropdown.component';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Router } from '@angular/router';
-import { RouteFormModalComponent } from './components/route-form-modal/route-form-modal.component';
 import { ReassignRouteModalComponent } from './components/reassign-route-modal/reassign-route-modal.component';
 
 @Component({
@@ -42,7 +41,6 @@ import { ReassignRouteModalComponent } from './components/reassign-route-modal/r
     EmptyStateComponent,
     TableSkeletonComponent,
     PaginationComponent,
-    RouteFormModalComponent,
     ReassignRouteModalComponent,
     DropdownComponent,
   ],
@@ -99,8 +97,6 @@ export class ReadingRoutesComponent implements OnInit {
   filterComunidadId: number | null = null;
 
   // Modals
-  isFormModalOpen = false;
-  selectedRouteForEdit: IReadingRoute | null = null;
   selectedRouteForReassign: IReadingRoute | null = null;
 
   ngOnInit(): void {
@@ -227,38 +223,12 @@ export class ReadingRoutesComponent implements OnInit {
     }
   }
 
-  // Modals Actions
-  openCreateModal(): void {
-    this.selectedRouteForReassign = null;
-    this.selectedRouteForEdit = null;
-    this.isFormModalOpen = true;
-    this.cdr.markForCheck();
-  }
-
-  openEditModal(route: IReadingRoute): void {
-    this.openDropdownId = null;
-    this.selectedRouteForReassign = null;
-    this.selectedRouteForEdit = route;
-    this.isFormModalOpen = true;
-    this.cdr.markForCheck();
-  }
-
-  closeFormModal(): void {
-    this.isFormModalOpen = false;
-    this.selectedRouteForEdit = null;
-    this.cdr.markForCheck();
-  }
-
-  onRouteSaved(): void {
-    this.isFormModalOpen = false;
-    this.selectedRouteForEdit = null;
-    this.selectedRouteForReassign = null;
-    this.loadRoutes();
+  goToAssignment(): void {
+    this.router.navigate(['/app/Contratos/RutasDeLectura/asignar']);
   }
 
   openReassignModal(route: IReadingRoute): void {
     this.openDropdownId = null;
-    this.isFormModalOpen = false;
     this.selectedRouteForReassign = route;
     this.cdr.markForCheck();
   }
@@ -282,7 +252,7 @@ export class ReadingRoutesComponent implements OnInit {
     this.openDropdownId = null;
     this.dialogService
       .confirm({
-        title: '¿Eliminar ruta de lectura?',
+        title: '¿Eliminar ruta de trabajo?',
         message: `¿Estás seguro de que deseas eliminar la ruta "${route.nombre}"? Esta acción no se puede deshacer.`,
         confirmText: 'Eliminar',
         cancelText: 'Cancelar',
@@ -345,8 +315,8 @@ export class ReadingRoutesComponent implements OnInit {
     if (this.routes.length === 0) return;
 
     this.tableExportService.exportToPdf({
-      title: 'LISTADO DE RUTAS DE TRABAJO Y LECTURA',
-      fileName: `Rutas_Lectura_${new Date().toISOString().slice(0, 10)}`,
+      title: 'LISTADO DE RUTAS DE TRABAJO',
+      fileName: `Rutas_Trabajo_${new Date().toISOString().slice(0, 10)}`,
       columns: [
         { header: 'ID', key: 'rutaId', width: 35, align: 'center' },
         { header: 'Nombre de Ruta', key: 'nombre', width: 110 },
@@ -387,8 +357,8 @@ export class ReadingRoutesComponent implements OnInit {
     if (this.routes.length === 0) return;
 
     this.tableExportService.exportToExcel({
-      title: 'LISTADO DE RUTAS DE TRABAJO Y LECTURA',
-      fileName: `Rutas_Lectura_${new Date().toISOString().slice(0, 10)}`,
+      title: 'LISTADO DE RUTAS DE TRABAJO',
+      fileName: `Rutas_Trabajo_${new Date().toISOString().slice(0, 10)}`,
       columns: [
         { header: 'ID', key: 'rutaId' },
         { header: 'Nombre de Ruta', key: 'nombre' },
@@ -424,8 +394,8 @@ export class ReadingRoutesComponent implements OnInit {
     if (this.routes.length === 0) return;
 
     this.tableExportService.exportToCsv({
-      title: 'LISTADO DE RUTAS DE TRABAJO Y LECTURA',
-      fileName: `Rutas_Lectura_${new Date().toISOString().slice(0, 10)}`,
+      title: 'LISTADO DE RUTAS DE TRABAJO',
+      fileName: `Rutas_Trabajo_${new Date().toISOString().slice(0, 10)}`,
       columns: [
         { header: 'ID', key: 'rutaId' },
         { header: 'Nombre de Ruta', key: 'nombre' },
