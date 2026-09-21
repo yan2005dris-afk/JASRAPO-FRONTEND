@@ -1,5 +1,4 @@
 import { A11yModule } from '@angular/cdk/a11y';
-import { DOCUMENT } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -12,13 +11,12 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
+import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { IOverdueAccountsFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
-import { ClientsService } from '../../contracts/clients/services/clients.service';
-import type { IClient } from '../../contracts/clients/interfaces/iclients.interface';
-import { resolveClientDisplayName } from '../../../shared/utils/client-display-name';
+import type { IContract } from '../../contracts/service-contracts/interfaces/icontract.interface';
 import { ReportEmailDialogComponent } from '../shared/report-email-dialog/report-email-dialog.component';
 import {
   IReportContextItem,
@@ -69,6 +67,7 @@ interface OverdueAccountsData {
     A11yModule,
     FormsModule,
     DatePickerComponent,
+    ContractPickerComponent,
     ReportEmailDialogComponent,
     ReportPdfModalComponent,
     ReportWorkspaceComponent,
@@ -78,16 +77,14 @@ interface OverdueAccountsData {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OverdueAccountsComponent implements OnInit, OnDestroy {
-  private readonly document = inject(DOCUMENT);
   private readonly reportsService = inject(ReportsService);
-  private readonly clientsService = inject(ClientsService);
   private readonly toast = inject(ToastService);
 
   // Filtros del reporte de recaudación y morosidad
   readonly fechaCorte = signal('');
-  readonly clienteId = signal('');
-  readonly selectedClientLabel = signal('');
-  readonly selectedClientName = signal('');
+  readonly contratoId = signal('');
+  readonly selectedContractNumber = signal('');
+  readonly selectedContractName = signal('');
   readonly searchTermTable = signal('');
 
   // Resultados JSON (tabla)
@@ -118,15 +115,8 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   readonly isEmailModalOpen = signal(false);
   private readonly emailAttempt = new ReportEmailAttemptTracker();
 
-  // Buscador de clientes
-  readonly searchTerm = signal('');
-  readonly searchResults = signal<IClient[]>([]);
-  readonly isSearching = signal(false);
-  readonly searchError = signal('');
-  readonly searchPerformed = signal(false);
-  readonly isClientPickerOpen = signal(false);
-  private clientPickerTrigger: HTMLElement | null = null;
-  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  // Buscador de contratos
+  readonly isContractPickerOpen = signal(false);
   private dataRequest: Subscription | null = null;
   private generalPdfRequest: Subscription | null = null;
   private detalleRequest: Subscription | null = null;
@@ -140,7 +130,6 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.searchTimer) clearTimeout(this.searchTimer);
     this.cancelDataRequest();
     this.cancelGeneralPdfRequest();
     this.cancelDetalleRequest();
@@ -190,7 +179,9 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   readonly contextItems = computed<readonly IReportContextItem[]>(() => [
     {
       label: 'Entidad',
-      value: this.selectedClientName() || 'Todos los clientes',
+      value: this.selectedContractNumber()
+        ? `${this.selectedContractNumber()} — ${this.selectedContractName()}`
+        : 'Todos los contratos',
     },
     {
       label: 'Fecha de corte',
@@ -198,7 +189,7 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     },
     {
       label: 'Filtros',
-      value: this.clienteId() ? 'Cliente seleccionado' : 'Sin filtro de cliente',
+      value: this.contratoId() ? 'Contrato seleccionado' : 'Sin filtro de contrato',
     },
   ]);
 
@@ -226,16 +217,16 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   private buildFilters(): IOverdueAccountsFilters {
     const filters: IOverdueAccountsFilters = {};
     const corte = this.fechaCorte();
-    const cliente = this.clienteId().trim();
+    const contrato = this.contratoId().trim();
 
     if (corte) filters.fechaCorte = corte;
-    if (cliente) filters.clienteId = cliente;
+    if (contrato) filters.contratoId = contrato;
     return filters;
   }
 
   private filterContextKey(): string {
     const filters = this.buildFilters();
-    return `${filters.clienteId ?? ''}|${filters.fechaCorte ?? ''}`;
+    return `${filters.contratoId ?? ''}|${filters.fechaCorte ?? ''}`;
   }
 
   // ---------- Filtros ----------
@@ -250,78 +241,23 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     this.searchTermTable.set(value);
   }
 
-  // ---------- Buscador de clientes ----------
+  // ---------- Buscador de contratos ----------
 
-  onSearchInput(value: string): void {
-    this.searchTerm.set(value);
-    if (this.searchTimer) {
-      clearTimeout(this.searchTimer);
-    }
-    this.searchTimer = setTimeout(() => this.buscarClientes(), 400);
+  abrirBuscadorContratos(): void {
+    this.isContractPickerOpen.set(true);
   }
 
-  abrirBuscadorClientes(): void {
-    this.clientPickerTrigger = this.getFocusedElement();
-    this.isClientPickerOpen.set(true);
-    if (!this.searchPerformed()) {
-      this.buscarClientes();
-    }
-  }
-
-  cerrarBuscadorClientes(): void {
-    this.isClientPickerOpen.set(false);
-    queueMicrotask(() => this.clientPickerTrigger?.focus());
-  }
-
-  onClientPickerBackdropClick(event: MouseEvent): void {
-    if (event.target === event.currentTarget) {
-      this.cerrarBuscadorClientes();
-    }
-  }
-
-  buscarClientes(): void {
-    if (this.searchTimer) {
-      clearTimeout(this.searchTimer);
-      this.searchTimer = null;
-    }
-
-    const term = this.searchTerm().trim();
-    if (!term) {
-      this.searchResults.set([]);
-      this.searchError.set('');
-      this.searchPerformed.set(false);
-      return;
-    }
-
-    this.isSearching.set(true);
-    this.searchError.set('');
-    this.clientsService.searchClients({ nombreCompleto: term, page: 1, limit: 50 }).subscribe({
-      next: (res) => {
-        this.searchResults.set(res.data);
-        this.searchPerformed.set(true);
-        this.isSearching.set(false);
-      },
-      error: (err) => {
-        this.searchResults.set([]);
-        this.searchPerformed.set(true);
-        this.searchError.set(this.getErrorMessage(err, 'No se pudieron buscar los clientes'));
-        this.isSearching.set(false);
-      },
-    });
-  }
-
-  seleccionarCliente(cliente: IClient): void {
-    this.clienteId.set(String(cliente.clienteId ?? cliente.id ?? cliente.clientId ?? ''));
-    const nombre = this.formatClientName(cliente);
-    this.selectedClientLabel.set(`${nombre} · ${cliente.identificacion}`);
-    this.selectedClientName.set(nombre);
-    this.destinatario.set(cliente.email?.trim() ?? '');
+  onContractSelected(contract: IContract): void {
+    this.contratoId.set(String(contract.contratoId));
+    this.selectedContractNumber.set(contract.numeroGuia);
+    this.selectedContractName.set(ContractPickerComponent.formatClientName(contract.cliente));
+    this.destinatario.set(contract.cliente.email?.trim() ?? '');
     this.invalidateFilterDependentState();
-    this.cerrarBuscadorClientes();
+    this.isContractPickerOpen.set(false);
   }
 
-  formatClientName(cliente: IClient): string {
-    return resolveClientDisplayName(cliente);
+  onContractPickerClosed(): void {
+    this.isContractPickerOpen.set(false);
   }
 
   // ---------- Consultar (carga JSON -> tabla) ----------
@@ -357,16 +293,12 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
     this.cancelDataRequest();
     this.cancelGeneralPdfRequest();
     this.fechaCorte.set('');
-    this.clienteId.set('');
-    this.selectedClientLabel.set('');
-    this.selectedClientName.set('');
+    this.contratoId.set('');
+    this.selectedContractNumber.set('');
+    this.selectedContractName.set('');
     this.searchTermTable.set('');
     this.reportData.set(null);
     this.generalPdfBlob.set(null);
-    this.searchTerm.set('');
-    this.searchResults.set([]);
-    this.searchError.set('');
-    this.searchPerformed.set(false);
     this.destinatario.set('');
     this.subject.set('');
     this.emailAttempt.clear();
@@ -410,7 +342,7 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   }
 
   get generalPdfFileName(): string {
-    return `reporte-recaudacion-morosidad-${this.clienteId() || 'general'}.pdf`;
+    return `reporte-recaudacion-morosidad-${this.contratoId() || 'general'}.pdf`;
   }
 
   // ---------- PDF individual (detalle por contrato) ----------
@@ -569,10 +501,5 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
       }
     }
     return fallback;
-  }
-
-  private getFocusedElement(): HTMLElement | null {
-    const activeElement = this.document.activeElement;
-    return activeElement instanceof HTMLElement ? activeElement : null;
   }
 }

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
-import { ClientsService } from '../../contracts/clients/services/clients.service';
+import { ContractsService } from '../../contracts/service-contracts/services/contracts.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ReportsService } from '../services/reports.service';
 import { OverdueAccountsComponent } from './overdue-accounts';
@@ -51,7 +51,7 @@ describe('OverdueAccountsComponent', () => {
       imports: [OverdueAccountsComponent],
       providers: [
         { provide: ReportsService, useValue: reportsService },
-        { provide: ClientsService, useValue: { searchClients: () => of({ data: [] }) } },
+        { provide: ContractsService, useValue: { getContracts: () => of({ data: [], meta: { total: 0 } }) } },
         { provide: ToastService, useValue: toast },
       ],
     }).compileComponents();
@@ -90,7 +90,7 @@ describe('OverdueAccountsComponent', () => {
 
   it('collectionDelinquencyTotalsMatchAcrossJsonPdfAndEmail', () => {
     component.fechaCorte.set('2026-09-15');
-    component.clienteId.set('42');
+    component.contratoId.set('42');
 
     component.consultar();
     component.generarPdfGeneral();
@@ -100,7 +100,7 @@ describe('OverdueAccountsComponent', () => {
     const pdfFilters = reportsService.getOverdueAccountsPdf.mock.calls.at(-1)?.[0];
     const emailBody = reportsService.sendOverdueAccountsEmail.mock.calls.at(-1)?.[0];
 
-    const expectedFilters = { fechaCorte: '2026-09-15', clienteId: '42' };
+    const expectedFilters = { fechaCorte: '2026-09-15', contratoId: '42' };
     // JSON, PDF y correo comparten el mismo universo filtrado.
     expect(jsonFilters).toEqual(expectedFilters);
     expect(pdfFilters).toEqual(expectedFilters);
@@ -110,22 +110,23 @@ describe('OverdueAccountsComponent', () => {
 
   it('collectionDelinquencyFiltersAppearInOfficialPdf', () => {
     component.fechaCorte.set('2026-09-15');
-    component.clienteId.set('42');
-    component.selectedClientName.set('Ana Pérez');
+    component.contratoId.set('42');
+    component.selectedContractNumber.set('G-042');
+    component.selectedContractName.set('Ana Pérez');
 
     component.generarPdfGeneral();
 
     // El período/filtros viajan al documento oficial (los renderiza la plantilla del backend).
     expect(reportsService.getOverdueAccountsPdf).toHaveBeenCalledWith({
       fechaCorte: '2026-09-15',
-      clienteId: '42',
+      contratoId: '42',
     });
 
     // Y quedan visibles en pantalla como contexto trazable del reporte.
     const context = component.contextItems();
     expect(context).toContainEqual({ label: 'Fecha de corte', value: '2026-09-15' });
-    expect(context).toContainEqual({ label: 'Entidad', value: 'Ana Pérez' });
-    expect(context).toContainEqual({ label: 'Filtros', value: 'Cliente seleccionado' });
+    expect(context).toContainEqual({ label: 'Entidad', value: 'G-042 — Ana Pérez' });
+    expect(context).toContainEqual({ label: 'Filtros', value: 'Contrato seleccionado' });
   });
 
   it('collectionDelinquencyWorkspacePreviewsDownloadsAndEmails', () => {

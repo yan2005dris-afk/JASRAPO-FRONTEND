@@ -12,23 +12,31 @@
   <div reportFilters>
     <div class="row g-3 align-items-end">
       <div class="col-lg-4 col-md-6">
-        <label class="form-label small fw-semibold" for="clienteId">Cliente específico</label>
+        <label class="form-label small fw-semibold" for="contratoId">Contrato específico</label>
         <div class="input-group">
           <input
-            id="clienteId"
+            id="contratoId"
             type="text"
             class="form-control contract-input text-truncate"
-            placeholder="Todos los clientes"
-            [value]="selectedClientLabel()"
-            [title]="selectedClientName() || 'Todos los clientes'"
+            placeholder="Todos los contratos"
+            [value]="
+              selectedContractNumber()
+                ? selectedContractNumber() + ' — ' + selectedContractName()
+                : ''
+            "
+            [title]="
+              selectedContractNumber()
+                ? selectedContractNumber() + ' — ' + selectedContractName()
+                : 'Todos los contratos'
+            "
             readonly
-            (click)="abrirBuscadorClientes()"
+            (click)="abrirBuscadorContratos()"
           />
-          @if (selectedClientLabel()) {
+          @if (selectedContractNumber()) {
             <button
               type="button"
               class="btn btn-outline-secondary"
-              aria-label="Quitar cliente seleccionado"
+              aria-label="Quitar contrato seleccionado"
               (click)="limpiar(); $event.stopPropagation()"
             >
               <i class="bi bi-x" aria-hidden="true"></i>
@@ -37,8 +45,8 @@
             <button
               type="button"
               class="btn btn-outline-primary"
-              aria-label="Buscar cliente"
-              (click)="abrirBuscadorClientes()"
+              aria-label="Buscar contrato"
+              (click)="abrirBuscadorContratos()"
             >
               <i class="bi bi-search" aria-hidden="true"></i>
             </button>
@@ -80,8 +88,8 @@
 
   <div reportSummary class="summary-grid">
     <div>
-      <span>Cliente</span>
-      <strong>{{ selectedClientName() || 'Todos los clientes' }}</strong>
+      <span>Entidad / Contrato</span>
+      <strong>{{ selectedContractNumber() ? selectedContractNumber() + ' — ' + selectedContractName() : 'Todos los contratos' }}</strong>
     </div>
     <div>
       <span>Cuentas en mora</span>
@@ -233,92 +241,9 @@
   }
 </app-report-workspace>
 
-@if (isClientPickerOpen()) {
-  <div
-    class="picker-modal"
-    role="presentation"
-    (mousedown)="onClientPickerBackdropClick($event)"
-    (keydown.escape)="cerrarBuscadorClientes()"
-  >
-    <section
-      class="picker-modal__dialog"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="picker-cliente-title"
-      cdkTrapFocus
-      [cdkTrapFocusAutoCapture]="true"
-    >
-      <header class="picker-modal__header">
-        <div>
-          <h2 id="picker-cliente-title">Buscar cliente</h2>
-          <p>Busque por nombre, razón social o identificación.</p>
-        </div>
-        <button
-          type="button"
-          class="btn-close"
-          aria-label="Cerrar"
-          (click)="cerrarBuscadorClientes()"
-        ></button>
-      </header>
-
-      <div class="picker-modal__body">
-        <div class="input-group mb-3">
-          <span class="input-group-text bg-white">
-            <i class="bi bi-search" aria-hidden="true"></i>
-          </span>
-          <input
-            type="search"
-            class="form-control"
-            cdkFocusInitial
-            aria-label="Buscar cliente"
-            placeholder="Ej.: María o 1105123"
-            [ngModel]="searchTerm()"
-            (ngModelChange)="onSearchInput($event)"
-            (keyup.enter)="buscarClientes()"
-          />
-          <button
-            type="button"
-            class="btn btn-primary"
-            [disabled]="isSearching()"
-            (click)="buscarClientes()"
-          >
-            Buscar
-          </button>
-        </div>
-
-        @if (isSearching()) {
-          <p class="picker-modal__status" role="status" aria-live="polite">Buscando clientes…</p>
-        } @else if (searchError()) {
-          <p class="alert alert-danger" role="alert">{{ searchError() }}</p>
-        } @else if (searchPerformed() && searchResults().length === 0) {
-          <p class="picker-modal__status" role="status">No se encontraron clientes.</p>
-        } @else if (searchResults().length > 0) {
-          <ul class="list-group list-group-flush contract-results">
-            @for (cliente of searchResults(); track cliente.clienteId ?? cliente.id) {
-              <li class="list-group-item d-flex justify-content-between align-items-center gap-2">
-                <span>
-                  <strong>{{ formatClientName(cliente) }}</strong>
-                  <small>
-                    {{ cliente.identificacion }}
-                    @if (cliente.email) {
-                      · {{ cliente.email }}
-                    }
-                  </small>
-                </span>
-                <button
-                  type="button"
-                  class="btn btn-sm btn-outline-primary"
-                  (click)="seleccionarCliente(cliente)"
-                >
-                  Seleccionar
-                </button>
-              </li>
-            }
-          </ul>
-        } @else {
-          <p class="picker-modal__status">Escriba un término para comenzar la búsqueda.</p>
-        }
-      </div>
-    </section>
-  </div>
-}
+<app-contract-picker
+  [open]="isContractPickerOpen()"
+  title="Buscar Contrato"
+  (contractSelected)="onContractSelected($event)"
+  (closed)="onContractPickerClosed()"
+/>
