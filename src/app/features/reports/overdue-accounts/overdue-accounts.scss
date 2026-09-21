@@ -28,6 +28,17 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.filter-toggle-btn {
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease-in-out;
+
+  &:hover {
+    color: var(--primary, #0d6efd) !important;
+  }
+}
+
 .advanced-filters-panel {
   animation: fadeInDown 0.2s ease-out;
   background-color: var(--report-info-bg, #f8f9fa);

@@ -36,29 +36,28 @@
             </button>
           }
         </div>
-      </div>
-
-      <div class="col-lg-6 col-md-12 d-flex flex-wrap align-items-center justify-content-lg-end gap-2">
-        <button
-          type="button"
-          class="btn btn-outline-secondary d-inline-flex align-items-center gap-2"
-          [class.active]="isFiltersExpanded()"
-          (click)="isFiltersExpanded.set(!isFiltersExpanded())"
-          aria-expanded="{{ isFiltersExpanded() }}"
-        >
-          <i class="bi bi-sliders" aria-hidden="true"></i>
-          <span>Filtros avanzados</span>
+        <div class="mt-1 d-flex align-items-center gap-2">
+          <button
+            type="button"
+            class="btn btn-link btn-sm p-0 text-decoration-none text-muted d-inline-flex align-items-center gap-1 filter-toggle-btn"
+            (click)="isFiltersExpanded.set(!isFiltersExpanded())"
+            aria-expanded="{{ isFiltersExpanded() }}"
+          >
+            <span>{{ isFiltersExpanded() ? 'Ver menos' : 'Ver más' }}</span>
+            <i
+              class="bi"
+              [class.bi-chevron-down]="!isFiltersExpanded()"
+              [class.bi-chevron-up]="isFiltersExpanded()"
+              aria-hidden="true"
+            ></i>
+          </button>
           @if (activeAdvancedFiltersCount() > 0) {
             <span class="badge text-bg-primary rounded-pill">{{ activeAdvancedFiltersCount() }}</span>
           }
-          <i
-            class="bi"
-            [class.bi-chevron-down]="!isFiltersExpanded()"
-            [class.bi-chevron-up]="isFiltersExpanded()"
-            aria-hidden="true"
-          ></i>
-        </button>
+        </div>
+      </div>
 
+      <div class="col-lg-6 col-md-12 d-flex flex-wrap align-items-center justify-content-lg-end gap-2">
         <button
           type="button"
           class="btn btn-primary d-inline-flex align-items-center gap-2"

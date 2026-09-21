@@ -103,11 +103,11 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   readonly sectores = signal<Sectores[]>([]);
   readonly comunidades = signal<Comunidad[]>([]);
 
-  // Sectores dependientes de la comunidad seleccionada
+  // Sectores dependientes de la comunidad seleccionada (solo visibles si se elige una comunidad específica)
   readonly sectoresDisponibles = computed<Sectores[]>(() => {
     const comId = this.comunidadId();
     if (!comId) {
-      return this.sectores();
+      return [];
     }
     return this.sectores().filter((s) => String(s.comunidadId) === comId);
   });
