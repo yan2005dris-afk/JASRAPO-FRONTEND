@@ -21,7 +21,6 @@ import {
   IClient,
   IIdentificacion,
 } from './interfaces/iclients.interface';
-import { ClientsFormComponent } from './components/clients-form/clients-form.component';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
@@ -37,7 +36,6 @@ import {
   imports: [
     CommonModule,
     FormsModule,
-    ClientsFormComponent,
     PaginationComponent,
     TableSkeletonComponent,
     DropdownComponent,
@@ -87,9 +85,6 @@ export class ClientsComponent implements OnInit, OnDestroy {
   readonly searchTerm = signal('');
   readonly estadoBusqueda = signal<EstadoBusquedaCliente>('todos');
 
-  readonly isModalOpen = signal(false);
-  readonly objetoClienteAEditar = signal<IClient | null>(null);
-
   readonly isDetalleModalOpen = signal(false);
   readonly clienteDetalleSeleccionado = signal<IClient | null>(null);
 
@@ -125,17 +120,6 @@ export class ClientsComponent implements OnInit, OnDestroy {
 
   /** Emite el cliente elegido (solo en modo selección). */
   selectClient(cliente: IClient): void {
-    if (this.selectionMode()) {
-      this.clientSelected.emit(cliente);
-    }
-  }
-
-  /**
-   * Cliente recién creado desde el modal. En modo selección se elige solo, para
-   * que quien abrió el selector (el formulario de contrato) continúe sin tener
-   * que buscarlo a mano. Fuera del modo selección basta con refrescar el listado.
-   */
-  onClientCreated(cliente: IClient): void {
     if (this.selectionMode()) {
       this.clientSelected.emit(cliente);
     }
@@ -246,27 +230,13 @@ export class ClientsComponent implements OnInit, OnDestroy {
     return `${year}-${month}-${day}`;
   }
 
-  abrirModal(): void {
-    if (this.selectionMode()) {
-      this.objetoClienteAEditar.set(null);
-      this.isModalOpen.set(true);
-    } else {
-      this.router.navigate(['/app/Contratos/Cliente/new']);
-    }
-  }
-
-  cerrarModal(): void {
-    this.objetoClienteAEditar.set(null);
-    this.isModalOpen.set(false);
+  crearCliente(): void {
+    this.router.navigate(['/app/Contratos/Cliente/new']);
   }
 
   editarCliente(cliente: IClient): void {
     const clienteId = this.obtenerIdCliente(cliente);
-
-    if (this.selectionMode()) {
-      this.objetoClienteAEditar.set(cliente);
-      this.isModalOpen.set(true);
-    } else if (clienteId !== null) {
+    if (clienteId !== null) {
       this.router.navigate(['/app/Contratos/Cliente', clienteId, 'edit']);
     }
   }

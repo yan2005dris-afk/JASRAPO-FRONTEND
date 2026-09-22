@@ -14,24 +14,13 @@
     <div
       class="card-header bg-white border-bottom-0 pt-4 pb-3 px-4 d-flex justify-content-between align-items-center flex-wrap gap-3"
     >
-      <!-- Botón Agregar. En modo selección permite registrar un cliente que aún
-           no existe sin abandonar el formulario que abrió este selector. -->
       @if (!selectionMode()) {
         <button
           class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
-          (click)="abrirModal()"
+          (click)="crearCliente()"
         >
           <i class="bi bi-plus-lg"></i>
           Agregar
-        </button>
-      } @else {
-        <button
-          type="button"
-          class="btn btn-outline-primary d-flex align-items-center gap-2 fw-medium px-3"
-          (click)="abrirModal()"
-        >
-          <i class="bi bi-person-plus"></i>
-          Registrar nuevo cliente
         </button>
       }
 
@@ -319,26 +308,6 @@
     </div>
   </div>
 </div>
-
-<!-- Modal Crear / Editar Cliente -->
-@if (isModalOpen()) {
-  <div
-    class="modal fade show d-block client-form-modal"
-    tabindex="-1"
-    style="background-color: rgba(0, 0, 0, 0.5)"
-  >
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-      <div class="modal-content border-0 shadow">
-        <app-clients-form
-          [clienteAEditar]="objetoClienteAEditar()"
-          (formSubmitted)="searchClients()"
-          (clientCreated)="onClientCreated($event)"
-          (formClosed)="cerrarModal()"
-        ></app-clients-form>
-      </div>
-    </div>
-  </div>
-}
 
 <!-- Modal Ver Detalle Cliente -->
 @if (isDetalleModalOpen() && clienteDetalleSeleccionado()) {
