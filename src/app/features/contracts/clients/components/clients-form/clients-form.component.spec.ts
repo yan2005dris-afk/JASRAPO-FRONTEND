@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 
@@ -67,7 +68,10 @@ describe('ClientsFormComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [ClientsFormComponent],
-      providers: [{ provide: ClientsService, useValue: clientsServiceSpy }],
+      providers: [
+        { provide: ClientsService, useValue: clientsServiceSpy },
+        provideRouter([]),
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ClientsFormComponent);
