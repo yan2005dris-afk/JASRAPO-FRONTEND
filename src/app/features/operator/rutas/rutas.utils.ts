@@ -1,5 +1,21 @@
 import type { OperatorRouteResponse, OperatorWorkOrder } from '../models/operator.models';
 
+const READING_ROUTE_TYPES = new Set(['LECTURA', 'TOMA_LECTURA']);
+
+/**
+ * The backend uses LECTURA, while older cached records may still contain TOMA_LECTURA.
+ * Treat both values as the same route type until those local caches are replaced.
+ */
+export function isReadingRouteType(value: string | null | undefined): boolean {
+  return value != null && READING_ROUTE_TYPES.has(value);
+}
+
+export function routeMatchesTypeFilter(routeType: string, filter: string): boolean {
+  if (filter === 'ALL') return true;
+  if (isReadingRouteType(filter)) return isReadingRouteType(routeType);
+  return routeType === filter;
+}
+
 /**
  * Canonical client-side visit order — the same order the online endpoint GET /operator/routes
  * delivers (comunidadId → sectorId → orden). It is the single source of ordering for the list,

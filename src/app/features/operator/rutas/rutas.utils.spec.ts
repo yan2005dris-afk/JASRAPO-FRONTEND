@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { OperatorRouteResponse, OperatorWorkOrder } from '../models/operator.models';
-import { compareRoutesCanonically, nextPendingWorkOrder } from './rutas.utils';
+import {
+  compareRoutesCanonically,
+  nextPendingWorkOrder,
+  routeMatchesTypeFilter,
+} from './rutas.utils';
 
 function route(partial: Partial<OperatorRouteResponse>): OperatorRouteResponse {
   return {
@@ -40,6 +44,24 @@ describe('compareRoutesCanonically', () => {
     const missing = route({ comunidadId: 1, sectorId: undefined, orden: undefined });
     const withValues = route({ comunidadId: 1, sectorId: 4, orden: 7 });
     expect(compareRoutesCanonically(missing, withValues)).toBeLessThan(0);
+  });
+});
+
+describe('routeMatchesTypeFilter', () => {
+  it('matches the backend LECTURA value with the reading filter', () => {
+    expect(routeMatchesTypeFilter('LECTURA', 'LECTURA')).toBe(true);
+  });
+
+  it('keeps legacy TOMA_LECTURA cache entries visible in the reading filter', () => {
+    expect(routeMatchesTypeFilter('TOMA_LECTURA', 'LECTURA')).toBe(true);
+  });
+
+  it('does not include a non-reading route in the reading filter', () => {
+    expect(routeMatchesTypeFilter('INSPECCION', 'LECTURA')).toBe(false);
+  });
+
+  it('matches every route when the ALL filter is active', () => {
+    expect(routeMatchesTypeFilter('RECONEXION', 'ALL')).toBe(true);
   });
 });
 

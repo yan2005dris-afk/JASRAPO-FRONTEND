@@ -21,7 +21,12 @@ import {
   OperatorRouteOfflineService,
 } from '../service/operator-route-offline.service';
 import { STATE_LABELS, FILTER_OPTIONS } from './rutas.constants';
-import { compareRoutesCanonically, nextPendingWorkOrder } from './rutas.utils';
+import {
+  compareRoutesCanonically,
+  isReadingRouteType,
+  nextPendingWorkOrder,
+  routeMatchesTypeFilter,
+} from './rutas.utils';
 import {
   formatDistance as formatDistanceUtil,
   haversineMeters,
@@ -66,8 +71,7 @@ export class RutasComponent implements OnInit, OnDestroy {
   // ── Computed ─────────────────────────────────────────────────────────────
   readonly filteredTasks = computed<OperatorRouteResponse[]>(() => {
     const filter = this.activeFilter();
-    const filtered =
-      filter === 'ALL' ? this.tasks() : this.tasks().filter((t) => t.tipoRuta === filter);
+    const filtered = this.tasks().filter((task) => routeMatchesTypeFilter(task.tipoRuta, filter));
     // Orden canónico de visita: el mismo que entrega GET /operator/routes
     // (comunidadId → sectorId → orden), aplicado igual en lista, caché offline y mapa.
     return filtered.slice().sort(compareRoutesCanonically);
@@ -134,7 +138,7 @@ export class RutasComponent implements OnInit, OnDestroy {
             });
           }
         }
-      } else if (task.tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos?.length) {
+      } else if (isReadingRouteType(task.tipoRuta) && task.rutaPuntos?.length) {
         for (const pt of task.rutaPuntos) {
           points.push({
             routeId: task.rutaId,
@@ -435,7 +439,7 @@ export class RutasComponent implements OnInit, OnDestroy {
         }
         queryParams['workOrders'] = merged.join(',');
       }
-    } else if (task.tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos?.length) {
+    } else if (isReadingRouteType(task.tipoRuta) && task.rutaPuntos?.length) {
       queryParams['series'] = task.rutaPuntos.map((pt) => pt.serie).join(',');
     } else if (task.medidor) {
       queryParams['serie'] = task.medidor.serie;
