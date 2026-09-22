@@ -5,7 +5,10 @@ import { AuthService } from '../../../core/services/auth.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { NetworkService } from '../../../core/services/network.service';
 import type { OperatorRouteResponse } from '../models/operator.models';
-import { OperatorRouteOfflineService } from './operator-route-offline.service';
+import {
+  classifyRouteLoadError,
+  OperatorRouteOfflineService,
+} from './operator-route-offline.service';
 import { OperatorService } from './operator.service';
 
 const route: OperatorRouteResponse = {
@@ -56,7 +59,12 @@ describe('OperatorRouteOfflineService', () => {
 
     expect(getRoutes).toHaveBeenCalledOnce();
     expect(saveRoutesCache).toHaveBeenCalledWith('operator:7', [route]);
-    expect(result).toEqual({ routes: [route], source: 'network', cachedAt: null });
+    expect(result).toEqual({
+      routes: [route],
+      source: 'network',
+      cachedAt: null,
+      error: null,
+    });
   });
 
   it('keeps the fresh network response when IndexedDB cannot persist it', async () => {
@@ -119,5 +127,106 @@ describe('OperatorRouteOfflineService', () => {
       'No se pudo identificar al operador para cargar sus rutas.',
     );
     expect(getRoutesCache).not.toHaveBeenCalled();
+  });
+
+  it('classifies a 404 period-closed response as a business error, not a network failure', async () => {
+    isOnline.mockReturnValue(true);
+    getRoutes.mockReturnValue(
+      throwError(
+        () => new HttpErrorResponse({ status: 404, error: { message: 'No hay periodo ABIERTO' } }),
+      ),
+    );
+    getRoutesCache.mockResolvedValue({
+      items: [route],
+      savedAt: '2026-08-25T12:00:00.000Z',
+    });
+
+    const result = await service.loadAssignedRoutes();
+
+    expect(result.source).toBe('cache');
+    expect(result.error?.kind).toBe('business');
+    expect(result.error?.status).toBe(404);
+    expect(result.error?.retryable).toBe(true);
+    expect(result.error?.message).toContain('periodo');
+  });
+
+  it('throws a business OperatorRouteLoadError when a 404 occurs and there is no cache', async () => {
+    isOnline.mockReturnValue(true);
+    getRoutes.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 404 })));
+    getRoutesCache.mockResolvedValue(null);
+
+    await expect(service.loadAssignedRoutes()).rejects.toMatchObject({
+      name: 'OperatorRouteLoadError',
+      status: 404,
+      info: { kind: 'business', retryable: true },
+    });
+  });
+
+  it('reports a server error while online and a cache fallback as a business error', async () => {
+    isOnline.mockReturnValue(true);
+    getRoutes.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 503 })));
+    getRoutesCache.mockResolvedValue({
+      items: [route],
+      savedAt: '2026-08-25T12:00:00.000Z',
+    });
+
+    const result = await service.loadAssignedRoutes();
+
+    expect(result.source).toBe('cache');
+    expect(result.error?.kind).toBe('business');
+  });
+
+  it('reports a status 0 failure (offline/network while online) without masking it as fresh data', async () => {
+    isOnline.mockReturnValue(true);
+    getRoutes.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    getRoutesCache.mockResolvedValue({
+      items: [route],
+      savedAt: '2026-08-25T12:00:00.000Z',
+    });
+
+    const result = await service.loadAssignedRoutes();
+
+    expect(result.source).toBe('cache');
+    expect(result.error?.kind).toBe('network');
+    expect(result.error?.retryable).toBe(true);
+  });
+
+  it('does not attach an error when genuinely offline with cached data', async () => {
+    isOnline.mockReturnValue(false);
+    getRoutesCache.mockResolvedValue({
+      items: [route],
+      savedAt: '2026-08-25T12:00:00.000Z',
+    });
+
+    const result = await service.loadAssignedRoutes();
+
+    expect(result.source).toBe('cache');
+    expect(result.error).toBeNull();
+  });
+});
+
+describe('classifyRouteLoadError', () => {
+  it('maps 401/403 to auth (non retryable)', () => {
+    const info = classifyRouteLoadError(new HttpErrorResponse({ status: 401 }));
+    expect(info.kind).toBe('auth');
+    expect(info.retryable).toBe(false);
+  });
+
+  it('maps any 4xx/5xx server response to business', () => {
+    expect(classifyRouteLoadError(new HttpErrorResponse({ status: 400 })).kind).toBe('business');
+    expect(classifyRouteLoadError(new HttpErrorResponse({ status: 409 })).kind).toBe('business');
+    expect(classifyRouteLoadError(new HttpErrorResponse({ status: 500 })).kind).toBe('business');
+  });
+
+  it('keeps the server message for business errors when present', () => {
+    const info = classifyRouteLoadError(
+      new HttpErrorResponse({ status: 404, error: { message: 'No hay periodo ABIERTO' } }),
+    );
+    expect(info.message).toBe('No hay periodo ABIERTO');
+  });
+
+  it('maps status 0 and non-HTTP errors to network', () => {
+    expect(classifyRouteLoadError(new HttpErrorResponse({ status: 0 })).kind).toBe('network');
+    expect(classifyRouteLoadError(new Error('Failed to fetch')).kind).toBe('network');
   });
 });

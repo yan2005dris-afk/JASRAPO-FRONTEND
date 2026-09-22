@@ -12,10 +12,12 @@ import {
   ElementRef,
   effect,
   untracked,
+  NgZone,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import * as L from 'leaflet';
 import { NetworkService } from '../../../../core/services/network.service';
+import { formatDistance, type LatLng } from '../../../../shared/utils/geo.utils';
 import { MARKER_COLORS, TIPO_ICONS } from '../../rutas/rutas.constants';
 
 export interface MapPoint {
@@ -25,6 +27,17 @@ export interface MapPoint {
   estado: string;
   tipoRuta: string;
   popupHtml: string;
+  /** Stable identity of the source point (e.g. `<routeId>:<ordenTrabajoId>`), used to match the next-stop marker. */
+  pointKey?: string;
+}
+
+/** Appends a live distance line to a popup when a next-stop fix is available. */
+function withNextStopDistance(popupHtml: string, distanceMeters: number | null): string {
+  if (distanceMeters === null) return popupHtml;
+  return (
+    popupHtml +
+    `<p class="map-info-distance"><i class="bi bi-geo-alt-fill" aria-hidden="true"></i> A ${formatDistance(distanceMeters)} de tu posición</p>`
+  );
 }
 
 @Component({
@@ -51,7 +64,7 @@ export interface MapPoint {
         class="btn-center-user"
         (click)="centerOnUser()"
         aria-label="Centrar mapa en mi ubicación GPS"
-        title="Mi ubicación"
+        [title]="locateButtonTitle()"
       >
         <i class="bi bi-crosshair" aria-hidden="true"></i>
       </button>
@@ -200,14 +213,30 @@ export interface MapPoint {
         font-size: 0.875rem;
         color: var(--dark-text, #1e293b);
       }
+      :host ::ng-deep .map-info-distance {
+        margin: 6px 0 0;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--primary-color, #0c9ea1);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
     `,
   ],
 })
 export class RutasMapComponent implements OnInit, OnDestroy {
   readonly networkService = inject(NetworkService);
+  private readonly ngZone = inject(NgZone);
 
   readonly points = input<MapPoint[]>([]);
   readonly pointSelected = output<string>();
+  /** Distance (m) from the operator to the next stop of the selected route; null when unknown. */
+  readonly nextStopDistance = input<number | null>(null);
+  /** Identity (`<routeId>:<ordenTrabajoId>`) of the next-stop marker among `points`. */
+  readonly nextStopPointKey = input<string | null>(null);
+  /** Emits every GPS fix so the parent can throttle the signal and keep the marker live. */
+  readonly userPositionChange = output<LatLng>();
 
   readonly mapContainer = viewChild.required<ElementRef<HTMLDivElement>>('mapContainer');
 
@@ -215,6 +244,10 @@ export class RutasMapComponent implements OnInit, OnDestroy {
   private tileLayer?: L.TileLayer;
   private markersGroup?: L.LayerGroup;
   private userMarker?: L.Marker;
+  private userMarkerIcon?: L.DivIcon;
+  private nextStopMarker?: L.Marker;
+  private nextStopBasePopupHtml = '';
+  private lastBoundsKey = '';
   private geoWatchId?: number;
   private initTimeoutId?: ReturnType<typeof setTimeout>;
   private isDestroyed = false;
@@ -250,6 +283,18 @@ export class RutasMapComponent implements OnInit, OnDestroy {
       this.isDegradedMap();
       if (this.map && !this.isDestroyed) {
         untracked(() => this.renderPoints());
+      }
+    });
+
+    effect(() => {
+      const distance = this.nextStopDistance();
+      if (this.map && !this.isDestroyed && this.nextStopMarker?.isPopupOpen()) {
+        // Live-update only the open popup — no marker rebuild, no refit at ~1 Hz.
+        untracked(() => {
+          this.nextStopMarker?.setPopupContent(
+            withNextStopDistance(this.nextStopBasePopupHtml, distance),
+          );
+        });
       }
     });
   }
@@ -291,6 +336,13 @@ export class RutasMapComponent implements OnInit, OnDestroy {
     }
 
     this.markersGroup = L.layerGroup().addTo(this.map);
+    this.userMarkerIcon = L.divIcon({
+      html: `<div class="map-user-marker" role="img" aria-label="Mi ubicación actual"><i class="bi bi-person-fill" aria-hidden="true"></i></div>`,
+      className: '',
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
+    });
+    this.lastBoundsKey = '';
     this.renderPoints();
     this.startGeoWatch();
   }
@@ -330,8 +382,11 @@ export class RutasMapComponent implements OnInit, OnDestroy {
   private renderPoints(): void {
     if (!this.markersGroup || !this.map || this.isDestroyed) return;
     this.markersGroup.clearLayers();
+    this.nextStopMarker = undefined;
+    this.nextStopBasePopupHtml = '';
 
     const pts = this.points();
+    const nextStopKey = this.nextStopPointKey();
     const routeLines = new Map<string, L.LatLngTuple[]>();
     for (const point of pts) {
       const line = routeLines.get(point.routeId) ?? [];
@@ -360,9 +415,18 @@ export class RutasMapComponent implements OnInit, OnDestroy {
         popupAnchor: [0, -20],
       });
 
+      const isNextStop = nextStopKey !== null && point.pointKey === nextStopKey;
+      const popupHtml = isNextStop
+        ? withNextStopDistance(point.popupHtml, this.nextStopDistance())
+        : point.popupHtml;
       const marker = L.marker([point.lat, point.lng], { icon, keyboard: true })
-        .bindPopup(point.popupHtml)
+        .bindPopup(popupHtml)
         .addTo(this.markersGroup!);
+
+      if (isNextStop) {
+        this.nextStopMarker = marker;
+        this.nextStopBasePopupHtml = point.popupHtml;
+      }
 
       const markerElement = marker.getElement();
       markerElement?.setAttribute('role', 'button');
@@ -382,8 +446,14 @@ export class RutasMapComponent implements OnInit, OnDestroy {
     });
 
     if (pts.length > 1) {
-      const bounds = L.latLngBounds(pts.map((p) => [p.lat, p.lng] as L.LatLngTuple));
-      this.map.fitBounds(bounds, { padding: [40, 40] });
+      // Guard: the rendered markers are rebuilt only when the coordinates change, so a
+      // ~1 Hz next-stop distance refresh never refits the viewport while the user pans.
+      const boundsKey = pts.map((p) => `${p.lat}:${p.lng}`).join('|');
+      if (boundsKey !== this.lastBoundsKey) {
+        this.lastBoundsKey = boundsKey;
+        const bounds = L.latLngBounds(pts.map((p) => [p.lat, p.lng] as L.LatLngTuple));
+        this.map.fitBounds(bounds, { padding: [40, 40] });
+      }
     }
   }
 
@@ -392,7 +462,12 @@ export class RutasMapComponent implements OnInit, OnDestroy {
     this.geoWatchId = navigator.geolocation.watchPosition(
       (pos) => {
         if (!this.isDestroyed) {
-          this.updateUserMarker(pos.coords.latitude, pos.coords.longitude);
+          // Geolocation callbacks run outside the Angular zone: re-enter it so the
+          // parent signal (userPosition) schedules change detection when it updates.
+          this.ngZone.run(() => {
+            this.updateUserMarker(pos.coords.latitude, pos.coords.longitude);
+            this.userPositionChange.emit({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          });
         }
       },
       () => {
@@ -404,17 +479,29 @@ export class RutasMapComponent implements OnInit, OnDestroy {
 
   private updateUserMarker(lat: number, lng: number): void {
     if (!this.map || this.isDestroyed) return;
-    const icon = L.divIcon({
-      html: `<div class="map-user-marker" role="img" aria-label="Mi ubicación actual"><i class="bi bi-person-fill" aria-hidden="true"></i></div>`,
-      className: '',
-      iconSize: [36, 36],
-      iconAnchor: [18, 18],
-    });
+    // divIcon is created once per map init (initMap) and reused across fixes —
+    // the marker moves, the icon does not get recreated on every GPS fix.
+    if (!this.userMarkerIcon) {
+      this.userMarkerIcon = L.divIcon({
+        html: `<div class="map-user-marker" role="img" aria-label="Mi ubicación actual"><i class="bi bi-person-fill" aria-hidden="true"></i></div>`,
+        className: '',
+        iconSize: [36, 36],
+        iconAnchor: [18, 18],
+      });
+    }
     if (this.userMarker) {
       this.userMarker.setLatLng([lat, lng]);
     } else {
-      this.userMarker = L.marker([lat, lng], { icon }).addTo(this.map);
+      this.userMarker = L.marker([lat, lng], { icon: this.userMarkerIcon }).addTo(this.map);
     }
+  }
+
+  /** Tooltip del botón de centrar: muestra la distancia a la próxima parada seleccionada. */
+  locateButtonTitle(): string {
+    const distance = this.nextStopDistance();
+    return distance === null
+      ? 'Mi ubicación'
+      : `Próxima parada a ${formatDistance(distance)} de tu posición`;
   }
 
   centerOnUser(): void {
@@ -433,6 +520,9 @@ export class RutasMapComponent implements OnInit, OnDestroy {
       this.geoWatchId = undefined;
     }
     this.userMarker = undefined;
+    this.userMarkerIcon = undefined;
+    this.nextStopMarker = undefined;
+    this.lastBoundsKey = '';
     this.tileLayer = undefined;
     if (this.map) {
       this.map.remove();

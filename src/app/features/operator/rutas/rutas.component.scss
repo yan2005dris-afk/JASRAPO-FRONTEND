@@ -446,6 +446,21 @@
   color: var(--border-color);
 }
 
+// Badge de proximidad GPS (soft tint + accent saturado, sistema de diseño)
+.task-distance {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  background: #dbf7f8;
+  color: #0c9ea1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 // ── Route type badges ─────────────────────────────────────────────────────────
 
 .route-badge {

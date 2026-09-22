@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 import { TestBed } from '@angular/core/testing';
-import { IndexedDbService } from './indexed-db.service';
+import {
+  IndexedDbService,
+  mergeHydratedRoutesWithSnapshot,
+  mergeWorkOrdersWithSnapshot,
+} from './indexed-db.service';
 import { vi, beforeEach } from 'vitest';
 
 describe('IndexedDbService - Multi-operator Snapshot Isolation', () => {
@@ -345,5 +349,229 @@ describe('IndexedDbService - Multi-operator Snapshot Isolation', () => {
     await service.clearPendingAnomalies();
     const after = await service.getPendingAnomalies();
     expect(after).toEqual([]);
+  });
+});
+
+describe('Route/snapshot cache merge (rutas_cache base, manifest delta)', () => {
+  let service: IndexedDbService;
+
+  const createMockDb = () => {
+    const tables = new Map<string, Map<any, any>>();
+    const storeNames = [
+      'assigned_snapshots',
+      'rutas_cache',
+      'medidores_cache',
+      'lecturas_pendientes',
+      'anomalias_pendientes',
+      'lecturas_registradas',
+      'lecturas_sincronizadas',
+      'estados_cache',
+    ];
+    for (const name of storeNames) tables.set(name, new Map());
+
+    const mockDb: any = {
+      objectStoreNames: { contains: (name: string) => tables.has(name) },
+      transaction: (stores: string | string[], _mode: string) => {
+        const storeList = Array.isArray(stores) ? stores : [stores];
+        const tx: any = {
+          objectStore: (storeName: string) => {
+            const table = tables.get(storeName)!;
+            return {
+              put: (item: any) => {
+                const key =
+                  item.scope ?? item.medidorId ?? item.lecturaId ?? item.tipo ?? item.id ?? item;
+                table.set(key, item);
+                return { onsuccess: null, onerror: null };
+              },
+              add: (item: any) => {
+                const id = item.id ?? table.size + 1;
+                table.set(id, { ...item, id });
+                return { result: id, onsuccess: null, onerror: null };
+              },
+              get: (key: any) => {
+                const req: any = { result: table.get(key) };
+                setTimeout(() => req.onsuccess?.(), 0);
+                return req;
+              },
+              getAll: () => {
+                const req: any = { result: Array.from(table.values()) };
+                setTimeout(() => req.onsuccess?.(), 0);
+                return req;
+              },
+              clear: () => table.clear(),
+              delete: (key: any) => table.delete(key),
+            };
+          },
+          abort: vi.fn(),
+          oncomplete: null,
+          onerror: null,
+        };
+        setTimeout(() => tx.oncomplete?.(), 50);
+        return tx;
+      },
+    };
+    return mockDb;
+  };
+
+  beforeEach(() => {
+    const mockDb = createMockDb();
+    vi.stubGlobal('indexedDB', {
+      open: () => {
+        const req: any = { result: mockDb };
+        setTimeout(() => req.onsuccess?.(), 0);
+        return req;
+      },
+    });
+    TestBed.configureTestingModule({ providers: [IndexedDbService] });
+    service = TestBed.inject(IndexedDbService);
+  });
+
+  it('renders from the hydrated cache and merges the stripped manifest snapshot as a delta', async () => {
+    const scope = 'operator:601';
+    const hydratedRoutes = [
+      {
+        rutaId: 'r-hydrated-1',
+        nombre: 'Ruta Centro',
+        tipoRuta: 'TOMA_LECTURA',
+        estado: 'PENDIENTE',
+        orden: 1,
+        comunidadId: 3,
+        paradas: [
+          {
+            ordenTrabajoId: 'wo-1',
+            tipoActividad: 'LECTURA',
+            estado: 'PENDIENTE',
+            latitud: -1.5,
+            longitud: -80.5,
+            serie: 'M-1',
+            clienteNombre: 'Cliente 1',
+          },
+        ],
+        ordenesTrabajo: [
+          {
+            ordenTrabajoId: 'wo-1',
+            rutaId: 'r-hydrated-1',
+            tipoActividad: 'LECTURA',
+            estado: 'PENDIENTE',
+            ordenVisita: 1,
+            medidor: { medidorId: '1', serie: 'M-1', latitud: -1.5, longitud: -80.5 },
+          },
+        ],
+      },
+    ];
+    await service.saveRoutesCache(scope, hydratedRoutes);
+
+    // Simula "Descargar / Actualizar Datos": el manifest publica rutas STRIPPED (ordenes/paradas []).
+    await service.applyManifestPage(scope, {
+      mode: 'snapshot',
+      snapshotVersion: 'v1',
+      periodId: 'p1',
+      cursor: null,
+      complete: true,
+      nextCursor: null,
+      routes: {
+        items: [
+          { rutaId: 'r-hydrated-1', nombre: 'Ruta Centro', tipoRuta: 'TOMA_LECTURA', estado: 'COMPLETADA', orden: 1, comunidadId: 3 },
+          { rutaId: 'r-new-2', nombre: 'Ruta Nueva', tipoRuta: 'INSTALACION', estado: 'PENDIENTE', orden: 1, comunidadId: 5 },
+        ],
+        hasMore: false,
+        nextCursor: null,
+      },
+      workOrders: {
+        items: [
+          {
+            ordenTrabajoId: 'wo-2',
+            rutaId: 'r-new-2',
+            tipoActividad: 'INSTALACION',
+            estado: 'PENDIENTE',
+            ordenVisita: 1,
+            medidor: { medidorId: '9', serie: 'M-9', latitud: -2.1, longitud: -80.1 },
+          },
+        ],
+        hasMore: false,
+        nextCursor: null,
+      },
+      changes: [],
+    } as any);
+
+    const result = (await service.getRoutesCache<any>(scope))!;
+    expect(result).not.toBeNull();
+    expect(result.items).toHaveLength(2);
+
+    const hydrated = result.items.find((r: any) => r.rutaId === 'r-hydrated-1');
+    expect(hydrated.estado).toBe('COMPLETADA'); // estado refrescado desde el snapshot
+    expect(hydrated.paradas).toHaveLength(1); // arreglo hidratado conservado
+    expect(hydrated.ordenesTrabajo).toHaveLength(1);
+
+    const newRoute = result.items.find((r: any) => r.rutaId === 'r-new-2');
+    expect(newRoute).toBeTruthy();
+    expect(newRoute.ordenesTrabajo).toHaveLength(1); // re-hidratada desde workOrders del manifest
+    expect(newRoute.ordenesTrabajo[0].ordenTrabajoId).toBe('wo-2');
+  });
+
+  it('returns only the snapshot routes when no hydrated cache exists (no dropped routes)', async () => {
+    const snapshotOnly = [
+      { rutaId: 'r-a', nombre: 'Ruta A' },
+      { rutaId: 'r-b', nombre: 'Ruta B' },
+    ];
+    const merged = mergeHydratedRoutesWithSnapshot(undefined, snapshotOnly);
+    expect(merged).toHaveLength(2);
+    expect(merged[0]).toEqual(snapshotOnly[0]);
+  });
+
+  it('keeps hydrated entries untouched when the snapshot has no route data at all', async () => {
+    const hydrated = [{ rutaId: 'r-a', paradas: [{ latitud: 1 }] }];
+    const merged = mergeHydratedRoutesWithSnapshot(hydrated, undefined);
+    expect(merged).toEqual(hydrated);
+  });
+
+  it('refreshes mutable route state without touching hydrated arrays', () => {
+    const hydrated = [
+      {
+        rutaId: 'r-1',
+        estado: 'PENDIENTE',
+        orden: 1,
+        nombre: 'Ruta Vieja',
+        paradas: [{ latitud: -1.5, longitud: -80.5 }],
+        ordenesTrabajo: [{ ordenTrabajoId: 'wo-1' }],
+      },
+    ];
+    const snapshot = [
+      {
+        rutaId: 'r-1',
+        estado: 'COMPLETADA',
+        orden: 2,
+        nombre: 'Ruta Vieja',
+        paradas: [], // stripped en el manifest
+        ordenesTrabajo: [],
+      },
+    ];
+    const [merged] = mergeHydratedRoutesWithSnapshot(hydrated, snapshot) as any[];
+    expect(merged.estado).toBe('COMPLETADA');
+    expect(merged.orden).toBe(2);
+    expect(merged.paradas).toHaveLength(1);
+    expect(merged.ordenesTrabajo).toHaveLength(1);
+  });
+
+  it('does not reorder hydrated work orders and refreshes mutable state in place', () => {
+    const hydrated = [
+      { ordenTrabajoId: 'wo-1', estado: 'PENDIENTE', ordenVisita: 5 },
+      { ordenTrabajoId: 'wo-2', estado: 'PENDIENTE', ordenVisita: 2 },
+    ];
+    const snapshot = [
+      { ordenTrabajoId: 'wo-2', estado: 'COMPLETADA' },
+      { ordenTrabajoId: 'wo-3', estado: 'PENDIENTE' },
+    ];
+    const merged = mergeWorkOrdersWithSnapshot(hydrated, snapshot);
+    expect(merged.map((wo) => wo.ordenTrabajoId)).toEqual(['wo-1', 'wo-2', 'wo-3']);
+    expect(merged[1].estado).toBe('COMPLETADA');
+  });
+
+  it('keeps the snapshot work orders when no hydrated orders exist', () => {
+    const merged = mergeWorkOrdersWithSnapshot(undefined, [
+      { ordenTrabajoId: 'wo-9', estado: 'PENDIENTE' },
+    ]);
+    expect(merged).toHaveLength(1);
+    expect(merged[0].ordenTrabajoId).toBe('wo-9');
   });
 });

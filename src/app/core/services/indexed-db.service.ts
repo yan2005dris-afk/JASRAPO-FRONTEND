@@ -32,6 +32,169 @@ export interface AssignedSnapshot {
   savedAt: string;
 }
 
+export interface RoutesCacheResult<T> {
+  items: T[];
+  savedAt: string;
+}
+
+/**
+ * Merge key for routes: the sync manifest and GET /operator/routes describe the same physical
+ * entity, matched by `rutaId` (work orders by `ordenTrabajoId`). The manifest ARRAY ORDER is
+ * pagination/cursor mechanics (updatedAt asc, id asc) and must never be used as visit order; the
+ * hydrated cache (rutas_cache) keeps the online visit order and is the BASE of every merge.
+ */
+const ROUTE_SNAPSHOT_MUTABLE_FIELDS = [
+  'estado',
+  'orden',
+  'nombre',
+  'tipoRuta',
+  'descripcion',
+  'observacion',
+  'fechaLimite',
+  'fechaPlanificada',
+  'operarioId',
+  'comunidadId',
+  'sectorId',
+] as const;
+
+const ROUTE_HYDRATED_ARRAY_FIELDS = ['paradas', 'ordenesTrabajo', 'rutaPuntos'] as const;
+
+const WORK_ORDER_SNAPSHOT_MUTABLE_FIELDS = ['estado', 'resultadoObservacion', 'completadoEn'] as const;
+
+function identityOf(value: unknown): string {
+  return value === null || value === undefined ? '' : String(value);
+}
+
+function snapshotRouteById(routes: any[] | undefined): Map<string, any> {
+  const byId = new Map<string, any>();
+  for (const route of routes ?? []) {
+    const id = identityOf(route?.rutaId);
+    if (id && !byId.has(id)) byId.set(id, route);
+  }
+  return byId;
+}
+
+function isRouteHydrated(route: any): boolean {
+  return (
+    (Array.isArray(route?.paradas) && route.paradas.length > 0) ||
+    (Array.isArray(route?.ordenesTrabajo) && route.ordenesTrabajo.length > 0) ||
+    (Array.isArray(route?.rutaPuntos) && route.rutaPuntos.length > 0) ||
+    (identityOf(route?.medidor?.latitud) !== '' && identityOf(route?.medidor?.longitud) !== '')
+  );
+}
+
+function refreshRouteFromSnapshot(hydratedRoute: any, snapshotRoute: any): any {
+  const merged = { ...hydratedRoute };
+  for (const field of ROUTE_SNAPSHOT_MUTABLE_FIELDS) {
+    const value = snapshotRoute?.[field];
+    if (value !== undefined) merged[field] = value;
+  }
+  // Hydrated collections (paradas/ordenesTrabajo/rutaPuntos) must never be replaced by the
+  // snapshot equivalents, which the manifest ships stripped ([]).
+  for (const field of ROUTE_HYDRATED_ARRAY_FIELDS) {
+    if (merged[field] != null) continue;
+    const value = snapshotRoute?.[field];
+    if (value !== undefined) merged[field] = value;
+  }
+  return merged;
+}
+
+/**
+ * Re-hydrates a route that has no coordinate-bearing collections by attaching the manifest work
+ * orders of its `rutaId`. Ordering follows `ordenVisita`, preserving visit-order semantics; the
+ * entries come from the manifest collection, never from the route list array order.
+ */
+function clientHydrateRoute(route: any, workOrders: any[] | undefined): any {
+  const hydrated = { ...route };
+  if (!workOrders?.length) return hydrated;
+  const orders = workOrders
+    .filter((order) => identityOf(order?.rutaId) === identityOf(route.rutaId))
+    .slice()
+    .sort((a, b) => (a?.ordenVisita ?? 0) - (b?.ordenVisita ?? 0));
+  const existing = hydrated.ordenesTrabajo;
+  if (orders.length > 0 && (!Array.isArray(existing) || existing.length === 0)) {
+    hydrated.ordenesTrabajo = orders;
+  }
+  return hydrated;
+}
+
+/**
+ * Merges the manifest snapshot routes into the hydrated cache (rutas_cache):
+ * - Existing hydrated routes keep their hydrated arrays and relative visit order; only mutable
+ *   scalar state (estado, fechas, orden, ...) is refreshed from the snapshot.
+ * - Routes present only in the snapshot are appended, hydrated from the manifest work-orders
+ *   collection when possible; otherwise they stay stripped.
+ */
+export function mergeHydratedRoutesWithSnapshot<T>(
+  hydratedRoutes: T[] | undefined,
+  snapshotRoutes: T[] | undefined,
+  snapshotWorkOrders?: any[],
+): T[] {
+  const hydrated = hydratedRoutes ?? [];
+  const snapshot = snapshotRoutes ?? [];
+  if (snapshot.length === 0) return [...hydrated];
+
+  const snapshotById = snapshotRouteById(snapshot);
+  const presentIds = new Set(
+    hydrated.map((route) => identityOf((route as any)?.rutaId)).filter((id) => id !== ''),
+  );
+
+  const merged: any[] = hydrated.map((route) => {
+    const snapshotRoute = snapshotById.get(identityOf((route as any)?.rutaId));
+    return snapshotRoute ? refreshRouteFromSnapshot(route, snapshotRoute) : route;
+  });
+
+  for (const snapshotRoute of snapshot) {
+    const id = identityOf((snapshotRoute as any)?.rutaId);
+    if (!id || presentIds.has(id)) continue;
+    presentIds.add(id);
+    merged.push(clientHydrateRoute(snapshotRoute, snapshotWorkOrders));
+  }
+
+  return merged.map((route) =>
+    isRouteHydrated(route) ? route : clientHydrateRoute(route, snapshotWorkOrders),
+  );
+}
+
+/**
+ * Merges the manifest work-orders collection into the work orders already hydrated inside
+ * rutas_cache. Known orders keep their hydrated position (visit order is never re-sequenced by the
+ * manifest keyset order) and only receive refreshed mutable state; unknown orders are appended.
+ */
+export function mergeWorkOrdersWithSnapshot(
+  hydratedWorkOrders: any[] | undefined,
+  snapshotWorkOrders: any[] | undefined,
+): any[] {
+  const base = hydratedWorkOrders ?? [];
+  const snapshot = snapshotWorkOrders ?? [];
+  if (snapshot.length === 0) return [...base];
+
+  const merged: any[] = [];
+  const seen = new Set<string>();
+  for (const order of base) {
+    const id = identityOf(order?.ordenTrabajoId ?? order?.id);
+    const snapshotOrder = id
+      ? snapshot.find((s) => identityOf(s?.ordenTrabajoId ?? s?.id) === id)
+      : undefined;
+    const mergedOrder = snapshotOrder ? { ...order } : order;
+    if (snapshotOrder) {
+      for (const field of WORK_ORDER_SNAPSHOT_MUTABLE_FIELDS) {
+        const value = snapshotOrder[field];
+        if (value !== undefined) mergedOrder[field] = value;
+      }
+    }
+    merged.push(mergedOrder);
+    if (id) seen.add(id);
+  }
+  for (const order of snapshot) {
+    const id = identityOf(order?.ordenTrabajoId ?? order?.id);
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    merged.push(order);
+  }
+  return merged;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -737,75 +900,96 @@ export class IndexedDbService {
     });
   }
 
-  async getRoutesCache<T>(scope: string): Promise<{ items: T[]; savedAt: string } | null> {
+  async getRoutesCache<T>(scope: string): Promise<RoutesCacheResult<T> | null> {
     const db = await this.initDb();
+    const hydratedCache = await this.readRoutesCacheRecord<T>(db, scope);
+    const snapshot = db.objectStoreNames.contains('assigned_snapshots')
+      ? await this.getAssignedSnapshot(scope)
+      : null;
 
-    // Si existe en assigned_snapshots, preferir ese snapshot
-    if (db.objectStoreNames.contains('assigned_snapshots')) {
-      const snapshot = await this.getAssignedSnapshot(scope);
-      if (snapshot?.routes) {
-        return { items: snapshot.routes as T[], savedAt: snapshot.savedAt };
-      }
+    const hydratedItems = hydratedCache?.items ?? [];
+    const snapshotRoutes = (snapshot?.routes as T[] | undefined) ?? [];
+
+    if (hydratedItems.length === 0 && snapshotRoutes.length === 0) {
+      return null;
     }
 
+    // RULE: rutas_cache is the BASE for rendering and visit order. The manifest snapshot only
+    // merges in as a delta/refresh (see mergeHydratedRoutesWithSnapshot); it is never the source.
+    return {
+      items: mergeHydratedRoutesWithSnapshot(hydratedItems, snapshotRoutes, snapshot?.workOrders),
+      savedAt: this.newestSavedAt(hydratedCache?.savedAt, snapshot?.savedAt),
+    };
+  }
+
+  private readRoutesCacheRecord<T>(
+    db: IDBDatabase,
+    scope: string,
+  ): Promise<RoutesCacheResult<T> | null> {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction('rutas_cache', 'readonly');
       const store = transaction.objectStore('rutas_cache');
       const request = store.get(scope);
       request.onsuccess = () => {
-        const snapshot = request.result as { items?: T[]; savedAt?: string } | undefined;
-        if (!snapshot || !snapshot.items || !snapshot.savedAt) {
+        const cache = request.result as { items?: T[]; savedAt?: string } | undefined;
+        if (!cache || !cache.items || !cache.savedAt) {
           resolve(null);
           return;
         }
-        resolve({ items: snapshot.items, savedAt: snapshot.savedAt });
+        resolve({ items: cache.items, savedAt: cache.savedAt });
       };
       request.onerror = () => reject(request.error);
     });
   }
 
+  private newestSavedAt(hydratedSavedAt?: string, snapshotSavedAt?: string): string {
+    if (!hydratedSavedAt) return snapshotSavedAt ?? new Date().toISOString();
+    if (!snapshotSavedAt) return hydratedSavedAt;
+    return hydratedSavedAt >= snapshotSavedAt ? hydratedSavedAt : snapshotSavedAt;
+  }
+
   async getAssignedWorkOrders(scope?: string): Promise<any[]> {
     const db = await this.initDb();
-    if (scope && db.objectStoreNames.contains('assigned_snapshots')) {
-      const snapshot = await this.getAssignedSnapshot(scope);
-      if (snapshot?.workOrders && snapshot.workOrders.length > 0) {
-        return snapshot.workOrders;
-      }
-    }
-    // Fallback: extraer órdenes desde rutas_cache si existen
-    if (scope && db.objectStoreNames.contains('rutas_cache')) {
-      const routesData = await this.getRoutesCache<any>(scope);
-      if (routesData?.items) {
-        const extracted: any[] = [];
-        const seenIds = new Set<string>();
-        for (const r of routesData.items) {
-          if (r.ordenesTrabajo && Array.isArray(r.ordenesTrabajo)) {
-            for (const ot of r.ordenesTrabajo) {
-              const id = String(ot.id ?? ot.ordenTrabajoId ?? '');
-              if (id && !seenIds.has(id)) {
-                seenIds.add(id);
-                extracted.push(ot);
-              } else if (!id) {
-                extracted.push(ot);
-              }
-            }
-          } else if (r.paradas && Array.isArray(r.paradas)) {
-            for (const p of r.paradas) {
-              const ot = p.ordenTrabajo ?? p;
-              const id = String(ot.id ?? ot.ordenTrabajoId ?? '');
-              if (id && !seenIds.has(id)) {
-                seenIds.add(id);
-                extracted.push(ot);
-              } else if (!id) {
-                extracted.push(ot);
-              }
-            }
+    const fromRoutes = await this.extractWorkOrdersFromRoutes(scope);
+    const snapshot =
+      scope && db.objectStoreNames.contains('assigned_snapshots')
+        ? await this.getAssignedSnapshot(scope)
+        : null;
+    // Same merge rule as routes: the hydrated cache is the base (visit order), the manifest
+    // work-orders collection merges in as a delta without re-sequencing known orders.
+    return mergeWorkOrdersWithSnapshot(fromRoutes, snapshot?.workOrders);
+  }
+
+  private async extractWorkOrdersFromRoutes(scope?: string): Promise<any[]> {
+    if (!scope) return [];
+    const routesData = await this.getRoutesCache<any>(scope);
+    const extracted: any[] = [];
+    const seenIds = new Set<string>();
+    for (const r of routesData?.items ?? []) {
+      if (r.ordenesTrabajo && Array.isArray(r.ordenesTrabajo)) {
+        for (const ot of r.ordenesTrabajo) {
+          const id = identityOf(ot.ordenTrabajoId ?? ot.id);
+          if (!id) {
+            extracted.push(ot);
+          } else if (!seenIds.has(id)) {
+            seenIds.add(id);
+            extracted.push(ot);
           }
         }
-        if (extracted.length > 0) return extracted;
+      } else if (r.paradas && Array.isArray(r.paradas)) {
+        for (const p of r.paradas) {
+          const ot = p.ordenTrabajo ?? p;
+          const id = identityOf(ot.ordenTrabajoId ?? ot.id);
+          if (!id) {
+            extracted.push(ot);
+          } else if (!seenIds.has(id)) {
+            seenIds.add(id);
+            extracted.push(ot);
+          }
+        }
       }
     }
-    return [];
+    return extracted;
   }
 
   async clearPendingAnomalies(): Promise<void> {
