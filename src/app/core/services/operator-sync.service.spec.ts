@@ -6,6 +6,7 @@ import { NetworkService } from './network.service';
 import { IndexedDbService } from './indexed-db.service';
 import { ToastService } from '../../shared/components/toast/toast.service';
 import { AuthService } from './auth.service';
+import { OperatorLocationService } from './operator-location.service';
 
 const VALID_DATA_URI = new Blob(['photo'], { type: 'image/png' });
 const INVALID_DATA_URI = null;
@@ -21,22 +22,29 @@ describe('OperatorSyncService', () => {
   let httpGet: ReturnType<typeof vi.fn>;
   let savePendingReading: ReturnType<typeof vi.fn>;
   let savePendingAnomaly: ReturnType<typeof vi.fn>;
+  let savePendingWorkOrder: ReturnType<typeof vi.fn>;
   let saveSyncedReading: ReturnType<typeof vi.fn>;
   let getPendingReadings: ReturnType<typeof vi.fn>;
   let getPendingAnomalies: ReturnType<typeof vi.fn>;
+  let getPendingWorkOrders: ReturnType<typeof vi.fn>;
   let getPendingReadingsByState: ReturnType<typeof vi.fn>;
   let getPendingAnomaliesByState: ReturnType<typeof vi.fn>;
+  let getPendingWorkOrdersByState: ReturnType<typeof vi.fn>;
   let updatePendingReading: ReturnType<typeof vi.fn>;
   let deletePendingReading: ReturnType<typeof vi.fn>;
+  let updatePendingWorkOrder: ReturnType<typeof vi.fn>;
+  let deletePendingWorkOrder: ReturnType<typeof vi.fn>;
   let updatePendingAnomaly: ReturnType<typeof vi.fn>;
   let deletePendingAnomaly: ReturnType<typeof vi.fn>;
   let saveEstadosCache: ReturnType<typeof vi.fn>;
   let getEstadosCache: ReturnType<typeof vi.fn>;
+  let saveNovedadesCache: ReturnType<typeof vi.fn>;
   let saveCompleteAssignedSnapshot: ReturnType<typeof vi.fn>;
   let getAssignedSnapshot: ReturnType<typeof vi.fn>;
   let discardPendingManifest: ReturnType<typeof vi.fn>;
   let applyManifestPage: ReturnType<typeof vi.fn>;
   let currentUserSignal: { id?: string; name?: string } | null;
+  let getCurrentCoordinates: ReturnType<typeof vi.fn>;
   let toast: {
     success: ReturnType<typeof vi.fn>;
     error: ReturnType<typeof vi.fn>;
@@ -77,17 +85,23 @@ describe('OperatorSyncService', () => {
           useValue: {
             savePendingReading,
             savePendingAnomaly,
+            savePendingWorkOrder,
             saveSyncedReading,
             getPendingReadings,
             getPendingAnomalies,
+            getPendingWorkOrders,
             getPendingReadingsByState,
             getPendingAnomaliesByState,
+            getPendingWorkOrdersByState,
             updatePendingReading,
             deletePendingReading,
+            updatePendingWorkOrder,
+            deletePendingWorkOrder,
             updatePendingAnomaly,
             deletePendingAnomaly,
             saveEstadosCache,
             getEstadosCache,
+            saveNovedadesCache,
             saveCompleteAssignedSnapshot,
             getAssignedSnapshot,
             discardPendingManifest,
@@ -99,6 +113,10 @@ describe('OperatorSyncService', () => {
           useValue: {
             currentUser: () => currentUserSignal,
           },
+        },
+        {
+          provide: OperatorLocationService,
+          useValue: { getCurrentCoordinates },
         },
         { provide: ToastService, useValue: toast },
         { provide: HttpClient, useValue: { post: httpPost, patch: httpPatch, get: httpGet } },
@@ -116,22 +134,32 @@ describe('OperatorSyncService', () => {
 
     savePendingReading = vi.fn().mockResolvedValue(1);
     savePendingAnomaly = vi.fn().mockResolvedValue(1);
+    savePendingWorkOrder = vi.fn().mockResolvedValue(1);
     saveSyncedReading = vi.fn().mockResolvedValue(undefined);
     getPendingReadings = vi.fn().mockResolvedValue([]);
     getPendingAnomalies = vi.fn().mockResolvedValue([]);
+    getPendingWorkOrders = vi.fn().mockResolvedValue([]);
     getPendingReadingsByState = vi.fn().mockResolvedValue([]);
     getPendingAnomaliesByState = vi.fn().mockResolvedValue([]);
+    getPendingWorkOrdersByState = vi.fn().mockResolvedValue([]);
     updatePendingReading = vi.fn().mockResolvedValue(undefined);
     deletePendingReading = vi.fn().mockResolvedValue(undefined);
+    updatePendingWorkOrder = vi.fn().mockResolvedValue(undefined);
+    deletePendingWorkOrder = vi.fn().mockResolvedValue(undefined);
     updatePendingAnomaly = vi.fn().mockResolvedValue(undefined);
     deletePendingAnomaly = vi.fn().mockResolvedValue(undefined);
     saveEstadosCache = vi.fn().mockResolvedValue(undefined);
     getEstadosCache = vi.fn().mockResolvedValue(null);
+    saveNovedadesCache = vi.fn().mockResolvedValue(undefined);
     saveCompleteAssignedSnapshot = vi.fn().mockResolvedValue(undefined);
     getAssignedSnapshot = vi.fn().mockResolvedValue(null);
     discardPendingManifest = vi.fn().mockResolvedValue(undefined);
     applyManifestPage = vi.fn().mockResolvedValue(undefined);
     currentUserSignal = { id: '42', name: 'Operador Test' };
+    getCurrentCoordinates = vi.fn().mockResolvedValue({
+      latitud: -0.9677,
+      longitud: -80.7089,
+    });
 
     toast = {
       success: vi.fn(),
@@ -284,7 +312,15 @@ describe('OperatorSyncService', () => {
         const [url, formData] = httpPatch.mock.calls[0];
         expect(url).toContain('/operator/work-orders/wo-42');
         const fields = formDataToObject(formData as FormData);
-        expect(Object.keys(fields).sort()).toEqual(['estado', 'foto', 'resultadoObservacion']);
+        expect(Object.keys(fields).sort()).toEqual([
+          'estado',
+          'foto',
+          'latitud',
+          'longitud',
+          'resultadoObservacion',
+        ]);
+        expect(fields['latitud']).toEqual(['-0.9677']);
+        expect(fields['longitud']).toEqual(['-80.7089']);
         expect(fields['resultadoObservacion']).toEqual(['sin novedades']);
         expect(fields['foto']).toHaveLength(1);
         expect(fields['foto'][0]).toBeInstanceOf(Blob);
@@ -306,7 +342,7 @@ describe('OperatorSyncService', () => {
       expect(fields['observaciones']).toBeUndefined();
     });
 
-    it('encola offline con discriminante y conserva el ID real', async () => {
+    it('encola offline en el store dedicado y conserva el ID real y las coordenadas', async () => {
       isOnline.mockReturnValue(false);
       const workOrder = {
         ordenTrabajoId: 'wo-42',
@@ -317,7 +353,12 @@ describe('OperatorSyncService', () => {
 
       await expect(service.submitWorkOrder(workOrder)).resolves.toEqual({ offline: true });
 
-      expect(savePendingReading).toHaveBeenCalledWith({ ...workOrder, recordType: 'WORK_ORDER' });
+      expect(savePendingWorkOrder).toHaveBeenCalledWith({
+        ...workOrder,
+        latitud: -0.9677,
+        longitud: -80.7089,
+      });
+      expect(savePendingReading).not.toHaveBeenCalled();
       expect(httpPatch).not.toHaveBeenCalled();
       expect(httpPost).not.toHaveBeenCalled();
     });
@@ -331,6 +372,37 @@ describe('OperatorSyncService', () => {
 
       expect(httpPatch).not.toHaveBeenCalled();
       expect(httpPost).not.toHaveBeenCalled();
+      expect(getCurrentCoordinates).not.toHaveBeenCalled();
+    });
+
+    it('ignora coordenadas entregadas por el caller y usa la posición medida', async () => {
+      isOnline.mockReturnValue(true);
+      httpPatch.mockReturnValue(of({ id: 'wo-42' }));
+
+      await service.submitWorkOrder({
+        ordenTrabajoId: 'wo-42',
+        latitud: 0,
+        longitud: 0,
+      });
+
+      const fields = formDataToObject(httpPatch.mock.calls[0][1] as FormData);
+      expect(fields['latitud']).toEqual(['-0.9677']);
+      expect(fields['longitud']).toEqual(['-80.7089']);
+    });
+
+    it('no bloquea la orden cuando el navegador no puede obtener ubicación', async () => {
+      isOnline.mockReturnValue(false);
+      getCurrentCoordinates.mockResolvedValue(null);
+
+      await expect(
+        service.submitWorkOrder({ ordenTrabajoId: 'wo-42', tipoActividad: 'INSPECCION' }),
+      ).resolves.toEqual({ offline: true });
+
+      expect(savePendingWorkOrder).toHaveBeenCalledWith({
+        ordenTrabajoId: 'wo-42',
+        tipoActividad: 'INSPECCION',
+      });
+      expect(savePendingReading).not.toHaveBeenCalled();
     });
   });
 
@@ -463,19 +535,20 @@ describe('OperatorSyncService', () => {
       expect(deletePendingReading).toHaveBeenCalledWith(2);
     });
 
-    it('reproduce una orden offline por PATCH y conserva payload y foto', async () => {
+    it('reproduce una orden offline por PATCH desde el store dedicado y conserva payload y foto', async () => {
       isOnline.mockReturnValue(true);
-      getPendingReadingsByState.mockResolvedValue([
+      getPendingWorkOrdersByState.mockResolvedValue([
         {
           id: 7,
           syncState: 'PENDIENTE_SYNC',
           errorMessage: null,
-          recordType: 'WORK_ORDER',
           ordenTrabajoId: 'wo-42',
           tipoActividad: 'INSPECCION',
           medidorId: 'meter-1',
           fecha: '2026-01-01',
           observaciones: 'revisión completada',
+          latitud: -0.9677,
+          longitud: -80.7089,
           fotoBlob: VALID_DATA_URI,
         },
       ]);
@@ -492,26 +565,57 @@ describe('OperatorSyncService', () => {
       expect(fields['fecha']).toBeUndefined();
       expect(fields['observaciones']).toBeUndefined();
       expect(fields['resultadoObservacion']).toEqual(['revisión completada']);
+      expect(fields['latitud']).toEqual(['-0.9677']);
+      expect(fields['longitud']).toEqual(['-80.7089']);
       expect(fields['foto']).toHaveLength(1);
       expect(httpPost).not.toHaveBeenCalled();
       expect(saveSyncedReading).not.toHaveBeenCalled();
-      expect(deletePendingReading).toHaveBeenCalledWith(7);
+      expect(deletePendingWorkOrder).toHaveBeenCalledWith(7);
+      expect(deletePendingReading).not.toHaveBeenCalled();
     });
 
-    it('marca una orden como RECHAZADA ante 400 y continúa con la siguiente', async () => {
+    it('drena órdenes legacy que aún viven en lecturas_pendientes', async () => {
       isOnline.mockReturnValue(true);
       getPendingReadingsByState.mockResolvedValue([
         {
           id: 7,
           syncState: 'PENDIENTE_SYNC',
+          errorMessage: null,
           recordType: 'WORK_ORDER',
+          ordenTrabajoId: 'wo-legacy',
+          tipoActividad: 'INSPECCION',
+          observaciones: 'legacy',
+          latitud: -0.9677,
+          longitud: -80.7089,
+          fotoBlob: VALID_DATA_URI,
+        },
+      ]);
+      getPendingWorkOrdersByState.mockResolvedValue([]);
+      getPendingAnomaliesByState.mockResolvedValue([]);
+      httpPatch.mockReturnValue(of({ id: 'wo-legacy' }));
+
+      await service.syncPendingData();
+
+      const [url, formData] = httpPatch.mock.calls[0];
+      const fields = formDataToObject(formData as FormData);
+      expect(url).toContain('/operator/work-orders/wo-legacy');
+      expect(fields['resultadoObservacion']).toEqual(['legacy']);
+      expect(deletePendingReading).toHaveBeenCalledWith(7);
+      expect(deletePendingWorkOrder).not.toHaveBeenCalled();
+    });
+
+    it('marca una orden como RECHAZADA ante 400 y continúa con la siguiente', async () => {
+      isOnline.mockReturnValue(true);
+      getPendingWorkOrdersByState.mockResolvedValue([
+        {
+          id: 7,
+          syncState: 'PENDIENTE_SYNC',
           ordenTrabajoId: 'wo-invalid',
           tipoActividad: 'INSPECCION',
         },
         {
           id: 8,
           syncState: 'PENDIENTE_SYNC',
-          recordType: 'WORK_ORDER',
           ordenTrabajoId: 'wo-valid',
           tipoActividad: 'INSPECCION',
         },
@@ -523,28 +627,26 @@ describe('OperatorSyncService', () => {
 
       await service.syncPendingData();
 
-      expect(updatePendingReading).toHaveBeenCalledWith(7, {
+      expect(updatePendingWorkOrder).toHaveBeenCalledWith(7, {
         syncState: 'RECHAZADA',
         errorMessage: 'orden no asignada',
       });
-      expect(deletePendingReading).toHaveBeenCalledWith(8);
+      expect(deletePendingWorkOrder).toHaveBeenCalledWith(8);
       expect(httpPatch).toHaveBeenCalledTimes(2);
     });
 
     it('conserva una orden pendiente ante error de red y detiene la cola', async () => {
       isOnline.mockReturnValue(true);
-      getPendingReadingsByState.mockResolvedValue([
+      getPendingWorkOrdersByState.mockResolvedValue([
         {
           id: 7,
           syncState: 'PENDIENTE_SYNC',
-          recordType: 'WORK_ORDER',
           ordenTrabajoId: 'wo-42',
           tipoActividad: 'INSPECCION',
         },
         {
           id: 8,
           syncState: 'PENDIENTE_SYNC',
-          recordType: 'WORK_ORDER',
           ordenTrabajoId: 'wo-43',
           tipoActividad: 'INSPECCION',
         },
@@ -554,7 +656,8 @@ describe('OperatorSyncService', () => {
 
       await service.syncPendingData();
 
-      expect(updatePendingReading).not.toHaveBeenCalled();
+      expect(updatePendingWorkOrder).not.toHaveBeenCalled();
+      expect(deletePendingWorkOrder).not.toHaveBeenCalled();
       expect(deletePendingReading).not.toHaveBeenCalled();
       expect(httpPatch).toHaveBeenCalledOnce();
     });
@@ -651,6 +754,50 @@ describe('OperatorSyncService', () => {
           'Novedad rechazada: no tiene orden de trabajo asociada para registrar en el servidor.',
       });
       expect(httpPost).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── refreshPendingCounts ─────────────────────────────────────────────────
+
+  describe('refreshPendingCounts', () => {
+    it('cuenta órdenes de trabajo pendientes y rechazadas en el badge', async () => {
+      getPendingReadings.mockResolvedValue([
+        { syncState: 'PENDIENTE_SYNC', _lecturaId: 1 },
+        { syncState: 'RECHAZADA', _lecturaId: 2 },
+      ]);
+      getPendingAnomalies.mockResolvedValue([{ syncState: 'PENDIENTE_SYNC', tipo: 'FUGA' }]);
+      getPendingWorkOrders.mockResolvedValue([
+        { syncState: 'PENDIENTE_SYNC', ordenTrabajoId: 'wo-1' },
+        { syncState: 'RECHAZADA', ordenTrabajoId: 'wo-2' },
+      ]);
+
+      await service.refreshPendingCounts();
+
+      expect(service.pendingReadingsCount()).toBe(1);
+      expect(service.rejectedReadingsCount()).toBe(1);
+      expect(service.pendingAnomaliesCount()).toBe(1);
+      expect(service.pendingWorkOrdersCount()).toBe(1);
+      expect(service.rejectedWorkOrdersCount()).toBe(1);
+      expect(service.totalPending()).toBe(3);
+      expect(service.totalRejected()).toBe(2);
+    });
+
+    it('excluye las órdenes legacy de lecturas_pendientes del contador de lecturas', async () => {
+      getPendingReadings.mockResolvedValue([
+        { syncState: 'PENDIENTE_SYNC', recordType: 'WORK_ORDER', ordenTrabajoId: 'wo-legacy' },
+        { syncState: 'RECHAZADA', recordType: 'WORK_ORDER', ordenTrabajoId: 'wo-legacy-2' },
+        { syncState: 'PENDIENTE_SYNC', _lecturaId: 1 },
+      ]);
+      getPendingAnomalies.mockResolvedValue([]);
+      getPendingWorkOrders.mockResolvedValue([]);
+
+      await service.refreshPendingCounts();
+
+      expect(service.pendingReadingsCount()).toBe(1);
+      expect(service.rejectedReadingsCount()).toBe(0);
+      expect(service.pendingWorkOrdersCount()).toBe(1);
+      expect(service.rejectedWorkOrdersCount()).toBe(1);
+      expect(service.totalPending()).toBe(2);
     });
   });
 

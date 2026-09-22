@@ -19,6 +19,7 @@ describe('IndexedDbService - Multi-operator Snapshot Isolation', () => {
       'medidores_cache',
       'lecturas_pendientes',
       'anomalias_pendientes',
+      'ordenes_pendientes',
       'lecturas_registradas',
       'lecturas_sincronizadas',
       'estados_cache',
@@ -39,7 +40,7 @@ describe('IndexedDbService - Multi-operator Snapshot Isolation', () => {
             return {
               put: (item: any) => {
                 const key =
-                  item.scope ?? item.medidorId ?? item.lecturaId ?? item.tipo ?? item.id ?? item;
+                  item.lecturaId ?? item.medidorId ?? item.scope ?? item.tipo ?? item.id ?? item;
                 table.set(key, item);
                 return { onsuccess: null, onerror: null };
               },
@@ -65,11 +66,27 @@ describe('IndexedDbService - Multi-operator Snapshot Isolation', () => {
                 }, 0);
                 return req;
               },
+              index: () => ({
+                getAll: (state: string) => {
+                  const req: any = {
+                    result: Array.from(table.values()).filter((v) => v.syncState === state),
+                  };
+                  setTimeout(() => {
+                    if (req.onsuccess) req.onsuccess();
+                  }, 0);
+                  return req;
+                },
+              }),
               clear: () => {
                 table.clear();
               },
               delete: (key: any) => {
                 table.delete(key);
+                const req: any = { onsuccess: null, onerror: null };
+                setTimeout(() => {
+                  if (req.onsuccess) req.onsuccess();
+                }, 0);
+                return req;
               },
             };
           },
@@ -176,6 +193,55 @@ describe('IndexedDbService - Multi-operator Snapshot Isolation', () => {
 
     expect((await service.getPendingReadings())[0]['fotoBlob']).toBeInstanceOf(Blob);
     expect((await service.getPendingAnomalies())[0]['fotoBlob']).toBeInstanceOf(Blob);
+  });
+
+  it('guarda, filtra por estado, actualiza y elimina órdenes de trabajo pendientes', async () => {
+    const id = await service.savePendingWorkOrder({
+      ordenTrabajoId: 'wo-1',
+      tipoActividad: 'INSPECCION',
+      latitud: -0.9677,
+      longitud: -80.7089,
+    });
+    expect(id).toBeGreaterThan(0);
+
+    const all = await service.getPendingWorkOrders();
+    expect(all).toHaveLength(1);
+    expect(all[0]['ordenTrabajoId']).toBe('wo-1');
+    expect(all[0]['syncState']).toBe('PENDIENTE_SYNC');
+    expect(all[0]['errorMessage']).toBeNull();
+
+    expect(await service.getPendingWorkOrdersByState('PENDIENTE_SYNC')).toHaveLength(1);
+
+    await service.updatePendingWorkOrder(id, {
+      syncState: 'RECHAZADA',
+      errorMessage: 'orden no asignada',
+    });
+    expect(await service.getPendingWorkOrdersByState('PENDIENTE_SYNC')).toHaveLength(0);
+    const rejected = await service.getPendingWorkOrdersByState('RECHAZADA');
+    expect(rejected).toHaveLength(1);
+    expect(rejected[0]['errorMessage']).toBe('orden no asignada');
+
+    await service.deletePendingWorkOrder(id);
+    expect(await service.getPendingWorkOrders()).toHaveLength(0);
+  });
+
+  it('conserva el Blob de foto en las órdenes de trabajo pendientes', async () => {
+    const blob = new Blob(['photo'], { type: 'image/jpeg' });
+    await service.savePendingWorkOrder({ ordenTrabajoId: 'wo-2', fotoBlob: blob });
+
+    const orders = await service.getPendingWorkOrders();
+    expect(orders).toHaveLength(1);
+    expect(orders[0]['fotoBlob']).toBe(blob);
+    expect(orders[0]['fotoBlob']).toBeInstanceOf(Blob);
+  });
+
+  it('aísla el store de órdenes pendientes del store de lecturas', async () => {
+    await service.savePendingReading({ _lecturaId: 1 });
+    await service.savePendingWorkOrder({ ordenTrabajoId: 'wo-x' });
+
+    expect(await service.getPendingReadings()).toHaveLength(1);
+    expect(await service.getPendingWorkOrders()).toHaveLength(1);
+    expect((await service.getPendingWorkOrders())[0]['recordType']).toBeUndefined();
   });
 
   it('aplica cambios de tablas físicas y tombstones al snapshot', async () => {
@@ -363,6 +429,7 @@ describe('Route/snapshot cache merge (rutas_cache base, manifest delta)', () => 
       'medidores_cache',
       'lecturas_pendientes',
       'anomalias_pendientes',
+      'ordenes_pendientes',
       'lecturas_registradas',
       'lecturas_sincronizadas',
       'estados_cache',
@@ -379,7 +446,7 @@ describe('Route/snapshot cache merge (rutas_cache base, manifest delta)', () => 
             return {
               put: (item: any) => {
                 const key =
-                  item.scope ?? item.medidorId ?? item.lecturaId ?? item.tipo ?? item.id ?? item;
+                  item.lecturaId ?? item.medidorId ?? item.scope ?? item.tipo ?? item.id ?? item;
                 table.set(key, item);
                 return { onsuccess: null, onerror: null };
               },
@@ -398,8 +465,24 @@ describe('Route/snapshot cache merge (rutas_cache base, manifest delta)', () => 
                 setTimeout(() => req.onsuccess?.(), 0);
                 return req;
               },
+              index: () => ({
+                getAll: (state: string) => {
+                  const req: any = {
+                    result: Array.from(table.values()).filter((v) => v.syncState === state),
+                  };
+                  setTimeout(() => req.onsuccess?.(state), 0);
+                  return req;
+                },
+              }),
               clear: () => table.clear(),
-              delete: (key: any) => table.delete(key),
+              delete: (key: any) => {
+                table.delete(key);
+                const req: any = { onsuccess: null, onerror: null };
+                setTimeout(() => {
+                  if (req.onsuccess) req.onsuccess();
+                }, 0);
+                return req;
+              },
             };
           },
           abort: vi.fn(),

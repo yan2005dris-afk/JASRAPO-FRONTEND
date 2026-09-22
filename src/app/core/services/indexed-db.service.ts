@@ -200,7 +200,7 @@ export function mergeWorkOrdersWithSnapshot(
 })
 export class IndexedDbService {
   private readonly dbName = 'jasrapo-operator-db';
-  private readonly dbVersion = 9;
+  private readonly dbVersion = 11;
   private db: IDBDatabase | null = null;
 
   constructor() {
@@ -279,6 +279,15 @@ export class IndexedDbService {
         // Snapshot de rutas asignadas para navegación degradada sin conexión
         if (!db.objectStoreNames.contains('rutas_cache')) {
           db.createObjectStore('rutas_cache', { keyPath: 'scope' });
+        }
+
+        // Almacén dedicado para órdenes de trabajo pendientes offline (#267)
+        if (!db.objectStoreNames.contains('ordenes_pendientes')) {
+          const store = db.createObjectStore('ordenes_pendientes', {
+            keyPath: 'id',
+            autoIncrement: true,
+          });
+          store.createIndex('bySyncState', 'syncState', { unique: false });
         }
       };
 
@@ -483,6 +492,84 @@ export class IndexedDbService {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction('anomalias_pendientes', 'readwrite');
       const store = transaction.objectStore('anomalias_pendientes');
+      const request = store.delete(id);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // --- ORDENES DE TRABAJO PENDIENTES ---
+
+  async savePendingWorkOrder(workOrder: any): Promise<number> {
+    const db = await this.initDb();
+    const record: PendingRecord = {
+      ...workOrder,
+      syncState: 'PENDIENTE_SYNC',
+      errorMessage: null,
+    };
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('ordenes_pendientes', 'readwrite');
+      const store = transaction.objectStore('ordenes_pendientes');
+      const request = store.add(record);
+
+      request.onsuccess = () => resolve(request.result as number);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getPendingWorkOrders(): Promise<PendingRecord[]> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('ordenes_pendientes', 'readonly');
+      const store = transaction.objectStore('ordenes_pendientes');
+      const request = store.getAll();
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getPendingWorkOrdersByState(state: SyncState): Promise<PendingRecord[]> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('ordenes_pendientes', 'readonly');
+      const store = transaction.objectStore('ordenes_pendientes');
+      const index = store.index('bySyncState');
+      const request = index.getAll(state);
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async updatePendingWorkOrder(id: number, updates: Partial<PendingRecord>): Promise<void> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('ordenes_pendientes', 'readwrite');
+      const store = transaction.objectStore('ordenes_pendientes');
+      const getReq = store.get(id);
+
+      getReq.onsuccess = () => {
+        const existing = getReq.result;
+        if (!existing) {
+          reject(new Error(`Orden de trabajo pendiente con id ${id} no encontrada.`));
+          return;
+        }
+        const updated = { ...existing, ...updates };
+        store.put(updated);
+      };
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  async deletePendingWorkOrder(id: number): Promise<void> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('ordenes_pendientes', 'readwrite');
+      const store = transaction.objectStore('ordenes_pendientes');
       const request = store.delete(id);
 
       request.onsuccess = () => resolve();

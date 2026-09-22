@@ -7,13 +7,16 @@ import { environment } from '../../../environments/environment';
 import { firstValueFrom } from 'rxjs';
 
 import { AuthService } from './auth.service';
+import { OperatorLocationService } from './operator-location.service';
 import {
   MANIFEST_PROTOCOL_VERSION,
   type OperatorManifestPage,
+  type ReadingWithAnomaly,
 } from '../../features/operator/models/operator.models';
 
 type PayloadValue = string | number | boolean | Blob | null | undefined;
-type WorkOrderDtoField = 'estado' | 'resultadoObservacion' | 'completadoEn';
+type WorkOrderDtoField =
+  'estado' | 'resultadoObservacion' | 'completadoEn' | 'latitud' | 'longitud';
 type WorkOrderDtoPayload = Partial<Record<WorkOrderDtoField, PayloadValue>>;
 export interface ReadingSubmission {
   _lecturaId?: string | number;
@@ -23,6 +26,8 @@ export interface ReadingSubmission {
 export interface WorkOrderSubmission {
   ordenTrabajoId?: string | number;
   fotoBlob?: Blob | null;
+  latitud?: number;
+  longitud?: number;
   [key: string]: PayloadValue;
 }
 
@@ -35,6 +40,7 @@ export class OperatorSyncService {
   private readonly dbService = inject(IndexedDbService);
   private readonly toastService = inject(ToastService);
   private readonly authService = inject(AuthService);
+  private readonly locationService = inject(OperatorLocationService);
 
   private readonly READINGS_API = `${environment.apiUrl}/readings`;
   private readonly OPERATOR_API = `${environment.apiUrl}/operator`;
@@ -43,8 +49,10 @@ export class OperatorSyncService {
   // Signals para rastrear el estado de la cola
   readonly pendingReadingsCount = signal<number>(0);
   readonly pendingAnomaliesCount = signal<number>(0);
+  readonly pendingWorkOrdersCount = signal<number>(0);
   readonly rejectedReadingsCount = signal<number>(0);
   readonly rejectedAnomaliesCount = signal<number>(0);
+  readonly rejectedWorkOrdersCount = signal<number>(0);
   readonly isSyncing = signal<boolean>(false);
   readonly isDownloading = signal<boolean>(false);
   /** Resultado de la última carga, para no confundir permisos con offline. */
@@ -57,12 +65,14 @@ export class OperatorSyncService {
 
   // Total de elementos pendientes (solo pendientes de envío, sin rechazados)
   readonly totalPending = computed(
-    () => this.pendingReadingsCount() + this.pendingAnomaliesCount(),
+    () =>
+      this.pendingReadingsCount() + this.pendingAnomaliesCount() + this.pendingWorkOrdersCount(),
   );
 
   // Total con problemas (rechazados)
   readonly totalRejected = computed(
-    () => this.rejectedReadingsCount() + this.rejectedAnomaliesCount(),
+    () =>
+      this.rejectedReadingsCount() + this.rejectedAnomaliesCount() + this.rejectedWorkOrdersCount(),
   );
 
   // Total general en cola (pendientes + rechazados)
@@ -137,7 +147,13 @@ export class OperatorSyncService {
   /** Normaliza el contrato estricto aceptado por PATCH /operator/work-orders/:id. */
   private normalizeWorkOrderPayload(workOrder: WorkOrderSubmission): WorkOrderDtoPayload {
     const payload: WorkOrderDtoPayload = {};
-    const acceptedFields: WorkOrderDtoField[] = ['estado', 'resultadoObservacion', 'completadoEn'];
+    const acceptedFields: WorkOrderDtoField[] = [
+      'estado',
+      'resultadoObservacion',
+      'completadoEn',
+      'latitud',
+      'longitud',
+    ];
 
     for (const field of acceptedFields) {
       const value = workOrder[field];
@@ -163,22 +179,52 @@ export class OperatorSyncService {
   }
 
   /**
+   * Captures coordinates internally at submission time. Caller-provided coordinates are discarded
+   * so neither the form nor a queued-record editor can override the operator's measured position.
+   */
+  private async attachCurrentCoordinates(
+    workOrder: WorkOrderSubmission,
+  ): Promise<WorkOrderSubmission> {
+    const sanitized = { ...workOrder };
+    delete sanitized.latitud;
+    delete sanitized.longitud;
+
+    const coordinates = await this.locationService.getCurrentCoordinates();
+    return coordinates ? { ...sanitized, ...coordinates } : sanitized;
+  }
+
+  /**
    * Refresca el contador de registros pendientes en IndexedDB
+   *
+   * Los registros legacy `WORK_ORDER` que todavía viven en `lecturas_pendientes`
+   * (encolados por la versión previa al store dedicado) se cuentan junto a la cola
+   * de órdenes (#267) y se EXCLUYEN del contador de lecturas, de modo que cada
+   * orden se cuenta exactamente una vez y el badge nunca las duplica.
    */
   async refreshPendingCounts(): Promise<void> {
     try {
       const readings = await this.dbService.getPendingReadings();
       const anomalies = await this.dbService.getPendingAnomalies();
+      const workOrders = await this.dbService.getPendingWorkOrders();
 
-      const pendingR = readings.filter((r) => r.syncState === 'PENDIENTE_SYNC');
-      const rejectedR = readings.filter((r) => r.syncState === 'RECHAZADA');
+      const legacyWorkOrders = readings.filter((r) => r['recordType'] === 'WORK_ORDER');
+      const actualReadings = readings.filter((r) => r['recordType'] !== 'WORK_ORDER');
+
+      const pendingR = actualReadings.filter((r) => r.syncState === 'PENDIENTE_SYNC');
+      const rejectedR = actualReadings.filter((r) => r.syncState === 'RECHAZADA');
       const pendingA = anomalies.filter((a) => a.syncState === 'PENDIENTE_SYNC');
       const rejectedA = anomalies.filter((a) => a.syncState === 'RECHAZADA');
+      const pendingWO = workOrders.filter((w) => w.syncState === 'PENDIENTE_SYNC');
+      const rejectedWO = workOrders.filter((w) => w.syncState === 'RECHAZADA');
+      const legacyPendingWO = legacyWorkOrders.filter((w) => w.syncState === 'PENDIENTE_SYNC');
+      const legacyRejectedWO = legacyWorkOrders.filter((w) => w.syncState === 'RECHAZADA');
 
       this.pendingReadingsCount.set(pendingR.length);
       this.rejectedReadingsCount.set(rejectedR.length);
       this.pendingAnomaliesCount.set(pendingA.length);
       this.rejectedAnomaliesCount.set(rejectedA.length);
+      this.pendingWorkOrdersCount.set(pendingWO.length + legacyPendingWO.length);
+      this.rejectedWorkOrdersCount.set(rejectedWO.length + legacyRejectedWO.length);
     } catch (e) {
       console.error('Error al actualizar contadores offline:', e);
     }
@@ -305,7 +351,7 @@ export class OperatorSyncService {
   async submitWorkOrder(
     workOrder: WorkOrderSubmission & { fotoBlob?: Blob | null },
   ): Promise<unknown> {
-    const { ordenTrabajoId, fotoBlob } = workOrder;
+    const { ordenTrabajoId } = workOrder;
     if (
       ordenTrabajoId === null ||
       ordenTrabajoId === undefined ||
@@ -314,10 +360,13 @@ export class OperatorSyncService {
       throw new Error('No se puede enviar la orden de trabajo: falta ordenTrabajoId.');
     }
 
+    const submission = await this.attachCurrentCoordinates(workOrder);
+    const { fotoBlob } = submission;
+
     if (this.networkService.isOnline()) {
       try {
         const formData = new FormData();
-        this.appendWorkOrderPayload(formData, this.normalizeWorkOrderPayload(workOrder));
+        this.appendWorkOrderPayload(formData, this.normalizeWorkOrderPayload(submission));
         this.appendPhoto(formData, fotoBlob);
 
         const url = `${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`;
@@ -334,9 +383,8 @@ export class OperatorSyncService {
         throw error;
       }
     } else {
-      // TODO (#267): encolar en nuevo store `ordenes_pendientes` cuando exista.
-      // Mientras tanto, guardamos en el store legacy de lecturas para no perder el dato.
-      await this.dbService.savePendingReading({ ...workOrder, recordType: 'WORK_ORDER' });
+      // Encolar la orden en el store dedicado `ordenes_pendientes` (#267)
+      await this.dbService.savePendingWorkOrder({ ...submission });
       await this.refreshPendingCounts();
       this.toastService.warning(
         'Modo Offline: Orden guardada localmente. Se sincronizará al recuperar internet.',
@@ -376,8 +424,9 @@ export class OperatorSyncService {
 
     const readings = await this.dbService.getPendingReadingsByState('PENDIENTE_SYNC');
     const anomalies = await this.dbService.getPendingAnomaliesByState('PENDIENTE_SYNC');
+    const workOrders = await this.dbService.getPendingWorkOrdersByState('PENDIENTE_SYNC');
 
-    if (readings.length === 0 && anomalies.length === 0) return;
+    if (readings.length === 0 && anomalies.length === 0 && workOrders.length === 0) return;
 
     this.isSyncing.set(true);
     this.toastService.info(
@@ -392,6 +441,9 @@ export class OperatorSyncService {
 
     // 1. Sincronizar primero las lecturas encoladas
     for (const pending of readings) {
+      // Drain legacy (#267): órdenes encoladas por versiones previas aún viven en
+      // `lecturas_pendientes` con recordType WORK_ORDER. Se flushean aquí para no
+      // orfanar datos; los registros nuevos ya van al store `ordenes_pendientes`.
       if (pending['recordType'] === 'WORK_ORDER') {
         try {
           const {
@@ -479,6 +531,46 @@ export class OperatorSyncService {
         } else {
           // Error de red: parar la cola
           console.error('Error de red al sincronizar lectura, deteniendo cola:', error);
+          break;
+        }
+      }
+    }
+
+    // 1b. Sincronizar las órdenes de trabajo encoladas en `ordenes_pendientes` (#267)
+    for (const pending of workOrders) {
+      try {
+        const {
+          id,
+          syncState: _syncState, // eslint-disable-line @typescript-eslint/no-unused-vars
+          errorMessage: _errorMessage, // eslint-disable-line @typescript-eslint/no-unused-vars
+          ordenTrabajoId,
+          fotoBlob,
+          ...workOrderPayload
+        } = pending;
+        const formData = new FormData();
+        this.appendWorkOrderPayload(formData, this.normalizeWorkOrderPayload(workOrderPayload));
+        this.appendPhoto(formData, fotoBlob);
+        await firstValueFrom(
+          this.http.patch<unknown>(
+            `${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`,
+            formData,
+            {
+              withCredentials: true,
+            },
+          ),
+        );
+        await this.dbService.deletePendingWorkOrder(id!);
+        successWorkOrdersCount++;
+      } catch (error) {
+        const httpError = error as HttpErrorResponse;
+        if (this.isValidationError(httpError)) {
+          await this.dbService.updatePendingWorkOrder(pending.id!, {
+            syncState: 'RECHAZADA',
+            errorMessage: this.extractErrorMessage(httpError),
+          });
+          rejectedCount++;
+        } else {
+          console.error('Error de red al sincronizar orden, deteniendo cola:', error);
           break;
         }
       }
