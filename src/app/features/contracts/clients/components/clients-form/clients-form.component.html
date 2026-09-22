@@ -1,273 +1,376 @@
-<form [formGroup]="clienteForm" (ngSubmit)="onSubmit()" novalidate>
-  <div class="modal-header">
-    <div>
-      <h5 class="modal-title fw-bold">
-        {{ isEditMode() ? 'Editar Cliente' : 'Agregar Nuevo Cliente' }}
-      </h5>
-      <p class="text-muted mb-0 small">
-        Complete los campos para registrar o actualizar la información del cliente.
-      </p>
-    </div>
-
+<div class="client-form-page container-fluid px-4 py-4">
+  <!-- Top Navigation & Header -->
+  <div class="d-flex align-items-center mb-4 flex-wrap gap-3">
     <button
       type="button"
-      class="btn-close shadow-none"
-      aria-label="Cerrar"
-      (click)="onClose()"
-    ></button>
+      class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-xs"
+      (click)="onCancel()"
+    >
+      <i class="bi bi-arrow-left fs-6"></i>
+      <span class="fw-medium">Volver</span>
+    </button>
+    <div>
+      <h3 class="fw-bold mb-0 text-dark fs-4 d-flex align-items-center gap-2">
+        <i
+          class="bi"
+          [ngClass]="isEditMode() ? 'bi-person-gear text-primary' : 'bi-person-plus text-primary'"
+        ></i>
+        {{ isEditMode() ? 'Editar Cliente' : 'Nuevo Cliente' }}
+      </h3>
+      <p class="text-muted small mb-0">
+        {{
+          isEditMode()
+            ? 'Actualice la información del cliente registrado en el sistema.'
+            : 'Complete el formulario para registrar un nuevo cliente.'
+        }}
+      </p>
+    </div>
   </div>
 
-  <div class="modal-body">
-    @if (mensajeFormulario()) {
-      <div
-        class="form-message"
-        [ngClass]="{
-          'form-message-success': tipoMensajeFormulario() === 'success',
-          'form-message-error': tipoMensajeFormulario() === 'error',
-        }"
-      >
-        {{ mensajeFormulario() }}
+  @if (mensajeFormulario()) {
+    <div
+      class="form-message shadow-xs mb-4"
+      [ngClass]="{
+        'form-message-success': tipoMensajeFormulario() === 'success',
+        'form-message-error': tipoMensajeFormulario() === 'error',
+      }"
+    >
+      <div class="d-flex align-items-center gap-2">
+        <i
+          class="bi"
+          [ngClass]="
+            tipoMensajeFormulario() === 'success'
+              ? 'bi-check-circle-fill'
+              : 'bi-exclamation-triangle-fill'
+          "
+        ></i>
+        <span>{{ mensajeFormulario() }}</span>
       </div>
-    }
+    </div>
+  }
 
-    <div class="row g-3">
-      <!-- Tipo de Identificación -->
-      <div class="col-md-6">
-        <label for="tipoIdentificacionId" class="form-label"
-          >Tipo de identificación <span class="text-dark fw-bold ms-1">*</span></label
-        >
-
-        <select
-          id="tipoIdentificacionId"
-          class="form-select"
-          [class.is-invalid]="campoInvalido('tipoIdentificacionId')"
-          formControlName="tipoIdentificacionId"
-          (change)="onTipoIdentificacionChange()"
-          required
-        >
-          <option value="">Seleccione un tipo de identificación</option>
-
-          @for (tipo of tiposIdentificacion(); track tipo.identificacionId || tipo.id) {
-            <option [value]="tipo.identificacionId || tipo.id">
-              {{ tipo.nombre || tipo.descripcion }}
-            </option>
-          }
-        </select>
-
-        @if (campoInvalido('tipoIdentificacionId')) {
-          <div class="invalid-feedback d-block">
-            {{ obtenerErrorCampo('tipoIdentificacionId') }}
+  <form [formGroup]="clienteForm" (ngSubmit)="onSubmit()" novalidate>
+    <div class="row g-4">
+      <!-- Columna Principal: Datos de Identidad y Contacto -->
+      <div class="col-lg-8">
+        <!-- Tarjeta 1: Identificación y Tipo -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+          <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-1">
+            <h5 class="fw-bold text-dark fs-6 mb-1 d-flex align-items-center gap-2">
+              <i class="bi bi-person-vcard text-primary"></i>
+              Identificación y Datos Principales
+            </h5>
+            <p class="text-muted small mb-0">
+              Seleccione el tipo de persona y documento de identidad.
+            </p>
           </div>
-        }
-      </div>
+          <div class="card-body p-4">
+            <div class="row g-3">
+              <!-- Tipo de Identificación -->
+              <div class="col-md-6">
+                <label for="tipoIdentificacionId" class="form-label">
+                  Tipo de identificación <span class="text-danger fw-bold">*</span>
+                </label>
+                <select
+                  id="tipoIdentificacionId"
+                  class="form-select shadow-none"
+                  [class.is-invalid]="campoInvalido('tipoIdentificacionId')"
+                  formControlName="tipoIdentificacionId"
+                  (change)="onTipoIdentificacionChange()"
+                  required
+                >
+                  <option value="">Seleccione un tipo</option>
+                  @for (tipo of tiposIdentificacion(); track tipo.identificacionId || tipo.id) {
+                    <option [value]="tipo.identificacionId || tipo.id">
+                      {{ tipo.nombre || tipo.descripcion }}
+                    </option>
+                  }
+                </select>
+                @if (campoInvalido('tipoIdentificacionId')) {
+                  <div class="invalid-feedback d-block">
+                    {{ obtenerErrorCampo('tipoIdentificacionId') }}
+                  </div>
+                }
+              </div>
 
-      <!-- Identificación -->
-      <div class="col-md-6">
-        <label for="identificacion" class="form-label"
-          >Identificación <span class="text-dark fw-bold ms-1">*</span></label
-        >
+              <!-- Número de Identificación -->
+              <div class="col-md-6">
+                <label for="identificacion" class="form-label">
+                  Número de identificación <span class="text-danger fw-bold">*</span>
+                </label>
+                <input
+                  id="identificacion"
+                  type="text"
+                  class="form-control shadow-none"
+                  [class.is-invalid]="campoInvalido('identificacion')"
+                  formControlName="identificacion"
+                  placeholder="Ej. 0923456789"
+                  required
+                  minlength="5"
+                  maxlength="13"
+                  autocomplete="off"
+                  (input)="!esPasaporte() ? soloNumeros($event, 'identificacion') : null"
+                />
+                @if (campoInvalido('identificacion')) {
+                  @if (clienteForm.get('identificacion')?.hasError('identificacionInvalida')) {
+                    <small class="text-danger">
+                      {{ etiquetaTipoIdentificacion }} inválida. Verifique el formato ingresado.
+                    </small>
+                  } @else if (clienteForm.get('identificacion')?.hasError('servidor')) {
+                    <small class="text-danger">
+                      {{ clienteForm.get('identificacion')?.getError('servidor') }}
+                    </small>
+                  } @else {
+                    <div class="invalid-feedback d-block">
+                      {{ obtenerErrorCampo('identificacion') }}
+                    </div>
+                  }
+                }
+              </div>
 
-        <input
-          id="identificacion"
-          type="text"
-          class="form-control"
-          [class.is-invalid]="campoInvalido('identificacion')"
-          formControlName="identificacion"
-          placeholder="Ej. 0923456789"
-          required
-          minlength="5"
-          maxlength="13"
-          autocomplete="off"
-          (input)="!esPasaporte() ? soloNumeros($event, 'identificacion') : null"
-        />
+              <!-- Nombres & Apellidos (Persona Natural) -->
+              @if (!esPersonaJuridica()) {
+                <div class="col-md-6">
+                  <label for="nombres" class="form-label">
+                    Nombres <span class="text-danger fw-bold">*</span>
+                  </label>
+                  <input
+                    id="nombres"
+                    type="text"
+                    class="form-control shadow-none"
+                    [class.is-invalid]="campoInvalido('nombres')"
+                    formControlName="nombres"
+                    placeholder="Ej. Juan Carlos"
+                    required
+                    maxlength="100"
+                    pattern="^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s-]+$"
+                    autocomplete="given-name"
+                    (input)="validarNombreCompleto($event, 'nombres')"
+                  />
+                  @if (campoInvalido('nombres')) {
+                    <div class="invalid-feedback d-block">{{ obtenerErrorCampo('nombres') }}</div>
+                  }
+                </div>
 
-        @if (campoInvalido('identificacion')) {
-          @if (clienteForm.get('identificacion')?.hasError('identificacionInvalida')) {
-            <small class="text-danger"
-              >{{ etiquetaTipoIdentificacion }} inválida. Verifique el número ingresado.</small
-            >
-          } @else if (clienteForm.get('identificacion')?.hasError('servidor')) {
-            <small class="text-danger">{{
-              clienteForm.get('identificacion')?.getError('servidor')
-            }}</small>
-          } @else {
-            <div class="invalid-feedback d-block">{{ obtenerErrorCampo('identificacion') }}</div>
-          }
-        }
-      </div>
+                <div class="col-md-6">
+                  <label for="apellidos" class="form-label">
+                    Apellidos <span class="text-danger fw-bold">*</span>
+                  </label>
+                  <input
+                    id="apellidos"
+                    type="text"
+                    class="form-control shadow-none"
+                    [class.is-invalid]="campoInvalido('apellidos')"
+                    formControlName="apellidos"
+                    placeholder="Ej. Pérez Gómez"
+                    required
+                    maxlength="100"
+                    pattern="^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s-]+$"
+                    autocomplete="family-name"
+                    (input)="validarNombreCompleto($event, 'apellidos')"
+                  />
+                  @if (campoInvalido('apellidos')) {
+                    <div class="invalid-feedback d-block">{{ obtenerErrorCampo('apellidos') }}</div>
+                  }
+                </div>
 
-      <!-- Nombres & Apellidos (Persona Natural) -->
-      @if (!esPersonaJuridica()) {
-        <div class="col-md-6">
-          <label for="nombres" class="form-label"
-            >Nombres <span class="text-dark fw-bold ms-1">*</span></label
-          >
+                <div class="col-md-6">
+                  <label for="fechaNacimiento" class="form-label">Fecha de nacimiento</label>
+                  <app-date-picker
+                    inputId="fechaNacimiento"
+                    placeholder="Seleccione fecha de nacimiento"
+                    [value]="fechaNacimiento"
+                    [allowPeriodNavigation]="true"
+                    (valueChange)="onFechaNacimientoChange($event)"
+                  />
+                  <span class="text-muted x-small d-block mt-1"
+                    >Calcula automáticamente beneficio de tercera edad.</span
+                  >
+                </div>
+              }
 
-          <input
-            id="nombres"
-            type="text"
-            class="form-control"
-            [class.is-invalid]="campoInvalido('nombres')"
-            formControlName="nombres"
-            placeholder="Ej. Juan Carlos"
-            required
-            maxlength="100"
-            pattern="^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s-]+$"
-            autocomplete="given-name"
-            (input)="validarNombreCompleto($event, 'nombres')"
-          />
-
-          @if (campoInvalido('nombres')) {
-            <div class="invalid-feedback d-block">{{ obtenerErrorCampo('nombres') }}</div>
-          }
+              <!-- Razón Social (Persona Jurídica) -->
+              @if (esPersonaJuridica()) {
+                <div class="col-12">
+                  <label for="razonSocial" class="form-label">
+                    Razón social <span class="text-danger fw-bold">*</span>
+                  </label>
+                  <input
+                    id="razonSocial"
+                    type="text"
+                    class="form-control shadow-none"
+                    [class.is-invalid]="campoInvalido('razonSocial')"
+                    formControlName="razonSocial"
+                    placeholder="Ej. Comercial Olón S.A."
+                    required
+                    maxlength="150"
+                    autocomplete="organization"
+                  />
+                  @if (campoInvalido('razonSocial')) {
+                    <div class="invalid-feedback d-block">
+                      {{ obtenerErrorCampo('razonSocial') }}
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
         </div>
 
-        <div class="col-md-6">
-          <label for="apellidos" class="form-label"
-            >Apellidos <span class="text-dark fw-bold ms-1">*</span></label
-          >
-
-          <input
-            id="apellidos"
-            type="text"
-            class="form-control"
-            [class.is-invalid]="campoInvalido('apellidos')"
-            formControlName="apellidos"
-            placeholder="Ej. Pérez Gómez"
-            required
-            maxlength="100"
-            pattern="^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s-]+$"
-            autocomplete="family-name"
-            (input)="validarNombreCompleto($event, 'apellidos')"
-          />
-
-          @if (campoInvalido('apellidos')) {
-            <div class="invalid-feedback d-block">{{ obtenerErrorCampo('apellidos') }}</div>
-          }
+        <!-- Tarjeta 2: Ubicación y Domicilio -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+          <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-1">
+            <h5 class="fw-bold text-dark fs-6 mb-1 d-flex align-items-center gap-2">
+              <i class="bi bi-geo-alt text-primary"></i>
+              Ubicación y Domicilio
+            </h5>
+            <p class="text-muted small mb-0">
+              Dirección donde se presta el servicio y para emisión de facturación.
+            </p>
+          </div>
+          <div class="card-body p-4">
+            <div class="row g-3">
+              <div class="col-12">
+                <label for="direccionDomicilio" class="form-label">
+                  Dirección domiciliaria <span class="text-danger fw-bold">*</span>
+                </label>
+                <textarea
+                  id="direccionDomicilio"
+                  class="form-control shadow-none"
+                  [class.is-invalid]="campoInvalido('direccionDomicilio')"
+                  formControlName="direccionDomicilio"
+                  placeholder="Ingrese calle principal, intersección o referencia clara del domicilio"
+                  rows="3"
+                  required
+                  minlength="5"
+                  maxlength="250"
+                  autocomplete="street-address"
+                ></textarea>
+                @if (campoInvalido('direccionDomicilio')) {
+                  <div class="invalid-feedback d-block">
+                    {{ obtenerErrorCampo('direccionDomicilio') }}
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
         </div>
-
-        <div class="col-md-6">
-          <label for="fechaNacimiento" class="form-label">Fecha de nacimiento</label>
-
-          <app-date-picker
-            inputId="fechaNacimiento"
-            placeholder="Seleccione la fecha de nacimiento"
-            [value]="fechaNacimiento"
-            [allowPeriodNavigation]="true"
-            (valueChange)="onFechaNacimientoChange($event)"
-          />
-
-          <small class="text-muted">Determina automáticamente el beneficio de tercera edad.</small>
-        </div>
-      }
-
-      <!-- Razón Social (Persona Jurídica) -->
-      @if (esPersonaJuridica()) {
-        <div class="col-12">
-          <label for="razonSocial" class="form-label"
-            >Razón social <span class="text-dark fw-bold ms-1">*</span></label
-          >
-
-          <input
-            id="razonSocial"
-            type="text"
-            class="form-control"
-            [class.is-invalid]="campoInvalido('razonSocial')"
-            formControlName="razonSocial"
-            placeholder="Ingrese la razón social"
-            required
-            maxlength="150"
-            autocomplete="organization"
-          />
-
-          @if (campoInvalido('razonSocial')) {
-            <div class="invalid-feedback d-block">{{ obtenerErrorCampo('razonSocial') }}</div>
-          }
-        </div>
-      }
-
-      <!-- Correo Electrónico -->
-      <div class="col-md-6">
-        <label for="email" class="form-label"
-          >Correo electrónico <span class="text-dark fw-bold ms-1">*</span></label
-        >
-
-        <input
-          id="email"
-          type="email"
-          class="form-control"
-          [class.is-invalid]="campoInvalido('email')"
-          formControlName="email"
-          placeholder="usuario@correo.com"
-          required
-          maxlength="100"
-          autocomplete="email"
-          (blur)="verificarUnicidadCorreo()"
-        />
-
-        @if (campoInvalido('email')) {
-          <div class="invalid-feedback d-block">{{ obtenerErrorCampo('email') }}</div>
-        }
       </div>
 
-      <!-- Teléfono -->
-      <div class="col-md-6">
-        <label for="telefono" class="form-label"
-          >Teléfono <span class="text-dark fw-bold ms-1">*</span></label
-        >
+      <!-- Columna Lateral: Contacto y Beneficios -->
+      <div class="col-lg-4">
+        <!-- Tarjeta 3: Información de Contacto -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+          <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-1">
+            <h5 class="fw-bold text-dark fs-6 mb-1 d-flex align-items-center gap-2">
+              <i class="bi bi-telephone text-primary"></i>
+              Contacto
+            </h5>
+            <p class="text-muted small mb-0">Para notificaciones y comprobantes electrónicos.</p>
+          </div>
+          <div class="card-body p-4">
+            <div class="row g-3">
+              <!-- Correo Electrónico -->
+              <div class="col-12">
+                <label for="email" class="form-label">
+                  Correo electrónico <span class="text-danger fw-bold">*</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text bg-white border-end-0 text-muted">
+                    <i class="bi bi-envelope"></i>
+                  </span>
+                  <input
+                    id="email"
+                    type="email"
+                    class="form-control border-start-0 shadow-none ps-0"
+                    [class.is-invalid]="campoInvalido('email')"
+                    formControlName="email"
+                    placeholder="ejemplo@correo.com"
+                    required
+                    maxlength="100"
+                    autocomplete="email"
+                    (blur)="verificarUnicidadCorreo()"
+                  />
+                </div>
+                @if (campoInvalido('email')) {
+                  <div class="invalid-feedback d-block">{{ obtenerErrorCampo('email') }}</div>
+                }
+              </div>
 
-        <input
-          id="telefono"
-          type="tel"
-          class="form-control"
-          [class.is-invalid]="campoInvalido('telefono')"
-          formControlName="telefono"
-          placeholder="Ej. 0987654321"
-          required
-          minlength="10"
-          maxlength="10"
-          pattern="^[0-9]{10}$"
-          inputmode="numeric"
-          autocomplete="tel"
-          (input)="soloNumeros($event, 'telefono')"
-        />
+              <!-- Teléfono Principal -->
+              <div class="col-12">
+                <label for="telefono" class="form-label">
+                  Teléfono principal <span class="text-danger fw-bold">*</span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text bg-white border-end-0 text-muted">
+                    <i class="bi bi-phone"></i>
+                  </span>
+                  <input
+                    id="telefono"
+                    type="tel"
+                    class="form-control border-start-0 shadow-none ps-0"
+                    [class.is-invalid]="campoInvalido('telefono')"
+                    formControlName="telefono"
+                    placeholder="0987654321"
+                    required
+                    minlength="10"
+                    maxlength="10"
+                    pattern="^[0-9]{10}$"
+                    inputmode="numeric"
+                    autocomplete="tel"
+                    (input)="soloNumeros($event, 'telefono')"
+                  />
+                </div>
+                @if (campoInvalido('telefono')) {
+                  <div class="invalid-feedback d-block">{{ obtenerErrorCampo('telefono') }}</div>
+                }
+              </div>
 
-        @if (campoInvalido('telefono')) {
-          <div class="invalid-feedback d-block">{{ obtenerErrorCampo('telefono') }}</div>
-        }
-      </div>
+              <!-- Teléfono Secundario -->
+              <div class="col-12">
+                <label for="telefonoSecundario" class="form-label">Teléfono secundario</label>
+                <div class="input-group">
+                  <span class="input-group-text bg-white border-end-0 text-muted">
+                    <i class="bi bi-telephone"></i>
+                  </span>
+                  <input
+                    id="telefonoSecundario"
+                    type="tel"
+                    class="form-control border-start-0 shadow-none ps-0"
+                    [class.is-invalid]="campoInvalido('telefonoSecundario')"
+                    formControlName="telefonoSecundario"
+                    placeholder="Opcional (Ej. 042780123)"
+                    minlength="7"
+                    maxlength="10"
+                    pattern="^[0-9]{7,10}$"
+                    inputmode="numeric"
+                    (input)="soloNumeros($event, 'telefonoSecundario')"
+                  />
+                </div>
+                @if (campoInvalido('telefonoSecundario')) {
+                  <div class="invalid-feedback d-block">
+                    {{ obtenerErrorCampo('telefonoSecundario') }}
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
 
-      <!-- Teléfono Secundario -->
-      <div class="col-md-6">
-        <label for="telefonoSecundario" class="form-label">Teléfono secundario</label>
-
-        <input
-          id="telefonoSecundario"
-          type="tel"
-          class="form-control"
-          [class.is-invalid]="campoInvalido('telefonoSecundario')"
-          formControlName="telefonoSecundario"
-          placeholder="Opcional (Ej. 022345678)"
-          minlength="7"
-          maxlength="10"
-          pattern="^[0-9]{7,10}$"
-          inputmode="numeric"
-          (input)="soloNumeros($event, 'telefonoSecundario')"
-        />
-
-        @if (campoInvalido('telefonoSecundario')) {
-          <div class="invalid-feedback d-block">{{ obtenerErrorCampo('telefonoSecundario') }}</div>
-        }
-      </div>
-
-      <!-- Condiciones especiales -->
-      <div class="col-12">
-        <p class="form-label mb-2">Condiciones especiales</p>
-        <div class="row g-3">
-          <!-- Card Tercera Edad (Informativo calculado por fecha) -->
-          <div class="col-md-6">
+        <!-- Tarjeta 4: Condiciones Especiales -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4">
+          <div class="card-header bg-white border-bottom-0 pt-4 px-4 pb-1">
+            <h5 class="fw-bold text-dark fs-6 mb-1 d-flex align-items-center gap-2">
+              <i class="bi bi-shield-check text-primary"></i>
+              Condiciones Especiales
+            </h5>
+            <p class="text-muted small mb-0">Beneficios tarifarios por ley.</p>
+          </div>
+          <div class="card-body p-4 d-flex flex-column gap-3">
+            <!-- Card Tercera Edad -->
             <div
-              class="condition-card h-100 p-3 rounded-3 border transition-all"
+              class="condition-card p-3 rounded-3 border transition-all"
               [class.condition-card-active]="esTerceraEdad"
             >
               <div class="d-flex align-items-center justify-content-between mb-2">
@@ -285,7 +388,7 @@
                 </div>
                 @if (esTerceraEdad) {
                   <span class="badge bg-success d-inline-flex align-items-center gap-1">
-                    <i class="bi bi-check-circle-fill"></i> Activo
+                    <i class="bi bi-check-circle-fill"></i> Aplica
                   </span>
                 } @else {
                   <span class="badge bg-secondary-subtle text-secondary">No aplica</span>
@@ -293,19 +396,17 @@
               </div>
               <p class="small text-muted mb-0">
                 @if (esTerceraEdad) {
-                  Aplica beneficio tarifario de tercera edad calculado automáticamente.
+                  Cumple con el umbral de 65+ años para beneficio tarifario.
                 } @else {
-                  Se calcula automáticamente a partir de la fecha de nacimiento (65+ años).
+                  Se determina según la fecha de nacimiento ingresada.
                 }
               </p>
             </div>
-          </div>
 
-          <!-- Card Discapacidad (Interactivo con checkbox) -->
-          <div class="col-md-6">
+            <!-- Card Discapacidad -->
             <label
               for="aplicaDiscapacidad"
-              class="condition-card condition-card-clickable h-100 p-3 rounded-3 border d-block transition-all mb-0"
+              class="condition-card condition-card-clickable p-3 rounded-3 border d-block transition-all mb-0"
               [class.condition-card-active]="clienteForm.get('aplicaDiscapacidad')?.value"
             >
               <div class="d-flex align-items-center justify-content-between mb-2">
@@ -332,48 +433,40 @@
               </div>
               <p class="small text-muted mb-0">
                 @if (clienteForm.get('aplicaDiscapacidad')?.value) {
-                  El cliente cuenta con condición o carnet de discapacidad registrado.
+                  Beneficio por condición o carnet de discapacidad activado.
                 } @else {
-                  Marque esta casilla si el cliente aplica para beneficio por discapacidad.
+                  Active esta casilla si el cliente cuenta con carnet de discapacidad.
                 }
               </p>
             </label>
           </div>
         </div>
       </div>
-
-      <!-- Dirección domiciliaria -->
-      <div class="col-12">
-        <label for="direccionDomicilio" class="form-label"
-          >Dirección domiciliaria <span class="text-dark fw-bold ms-1">*</span></label
-        >
-
-        <textarea
-          id="direccionDomicilio"
-          class="form-control"
-          [class.is-invalid]="campoInvalido('direccionDomicilio')"
-          formControlName="direccionDomicilio"
-          placeholder="Ingrese la dirección del cliente"
-          rows="3"
-          required
-          maxlength="250"
-          autocomplete="street-address"
-        ></textarea>
-
-        @if (campoInvalido('direccionDomicilio')) {
-          <div class="invalid-feedback d-block">{{ obtenerErrorCampo('direccionDomicilio') }}</div>
-        }
-      </div>
     </div>
-  </div>
 
-  <div class="modal-footer">
-    <button type="button" class="btn btn-outline-secondary fw-medium px-4" (click)="onClose()">
-      Cancelar
-    </button>
-
-    <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
-      {{ isSaving() ? 'Guardando...' : 'Guardar' }}
-    </button>
-  </div>
-</form>
+    <!-- Bottom Action Bar -->
+    <div class="d-flex justify-content-end align-items-center gap-3 pt-3 border-top mt-2">
+      <button
+        type="button"
+        class="btn btn-outline-secondary px-4 fw-medium rounded-3"
+        (click)="onCancel()"
+        [disabled]="isSaving()"
+      >
+        Cancelar
+      </button>
+      <button
+        type="submit"
+        class="btn btn-primary px-4 fw-medium rounded-3 d-flex align-items-center gap-2 shadow-sm"
+        [disabled]="isSaving()"
+      >
+        @if (isSaving()) {
+          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+          <span>Guardando...</span>
+        } @else {
+          <i class="bi bi-check-lg fs-6"></i>
+          <span>{{ isEditMode() ? 'Guardar Cambios' : 'Registrar Cliente' }}</span>
+        }
+      </button>
+    </div>
+  </form>
+</div>

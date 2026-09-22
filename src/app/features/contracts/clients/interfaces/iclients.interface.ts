@@ -31,8 +31,9 @@ export interface IClient {
   telefono: string;
   telefonoSecundario?: string | null;
 
-  aplicaTerceraEdad: boolean;
-  aplicaDiscapacidad: boolean;
+  fechaNacimiento?: string;
+  aplicaTerceraEdad?: boolean;
+  aplicaDiscapacidad?: boolean;
 
   direccionDomicilio: string;
 

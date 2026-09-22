@@ -78,25 +78,25 @@ describe('ClientsComponent', () => {
     });
   });
 
-  it('en modo selección elige automáticamente el cliente recién creado', () => {
+  it('en modo selección emite el cliente seleccionado', () => {
     fixture.componentRef.setInput('selectionMode', true);
     fixture.detectChanges();
 
     const seleccionado = vi.fn();
     component.clientSelected.subscribe(seleccionado);
 
-    const nuevoCliente = { clienteId: '42', nombres: 'Ana', apellidos: 'Pérez' } as IClient;
-    component.onClientCreated(nuevoCliente);
+    const cliente = { clienteId: '42', nombres: 'Ana', apellidos: 'Pérez' } as IClient;
+    component.selectClient(cliente);
 
     expect(seleccionado).toHaveBeenCalledTimes(1);
-    expect(seleccionado).toHaveBeenCalledWith(nuevoCliente);
+    expect(seleccionado).toHaveBeenCalledWith(cliente);
   });
 
-  it('fuera del modo selección no emite el cliente recién creado', () => {
+  it('fuera del modo selección no emite el cliente seleccionado', () => {
     const seleccionado = vi.fn();
     component.clientSelected.subscribe(seleccionado);
 
-    component.onClientCreated({ clienteId: '42' } as IClient);
+    component.selectClient({ clienteId: '42' } as IClient);
 
     expect(seleccionado).not.toHaveBeenCalled();
   });

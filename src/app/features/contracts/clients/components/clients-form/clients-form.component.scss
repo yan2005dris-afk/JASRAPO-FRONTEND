@@ -1,73 +1,69 @@
+.client-form-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
 .form-label {
   font-weight: 600;
-  font-size: 0.9rem;
-  color: #212529;
+  font-size: 0.875rem;
+  color: #344767;
+  margin-bottom: 0.375rem;
 }
 
 .form-control,
 .form-select {
-  border-radius: 8px;
-  min-height: 42px;
-  border-color: #dee2e6;
-}
-
-.form-control:focus,
-.form-select:focus {
-  box-shadow: none;
-  border-color: #0d6efd;
-}
-
-textarea {
-  resize: none;
-}
-
-.modal-title {
-  color: #212529;
-}
-
-.modal-body {
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.text-danger {
-  font-size: 0.78rem;
-}
-
-.form-check {
-  margin-bottom: 0;
-}
-
-.form-check-input {
-  cursor: pointer;
-}
-
-.form-check-label {
+  border-radius: 0.5rem;
+  min-height: 44px;
+  border: 1px solid #dee2e6;
   font-size: 0.9rem;
-  color: #495057;
-  cursor: pointer;
+  color: #212529;
+  transition: all 0.15s ease-in-out;
+
+  &:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
+  }
+
+  &.is-invalid {
+    border-color: #dc3545;
+  }
+}
+
+.input-group-text {
+  border-radius: 0.5rem 0 0 0.5rem;
+  border: 1px solid #dee2e6;
+}
+
+textarea.form-control {
+  resize: vertical;
+  min-height: 90px;
+}
+
+.card {
+  box-shadow: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.05) !important;
+  border-color: rgba(0, 0, 0, 0.06) !important;
 }
 
 .btn {
-  border-radius: 8px;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
 }
 
 .form-message {
-  margin: 0 0 1rem;
-  padding: 0.75rem 1rem;
+  padding: 0.85rem 1.25rem;
   border-radius: 0.75rem;
-  font-size: 0.95rem;
+  font-size: 0.925rem;
   font-weight: 500;
 }
 
 .form-message-success {
-  color: #146c43;
+  color: #0f5132;
   background-color: #d1e7dd;
   border: 1px solid #badbcc;
 }
 
 .form-message-error {
-  color: #b02a37;
+  color: #842029;
   background-color: #f8d7da;
   border: 1px solid #f5c2c7;
 }
@@ -101,9 +97,15 @@ textarea {
 
 .condition-switch {
   cursor: pointer;
+  width: 2.5em;
+  height: 1.25em;
 
   &:checked {
     background-color: #198754;
     border-color: #198754;
   }
+}
+
+.shadow-xs {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
 }

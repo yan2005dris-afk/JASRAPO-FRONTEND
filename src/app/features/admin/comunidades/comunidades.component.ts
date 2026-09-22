@@ -305,24 +305,24 @@ export class ComunidadesComponent implements OnInit {
       return mensajePorDefecto;
     }
 
-    if (errorBackend.message) {
-      return errorBackend.message;
-    }
-
-    if (errorBackend.error) {
-      return errorBackend.error;
-    }
-
     if (Array.isArray(errorBackend.errors) && errorBackend.errors.length > 0) {
-      return errorBackend.errors.join(' ');
+      return errorBackend.errors.join('. ');
     }
 
     if (errorBackend.errors && typeof errorBackend.errors === 'object') {
       const mensajes = Object.values(errorBackend.errors).flat();
 
       if (mensajes.length > 0) {
-        return mensajes.join(' ');
+        return mensajes.join('. ');
       }
+    }
+
+    if (errorBackend.message) {
+      return errorBackend.message;
+    }
+
+    if (errorBackend.error) {
+      return errorBackend.error;
     }
 
     return mensajePorDefecto;
