@@ -404,6 +404,33 @@ describe('OperatorSyncService', () => {
       });
       expect(savePendingReading).not.toHaveBeenCalled();
     });
+
+    it('exige coordenadas al registrar la ubicación de una orden de lectura', async () => {
+      isOnline.mockReturnValue(false);
+      getCurrentCoordinates.mockResolvedValue(null);
+
+      await expect(service.submitReadingCoordinates('wo-reading')).rejects.toThrow(
+        /No se pudo obtener la ubicación/,
+      );
+
+      expect(savePendingWorkOrder).not.toHaveBeenCalled();
+      expect(httpPatch).not.toHaveBeenCalled();
+    });
+
+    it('encola silenciosamente las coordenadas de la orden asociada a una lectura offline', async () => {
+      isOnline.mockReturnValue(false);
+
+      await expect(service.submitReadingCoordinates('wo-reading')).resolves.toEqual({
+        offline: true,
+      });
+
+      expect(savePendingWorkOrder).toHaveBeenCalledWith({
+        ordenTrabajoId: 'wo-reading',
+        latitud: -0.9677,
+        longitud: -80.7089,
+      });
+      expect(toast.warning).not.toHaveBeenCalled();
+    });
   });
 
   // ── submitAnomaly ────────────────────────────────────────────────────────
@@ -1072,9 +1099,7 @@ describe('OperatorSyncService', () => {
 
       expect(saveNovedadesCache).toHaveBeenCalledWith(
         'operator:42',
-        expect.arrayContaining([
-          expect.objectContaining({ lecturaId: 'l-1', medidorId: 'M-1' }),
-        ]),
+        expect.arrayContaining([expect.objectContaining({ lecturaId: 'l-1', medidorId: 'M-1' })]),
       );
     });
 

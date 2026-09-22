@@ -31,6 +31,11 @@ export interface WorkOrderSubmission {
   [key: string]: PayloadValue;
 }
 
+interface WorkOrderSubmissionOptions {
+  requireCoordinates: boolean;
+  notify: boolean;
+}
+
 @Injectable({
   providedIn: 'root',
 })
@@ -351,6 +356,27 @@ export class OperatorSyncService {
   async submitWorkOrder(
     workOrder: WorkOrderSubmission & { fotoBlob?: Blob | null },
   ): Promise<unknown> {
+    return this.submitWorkOrderUpdate(workOrder, {
+      requireCoordinates: false,
+      notify: true,
+    });
+  }
+
+  /**
+   * Persists the measured position on the LECTURA work order before its reading is submitted.
+   * Coordinates never become editable form fields and are never sent to PATCH /readings/:id.
+   */
+  async submitReadingCoordinates(ordenTrabajoId: string | number): Promise<unknown> {
+    return this.submitWorkOrderUpdate(
+      { ordenTrabajoId },
+      { requireCoordinates: true, notify: false },
+    );
+  }
+
+  private async submitWorkOrderUpdate(
+    workOrder: WorkOrderSubmission & { fotoBlob?: Blob | null },
+    options: WorkOrderSubmissionOptions,
+  ): Promise<unknown> {
     const { ordenTrabajoId } = workOrder;
     if (
       ordenTrabajoId === null ||
@@ -361,6 +387,14 @@ export class OperatorSyncService {
     }
 
     const submission = await this.attachCurrentCoordinates(workOrder);
+    if (
+      options.requireCoordinates &&
+      (submission.latitud === undefined || submission.longitud === undefined)
+    ) {
+      throw new Error(
+        'No se pudo obtener la ubicación. Activa el GPS y permite el acceso antes de registrar la lectura.',
+      );
+    }
     const { fotoBlob } = submission;
 
     if (this.networkService.isOnline()) {
@@ -373,23 +407,29 @@ export class OperatorSyncService {
         const request$ = this.http.patch<unknown>(url, formData, { withCredentials: true });
 
         const response = await firstValueFrom(request$);
-        this.toastService.success('Orden de trabajo registrada correctamente.', 'Éxito');
+        if (options.notify) {
+          this.toastService.success('Orden de trabajo registrada correctamente.', 'Éxito');
+        }
         return response;
       } catch (error: unknown) {
-        this.toastService.error(
-          (error as HttpErrorResponse).error?.message || 'Error al enviar orden al servidor.',
-          'Error',
-        );
+        if (options.notify) {
+          this.toastService.error(
+            (error as HttpErrorResponse).error?.message || 'Error al enviar orden al servidor.',
+            'Error',
+          );
+        }
         throw error;
       }
     } else {
       // Encolar la orden en el store dedicado `ordenes_pendientes` (#267)
       await this.dbService.savePendingWorkOrder({ ...submission });
       await this.refreshPendingCounts();
-      this.toastService.warning(
-        'Modo Offline: Orden guardada localmente. Se sincronizará al recuperar internet.',
-        'Guardado Local',
-      );
+      if (options.notify) {
+        this.toastService.warning(
+          'Modo Offline: Orden guardada localmente. Se sincronizará al recuperar internet.',
+          'Guardado Local',
+        );
+      }
       return { offline: true };
     }
   }
@@ -551,13 +591,9 @@ export class OperatorSyncService {
         this.appendWorkOrderPayload(formData, this.normalizeWorkOrderPayload(workOrderPayload));
         this.appendPhoto(formData, fotoBlob);
         await firstValueFrom(
-          this.http.patch<unknown>(
-            `${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`,
-            formData,
-            {
-              withCredentials: true,
-            },
-          ),
+          this.http.patch<unknown>(`${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`, formData, {
+            withCredentials: true,
+          }),
         );
         await this.dbService.deletePendingWorkOrder(id!);
         successWorkOrdersCount++;

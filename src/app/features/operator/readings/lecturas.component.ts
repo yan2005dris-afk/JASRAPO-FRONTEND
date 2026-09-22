@@ -24,8 +24,6 @@ import { WorkOrderDispatcherComponent } from '../components/work-order-dispatche
 import { calculateConsumo, type WorkOrderFormPayload } from '../models/work-order-form.models';
 import type { WorkOrderActivityType, WorkOrderState } from '../models/operator.models';
 
-type AssignedWorkOrderType = Exclude<WorkOrderActivityType, 'LECTURA'>;
-
 interface AssignedWorkOrder {
   id: string;
   estado: WorkOrderState;
@@ -254,8 +252,12 @@ export class LecturasComponent implements OnInit {
       await this.meterCache.load();
       const operatorId = this.authService.currentUser()?.id;
       const scope = operatorId ? `operator:${operatorId}` : undefined;
-      const cachedReadings = await this.dbService.getRegisteredReadingsCache(scope);
+      const [cachedReadings, assignedWorkOrders] = await Promise.all([
+        this.dbService.getRegisteredReadingsCache(scope),
+        this.dbService.getAssignedWorkOrders(scope),
+      ]);
       this.registeredReadings.set(cachedReadings);
+      this.mergeAssignedWorkOrders(assignedWorkOrders);
 
       // Si se pasó una serie específica en la query URL y no estaba seleccionada
       const singleSerie = this.activatedRoute.snapshot.queryParamMap.get('serie');
@@ -266,6 +268,34 @@ export class LecturasComponent implements OnInit {
     } catch (e) {
       console.error('Error al cargar caché offline:', e);
     }
+  }
+
+  private mergeAssignedWorkOrders(workOrders: Record<string, unknown>[]): void {
+    const merged = new Map(this.workOrdersByMeter());
+    const meterSeriesById = new Map(
+      this.metersList().map((meter) => [String(meter.medidorId), meter.serie]),
+    );
+
+    for (const workOrder of workOrders) {
+      const meter = workOrder['medidor'] as { medidorId?: unknown; serie?: unknown } | undefined;
+      const medidorId = workOrder['medidorId'] ?? meter?.medidorId;
+      const serie =
+        typeof meter?.serie === 'string'
+          ? meter.serie
+          : medidorId != null
+            ? meterSeriesById.get(String(medidorId))
+            : undefined;
+      const id = workOrder['ordenTrabajoId'] ?? workOrder['id'];
+      const tipo = workOrder['tipoActividad'] as WorkOrderActivityType | undefined;
+      const estado = workOrder['estado'] as WorkOrderState | undefined;
+      if (!serie || id == null || !tipo || !estado) continue;
+
+      const assignments = new Map(merged.get(serie) ?? []);
+      if (!assignments.has(tipo)) assignments.set(tipo, { id: String(id), estado });
+      merged.set(serie, assignments);
+    }
+
+    this.workOrdersByMeter.set(merged);
   }
 
   private autoSelectFromQueryParam(): void {
@@ -473,7 +503,7 @@ export class LecturasComponent implements OnInit {
     return this.estadosCatalog().find((item) => item.codigo === state)?.nombre ?? state;
   }
 
-  private workOrderIdFor(meter: IMeterDto, tipo: AssignedWorkOrderType): string | undefined {
+  private workOrderIdFor(meter: IMeterDto, tipo: WorkOrderActivityType): string | undefined {
     const workOrder = this.workOrdersByMeter().get(meter.serie)?.get(tipo);
     if (workOrder?.estado !== 'PENDIENTE' && workOrder?.estado !== 'EN_PROGRESO') {
       return undefined;
@@ -521,6 +551,15 @@ export class LecturasComponent implements OnInit {
 
     try {
       if (formPayload.tipoActividad === 'LECTURA') {
+        const ordenTrabajoId = this.workOrderIdFor(meter, 'LECTURA');
+        if (!ordenTrabajoId) {
+          throw new Error(
+            'No se encontró la orden de trabajo asociada a esta lectura. Actualiza los datos del operador e intenta nuevamente.',
+          );
+        }
+        // El backend guarda GPS en la orden, no en PATCH /readings/:id. Se registra primero
+        // para no dejar una lectura aceptada sin su ubicación si la operación GPS falla.
+        await this.syncService.submitReadingCoordinates(ordenTrabajoId);
         const lecturaPayload = {
           fecha: new Date().toISOString(),
           medidorId: meter.medidorId.toString(),
@@ -545,10 +584,7 @@ export class LecturasComponent implements OnInit {
         this.setSubmissionSuccess(response as { offline?: boolean });
       } else {
         // INSTALACION / INSPECCION / RECONEXION → endpoint dedicado (#261)
-        const ordenTrabajoId = this.workOrderIdFor(
-          meter,
-          formPayload.tipoActividad as AssignedWorkOrderType,
-        );
+        const ordenTrabajoId = this.workOrderIdFor(meter, formPayload.tipoActividad);
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const workOrderPayload: any = {
           ordenTrabajoId,
@@ -566,12 +602,17 @@ export class LecturasComponent implements OnInit {
     } catch (e) {
       console.error('Error al registrar orden de trabajo:', e);
       this.failedSubmission.set(formPayload);
+      const localMessage =
+        e instanceof Error &&
+        (e.message.includes('ubicación') || e.message.includes('orden de trabajo asociada'))
+          ? e.message
+          : 'Tus datos se conservaron. Revisa la conexión y reintenta el envío.';
       this.submissionFeedback.set({
         kind: 'error',
         title: 'No se pudo enviar',
-        message: 'Tus datos se conservaron. Revisa la conexión y reintenta el envío.',
+        message: localMessage,
       });
-      this.toastService.error('Los datos se conservaron. Puedes reintentar el envío.', 'Error');
+      this.toastService.error(localMessage, 'Error');
     } finally {
       this.isSaving.set(false);
     }
