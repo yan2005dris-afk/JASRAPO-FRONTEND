@@ -68,10 +68,7 @@ describe('ClientsFormComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [ClientsFormComponent],
-      providers: [
-        { provide: ClientsService, useValue: clientsServiceSpy },
-        provideRouter([]),
-      ],
+      providers: [{ provide: ClientsService, useValue: clientsServiceSpy }, provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ClientsFormComponent);
