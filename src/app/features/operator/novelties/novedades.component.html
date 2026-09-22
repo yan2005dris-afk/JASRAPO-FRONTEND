@@ -6,13 +6,25 @@
     </button>
   </div>
 
-  @if (isOffline()) {
+  @if (isOffline() && !isLoading()) {
     <div class="offline-banner">
       <i class="bi bi-wifi-off"></i>
-      Sin conexión — las novedades se listan solo online.
+      @if (cachedAt()) {
+        <span class="offline-cache-info">
+          Sin conexión — mostrando datos guardados localmente
+          ({{ cachedAt() | date: 'dd/MM/yyyy HH:mm' }}).
+          @if (isStale()) {
+            <span class="stale-warning">Los datos pueden estar desactualizados (más de 24 h).</span>
+          }
+        </span>
+      } @else {
+        <span>Sin conexión — las novedades se listan solo online.</span>
+      }
       <button class="retry-link" type="button" (click)="retry()">Reintentar</button>
     </div>
-  } @else if (isLoading()) {
+  }
+
+  @if (isLoading()) {
     <div class="skeleton-list" aria-busy="true">
       @for (i of [1, 2, 3]; track i) {
         <div class="skeleton-card"></div>
@@ -44,6 +56,12 @@
             <span class="anomaly-estado estado-{{ item.estado.toLowerCase() }}">
               {{ item.estado }}
             </span>
+            @if (item.isPending) {
+              <span class="anomaly-chip pending-sync">
+                <i class="bi bi-cloud-slash"></i>
+                Pendiente de sync
+              </span>
+            }
           </div>
 
           @if (item.anomalias.length) {
@@ -58,9 +76,11 @@
           }
 
           <div class="anomaly-actions">
-            <button class="btn-edit" type="button" (click)="editNovedad(item)">
-              <i class="bi bi-pencil-fill"></i> Editar
-            </button>
+            @if (item.lecturaId) {
+              <button class="btn-edit" type="button" (click)="editNovedad(item)">
+                <i class="bi bi-pencil-fill"></i> Editar
+              </button>
+            }
           </div>
         </div>
       }

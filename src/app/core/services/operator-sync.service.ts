@@ -769,6 +769,9 @@ export class OperatorSyncService {
       const estados = await this.getReadingEstados().catch(() => []);
       if (estados.length > 0) await this.dbService.saveEstadosCache(estados);
 
+      // Caché offline de novedades para la vista sin conexión.
+      await this.cacheNovedadesForOffline(scope);
+
       this.markInitialSyncDone();
       this.saveLastDownloadDate();
 
@@ -813,6 +816,23 @@ export class OperatorSyncService {
    */
   async syncCatalogAndReadings(): Promise<void> {
     await this.downloadAssignedData();
+  }
+
+  /**
+   * Persiste en `novedades_cache` las lecturas con anomalías del operador para la vista offline.
+   * No bloquea la descarga si el GET o la escritura fallan: se registra un warning y se continúa.
+   */
+  private async cacheNovedadesForOffline(scope: string): Promise<void> {
+    try {
+      const anomalies = await firstValueFrom(
+        this.http.get<ReadingWithAnomaly[]>(`${this.OPERATOR_API}/readings/anomalies`, {
+          withCredentials: true,
+        }),
+      );
+      await this.dbService.saveNovedadesCache(scope, anomalies);
+    } catch (error) {
+      console.warn('No se pudo guardar el caché offline de novedades:', error);
+    }
   }
 
   /**

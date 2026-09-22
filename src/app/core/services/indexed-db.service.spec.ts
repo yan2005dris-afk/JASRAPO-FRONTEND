@@ -23,6 +23,7 @@ describe('IndexedDbService - Multi-operator Snapshot Isolation', () => {
       'lecturas_registradas',
       'lecturas_sincronizadas',
       'estados_cache',
+      'novedades_cache',
     ];
     for (const name of storeNames) {
       inMemoryDb.set(name, new Map());
@@ -416,6 +417,91 @@ describe('IndexedDbService - Multi-operator Snapshot Isolation', () => {
     const after = await service.getPendingAnomalies();
     expect(after).toEqual([]);
   });
+
+  it('guarda y recupera el caché de novedades por operador', async () => {
+    const items = [
+      {
+        lecturaId: 'l-1',
+        medidorId: 'M-1',
+        medidorSerie: 'S-1',
+        fecha: '2026-06-15T10:00:00Z',
+        estado: 'PROCESADA',
+        anomalias: [],
+      },
+      {
+        lecturaId: 'l-2',
+        medidorId: 'M-2',
+        medidorSerie: 'S-2',
+        fecha: '2026-06-16T10:00:00Z',
+        estado: 'PENDIENTE',
+        anomalias: [],
+      },
+    ];
+
+    await service.saveNovedadesCache('operator:1', items);
+    const result = await service.getNovedadesCache<any>('operator:1');
+
+    expect(result).not.toBeNull();
+    expect(result?.items).toHaveLength(2);
+    expect(result?.items.map((i) => i.lecturaId)).toEqual(['l-1', 'l-2']);
+    expect(result?.items[0].medidorSerie).toBe('S-1');
+    expect(result?.savedAt).toBeTruthy();
+  });
+
+  it('aisla el caché de novedades por operador y reemplaza al descargar de nuevo', async () => {
+    await service.saveNovedadesCache('operator:1', [
+      {
+        lecturaId: 'l-1',
+        medidorId: 'M-1',
+        medidorSerie: 'S-1',
+        fecha: '2026-06-15T10:00:00Z',
+        estado: 'PROCESADA',
+        anomalias: [],
+      },
+    ]);
+    await service.saveNovedadesCache('operator:2', [
+      {
+        lecturaId: 'l-9',
+        medidorId: 'M-9',
+        medidorSerie: 'S-9',
+        fecha: '2026-06-17T10:00:00Z',
+        estado: 'PENDIENTE',
+        anomalias: [],
+      },
+    ]);
+
+    expect((await service.getNovedadesCache<any>('operator:1'))?.items).toHaveLength(1);
+    expect((await service.getNovedadesCache<any>('operator:2'))?.items[0].lecturaId).toBe('l-9');
+
+    // Una nueva descarga para el mismo operador reemplaza las lecturas anteriores.
+    await service.saveNovedadesCache('operator:1', [
+      {
+        lecturaId: 'l-3',
+        medidorId: 'M-3',
+        medidorSerie: 'S-3',
+        fecha: '2026-06-18T10:00:00Z',
+        estado: 'PROCESADA',
+        anomalias: [],
+      },
+    ]);
+    const refreshed = await service.getNovedadesCache<any>('operator:1');
+    expect(refreshed?.items.map((i) => i.lecturaId)).toEqual(['l-3']);
+  });
+
+  it('retorna null del caché de novedades si no hay registros para el operador', async () => {
+    await service.saveNovedadesCache('operator:7', [
+      {
+        lecturaId: 'l-7',
+        medidorId: 'M-7',
+        medidorSerie: 'S-7',
+        fecha: '2026-06-15T10:00:00Z',
+        estado: 'PROCESADA',
+        anomalias: [],
+      },
+    ]);
+
+    expect(await service.getNovedadesCache<any>('operator:missing')).toBeNull();
+  });
 });
 
 describe('Route/snapshot cache merge (rutas_cache base, manifest delta)', () => {
@@ -433,6 +519,7 @@ describe('Route/snapshot cache merge (rutas_cache base, manifest delta)', () => 
       'lecturas_registradas',
       'lecturas_sincronizadas',
       'estados_cache',
+      'novedades_cache',
     ];
     for (const name of storeNames) tables.set(name, new Map());
 

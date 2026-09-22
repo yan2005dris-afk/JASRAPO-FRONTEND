@@ -1037,6 +1037,68 @@ describe('OperatorSyncService', () => {
         expect.stringMatching(/\/operator\/sync$/),
       );
     });
+
+    it('persiste el caché offline de novedades al descargar datos', async () => {
+      isOnline.mockReturnValue(true);
+      const snapshot = {
+        scope: 'operator:42',
+        manifestProtocolVersion: 2,
+        cursor: null,
+        routes: [],
+        meters: [],
+        registeredReadings: [],
+        workOrders: [],
+        pendingAnomalies: [],
+      };
+      getAssignedSnapshot.mockResolvedValue(snapshot);
+      httpGet.mockImplementation((url: string) => {
+        if (url.includes('/operator/sync/manifest')) return of(manifestPage(true, null));
+        if (url.includes('/operator/readings/anomalies')) {
+          return of([
+            {
+              lecturaId: 'l-1',
+              medidorId: 'M-1',
+              medidorSerie: 'S-1',
+              fecha: '2026-06-15T10:00:00Z',
+              estado: 'PROCESADA',
+              anomalias: [],
+            },
+          ]);
+        }
+        return of([]);
+      });
+
+      await service.downloadAssignedData();
+
+      expect(saveNovedadesCache).toHaveBeenCalledWith(
+        'operator:42',
+        expect.arrayContaining([
+          expect.objectContaining({ lecturaId: 'l-1', medidorId: 'M-1' }),
+        ]),
+      );
+    });
+
+    it('no bloquea la descarga si falla el caché de novedades', async () => {
+      isOnline.mockReturnValue(true);
+      getAssignedSnapshot.mockResolvedValue({
+        scope: 'operator:42',
+        manifestProtocolVersion: 2,
+        cursor: null,
+        routes: [],
+        meters: [],
+        registeredReadings: [],
+        workOrders: [],
+        pendingAnomalies: [],
+      });
+      saveNovedadesCache.mockRejectedValue(new Error('db full'));
+      httpGet.mockImplementation((url: string) =>
+        url.includes('/operator/sync/manifest') ? of(manifestPage(true, null)) : of([]),
+      );
+
+      await expect(service.downloadAssignedData()).resolves.toBeDefined();
+      expect(saveNovedadesCache).toHaveBeenCalledWith('operator:42', []);
+      expect(toast.success).toHaveBeenCalled();
+    });
     it('lanza error y toast de advertencia si no hay conexión a internet (offline)', async () => {
       isOnline.mockReturnValue(false);
 

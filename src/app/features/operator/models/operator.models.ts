@@ -91,7 +91,7 @@ export interface AnomaliaItem {
 }
 
 export interface ReadingWithAnomaly {
-  lecturaId: string;
+  lecturaId: string | null;
   medidorId: string | null;
   medidorSerie: string;
   fecha: string;

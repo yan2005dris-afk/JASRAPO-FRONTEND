@@ -281,6 +281,11 @@ export class IndexedDbService {
           db.createObjectStore('rutas_cache', { keyPath: 'scope' });
         }
 
+        // Caché offline de novedades (lecturas con anomalías) por operador
+        if (!db.objectStoreNames.contains('novedades_cache')) {
+          db.createObjectStore('novedades_cache', { keyPath: 'lecturaId' });
+        }
+
         // Almacén dedicado para órdenes de trabajo pendientes offline (#267)
         if (!db.objectStoreNames.contains('ordenes_pendientes')) {
           const store = db.createObjectStore('ordenes_pendientes', {
@@ -1033,6 +1038,75 @@ export class IndexedDbService {
     if (!hydratedSavedAt) return snapshotSavedAt ?? new Date().toISOString();
     if (!snapshotSavedAt) return hydratedSavedAt;
     return hydratedSavedAt >= snapshotSavedAt ? hydratedSavedAt : snapshotSavedAt;
+  }
+
+  // --- NOVEDADES CACHE (lecturas con anomalías, offline) ---
+
+  /**
+   * Persiste el caché de novedades por operador. Cada registro se guarda por su `lecturaId`
+   * (keyPath del store) con `scope` y `savedAt` embebidos; una nueva descarga reemplaza solo
+   * los registros del mismo scope para no acumular lecturas obsoletas.
+   */
+  async saveNovedadesCache<T>(scope: string, items: T[]): Promise<void> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('novedades_cache', 'readwrite');
+      const store = transaction.objectStore('novedades_cache');
+      const getAllRequest = store.getAll();
+
+      getAllRequest.onsuccess = () => {
+        const savedAt = new Date().toISOString();
+        for (const record of getAllRequest.result ?? []) {
+          if (identityOf(record?.scope) === scope && record?.lecturaId != null) {
+            store.delete(record.lecturaId);
+          }
+        }
+        for (const item of items) {
+          const record = { ...(item as any), scope, savedAt };
+          // Solamente se persisten novedades con lectura servidora real.
+          if (identityOf(record.lecturaId) === '') continue;
+          store.put(record);
+        }
+      };
+      getAllRequest.onerror = () => reject(getAllRequest.error);
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  /** Lee el caché de novedades del operador en la forma `{ items, savedAt }` o null si no hay. */
+  async getNovedadesCache<T>(scope: string): Promise<RoutesCacheResult<T> | null> {
+    const db = await this.initDb();
+    return new Promise<RoutesCacheResult<T> | null>((resolve, reject) => {
+      const transaction = db.transaction('novedades_cache', 'readonly');
+      const store = transaction.objectStore('novedades_cache');
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const records = request.result ?? [];
+        const scoped = records.filter(
+          (record: any) => identityOf(record?.scope) === scope,
+        ) as any[];
+        if (scoped.length === 0) {
+          resolve(null);
+          return;
+        }
+        let savedAt = '';
+        for (const record of scoped) {
+          const at = identityOf(record?.savedAt);
+          if (at > savedAt) savedAt = at;
+        }
+        const items = scoped.map((record) => {
+          const item = { ...record };
+          delete item['scope'];
+          delete item['savedAt'];
+          return item;
+        }) as T[];
+        resolve({ items, savedAt });
+      };
+      request.onerror = () => reject(request.error);
+    });
   }
 
   async getAssignedWorkOrders(scope?: string): Promise<any[]> {
