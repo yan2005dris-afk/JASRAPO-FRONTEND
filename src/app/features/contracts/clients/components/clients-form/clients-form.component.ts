@@ -139,7 +139,12 @@ export class ClientsFormComponent implements OnInit {
 
     direccionDomicilio: [
       '',
-      [Validators.required, noWhitespaceValidator(), Validators.maxLength(250)],
+      [
+        Validators.required,
+        noWhitespaceValidator(),
+        Validators.minLength(5),
+        Validators.maxLength(250),
+      ],
     ],
   });
 
@@ -626,6 +631,10 @@ export class ClientsFormComponent implements OnInit {
       return '';
     }
 
+    if (control.hasError('servidor')) {
+      return control.getError('servidor');
+    }
+
     if (control.hasError('required') || control.hasError('whitespace')) {
       switch (campo) {
         case 'nombres':
@@ -697,8 +706,21 @@ export class ClientsFormComponent implements OnInit {
   }
 
   private aplicarErrorBackendAControl(mensaje: string): void {
-    if (mensaje.toLowerCase().includes('identificaci')) {
+    const msg = mensaje.toLowerCase();
+    if (msg.includes('identificaci')) {
       const control = this.clienteForm.get('identificacion');
+      control?.setErrors({ ...(control.errors ?? {}), servidor: mensaje });
+      control?.markAsTouched();
+    } else if (msg.includes('direcciondomicilio') || msg.includes('dirección') || msg.includes('direccion')) {
+      const control = this.clienteForm.get('direccionDomicilio');
+      control?.setErrors({ ...(control.errors ?? {}), servidor: mensaje });
+      control?.markAsTouched();
+    } else if (msg.includes('email') || msg.includes('correo')) {
+      const control = this.clienteForm.get('email');
+      control?.setErrors({ ...(control.errors ?? {}), servidor: mensaje });
+      control?.markAsTouched();
+    } else if (msg.includes('telefono') || msg.includes('teléfono')) {
+      const control = this.clienteForm.get('telefono');
       control?.setErrors({ ...(control.errors ?? {}), servidor: mensaje });
       control?.markAsTouched();
     }
