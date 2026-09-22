@@ -19,9 +19,11 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
+import { Router, ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { ClientsService } from '../../services/clients.service';
+import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import {
   UpdateClientRequest,
   CreateClientRequest,
@@ -76,11 +78,16 @@ export class ClientsFormComponent implements OnInit {
   readonly clienteAEditar = input<IClient | null>(null);
 
   private readonly clientsService = inject(ClientsService);
+  private readonly toastService = inject(ToastService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
 
   readonly isEditMode = signal<boolean>(false);
   readonly isSaving = signal<boolean>(false);
+  readonly clientIdFromRoute = signal<string | number | null>(null);
+  readonly loadedClient = signal<IClient | null>(null);
 
   readonly mensajeFormulario = signal<string>('');
   readonly tipoMensajeFormulario = signal<TipoMensajeFormulario>(null);
@@ -149,9 +156,24 @@ export class ClientsFormComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    this.isEditMode.set(this.clienteAEditar() !== null);
+    const idParam = this.route.snapshot.paramMap.get('id');
+    if (idParam) {
+      this.clientIdFromRoute.set(idParam);
+      this.isEditMode.set(true);
+    } else if (this.clienteAEditar()) {
+      this.isEditMode.set(true);
+    }
 
     this.cargarTiposIdentificacion();
+  }
+
+  isRouted(): boolean {
+    const url = this.router.url;
+    return (
+      url.includes('/Contratos/Cliente/new') ||
+      url.includes('/edit') ||
+      this.clientIdFromRoute() !== null
+    );
   }
 
   soloNumeros(event: Event, campo: string): void {
@@ -190,9 +212,12 @@ export class ClientsFormComponent implements OnInit {
         .sort((a, b) => Number(a.orden || 0) - Number(b.orden || 0));
 
       this.tiposIdentificacion.set(tiposFiltrados);
-      this.prepararFormulario();
 
-      if (!this.isEditMode() && tiposFiltrados.length > 0) {
+      if (this.clienteAEditar()) {
+        this.prepararFormulario(this.clienteAEditar()!);
+      } else if (this.clientIdFromRoute()) {
+        await this.cargarClientePorId(this.clientIdFromRoute()!);
+      } else if (tiposFiltrados.length > 0) {
         const primerId = String(tiposFiltrados[0].identificacionId ?? tiposFiltrados[0].id);
         this.clienteForm.patchValue({
           tipoIdentificacionId: primerId,
@@ -207,9 +232,22 @@ export class ClientsFormComponent implements OnInit {
     }
   }
 
-  prepararFormulario(): void {
-    const cliente = this.clienteAEditar();
+  private async cargarClientePorId(id: string | number): Promise<void> {
+    try {
+      const cliente = await firstValueFrom(this.clientsService.getClientById(id));
+      if (cliente) {
+        this.loadedClient.set(cliente);
+        this.prepararFormulario(cliente);
+      }
+    } catch {
+      this.toastService.error('No se pudo cargar la información del cliente.', 'Error');
+      if (this.isRouted()) {
+        this.router.navigate(['/app/Contratos/Cliente']);
+      }
+    }
+  }
 
+  prepararFormulario(cliente: IClient): void {
     if (!cliente) {
       return;
     }
@@ -228,6 +266,7 @@ export class ClientsFormComponent implements OnInit {
       telefono: cliente.telefono ?? '',
       telefonoSecundario: cliente.telefonoSecundario ?? '',
 
+      fechaNacimiento: cliente.fechaNacimiento ?? '',
       aplicaDiscapacidad: cliente.aplicaDiscapacidad ?? false,
 
       direccionDomicilio: cliente.direccionDomicilio ?? '',
@@ -458,8 +497,15 @@ export class ClientsFormComponent implements OnInit {
     }
   }
 
+  onCancel(): void {
+    this.onClose();
+  }
+
   onClose(): void {
     this.formClosed.emit();
+    if (this.isRouted()) {
+      this.router.navigate(['/app/Contratos/Cliente']);
+    }
   }
 
   async onSubmit(): Promise<void> {
@@ -479,7 +525,7 @@ export class ClientsFormComponent implements OnInit {
     const cliente = this.prepararClienteParaEnviar();
 
     try {
-      if (this.isEditMode() && this.clienteAEditar()) {
+      if (this.isEditMode()) {
         await this.actualizarCliente(cliente);
       } else {
         await this.crearCliente(cliente);
@@ -509,6 +555,7 @@ export class ClientsFormComponent implements OnInit {
     this.clientsService.createClient(cliente).subscribe({
       next: (clienteCreado) => {
         this.isSaving.set(false);
+        this.toastService.success('Cliente creado correctamente.', 'Éxito');
         this.mostrarMensaje('Cliente creado correctamente.', 'success');
         this.formSubmitted.emit();
         this.onClose();
@@ -535,18 +582,12 @@ export class ClientsFormComponent implements OnInit {
   }
 
   async actualizarCliente(cliente: UpdateClientRequest): Promise<void> {
-    const clienteActual = this.clienteAEditar();
+    const clienteActual = this.clienteAEditar() ?? this.loadedClient();
+    const clienteId = clienteActual
+      ? this.obtenerIdCliente(clienteActual)
+      : this.clientIdFromRoute();
 
-    if (!clienteActual) {
-      this.isSaving.set(false);
-      this.mostrarMensaje('No se encontró información del cliente a actualizar.', 'error');
-      this.cdr.markForCheck();
-      return;
-    }
-
-    const clienteId = this.obtenerIdCliente(clienteActual);
-
-    if (clienteId === null) {
+    if (clienteId === null || clienteId === undefined) {
       this.isSaving.set(false);
       this.mostrarMensaje(
         'No se puede actualizar este cliente porque no tiene un ID válido.',
@@ -559,6 +600,7 @@ export class ClientsFormComponent implements OnInit {
     this.clientsService.updateClient(clienteId, cliente).subscribe({
       next: () => {
         this.isSaving.set(false);
+        this.toastService.success('Cliente actualizado correctamente.', 'Éxito');
         this.mostrarMensaje('Cliente actualizado correctamente.', 'success');
         this.formSubmitted.emit();
         this.onClose();
@@ -711,7 +753,11 @@ export class ClientsFormComponent implements OnInit {
       const control = this.clienteForm.get('identificacion');
       control?.setErrors({ ...(control.errors ?? {}), servidor: mensaje });
       control?.markAsTouched();
-    } else if (msg.includes('direcciondomicilio') || msg.includes('dirección') || msg.includes('direccion')) {
+    } else if (
+      msg.includes('direcciondomicilio') ||
+      msg.includes('dirección') ||
+      msg.includes('direccion')
+    ) {
       const control = this.clienteForm.get('direccionDomicilio');
       control?.setErrors({ ...(control.errors ?? {}), servidor: mensaje });
       control?.markAsTouched();

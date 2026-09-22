@@ -247,8 +247,12 @@ export class ClientsComponent implements OnInit, OnDestroy {
   }
 
   abrirModal(): void {
-    this.objetoClienteAEditar.set(null);
-    this.isModalOpen.set(true);
+    if (this.selectionMode()) {
+      this.objetoClienteAEditar.set(null);
+      this.isModalOpen.set(true);
+    } else {
+      this.router.navigate(['/app/Contratos/Cliente/new']);
+    }
   }
 
   cerrarModal(): void {
@@ -257,15 +261,24 @@ export class ClientsComponent implements OnInit, OnDestroy {
   }
 
   editarCliente(cliente: IClient): void {
-    this.objetoClienteAEditar.set(cliente);
-    this.isModalOpen.set(true);
+    const clienteId = this.obtenerIdCliente(cliente);
+
+    if (this.selectionMode()) {
+      this.objetoClienteAEditar.set(cliente);
+      this.isModalOpen.set(true);
+    } else if (clienteId !== null) {
+      this.router.navigate(['/app/Contratos/Cliente', clienteId, 'edit']);
+    }
   }
 
   verDetalleCliente(cliente: IClient): void {
     const clienteId = this.obtenerIdCliente(cliente);
 
     if (clienteId === null) {
-      alert('No se puede consultar el detalle porque el cliente no tiene ID válido.');
+      this.toastService.error(
+        'No se puede consultar el detalle porque el cliente no tiene ID válido.',
+        'Error',
+      );
       return;
     }
 
@@ -276,7 +289,7 @@ export class ClientsComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Error obteniendo detalle del cliente:', err);
-        alert('No se pudo obtener el detalle del cliente.');
+        this.toastService.error('No se pudo obtener el detalle del cliente.', 'Error');
       },
     });
   }

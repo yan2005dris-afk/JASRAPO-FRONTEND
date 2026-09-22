@@ -311,10 +311,32 @@ export const routes: Routes = [
           {
             path: 'Cliente',
             data: { breadcrumb: 'Clientes' },
-            loadComponent: () =>
-              import('./features/contracts/clients/clients.component').then(
-                (m) => m.ClientsComponent,
-              ),
+            children: [
+              {
+                path: '',
+                pathMatch: 'full',
+                loadComponent: () =>
+                  import('./features/contracts/clients/clients.component').then(
+                    (m) => m.ClientsComponent,
+                  ),
+              },
+              {
+                path: 'new',
+                data: { breadcrumb: 'Nuevo Cliente' },
+                loadComponent: () =>
+                  import('./features/contracts/clients/components/clients-form/clients-form.component').then(
+                    (m) => m.ClientsFormComponent,
+                  ),
+              },
+              {
+                path: ':id/edit',
+                data: { breadcrumb: 'Editar Cliente' },
+                loadComponent: () =>
+                  import('./features/contracts/clients/components/clients-form/clients-form.component').then(
+                    (m) => m.ClientsFormComponent,
+                  ),
+              },
+            ],
           },
           {
             path: 'Contratos',
