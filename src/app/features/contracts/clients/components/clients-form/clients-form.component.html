@@ -1,57 +1,29 @@
 <div class="client-form-page container-fluid px-4 py-4">
   <!-- Top Navigation & Header -->
-  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
-    <div class="d-flex align-items-center gap-3">
-      <button
-        type="button"
-        class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-xs"
-        (click)="onCancel()"
-      >
-        <i class="bi bi-arrow-left fs-6"></i>
-        <span class="fw-medium">Volver</span>
-      </button>
-      <div>
-        <h3 class="fw-bold mb-0 text-dark fs-4 d-flex align-items-center gap-2">
-          <i
-            class="bi"
-            [ngClass]="isEditMode() ? 'bi-person-gear text-primary' : 'bi-person-plus text-primary'"
-          ></i>
-          {{ isEditMode() ? 'Editar Cliente' : 'Nuevo Cliente' }}
-        </h3>
-        <p class="text-muted small mb-0">
-          {{
-            isEditMode()
-              ? 'Actualice la información del cliente registrado en el sistema.'
-              : 'Complete el formulario para registrar un nuevo cliente.'
-          }}
-        </p>
-      </div>
-    </div>
-
-    <!-- Quick action buttons in top bar -->
-    <div class="d-flex align-items-center gap-2">
-      <button
-        type="button"
-        class="btn btn-light border px-3 fw-medium rounded-3"
-        (click)="onCancel()"
-        [disabled]="isSaving()"
-      >
-        Cancelar
-      </button>
-      <button
-        type="button"
-        class="btn btn-primary px-4 fw-medium rounded-3 d-flex align-items-center gap-2 shadow-sm"
-        (click)="onSubmit()"
-        [disabled]="isSaving()"
-      >
-        @if (isSaving()) {
-          <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-          <span>Guardando...</span>
-        } @else {
-          <i class="bi bi-check-lg fs-6"></i>
-          <span>{{ isEditMode() ? 'Guardar Cambios' : 'Registrar Cliente' }}</span>
-        }
-      </button>
+  <div class="d-flex align-items-center mb-4 flex-wrap gap-3">
+    <button
+      type="button"
+      class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 px-3 py-2 rounded-3 shadow-xs"
+      (click)="onCancel()"
+    >
+      <i class="bi bi-arrow-left fs-6"></i>
+      <span class="fw-medium">Volver</span>
+    </button>
+    <div>
+      <h3 class="fw-bold mb-0 text-dark fs-4 d-flex align-items-center gap-2">
+        <i
+          class="bi"
+          [ngClass]="isEditMode() ? 'bi-person-gear text-primary' : 'bi-person-plus text-primary'"
+        ></i>
+        {{ isEditMode() ? 'Editar Cliente' : 'Nuevo Cliente' }}
+      </h3>
+      <p class="text-muted small mb-0">
+        {{
+          isEditMode()
+            ? 'Actualice la información del cliente registrado en el sistema.'
+            : 'Complete el formulario para registrar un nuevo cliente.'
+        }}
+      </p>
     </div>
   </div>
 
