@@ -13,7 +13,6 @@ const route: OperatorRouteResponse = {
   tipoRuta: 'TOMA_LECTURA',
   nombre: 'Ruta Centro',
   estado: 'PENDIENTE',
-  orden: 1,
   operarioId: 7,
   comunidadId: 3,
   medidor: null,
