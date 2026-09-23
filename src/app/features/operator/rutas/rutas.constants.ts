@@ -42,3 +42,13 @@ export const FILTER_OPTIONS: { label: string; value: string }[] = [
   { label: 'Instalación', value: 'INSTALACION' },
   { label: 'Inspección', value: 'INSPECCION' },
 ];
+
+/**
+ * Opciones de filtro por estado de la ruta.
+ */
+export const STATE_FILTER_OPTIONS: { label: string; value: string }[] = [
+  { label: 'Todos los estados', value: 'ALL' },
+  { label: 'Pendientes', value: 'PENDIENTE' },
+  { label: 'En Progreso', value: 'EN_PROGRESO' },
+  { label: 'Completadas', value: 'COMPLETADA' },
+];

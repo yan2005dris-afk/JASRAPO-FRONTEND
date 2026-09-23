@@ -1,28 +1,84 @@
 <div class="rutas-screen">
-  <!-- Header -->
-  <div class="rutas-header">
-    <h1 class="rutas-title">Mis Rutas</h1>
+  <!-- SECCIÓN DE RUTAS Y CATASTRO -->
+  <div class="rutas-section-header">
+    <div>
+      <h2 class="section-title">Mis Rutas Asignadas</h2>
+      <p class="section-subtitle">Seleccioná una ruta para ver su secuencia de visita</p>
+    </div>
     <button class="view-toggle-btn" (click)="toggleView()" type="button" aria-label="Cambiar vista">
       @if (viewMode() === 'list') {
-        <i class="bi bi-map"></i> Mapa
+        <i class="bi bi-map-fill"></i> Mapa
       } @else {
         <i class="bi bi-list-ul"></i> Lista
       }
     </button>
   </div>
 
-  <!-- Filtros por tipo de ruta -->
-  <div class="filter-chips" role="group" aria-label="Filtrar rutas por tipo">
-    @for (option of filterOptions; track option.value) {
-      <button
-        class="filter-chip"
-        [class.active]="activeFilter() === option.value"
-        (click)="setFilter(option.value)"
-        type="button"
-      >
-        {{ option.label }}
-      </button>
-    }
+  <!-- Filtros combinados: Tipo, Estado y Sector -->
+  <div class="filters-container">
+    <!-- 1. Tipo de ruta -->
+    <div class="filter-chips" role="group" aria-label="Filtrar rutas por tipo">
+      @for (option of filterOptions; track option.value) {
+        <button
+          class="filter-chip"
+          [class.active]="activeFilter() === option.value"
+          (click)="setFilter(option.value)"
+          type="button"
+        >
+          {{ option.label }}
+        </button>
+      }
+    </div>
+
+    <!-- 2. Estado, Comunidad y Sector (Filtros secundarios) -->
+    <div class="filter-secondary-row">
+      <div class="filter-chips compact" role="group" aria-label="Filtrar por estado">
+        @for (opt of stateFilterOptions; track opt.value) {
+          <button
+            class="filter-chip sub-chip"
+            [class.active]="activeStateFilter() === opt.value"
+            (click)="setStateFilter(opt.value)"
+            type="button"
+          >
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+
+      <div class="selects-group">
+        @if (availableComunidades().length > 0) {
+          <div class="sector-select-wrapper">
+            <select
+              class="sector-select"
+              [value]="activeComunidadFilter()"
+              (change)="setComunidadFilter($any($event.target).value)"
+              aria-label="Filtrar por comunidad"
+            >
+              <option value="ALL">Todas las comunidades</option>
+              @for (com of availableComunidades(); track com.id) {
+                <option [value]="com.id">{{ com.label }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        @if (availableSectors().length > 0) {
+          <div class="sector-select-wrapper">
+            <select
+              class="sector-select"
+              [value]="activeSectorFilter()"
+              (change)="setSectorFilter($any($event.target).value)"
+              aria-label="Filtrar por sector"
+            >
+              <option value="ALL">Todos los sectores</option>
+              @for (sec of availableSectors(); track sec.id) {
+                <option [value]="sec.id">{{ sec.label }}</option>
+              }
+            </select>
+          </div>
+        }
+      </div>
+    </div>
   </div>
 
   @if (routesSource() === 'cache') {
@@ -39,13 +95,13 @@
 
   @if (loadError() && !isLoading()) {
     <div
-      class="border rounded p-4 text-center text-muted d-flex flex-column align-items-center gap-2"
+      class="border rounded-3 p-4 text-center text-muted d-flex flex-column align-items-center gap-2 bg-white"
       role="alert"
     >
-      <i class="bi bi-map fs-2"></i>
-      <strong>Mapa offline no preparado</strong>
-      <p class="mb-0">{{ loadError() }}</p>
-      <button type="button" class="view-toggle-btn" (click)="loadTasks()">
+      <i class="bi bi-map fs-2 text-warning"></i>
+      <strong>No se pudieron cargar las rutas</strong>
+      <p class="mb-0 small">{{ loadError() }}</p>
+      <button type="button" class="btn-card-lecturas mt-2" (click)="loadTasks()">
         <i class="bi bi-arrow-clockwise"></i> Reintentar
       </button>
     </div>
@@ -92,15 +148,12 @@
             ><span class="legend-dot" style="background: #3b82f6"></span>Estimada</span
           >
           <span class="legend-item"
-            ><span class="legend-dot" style="background: #8b5cf6"></span>Planillada</span
-          >
-          <span class="legend-item"
             ><span class="legend-dot" style="background: #f97316"></span>Con novedad</span
           >
         </div>
 
         <div class="map-task-list" role="list" aria-label="Rutas asignadas en mapa">
-          <h2 class="map-task-list-title">Rutas</h2>
+          <h3 class="map-task-list-title">Rutas en Mapa</h3>
           @for (task of filteredTasks(); track task.rutaId) {
             <div
               class="map-task-row"
@@ -111,27 +164,16 @@
               [attr.aria-label]="task.nombre"
               (click)="selectTask(selectedTaskId() === task.rutaId ? null : task.rutaId)"
               (keydown.enter)="selectTask(selectedTaskId() === task.rutaId ? null : task.rutaId)"
-              (keydown.space)="
-                $event.preventDefault();
-                selectTask(selectedTaskId() === task.rutaId ? null : task.rutaId)
-              "
             >
               <span class="task-orden-badge">{{ $index + 1 }}</span>
-              <span class="task-name">{{ task.nombre }}</span>
-              @if (taskHasMeterCoordinates(task)) {
-                <span class="task-coords">
-                  {{ task.medidor!.latitud | number: '1.4-4' }},
-                  {{ task.medidor!.longitud | number: '1.4-4' }}
-                </span>
-              } @else if (getTaskPointCount(task) > 0) {
-                <span class="task-coords task-coords--ok"> {{ getTaskPointCount(task) }} pts </span>
-              } @else {
-                <span class="task-no-coords">Sin coords</span>
-              }
+              <div class="task-map-info">
+                <span class="task-name">{{
+                  task.nombre || 'Ruta ' + (task.tipoRuta | routeType)
+                }}</span>
+                <span class="task-sub">{{ getTaskPointCount(task) }} puntos en ruta</span>
+              </div>
+              <i class="bi bi-chevron-right text-muted"></i>
             </div>
-          }
-          @if (filteredTasks().length === 0) {
-            <p class="empty-state">No hay rutas para mostrar.</p>
           }
         </div>
       </div>
@@ -142,29 +184,69 @@
       <div class="task-list">
         @for (task of filteredTasks(); track task.rutaId) {
           <div class="task-card">
+            <!-- Header de tarjeta -->
             <div class="task-card-top">
               <span class="task-orden">#{{ $index + 1 }}</span>
-              <span class="route-badge badge-{{ task.tipoRuta.toLowerCase() }}">
+              <span class="route-badge badge-{{ (task.tipoRuta || 'TOMA_LECTURA').toLowerCase() }}">
+                <i class="bi" [class]="actionIconFor(task)"></i>
                 {{ task.tipoRuta | routeType }}
               </span>
-              <span class="state-badge state-{{ task.estado.toLowerCase() }}">
+              <span class="state-badge state-{{ (task.estado || 'PENDIENTE').toLowerCase() }}">
                 {{ getStateLabel(task.estado) }}
               </span>
             </div>
-            <h3 class="task-nombre">{{ task.nombre }}</h3>
-            @if (task.medidor) {
-              <p class="task-medidor">
-                <i class="bi bi-speedometer"></i> Serie: {{ task.medidor.serie }}
-              </p>
-            }
-            @if (task.descripcion) {
-              <p class="task-descripcion">{{ task.descripcion }}</p>
-            }
+
+            <!-- Título & Subtítulo de Ruta -->
+            <h3 class="task-nombre">
+              {{ task.nombre || 'Ruta ' + (task.tipoRuta | routeType) + ' #' + ($index + 1) }}
+            </h3>
+
+            <!-- Información rica de la ruta -->
+            <div class="task-details-grid">
+              <div class="task-detail-item">
+                <i class="bi bi-geo-alt-fill text-muted"></i>
+                <span
+                  >Comunidad: <strong>{{ getTaskComunidadDescription(task) }}</strong></span
+                >
+              </div>
+              <div class="task-detail-item">
+                <i class="bi bi-pin-map-fill text-muted"></i>
+                <span
+                  >Sector: <strong>{{ getTaskSectorDescription(task) }}</strong></span
+                >
+              </div>
+              <div class="task-detail-item">
+                <i class="bi bi-speedometer2 text-muted"></i>
+                <span
+                  >Paradas: <strong>{{ getTaskPointCount(task) }} medidores asignados</strong></span
+                >
+              </div>
+              @if (getTaskFirstClient(task); as client) {
+                <div class="task-detail-item">
+                  <i class="bi bi-person-fill text-muted"></i>
+                  <span
+                    >Inicio: <strong>{{ client }}</strong></span
+                  >
+                </div>
+              }
+            </div>
+
+            <!-- Barra de progreso de lectura individual de la ruta -->
+            @let totalPts = getTaskPointCount(task);
+            @let readPts = getTaskReadCount(task);
+            @let pct = getTaskProgressPct(task);
+            <div class="task-progress-box">
+              <div class="task-progress-header">
+                <span>Avance de ruta</span>
+                <strong>{{ readPts }} / {{ totalPts }} ({{ pct }}%)</strong>
+              </div>
+              <div class="task-progress-bar-track">
+                <div class="task-progress-bar-fill" [style.width.%]="pct"></div>
+              </div>
+            </div>
+
+            <!-- Botones de Acción -->
             <div class="task-card-actions">
-              <!--
-                    Botón principal: label/icon varía según tipo de actividad.
-                    Antes mostraba "Lecturas" universal (bug UX).
-                  -->
               @let actionLabel = actionLabelFor(task);
               @let actionIcon = actionIconFor(task);
               <button
@@ -182,7 +264,7 @@
                   type="button"
                   [attr.aria-label]="'Ver ' + task.nombre + ' en mapa'"
                 >
-                  <i class="bi bi-geo-alt-fill"></i> Mapa
+                  <i class="bi bi-map-fill"></i> Mapa
                 </button>
               }
             </div>

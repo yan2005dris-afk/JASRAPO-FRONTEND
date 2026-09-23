@@ -75,7 +75,21 @@
   <!-- Bottom Floating Navigation Bar -->
   <nav class="operator-bottom-nav">
     <div class="nav-items-container">
-      <!-- Tab 1: Rutas -->
+      <!-- Tab 1: Inicio -->
+      <a
+        routerLink="/app/operador/inicio"
+        routerLinkActive="active"
+        class="nav-tab"
+        id="tab-inicio"
+        aria-label="Panel del Operador"
+      >
+        <div class="icon-wrapper">
+          <i class="bi bi-house-door-fill"></i>
+        </div>
+        <span class="tab-label">Inicio</span>
+      </a>
+
+      <!-- Tab 2: Rutas -->
       <a
         routerLink="/app/operador/rutas"
         routerLinkActive="active"
@@ -89,7 +103,7 @@
         <span class="tab-label">Rutas</span>
       </a>
 
-      <!-- Tab 2: Órdenes de Trabajo -->
+      <!-- Tab 3: Órdenes de Trabajo -->
       <a
         routerLink="/app/operador/lecturas"
         routerLinkActive="active"
@@ -103,7 +117,7 @@
         <span class="tab-label">Órdenes</span>
       </a>
 
-      <!-- Tab 3: Novedades -->
+      <!-- Tab 4: Novedades -->
       <a
         routerLink="/app/operador/novedades"
         routerLinkActive="active"
@@ -117,7 +131,7 @@
         <span class="tab-label">Novedades</span>
       </a>
 
-      <!-- Tab 4: Sincronización -->
+      <!-- Tab 5: Sincronización -->
       <a
         routerLink="/app/operador/sincronizar"
         routerLinkActive="active"

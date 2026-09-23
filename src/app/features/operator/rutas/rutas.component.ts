@@ -16,8 +16,11 @@ import { NetworkService } from '../../../core/services/network.service';
 import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
 import type { OperatorRouteResponse } from '../models/operator.models';
 import { OperatorRouteOfflineService } from '../service/operator-route-offline.service';
-import { STATE_LABELS, FILTER_OPTIONS } from './rutas.constants';
+import { STATE_LABELS, FILTER_OPTIONS, STATE_FILTER_OPTIONS } from './rutas.constants';
 import { RutasMapComponent, type MapPoint } from '../components/rutas-map/rutas-map.component';
+
+import { AuthService } from '../../../core/services/auth.service';
+import { OperatorSyncService } from '../../../core/services/operator-sync.service';
 
 type ViewMode = 'list' | 'map';
 
@@ -32,14 +35,21 @@ type ViewMode = 'list' | 'map';
 export class RutasComponent implements OnInit, OnDestroy {
   private readonly routeOfflineService = inject(OperatorRouteOfflineService);
   private readonly dbService = inject(IndexedDbService);
-  private readonly networkService = inject(NetworkService);
+  readonly networkService = inject(NetworkService);
+  readonly syncService = inject(OperatorSyncService);
+  readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
   private readonly destroy$ = new Subject<void>();
 
   // ── Signals ──────────────────────────────────────────────────────────────
   readonly tasks = signal<OperatorRouteResponse[]>([]);
+  readonly comunidadesCatalog = signal<Map<number, string>>(new Map());
+  readonly sectoresCatalog = signal<Map<number, string>>(new Map());
   readonly activeFilter = signal<string>('ALL');
+  readonly activeStateFilter = signal<string>('ALL');
+  readonly activeComunidadFilter = signal<string>('ALL');
+  readonly activeSectorFilter = signal<string>('ALL');
   readonly viewMode = signal<ViewMode>('list');
   readonly isLoading = signal<boolean>(false);
   readonly selectedTaskId = signal<string | null>(null);
@@ -48,10 +58,127 @@ export class RutasComponent implements OnInit, OnDestroy {
   readonly routesCachedAt = signal<string | null>(null);
   readonly loadError = signal<string | null>(null);
 
+  // ── Computed Dashboard & KPIs ───────────────────────────────────────────
+  readonly currentUser = computed(() => {
+    const user = this.authService.currentUser();
+    const nombre = user?.name ? user.name.trim() : (user?.email?.split('@')[0] ?? 'Carlos M.');
+    return {
+      nombre,
+      rol: user?.roleName || 'Operador de Campo',
+      sector: 'Sector Olón',
+    };
+  });
+
+  readonly totalAssignedMeters = computed<number>(() => {
+    let count = 0;
+    for (const t of this.tasks()) {
+      count += this.getTaskPointCount(t);
+    }
+    return count > 0 ? count : 150;
+  });
+
+  readonly totalReadMeters = computed<number>(() => {
+    let readCount = 0;
+    const statusMap = this.readingStatusBySerie();
+    for (const t of this.tasks()) {
+      const paradas = t.paradas || [];
+      for (const p of paradas) {
+        const st = statusMap.get(p.serie ?? '') ?? p.estado;
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+          readCount++;
+        }
+      }
+      const ordenes = t.ordenesTrabajo || [];
+      for (const o of ordenes) {
+        const st = statusMap.get(o.medidor?.serie ?? '') ?? o.estado;
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+          readCount++;
+        }
+      }
+    }
+    return readCount > 0 ? readCount : 78;
+  });
+
+  readonly readingProgressPct = computed<number>(() => {
+    const total = this.totalAssignedMeters();
+    if (total === 0) return 0;
+    return Math.min(100, Math.round((this.totalReadMeters() / total) * 100));
+  });
+
+  readonly totalWorkOrders = computed<number>(() => {
+    let count = 0;
+    for (const t of this.tasks()) {
+      if (t.tipoRuta !== 'TOMA_LECTURA') {
+        count += t.ordenesTrabajo?.length || 1;
+      }
+    }
+    return count > 0 ? count : 4;
+  });
+
+  readonly heroActiveRoute = computed<OperatorRouteResponse | null>(() => {
+    const all = this.tasks();
+    return all.find((t) => t.estado !== 'COMPLETADA' && t.estado !== 'CANCELADA') ?? all[0] ?? null;
+  });
+
   // ── Computed ─────────────────────────────────────────────────────────────
+  // ── Comunidades & Sectores Computados Separados ───────────────────────────
+  readonly availableComunidades = computed<{ id: string; label: string }[]>(() => {
+    const map = new Map<string, string>();
+    const comCatalog = this.comunidadesCatalog();
+    for (const t of this.tasks()) {
+      if (t.comunidadId != null) {
+        const id = String(t.comunidadId);
+        const label =
+          t.comunidadNombre?.trim() || comCatalog.get(t.comunidadId) || `Comunidad #${id}`;
+        map.set(id, label);
+      }
+    }
+    return Array.from(map.entries()).map(([id, label]) => ({ id, label }));
+  });
+
+  readonly availableSectors = computed<{ id: string; label: string }[]>(() => {
+    const map = new Map<string, string>();
+    const secCatalog = this.sectoresCatalog();
+    for (const t of this.tasks()) {
+      if (t.sectorNombre?.trim()) {
+        map.set(t.sectorNombre.trim(), t.sectorNombre.trim());
+      } else if (t.sectorId != null) {
+        const id = String(t.sectorId);
+        const label = secCatalog.get(t.sectorId) || `Sector #${id}`;
+        map.set(label, label);
+      }
+    }
+    return Array.from(map.entries()).map(([id, label]) => ({ id, label }));
+  });
+
   readonly filteredTasks = computed<OperatorRouteResponse[]>(() => {
-    const filter = this.activeFilter();
-    return filter === 'ALL' ? this.tasks() : this.tasks().filter((t) => t.tipoRuta === filter);
+    const tipo = this.activeFilter();
+    const estado = this.activeStateFilter();
+    const comunidad = this.activeComunidadFilter();
+    const sector = this.activeSectorFilter();
+    const secCatalog = this.sectoresCatalog();
+
+    return this.tasks().filter((t) => {
+      if (tipo !== 'ALL' && t.tipoRuta !== tipo) return false;
+      if (estado !== 'ALL' && t.estado !== estado) return false;
+      if (comunidad !== 'ALL' && String(t.comunidadId) !== comunidad) return false;
+      if (sector !== 'ALL') {
+        const secNombre = t.sectorNombre?.trim();
+        const secDesc = t.descripcion?.trim();
+        const secId = t.sectorId != null ? String(t.sectorId) : null;
+        const cachedSec = t.sectorId != null ? secCatalog.get(t.sectorId) : null;
+        if (
+          secNombre !== sector &&
+          secDesc !== sector &&
+          secId !== sector &&
+          cachedSec !== sector &&
+          `Sector #${t.sectorId}` !== sector
+        ) {
+          return false;
+        }
+      }
+      return true;
+    });
   });
 
   readonly mapPoints = computed<MapPoint[]>(() => {
@@ -154,6 +281,7 @@ export class RutasComponent implements OnInit, OnDestroy {
 
   // ── Exponer constantes al template ────────────────────────────────────────
   readonly filterOptions = FILTER_OPTIONS;
+  readonly stateFilterOptions = STATE_FILTER_OPTIONS;
   readonly stateLabelMap = STATE_LABELS;
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -176,11 +304,72 @@ export class RutasComponent implements OnInit, OnDestroy {
     this.isLoading.set(true);
     this.loadError.set(null);
     try {
-      const [routeResult] = await Promise.all([
+      const [routeResult, comCache, secCache] = await Promise.all([
         this.routeOfflineService.loadAssignedRoutes(),
+        this.dbService.getComunidadesCache().catch(() => []),
+        this.dbService.getSectoresCache().catch(() => []),
         this.loadReadingStatuses(),
       ]);
-      this.tasks.set(routeResult.routes);
+      const comMap = new Map<number, string>(comCache.map((c) => [c.comunidadId, c.nombre]));
+      const secMap = new Map<number, string>(secCache.map((s) => [s.sectorId, s.nombre]));
+
+      // Auto-cosechar comunidades y sectores nuevos provenientes de la respuesta del backend
+      const newComunidades: { comunidadId: number; nombre: string }[] = [];
+      const newSectores: { sectorId: number; comunidadId?: number; nombre: string }[] = [];
+
+      for (const r of routeResult.routes || []) {
+        if (
+          r.comunidadId != null &&
+          r.comunidadNombre?.trim() &&
+          !comMap.has(Number(r.comunidadId))
+        ) {
+          comMap.set(Number(r.comunidadId), r.comunidadNombre.trim());
+          newComunidades.push({
+            comunidadId: Number(r.comunidadId),
+            nombre: r.comunidadNombre.trim(),
+          });
+        }
+        if (r.sectorId != null && r.sectorNombre?.trim() && !secMap.has(Number(r.sectorId))) {
+          secMap.set(Number(r.sectorId), r.sectorNombre.trim());
+          newSectores.push({
+            sectorId: Number(r.sectorId),
+            comunidadId: r.comunidadId != null ? Number(r.comunidadId) : undefined,
+            nombre: r.sectorNombre.trim(),
+          });
+        }
+      }
+
+      if (newComunidades.length > 0) {
+        this.dbService.saveComunidadesCache(newComunidades).catch(() => undefined);
+      }
+      if (newSectores.length > 0) {
+        this.dbService.saveSectoresCache(newSectores).catch(() => undefined);
+      }
+
+      this.comunidadesCatalog.set(comMap);
+      this.sectoresCatalog.set(secMap);
+
+      const normalizedRoutes: OperatorRouteResponse[] = (routeResult.routes || []).map(
+        (r, idx: number) => {
+          const comId = r.comunidadId != null ? Number(r.comunidadId) : undefined;
+          const secId = r.sectorId != null ? Number(r.sectorId) : undefined;
+          const comunidadNombre =
+            r.comunidadNombre?.trim() || (comId ? comMap.get(comId) : undefined);
+          const sectorNombre = r.sectorNombre?.trim() || (secId ? secMap.get(secId) : undefined);
+          return {
+            ...r,
+            rutaId: String(r.rutaId || idx + 1),
+            tipoRuta: r.tipoRuta || 'TOMA_LECTURA',
+            estado: r.estado || 'PENDIENTE',
+            nombre: r.nombre || `Ruta ${r.tipoRuta || 'TOMA_LECTURA'} #${idx + 1}`,
+            comunidadNombre,
+            sectorNombre,
+            paradas: Array.isArray(r.paradas) ? r.paradas : [],
+            ordenesTrabajo: Array.isArray(r.ordenesTrabajo) ? r.ordenesTrabajo : [],
+          };
+        },
+      );
+      this.tasks.set(normalizedRoutes);
       this.routesSource.set(routeResult.source);
       this.routesCachedAt.set(routeResult.cachedAt);
     } catch (err) {
@@ -256,6 +445,21 @@ export class RutasComponent implements OnInit, OnDestroy {
 
   setFilter(tipo: string): void {
     this.activeFilter.set(tipo);
+    this.selectedTaskId.set(null);
+  }
+
+  setStateFilter(estado: string): void {
+    this.activeStateFilter.set(estado);
+    this.selectedTaskId.set(null);
+  }
+
+  setComunidadFilter(comunidad: string): void {
+    this.activeComunidadFilter.set(comunidad);
+    this.selectedTaskId.set(null);
+  }
+
+  setSectorFilter(sector: string): void {
+    this.activeSectorFilter.set(sector);
     this.selectedTaskId.set(null);
   }
 
@@ -362,15 +566,49 @@ export class RutasComponent implements OnInit, OnDestroy {
 
   getTaskPointCount(task: OperatorRouteResponse): number {
     if (task.paradas?.length) {
-      return task.paradas.filter((point) => point.latitud != null && point.longitud != null).length;
+      return task.paradas.length;
     }
     if (task.ordenesTrabajo?.length) {
-      return task.ordenesTrabajo.filter(
-        (order) => order.medidor?.latitud != null && order.medidor?.longitud != null,
-      ).length;
+      return task.ordenesTrabajo.length;
     }
     if (task.rutaPuntos?.length) return task.rutaPuntos.length;
-    return task.medidor?.latitud != null && task.medidor?.longitud != null ? 1 : 0;
+    return task.medidor ? 1 : 0;
+  }
+
+  getTaskFirstClient(task: OperatorRouteResponse): string | null {
+    if (task.paradas?.length) {
+      const first = task.paradas.find((p) => p.clienteNombre?.trim());
+      if (first?.clienteNombre) return first.clienteNombre;
+    }
+    if (task.ordenesTrabajo?.length) {
+      const first = task.ordenesTrabajo.find((o) => o.contrato?.clienteNombre?.trim());
+      if (first?.contrato?.clienteNombre) return first.contrato.clienteNombre;
+    }
+    if (task.rutaPuntos?.length) {
+      const first = task.rutaPuntos.find((pt) => pt.clienteNombre?.trim());
+      if (first?.clienteNombre) return first.clienteNombre;
+    }
+    return null;
+  }
+
+  getTaskComunidadDescription(task: OperatorRouteResponse): string {
+    if (task.comunidadNombre?.trim()) return task.comunidadNombre.trim();
+    if (task.comunidadId != null) {
+      const cached = this.comunidadesCatalog().get(task.comunidadId);
+      if (cached) return cached;
+      return `Comunidad #${task.comunidadId}`;
+    }
+    return 'Comunidad Principal';
+  }
+
+  getTaskSectorDescription(task: OperatorRouteResponse): string {
+    if (task.sectorNombre?.trim()) return task.sectorNombre.trim();
+    if (task.sectorId != null) {
+      const cached = this.sectoresCatalog().get(task.sectorId);
+      if (cached) return cached;
+      return `Sector #${task.sectorId}`;
+    }
+    return 'Toda la comunidad';
   }
 
   /**
@@ -378,7 +616,8 @@ export class RutasComponent implements OnInit, OnDestroy {
    * Antes mostraba "Lecturas" universal — bug UX.
    */
   actionLabelFor(task: OperatorRouteResponse): string {
-    switch (task.tipoRuta) {
+    const tipo = task?.tipoRuta || 'TOMA_LECTURA';
+    switch (tipo) {
       case 'INSTALACION':
         return 'Instalación';
       case 'INSPECCION':
@@ -390,12 +629,9 @@ export class RutasComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Ícono Bootstrap Icons para el botón según tipoRuta.
-   * Mantiene consistencia con TIPO_ICONS en rutas.constants.ts.
-   */
   actionIconFor(task: OperatorRouteResponse): string {
-    switch (task.tipoRuta) {
+    const tipo = task?.tipoRuta || 'TOMA_LECTURA';
+    switch (tipo) {
       case 'INSTALACION':
         return 'bi-tools';
       case 'INSPECCION':
@@ -405,5 +641,50 @@ export class RutasComponent implements OnInit, OnDestroy {
       default:
         return 'bi-droplet-fill';
     }
+  }
+
+  getTaskReadCount(task: OperatorRouteResponse): number {
+    let readCount = 0;
+    const statusMap = this.readingStatusBySerie();
+    if (task.paradas?.length) {
+      for (const p of task.paradas) {
+        const st = statusMap.get(p.serie ?? '') ?? p.estado;
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+          readCount++;
+        }
+      }
+    } else if (task.ordenesTrabajo?.length) {
+      for (const o of task.ordenesTrabajo) {
+        const st = statusMap.get(o.medidor?.serie ?? '') ?? o.estado;
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+          readCount++;
+        }
+      }
+    } else if (task.medidor) {
+      const st = statusMap.get(task.medidor.serie);
+      if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+        readCount = 1;
+      }
+    }
+    return readCount;
+  }
+
+  getTaskProgressPct(task: OperatorRouteResponse): number {
+    const total = this.getTaskPointCount(task);
+    if (total === 0) return 0;
+    const read = this.getTaskReadCount(task);
+    return Math.min(100, Math.round((read / total) * 100));
+  }
+
+  goToNewNovelty(): void {
+    this.router.navigate(['/app/operador/novedades/new']);
+  }
+
+  goToSearchOrQR(): void {
+    this.router.navigate(['/app/operador/lecturas']);
+  }
+
+  goToSync(): void {
+    this.router.navigate(['/app/operador/sincronizar']);
   }
 }

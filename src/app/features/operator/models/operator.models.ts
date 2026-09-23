@@ -57,7 +57,9 @@ export interface OperatorRouteResponse {
   estado: RouteState;
   operarioId: number;
   comunidadId: number;
+  comunidadNombre?: string;
   sectorId?: number;
+  sectorNombre?: string;
   fechaPlanificada?: string;
   fechaInicio?: string;
   fechaFin?: string;

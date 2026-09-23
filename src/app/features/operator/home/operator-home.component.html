@@ -1,0 +1,143 @@
+<div class="operator-home-screen">
+  <!-- 1. BARRA DE OPERADOR (HEADER DEL PANEL) -->
+  <header class="operator-profile-bar">
+    <div class="operator-avatar">
+      <i class="bi bi-person-badge-fill"></i>
+    </div>
+    <div class="operator-info">
+      <div class="operator-name-row">
+        <h2 class="operator-name">{{ currentUser().nombre }}</h2>
+        <span class="operator-role-badge">{{ currentUser().rol }}</span>
+      </div>
+      <p class="operator-meta">
+        <span><i class="bi bi-geo-alt-fill"></i> {{ currentUser().sector }}</span>
+        <span class="meta-dot">·</span>
+        <span>Turno: {{ currentUser().turno }}</span>
+      </p>
+    </div>
+  </header>
+
+  <!-- 2. GRILLA DE KPIS DEL TURNO (2x2) -->
+  <section class="kpi-grid">
+    <!-- KPI 1: Lecturas Hoy -->
+    <div class="kpi-card kpi-lecturas">
+      <div class="kpi-top">
+        <span class="kpi-label">Lecturas Hoy</span>
+        <span class="kpi-badge-pct">{{ readingProgressPct() }}%</span>
+      </div>
+      <div class="kpi-value-row">
+        <h3 class="kpi-number">{{ totalReadMeters() }}/{{ totalAssignedMeters() }}</h3>
+        <i class="bi bi-droplet-fill kpi-icon"></i>
+      </div>
+      <div class="kpi-progress-track">
+        <div class="kpi-progress-bar" [style.width.%]="readingProgressPct()"></div>
+      </div>
+    </div>
+
+    <!-- KPI 2: Órdenes Asignadas -->
+    <div class="kpi-card kpi-ordenes">
+      <div class="kpi-top">
+        <span class="kpi-label">Órdenes Asignadas</span>
+        <span class="kpi-badge-pill urgent">{{ totalWorkOrders() }} activas</span>
+      </div>
+      <div class="kpi-value-row">
+        <h3 class="kpi-number">{{ totalWorkOrders() }}</h3>
+        <i class="bi bi-card-checklist kpi-icon"></i>
+      </div>
+      <span class="kpi-subtext">Cortes & Reconexiones</span>
+    </div>
+
+    <!-- KPI 3: Novedades Reportadas -->
+    <div class="kpi-card kpi-novedades">
+      <div class="kpi-top">
+        <span class="kpi-label">Novedades</span>
+        <span class="kpi-badge-pill warning">Fugas / Daños</span>
+      </div>
+      <div class="kpi-value-row">
+        <h3 class="kpi-number">Reportar</h3>
+        <i class="bi bi-exclamation-triangle-fill kpi-icon warning"></i>
+      </div>
+      <span class="kpi-subtext">Georreferenciadas</span>
+    </div>
+
+    <!-- KPI 4: Dispositivo / Almacenamiento -->
+    <div class="kpi-card kpi-device">
+      <div class="kpi-top">
+        <span class="kpi-label">Dispositivo</span>
+        <span class="kpi-badge-pill success">Offline OK</span>
+      </div>
+      <div class="kpi-value-row">
+        <h3 class="kpi-number">Listo</h3>
+        <i class="bi bi-shield-check kpi-icon success"></i>
+      </div>
+      <span class="kpi-subtext">Sync local activo</span>
+    </div>
+  </section>
+
+  <!-- 3. FEATURED HERO CARD: RUTA ACTIVA -->
+  @if (heroActiveRoute(); as hero) {
+    <section class="hero-active-route-card">
+      <div class="hero-top-tag">
+        <span class="hero-pill"> <i class="bi bi-play-circle-fill"></i> RUTA ACTIVA </span>
+        <span class="hero-sector">
+          {{ hero.nombre || 'Sector Olón' }}
+        </span>
+      </div>
+      <h3 class="hero-title">Continuar: {{ hero.nombre || 'Ruta de Campo' }}</h3>
+      <p class="hero-progress-text">
+        <span
+          >Progreso de paradas:
+          <strong>{{ getHeroReadCount() }} / {{ getHeroStopsCount() }}</strong></span
+        >
+        <span>{{ getHeroProgressPct() }}% completado</span>
+      </p>
+      <div class="hero-progress-track">
+        <div class="hero-progress-fill" [style.width.%]="getHeroProgressPct()"></div>
+      </div>
+      <div class="hero-actions">
+        <button class="hero-btn-primary" (click)="resumeActiveRoute()" type="button">
+          <i class="bi bi-play-fill"></i> Reanudar Ruta
+        </button>
+        <button class="hero-btn-secondary" (click)="goToRoutesMap()" type="button">
+          <i class="bi bi-map-fill"></i> Ver Mapa
+        </button>
+      </div>
+    </section>
+  }
+
+  <!-- 4. ACCIONES RÁPIDAS (QUICK ACTIONS) -->
+  <section class="quick-actions-section">
+    <button class="quick-action-btn" (click)="goToNewNovelty()" type="button">
+      <div class="quick-action-icon warning">
+        <i class="bi bi-plus-circle-fill"></i>
+      </div>
+      <span>Nueva Novedad</span>
+    </button>
+
+    <button class="quick-action-btn" (click)="goToSearchOrQR()" type="button">
+      <div class="quick-action-icon primary">
+        <i class="bi bi-qr-code-scan"></i>
+      </div>
+      <span>Buscar Medidor</span>
+    </button>
+
+    <button class="quick-action-btn" (click)="goToSync()" type="button">
+      <div class="quick-action-icon sync">
+        <i class="bi bi-cloud-arrow-up-fill"></i>
+      </div>
+      <span>Sincronizar</span>
+    </button>
+  </section>
+
+  <!-- 5. BANNER DE ESTADO Y RESUMEN OPERATIVO -->
+  <section class="critical-order-banner">
+    <div class="banner-icon">
+      <i class="bi bi-geo-alt-fill"></i>
+    </div>
+    <div class="banner-content">
+      <h4 class="banner-title">Sector Asignado: Olón Centro</h4>
+      <p class="banner-meta">Rutas y órdenes sincronizadas para trabajo en campo</p>
+    </div>
+    <button class="banner-action-btn" (click)="goToSearchOrQR()" type="button">Ver Todo</button>
+  </section>
+</div>
