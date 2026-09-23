@@ -14,18 +14,53 @@
     </button>
   </div>
 
-  <!-- Filtros por tipo de ruta -->
-  <div class="filter-chips" role="group" aria-label="Filtrar rutas por tipo">
-    @for (option of filterOptions; track option.value) {
-      <button
-        class="filter-chip"
-        [class.active]="activeFilter() === option.value"
-        (click)="setFilter(option.value)"
-        type="button"
-      >
-        {{ option.label }}
-      </button>
-    }
+  <!-- Filtros combinados: Tipo, Estado y Sector -->
+  <div class="filters-container">
+    <!-- 1. Tipo de ruta -->
+    <div class="filter-chips" role="group" aria-label="Filtrar rutas por tipo">
+      @for (option of filterOptions; track option.value) {
+        <button
+          class="filter-chip"
+          [class.active]="activeFilter() === option.value"
+          (click)="setFilter(option.value)"
+          type="button"
+        >
+          {{ option.label }}
+        </button>
+      }
+    </div>
+
+    <!-- 2. Estado y Sector (Filtros secundarios) -->
+    <div class="filter-secondary-row">
+      <div class="filter-chips compact" role="group" aria-label="Filtrar por estado">
+        @for (opt of stateFilterOptions; track opt.value) {
+          <button
+            class="filter-chip sub-chip"
+            [class.active]="activeStateFilter() === opt.value"
+            (click)="setStateFilter(opt.value)"
+            type="button"
+          >
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+
+      @if (availableSectors().length > 1) {
+        <div class="sector-select-wrapper">
+          <select
+            class="sector-select"
+            [value]="activeSectorFilter()"
+            (change)="setSectorFilter($any($event.target).value)"
+            aria-label="Filtrar por sector"
+          >
+            <option value="ALL">Todos los sectores</option>
+            @for (sec of availableSectors(); track sec) {
+              <option [value]="sec">{{ sec }}</option>
+            }
+          </select>
+        </div>
+      }
+    </div>
   </div>
 
   @if (routesSource() === 'cache') {
@@ -136,12 +171,18 @@
             <div class="task-details-grid">
               <div class="task-detail-item">
                 <i class="bi bi-geo-alt-fill text-muted"></i>
-                <span>Sector: <strong>{{ task.descripcion || ('Sector #' + (task.sectorId || task.comunidadId || 'Olón')) }}</strong></span>
+                <span>Sector: <strong>{{ getTaskSectorDescription(task) }}</strong></span>
               </div>
               <div class="task-detail-item">
                 <i class="bi bi-speedometer2 text-muted"></i>
-                <span>Total Paradas: <strong>{{ getTaskPointCount(task) }} medidores</strong></span>
+                <span>Paradas: <strong>{{ getTaskPointCount(task) }} medidores asignados</strong></span>
               </div>
+              @if (getTaskFirstClient(task); as client) {
+                <div class="task-detail-item">
+                  <i class="bi bi-person-fill text-muted"></i>
+                  <span>Inicio: <strong>{{ client }}</strong></span>
+                </div>
+              }
             </div>
 
             <!-- Barra de progreso de lectura individual de la ruta -->

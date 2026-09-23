@@ -38,39 +38,39 @@
     <div class="kpi-card kpi-ordenes">
       <div class="kpi-top">
         <span class="kpi-label">Órdenes Asignadas</span>
-        <span class="kpi-badge-pill urgent">2 urgentes</span>
+        <span class="kpi-badge-pill urgent">{{ totalWorkOrders() }} activas</span>
       </div>
       <div class="kpi-value-row">
         <h3 class="kpi-number">{{ totalWorkOrders() }}</h3>
         <i class="bi bi-card-checklist kpi-icon"></i>
       </div>
-      <span class="kpi-subtext">Cortes & Inspecciones</span>
+      <span class="kpi-subtext">Cortes & Reconexiones</span>
     </div>
 
     <!-- KPI 3: Novedades Reportadas -->
     <div class="kpi-card kpi-novedades">
       <div class="kpi-top">
-        <span class="kpi-label">Novedades Hoy</span>
-        <span class="kpi-badge-pill warning">1 crítica</span>
+        <span class="kpi-label">Novedades</span>
+        <span class="kpi-badge-pill warning">Fugas / Daños</span>
       </div>
       <div class="kpi-value-row">
-        <h3 class="kpi-number">6</h3>
+        <h3 class="kpi-number">Reportar</h3>
         <i class="bi bi-exclamation-triangle-fill kpi-icon warning"></i>
       </div>
-      <span class="kpi-subtext">Fugas y medidores</span>
+      <span class="kpi-subtext">Georreferenciadas</span>
     </div>
 
     <!-- KPI 4: Dispositivo / Almacenamiento -->
     <div class="kpi-card kpi-device">
       <div class="kpi-top">
         <span class="kpi-label">Dispositivo</span>
-        <span class="kpi-badge-pill success">OK</span>
+        <span class="kpi-badge-pill success">Offline OK</span>
       </div>
       <div class="kpi-value-row">
-        <h3 class="kpi-number">82%</h3>
-        <i class="bi bi-battery-charging kpi-icon success"></i>
+        <h3 class="kpi-number">Listo</h3>
+        <i class="bi bi-shield-check kpi-icon success"></i>
       </div>
-      <span class="kpi-subtext">1.2 GB libre local</span>
+      <span class="kpi-subtext">Sync local activo</span>
     </div>
   </section>
 
@@ -82,11 +82,11 @@
           <i class="bi bi-play-circle-fill"></i> RUTA ACTIVA
         </span>
         <span class="hero-sector">
-          {{ hero.nombre || 'Sector Olón Norte · Mz 12' }}
+          {{ hero.nombre || 'Sector Olón' }}
         </span>
       </div>
       <h3 class="hero-title">
-        Continuar Ruta: {{ hero.nombre || 'Sector Olón' }}
+        Continuar: {{ hero.nombre || 'Ruta de Campo' }}
       </h3>
       <p class="hero-progress-text">
         <span>Progreso de paradas: <strong>{{ getHeroReadCount() }} / {{ getHeroStopsCount() }}</strong></span>
@@ -97,7 +97,7 @@
       </div>
       <div class="hero-actions">
         <button class="hero-btn-primary" (click)="resumeActiveRoute()" type="button">
-          <i class="bi bi-play-fill"></i> Reanudar Lecturas
+          <i class="bi bi-play-fill"></i> Reanudar Ruta
         </button>
         <button class="hero-btn-secondary" (click)="goToRoutesMap()" type="button">
           <i class="bi bi-map-fill"></i> Ver Mapa
@@ -119,7 +119,7 @@
       <div class="quick-action-icon primary">
         <i class="bi bi-qr-code-scan"></i>
       </div>
-      <span>Escanear QR</span>
+      <span>Buscar Medidor</span>
     </button>
 
     <button class="quick-action-btn" (click)="goToSync()" type="button">
@@ -130,17 +130,17 @@
     </button>
   </section>
 
-  <!-- 5. BANNER DE PRÓXIMA ORDEN CRÍTICA -->
+  <!-- 5. BANNER DE ESTADO Y RESUMEN OPERATIVO -->
   <section class="critical-order-banner">
     <div class="banner-icon">
-      <i class="bi bi-alarm-fill"></i>
+      <i class="bi bi-geo-alt-fill"></i>
     </div>
     <div class="banner-content">
-      <h4 class="banner-title">Próxima orden: Corte por Mora 10:30</h4>
-      <p class="banner-meta">CNT-2291 · Luis Tomalá · a 400 m de tu posición</p>
+      <h4 class="banner-title">Sector Asignado: Olón Centro</h4>
+      <p class="banner-meta">Rutas y órdenes sincronizadas para trabajo en campo</p>
     </div>
     <button class="banner-action-btn" (click)="goToSearchOrQR()" type="button">
-      Ver
+      Ver Todo
     </button>
   </section>
 </div>

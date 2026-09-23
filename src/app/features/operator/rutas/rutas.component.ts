@@ -16,7 +16,7 @@ import { NetworkService } from '../../../core/services/network.service';
 import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
 import type { OperatorRouteResponse } from '../models/operator.models';
 import { OperatorRouteOfflineService } from '../service/operator-route-offline.service';
-import { STATE_LABELS, FILTER_OPTIONS } from './rutas.constants';
+import { STATE_LABELS, FILTER_OPTIONS, STATE_FILTER_OPTIONS } from './rutas.constants';
 import { RutasMapComponent, type MapPoint } from '../components/rutas-map/rutas-map.component';
 
 import { AuthService } from '../../../core/services/auth.service';
@@ -45,6 +45,8 @@ export class RutasComponent implements OnInit, OnDestroy {
   // ── Signals ──────────────────────────────────────────────────────────────
   readonly tasks = signal<OperatorRouteResponse[]>([]);
   readonly activeFilter = signal<string>('ALL');
+  readonly activeStateFilter = signal<string>('ALL');
+  readonly activeSectorFilter = signal<string>('ALL');
   readonly viewMode = signal<ViewMode>('list');
   readonly isLoading = signal<boolean>(false);
   readonly selectedTaskId = signal<string | null>(null);
@@ -116,9 +118,35 @@ export class RutasComponent implements OnInit, OnDestroy {
   });
 
   // ── Computed ─────────────────────────────────────────────────────────────
+  // ── Sectores & Filtros Computados ─────────────────────────────────────────
+  readonly availableSectors = computed<string[]>(() => {
+    const set = new Set<string>();
+    for (const t of this.tasks()) {
+      if (t.descripcion?.trim()) {
+        set.add(t.descripcion.trim());
+      } else if (t.sectorId != null) {
+        set.add(`Sector #${t.sectorId}`);
+      } else if (t.comunidadId != null) {
+        set.add(`Comunidad #${t.comunidadId}`);
+      }
+    }
+    return Array.from(set);
+  });
+
   readonly filteredTasks = computed<OperatorRouteResponse[]>(() => {
-    const filter = this.activeFilter();
-    return filter === 'ALL' ? this.tasks() : this.tasks().filter((t) => t.tipoRuta === filter);
+    const tipo = this.activeFilter();
+    const estado = this.activeStateFilter();
+    const sector = this.activeSectorFilter();
+
+    return this.tasks().filter((t) => {
+      if (tipo !== 'ALL' && t.tipoRuta !== tipo) return false;
+      if (estado !== 'ALL' && t.estado !== estado) return false;
+      if (sector !== 'ALL') {
+        const desc = t.descripcion?.trim() || (t.sectorId ? `Sector #${t.sectorId}` : `Comunidad #${t.comunidadId}`);
+        if (desc !== sector) return false;
+      }
+      return true;
+    });
   });
 
   readonly mapPoints = computed<MapPoint[]>(() => {
@@ -221,6 +249,7 @@ export class RutasComponent implements OnInit, OnDestroy {
 
   // ── Exponer constantes al template ────────────────────────────────────────
   readonly filterOptions = FILTER_OPTIONS;
+  readonly stateFilterOptions = STATE_FILTER_OPTIONS;
   readonly stateLabelMap = STATE_LABELS;
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -323,6 +352,16 @@ export class RutasComponent implements OnInit, OnDestroy {
 
   setFilter(tipo: string): void {
     this.activeFilter.set(tipo);
+    this.selectedTaskId.set(null);
+  }
+
+  setStateFilter(estado: string): void {
+    this.activeStateFilter.set(estado);
+    this.selectedTaskId.set(null);
+  }
+
+  setSectorFilter(sector: string): void {
+    this.activeSectorFilter.set(sector);
     this.selectedTaskId.set(null);
   }
 
@@ -429,15 +468,36 @@ export class RutasComponent implements OnInit, OnDestroy {
 
   getTaskPointCount(task: OperatorRouteResponse): number {
     if (task.paradas?.length) {
-      return task.paradas.filter((point) => point.latitud != null && point.longitud != null).length;
+      return task.paradas.length;
     }
     if (task.ordenesTrabajo?.length) {
-      return task.ordenesTrabajo.filter(
-        (order) => order.medidor?.latitud != null && order.medidor?.longitud != null,
-      ).length;
+      return task.ordenesTrabajo.length;
     }
     if (task.rutaPuntos?.length) return task.rutaPuntos.length;
-    return task.medidor?.latitud != null && task.medidor?.longitud != null ? 1 : 0;
+    return task.medidor ? 1 : 0;
+  }
+
+  getTaskFirstClient(task: OperatorRouteResponse): string | null {
+    if (task.paradas?.length) {
+      const first = task.paradas.find((p) => p.clienteNombre?.trim());
+      if (first?.clienteNombre) return first.clienteNombre;
+    }
+    if (task.ordenesTrabajo?.length) {
+      const first = task.ordenesTrabajo.find((o) => o.contrato?.clienteNombre?.trim());
+      if (first?.contrato?.clienteNombre) return first.contrato.clienteNombre;
+    }
+    if (task.rutaPuntos?.length) {
+      const first = task.rutaPuntos.find((pt) => pt.clienteNombre?.trim());
+      if (first?.clienteNombre) return first.clienteNombre;
+    }
+    return null;
+  }
+
+  getTaskSectorDescription(task: OperatorRouteResponse): string {
+    if (task.descripcion?.trim()) return task.descripcion.trim();
+    if (task.sectorId != null) return `Sector #${task.sectorId}`;
+    if (task.comunidadId != null) return `Comunidad #${task.comunidadId}`;
+    return 'Sector Olón';
   }
 
   /**

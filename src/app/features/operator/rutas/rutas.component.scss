@@ -9,11 +9,71 @@
 .view-toggle-btn {
   display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.35rem 0.75rem; border: 1px solid var(--op-border-subtle); border-radius: 999px; background: var(--op-bg-surface); font-size: 0.78rem; font-weight: 600; color: var(--op-text-primary); min-height: 38px;
 }
-.filter-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.75rem; }
-.filter-chip {
-  padding: 0.35rem 0.75rem; border-radius: 999px; border: 1px solid var(--op-border-subtle); background: var(--op-bg-surface); font-size: 0.75rem; font-weight: 600; color: var(--op-text-secondary); min-height: 34px;
+.filters-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-bottom: 0.85rem;
 }
-.filter-chip.active { background: var(--op-bg-header-dark); border-color: var(--op-bg-header-dark); color: #fff; }
+
+.filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+
+  &.compact {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 2px;
+  }
+}
+
+.filter-secondary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid var(--op-border-subtle);
+  background: var(--op-bg-surface);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--op-text-secondary);
+  min-height: 34px;
+  white-space: nowrap;
+
+  &.sub-chip {
+    font-size: 0.7rem;
+    padding: 0.25rem 0.6rem;
+    min-height: 28px;
+    background: transparent;
+  }
+
+  &.active {
+    background: var(--op-bg-header-dark);
+    border-color: var(--op-bg-header-dark);
+    color: #fff;
+  }
+}
+
+.sector-select-wrapper {
+  .sector-select {
+    padding: 0.3rem 0.6rem;
+    border-radius: 8px;
+    border: 1px solid var(--op-border-subtle);
+    background: var(--op-bg-surface);
+    color: var(--op-text-primary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    outline: none;
+    cursor: pointer;
+  }
+}
 .task-list { display: flex; flex-direction: column; gap: 0.65rem; }
 .task-card {
   background: var(--op-bg-surface); border-radius: 12px; padding: 0.85rem; border: 1px solid var(--op-border-subtle);
