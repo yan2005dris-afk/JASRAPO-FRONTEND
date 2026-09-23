@@ -4,6 +4,7 @@ import { RouterModule, Router } from '@angular/router';
 import { NetworkService } from '../../core/services/network.service';
 import { OperatorSyncService } from '../../core/services/operator-sync.service';
 import { AuthService } from '../../core/services/auth.service';
+import { PwaInstallService } from '../../core/services/pwa-install.service';
 import { BrandLogoComponent } from '../../shared/components/brand-logo/brand-logo.component';
 
 @Component({
@@ -17,6 +18,7 @@ export class OperatorLayoutComponent {
   readonly networkService = inject(NetworkService);
   readonly syncService = inject(OperatorSyncService);
   readonly authService = inject(AuthService);
+  readonly pwaInstallService = inject(PwaInstallService);
   private readonly router = inject(Router);
 
   // Getter para el usuario actual
@@ -34,5 +36,10 @@ export class OperatorLayoutComponent {
   // Cerrar sesión
   onLogout(): void {
     this.authService.logout();
+  }
+
+  // Solicita la instalación de la PWA cuando el navegador lo permite
+  installApp(): void {
+    void this.pwaInstallService.promptInstall();
   }
 }
