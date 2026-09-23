@@ -58,9 +58,7 @@ export class RutasComponent implements OnInit, OnDestroy {
     const activeSelectedId = this.selectedTaskId();
     const statusMap = this.readingStatusBySerie();
 
-    const sortedTasks = this.filteredTasks()
-      .slice()
-      .sort((a, b) => a.orden - b.orden);
+    const sortedTasks = this.filteredTasks();
 
     const points: MapPoint[] = [];
 

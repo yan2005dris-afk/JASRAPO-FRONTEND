@@ -9,7 +9,6 @@ const mockTask: OperatorRouteResponse = {
   tipoRuta: 'TOMA_LECTURA',
   nombre: 'Ruta Norte',
   estado: 'PENDIENTE',
-  orden: 1,
   operarioId: 1,
   comunidadId: 2,
   medidor: null,
