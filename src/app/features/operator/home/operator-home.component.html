@@ -78,18 +78,17 @@
   @if (heroActiveRoute(); as hero) {
     <section class="hero-active-route-card">
       <div class="hero-top-tag">
-        <span class="hero-pill">
-          <i class="bi bi-play-circle-fill"></i> RUTA ACTIVA
-        </span>
+        <span class="hero-pill"> <i class="bi bi-play-circle-fill"></i> RUTA ACTIVA </span>
         <span class="hero-sector">
           {{ hero.nombre || 'Sector Olón' }}
         </span>
       </div>
-      <h3 class="hero-title">
-        Continuar: {{ hero.nombre || 'Ruta de Campo' }}
-      </h3>
+      <h3 class="hero-title">Continuar: {{ hero.nombre || 'Ruta de Campo' }}</h3>
       <p class="hero-progress-text">
-        <span>Progreso de paradas: <strong>{{ getHeroReadCount() }} / {{ getHeroStopsCount() }}</strong></span>
+        <span
+          >Progreso de paradas:
+          <strong>{{ getHeroReadCount() }} / {{ getHeroStopsCount() }}</strong></span
+        >
         <span>{{ getHeroProgressPct() }}% completado</span>
       </p>
       <div class="hero-progress-track">
@@ -139,8 +138,6 @@
       <h4 class="banner-title">Sector Asignado: Olón Centro</h4>
       <p class="banner-meta">Rutas y órdenes sincronizadas para trabajo en campo</p>
     </div>
-    <button class="banner-action-btn" (click)="goToSearchOrQR()" type="button">
-      Ver Todo
-    </button>
+    <button class="banner-action-btn" (click)="goToSearchOrQR()" type="button">Ver Todo</button>
   </section>
 </div>

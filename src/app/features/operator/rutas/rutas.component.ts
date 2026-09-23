@@ -109,7 +109,7 @@ export class RutasComponent implements OnInit, OnDestroy {
     let count = 0;
     for (const t of this.tasks()) {
       if (t.tipoRuta !== 'TOMA_LECTURA') {
-        count += (t.ordenesTrabajo?.length || 1);
+        count += t.ordenesTrabajo?.length || 1;
       }
     }
     return count > 0 ? count : 4;
@@ -129,9 +129,7 @@ export class RutasComponent implements OnInit, OnDestroy {
       if (t.comunidadId != null) {
         const id = String(t.comunidadId);
         const label =
-          t.comunidadNombre?.trim() ||
-          comCatalog.get(t.comunidadId) ||
-          `Comunidad #${id}`;
+          t.comunidadNombre?.trim() || comCatalog.get(t.comunidadId) || `Comunidad #${id}`;
         map.set(id, label);
       }
     }
@@ -316,13 +314,20 @@ export class RutasComponent implements OnInit, OnDestroy {
       const secMap = new Map<number, string>(secCache.map((s) => [s.sectorId, s.nombre]));
 
       // Auto-cosechar comunidades y sectores nuevos provenientes de la respuesta del backend
-      const newComunidades: Array<{ comunidadId: number; nombre: string }> = [];
-      const newSectores: Array<{ sectorId: number; comunidadId?: number; nombre: string }> = [];
+      const newComunidades: { comunidadId: number; nombre: string }[] = [];
+      const newSectores: { sectorId: number; comunidadId?: number; nombre: string }[] = [];
 
       for (const r of routeResult.routes || []) {
-        if (r.comunidadId != null && r.comunidadNombre?.trim() && !comMap.has(Number(r.comunidadId))) {
+        if (
+          r.comunidadId != null &&
+          r.comunidadNombre?.trim() &&
+          !comMap.has(Number(r.comunidadId))
+        ) {
           comMap.set(Number(r.comunidadId), r.comunidadNombre.trim());
-          newComunidades.push({ comunidadId: Number(r.comunidadId), nombre: r.comunidadNombre.trim() });
+          newComunidades.push({
+            comunidadId: Number(r.comunidadId),
+            nombre: r.comunidadNombre.trim(),
+          });
         }
         if (r.sectorId != null && r.sectorNombre?.trim() && !secMap.has(Number(r.sectorId))) {
           secMap.set(Number(r.sectorId), r.sectorNombre.trim());
@@ -344,30 +349,29 @@ export class RutasComponent implements OnInit, OnDestroy {
       this.comunidadesCatalog.set(comMap);
       this.sectoresCatalog.set(secMap);
 
-      const normalizedRoutes = (routeResult.routes || []).map((r: any, idx: number) => {
-        const rawTipo = r.tipoRuta || r.tipo || r.type || 'TOMA_LECTURA';
-        const rawEstado = r.estado || r.state || 'PENDIENTE';
-        const rawNombre = r.nombre || r.name || `Ruta ${rawTipo} #${idx + 1}`;
-        const comId = r.comunidadId != null ? Number(r.comunidadId) : undefined;
-        const secId = r.sectorId != null ? Number(r.sectorId) : undefined;
-        const comunidadNombre =
-          r.comunidadNombre?.trim() ||
-          (comId ? comMap.get(comId) : undefined);
-        const sectorNombre =
-          r.sectorNombre?.trim() ||
-          (secId ? secMap.get(secId) : undefined);
-        return {
-          ...r,
-          rutaId: String(r.rutaId || r.id || idx + 1),
-          tipoRuta: String(rawTipo).toUpperCase(),
-          estado: String(rawEstado).toUpperCase(),
-          nombre: rawNombre,
-          comunidadNombre,
-          sectorNombre,
-          paradas: Array.isArray(r.paradas) ? r.paradas : [],
-          ordenesTrabajo: Array.isArray(r.ordenesTrabajo) ? r.ordenesTrabajo : [],
-        };
-      });
+      const normalizedRoutes = (routeResult.routes || []).map(
+        (r: OperatorRouteResponse, idx: number) => {
+          const rawTipo = r.tipoRuta || r.tipo || r.type || 'TOMA_LECTURA';
+          const rawEstado = r.estado || r.state || 'PENDIENTE';
+          const rawNombre = r.nombre || r.name || `Ruta ${rawTipo} #${idx + 1}`;
+          const comId = r.comunidadId != null ? Number(r.comunidadId) : undefined;
+          const secId = r.sectorId != null ? Number(r.sectorId) : undefined;
+          const comunidadNombre =
+            r.comunidadNombre?.trim() || (comId ? comMap.get(comId) : undefined);
+          const sectorNombre = r.sectorNombre?.trim() || (secId ? secMap.get(secId) : undefined);
+          return {
+            ...r,
+            rutaId: String(r.rutaId || r.id || idx + 1),
+            tipoRuta: String(rawTipo).toUpperCase(),
+            estado: String(rawEstado).toUpperCase(),
+            nombre: rawNombre,
+            comunidadNombre,
+            sectorNombre,
+            paradas: Array.isArray(r.paradas) ? r.paradas : [],
+            ordenesTrabajo: Array.isArray(r.ordenesTrabajo) ? r.ordenesTrabajo : [],
+          };
+        },
+      );
       this.tasks.set(normalizedRoutes);
       this.routesSource.set(routeResult.source);
       this.routesCachedAt.set(routeResult.cachedAt);

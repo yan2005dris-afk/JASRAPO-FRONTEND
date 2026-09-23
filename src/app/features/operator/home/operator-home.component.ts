@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -88,7 +95,7 @@ export class OperatorHomeComponent implements OnInit {
     let count = 0;
     for (const t of this.tasks()) {
       if (t.tipoRuta !== 'TOMA_LECTURA') {
-        count += (t.ordenesTrabajo?.length || 1);
+        count += t.ordenesTrabajo?.length || 1;
       }
     }
     return count > 0 ? count : 4;
@@ -170,11 +177,11 @@ export class OperatorHomeComponent implements OnInit {
     if (!hero) return 0;
     let read = 0;
     const statusMap = this.readingStatusBySerie();
-    for (const p of (hero.paradas || [])) {
+    for (const p of hero.paradas || []) {
       const st = statusMap.get(p.serie ?? '') ?? p.estado;
       if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') read++;
     }
-    for (const o of (hero.ordenesTrabajo || [])) {
+    for (const o of hero.ordenesTrabajo || []) {
       const st = statusMap.get(o.medidor?.serie ?? '') ?? o.estado;
       if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') read++;
     }

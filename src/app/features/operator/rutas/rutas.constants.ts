@@ -52,4 +52,3 @@ export const STATE_FILTER_OPTIONS: { label: string; value: string }[] = [
   { label: 'En Progreso', value: 'EN_PROGRESO' },
   { label: 'Completadas', value: 'COMPLETADA' },
 ];
-

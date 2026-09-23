@@ -160,8 +160,12 @@
   color: var(--op-brand-primary, #0a9396);
 }
 
-.kpi-icon.warning { color: var(--op-status-warning, #d97706); }
-.kpi-icon.success { color: var(--op-status-success, #1e7e34); }
+.kpi-icon.warning {
+  color: var(--op-status-warning, #d97706);
+}
+.kpi-icon.success {
+  color: var(--op-status-success, #1e7e34);
+}
 
 .kpi-subtext {
   font-size: 0.7rem;
@@ -323,9 +327,18 @@
   font-size: 1.15rem;
 }
 
-.quick-action-icon.warning { background: var(--op-status-warning-bg, #fff3e0); color: var(--op-status-warning, #d97706); }
-.quick-action-icon.primary { background: var(--op-bg-app, #e1f5f5); color: var(--op-brand-primary, #0a9396); }
-.quick-action-icon.sync { background: #e0f2fe; color: #0284c7; }
+.quick-action-icon.warning {
+  background: var(--op-status-warning-bg, #fff3e0);
+  color: var(--op-status-warning, #d97706);
+}
+.quick-action-icon.primary {
+  background: var(--op-bg-app, #e1f5f5);
+  color: var(--op-brand-primary, #0a9396);
+}
+.quick-action-icon.sync {
+  background: #e0f2fe;
+  color: #0284c7;
+}
 
 .quick-action-btn span {
   font-size: 0.72rem;

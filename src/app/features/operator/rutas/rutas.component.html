@@ -129,13 +129,27 @@
         <app-rutas-map [points]="mapPoints()" (pointSelected)="selectTask($event)" />
 
         <div class="map-legend" aria-label="Leyenda del mapa">
-          <span class="legend-item"><span class="legend-dot" style="background: #d1d5db"></span>Sin lectura</span>
-          <span class="legend-item"><span class="legend-dot" style="background: #6b7280"></span>Pendiente</span>
-          <span class="legend-item"><span class="legend-dot" style="background: #f59e0b"></span>Por revisión</span>
-          <span class="legend-item"><span class="legend-dot" style="background: #ef4444"></span>Rechazada</span>
-          <span class="legend-item"><span class="legend-dot" style="background: #22c55e"></span>Aprobada</span>
-          <span class="legend-item"><span class="legend-dot" style="background: #3b82f6"></span>Estimada</span>
-          <span class="legend-item"><span class="legend-dot" style="background: #f97316"></span>Con novedad</span>
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: #d1d5db"></span>Sin lectura</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: #6b7280"></span>Pendiente</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: #f59e0b"></span>Por revisión</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: #ef4444"></span>Rechazada</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: #22c55e"></span>Aprobada</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: #3b82f6"></span>Estimada</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: #f97316"></span>Con novedad</span
+          >
         </div>
 
         <div class="map-task-list" role="list" aria-label="Rutas asignadas en mapa">
@@ -153,7 +167,9 @@
             >
               <span class="task-orden-badge">{{ $index + 1 }}</span>
               <div class="task-map-info">
-                <span class="task-name">{{ task.nombre || ('Ruta ' + (task.tipoRuta | routeType)) }}</span>
+                <span class="task-name">{{
+                  task.nombre || 'Ruta ' + (task.tipoRuta | routeType)
+                }}</span>
                 <span class="task-sub">{{ getTaskPointCount(task) }} puntos en ruta</span>
               </div>
               <i class="bi bi-chevron-right text-muted"></i>
@@ -182,27 +198,35 @@
 
             <!-- Título & Subtítulo de Ruta -->
             <h3 class="task-nombre">
-              {{ task.nombre || ('Ruta ' + (task.tipoRuta | routeType) + ' #' + ($index + 1)) }}
+              {{ task.nombre || 'Ruta ' + (task.tipoRuta | routeType) + ' #' + ($index + 1) }}
             </h3>
 
             <!-- Información rica de la ruta -->
             <div class="task-details-grid">
               <div class="task-detail-item">
                 <i class="bi bi-geo-alt-fill text-muted"></i>
-                <span>Comunidad: <strong>{{ getTaskComunidadDescription(task) }}</strong></span>
+                <span
+                  >Comunidad: <strong>{{ getTaskComunidadDescription(task) }}</strong></span
+                >
               </div>
               <div class="task-detail-item">
                 <i class="bi bi-pin-map-fill text-muted"></i>
-                <span>Sector: <strong>{{ getTaskSectorDescription(task) }}</strong></span>
+                <span
+                  >Sector: <strong>{{ getTaskSectorDescription(task) }}</strong></span
+                >
               </div>
               <div class="task-detail-item">
                 <i class="bi bi-speedometer2 text-muted"></i>
-                <span>Paradas: <strong>{{ getTaskPointCount(task) }} medidores asignados</strong></span>
+                <span
+                  >Paradas: <strong>{{ getTaskPointCount(task) }} medidores asignados</strong></span
+                >
               </div>
               @if (getTaskFirstClient(task); as client) {
                 <div class="task-detail-item">
                   <i class="bi bi-person-fill text-muted"></i>
-                  <span>Inicio: <strong>{{ client }}</strong></span>
+                  <span
+                    >Inicio: <strong>{{ client }}</strong></span
+                  >
                 </div>
               }
             </div>

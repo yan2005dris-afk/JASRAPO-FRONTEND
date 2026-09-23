@@ -733,7 +733,7 @@ export class IndexedDbService {
   // --- COMUNIDADES & SECTORES CACHE ---
 
   async saveComunidadesCache(
-    items: Array<{ comunidadId: number; nombre: string; codigo?: string }>,
+    items: { comunidadId: number; nombre: string; codigo?: string }[],
   ): Promise<void> {
     if (!items?.length) return;
     const db = await this.initDb();
@@ -750,9 +750,7 @@ export class IndexedDbService {
     });
   }
 
-  async getComunidadesCache(): Promise<
-    Array<{ comunidadId: number; nombre: string; codigo?: string }>
-  > {
+  async getComunidadesCache(): Promise<{ comunidadId: number; nombre: string; codigo?: string }[]> {
     const db = await this.initDb();
     if (!db.objectStoreNames.contains('comunidades_cache')) return [];
     return new Promise((resolve, reject) => {
@@ -765,7 +763,7 @@ export class IndexedDbService {
   }
 
   async saveSectoresCache(
-    items: Array<{ sectorId: number; comunidadId?: number; nombre: string; codigo?: string }>,
+    items: { sectorId: number; comunidadId?: number; nombre: string; codigo?: string }[],
   ): Promise<void> {
     if (!items?.length) return;
     const db = await this.initDb();
@@ -783,7 +781,7 @@ export class IndexedDbService {
   }
 
   async getSectoresCache(): Promise<
-    Array<{ sectorId: number; comunidadId?: number; nombre: string; codigo?: string }>
+    { sectorId: number; comunidadId?: number; nombre: string; codigo?: string }[]
   > {
     const db = await this.initDb();
     if (!db.objectStoreNames.contains('sectores_cache')) return [];
@@ -802,11 +800,14 @@ export class IndexedDbService {
     const db = await this.initDb();
 
     // Auto-persist discovered comunidades & sectores to their dedicated stores
-    const comunidades: Array<{ comunidadId: number; nombre: string }> = [];
-    const sectores: Array<{ sectorId: number; comunidadId?: number; nombre: string }> = [];
+    const comunidades: { comunidadId: number; nombre: string }[] = [];
+    const sectores: { sectorId: number; comunidadId?: number; nombre: string }[] = [];
     for (const r of routes) {
       if (r['comunidadId'] != null && r['comunidadNombre']?.trim()) {
-        comunidades.push({ comunidadId: Number(r['comunidadId']), nombre: r['comunidadNombre'].trim() });
+        comunidades.push({
+          comunidadId: Number(r['comunidadId']),
+          nombre: r['comunidadNombre'].trim(),
+        });
       }
       if (r['sectorId'] != null && r['sectorNombre']?.trim()) {
         sectores.push({
