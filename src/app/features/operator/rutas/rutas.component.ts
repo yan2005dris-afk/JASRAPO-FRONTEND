@@ -144,8 +144,6 @@ export class RutasComponent implements OnInit, OnDestroy {
     for (const t of this.tasks()) {
       if (t.sectorNombre?.trim()) {
         map.set(t.sectorNombre.trim(), t.sectorNombre.trim());
-      } else if (t.descripcion?.trim()) {
-        map.set(t.descripcion.trim(), t.descripcion.trim());
       } else if (t.sectorId != null) {
         const id = String(t.sectorId);
         const label = secCatalog.get(t.sectorId) || `Sector #${id}`;
@@ -604,19 +602,12 @@ export class RutasComponent implements OnInit, OnDestroy {
 
   getTaskSectorDescription(task: OperatorRouteResponse): string {
     if (task.sectorNombre?.trim()) return task.sectorNombre.trim();
-    if (task.descripcion?.trim()) return task.descripcion.trim();
     if (task.sectorId != null) {
       const cached = this.sectoresCatalog().get(task.sectorId);
       if (cached) return cached;
       return `Sector #${task.sectorId}`;
     }
-    if (task.comunidadNombre?.trim()) return task.comunidadNombre.trim();
-    if (task.comunidadId != null) {
-      const cached = this.comunidadesCatalog().get(task.comunidadId);
-      if (cached) return cached;
-      return `Comunidad #${task.comunidadId}`;
-    }
-    return 'Sector General';
+    return 'Toda la comunidad';
   }
 
   /**
