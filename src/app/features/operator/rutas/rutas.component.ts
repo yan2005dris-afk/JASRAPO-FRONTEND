@@ -125,7 +125,8 @@ export class RutasComponent implements OnInit, OnDestroy {
     for (const t of this.tasks()) {
       if (t.comunidadId != null) {
         const id = String(t.comunidadId);
-        map.set(id, `Comunidad #${id}`);
+        const label = t.comunidadNombre?.trim() || `Comunidad #${id}`;
+        map.set(id, label);
       }
     }
     return Array.from(map.entries()).map(([id, label]) => ({ id, label }));
@@ -134,7 +135,9 @@ export class RutasComponent implements OnInit, OnDestroy {
   readonly availableSectors = computed<{ id: string; label: string }[]>(() => {
     const map = new Map<string, string>();
     for (const t of this.tasks()) {
-      if (t.descripcion?.trim()) {
+      if (t.sectorNombre?.trim()) {
+        map.set(t.sectorNombre.trim(), t.sectorNombre.trim());
+      } else if (t.descripcion?.trim()) {
         map.set(t.descripcion.trim(), t.descripcion.trim());
       } else if (t.sectorId != null) {
         const id = String(t.sectorId);
@@ -155,8 +158,17 @@ export class RutasComponent implements OnInit, OnDestroy {
       if (estado !== 'ALL' && t.estado !== estado) return false;
       if (comunidad !== 'ALL' && String(t.comunidadId) !== comunidad) return false;
       if (sector !== 'ALL') {
-        const secDesc = t.descripcion?.trim() || (t.sectorId ? String(t.sectorId) : null);
-        if (secDesc !== sector && `Sector #${t.sectorId}` !== sector) return false;
+        const secNombre = t.sectorNombre?.trim();
+        const secDesc = t.descripcion?.trim();
+        const secId = t.sectorId != null ? String(t.sectorId) : null;
+        if (
+          secNombre !== sector &&
+          secDesc !== sector &&
+          secId !== sector &&
+          `Sector #${t.sectorId}` !== sector
+        ) {
+          return false;
+        }
       }
       return true;
     });
@@ -525,11 +537,19 @@ export class RutasComponent implements OnInit, OnDestroy {
     return null;
   }
 
+  getTaskComunidadDescription(task: OperatorRouteResponse): string {
+    if (task.comunidadNombre?.trim()) return task.comunidadNombre.trim();
+    if (task.comunidadId != null) return `Comunidad #${task.comunidadId}`;
+    return 'Comunidad Principal';
+  }
+
   getTaskSectorDescription(task: OperatorRouteResponse): string {
+    if (task.sectorNombre?.trim()) return task.sectorNombre.trim();
     if (task.descripcion?.trim()) return task.descripcion.trim();
     if (task.sectorId != null) return `Sector #${task.sectorId}`;
+    if (task.comunidadNombre?.trim()) return task.comunidadNombre.trim();
     if (task.comunidadId != null) return `Comunidad #${task.comunidadId}`;
-    return 'Sector Olón';
+    return 'Sector General';
   }
 
   /**
