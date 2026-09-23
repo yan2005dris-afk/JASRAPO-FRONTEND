@@ -61,9 +61,16 @@
   }
 }
 
+.selects-group {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
 .sector-select-wrapper {
   .sector-select {
-    padding: 0.3rem 0.6rem;
+    padding: 0.35rem 0.65rem;
     border-radius: 8px;
     border: 1px solid var(--op-border-subtle);
     background: var(--op-bg-surface);
@@ -72,6 +79,7 @@
     font-weight: 600;
     outline: none;
     cursor: pointer;
+    min-height: 32px;
   }
 }
 .task-list { display: flex; flex-direction: column; gap: 0.65rem; }

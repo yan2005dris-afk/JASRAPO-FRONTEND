@@ -46,6 +46,7 @@ export class RutasComponent implements OnInit, OnDestroy {
   readonly tasks = signal<OperatorRouteResponse[]>([]);
   readonly activeFilter = signal<string>('ALL');
   readonly activeStateFilter = signal<string>('ALL');
+  readonly activeComunidadFilter = signal<string>('ALL');
   readonly activeSectorFilter = signal<string>('ALL');
   readonly viewMode = signal<ViewMode>('list');
   readonly isLoading = signal<boolean>(false);
@@ -118,32 +119,44 @@ export class RutasComponent implements OnInit, OnDestroy {
   });
 
   // ── Computed ─────────────────────────────────────────────────────────────
-  // ── Sectores & Filtros Computados ─────────────────────────────────────────
-  readonly availableSectors = computed<string[]>(() => {
-    const set = new Set<string>();
+  // ── Comunidades & Sectores Computados Separados ───────────────────────────
+  readonly availableComunidades = computed<{ id: string; label: string }[]>(() => {
+    const map = new Map<string, string>();
     for (const t of this.tasks()) {
-      if (t.descripcion?.trim()) {
-        set.add(t.descripcion.trim());
-      } else if (t.sectorId != null) {
-        set.add(`Sector #${t.sectorId}`);
-      } else if (t.comunidadId != null) {
-        set.add(`Comunidad #${t.comunidadId}`);
+      if (t.comunidadId != null) {
+        const id = String(t.comunidadId);
+        map.set(id, `Comunidad #${id}`);
       }
     }
-    return Array.from(set);
+    return Array.from(map.entries()).map(([id, label]) => ({ id, label }));
+  });
+
+  readonly availableSectors = computed<{ id: string; label: string }[]>(() => {
+    const map = new Map<string, string>();
+    for (const t of this.tasks()) {
+      if (t.descripcion?.trim()) {
+        map.set(t.descripcion.trim(), t.descripcion.trim());
+      } else if (t.sectorId != null) {
+        const id = String(t.sectorId);
+        map.set(id, `Sector #${id}`);
+      }
+    }
+    return Array.from(map.entries()).map(([id, label]) => ({ id, label }));
   });
 
   readonly filteredTasks = computed<OperatorRouteResponse[]>(() => {
     const tipo = this.activeFilter();
     const estado = this.activeStateFilter();
+    const comunidad = this.activeComunidadFilter();
     const sector = this.activeSectorFilter();
 
     return this.tasks().filter((t) => {
       if (tipo !== 'ALL' && t.tipoRuta !== tipo) return false;
       if (estado !== 'ALL' && t.estado !== estado) return false;
+      if (comunidad !== 'ALL' && String(t.comunidadId) !== comunidad) return false;
       if (sector !== 'ALL') {
-        const desc = t.descripcion?.trim() || (t.sectorId ? `Sector #${t.sectorId}` : `Comunidad #${t.comunidadId}`);
-        if (desc !== sector) return false;
+        const secDesc = t.descripcion?.trim() || (t.sectorId ? String(t.sectorId) : null);
+        if (secDesc !== sector && `Sector #${t.sectorId}` !== sector) return false;
       }
       return true;
     });
@@ -371,6 +384,11 @@ export class RutasComponent implements OnInit, OnDestroy {
 
   setStateFilter(estado: string): void {
     this.activeStateFilter.set(estado);
+    this.selectedTaskId.set(null);
+  }
+
+  setComunidadFilter(comunidad: string): void {
+    this.activeComunidadFilter.set(comunidad);
     this.selectedTaskId.set(null);
   }
 

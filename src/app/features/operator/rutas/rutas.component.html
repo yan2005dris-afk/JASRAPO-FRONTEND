@@ -30,7 +30,7 @@
       }
     </div>
 
-    <!-- 2. Estado y Sector (Filtros secundarios) -->
+    <!-- 2. Estado, Comunidad y Sector (Filtros secundarios) -->
     <div class="filter-secondary-row">
       <div class="filter-chips compact" role="group" aria-label="Filtrar por estado">
         @for (opt of stateFilterOptions; track opt.value) {
@@ -45,21 +45,39 @@
         }
       </div>
 
-      @if (availableSectors().length > 1) {
-        <div class="sector-select-wrapper">
-          <select
-            class="sector-select"
-            [value]="activeSectorFilter()"
-            (change)="setSectorFilter($any($event.target).value)"
-            aria-label="Filtrar por sector"
-          >
-            <option value="ALL">Todos los sectores</option>
-            @for (sec of availableSectors(); track sec) {
-              <option [value]="sec">{{ sec }}</option>
-            }
-          </select>
-        </div>
-      }
+      <div class="selects-group">
+        @if (availableComunidades().length > 0) {
+          <div class="sector-select-wrapper">
+            <select
+              class="sector-select"
+              [value]="activeComunidadFilter()"
+              (change)="setComunidadFilter($any($event.target).value)"
+              aria-label="Filtrar por comunidad"
+            >
+              <option value="ALL">Todas las comunidades</option>
+              @for (com of availableComunidades(); track com.id) {
+                <option [value]="com.id">{{ com.label }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        @if (availableSectors().length > 0) {
+          <div class="sector-select-wrapper">
+            <select
+              class="sector-select"
+              [value]="activeSectorFilter()"
+              (change)="setSectorFilter($any($event.target).value)"
+              aria-label="Filtrar por sector"
+            >
+              <option value="ALL">Todos los sectores</option>
+              @for (sec of availableSectors(); track sec.id) {
+                <option [value]="sec.id">{{ sec.label }}</option>
+              }
+            </select>
+          </div>
+        }
+      </div>
     </div>
   </div>
 
