@@ -122,7 +122,7 @@
         </div>
 
         <div class="map-task-list" role="list" aria-label="Rutas asignadas en mapa">
-          <h2 class="map-task-list-title">Rutas en orden</h2>
+          <h2 class="map-task-list-title">Rutas</h2>
           @for (task of filteredTasks(); track task.rutaId) {
             <div
               class="map-task-row"
@@ -130,7 +130,7 @@
               tabindex="0"
               role="button"
               [attr.aria-pressed]="selectedTaskId() === task.rutaId"
-              [attr.aria-label]="task.nombre + ' orden ' + task.orden"
+              [attr.aria-label]="task.nombre"
               (click)="selectTask(selectedTaskId() === task.rutaId ? null : task.rutaId)"
               (keydown.enter)="selectTask(selectedTaskId() === task.rutaId ? null : task.rutaId)"
               (keydown.space)="
@@ -138,7 +138,7 @@
                 selectTask(selectedTaskId() === task.rutaId ? null : task.rutaId)
               "
             >
-              <span class="task-orden-badge">{{ task.orden }}</span>
+              <span class="task-orden-badge">{{ $index + 1 }}</span>
               <span class="task-name">{{ task.nombre }}</span>
               @let mapDistance = nextStopDistanceByRoute().get(task.rutaId);
               @if (mapDistance !== undefined) {
@@ -176,7 +176,7 @@
         @for (task of filteredTasks(); track task.rutaId) {
           <div class="task-card">
             <div class="task-card-top">
-              <span class="task-orden">#{{ task.orden }}</span>
+              <span class="task-orden">#{{ $index + 1 }}</span>
               <span class="route-badge badge-{{ task.tipoRuta.toLowerCase() }}">
                 {{ task.tipoRuta | routeType }}
               </span>

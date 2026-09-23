@@ -55,9 +55,6 @@ export interface OperatorRouteResponse {
   nombre: string;
   descripcion?: string;
   estado: RouteState;
-  orden: number;
-  observacion?: string;
-  fechaLimite?: string;
   operarioId: number;
   comunidadId: number;
   sectorId?: number;

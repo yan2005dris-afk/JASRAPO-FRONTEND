@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 
@@ -99,5 +99,27 @@ describe('ClientsComponent', () => {
     component.selectClient({ clienteId: '42' } as IClient);
 
     expect(seleccionado).not.toHaveBeenCalled();
+  });
+
+  it('permite navegar a la creación de cliente en modo selección', () => {
+    fixture.componentRef.setInput('selectionMode', true);
+    fixture.detectChanges();
+
+    const router = TestBed.inject(Router);
+    const navigateSpy = vi.spyOn(router, 'navigate');
+
+    component.crearCliente();
+
+    expect(navigateSpy).toHaveBeenCalledWith(['/app/Contratos/Cliente/new']);
+  });
+
+  it('renderiza el botón de agregar cliente incluso en modo selección', () => {
+    fixture.componentRef.setInput('selectionMode', true);
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const addButton = compiled.querySelector('button.btn-primary');
+    expect(addButton).not.toBeNull();
+    expect(addButton?.textContent).toContain('Agregar');
   });
 });

@@ -10,7 +10,6 @@ describe('operator.models — type contracts', () => {
       tipoRuta: 'TOMA_LECTURA',
       nombre: 'Ruta Norte',
       estado: 'PENDIENTE',
-      orden: 1,
       operarioId: 42,
       comunidadId: 7,
       medidor: null,
@@ -20,7 +19,6 @@ describe('operator.models — type contracts', () => {
     expect(task.rutaId).toBe('r-001');
     expect(task.tipoRuta).toBe('TOMA_LECTURA');
     expect(task.estado).toBe('PENDIENTE');
-    expect(task.orden).toBe(1);
     expect(task.medidor).toBeNull();
   });
 
@@ -30,7 +28,6 @@ describe('operator.models — type contracts', () => {
       tipoRuta: 'INSTALACION',
       nombre: 'Ruta Sur',
       estado: 'EN_PROGRESO',
-      orden: 2,
       operarioId: 1,
       comunidadId: 2,
       medidor: { medidorId: 'M-01', serie: 'SER-123', latitud: -0.5, longitud: -78.5 },
