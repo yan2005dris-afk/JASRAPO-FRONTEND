@@ -153,11 +153,11 @@
             <!-- Header de tarjeta -->
             <div class="task-card-top">
               <span class="task-orden">#{{ $index + 1 }}</span>
-              <span class="route-badge badge-{{ task.tipoRuta.toLowerCase() }}">
+              <span class="route-badge badge-{{ (task.tipoRuta || 'TOMA_LECTURA').toLowerCase() }}">
                 <i class="bi" [class]="actionIconFor(task)"></i>
                 {{ task.tipoRuta | routeType }}
               </span>
-              <span class="state-badge state-{{ task.estado.toLowerCase() }}">
+              <span class="state-badge state-{{ (task.estado || 'PENDIENTE').toLowerCase() }}">
                 {{ getStateLabel(task.estado) }}
               </span>
             </div>

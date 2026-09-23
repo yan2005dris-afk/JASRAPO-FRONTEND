@@ -276,7 +276,21 @@ export class RutasComponent implements OnInit, OnDestroy {
         this.routeOfflineService.loadAssignedRoutes(),
         this.loadReadingStatuses(),
       ]);
-      this.tasks.set(routeResult.routes);
+      const normalizedRoutes = (routeResult.routes || []).map((r: any, idx: number) => {
+        const rawTipo = r.tipoRuta || r.tipo || r.type || 'TOMA_LECTURA';
+        const rawEstado = r.estado || r.state || 'PENDIENTE';
+        const rawNombre = r.nombre || r.name || `Ruta ${rawTipo} #${idx + 1}`;
+        return {
+          ...r,
+          rutaId: String(r.rutaId || r.id || idx + 1),
+          tipoRuta: String(rawTipo).toUpperCase(),
+          estado: String(rawEstado).toUpperCase(),
+          nombre: rawNombre,
+          paradas: Array.isArray(r.paradas) ? r.paradas : [],
+          ordenesTrabajo: Array.isArray(r.ordenesTrabajo) ? r.ordenesTrabajo : [],
+        };
+      });
+      this.tasks.set(normalizedRoutes);
       this.routesSource.set(routeResult.source);
       this.routesCachedAt.set(routeResult.cachedAt);
     } catch (err) {
@@ -505,7 +519,8 @@ export class RutasComponent implements OnInit, OnDestroy {
    * Antes mostraba "Lecturas" universal — bug UX.
    */
   actionLabelFor(task: OperatorRouteResponse): string {
-    switch (task.tipoRuta) {
+    const tipo = task?.tipoRuta || 'TOMA_LECTURA';
+    switch (tipo) {
       case 'INSTALACION':
         return 'Instalación';
       case 'INSPECCION':
@@ -517,12 +532,9 @@ export class RutasComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Ícono Bootstrap Icons para el botón según tipoRuta.
-   * Mantiene consistencia con TIPO_ICONS en rutas.constants.ts.
-   */
   actionIconFor(task: OperatorRouteResponse): string {
-    switch (task.tipoRuta) {
+    const tipo = task?.tipoRuta || 'TOMA_LECTURA';
+    switch (tipo) {
       case 'INSTALACION':
         return 'bi-tools';
       case 'INSPECCION':
