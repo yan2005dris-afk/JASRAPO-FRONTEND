@@ -135,6 +135,20 @@
             <div class="invalid-feedback d-block">{{ obtenerErrorCampo('apellidos') }}</div>
           }
         </div>
+
+        <div class="col-md-6">
+          <label for="fechaNacimiento" class="form-label">Fecha de nacimiento</label>
+
+          <app-date-picker
+            inputId="fechaNacimiento"
+            placeholder="Seleccione la fecha de nacimiento"
+            [value]="fechaNacimiento"
+            [allowPeriodNavigation]="true"
+            (valueChange)="onFechaNacimientoChange($event)"
+          />
+
+          <small class="text-muted">Determina automáticamente el beneficio de tercera edad.</small>
+        </div>
       }
 
       <!-- Razón Social (Persona Jurídica) -->
@@ -240,15 +254,15 @@
       <div class="col-md-6">
         <p class="form-label mb-2">Condiciones especiales</p>
 
-        <div class="form-check mb-2">
-          <input
-            id="aplicaTerceraEdad"
-            type="checkbox"
-            class="form-check-input"
-            formControlName="aplicaTerceraEdad"
-          />
-
-          <label for="aplicaTerceraEdad" class="form-check-label"> Aplica tercera edad </label>
+        <div class="mb-2">
+          <span class="d-block small text-muted mb-1">Tercera edad</span>
+          @if (esTerceraEdad) {
+            <span class="badge bg-warning text-dark">
+              <i class="bi bi-check-circle-fill me-1"></i>Aplica beneficio de tercera edad
+            </span>
+          } @else {
+            <span class="text-muted small">Se calcula desde la fecha de nacimiento</span>
+          }
         </div>
 
         <div class="form-check">

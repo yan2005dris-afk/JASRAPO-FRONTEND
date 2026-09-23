@@ -52,7 +52,7 @@ export interface CreateClientRequest {
   telefono: string;
   telefonoSecundario?: string | null;
 
-  aplicaTerceraEdad: boolean;
+  fechaNacimiento?: string;
   aplicaDiscapacidad: boolean;
 
   direccionDomicilio: string;
@@ -71,7 +71,7 @@ export interface UpdateClientRequest {
   telefono?: string;
   telefonoSecundario?: string | null;
 
-  aplicaTerceraEdad?: boolean;
+  fechaNacimiento?: string;
   aplicaDiscapacidad?: boolean;
 
   direccionDomicilio?: string;

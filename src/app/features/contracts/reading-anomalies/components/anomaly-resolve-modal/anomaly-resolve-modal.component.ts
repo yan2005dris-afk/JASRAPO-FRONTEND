@@ -28,12 +28,13 @@ export class AnomalyResolveModalComponent {
   isLoading = false;
 
   get isPending(): boolean {
-    return this.anomaly().estado === 'PENDIENTE';
+    const st = this.anomaly().estado;
+    return st === 'OPEN' || st === 'PENDIENTE';
   }
 
   get canResolve(): boolean {
     const st = this.anomaly().estado;
-    return st === 'PENDIENTE' || st === 'EN_REVISION';
+    return st === 'OPEN' || st === 'PENDIENTE' || st === 'IN_PROGRESS' || st === 'EN_REVISION';
   }
 
   setInReview(): void {
@@ -41,11 +42,11 @@ export class AnomalyResolveModalComponent {
 
     this.isLoading = true;
     this.anomaliesService
-      .updateAnomaly(this.anomaly().anomaliaId, { estado: 'EN_REVISION' })
+      .updateAnomaly(this.anomaly().anomaliaId, { estado: 'IN_PROGRESS' })
       .subscribe({
         next: () => {
           this.isLoading = false;
-          this.toastService.show('Anomalía pasada a estado "En Revisión"', 'info');
+          this.toastService.show('Novedad pasada a estado "En Revisión"', 'info');
           this.resolved.emit();
         },
         error: (err) => {
@@ -61,16 +62,16 @@ export class AnomalyResolveModalComponent {
 
     this.isLoading = true;
     this.anomaliesService
-      .updateAnomaly(this.anomaly().anomaliaId, { estado: 'RESUELTA' })
+      .updateAnomaly(this.anomaly().anomaliaId, { estado: 'RESOLVED' })
       .subscribe({
         next: () => {
           this.isLoading = false;
-          this.toastService.show('Anomalía marcada como resuelta', 'success');
+          this.toastService.show('Novedad marcada como resuelta', 'success');
           this.resolved.emit();
         },
         error: (err) => {
           this.isLoading = false;
-          const msg = err?.error?.message || 'Error al resolver anomalía';
+          const msg = err?.error?.message || 'Error al resolver novedad';
           this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
         },
       });
@@ -95,18 +96,18 @@ export class AnomalyResolveModalComponent {
 
     this.anomaliesService
       .updateAnomaly(this.anomaly().anomaliaId, {
-        estado: 'DESCARTADA',
+        estado: 'CANCELLED',
         observacion: obs,
       })
       .subscribe({
         next: () => {
           this.isLoading = false;
-          this.toastService.show('Anomalía descartada', 'warning');
+          this.toastService.show('Novedad cancelada/descartada', 'warning');
           this.resolved.emit();
         },
         error: (err) => {
           this.isLoading = false;
-          const msg = err?.error?.message || 'Error al descartar anomalía';
+          const msg = err?.error?.message || 'Error al descartar novedad';
           this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
         },
       });

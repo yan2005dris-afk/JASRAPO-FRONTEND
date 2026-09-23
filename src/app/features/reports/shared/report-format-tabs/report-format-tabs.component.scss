@@ -1,0 +1,39 @@
+.report-format-tabs {
+  display: inline-flex;
+  padding: 0.2rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--report-radius-sm);
+  background: var(--white);
+}
+
+.report-format-tabs__tab {
+  display: inline-flex;
+  min-height: 2.25rem;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  border: 0;
+  border-radius: calc(var(--report-radius-sm) - 0.2rem);
+  background: transparent;
+  color: var(--muted-text);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.report-format-tabs__tab:hover:not(:disabled) {
+  color: var(--primary-color);
+}
+
+.report-format-tabs__tab:focus-visible {
+  outline: var(--report-focus-outline);
+  outline-offset: 2px;
+}
+
+.report-format-tabs__tab--active {
+  background: var(--primary-color);
+  color: var(--white);
+}
+
+.report-format-tabs__tab--active:hover:not(:disabled) {
+  color: var(--white);
+}

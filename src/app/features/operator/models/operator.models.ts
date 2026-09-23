@@ -113,6 +113,7 @@ export const MANIFEST_ENTITY_TYPE = {
   METER: 'meter',
   READING: 'reading',
   PENDING_ANOMALY: 'pendingAnomaly',
+  NOVELTY: 'novelty',
 } as const;
 export type ManifestEntityType = (typeof MANIFEST_ENTITY_TYPE)[keyof typeof MANIFEST_ENTITY_TYPE];
 
@@ -122,6 +123,7 @@ export const MANIFEST_PHYSICAL_ENTITY_TYPE = {
   METERS: 'medidores',
   READINGS: 'lecturas',
   READING_ANOMALY: 'lectura_anomalia',
+  WORK_ORDER_NOVELTY: 'novedad_orden_trabajo',
 } as const;
 export type ManifestPhysicalEntityType =
   (typeof MANIFEST_PHYSICAL_ENTITY_TYPE)[keyof typeof MANIFEST_PHYSICAL_ENTITY_TYPE];

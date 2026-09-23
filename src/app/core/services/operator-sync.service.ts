@@ -44,7 +44,7 @@ export class OperatorSyncService {
 
   private readonly READINGS_API = `${environment.apiUrl}/readings`;
   private readonly OPERATOR_API = `${environment.apiUrl}/operator`;
-  private readonly ANOMALIES_API = `${environment.apiUrl}/reading-anomalies`;
+  private readonly NOVELTIES_API = `${environment.apiUrl}/work-order-novelties`;
 
   // Signals para rastrear el estado de la cola
   readonly pendingReadingsCount = signal<number>(0);
@@ -253,24 +253,36 @@ export class OperatorSyncService {
   }
 
   /**
-   * Envia una anomalía al backend o la encola si está offline
+   * Envia una novedad al backend (/work-order-novelties) o la encola si está offline.
    */
   async submitAnomaly(anomaly: Record<string, unknown>): Promise<unknown> {
+    const ordenTrabajoId =
+      anomaly['ordenTrabajoId'] !== null && anomaly['ordenTrabajoId'] !== undefined
+        ? String(anomaly['ordenTrabajoId']).trim()
+        : '';
+
     if (this.networkService.isOnline()) {
+      if (!ordenTrabajoId) {
+        throw new Error(
+          'No se puede registrar la novedad: se requiere una orden de trabajo asociada.',
+        );
+      }
       try {
         const formData = new FormData();
-        formData.append('lecturaId', String(anomaly['lecturaId']));
+        formData.append('ordenTrabajoId', ordenTrabajoId);
+        if (anomaly['lecturaId']) {
+          formData.append('lecturaId', String(anomaly['lecturaId']));
+        }
         formData.append('tipo', String(anomaly['tipo']));
-        formData.append('estado', String(anomaly['estado']));
         if (anomaly['observacion']) {
           formData.append('observacion', String(anomaly['observacion']));
         }
         this.appendPhoto(formData, (anomaly['fotoBlob'] as Blob) || null, 'file');
 
         const response = await firstValueFrom(
-          this.http.post<unknown>(this.ANOMALIES_API, formData, { withCredentials: true }),
+          this.http.post<unknown>(this.NOVELTIES_API, formData, { withCredentials: true }),
         );
-        this.toastService.success('Novedad/Anomalía registrada en el servidor.', 'Éxito');
+        this.toastService.success('Novedad registrada en el servidor.', 'Éxito');
         return response;
       } catch (error: unknown) {
         this.toastService.error(
@@ -289,6 +301,10 @@ export class OperatorSyncService {
       );
       return { offline: true };
     }
+  }
+
+  async submitNovelty(novelty: Record<string, unknown>): Promise<unknown> {
+    return this.submitAnomaly(novelty);
   }
 
   /**
@@ -495,17 +511,34 @@ export class OperatorSyncService {
           ...payload
         } = pending;
 
+        const ordenTrabajoId =
+          payload['ordenTrabajoId'] !== null && payload['ordenTrabajoId'] !== undefined
+            ? String(payload['ordenTrabajoId']).trim()
+            : '';
+
+        if (!ordenTrabajoId) {
+          await this.dbService.updatePendingAnomaly(pending.id!, {
+            syncState: 'RECHAZADA',
+            errorMessage:
+              'Novedad rechazada: no tiene orden de trabajo asociada para registrar en el servidor.',
+          });
+          rejectedCount++;
+          continue;
+        }
+
         const formData = new FormData();
-        formData.append('lecturaId', String(payload['lecturaId']));
+        formData.append('ordenTrabajoId', ordenTrabajoId);
+        if (payload['lecturaId']) {
+          formData.append('lecturaId', String(payload['lecturaId']));
+        }
         formData.append('tipo', String(payload['tipo']));
-        formData.append('estado', String(payload['estado']));
         if (payload['observacion']) {
           formData.append('observacion', String(payload['observacion']));
         }
         this.appendPhoto(formData, fotoBlob, 'file');
 
         await firstValueFrom(
-          this.http.post<unknown>(this.ANOMALIES_API, formData, { withCredentials: true }),
+          this.http.post<unknown>(this.NOVELTIES_API, formData, { withCredentials: true }),
         );
         await this.dbService.deletePendingAnomaly(id!);
         successAnomaliesCount++;

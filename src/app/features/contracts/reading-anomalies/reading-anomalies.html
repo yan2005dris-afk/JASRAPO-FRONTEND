@@ -14,10 +14,10 @@
     <button
       type="button"
       class="btn btn-sm btn-filter"
-      [class.active]="activeStatusFilter() === 'PENDIENTE'"
-      (click)="setStatusFilter('PENDIENTE')"
+      [class.active]="activeStatusFilter() === 'OPEN' || activeStatusFilter() === 'PENDIENTE'"
+      (click)="setStatusFilter('OPEN')"
     >
-      <i class="bi bi-flag-fill me-1 text-warning"></i> Pendientes (Nuevas)
+      <i class="bi bi-flag-fill me-1 text-warning"></i> Abiertas (Nuevas)
     </button>
     <button
       type="button"
@@ -30,26 +30,28 @@
     <button
       type="button"
       class="btn btn-sm btn-filter"
-      [class.active]="activeStatusFilter() === 'EN_REVISION'"
-      (click)="setStatusFilter('EN_REVISION')"
+      [class.active]="
+        activeStatusFilter() === 'IN_PROGRESS' || activeStatusFilter() === 'EN_REVISION'
+      "
+      (click)="setStatusFilter('IN_PROGRESS')"
     >
-      En Revisión
+      En Proceso
     </button>
     <button
       type="button"
       class="btn btn-sm btn-filter"
-      [class.active]="activeStatusFilter() === 'RESUELTA'"
-      (click)="setStatusFilter('RESUELTA')"
+      [class.active]="activeStatusFilter() === 'RESOLVED' || activeStatusFilter() === 'RESUELTA'"
+      (click)="setStatusFilter('RESOLVED')"
     >
       Resueltas
     </button>
     <button
       type="button"
       class="btn btn-sm btn-filter"
-      [class.active]="activeStatusFilter() === 'DESCARTADA'"
-      (click)="setStatusFilter('DESCARTADA')"
+      [class.active]="activeStatusFilter() === 'CANCELLED' || activeStatusFilter() === 'DESCARTADA'"
+      (click)="setStatusFilter('CANCELLED')"
     >
-      Descartadas
+      Canceladas / Descartadas
     </button>
   </div>
 
@@ -159,7 +161,7 @@
                 <th scope="col" class="ps-4" style="width: 56px">
                   <input class="form-check-input table-checkbox" type="checkbox" />
                 </th>
-                <th scope="col">Lectura Ref</th>
+                <th scope="col">Orden de Trabajo / Lectura</th>
                 <th scope="col">Tipo Incidente</th>
                 <th scope="col">Observación</th>
                 <th scope="col" class="text-end">Consumo Lectura</th>
@@ -174,7 +176,16 @@
                     <input class="form-check-input table-checkbox" type="checkbox" />
                   </td>
                   <td>
-                    <div class="fw-semibold text-dark small">Lectura #{{ anomaly.lecturaId }}</div>
+                    @if (anomaly.ordenTrabajoId) {
+                      <div class="fw-semibold text-primary small">
+                        <i class="bi bi-clipboard-check me-1"></i>OT #{{ anomaly.ordenTrabajoId }}
+                      </div>
+                    }
+                    @if (anomaly.lecturaId) {
+                      <div class="text-dark small fw-medium">Lectura #{{ anomaly.lecturaId }}</div>
+                    } @else if (!anomaly.ordenTrabajoId) {
+                      <div class="text-muted small">Sin referencia</div>
+                    }
                     @if (anomaly.lectura?.fecha) {
                       <div class="text-muted" style="font-size: 0.75rem">
                         {{ anomaly.lectura!.fecha | localDate: 'dd/MM/yyyy' }}

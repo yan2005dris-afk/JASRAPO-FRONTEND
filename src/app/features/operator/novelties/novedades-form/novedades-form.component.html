@@ -37,6 +37,12 @@
     <!-- Selected meter -->
     <div class="selected-section">
       <app-selected-meter-card [meter]="selectedMeter()!" (clear)="clearSelection()" />
+      @if (resolvedOrdenTrabajoId() || presetOrdenTrabajoId(); as otId) {
+        <div class="work-order-badge" role="status">
+          <i class="bi bi-clipboard-check-fill" aria-hidden="true"></i>
+          <span>Orden de Trabajo asignada: #{{ otId }}</span>
+        </div>
+      }
     </div>
 
     <!-- Form -->

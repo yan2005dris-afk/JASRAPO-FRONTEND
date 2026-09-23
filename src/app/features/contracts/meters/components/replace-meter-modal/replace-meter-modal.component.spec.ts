@@ -46,7 +46,7 @@ describe('ReplaceMeterModalComponent', () => {
     numeroGuia: 'GUI-001',
     fechaInicio: '2026-01-01',
     direccionSuministro: 'Av Principal 123',
-    estado: 'ACTIVO',
+    estadoServicio: 'ACTIVO',
     comunidadId: 1,
     categoriaTarifa: {
       categoriaTarifaId: 1,

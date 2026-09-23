@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { JasrapoMascotComponent } from '../../../shared/components/jasrapo-mascot/jasrapo-mascot.component';
 
 @Component({
   selector: 'app-error-page',
-  imports: [RouterLink],
+  imports: [RouterLink, JasrapoMascotComponent],
   templateUrl: './error-page.component.html',
   styleUrl: './error-page.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

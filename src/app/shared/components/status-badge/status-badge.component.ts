@@ -98,6 +98,7 @@ export class StatusBadgeComponent {
         'RESUELTO',
         'RESUELTA',
         'COMPLETADA',
+        'RESOLVED',
       ].includes(st)
     ) {
       return 'success';
@@ -115,6 +116,8 @@ export class StatusBadgeComponent {
         'PARCIAL',
         'CON_NOVEDAD',
         'POR_REVISION',
+        'OPEN',
+        'IN_PROGRESS',
       ].includes(st)
     ) {
       return 'warning';
@@ -137,6 +140,7 @@ export class StatusBadgeComponent {
         'DESCARTADO',
         'DESCARTADA',
         'CANCELADA',
+        'CANCELLED',
       ].includes(st)
     ) {
       return 'danger';

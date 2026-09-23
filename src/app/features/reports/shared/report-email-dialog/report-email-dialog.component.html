@@ -1,0 +1,99 @@
+<div
+  class="report-dialog-backdrop"
+  role="presentation"
+  (mousedown)="onBackdropClick($event)"
+  (keydown.escape)="requestClose()"
+>
+  <section
+    class="report-dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="report-email-dialog-title"
+    aria-describedby="report-email-dialog-description"
+    cdkTrapFocus
+    [cdkTrapFocusAutoCapture]="true"
+  >
+    <header class="report-dialog__header">
+      <div>
+        <h2 id="report-email-dialog-title" class="report-dialog__title">{{ title() }}</h2>
+        <p id="report-email-dialog-description" class="report-dialog__description">
+          {{ description() }}
+        </p>
+      </div>
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="Cerrar diálogo"
+        [disabled]="isSubmitting()"
+        (click)="requestClose()"
+      ></button>
+    </header>
+
+    @if (contextItems().length > 0) {
+      <dl class="report-dialog__context" aria-label="Contexto que se enviará">
+        @for (item of contextItems(); track item.label) {
+          <div>
+            <dt>{{ item.label }}</dt>
+            <dd>{{ item.value }}</dd>
+          </div>
+        }
+      </dl>
+    }
+
+    <form class="report-dialog__form" [formGroup]="form" (ngSubmit)="submit()">
+      <div>
+        <label class="form-label" for="report-email-recipient">Destinatario</label>
+        <input
+          id="report-email-recipient"
+          type="email"
+          class="form-control"
+          formControlName="destinatario"
+          autocomplete="email"
+          cdkFocusInitial
+          [attr.aria-describedby]="
+            form.controls.destinatario.touched && form.controls.destinatario.invalid
+              ? 'report-email-recipient-error'
+              : null
+          "
+        />
+        @if (form.controls.destinatario.touched && form.controls.destinatario.invalid) {
+          <p id="report-email-recipient-error" class="report-dialog__validation" role="alert">
+            Ingrese un correo electrónico válido.
+          </p>
+        }
+      </div>
+
+      <div>
+        <label class="form-label" for="report-email-subject">Asunto</label>
+        <input
+          id="report-email-subject"
+          type="text"
+          class="form-control"
+          formControlName="subject"
+          autocomplete="off"
+          placeholder="Asunto opcional"
+        />
+      </div>
+
+      <footer class="report-dialog__actions">
+        <button
+          type="button"
+          class="btn btn-light"
+          [disabled]="isSubmitting()"
+          (click)="requestClose()"
+        >
+          Cancelar
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+            Enviando…
+          } @else {
+            <i class="bi bi-envelope" aria-hidden="true"></i>
+            Enviar
+          }
+        </button>
+      </footer>
+    </form>
+  </section>
+</div>

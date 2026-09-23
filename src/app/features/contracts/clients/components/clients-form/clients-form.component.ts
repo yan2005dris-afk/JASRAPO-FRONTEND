@@ -28,6 +28,10 @@ import {
   IClient,
   IIdentificacion,
 } from '../../interfaces/iclients.interface';
+import { identificacionValidator } from '../../validators/identificacion.validator';
+import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
+
+const EDAD_TERCERA_EDAD = 65;
 
 export type TipoMensajeFormulario = 'success' | 'error' | null;
 
@@ -53,7 +57,7 @@ interface BackendErrorResponse {
 
 @Component({
   selector: 'app-clients-form',
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, DatePickerComponent],
   templateUrl: './clients-form.component.html',
   styleUrl: './clients-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -61,6 +65,13 @@ interface BackendErrorResponse {
 export class ClientsFormComponent implements OnInit {
   readonly formClosed = output<void>();
   readonly formSubmitted = output<void>();
+
+  /**
+   * Emite el cliente recién creado. Permite que quien abre el formulario como
+   * modal (por ejemplo el selector de cliente del contrato) lo use al vuelo sin
+   * volver a consultarlo al backend.
+   */
+  readonly clientCreated = output<IClient>();
 
   readonly clienteAEditar = input<IClient | null>(null);
 
@@ -123,7 +134,7 @@ export class ClientsFormComponent implements OnInit {
     ],
     telefonoSecundario: ['', [Validators.pattern(TELEFONO_SECUNDARIO_PATTERN)]],
 
-    aplicaTerceraEdad: [false],
+    fechaNacimiento: [''],
     aplicaDiscapacidad: [false],
 
     direccionDomicilio: [
@@ -184,6 +195,7 @@ export class ClientsFormComponent implements OnInit {
       }
 
       this.actualizarValidacionesPersona();
+      this.actualizarValidacionIdentificacion();
       this.cdr.markForCheck();
     } catch {
       this.mostrarMensaje('No se pudieron cargar los tipos de identificación.', 'error');
@@ -211,7 +223,6 @@ export class ClientsFormComponent implements OnInit {
       telefono: cliente.telefono ?? '',
       telefonoSecundario: cliente.telefonoSecundario ?? '',
 
-      aplicaTerceraEdad: cliente.aplicaTerceraEdad ?? false,
       aplicaDiscapacidad: cliente.aplicaDiscapacidad ?? false,
 
       direccionDomicilio: cliente.direccionDomicilio ?? '',
@@ -443,13 +454,33 @@ export class ClientsFormComponent implements OnInit {
     }
   }
 
-  async crearCliente(cliente: CreateClientRequest): Promise<void> {
-    await firstValueFrom(this.clientsService.createClient(cliente));
-    this.isSaving.set(false);
-    this.mostrarMensaje('Cliente creado correctamente.', 'success');
-    this.formSubmitted.emit();
-    this.onClose();
-    this.cdr.markForCheck();
+  crearCliente(cliente: CreateClientRequest): void {
+    this.clientsService.createClient(cliente).subscribe({
+      next: (clienteCreado) => {
+        this.isSaving.set(false);
+        this.mostrarMensaje('Cliente creado correctamente.', 'success');
+        this.formSubmitted.emit();
+        this.onClose();
+        this.cdr.markForCheck();
+        // Se emite al final: quien escucha puede cerrar el selector que contiene
+        // a este formulario, y con él destruir esta vista.
+        if (clienteCreado) {
+          this.clientCreated.emit(clienteCreado);
+        }
+      },
+      error: (err: HttpErrorResponse) => {
+        this.isSaving.set(false);
+
+        const mensajeError = this.obtenerMensajeErrorBackend(
+          err,
+          'No se pudo crear el cliente. Revise los datos ingresados.',
+        );
+
+        this.aplicarErrorBackendAControl(mensajeError);
+        this.mostrarMensaje(mensajeError, 'error');
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   async actualizarCliente(cliente: UpdateClientRequest): Promise<void> {
@@ -474,12 +505,27 @@ export class ClientsFormComponent implements OnInit {
       return;
     }
 
-    await firstValueFrom(this.clientsService.updateClient(clienteId, cliente));
-    this.isSaving.set(false);
-    this.mostrarMensaje('Cliente actualizado correctamente.', 'success');
-    this.formSubmitted.emit();
-    this.onClose();
-    this.cdr.markForCheck();
+    this.clientsService.updateClient(clienteId, cliente).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.mostrarMensaje('Cliente actualizado correctamente.', 'success');
+        this.formSubmitted.emit();
+        this.onClose();
+        this.cdr.markForCheck();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.isSaving.set(false);
+
+        const mensajeError = this.obtenerMensajeErrorBackend(
+          err,
+          'No se pudo actualizar el cliente. Revise los datos ingresados.',
+        );
+
+        this.aplicarErrorBackendAControl(mensajeError);
+        this.mostrarMensaje(mensajeError, 'error');
+        this.cdr.markForCheck();
+      },
+    });
   }
 
   prepararClienteParaEnviar(): CreateClientRequest {
@@ -498,11 +544,15 @@ export class ClientsFormComponent implements OnInit {
       telefono: String(formValue.telefono).trim(),
       telefonoSecundario: String(formValue.telefonoSecundario ?? '').trim() || null,
 
-      aplicaTerceraEdad: Boolean(formValue.aplicaTerceraEdad),
       aplicaDiscapacidad: Boolean(formValue.aplicaDiscapacidad),
 
       direccionDomicilio: String(formValue.direccionDomicilio).trim(),
     };
+
+    const fechaNacimiento = String(formValue.fechaNacimiento ?? '').trim();
+    if (fechaNacimiento) {
+      cliente.fechaNacimiento = fechaNacimiento;
+    }
 
     if (this.esPersonaJuridica()) {
       cliente.nombres = undefined;
@@ -598,6 +648,14 @@ export class ClientsFormComponent implements OnInit {
   limpiarMensaje(): void {
     this.mensajeFormulario.set('');
     this.tipoMensajeFormulario.set(null);
+  }
+
+  private aplicarErrorBackendAControl(mensaje: string): void {
+    if (mensaje.toLowerCase().includes('identificaci')) {
+      const control = this.clienteForm.get('identificacion');
+      control?.setErrors({ ...(control.errors ?? {}), servidor: mensaje });
+      control?.markAsTouched();
+    }
   }
 
   private obtenerMensajeErrorBackend(err: HttpErrorResponse, mensajePorDefecto: string): string {

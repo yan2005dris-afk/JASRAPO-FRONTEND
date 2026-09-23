@@ -1,0 +1,53 @@
+name: Mejora del frontend
+description: Reporta una mejora funcional o visual para la aplicación frontend
+title: "[Frontend] "
+labels: []
+body:
+  - type: dropdown
+    id: request-type
+    attributes:
+      label: Tipo de solicitud
+      options:
+        - Mejora funcional
+        - Mejora visual
+        - Corrección de comportamiento
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problema o necesidad
+      description: Describe qué comportamiento debe corregirse o mejorarse y por qué.
+      placeholder: Explica el problema actual y a quién afecta.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Solución propuesta
+      description: Detalla el comportamiento o resultado esperado.
+      placeholder: Describe cómo debería funcionar después del cambio.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Criterios de aceptación
+      description: Lista las condiciones que deben cumplirse para considerar completa la solicitud.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+
+  - type: input
+    id: affected-area
+    attributes:
+      label: Área afectada
+      description: Indica la pantalla, formulario o componente involucrado.
+      placeholder: Formulario de registro de clientes
+    validations:
+      required: true

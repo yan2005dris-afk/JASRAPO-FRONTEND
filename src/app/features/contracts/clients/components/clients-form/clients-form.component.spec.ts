@@ -2,6 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 
+import { ClientsService } from '../../services/clients.service';
+import { CreateClientRequest, IClient, IIdentificacion } from '../../interfaces/iclients.interface';
 import { ClientsFormComponent } from './clients-form.component';
 import { ClientsService } from '../../services/clients.service';
 import { IIdentificacion } from '../../interfaces/iclients.interface';
@@ -158,5 +160,18 @@ describe('ClientsFormComponent', () => {
 
     telefonoSecControl?.setValue('022345678');
     expect(telefonoSecControl?.valid).toBe(true);
+  });
+
+  it('emite el cliente creado para que el selector lo use sin volver a buscarlo', () => {
+    const clienteCreado = { clienteId: '77', nombres: 'Luis', apellidos: 'Vera' } as IClient;
+    const clientsService = TestBed.inject(ClientsService);
+    vi.spyOn(clientsService, 'createClient').mockReturnValue(of(clienteCreado));
+
+    const emitido = vi.fn();
+    component.clientCreated.subscribe(emitido);
+
+    component.crearCliente({} as CreateClientRequest);
+
+    expect(emitido).toHaveBeenCalledWith(clienteCreado);
   });
 });

@@ -1,0 +1,42 @@
+<div class="report-format-tabs" role="tablist" aria-label="Formato del reporte">
+  <button
+    #tab
+    id="report-table-tab"
+    type="button"
+    class="report-format-tabs__tab"
+    role="tab"
+    [class.report-format-tabs__tab--active]="activeFormat() === 'table'"
+    [attr.aria-selected]="activeFormat() === 'table'"
+    [attr.tabindex]="tabIndex('table')"
+    data-report-format="table"
+    aria-controls="report-results-panel"
+    (click)="activate('table', $event)"
+    (keydown)="onKeydown($event)"
+  >
+    <i class="bi bi-table" aria-hidden="true"></i>
+    Tabla
+  </button>
+  <button
+    #tab
+    id="report-pdf-tab"
+    type="button"
+    class="report-format-tabs__tab"
+    role="tab"
+    [class.report-format-tabs__tab--active]="activeFormat() === 'pdf'"
+    [attr.aria-selected]="activeFormat() === 'pdf'"
+    [attr.tabindex]="tabIndex('pdf')"
+    data-report-format="pdf"
+    aria-controls="report-results-panel"
+    [attr.aria-busy]="pdfLoading()"
+    (click)="activate('pdf', $event)"
+    (keydown)="onKeydown($event)"
+  >
+    @if (pdfLoading()) {
+      <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+      <span class="visually-hidden">Generando PDF</span>
+    } @else {
+      <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>
+    }
+    PDF
+  </button>
+</div>

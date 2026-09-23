@@ -1,0 +1,36 @@
+.report-status {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--report-radius-sm);
+  font-size: 0.875rem;
+}
+
+.report-status--loading,
+.report-status--empty {
+  background: var(--report-info-bg);
+  color: var(--dark-text);
+}
+
+.report-status--error {
+  border-color: var(--report-danger-border);
+  background: var(--report-danger-bg);
+  color: var(--report-danger-text);
+}
+
+.report-status__message {
+  flex: 1;
+}
+
+@media (max-width: 575.98px) {
+  .report-status {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .report-status__message {
+    min-width: calc(100% - 2rem);
+  }
+}

@@ -5,10 +5,16 @@ colors:
   lagoon-deep: '#0c9ea1'
   turquoise-vivid: '#0fc3c6'
   lagoon-glow: '#4ee6e9'
+  pure-aqua: '#0284c7'
+  brass-gold: '#d97706'
+  brass-gold-light: '#fef3c7'
+  forest-green: '#15803d'
+  forest-green-light: '#dcfce7'
   foam: '#bff3f4'
   water-mist: '#dbf7f8'
   water-white: '#ffffff'
   deep-sea: '#0e2728'
+  marine-slate: '#0b2938'
   muted-tide: '#597b7d'
   shoreline: '#cbdedf'
   marine-ink: '#0f172a'
@@ -72,19 +78,24 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Corporate Lagoon"**
+**Creative North Star: "The Living Watershed & Corporate Lagoon"**
 
-A calm, professional water metaphor governs the whole system: deep teal as the corporate anchor, white as the dominant surface, and brighter turquoise reserved for hover and active states. The interface feels like still water — quiet, precise, and trustworthy — with the primary accent appearing only where the user needs to act or know what is selected. Nothing shouts; the teal is the voice.
+Inspired directly by the official emblem of the **Junta Administradora del Sistema Regional de Agua Potable de Olón (JASRAPO)**, the visual identity harmonizes four symbolic and chromatic pillars:
 
-This is a dense operational tool (role-based dashboards, tables of meters/clients/tariffs, billing workflows), so scanability and consistency outrank expression. Bootstrap 5 provides the grid, spacing, and utility layer; Angular Material 3 components (using azure primary, blue tertiary, Roboto) handle the advanced widgets. A thin custom SCSS layer applies the water palette and the recurring component vocabulary (custom tables, soft badges, page headers, modal cards).
+1. **The Corporate Lagoon (Deep Teal #0c9ea1 & Vivid Turquoise #0fc3c6)**: The tranquil, authoritative anchor representing community water delivery.
+2. **The Golden Brass Faucet (Warm Amber/Brass #d97706, surface #fef3c7)**: Human infrastructure, craftsmanship, and reliable service. Used for warm highlights, priority states, and distinctive badges.
+3. **The Sacred Guayacán Tree Canopy (Watershed Emerald #15803d, surface #dcfce7)**: Environmental stewardship, river basin preservation, active service indicators, and sustainable operations.
+4. **The Crystal Water Droplets & Marine Slate (Pure Aqua #0284c7, Marine Slate #0b2938)**: Pure drinking water clarity and institutional authority for titles and structured interfaces.
+
+This is a dense operational tool (role-based dashboards, tables of meters/clients/tariffs, billing workflows), so scanability and consistency outrank arbitrary expression. Bootstrap 5 provides the grid, spacing, and utility layer; Angular Material 3 components handle advanced widgets.
 
 **Key Characteristics:**
 
 - Flat surfaces at rest; shadows appear only on elevation (cards, dropdowns, modals) and state (hover/focus)
-- One teal voice — `#0c9ea1` deep lagoon for primary actions, `#0fc3c6` vivid turquoise for hover
-- Soft pastel tints (`water-mist #dbf7f8`, `foam #bff3f4`) for badges, avatars, page-header icons, and active nav — never full-saturation backgrounds
-- Radius language: 8px for interactive controls, 10px for nav, 16px for modals and empty-state icons, 50% for avatars
-- 0.2s ease-in-out transitions everywhere; 0.3s cubic-bezier(0.4, 0, 0.2, 1) for the shell (sidebar, drawer)
+- The JASRAPO Seal is presented in a refined circular badge (`.brand-seal-wrapper`) with subtle aquatic rim glow.
+- Soft pastel tints (`water-mist #dbf7f8`, `brass-gold-light #fef3c7`, `forest-green-light #dcfce7`) for contextual badges, avatars, and page-header icons — never abrasive full-saturation backgrounds.
+- Radius language: 8px for interactive controls, 10px for nav, 16px for modals and empty-state icons, 50% for avatars and seals.
+- 0.2s ease-in-out transitions everywhere; 0.3s cubic-bezier(0.4, 0, 0.2, 1) for the shell (sidebar, drawer).
 
 ## Colors
 
@@ -260,6 +271,19 @@ Borders are 1px `shoreline` except table headers, which use a 2px bottom border.
 ### Page Header (system signature)
 
 - Title (`h3 fw-bold`) + optional 48px square icon in a `12px` radius water-mist tile with Deep Lagoon glyph, aligned with `gap-1rem`.
+
+### Brand Logo (`<app-brand-logo>`)
+
+- **Single Source of Truth:** Centralized in `BRAND_CONFIG` (`src/app/shared/constants/brand.constant.ts`).
+- **Sizes:** `xs` (28px), `sm` (38px), `md` (48px), `lg` (68px), `hero` (120px).
+- **Features:** Automatic error-fallback from Imgur CDN (`https://i.imgur.com/oHyMUhU.png`) to local asset (`assets/logo-jasrapo.png`), stacked or horizontal layouts, text and subtitle toggles.
+
+### Jasrapo Official Mascot (`<app-jasrapo-mascot>`)
+
+- **Design:** Reusable inline SVG component representing the JASRAPO water droplet character.
+- **Sizes:** `sm` (100px), `md` (170px), `lg` (250px), `hero` (320px).
+- **Features:** Plump water droplet body, fluid surface-tension physics, large expressive eyes with double white sparkle reflection, floating ambient bubbles, eye blinking, water wobble, and click splash bounce animation.
+- **Unboxed Integration:** Transparent background without boxy card borders, integrating naturally into atmospheric layouts.
 
 ### Empty States
 

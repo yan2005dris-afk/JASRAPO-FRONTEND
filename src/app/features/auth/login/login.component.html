@@ -1,102 +1,182 @@
-<section class="vh-100 d-flex m-0 p-0 overflow-hidden anim-fade-in">
-  <!-- Left Side: Full Bleed Image / Illustration -->
-  <!-- Muestra la imagen a la izquierda al 50% en escritorio y 60% en pantallas grandes -->
-  <div class="image-side col-lg-6 col-xl-7 d-none d-lg-block p-0 m-0" style="height: 100vh">
-    <!-- Reemplazar con la foto del edificio de la Regional de Agua -->
-    <img
-      src="https://e9e04baf2d.cbaul-cdnwnd.com/bd0274cfacdf956c1d85bfe31bf67f70/200000041-d7af4d8ac7/700/3-1.png?ph=e9e04baf2d"
-      class="w-100 h-100 object-fit-cover"
-      style="display: block"
-      alt="AquaManage Background"
-    />
+<section class="login-wrapper min-vh-100 d-flex m-0 p-0 overflow-hidden anim-fade-in">
+  <!-- Left Side: Atmospheric Water Canvas with Extracted Mascot -->
+  <div
+    class="hero-side col-lg-6 col-xl-7 d-none d-lg-flex flex-column justify-content-between p-5 m-0 position-relative"
+  >
+    <div class="hero-overlay-waves"></div>
+
+    <!-- Center: Extracted 2D Mascot (Unboxed, Pure Vector) -->
+    <div class="hero-center-content mx-auto my-auto position-relative z-2 w-100 text-center">
+      <app-jasrapo-mascot size="hero" [interactive]="true"></app-jasrapo-mascot>
+
+      <p class="hero-mascot-caption mx-auto mt-3 mb-0">¡Cuidemos cada gota de agua en Olón! 💧</p>
+    </div>
+
+    <!-- Bottom Link -->
+    <div
+      class="position-relative z-2 d-flex justify-content-end align-items-center text-white-50 small"
+    >
+      <a
+        routerLink="/consulta-planilla"
+        class="text-white-50 text-decoration-underline hover-white"
+      >
+        Consulta pública de planillas
+      </a>
+    </div>
+
+    <!-- Subtle Wave Graphic at base -->
+    <svg
+      class="hero-wave-svg"
+      viewBox="0 0 1440 320"
+      preserveAspectRatio="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <path
+        fill="#0c9ea1"
+        fill-opacity="0.25"
+        d="M0,192L48,197.3C96,203,192,213,288,197.3C384,181,480,139,576,144C672,149,768,203,864,208C960,213,1056,171,1152,149.3C1248,128,1344,128,1392,128L1440,128L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z"
+      ></path>
+    </svg>
   </div>
 
-  <!-- Right Side: Form Container -->
+  <!-- Right Side: Clean Modern Form Container -->
   <div
-    class="form-side col-12 col-lg-6 col-xl-5 d-flex flex-column justify-content-center px-4 px-md-5 bg-white h-100 anim-slide-up"
+    class="form-side col-12 col-lg-6 col-xl-5 d-flex flex-column justify-content-between p-4 p-md-5 h-100 anim-slide-up overflow-y-auto"
   >
-    <div class="w-100 mx-auto" style="max-width: 320px">
-      <!-- Opcional: Logo Corporativo para mantener la identidad del proyecto -->
-      <div class="mb-5 d-flex justify-content-center w-100">
-        <img
-          src="https://i.imgur.com/oHyMUhU.png"
-          class="img-fluid custom-logo-small mb-3"
-          alt="Logo-Jasrapo"
-        />
+    <!-- Top Bar: Link to Citizen Inquiry -->
+    <div class="d-flex justify-content-end mb-4">
+      <a
+        routerLink="/consulta-planilla"
+        class="citizen-portal-link d-inline-flex align-items-center gap-1"
+      >
+        <i class="bi bi-file-earmark-text"></i>
+        <span>Consulta tu planilla aquí</span>
+        <i class="bi bi-arrow-right small"></i>
+      </a>
+    </div>
+
+    <!-- Main Login Form -->
+    <div class="w-100 mx-auto my-auto" style="max-width: 360px">
+      <!-- Logo for all screens -->
+      <div class="d-flex flex-column align-items-center text-center mb-4">
+        <app-brand-logo size="lg" [showText]="false" class="mb-3"></app-brand-logo>
+        <h2 class="form-title mb-1">Iniciar Sesión</h2>
+        <p class="text-muted small mb-0">Accede al portal administrativo y operativo</p>
       </div>
 
       <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="anim-stagger-children">
-        <!-- Mensaje de error general -->
+        <!-- Error Alert -->
         @if (errorMessage()) {
           <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
-            {{ errorMessage() }}
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span>{{ errorMessage() }}</span>
             <button
               type="button"
               class="btn-close"
               (click)="errorMessage.set(null)"
-              aria-label="Close"
+              aria-label="Cerrar"
             ></button>
           </div>
         }
 
-        <!-- Usuario input -->
+        <!-- Email/Username -->
         <div class="mb-3">
-          <label class="form-label text-muted small fw-semibold mb-1" for="email">Usuario</label>
-          <input
-            type="email"
-            id="email"
-            class="form-control form-control-simple"
-            formControlName="email"
-            placeholder="admin@japo.com"
-            [ngClass]="{ 'is-invalid': submitted() && f['email'].errors }"
-          />
-          @if (submitted() && f['email'].errors) {
-            <div class="invalid-feedback">
-              @if (f['email'].errors['required']) {
+          <label class="form-label text-dark small fw-semibold mb-1" for="email">
+            Correo o Usuario
+          </label>
+          <div class="input-icon-wrapper">
+            <i class="bi bi-person input-icon"></i>
+            <input
+              type="email"
+              id="email"
+              class="form-control form-control-modern"
+              formControlName="email"
+              placeholder="admin@jasrapo.com"
+              [ngClass]="{ 'is-invalid': submitted() && f.email.errors }"
+              autocomplete="username"
+            />
+          </div>
+          @if (submitted() && f.email.errors) {
+            <div class="invalid-feedback d-block mt-1">
+              @if (f.email.errors['required']) {
                 <div>El usuario es requerido</div>
               }
-              @if (f['email'].errors['email']) {
+              @if (f.email.errors['email']) {
                 <div>Debe ser un correo válido</div>
               }
             </div>
           }
         </div>
 
-        <!-- Password input -->
+        <!-- Password -->
         <div class="mb-4">
-          <label class="form-label text-muted small fw-semibold mb-1" for="password"
-            >contraseña</label
-          >
-          <input
-            type="password"
-            id="password"
-            class="form-control form-control-simple"
-            formControlName="password"
-            placeholder="123456"
-            [ngClass]="{ 'is-invalid': submitted() && f['password'].errors }"
-          />
-          @if (submitted() && f['password'].errors) {
-            <div class="invalid-feedback">
-              @if (f['password'].errors['required']) {
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <label class="form-label text-dark small fw-semibold mb-0" for="password">
+              Contraseña
+            </label>
+          </div>
+          <div class="input-icon-wrapper">
+            <i class="bi bi-lock input-icon" aria-hidden="true"></i>
+            <input
+              [type]="showPassword() ? 'text' : 'password'"
+              id="password"
+              class="form-control form-control-modern has-toggle"
+              formControlName="password"
+              placeholder="••••••••"
+              [ngClass]="{ 'is-invalid': submitted() && f.password.errors }"
+              autocomplete="current-password"
+            />
+            <button
+              type="button"
+              class="password-toggle-btn"
+              [class.active]="showPassword()"
+              (click)="togglePasswordVisibility()"
+              [attr.aria-label]="showPassword() ? 'Ocultar contraseña' : 'Ver contraseña'"
+              [attr.aria-pressed]="showPassword()"
+              aria-controls="password"
+              [title]="
+                showPassword()
+                  ? 'Contraseña visible (clic para ocultar)'
+                  : 'Contraseña oculta (clic para ver)'
+              "
+            >
+              <i
+                class="bi"
+                [ngClass]="showPassword() ? 'bi-eye' : 'bi-eye-slash'"
+                aria-hidden="true"
+              ></i>
+              <span class="visually-hidden" aria-live="polite">
+                {{
+                  showPassword()
+                    ? 'Contraseña visible en pantalla'
+                    : 'Contraseña protegida y oculta'
+                }}
+              </span>
+            </button>
+          </div>
+          @if (submitted() && f.password.errors) {
+            <div class="invalid-feedback d-block mt-1">
+              @if (f.password.errors['required']) {
                 <div>La contraseña es requerida</div>
               }
-              @if (f['password'].errors['minlength']) {
+              @if (f.password.errors['minlength']) {
                 <div>Mínimo 6 caracteres</div>
               }
             </div>
           }
         </div>
 
-        <!-- Contenedor de botones -->
+        <!-- Submit Button -->
         <div class="d-grid mb-3">
-          <!-- Submit button -->
           <button
             type="submit"
-            class="btn btn-brand-primary py-2 fw-semibold rounded-2 text-white shadow-sm"
+            class="btn btn-brand-primary py-2 px-4 rounded-3 shadow-sm d-flex align-items-center justify-content-center gap-2"
             [disabled]="loading()"
           >
             @if (!loading()) {
-              <span>Iniciar Sesión</span>
+              <span>Ingresar al Sistema</span>
+              <i class="bi bi-arrow-right-short fs-5"></i>
             }
             @if (loading()) {
               <span>
@@ -105,31 +185,24 @@
                   role="status"
                   aria-hidden="true"
                 ></span>
-                Cargando...
+                Iniciando sesión...
               </span>
             }
           </button>
         </div>
 
-        <!-- Forgot Password -->
-        <div class="text-start">
+        <!-- Help Link -->
+        <div class="text-center">
+          <span class="text-muted small">¿Problemas para acceder? </span>
           <a
-            href="#!"
-            class="text-secondary text-decoration-underline small hover-primary fw-medium"
-            style="font-size: 0.85rem"
-            >¿Olvidaste tu contraseña?</a
+            [href]="'mailto:' + brand.supportEmail"
+            class="small text-decoration-none fw-semibold"
+            style="color: var(--primary-color)"
           >
+            Contactar soporte
+          </a>
         </div>
       </form>
-      <!-- href de volver esquina superior derecha -->
-      <div class="position-absolute top-0 end-0 m-3">
-        <a
-          href="#!"
-          class="text-secondary text-decoration-underline small hover-primary fw-medium"
-          style="font-size: 0.85rem"
-          >Volver al inicio</a
-        >
-      </div>
     </div>
   </div>
 </section>

@@ -1,0 +1,20 @@
+@if (status() === 'loading') {
+  <div class="report-status report-status--loading" role="status" aria-live="polite">
+    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+    <span>{{ message() || 'Cargando reporte…' }}</span>
+  </div>
+} @else if (status() === 'error') {
+  <div class="report-status report-status--error" role="alert" aria-live="assertive">
+    <i class="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
+    <span class="report-status__message">{{ message() }}</span>
+    <button type="button" class="btn btn-sm btn-outline-danger" (click)="retry.emit()">
+      <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+      {{ retryLabel() }}
+    </button>
+  </div>
+} @else if (status() === 'empty') {
+  <div class="report-status report-status--empty" role="status" aria-live="polite">
+    <i class="bi bi-inbox" aria-hidden="true"></i>
+    <span>{{ message() || 'No se encontraron resultados para el contexto seleccionado.' }}</span>
+  </div>
+}
