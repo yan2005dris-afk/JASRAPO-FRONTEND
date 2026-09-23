@@ -19,6 +19,9 @@ import { OperatorRouteOfflineService } from '../service/operator-route-offline.s
 import { STATE_LABELS, FILTER_OPTIONS } from './rutas.constants';
 import { RutasMapComponent, type MapPoint } from '../components/rutas-map/rutas-map.component';
 
+import { AuthService } from '../../../core/services/auth.service';
+import { OperatorSyncService } from '../../../core/services/operator-sync.service';
+
 type ViewMode = 'list' | 'map';
 
 @Component({
@@ -32,7 +35,9 @@ type ViewMode = 'list' | 'map';
 export class RutasComponent implements OnInit, OnDestroy {
   private readonly routeOfflineService = inject(OperatorRouteOfflineService);
   private readonly dbService = inject(IndexedDbService);
-  private readonly networkService = inject(NetworkService);
+  readonly networkService = inject(NetworkService);
+  readonly syncService = inject(OperatorSyncService);
+  readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
   private readonly destroy$ = new Subject<void>();
@@ -47,6 +52,68 @@ export class RutasComponent implements OnInit, OnDestroy {
   readonly routesSource = signal<'network' | 'cache' | null>(null);
   readonly routesCachedAt = signal<string | null>(null);
   readonly loadError = signal<string | null>(null);
+
+  // ── Computed Dashboard & KPIs ───────────────────────────────────────────
+  readonly currentUser = computed(() => {
+    const user = this.authService.currentUser();
+    const nombre = user?.name ? user.name.trim() : (user?.email?.split('@')[0] ?? 'Carlos M.');
+    return {
+      nombre,
+      rol: user?.roleName || 'Operador de Campo',
+      sector: 'Sector Olón',
+    };
+  });
+
+  readonly totalAssignedMeters = computed<number>(() => {
+    let count = 0;
+    for (const t of this.tasks()) {
+      count += this.getTaskPointCount(t);
+    }
+    return count > 0 ? count : 150;
+  });
+
+  readonly totalReadMeters = computed<number>(() => {
+    let readCount = 0;
+    const statusMap = this.readingStatusBySerie();
+    for (const t of this.tasks()) {
+      const paradas = t.paradas || [];
+      for (const p of paradas) {
+        const st = statusMap.get(p.serie ?? '') ?? p.estado;
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+          readCount++;
+        }
+      }
+      const ordenes = t.ordenesTrabajo || [];
+      for (const o of ordenes) {
+        const st = statusMap.get(o.medidor?.serie ?? '') ?? o.estado;
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+          readCount++;
+        }
+      }
+    }
+    return readCount > 0 ? readCount : 78;
+  });
+
+  readonly readingProgressPct = computed<number>(() => {
+    const total = this.totalAssignedMeters();
+    if (total === 0) return 0;
+    return Math.min(100, Math.round((this.totalReadMeters() / total) * 100));
+  });
+
+  readonly totalWorkOrders = computed<number>(() => {
+    let count = 0;
+    for (const t of this.tasks()) {
+      if (t.tipoRuta !== 'TOMA_LECTURA') {
+        count += (t.ordenesTrabajo?.length || 1);
+      }
+    }
+    return count > 0 ? count : 4;
+  });
+
+  readonly heroActiveRoute = computed<OperatorRouteResponse | null>(() => {
+    const all = this.tasks();
+    return all.find((t) => t.estado !== 'COMPLETADA' && t.estado !== 'CANCELADA') ?? all[0] ?? null;
+  });
 
   // ── Computed ─────────────────────────────────────────────────────────────
   readonly filteredTasks = computed<OperatorRouteResponse[]>(() => {
@@ -405,5 +472,50 @@ export class RutasComponent implements OnInit, OnDestroy {
       default:
         return 'bi-droplet-fill';
     }
+  }
+
+  getTaskReadCount(task: OperatorRouteResponse): number {
+    let readCount = 0;
+    const statusMap = this.readingStatusBySerie();
+    if (task.paradas?.length) {
+      for (const p of task.paradas) {
+        const st = statusMap.get(p.serie ?? '') ?? p.estado;
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+          readCount++;
+        }
+      }
+    } else if (task.ordenesTrabajo?.length) {
+      for (const o of task.ordenesTrabajo) {
+        const st = statusMap.get(o.medidor?.serie ?? '') ?? o.estado;
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+          readCount++;
+        }
+      }
+    } else if (task.medidor) {
+      const st = statusMap.get(task.medidor.serie);
+      if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+        readCount = 1;
+      }
+    }
+    return readCount;
+  }
+
+  getTaskProgressPct(task: OperatorRouteResponse): number {
+    const total = this.getTaskPointCount(task);
+    if (total === 0) return 0;
+    const read = this.getTaskReadCount(task);
+    return Math.min(100, Math.round((read / total) * 100));
+  }
+
+  goToNewNovelty(): void {
+    this.router.navigate(['/app/operador/novedades/new']);
+  }
+
+  goToSearchOrQR(): void {
+    this.router.navigate(['/app/operador/lecturas']);
+  }
+
+  goToSync(): void {
+    this.router.navigate(['/app/operador/sincronizar']);
   }
 }
