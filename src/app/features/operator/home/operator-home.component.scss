@@ -26,8 +26,8 @@
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  background: var(--op-bg-accent-card, #0f2d30);
-  color: var(--op-brand-pill-active, #00e5ff);
+  background: var(--op-bg-app, #e1f5f5);
+  color: var(--op-brand-primary, #0a9396);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -186,13 +186,14 @@
 
 /* 3. Hero Active Route */
 .hero-active-route-card {
-  background: var(--op-bg-accent-card, #0f2d30);
-  border: 1px solid var(--op-brand-primary, #0a9396);
+  background: var(--op-bg-surface, #ffffff);
+  border: 1px solid var(--op-border-subtle, #d1e7e8);
+  border-left: 4px solid var(--op-brand-primary, #0a9396);
   border-radius: 14px;
   padding: 1rem;
   margin-bottom: 0.85rem;
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(15, 45, 48, 0.2);
+  color: var(--op-text-primary, #0a191b);
+  box-shadow: 0 2px 8px rgba(13, 40, 42, 0.05);
 }
 
 .hero-top-tag {
@@ -207,8 +208,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  background: rgba(0, 229, 255, 0.15);
-  color: var(--op-brand-pill-active, #00e5ff);
+  background: #e0f2fe;
+  color: #0369a1;
   font-size: 0.7rem;
   font-weight: 700;
   padding: 0.2rem 0.55rem;
@@ -217,31 +218,32 @@
 
 .hero-sector {
   font-size: 0.72rem;
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--op-text-secondary, #4b6366);
+  font-weight: 600;
 }
 
 .hero-title {
   font-size: 1.05rem;
   font-weight: 700;
   margin: 0 0 0.4rem;
-  color: #ffffff;
+  color: var(--op-text-primary, #0a191b);
 }
 
 .hero-progress-text {
   display: flex;
   justify-content: space-between;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--op-text-secondary, #4b6366);
   margin-bottom: 0.35rem;
 }
 
 .hero-progress-text strong {
-  color: var(--op-brand-pill-active, #00e5ff);
+  color: var(--op-brand-primary-dark, #005f73);
 }
 
 .hero-progress-track {
   height: 6px;
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--op-bg-app, #e1f5f5);
   border-radius: 999px;
   overflow: hidden;
   margin-bottom: 0.85rem;
@@ -249,7 +251,7 @@
 
 .hero-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--op-brand-primary, #0a9396), var(--op-brand-pill-active, #00e5ff));
+  background: var(--op-brand-primary, #0a9396);
   border-radius: 999px;
 }
 
@@ -282,9 +284,9 @@
   gap: 0.4rem;
   padding: 0.6rem 0.85rem;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(255, 255, 255, 0.1);
-  color: #ffffff;
+  border: 1px solid var(--op-border-subtle, #d1e7e8);
+  background: var(--op-bg-app, #e1f5f5);
+  color: var(--op-brand-primary-dark, #005f73);
   font-size: 0.85rem;
   font-weight: 600;
   min-height: 46px;
