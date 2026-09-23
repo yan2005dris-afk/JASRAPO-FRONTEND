@@ -52,6 +52,14 @@ export const routes: Routes = [
         pathMatch: 'full',
       },
       {
+        path: 'inicio',
+        data: { breadcrumb: 'Panel Principal' },
+        loadComponent: () =>
+          import('./features/operator/home/operator-home.component').then(
+            (m) => m.OperatorHomeComponent,
+          ),
+      },
+      {
         path: 'rutas',
         data: { breadcrumb: 'Rutas' },
         loadComponent: () =>
@@ -97,7 +105,7 @@ export const routes: Routes = [
       },
       {
         path: '',
-        redirectTo: 'rutas',
+        redirectTo: 'inicio',
         pathMatch: 'full',
       },
     ],

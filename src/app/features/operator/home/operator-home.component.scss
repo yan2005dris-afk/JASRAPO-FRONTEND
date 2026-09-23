@@ -1,0 +1,389 @@
+.operator-home-screen {
+  padding: 0.85rem;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* 1. Header */
+.operator-profile-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  background: var(--op-bg-surface, #ffffff);
+  border: 1px solid var(--op-border-subtle, #d1e7e8);
+  border-radius: 14px;
+  margin-bottom: 0.85rem;
+  box-shadow: 0 2px 6px rgba(13, 40, 42, 0.04);
+}
+
+.operator-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--op-bg-accent-card, #0f2d30);
+  color: var(--op-brand-pill-active, #00e5ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+.operator-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.operator-name-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.operator-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--op-text-primary, #0a191b);
+}
+
+.operator-role-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  background: var(--op-bg-app, #e1f5f5);
+  color: var(--op-brand-primary-dark, #005f73);
+}
+
+.operator-meta {
+  margin: 2px 0 0;
+  font-size: 0.78rem;
+  color: var(--op-text-secondary, #4b6366);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.operator-meta i {
+  color: var(--op-brand-primary, #0a9396);
+}
+
+.meta-dot {
+  opacity: 0.5;
+}
+
+/* 2. KPI Grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.65rem;
+  margin-bottom: 0.85rem;
+}
+
+.kpi-card {
+  background: var(--op-bg-surface, #ffffff);
+  border: 1px solid var(--op-border-subtle, #d1e7e8);
+  border-radius: 12px;
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 1px 4px rgba(13, 40, 42, 0.04);
+}
+
+.kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.3rem;
+}
+
+.kpi-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--op-text-secondary, #4b6366);
+}
+
+.kpi-badge-pct {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--op-brand-primary, #0a9396);
+  background: var(--op-bg-app, #e1f5f5);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+}
+
+.kpi-badge-pill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+}
+
+.kpi-badge-pill.urgent {
+  background: var(--op-status-badge-urgent, #fee2e2);
+  color: var(--op-status-danger, #b91c1c);
+}
+
+.kpi-badge-pill.warning {
+  background: var(--op-status-warning-bg, #fff3e0);
+  color: var(--op-status-warning, #d97706);
+}
+
+.kpi-badge-pill.success {
+  background: var(--op-status-success-bg, #e8f5e9);
+  color: var(--op-status-success, #1e7e34);
+}
+
+.kpi-value-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.kpi-number {
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--op-text-primary, #0a191b);
+}
+
+.kpi-icon {
+  font-size: 1.15rem;
+  color: var(--op-brand-primary, #0a9396);
+}
+
+.kpi-icon.warning { color: var(--op-status-warning, #d97706); }
+.kpi-icon.success { color: var(--op-status-success, #1e7e34); }
+
+.kpi-subtext {
+  font-size: 0.7rem;
+  color: var(--op-text-secondary, #4b6366);
+  margin-top: 0.2rem;
+}
+
+.kpi-progress-track {
+  height: 5px;
+  background: var(--op-bg-app, #e1f5f5);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 0.4rem;
+}
+
+.kpi-progress-bar {
+  height: 100%;
+  background: var(--op-brand-primary, #0a9396);
+  border-radius: 999px;
+  transition: width 0.4s ease;
+}
+
+/* 3. Hero Active Route */
+.hero-active-route-card {
+  background: var(--op-bg-accent-card, #0f2d30);
+  border: 1px solid var(--op-brand-primary, #0a9396);
+  border-radius: 14px;
+  padding: 1rem;
+  margin-bottom: 0.85rem;
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(15, 45, 48, 0.2);
+}
+
+.hero-top-tag {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.hero-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(0, 229, 255, 0.15);
+  color: var(--op-brand-pill-active, #00e5ff);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+}
+
+.hero-sector {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.hero-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0 0 0.4rem;
+  color: #ffffff;
+}
+
+.hero-progress-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 0.35rem;
+}
+
+.hero-progress-text strong {
+  color: var(--op-brand-pill-active, #00e5ff);
+}
+
+.hero-progress-track {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 0.85rem;
+}
+
+.hero-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--op-brand-primary, #0a9396), var(--op-brand-pill-active, #00e5ff));
+  border-radius: 999px;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.hero-btn-primary {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  border: none;
+  background: var(--op-brand-primary, #0a9396);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  min-height: 46px;
+  cursor: pointer;
+}
+
+.hero-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-height: 46px;
+  cursor: pointer;
+}
+
+/* 4. Quick Actions */
+.quick-actions-section {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.85rem;
+}
+
+.quick-action-btn {
+  background: var(--op-bg-surface, #ffffff);
+  border: 1px solid var(--op-border-subtle, #d1e7e8);
+  border-radius: 12px;
+  padding: 0.65rem 0.4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  min-height: 68px;
+}
+
+.quick-action-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+}
+
+.quick-action-icon.warning { background: var(--op-status-warning-bg, #fff3e0); color: var(--op-status-warning, #d97706); }
+.quick-action-icon.primary { background: var(--op-bg-app, #e1f5f5); color: var(--op-brand-primary, #0a9396); }
+.quick-action-icon.sync { background: #e0f2fe; color: #0284c7; }
+
+.quick-action-btn span {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--op-text-primary, #0a191b);
+}
+
+/* 5. Critical Order Banner */
+.critical-order-banner {
+  background: var(--op-bg-surface, #ffffff);
+  border: 1px solid var(--op-border-subtle, #d1e7e8);
+  border-left: 4px solid var(--op-status-danger, #b91c1c);
+  border-radius: 12px;
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  box-shadow: 0 2px 6px rgba(185, 28, 28, 0.06);
+
+  .banner-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--op-status-badge-urgent, #fee2e2);
+    color: var(--op-status-danger, #b91c1c);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15rem;
+    flex-shrink: 0;
+  }
+
+  .banner-content {
+    flex: 1;
+    min-width: 0;
+
+    .banner-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--op-text-primary, #0a191b);
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .banner-meta {
+      font-size: 0.72rem;
+      color: var(--op-text-secondary, #4b6366);
+      margin: 2px 0 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .banner-action-btn {
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    border: none;
+    background: var(--op-bg-app, #e1f5f5);
+    color: var(--op-brand-primary-dark, #005f73);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+}
