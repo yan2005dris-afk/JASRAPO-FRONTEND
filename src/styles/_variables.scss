@@ -120,23 +120,23 @@
   --report-danger-text: #a91d1d;
   --report-focus-outline: 3px solid rgba(var(--primary-rgb), 0.42);
 
-  /* Operator Mobile Industrial & Offline Design Tokens */
-  --op-bg-app: #e1f5f5;
-  --op-bg-surface: #ffffff;
-  --op-bg-header-dark: #0d282a;
-  --op-bg-accent-card: #0f2d30;
-  --op-brand-primary: #0a9396;
-  --op-brand-primary-dark: #005f73;
-  --op-brand-pill-active: #00e5ff;
-  --op-status-success-bg: #e8f5e9;
-  --op-status-success: #1e7e34;
-  --op-status-warning-bg: #fff3e0;
-  --op-status-warning: #d97706;
-  --op-status-danger-bg: #fce8e6;
-  --op-status-danger: #b91c1c;
+  /* Operator Tokens — Mapeados a la fuente única de verdad del Design System */
+  --op-bg-app: var(--surface-ground, #f0fdfa);
+  --op-bg-surface: var(--white, #ffffff);
+  --op-bg-header-dark: var(--marine-slate, #0b2938);
+  --op-bg-accent-card: var(--surface-ground, #f0fdfa);
+  --op-brand-primary: var(--primary-color, #087a7d);
+  --op-brand-primary-dark: var(--sidebar-text-hover, #044b4e);
+  --op-brand-pill-active: var(--secondary-color, #0c9ea1);
+  --op-status-success-bg: var(--forest-green-light, #dcfce7);
+  --op-status-success: var(--forest-green, #15803d);
+  --op-status-warning-bg: var(--brass-gold-light, #fef3c7);
+  --op-status-warning: var(--brass-gold, #d97706);
+  --op-status-danger-bg: rgba(239, 68, 68, 0.1);
+  --op-status-danger: var(--danger, #ef4444);
   --op-status-badge-urgent: #fee2e2;
-  --op-text-primary: #0a191b;
-  --op-text-secondary: #4b6366;
+  --op-text-primary: var(--dark-text, #0e2728);
+  --op-text-secondary: var(--muted-text, #597b7d);
   --op-text-disabled: #94a3b8;
-  --op-border-subtle: #d1e7e8;
+  --op-border-subtle: var(--border-color, #cbdedf);
 }

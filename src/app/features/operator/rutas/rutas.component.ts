@@ -349,11 +349,8 @@ export class RutasComponent implements OnInit, OnDestroy {
       this.comunidadesCatalog.set(comMap);
       this.sectoresCatalog.set(secMap);
 
-      const normalizedRoutes = (routeResult.routes || []).map(
-        (r: OperatorRouteResponse, idx: number) => {
-          const rawTipo = r.tipoRuta || r.tipo || r.type || 'TOMA_LECTURA';
-          const rawEstado = r.estado || r.state || 'PENDIENTE';
-          const rawNombre = r.nombre || r.name || `Ruta ${rawTipo} #${idx + 1}`;
+      const normalizedRoutes: OperatorRouteResponse[] = (routeResult.routes || []).map(
+        (r, idx: number) => {
           const comId = r.comunidadId != null ? Number(r.comunidadId) : undefined;
           const secId = r.sectorId != null ? Number(r.sectorId) : undefined;
           const comunidadNombre =
@@ -361,10 +358,10 @@ export class RutasComponent implements OnInit, OnDestroy {
           const sectorNombre = r.sectorNombre?.trim() || (secId ? secMap.get(secId) : undefined);
           return {
             ...r,
-            rutaId: String(r.rutaId || r.id || idx + 1),
-            tipoRuta: String(rawTipo).toUpperCase(),
-            estado: String(rawEstado).toUpperCase(),
-            nombre: rawNombre,
+            rutaId: String(r.rutaId || idx + 1),
+            tipoRuta: r.tipoRuta || 'TOMA_LECTURA',
+            estado: r.estado || 'PENDIENTE',
+            nombre: r.nombre || `Ruta ${r.tipoRuta || 'TOMA_LECTURA'} #${idx + 1}`,
             comunidadNombre,
             sectorNombre,
             paradas: Array.isArray(r.paradas) ? r.paradas : [],
