@@ -24,21 +24,6 @@ import { OperatorSyncService } from '../../../core/services/operator-sync.servic
 
 type ViewMode = 'list' | 'map';
 
-export const KNOWN_COMUNIDADES: Record<number, string> = {
-  1: 'Olón',
-  2: 'Núñez',
-  3: 'La Entrada',
-  4: 'San José',
-  5: 'Curia',
-};
-
-export const KNOWN_SECTORES: Record<number, string> = {
-  1: 'Sector Norte Olón',
-  2: 'Sector Sur Olón',
-  3: 'Sector Centro Olón',
-  4: 'Sector Playa Olón',
-};
-
 @Component({
   selector: 'app-rutas',
   standalone: true,
@@ -59,6 +44,8 @@ export class RutasComponent implements OnInit, OnDestroy {
 
   // ── Signals ──────────────────────────────────────────────────────────────
   readonly tasks = signal<OperatorRouteResponse[]>([]);
+  readonly comunidadesCatalog = signal<Map<number, string>>(new Map());
+  readonly sectoresCatalog = signal<Map<number, string>>(new Map());
   readonly activeFilter = signal<string>('ALL');
   readonly activeStateFilter = signal<string>('ALL');
   readonly activeComunidadFilter = signal<string>('ALL');
@@ -137,12 +124,13 @@ export class RutasComponent implements OnInit, OnDestroy {
   // ── Comunidades & Sectores Computados Separados ───────────────────────────
   readonly availableComunidades = computed<{ id: string; label: string }[]>(() => {
     const map = new Map<string, string>();
+    const comCatalog = this.comunidadesCatalog();
     for (const t of this.tasks()) {
       if (t.comunidadId != null) {
         const id = String(t.comunidadId);
         const label =
           t.comunidadNombre?.trim() ||
-          KNOWN_COMUNIDADES[t.comunidadId] ||
+          comCatalog.get(t.comunidadId) ||
           `Comunidad #${id}`;
         map.set(id, label);
       }
@@ -152,6 +140,7 @@ export class RutasComponent implements OnInit, OnDestroy {
 
   readonly availableSectors = computed<{ id: string; label: string }[]>(() => {
     const map = new Map<string, string>();
+    const secCatalog = this.sectoresCatalog();
     for (const t of this.tasks()) {
       if (t.sectorNombre?.trim()) {
         map.set(t.sectorNombre.trim(), t.sectorNombre.trim());
@@ -159,7 +148,7 @@ export class RutasComponent implements OnInit, OnDestroy {
         map.set(t.descripcion.trim(), t.descripcion.trim());
       } else if (t.sectorId != null) {
         const id = String(t.sectorId);
-        const label = KNOWN_SECTORES[t.sectorId] || `Sector #${id}`;
+        const label = secCatalog.get(t.sectorId) || `Sector #${id}`;
         map.set(label, label);
       }
     }
@@ -171,6 +160,7 @@ export class RutasComponent implements OnInit, OnDestroy {
     const estado = this.activeStateFilter();
     const comunidad = this.activeComunidadFilter();
     const sector = this.activeSectorFilter();
+    const secCatalog = this.sectoresCatalog();
 
     return this.tasks().filter((t) => {
       if (tipo !== 'ALL' && t.tipoRuta !== tipo) return false;
@@ -180,12 +170,12 @@ export class RutasComponent implements OnInit, OnDestroy {
         const secNombre = t.sectorNombre?.trim();
         const secDesc = t.descripcion?.trim();
         const secId = t.sectorId != null ? String(t.sectorId) : null;
-        const knownSector = t.sectorId != null ? KNOWN_SECTORES[t.sectorId] : null;
+        const cachedSec = t.sectorId != null ? secCatalog.get(t.sectorId) : null;
         if (
           secNombre !== sector &&
           secDesc !== sector &&
           secId !== sector &&
-          knownSector !== sector &&
+          cachedSec !== sector &&
           `Sector #${t.sectorId}` !== sector
         ) {
           return false;
@@ -327,6 +317,35 @@ export class RutasComponent implements OnInit, OnDestroy {
       const comMap = new Map<number, string>(comCache.map((c) => [c.comunidadId, c.nombre]));
       const secMap = new Map<number, string>(secCache.map((s) => [s.sectorId, s.nombre]));
 
+      // Auto-cosechar comunidades y sectores nuevos provenientes de la respuesta del backend
+      const newComunidades: Array<{ comunidadId: number; nombre: string }> = [];
+      const newSectores: Array<{ sectorId: number; comunidadId?: number; nombre: string }> = [];
+
+      for (const r of routeResult.routes || []) {
+        if (r.comunidadId != null && r.comunidadNombre?.trim() && !comMap.has(Number(r.comunidadId))) {
+          comMap.set(Number(r.comunidadId), r.comunidadNombre.trim());
+          newComunidades.push({ comunidadId: Number(r.comunidadId), nombre: r.comunidadNombre.trim() });
+        }
+        if (r.sectorId != null && r.sectorNombre?.trim() && !secMap.has(Number(r.sectorId))) {
+          secMap.set(Number(r.sectorId), r.sectorNombre.trim());
+          newSectores.push({
+            sectorId: Number(r.sectorId),
+            comunidadId: r.comunidadId != null ? Number(r.comunidadId) : undefined,
+            nombre: r.sectorNombre.trim(),
+          });
+        }
+      }
+
+      if (newComunidades.length > 0) {
+        this.dbService.saveComunidadesCache(newComunidades).catch(() => undefined);
+      }
+      if (newSectores.length > 0) {
+        this.dbService.saveSectoresCache(newSectores).catch(() => undefined);
+      }
+
+      this.comunidadesCatalog.set(comMap);
+      this.sectoresCatalog.set(secMap);
+
       const normalizedRoutes = (routeResult.routes || []).map((r: any, idx: number) => {
         const rawTipo = r.tipoRuta || r.tipo || r.type || 'TOMA_LECTURA';
         const rawEstado = r.estado || r.state || 'PENDIENTE';
@@ -335,12 +354,10 @@ export class RutasComponent implements OnInit, OnDestroy {
         const secId = r.sectorId != null ? Number(r.sectorId) : undefined;
         const comunidadNombre =
           r.comunidadNombre?.trim() ||
-          (comId ? comMap.get(comId) : undefined) ||
-          (comId ? KNOWN_COMUNIDADES[comId] : undefined);
+          (comId ? comMap.get(comId) : undefined);
         const sectorNombre =
           r.sectorNombre?.trim() ||
-          (secId ? secMap.get(secId) : undefined) ||
-          (secId ? KNOWN_SECTORES[secId] : undefined);
+          (secId ? secMap.get(secId) : undefined);
         return {
           ...r,
           rutaId: String(r.rutaId || r.id || idx + 1),
@@ -578,7 +595,9 @@ export class RutasComponent implements OnInit, OnDestroy {
   getTaskComunidadDescription(task: OperatorRouteResponse): string {
     if (task.comunidadNombre?.trim()) return task.comunidadNombre.trim();
     if (task.comunidadId != null) {
-      return KNOWN_COMUNIDADES[task.comunidadId] || `Comunidad #${task.comunidadId}`;
+      const cached = this.comunidadesCatalog().get(task.comunidadId);
+      if (cached) return cached;
+      return `Comunidad #${task.comunidadId}`;
     }
     return 'Comunidad Principal';
   }
@@ -587,11 +606,15 @@ export class RutasComponent implements OnInit, OnDestroy {
     if (task.sectorNombre?.trim()) return task.sectorNombre.trim();
     if (task.descripcion?.trim()) return task.descripcion.trim();
     if (task.sectorId != null) {
-      return KNOWN_SECTORES[task.sectorId] || `Sector #${task.sectorId}`;
+      const cached = this.sectoresCatalog().get(task.sectorId);
+      if (cached) return cached;
+      return `Sector #${task.sectorId}`;
     }
     if (task.comunidadNombre?.trim()) return task.comunidadNombre.trim();
     if (task.comunidadId != null) {
-      return KNOWN_COMUNIDADES[task.comunidadId] || `Comunidad #${task.comunidadId}`;
+      const cached = this.comunidadesCatalog().get(task.comunidadId);
+      if (cached) return cached;
+      return `Comunidad #${task.comunidadId}`;
     }
     return 'Sector General';
   }
