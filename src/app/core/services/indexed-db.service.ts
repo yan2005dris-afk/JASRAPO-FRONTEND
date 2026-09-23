@@ -37,7 +37,7 @@ export interface AssignedSnapshot {
 })
 export class IndexedDbService {
   private readonly dbName = 'jasrapo-operator-db';
-  private readonly dbVersion = 9;
+  private readonly dbVersion = 10;
   private db: IDBDatabase | null = null;
 
   constructor() {
@@ -116,6 +116,16 @@ export class IndexedDbService {
         // Snapshot de rutas asignadas para navegación degradada sin conexión
         if (!db.objectStoreNames.contains('rutas_cache')) {
           db.createObjectStore('rutas_cache', { keyPath: 'scope' });
+        }
+
+        // Almacén para catálogo geográfico de comunidades
+        if (!db.objectStoreNames.contains('comunidades_cache')) {
+          db.createObjectStore('comunidades_cache', { keyPath: 'comunidadId' });
+        }
+
+        // Almacén para catálogo geográfico de sectores
+        if (!db.objectStoreNames.contains('sectores_cache')) {
+          db.createObjectStore('sectores_cache', { keyPath: 'sectorId' });
         }
       };
 
@@ -720,10 +730,99 @@ export class IndexedDbService {
     });
   }
 
+  // --- COMUNIDADES & SECTORES CACHE ---
+
+  async saveComunidadesCache(
+    items: Array<{ comunidadId: number; nombre: string; codigo?: string }>,
+  ): Promise<void> {
+    if (!items?.length) return;
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('comunidades_cache', 'readwrite');
+      const store = transaction.objectStore('comunidades_cache');
+      for (const item of items) {
+        if (item.comunidadId != null) {
+          store.put(item);
+        }
+      }
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  async getComunidadesCache(): Promise<
+    Array<{ comunidadId: number; nombre: string; codigo?: string }>
+  > {
+    const db = await this.initDb();
+    if (!db.objectStoreNames.contains('comunidades_cache')) return [];
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('comunidades_cache', 'readonly');
+      const store = transaction.objectStore('comunidades_cache');
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async saveSectoresCache(
+    items: Array<{ sectorId: number; comunidadId?: number; nombre: string; codigo?: string }>,
+  ): Promise<void> {
+    if (!items?.length) return;
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('sectores_cache', 'readwrite');
+      const store = transaction.objectStore('sectores_cache');
+      for (const item of items) {
+        if (item.sectorId != null) {
+          store.put(item);
+        }
+      }
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  async getSectoresCache(): Promise<
+    Array<{ sectorId: number; comunidadId?: number; nombre: string; codigo?: string }>
+  > {
+    const db = await this.initDb();
+    if (!db.objectStoreNames.contains('sectores_cache')) return [];
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('sectores_cache', 'readonly');
+      const store = transaction.objectStore('sectores_cache');
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
   // --- RUTAS CACHE (snapshot offline) ---
 
-  async saveRoutesCache<T>(scope: string, routes: T[]): Promise<void> {
+  async saveRoutesCache<T extends Record<string, any>>(scope: string, routes: T[]): Promise<void> {
     const db = await this.initDb();
+
+    // Auto-persist discovered comunidades & sectores to their dedicated stores
+    const comunidades: Array<{ comunidadId: number; nombre: string }> = [];
+    const sectores: Array<{ sectorId: number; comunidadId?: number; nombre: string }> = [];
+    for (const r of routes) {
+      if (r['comunidadId'] != null && r['comunidadNombre']?.trim()) {
+        comunidades.push({ comunidadId: Number(r['comunidadId']), nombre: r['comunidadNombre'].trim() });
+      }
+      if (r['sectorId'] != null && r['sectorNombre']?.trim()) {
+        sectores.push({
+          sectorId: Number(r['sectorId']),
+          comunidadId: r['comunidadId'] != null ? Number(r['comunidadId']) : undefined,
+          nombre: r['sectorNombre'].trim(),
+        });
+      }
+    }
+    if (comunidades.length > 0) {
+      this.saveComunidadesCache(comunidades).catch(() => undefined);
+    }
+    if (sectores.length > 0) {
+      this.saveSectoresCache(sectores).catch(() => undefined);
+    }
+
     return new Promise((resolve, reject) => {
       const transaction = db.transaction('rutas_cache', 'readwrite');
       const store = transaction.objectStore('rutas_cache');

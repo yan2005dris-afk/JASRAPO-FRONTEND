@@ -24,6 +24,21 @@ import { OperatorSyncService } from '../../../core/services/operator-sync.servic
 
 type ViewMode = 'list' | 'map';
 
+export const KNOWN_COMUNIDADES: Record<number, string> = {
+  1: 'Olón',
+  2: 'Núñez',
+  3: 'La Entrada',
+  4: 'San José',
+  5: 'Curia',
+};
+
+export const KNOWN_SECTORES: Record<number, string> = {
+  1: 'Sector Norte Olón',
+  2: 'Sector Sur Olón',
+  3: 'Sector Centro Olón',
+  4: 'Sector Playa Olón',
+};
+
 @Component({
   selector: 'app-rutas',
   standalone: true,
@@ -125,7 +140,10 @@ export class RutasComponent implements OnInit, OnDestroy {
     for (const t of this.tasks()) {
       if (t.comunidadId != null) {
         const id = String(t.comunidadId);
-        const label = t.comunidadNombre?.trim() || `Comunidad #${id}`;
+        const label =
+          t.comunidadNombre?.trim() ||
+          KNOWN_COMUNIDADES[t.comunidadId] ||
+          `Comunidad #${id}`;
         map.set(id, label);
       }
     }
@@ -141,7 +159,8 @@ export class RutasComponent implements OnInit, OnDestroy {
         map.set(t.descripcion.trim(), t.descripcion.trim());
       } else if (t.sectorId != null) {
         const id = String(t.sectorId);
-        map.set(id, `Sector #${id}`);
+        const label = KNOWN_SECTORES[t.sectorId] || `Sector #${id}`;
+        map.set(label, label);
       }
     }
     return Array.from(map.entries()).map(([id, label]) => ({ id, label }));
@@ -161,10 +180,12 @@ export class RutasComponent implements OnInit, OnDestroy {
         const secNombre = t.sectorNombre?.trim();
         const secDesc = t.descripcion?.trim();
         const secId = t.sectorId != null ? String(t.sectorId) : null;
+        const knownSector = t.sectorId != null ? KNOWN_SECTORES[t.sectorId] : null;
         if (
           secNombre !== sector &&
           secDesc !== sector &&
           secId !== sector &&
+          knownSector !== sector &&
           `Sector #${t.sectorId}` !== sector
         ) {
           return false;
@@ -297,20 +318,37 @@ export class RutasComponent implements OnInit, OnDestroy {
     this.isLoading.set(true);
     this.loadError.set(null);
     try {
-      const [routeResult] = await Promise.all([
+      const [routeResult, comCache, secCache] = await Promise.all([
         this.routeOfflineService.loadAssignedRoutes(),
+        this.dbService.getComunidadesCache().catch(() => []),
+        this.dbService.getSectoresCache().catch(() => []),
         this.loadReadingStatuses(),
       ]);
+      const comMap = new Map<number, string>(comCache.map((c) => [c.comunidadId, c.nombre]));
+      const secMap = new Map<number, string>(secCache.map((s) => [s.sectorId, s.nombre]));
+
       const normalizedRoutes = (routeResult.routes || []).map((r: any, idx: number) => {
         const rawTipo = r.tipoRuta || r.tipo || r.type || 'TOMA_LECTURA';
         const rawEstado = r.estado || r.state || 'PENDIENTE';
         const rawNombre = r.nombre || r.name || `Ruta ${rawTipo} #${idx + 1}`;
+        const comId = r.comunidadId != null ? Number(r.comunidadId) : undefined;
+        const secId = r.sectorId != null ? Number(r.sectorId) : undefined;
+        const comunidadNombre =
+          r.comunidadNombre?.trim() ||
+          (comId ? comMap.get(comId) : undefined) ||
+          (comId ? KNOWN_COMUNIDADES[comId] : undefined);
+        const sectorNombre =
+          r.sectorNombre?.trim() ||
+          (secId ? secMap.get(secId) : undefined) ||
+          (secId ? KNOWN_SECTORES[secId] : undefined);
         return {
           ...r,
           rutaId: String(r.rutaId || r.id || idx + 1),
           tipoRuta: String(rawTipo).toUpperCase(),
           estado: String(rawEstado).toUpperCase(),
           nombre: rawNombre,
+          comunidadNombre,
+          sectorNombre,
           paradas: Array.isArray(r.paradas) ? r.paradas : [],
           ordenesTrabajo: Array.isArray(r.ordenesTrabajo) ? r.ordenesTrabajo : [],
         };
@@ -539,16 +577,22 @@ export class RutasComponent implements OnInit, OnDestroy {
 
   getTaskComunidadDescription(task: OperatorRouteResponse): string {
     if (task.comunidadNombre?.trim()) return task.comunidadNombre.trim();
-    if (task.comunidadId != null) return `Comunidad #${task.comunidadId}`;
+    if (task.comunidadId != null) {
+      return KNOWN_COMUNIDADES[task.comunidadId] || `Comunidad #${task.comunidadId}`;
+    }
     return 'Comunidad Principal';
   }
 
   getTaskSectorDescription(task: OperatorRouteResponse): string {
     if (task.sectorNombre?.trim()) return task.sectorNombre.trim();
     if (task.descripcion?.trim()) return task.descripcion.trim();
-    if (task.sectorId != null) return `Sector #${task.sectorId}`;
+    if (task.sectorId != null) {
+      return KNOWN_SECTORES[task.sectorId] || `Sector #${task.sectorId}`;
+    }
     if (task.comunidadNombre?.trim()) return task.comunidadNombre.trim();
-    if (task.comunidadId != null) return `Comunidad #${task.comunidadId}`;
+    if (task.comunidadId != null) {
+      return KNOWN_COMUNIDADES[task.comunidadId] || `Comunidad #${task.comunidadId}`;
+    }
     return 'Sector General';
   }
 
