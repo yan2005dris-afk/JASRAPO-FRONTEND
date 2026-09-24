@@ -13,12 +13,16 @@ describe('ClientsListComponent', () => {
   let reportsService: {
     getClientsListPdf: ReturnType<typeof vi.fn>;
     sendClientsListEmail: ReturnType<typeof vi.fn>;
+    exportClientsList: ReturnType<typeof vi.fn>;
+    downloadBlob: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
     reportsService = {
       getClientsListPdf: vi.fn(() => of(new Blob(['pdf'], { type: 'application/pdf' }))),
       sendClientsListEmail: vi.fn(() => of({})),
+      exportClientsList: vi.fn(() => of(new Blob(['export'], { type: 'text/csv' }))),
+      downloadBlob: vi.fn(),
     };
 
     await TestBed.configureTestingModule({

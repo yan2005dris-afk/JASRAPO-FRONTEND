@@ -25,6 +25,8 @@ import { ReportEmailAttemptTracker } from '../shared/report-email-attempt-tracke
 import { ReportWorkspaceComponent } from '../shared/report-workspace/report-workspace.component';
 
 type DatePreset = 'currentYear' | 'currentMonth' | 'lastMonth' | 'last3Months';
+import { ToastService } from '../../../shared/components/toast/toast.service';
+
 type FailedReportAction = 'pdf' | 'email';
 
 @Component({
@@ -42,6 +44,7 @@ type FailedReportAction = 'pdf' | 'email';
 })
 export class ClientsListComponent implements OnInit, OnDestroy {
   private readonly reportsService = inject(ReportsService);
+  private readonly toastService = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
 
   readonly fechaDesde = signal('');
@@ -50,6 +53,7 @@ export class ClientsListComponent implements OnInit, OnDestroy {
 
   readonly pdfBlob = signal<Blob | null>(null);
   readonly isLoadingPdf = signal(false);
+  readonly isExporting = signal(false);
   readonly workspaceError = signal('');
   readonly lastFailedAction = signal<FailedReportAction | null>(null);
 
@@ -195,6 +199,38 @@ export class ClientsListComponent implements OnInit, OnDestroy {
     anchor.download = `listado-clientes-${this.activo() || 'todos'}.pdf`;
     anchor.click();
     URL.revokeObjectURL(url);
+  }
+
+  descargarExcel(): void {
+    const filters = this.buildFilters();
+    this.isExporting.set(true);
+    this.reportsService.exportClientsList(filters, 'xlsx').subscribe({
+      next: (blob) => {
+        this.isExporting.set(false);
+        this.reportsService.downloadBlob(blob, `listado-clientes-${this.activo() || 'todos'}.xlsx`);
+        this.toastService.success('Reporte Excel descargado exitosamente');
+      },
+      error: () => {
+        this.isExporting.set(false);
+        this.toastService.error('No se pudo exportar el reporte en formato Excel');
+      },
+    });
+  }
+
+  descargarCsv(): void {
+    const filters = this.buildFilters();
+    this.isExporting.set(true);
+    this.reportsService.exportClientsList(filters, 'csv').subscribe({
+      next: (blob) => {
+        this.isExporting.set(false);
+        this.reportsService.downloadBlob(blob, `listado-clientes-${this.activo() || 'todos'}.csv`);
+        this.toastService.success('Reporte CSV descargado exitosamente');
+      },
+      error: () => {
+        this.isExporting.set(false);
+        this.toastService.error('No se pudo exportar el reporte en formato CSV');
+      },
+    });
   }
 
   abrirModalEmail(): void {
