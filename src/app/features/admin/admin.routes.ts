@@ -25,6 +25,11 @@ export const adminRoutes: Routes = [
           ),
       },
       {
+        path: 'periods',
+        loadComponent: () =>
+          import('./periods/periods-admin.component').then((m) => m.PeriodsAdminComponent),
+      },
+      {
         path: 'roles',
         loadComponent: () => import('./roles/roles.component').then((m) => m.RolesComponent),
         children: [

@@ -1,0 +1,474 @@
+<div class="periods-admin-page d-flex flex-column gap-4">
+  <!-- Top Navigation & Header Card -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <div class="d-flex align-items-center gap-3">
+        <div class="header-icon-tile">
+          <i class="bi bi-calendar3-range-fill"></i>
+        </div>
+        <div>
+          <h4 class="fw-bold text-dark mb-0 fs-5">Administración de Períodos Contables</h4>
+          <p class="text-muted small mb-0">
+            Gestión de meses operativos, fechas de inicio, corte, vencimiento y generador del ejercicio anual.
+          </p>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="d-flex align-items-center gap-2">
+        <button
+          type="button"
+          class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2 rounded-3 px-3 py-2 fw-semibold"
+          (click)="openAnnualModal()"
+          [disabled]="isLoading()"
+        >
+          <i class="bi bi-magic"></i>
+          Generar Ejercicio Anual
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-primary btn-sm d-flex align-items-center gap-2 rounded-3 px-3 py-2 fw-semibold shadow-sm"
+          (click)="openCreateModal()"
+          [disabled]="isLoading()"
+        >
+          <i class="bi bi-plus-lg"></i>
+          Nuevo Período
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- KPI Metric Cards -->
+  @let stats = kpis();
+  <div class="row g-3">
+    <div class="col-md-3 col-sm-6">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
+        <span class="text-muted small fw-medium">Total de Períodos</span>
+        <h3 class="fw-bold text-dark mb-0 mt-1">{{ stats.total }}</h3>
+        <span class="text-muted" style="font-size: 0.75rem;">Registrados en el sistema</span>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-success border-4">
+        <span class="text-success small fw-semibold">Períodos Abiertos</span>
+        <h3 class="fw-bold text-success mb-0 mt-1">{{ stats.abiertos }}</h3>
+        <span class="text-muted" style="font-size: 0.75rem;">En operación activa</span>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-warning border-4">
+        <span class="text-warning-emphasis small fw-semibold">Períodos Pendientes</span>
+        <h3 class="fw-bold text-warning-emphasis mb-0 mt-1">{{ stats.pendientes }}</h3>
+        <span class="text-muted" style="font-size: 0.75rem;">Planificados para el año</span>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-secondary border-4">
+        <span class="text-secondary small fw-medium">Períodos Cerrados</span>
+        <h3 class="fw-bold text-secondary mb-0 mt-1">{{ stats.cerrados }}</h3>
+        <span class="text-muted" style="font-size: 0.75rem;">Historial finalizado</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters and Periods Table -->
+  <div class="card border-0 shadow-sm rounded-4 p-4 bg-white d-flex flex-column gap-3">
+    <!-- Filter Bar -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 pb-3 border-bottom">
+      <div class="d-flex align-items-center gap-3 flex-wrap" style="min-width: 320px;">
+        <app-picker-input
+          inputId="periodsSearchInput"
+          placeholder="Buscar período por nombre (ej. 2026)..."
+          icon="bi-search"
+          [query]="searchQuery()"
+          [disabled]="isLoading()"
+          (queryChange)="searchQuery.set($event)"
+          (clear)="searchQuery.set('')"
+        />
+
+        <!-- Status Filter Tabs -->
+        <div class="btn-group btn-group-sm p-1 bg-light rounded-3" role="group">
+          <button
+            type="button"
+            class="btn rounded-2"
+            [class.btn-primary]="statusFilter() === 'TODOS'"
+            [class.btn-light]="statusFilter() !== 'TODOS'"
+            (click)="statusFilter.set('TODOS')"
+          >
+            Todos
+          </button>
+          <button
+            type="button"
+            class="btn rounded-2"
+            [class.btn-success]="statusFilter() === 'ABIERTO'"
+            [class.btn-light]="statusFilter() !== 'ABIERTO'"
+            (click)="statusFilter.set('ABIERTO')"
+          >
+            Abiertos
+          </button>
+          <button
+            type="button"
+            class="btn rounded-2"
+            [class.btn-warning]="statusFilter() === 'PENDIENTE'"
+            [class.btn-light]="statusFilter() !== 'PENDIENTE'"
+            (click)="statusFilter.set('PENDIENTE')"
+          >
+            Pendientes
+          </button>
+          <button
+            type="button"
+            class="btn rounded-2"
+            [class.btn-secondary]="statusFilter() === 'CERRADO'"
+            [class.btn-light]="statusFilter() !== 'CERRADO'"
+            (click)="statusFilter.set('CERRADO')"
+          >
+            Cerrados
+          </button>
+        </div>
+      </div>
+
+      <span class="badge bg-light text-secondary border px-3 py-2 fw-medium">
+        Mostrando {{ filteredPeriods().length }} período(s)
+      </span>
+    </div>
+
+    <!-- Table -->
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th class="ps-3">Nombre del Período</th>
+            <th>Fecha Inicio</th>
+            <th>Fecha Fin / Corte</th>
+            <th>Fecha Vencimiento</th>
+            <th>Estado</th>
+            <th class="text-end pe-3">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @if (isLoading()) {
+            <tr>
+              <td colspan="6" class="text-center py-5 text-muted">
+                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                Cargando períodos contables...
+              </td>
+            </tr>
+          } @else if (filteredPeriods().length === 0) {
+            <tr>
+              <td colspan="6" class="text-center py-5 text-muted">
+                <i class="bi bi-calendar-x fs-2 d-block mb-1 text-secondary"></i>
+                No se encontraron períodos registrados.
+              </td>
+            </tr>
+          }
+          @for (period of filteredPeriods(); track period.periodoId) {
+            <tr>
+              <!-- Nombre -->
+              <td class="ps-3">
+                <div class="d-flex align-items-center gap-2">
+                  <div
+                    class="rounded-circle d-flex align-items-center justify-content-center"
+                    [ngClass]="{
+                      'bg-success-subtle text-success': period.estado === 'ABIERTO',
+                      'bg-warning-subtle text-warning-emphasis': period.estado === 'PENDIENTE',
+                      'bg-secondary-subtle text-secondary': period.estado === 'CERRADO',
+                      'bg-info-subtle text-info': period.estado === 'FACTURADO'
+                    }"
+                    style="width: 32px; height: 32px;"
+                  >
+                    <i class="bi bi-calendar2-check"></i>
+                  </div>
+                  <span class="fw-bold text-dark">{{ period.nombre }}</span>
+                </div>
+              </td>
+
+              <!-- Fecha Inicio -->
+              <td>
+                <span class="small font-monospace text-dark">
+                  {{ period.fechaInicio | date:'dd/MM/yyyy' }}
+                </span>
+              </td>
+
+              <!-- Fecha Fin -->
+              <td>
+                <span class="small font-monospace text-dark">
+                  {{ period.fechaFin | date:'dd/MM/yyyy' }}
+                </span>
+              </td>
+
+              <!-- Fecha Vencimiento -->
+              <td>
+                <span class="small font-monospace text-danger-emphasis fw-semibold">
+                  {{ period.fechaVencimiento | date:'dd/MM/yyyy' }}
+                </span>
+              </td>
+
+              <!-- Estado Badge -->
+              <td>
+                <span
+                  class="badge px-3 py-2 fw-semibold"
+                  [ngClass]="{
+                    'bg-success-subtle text-success border border-success-subtle': period.estado === 'ABIERTO',
+                    'bg-warning-subtle text-warning-emphasis border border-warning-subtle': period.estado === 'PENDIENTE',
+                    'bg-secondary-subtle text-secondary border': period.estado === 'CERRADO',
+                    'bg-info-subtle text-info border border-info-subtle': period.estado === 'FACTURADO'
+                  }"
+                >
+                  {{ period.estado }}
+                </span>
+              </td>
+
+              <!-- Acciones -->
+              <td class="text-end pe-3">
+                <div class="d-inline-flex align-items-center gap-1">
+                  <!-- Toggle Open/Close -->
+                  @if (period.estado === 'ABIERTO') {
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary btn-sm"
+                      title="Cerrar Período"
+                      (click)="togglePeriodStatus(period)"
+                    >
+                      <i class="bi bi-lock-fill me-1"></i> Cerrar
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="btn btn-outline-success btn-sm"
+                      title="Abrir Período"
+                      (click)="togglePeriodStatus(period)"
+                    >
+                      <i class="bi bi-unlock-fill me-1"></i> Abrir
+                    </button>
+                  }
+
+                  <!-- Edit -->
+                  <button
+                    type="button"
+                    class="btn btn-light btn-sm border"
+                    title="Editar Período"
+                    (click)="openEditModal(period)"
+                  >
+                    <i class="bi bi-pencil"></i>
+                  </button>
+
+                  <!-- Delete -->
+                  <button
+                    type="button"
+                    class="btn btn-light btn-sm border text-danger"
+                    title="Eliminar Período"
+                    (click)="deletePeriod(period)"
+                  >
+                    <i class="bi bi-trash3"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- MODAL: CREAR / EDITAR PERÍODO INDIVIDUAL                                  -->
+<!-- ========================================================================= -->
+@if (showEditModal()) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.45); z-index: 1050;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow-lg">
+        <div class="modal-header border-bottom pb-3">
+          <h5 class="modal-title fw-bold text-dark">
+            <i class="bi bi-calendar-event me-2 text-primary"></i>
+            {{ isEditing() ? 'Editar Período Contable' : 'Nuevo Período Contable' }}
+          </h5>
+          <button type="button" class="btn-close shadow-none" (click)="closeEditModal()"></button>
+        </div>
+
+        <div class="modal-body d-flex flex-column gap-3 py-4">
+          <!-- Nombre -->
+          <div>
+            <label for="periodNameInput" class="form-label small fw-semibold text-dark mb-1">
+              Nombre del Período <span class="text-danger">*</span>
+            </label>
+            <input
+              id="periodNameInput"
+              type="text"
+              class="form-control shadow-none"
+              placeholder="Ej: Enero 2026"
+              [(ngModel)]="periodForm.nombre"
+            />
+          </div>
+
+          <!-- Fechas: Inicio y Fin -->
+          <div class="row g-3">
+            <div class="col-6">
+              <label for="periodStartInput" class="form-label small fw-semibold text-dark mb-1">
+                Fecha Inicio <span class="text-danger">*</span>
+              </label>
+              <input
+                id="periodStartInput"
+                type="date"
+                class="form-control shadow-none"
+                [(ngModel)]="periodForm.fechaInicio"
+              />
+            </div>
+            <div class="col-6">
+              <label for="periodEndInput" class="form-label small fw-semibold text-dark mb-1">
+                Fecha Fin / Corte <span class="text-danger">*</span>
+              </label>
+              <input
+                id="periodEndInput"
+                type="date"
+                class="form-control shadow-none"
+                [(ngModel)]="periodForm.fechaFin"
+              />
+            </div>
+          </div>
+
+          <!-- Fecha Vencimiento -->
+          <div>
+            <label for="periodDueInput" class="form-label small fw-semibold text-dark mb-1">
+              Fecha de Vencimiento de Pago <span class="text-danger">*</span>
+            </label>
+            <input
+              id="periodDueInput"
+              type="date"
+              class="form-control shadow-none"
+              [(ngModel)]="periodForm.fechaVencimiento"
+            />
+          </div>
+
+          <!-- Estado -->
+          <div>
+            <label for="periodStateSelect" class="form-label small fw-semibold text-dark mb-1">
+              Estado del Período
+            </label>
+            <select id="periodStateSelect" class="form-select shadow-none" [(ngModel)]="periodForm.estado">
+              <option value="PENDIENTE">PENDIENTE (Planificado)</option>
+              <option value="ABIERTO">ABIERTO (En operaciones y lecturas)</option>
+              <option value="CERRADO">CERRADO (Lecturas finalizadas)</option>
+              <option value="FACTURADO">FACTURADO (Emisión realizada)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer border-top pt-3">
+          <button type="button" class="btn btn-outline-secondary px-3 py-2 rounded-3" (click)="closeEditModal()">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary px-4 py-2 rounded-3 fw-semibold shadow-sm"
+            (click)="savePeriod()"
+            [disabled]="isLoading()"
+          >
+            {{ isEditing() ? 'Guardar Cambios' : 'Crear Período' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ========================================================================= -->
+<!-- MODAL: ASISTENTE DE GENERACIÓN DE EJERCICIO ANUAL                         -->
+<!-- ========================================================================= -->
+@if (showAnnualModal()) {
+  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.45); z-index: 1050;">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow-lg">
+        <div class="modal-header border-bottom pb-3">
+          <div class="d-flex align-items-center gap-2">
+            <div class="rounded-circle bg-primary-subtle text-primary p-2 d-flex align-items-center justify-content-center">
+              <i class="bi bi-magic fs-5"></i>
+            </div>
+            <div>
+              <h5 class="modal-title fw-bold text-dark mb-0">Generar Ejercicio Anual Completo</h5>
+              <span class="text-muted small">Crea automáticamente los 12 meses del año</span>
+            </div>
+          </div>
+          <button type="button" class="btn-close shadow-none" (click)="closeAnnualModal()"></button>
+        </div>
+
+        <div class="modal-body d-flex flex-column gap-3 py-4">
+          <div class="alert alert-primary d-flex align-items-center gap-3 rounded-3 mb-1">
+            <i class="bi bi-info-circle-fill fs-4 text-primary"></i>
+            <div class="small">
+              Este asistente generará <strong>12 períodos mensuales</strong> (Enero a Diciembre) para el año seleccionado,
+              con fechas de corte a fin de mes y fecha de vencimiento estándar.
+            </div>
+          </div>
+
+          <!-- Año -->
+          <div>
+            <label for="annualYearInput" class="form-label small fw-semibold text-dark mb-1">
+              Año Fiscal / Operativo <span class="text-danger">*</span>
+            </label>
+            <input
+              id="annualYearInput"
+              type="number"
+              class="form-control shadow-none"
+              placeholder="Ej: 2026"
+              min="2020"
+              max="2100"
+              [(ngModel)]="annualForm.year"
+            />
+          </div>
+
+          <!-- Día de Vencimiento de Pago -->
+          <div>
+            <label for="annualDueDayInput" class="form-label small fw-semibold text-dark mb-1">
+              Día de Vencimiento mensual <span class="text-muted">(Día del mes siguiente)</span>
+            </label>
+            <input
+              id="annualDueDayInput"
+              type="number"
+              class="form-control shadow-none"
+              placeholder="15"
+              min="1"
+              max="28"
+              [(ngModel)]="annualForm.diaVencimiento"
+            />
+            <span class="text-muted" style="font-size: 0.72rem;">
+              Ejemplo: Día 15 -> El período de Enero vencerá el 15 de Febrero.
+            </span>
+          </div>
+
+          <!-- Estado Inicial -->
+          <div>
+            <label for="annualInitialStateSelect" class="form-label small fw-semibold text-dark mb-1">
+              Estado Inicial de los 12 Períodos
+            </label>
+            <select id="annualInitialStateSelect" class="form-select shadow-none" [(ngModel)]="annualForm.estadoInicial">
+              <option value="PENDIENTE">PENDIENTE (Recomendado - se abren mes a mes)</option>
+              <option value="ABIERTO">ABIERTO (Todos activos inmediatamente)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="modal-footer border-top pt-3">
+          <button type="button" class="btn btn-outline-secondary px-3 py-2 rounded-3" (click)="closeAnnualModal()">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary px-4 py-2 rounded-3 fw-bold d-flex align-items-center gap-2 shadow-sm"
+            (click)="executeGenerateAnnual()"
+            [disabled]="isGeneratingAnnual()"
+          >
+            @if (isGeneratingAnnual()) {
+              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span>Generando 12 Meses...</span>
+            } @else {
+              <i class="bi bi-calendar-plus-fill"></i>
+              <span>Generar Períodos del Año</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
