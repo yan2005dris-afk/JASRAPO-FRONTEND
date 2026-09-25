@@ -95,6 +95,7 @@ export class ConnectionHistoryComponent {
   // Estados de carga
   readonly isLoadingData = signal(false);
   readonly isLoadingPdf = signal(false);
+  readonly isExporting = signal(false);
 
   // Envío por email
   readonly destinatario = signal('');
@@ -325,12 +326,50 @@ export class ConnectionHistoryComponent {
   descargarPdf(): void {
     const blob = this.pdfBlob();
     if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `historial-conexion-${this.selectedContractNumber() || this.contratoId()}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
+    this.reportsService.downloadBlob(
+      blob,
+      `historial-conexion-${this.selectedContractNumber() || this.contratoId()}.pdf`,
+    );
+  }
+
+  descargarExcel(): void {
+    const filters = this.buildFilters();
+    if (!filters) return;
+    this.isExporting.set(true);
+    this.reportsService.exportConnectionHistory(filters, 'xlsx').subscribe({
+      next: (blob) => {
+        this.isExporting.set(false);
+        this.reportsService.downloadBlob(
+          blob,
+          `historial-conexion-${this.selectedContractNumber() || this.contratoId()}.xlsx`,
+        );
+        this.toast.success('Reporte Excel descargado exitosamente');
+      },
+      error: () => {
+        this.isExporting.set(false);
+        this.toast.error('No se pudo exportar el reporte en formato Excel');
+      },
+    });
+  }
+
+  descargarCsv(): void {
+    const filters = this.buildFilters();
+    if (!filters) return;
+    this.isExporting.set(true);
+    this.reportsService.exportConnectionHistory(filters, 'csv').subscribe({
+      next: (blob) => {
+        this.isExporting.set(false);
+        this.reportsService.downloadBlob(
+          blob,
+          `historial-conexion-${this.selectedContractNumber() || this.contratoId()}.csv`,
+        );
+        this.toast.success('Reporte CSV descargado exitosamente');
+      },
+      error: () => {
+        this.isExporting.set(false);
+        this.toast.error('No se pudo exportar el reporte en formato CSV');
+      },
+    });
   }
 
   // ---------- Envío por email (modal) ----------

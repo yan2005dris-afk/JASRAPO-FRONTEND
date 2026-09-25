@@ -53,6 +53,18 @@ export class ReportsService {
     });
   }
 
+  /** Exporta el reporte de abonos en streaming (CSV o XLSX). */
+  exportPaymentsReport(
+    filters: IPaymentsReportFilters = {},
+    format: 'csv' | 'xlsx',
+  ): Observable<Blob> {
+    const params = this.buildParams({ ...filters, format });
+    return this.http.get(`${this.endpoint}/payments-report`, {
+      params,
+      responseType: 'blob',
+    });
+  }
+
   /** Envía por email el reporte de abonos (clienteId obligatorio). */
   sendPaymentsReportEmail(body: ISendReportEmailBody): Observable<unknown> {
     return this.http.post(`${this.endpoint}/payments-report/email`, body);
@@ -72,6 +84,18 @@ export class ReportsService {
     return this.http.get(`${this.endpoint}/connection-history`, {
       params,
       headers: { Accept: 'application/pdf' },
+      responseType: 'blob',
+    });
+  }
+
+  /** Exporta el historial de conexión en streaming (CSV o XLSX). */
+  exportConnectionHistory(
+    filters: IConnectionHistoryFilters,
+    format: 'csv' | 'xlsx',
+  ): Observable<Blob> {
+    const params = this.buildParams({ ...filters, format });
+    return this.http.get(`${this.endpoint}/connection-history`, {
+      params,
       responseType: 'blob',
     });
   }
@@ -99,6 +123,18 @@ export class ReportsService {
     });
   }
 
+  /** Exporta el convenio de pago en streaming (CSV o XLSX). */
+  exportPaymentAgreement(
+    filters: IPaymentAgreementFilters,
+    format: 'csv' | 'xlsx',
+  ): Observable<Blob> {
+    const params = this.buildParams({ ...filters, format });
+    return this.http.get(`${this.endpoint}/payment-agreement`, {
+      params,
+      responseType: 'blob',
+    });
+  }
+
   /** Envía por email el convenio de pago (convenioId obligatorio). */
   sendPaymentAgreementEmail(body: ISendReportEmailBody): Observable<unknown> {
     return this.http.post(`${this.endpoint}/payment-agreement/email`, body);
@@ -118,6 +154,15 @@ export class ReportsService {
     return this.http.get(`${this.endpoint}/clients-list`, {
       params,
       headers: { Accept: 'application/pdf' },
+      responseType: 'blob',
+    });
+  }
+
+  /** Exporta el listado de clientes en streaming (CSV o XLSX). */
+  exportClientsList(filters: IClientsListFilters = {}, format: 'csv' | 'xlsx'): Observable<Blob> {
+    const params = this.buildParams({ ...filters, format });
+    return this.http.get(`${this.endpoint}/clients-list`, {
+      params,
       responseType: 'blob',
     });
   }
@@ -145,6 +190,18 @@ export class ReportsService {
     });
   }
 
+  /** Exporta el estado de cuenta en streaming (CSV o XLSX). */
+  exportAccountStatement(
+    filters: IAccountStatementFilters,
+    format: 'csv' | 'xlsx',
+  ): Observable<Blob> {
+    const params = this.buildParams({ ...filters, format });
+    return this.http.get(`${this.endpoint}/account-statement`, {
+      params,
+      responseType: 'blob',
+    });
+  }
+
   /** Envía por email el estado de cuenta (contratoId obligatorio). */
   sendAccountStatementEmail(body: ISendReportEmailBody): Observable<unknown> {
     return this.http.post(`${this.endpoint}/account-statement/email`, body);
@@ -168,8 +225,32 @@ export class ReportsService {
     });
   }
 
+  /** Exporta el reporte de recaudación y morosidad en streaming (CSV o XLSX). */
+  exportOverdueAccounts(
+    filters: IOverdueAccountsFilters = {},
+    format: 'csv' | 'xlsx',
+  ): Observable<Blob> {
+    const params = this.buildParams({ ...filters, format });
+    return this.http.get(`${this.endpoint}/overdue-accounts`, {
+      params,
+      responseType: 'blob',
+    });
+  }
+
   /** Envía por email el reporte de recaudación y morosidad (destinatario obligatorio). */
   sendOverdueAccountsEmail(body: ISendReportEmailBody): Observable<unknown> {
     return this.http.post(`${this.endpoint}/overdue-accounts/email`, body);
+  }
+
+  // ---------- Utilidad de descarga ----------
+
+  /** Descarga un Blob en el navegador con el nombre de archivo especificado. */
+  downloadBlob(blob: Blob, filename: string): void {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 }

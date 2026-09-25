@@ -110,6 +110,24 @@
         <i class="bi bi-download" aria-hidden="true"></i>
         Descargar PDF
       </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1"
+        [disabled]="isExporting()"
+        (click)="descargarExcel()"
+      >
+        <i class="bi bi-file-earmark-excel" aria-hidden="true"></i>
+        Exportar Excel
+      </button>
+      <button
+        type="button"
+        class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1"
+        [disabled]="isExporting()"
+        (click)="descargarCsv()"
+      >
+        <i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i>
+        Exportar CSV
+      </button>
     }
     <button
       type="button"

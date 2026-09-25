@@ -227,6 +227,26 @@
             Descargar PDF
           </button>
         }
+        @if (reportData()) {
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-success d-flex align-items-center gap-1 fw-medium"
+            [disabled]="isExporting()"
+            (click)="descargarExcel()"
+          >
+            <i class="bi bi-file-earmark-excel"></i>
+            Exportar Excel
+          </button>
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 fw-medium"
+            [disabled]="isExporting()"
+            (click)="descargarCsv()"
+          >
+            <i class="bi bi-file-earmark-spreadsheet"></i>
+            Exportar CSV
+          </button>
+        }
         @if (contratoId()) {
           <button
             type="button"
