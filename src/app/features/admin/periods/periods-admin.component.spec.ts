@@ -37,7 +37,7 @@ describe('PeriodsAdminComponent', () => {
       fechaInicio: '2026-02-01',
       fechaFin: '2026-02-28',
       fechaVencimiento: '2026-03-15',
-      estado: 'PENDIENTE',
+      estado: 'CERRADO',
     },
   ];
 
@@ -75,18 +75,18 @@ describe('PeriodsAdminComponent', () => {
     const kpis = computed(() => {
       const list = periods();
       let abiertos = 0;
-      let pendientes = 0;
       let cerrados = 0;
+      let procesando = 0;
       for (const p of list) {
         if (p.estado === 'ABIERTO') abiertos++;
-        else if (p.estado === 'PENDIENTE') pendientes++;
         else if (p.estado === 'CERRADO') cerrados++;
+        else if (p.estado === 'PROCESANDO') procesando++;
       }
       return {
         total: list.length,
         abiertos,
-        pendientes,
         cerrados,
+        procesando,
       };
     });
 
@@ -110,12 +110,12 @@ describe('PeriodsAdminComponent', () => {
         fechaInicio: '2026-01-01',
         fechaFin: '2026-01-31',
         fechaVencimiento: '2026-02-15',
-        estado: 'PENDIENTE',
+        estado: 'CERRADO',
       },
       annualForm: {
         year: 2026,
         diaVencimiento: 15,
-        estadoInicial: 'PENDIENTE',
+        estadoInicial: 'CERRADO',
       },
     });
   });
@@ -123,7 +123,7 @@ describe('PeriodsAdminComponent', () => {
   it('should compute KPIs and filtered periods list correctly', () => {
     expect(component.kpis().total).toBe(2);
     expect(component.kpis().abiertos).toBe(1);
-    expect(component.kpis().pendientes).toBe(1);
+    expect(component.kpis().cerrados).toBe(1);
     expect(component.filteredPeriods().length).toBe(2);
 
     component.statusFilter.set('ABIERTO');
@@ -135,7 +135,7 @@ describe('PeriodsAdminComponent', () => {
     component.openCreateModal();
     expect(component.showEditModal()).toBe(true);
     expect(component.isEditing()).toBe(false);
-    expect(component.periodForm.estado).toBe('PENDIENTE');
+    expect(component.periodForm.estado).toBe('CERRADO');
   });
 
   it('should open modal for editing existing period', () => {
@@ -155,7 +155,7 @@ describe('PeriodsAdminComponent', () => {
       fechaInicio: '2026-03-01',
       fechaFin: '2026-03-31',
       fechaVencimiento: '2026-04-15',
-      estado: 'PENDIENTE',
+      estado: 'CERRADO',
     };
 
     component.savePeriod();
@@ -165,7 +165,7 @@ describe('PeriodsAdminComponent', () => {
       fechaInicio: '2026-03-01',
       fechaFin: '2026-03-31',
       fechaVencimiento: '2026-04-15',
-      estado: 'PENDIENTE',
+      estado: 'CERRADO',
     });
     expect(mockToastService.show).toHaveBeenCalledWith(
       expect.stringContaining('creado exitosamente'),
@@ -180,7 +180,7 @@ describe('PeriodsAdminComponent', () => {
     component.annualForm = {
       year: 2026,
       diaVencimiento: 20,
-      estadoInicial: 'PENDIENTE',
+      estadoInicial: 'CERRADO',
     };
 
     component.executeGenerateAnnual();
@@ -188,7 +188,7 @@ describe('PeriodsAdminComponent', () => {
     expect(mockPeriodsService.generateAnnualPeriods).toHaveBeenCalledWith({
       year: 2026,
       diaVencimiento: 20,
-      estadoInicial: 'PENDIENTE',
+      estadoInicial: 'CERRADO',
     });
     expect(mockToastService.show).toHaveBeenCalledWith(
       expect.stringContaining('generado con éxito'),

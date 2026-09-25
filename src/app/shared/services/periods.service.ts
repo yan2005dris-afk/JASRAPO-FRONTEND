@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { IPaginatedResult } from '../../features/billing/payments/interfaces/ipayments.interface';
 
-export type EstadoPeriodo = 'PENDIENTE' | 'ABIERTO' | 'CERRADO' | 'FACTURADO';
+export type EstadoPeriodo = 'ABIERTO' | 'CERRADO' | 'PROCESANDO';
 
 export interface IAccountingPeriod {
   periodoId: number;

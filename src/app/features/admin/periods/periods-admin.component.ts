@@ -59,7 +59,7 @@ export class PeriodsAdminComponent implements OnInit {
     fechaInicio: '',
     fechaFin: '',
     fechaVencimiento: '',
-    estado: 'PENDIENTE',
+    estado: 'CERRADO',
   };
 
   annualForm: {
@@ -69,7 +69,7 @@ export class PeriodsAdminComponent implements OnInit {
   } = {
     year: new Date().getFullYear(),
     diaVencimiento: 15,
-    estadoInicial: 'PENDIENTE',
+    estadoInicial: 'CERRADO',
   };
 
   // Filtered Periods
@@ -98,18 +98,18 @@ export class PeriodsAdminComponent implements OnInit {
   readonly kpis = computed(() => {
     const list = this.periods();
     let abiertos = 0;
-    let pendientes = 0;
     let cerrados = 0;
+    let procesando = 0;
     for (const p of list) {
       if (p.estado === 'ABIERTO') abiertos++;
-      else if (p.estado === 'PENDIENTE') pendientes++;
       else if (p.estado === 'CERRADO') cerrados++;
+      else if (p.estado === 'PROCESANDO') procesando++;
     }
     return {
       total: list.length,
       abiertos,
-      pendientes,
       cerrados,
+      procesando,
     };
   });
 
@@ -154,7 +154,7 @@ export class PeriodsAdminComponent implements OnInit {
       fechaInicio: startStr,
       fechaFin: endStr,
       fechaVencimiento: dueStr,
-      estado: 'PENDIENTE',
+      estado: 'CERRADO',
     };
     this.showEditModal.set(true);
   }
@@ -175,7 +175,7 @@ export class PeriodsAdminComponent implements OnInit {
       fechaInicio: parseDateToInput(period.fechaInicio),
       fechaFin: parseDateToInput(period.fechaFin),
       fechaVencimiento: parseDateToInput(period.fechaVencimiento),
-      estado: (period.estado as EstadoPeriodo) || 'PENDIENTE',
+      estado: (period.estado as EstadoPeriodo) || 'CERRADO',
     };
     this.showEditModal.set(true);
   }
@@ -244,7 +244,7 @@ export class PeriodsAdminComponent implements OnInit {
     this.annualForm = {
       year: new Date().getFullYear(),
       diaVencimiento: 15,
-      estadoInicial: 'PENDIENTE',
+      estadoInicial: 'CERRADO',
     };
     this.showAnnualModal.set(true);
   }

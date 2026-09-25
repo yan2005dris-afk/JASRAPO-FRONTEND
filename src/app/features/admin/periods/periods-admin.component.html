@@ -49,25 +49,18 @@
         <span class="text-muted" style="font-size: 0.75rem;">Registrados en el sistema</span>
       </div>
     </div>
-    <div class="col-md-3 col-sm-6">
+    <div class="col-md-4 col-sm-6">
       <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-success border-4">
         <span class="text-success small fw-semibold">Períodos Abiertos</span>
         <h3 class="fw-bold text-success mb-0 mt-1">{{ stats.abiertos }}</h3>
         <span class="text-muted" style="font-size: 0.75rem;">En operación activa</span>
       </div>
     </div>
-    <div class="col-md-3 col-sm-6">
-      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-warning border-4">
-        <span class="text-warning-emphasis small fw-semibold">Períodos Pendientes</span>
-        <h3 class="fw-bold text-warning-emphasis mb-0 mt-1">{{ stats.pendientes }}</h3>
-        <span class="text-muted" style="font-size: 0.75rem;">Planificados para el año</span>
-      </div>
-    </div>
-    <div class="col-md-3 col-sm-6">
+    <div class="col-md-4 col-sm-6">
       <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-secondary border-4">
         <span class="text-secondary small fw-medium">Períodos Cerrados</span>
         <h3 class="fw-bold text-secondary mb-0 mt-1">{{ stats.cerrados }}</h3>
-        <span class="text-muted" style="font-size: 0.75rem;">Historial finalizado</span>
+        <span class="text-muted" style="font-size: 0.75rem;">Planificados o finalizados</span>
       </div>
     </div>
   </div>
@@ -106,15 +99,6 @@
             (click)="statusFilter.set('ABIERTO')"
           >
             Abiertos
-          </button>
-          <button
-            type="button"
-            class="btn rounded-2"
-            [class.btn-warning]="statusFilter() === 'PENDIENTE'"
-            [class.btn-light]="statusFilter() !== 'PENDIENTE'"
-            (click)="statusFilter.set('PENDIENTE')"
-          >
-            Pendientes
           </button>
           <button
             type="button"
