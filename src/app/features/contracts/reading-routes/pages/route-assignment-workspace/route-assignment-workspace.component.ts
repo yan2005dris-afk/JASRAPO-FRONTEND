@@ -9,9 +9,11 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import { ReadingRoutesService } from '../../services/reading-routes.service';
 import {
   ICreateRouteAssignmentsDto,
+  IReadingRoute,
   ITipoActividad,
   TipoRuta,
 } from '../../interfaces/ireading-route.interface';
@@ -25,10 +27,112 @@ import { User } from '../../../../users/models/user.interface';
 import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
-import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 import { PeriodPickerComponent } from '../../../../../shared/components/period-picker/period-picker.component';
 import { PickerInputComponent } from '../../../../../shared/components/picker-input/picker-input.component';
 import type { IAccountingPeriod } from '../../../../../shared/services/periods.service';
+
+export interface OperatorColor {
+  id: string;
+  name: string;
+  badgeClass: string;
+  bgClass: string;
+  textClass: string;
+  borderClass: string;
+  hex: string;
+  lightBg: string;
+  contrastText: string;
+}
+
+export const OPERATOR_PALETTE: OperatorColor[] = [
+  {
+    id: 'blue',
+    name: 'Azul',
+    badgeClass: 'text-bg-primary',
+    bgClass: 'bg-primary-subtle',
+    textClass: 'text-primary',
+    borderClass: 'border-primary',
+    hex: '#0d6efd',
+    lightBg: '#e7f1ff',
+    contrastText: '#0a58ca',
+  },
+  {
+    id: 'emerald',
+    name: 'Verde',
+    badgeClass: 'text-bg-success',
+    bgClass: 'bg-success-subtle',
+    textClass: 'text-success',
+    borderClass: 'border-success',
+    hex: '#198754',
+    lightBg: '#e8f5e9',
+    contrastText: '#0f5132',
+  },
+  {
+    id: 'purple',
+    name: 'Morado',
+    badgeClass: 'text-bg-dark',
+    bgClass: 'bg-purple-subtle',
+    textClass: 'text-purple',
+    borderClass: 'border-purple',
+    hex: '#6f42c1',
+    lightBg: '#f3e8ff',
+    contrastText: '#59359a',
+  },
+  {
+    id: 'orange',
+    name: 'Naranja',
+    badgeClass: 'text-bg-warning',
+    bgClass: 'bg-warning-subtle',
+    textClass: 'text-warning-emphasis',
+    borderClass: 'border-warning',
+    hex: '#fd7e14',
+    lightBg: '#fff3e0',
+    contrastText: '#b35300',
+  },
+  {
+    id: 'cyan',
+    name: 'Cian',
+    badgeClass: 'text-bg-info',
+    bgClass: 'bg-info-subtle',
+    textClass: 'text-info-emphasis',
+    borderClass: 'border-info',
+    hex: '#0dcaf0',
+    lightBg: '#e0f7fa',
+    contrastText: '#055160',
+  },
+  {
+    id: 'pink',
+    name: 'Rosa',
+    badgeClass: 'text-bg-danger',
+    bgClass: 'bg-danger-subtle',
+    textClass: 'text-danger',
+    borderClass: 'border-danger',
+    hex: '#d63384',
+    lightBg: '#fce4ec',
+    contrastText: '#880e4f',
+  },
+  {
+    id: 'indigo',
+    name: 'Índigo',
+    badgeClass: 'text-bg-primary',
+    bgClass: 'bg-indigo-subtle',
+    textClass: 'text-indigo',
+    borderClass: 'border-indigo',
+    hex: '#6610f2',
+    lightBg: '#ede7f6',
+    contrastText: '#4527a0',
+  },
+  {
+    id: 'teal',
+    name: 'Teal',
+    badgeClass: 'text-bg-success',
+    bgClass: 'bg-teal-subtle',
+    textClass: 'text-teal',
+    borderClass: 'border-teal',
+    hex: '#20c997',
+    lightBg: '#e0f2f1',
+    contrastText: '#004d40',
+  },
+];
 
 @Component({
   selector: 'app-route-assignment-workspace',
@@ -36,7 +140,6 @@ import type { IAccountingPeriod } from '../../../../../shared/services/periods.s
   imports: [
     CommonModule,
     FormsModule,
-    DatePickerComponent,
     PeriodPickerComponent,
     PickerInputComponent,
   ],
@@ -54,6 +157,9 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
 
+  // Wizard Step (1: Asignación 2 Tablas, 2: Resumen Full Width)
+  readonly currentStep = signal<1 | 2>(1);
+
   // Catalogs
   readonly operarios = signal<User[]>([]);
   readonly comunidades = signal<Comunidad[]>([]);
@@ -61,25 +167,34 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   readonly contratos = signal<IContract[]>([]);
   readonly tiposActividad = signal<ITipoActividad[]>([]);
 
-  // Selection & Form State
+  // Pre-existing routes in the active period (from Database)
+  readonly periodExistingRoutes = signal<IReadingRoute[]>([]);
+  readonly isLoadingRoutes = signal<boolean>(false);
+
+  // Selection & Filters
   readonly selectedPeriod = signal<IAccountingPeriod | null>(null);
   readonly selectedPeriodId = signal<number | null>(null);
   readonly selectedOperarioId = signal<number | null>(null);
   readonly selectedComunidadId = signal<number | null>(null);
-  readonly selectedSectorIds = signal<number[]>([]);
-  readonly selectedContratoIds = signal<number[]>([]);
-  readonly isAllCommunitySelected = signal<boolean>(false);
-  readonly tipoActividadSeleccionada = signal<TipoRuta | string | null>(null);
+  readonly tipoActividadSeleccionada = signal<TipoRuta | string | null>('LECTURA');
   readonly fechaPlanificada = signal<string>(
     new Date().toISOString().slice(0, 7), // 'YYYY-MM'
   );
   readonly customNombreBase = signal<string | null>(null);
+
+  // Search queries
   readonly workerSearch = signal<string>('');
+  readonly communitySearch = signal<string>('');
   readonly contractSearch = signal<string>('');
+
+  // Dynamic Session Assignments: Map of sectorId -> operarioId
+  readonly sessionSectorAssignments = signal<Map<number, number>>(new Map());
+  // Non-lectura: selected contract IDs
+  readonly selectedContratoIds = signal<number[]>([]);
+
   readonly isLoading = signal<boolean>(false);
   readonly isLoadingContracts = signal<boolean>(false);
 
-  // Nombres de meses para armado descriptivo del nombre sugerido
   private readonly MONTH_NAMES = [
     'Enero',
     'Febrero',
@@ -95,54 +210,241 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     'Diciembre',
   ];
 
+  // Operator Color Mapper
+  getOperatorColor(operarioId: number): OperatorColor {
+    const ops = this.operarios();
+    const idx = ops.findIndex((u) => u.usuarioId === operarioId);
+    const colorIndex = idx >= 0 ? idx % OPERATOR_PALETTE.length : 0;
+    return OPERATOR_PALETTE[colorIndex];
+  }
+
   isLecturaActivity(tipo: TipoRuta | string | null): boolean {
-    return tipo === 'LECTURA' || tipo === 'TOMA_LECTURA';
+    return tipo === 'LECTURA' || tipo === 'TOMA_LECTURA' || !tipo;
   }
 
-  getActivityIcon(codigo: string): string {
-    switch (codigo) {
-      case 'LECTURA':
-      case 'TOMA_LECTURA':
-        return 'bi-speedometer2';
-      case 'CORTE':
-        return 'bi-slash-circle';
-      case 'RECONEXION':
-        return 'bi-arrow-repeat';
-      case 'INSPECCION':
-        return 'bi-search';
-      case 'INSTALACION':
-        return 'bi-tools';
-      default:
-        return 'bi-clipboard-check';
+  // Pre-existing assigned routes mapping
+  readonly existingAssignedSectorMap = computed(() => {
+    const map = new Map<number, IReadingRoute>();
+    for (const r of this.periodExistingRoutes()) {
+      if (r.sectorId != null) {
+        map.set(r.sectorId, r);
+      }
     }
-  }
+    return map;
+  });
 
-  private getTipoActividadPrefix(tipo: TipoRuta | string | null): string {
-    if (!tipo) return 'Ruta de Trabajo';
-    const found = this.tiposActividad().find((t) => t.codigo === tipo);
-    if (found) return `Ruta ${found.nombre}`;
-    switch (tipo) {
-      case 'LECTURA':
-      case 'TOMA_LECTURA':
-        return 'Ruta Lectura';
-      case 'CORTE':
-        return 'Ruta Corte';
-      case 'RECONEXION':
-        return 'Ruta Reconexión';
-      case 'INSPECCION':
-        return 'Ruta Inspección';
-      case 'INSTALACION':
-        return 'Ruta Instalación';
-      default:
-        return `Ruta ${tipo}`;
+  readonly existingCommunityRoutes = computed(() => {
+    const map = new Map<number, IReadingRoute[]>();
+    for (const r of this.periodExistingRoutes()) {
+      if (r.comunidadId != null) {
+        const list = map.get(r.comunidadId) || [];
+        list.push(r);
+        map.set(r.comunidadId, list);
+      }
     }
+    return map;
+  });
+
+  // Active routes already assigned to currently selected operator in the month
+  readonly selectedOperatorExistingRoutes = computed(() => {
+    const opId = this.selectedOperarioId();
+    if (!opId) return [];
+    return this.periodExistingRoutes().filter((r) => r.operarioId === opId);
+  });
+
+  // Filtered Workers list
+  readonly filteredOperarios = computed(() => {
+    const q = this.workerSearch().toLowerCase().trim();
+    const ops = this.operarios();
+    if (!q) return ops;
+    return ops.filter(
+      (op) =>
+        `${op.nombres} ${op.apellidos}`.toLowerCase().includes(q) ||
+        (op.email && op.email.toLowerCase().includes(q)) ||
+        (op.telefono && op.telefono.toLowerCase().includes(q)),
+    );
+  });
+
+  // Filtered Communities list with search
+  readonly filteredComunidades = computed(() => {
+    const q = this.communitySearch().toLowerCase().trim();
+    const list = this.comunidades();
+    if (!q) return list;
+    return list.filter((c) => {
+      const matchName = c.nombre?.toLowerCase().includes(q);
+      const matchCode = c.codigo?.toLowerCase().includes(q);
+      const hasMatchingSector = this.sectores()
+        .filter((s) => s.comunidadId === c.id)
+        .some((s) => s.nombre?.toLowerCase().includes(q) || s.codigo?.toLowerCase().includes(q));
+      return matchName || matchCode || hasMatchingSector;
+    });
+  });
+
+  // Helper to get sectors for a community
+  getSectoresForComunidad(comunidadId: number): Sectores[] {
+    return this.sectores().filter((s) => s.comunidadId === comunidadId);
   }
 
+  // Get current assignment status for a sector
+  getSectorStatus(sectorId: number | undefined): {
+    isAssigned: boolean;
+    isDbAssigned: boolean;
+    isCurrentOperator: boolean;
+    operarioId?: number;
+    operarioName?: string;
+    color?: OperatorColor;
+    routeName?: string;
+  } {
+    if (sectorId == null) {
+      return {
+        isAssigned: false,
+        isDbAssigned: false,
+        isCurrentOperator: false,
+      };
+    }
+
+    const dbRoute = this.existingAssignedSectorMap().get(sectorId);
+    if (dbRoute) {
+      const op = this.operarios().find((u) => u.usuarioId === dbRoute.operarioId);
+      const color = dbRoute.operarioId ? this.getOperatorColor(dbRoute.operarioId) : undefined;
+      return {
+        isAssigned: true,
+        isDbAssigned: true,
+        isCurrentOperator: dbRoute.operarioId === this.selectedOperarioId(),
+        operarioId: dbRoute.operarioId,
+        operarioName: op ? `${op.nombres} ${op.apellidos}` : `Operario #${dbRoute.operarioId}`,
+        color,
+        routeName: dbRoute.nombre,
+      };
+    }
+
+    const sessionOpId = this.sessionSectorAssignments().get(sectorId);
+    if (sessionOpId != null) {
+      const op = this.operarios().find((u) => u.usuarioId === sessionOpId);
+      const color = this.getOperatorColor(sessionOpId);
+      return {
+        isAssigned: true,
+        isDbAssigned: false,
+        isCurrentOperator: sessionOpId === this.selectedOperarioId(),
+        operarioId: sessionOpId,
+        operarioName: op ? `${op.nombres} ${op.apellidos}` : `Operario #${sessionOpId}`,
+        color,
+      };
+    }
+
+    return {
+      isAssigned: false,
+      isDbAssigned: false,
+      isCurrentOperator: false,
+    };
+  }
+
+  // Check if community is 100% completed (Yellow Border indicator)
+  isCommunityCompleted(comunidadId: number | undefined): boolean {
+    if (comunidadId == null) return false;
+    const communitySectors = this.getSectoresForComunidad(comunidadId);
+    if (communitySectors.length === 0) {
+      // If community has no sectors, check if whole community route exists
+      const existing = this.existingCommunityRoutes().get(comunidadId);
+      return (existing && existing.length > 0) || false;
+    }
+
+    // Check if every sector is assigned either in DB or in current session
+    return communitySectors.every((s) => {
+      if (s.sectorId == null) return true;
+      const status = this.getSectorStatus(s.sectorId);
+      return status.isAssigned;
+    });
+  }
+
+  // Count assigned sectors for a community
+  getCommunityAssignedCount(comunidadId: number | undefined): { assigned: number; total: number } {
+    if (comunidadId == null) return { assigned: 0, total: 0 };
+    const communitySectors = this.getSectoresForComunidad(comunidadId);
+    const total = communitySectors.length;
+    let assigned = 0;
+    for (const s of communitySectors) {
+      if (s.sectorId != null && this.getSectorStatus(s.sectorId).isAssigned) {
+        assigned++;
+      }
+    }
+    return { assigned, total };
+  }
+
+  // Count assigned sectors in session for an operator
+  getOperatorSessionSectorsCount(operarioId: number): number {
+    let count = 0;
+    this.sessionSectorAssignments().forEach((opId) => {
+      if (opId === operarioId) count++;
+    });
+    return count;
+  }
+
+  // Get list of session sectors assigned to an operator
+  getOperatorSessionSectors(operarioId: number): Array<{ sector: Sectores; comunidad?: Comunidad }> {
+    const result: Array<{ sector: Sectores; comunidad?: Comunidad }> = [];
+    this.sessionSectorAssignments().forEach((opId, sectorId) => {
+      if (opId === operarioId) {
+        const sector = this.sectores().find((s) => s.sectorId === sectorId);
+        if (sector) {
+          const comunidad = this.comunidades().find((c) => c.id === sector.comunidadId);
+          result.push({ sector, comunidad });
+        }
+      }
+    });
+    return result;
+  }
+
+  // Total sectors assigned across all operators in this session
+  readonly totalSessionAssignedSectorsCount = computed(() => {
+    return this.sessionSectorAssignments().size;
+  });
+
+  // Operators that have at least 1 sector assigned in session
+  readonly assignedOperatorsInSession = computed(() => {
+    const opIds = new Set<number>();
+    this.sessionSectorAssignments().forEach((opId) => opIds.add(opId));
+    return this.operarios().filter((op) => opIds.has(op.usuarioId));
+  });
+
+  // Global coverage metrics for Step 3 Summary
+  readonly globalCoverageSummary = computed(() => {
+    const allComunidades = this.comunidades();
+    let fullyCompletedCommunities = 0;
+    let partialCommunities = 0;
+    let unassignedCommunities = 0;
+    let totalSectors = 0;
+    let totalAssignedSectors = 0;
+
+    for (const c of allComunidades) {
+      if (c.id == null) continue;
+      const { assigned, total } = this.getCommunityAssignedCount(c.id);
+      totalSectors += total;
+      totalAssignedSectors += assigned;
+      if (total > 0 && assigned === total) {
+        fullyCompletedCommunities++;
+      } else if (assigned > 0) {
+        partialCommunities++;
+      } else {
+        unassignedCommunities++;
+      }
+    }
+
+    return {
+      fullyCompletedCommunities,
+      partialCommunities,
+      unassignedCommunities,
+      totalSectors,
+      totalAssignedSectors,
+      pendingSectors: Math.max(0, totalSectors - totalAssignedSectors),
+    };
+  });
+
+  // Suggested Base Name
   readonly sugeridoNombreBase = computed(() => {
     const periodoSeleccionado = this.selectedPeriod();
     const fechaObjetivo = this.fechaPlanificada();
-    const tipoActividad = this.tipoActividadSeleccionada();
-    const fragmentosNombre: string[] = [this.getTipoActividadPrefix(tipoActividad)];
+    const fragmentosNombre: string[] = ['Ruta Lectura'];
 
     if (periodoSeleccionado?.nombre) {
       fragmentosNombre.push(periodoSeleccionado.nombre);
@@ -164,97 +466,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     return valorPersonalizado !== null ? valorPersonalizado : this.sugeridoNombreBase();
   });
 
-  onTipoActividadChange(nuevoTipo: TipoRuta | string | null): void {
-    this.tipoActividadSeleccionada.set(nuevoTipo);
-  }
-
-  onNombreBaseInput(valorIngresado: string): void {
-    this.customNombreBase.set(valorIngresado);
-  }
-
-  onNombreBaseClear(): void {
-    this.customNombreBase.set(null);
-  }
-
-  onFechaPlanificadaChange(nuevaFecha: string): void {
-    this.fechaPlanificada.set(nuevaFecha);
-  }
-
-  // Filtered Workers
-  readonly filteredOperarios = computed(() => {
-    const q = this.workerSearch().toLowerCase().trim();
-    const ops = this.operarios();
-    if (!q) return ops;
-    return ops.filter(
-      (op) =>
-        `${op.nombres} ${op.apellidos}`.toLowerCase().includes(q) ||
-        (op.email && op.email.toLowerCase().includes(q)) ||
-        (op.telefono && op.telefono.toLowerCase().includes(q)),
-    );
-  });
-
-  // Filtered Sectors for selected Comunidad
-  readonly filteredSectores = computed(() => {
-    const comId = this.selectedComunidadId();
-    if (!comId) return [];
-    return this.sectores().filter((s) => s.comunidadId === comId);
-  });
-
-  getMedidorSerie(contrato: IContract): string | null {
-    const medidorActivo = contrato.historialMedidores?.find(
-      (historial) => historial.fechaHasta === null,
-    );
-    return medidorActivo?.medidor?.serie || null;
-  }
-
-  // Filtered Contracts for selected Comunidad
-  readonly filteredContratos = computed(() => {
-    const q = this.contractSearch().toLowerCase().trim();
-    const list = this.contratos();
-
-    return list.filter((c) => {
-      const serie = this.getMedidorSerie(c);
-      const matchSearch =
-        !q ||
-        c.contratoId?.toString().includes(q) ||
-        c.cliente?.nombres?.toLowerCase().includes(q) ||
-        c.cliente?.apellidos?.toLowerCase().includes(q) ||
-        c.cliente?.identificacion?.toLowerCase().includes(q) ||
-        c.numeroGuia?.toLowerCase().includes(q) ||
-        (serie && serie.toLowerCase().includes(q));
-
-      return matchSearch;
-    });
-  });
-
-  readonly areAllFilteredContratosSelected = computed(() => {
-    const filtered = this.filteredContratos();
-    const current = this.selectedContratoIds();
-    return filtered.length > 0 && filtered.every((c) => current.includes(Number(c.contratoId)));
-  });
-
-  // Validity
-  readonly isFormValid = computed(() => {
-    const tipo = this.tipoActividadSeleccionada();
-    const period = this.selectedPeriod();
-    const opId = this.selectedOperarioId();
-    const comId = this.selectedComunidadId();
-    const allCom = this.isAllCommunitySelected();
-    const sectors = this.selectedSectorIds();
-    const contracts = this.selectedContratoIds();
-
-    const hasTipo = tipo !== null;
-    const hasValidPeriod = period !== null && period.periodoId > 0 && period.estado === 'ABIERTO';
-    const hasWorker = opId !== null && opId > 0;
-    const hasComunidad = comId !== null && comId > 0;
-
-    const hasCoverage = this.isLecturaActivity(tipo)
-      ? allCom || sectors.length > 0
-      : contracts.length > 0;
-
-    return hasTipo && hasValidPeriod && hasWorker && hasComunidad && hasCoverage;
-  });
-
   ngOnInit(): void {
     this.loadCatalogs();
   }
@@ -264,11 +475,11 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       next: (res) => this.tiposActividad.set(res),
     });
 
-    this.comunidadesService.getAllComunidades(1, 100).subscribe({
+    this.comunidadesService.getAllComunidades(1, 200).subscribe({
       next: (res) => this.comunidades.set(res.data),
     });
 
-    this.sectoresService.getAllSectores(1, 200).subscribe({
+    this.sectoresService.getAllSectores(1, 500).subscribe({
       next: (res) => this.sectores.set(res.data),
     });
 
@@ -279,28 +490,28 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
           return roleName.includes('operador') || roleName.includes('operario');
         });
         this.operarios.set(filtered);
+        if (filtered.length > 0 && !this.selectedOperarioId()) {
+          this.selectedOperarioId.set(filtered[0].usuarioId);
+        }
       },
     });
   }
 
-  loadContractsForComunidad(comunidadId: number): void {
-    this.isLoadingContracts.set(true);
-    this.contractsService
-      .getContracts({
-        limit: 200,
+  loadPeriodRoutes(periodoId: number): void {
+    this.isLoadingRoutes.set(true);
+    this.routesService
+      .getRoutes({
+        periodoId,
+        limit: 1000,
       })
       .subscribe({
         next: (res) => {
-          const filtered = res.data.filter(
-            (c) =>
-              c.comunidad?.comunidadId === comunidadId ||
-              (c as unknown as { comunidadId?: number }).comunidadId === comunidadId,
-          );
-          this.contratos.set(filtered);
-          this.isLoadingContracts.set(false);
+          this.periodExistingRoutes.set(res.data || []);
+          this.isLoadingRoutes.set(false);
         },
         error: () => {
-          this.isLoadingContracts.set(false);
+          this.periodExistingRoutes.set([]);
+          this.isLoadingRoutes.set(false);
         },
       });
   }
@@ -308,155 +519,217 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   onPeriodSelected(period: IAccountingPeriod | null): void {
     this.selectedPeriod.set(period);
     this.selectedPeriodId.set(period ? period.periodoId : null);
+    this.sessionSectorAssignments.set(new Map());
+    if (period?.periodoId) {
+      this.loadPeriodRoutes(period.periodoId);
+    } else {
+      this.periodExistingRoutes.set([]);
+    }
   }
 
   selectOperario(operarioId: number): void {
     this.selectedOperarioId.set(operarioId);
   }
 
-  onComunidadChange(comunidadId: number | null): void {
-    this.selectedComunidadId.set(comunidadId);
-    this.selectedSectorIds.set([]);
-    this.selectedContratoIds.set([]);
-    this.isAllCommunitySelected.set(false);
-    if (comunidadId) {
-      this.loadContractsForComunidad(comunidadId);
-    } else {
-      this.contratos.set([]);
-    }
-  }
+  // Toggle sector selection for currently active operator
+  toggleSector(sector: Sectores): void {
+    if (!sector.sectorId) return;
 
-  toggleAllCommunity(): void {
-    const current = this.isAllCommunitySelected();
-    this.isAllCommunitySelected.set(!current);
-    if (!current) {
-      this.selectedSectorIds.set([]);
-    }
-  }
-
-  isSectorSelected(sectorId: number): boolean {
-    return this.selectedSectorIds().includes(sectorId);
-  }
-
-  toggleSector(sectorId: number): void {
-    if (this.isAllCommunitySelected()) {
-      this.isAllCommunitySelected.set(false);
-    }
-    const list = [...this.selectedSectorIds()];
-    const index = list.indexOf(sectorId);
-    if (index > -1) {
-      list.splice(index, 1);
-    } else {
-      list.push(sectorId);
-    }
-    this.selectedSectorIds.set(list);
-  }
-
-  isContratoSelected(contratoId: number | string): boolean {
-    return this.selectedContratoIds().includes(Number(contratoId));
-  }
-
-  toggleContrato(contratoId: number | string): void {
-    const idNum = Number(contratoId);
-    const list = [...this.selectedContratoIds()];
-    const index = list.indexOf(idNum);
-    if (index > -1) {
-      list.splice(index, 1);
-    } else {
-      list.push(idNum);
-    }
-    this.selectedContratoIds.set(list);
-  }
-
-  toggleAllFilteredContratos(): void {
-    const filtered = this.filteredContratos();
-    const current = this.selectedContratoIds();
-    const allSelected =
-      filtered.length > 0 && filtered.every((c) => current.includes(Number(c.contratoId)));
-
-    if (allSelected) {
-      const filteredIds = new Set(filtered.map((c) => Number(c.contratoId)));
-      this.selectedContratoIds.set(current.filter((id) => !filteredIds.has(id)));
-    } else {
-      const combined = new Set([...current, ...filtered.map((c) => Number(c.contratoId))]);
-      this.selectedContratoIds.set(Array.from(combined));
-    }
-  }
-
-  getOperarioName(): string {
     const opId = this.selectedOperarioId();
-    if (!opId) return 'Sin seleccionar';
-    const op = this.operarios().find((u) => u.usuarioId === opId);
-    return op ? `${op.nombres} ${op.apellidos}` : `Operario #${opId}`;
+    if (!opId) {
+      this.toastService.show(
+        'Por favor, seleccioná un operario en la Tabla 1 para asignarle sectores.',
+        'warning',
+      );
+      return;
+    }
+
+    const currentMap = new Map(this.sessionSectorAssignments());
+    const status = this.getSectorStatus(sector.sectorId);
+
+    // If already in database, block
+    if (status.isDbAssigned) {
+      this.toastService.show(
+        `Este sector ya tiene una ruta creada en el mes para ${status.operarioName}.`,
+        'warning',
+      );
+      return;
+    }
+
+    // If assigned to current operator in session => deselect
+    if (status.operarioId === opId) {
+      currentMap.delete(sector.sectorId);
+      this.sessionSectorAssignments.set(currentMap);
+      return;
+    }
+
+    // If assigned to another operator in session => dynamic exclusion block with friendly notice
+    if (status.operarioId && status.operarioId !== opId) {
+      this.toastService.show(
+        `El sector ${sector.nombre ?? sector.sectorId} ya está asignado a ${status.operarioName} en esta sesión.`,
+        'warning',
+      );
+      return;
+    }
+
+    // Available => assign to current operator
+    currentMap.set(sector.sectorId, opId);
+    this.sessionSectorAssignments.set(currentMap);
   }
 
-  getComunidadName(): string {
-    const comId = this.selectedComunidadId();
-    if (!comId) return 'Sin seleccionar';
-    const com = this.comunidades().find((c) => c.id === comId);
-    return com ? com.nombre : `Comunidad #${comId}`;
+  // Assign or toggle all available sectors in a community to current operator
+  toggleAllSectorsInCommunity(comunidadId: number): void {
+    const opId = this.selectedOperarioId();
+    if (!opId) {
+      this.toastService.show(
+        'Por favor, seleccioná un operario en la Tabla 1 primero.',
+        'warning',
+      );
+      return;
+    }
+
+    const communitySectors = this.getSectoresForComunidad(comunidadId);
+    if (communitySectors.length === 0) return;
+
+    const currentMap = new Map(this.sessionSectorAssignments());
+    const availableSectors = communitySectors.filter((s) => {
+      if (!s.sectorId) return false;
+      const status = this.getSectorStatus(s.sectorId);
+      return !status.isDbAssigned && (!status.operarioId || status.operarioId === opId);
+    });
+
+    const allAssignedToMe =
+      availableSectors.length > 0 &&
+      availableSectors.every((s) => currentMap.get(s.sectorId!) === opId);
+
+    if (allAssignedToMe) {
+      // Unassign all my sectors in this community
+      for (const s of availableSectors) {
+        if (s.sectorId) currentMap.delete(s.sectorId);
+      }
+    } else {
+      // Assign all available sectors to me
+      for (const s of availableSectors) {
+        if (s.sectorId) currentMap.set(s.sectorId, opId);
+      }
+    }
+
+    this.sessionSectorAssignments.set(currentMap);
   }
 
-  getSelectedSectorsList(): Sectores[] {
-    const ids = this.selectedSectorIds();
-    return this.sectores().filter((s) => s.sectorId != null && ids.includes(s.sectorId));
+  removeOperatorSector(sectorId: number): void {
+    const currentMap = new Map(this.sessionSectorAssignments());
+    currentMap.delete(sectorId);
+    this.sessionSectorAssignments.set(currentMap);
   }
 
-  confirmAndSave(): void {
-    if (!this.isFormValid() || this.isLoading()) return;
+  clearOperatorSessionAssignments(operarioId: number): void {
+    const currentMap = new Map(this.sessionSectorAssignments());
+    currentMap.forEach((opId, sectorId) => {
+      if (opId === operarioId) {
+        currentMap.delete(sectorId);
+      }
+    });
+    this.sessionSectorAssignments.set(currentMap);
+  }
 
-    const tipo = this.tipoActividadSeleccionada();
-    const coverageDescription = this.isLecturaActivity(tipo)
-      ? this.isAllCommunitySelected()
-        ? 'toda la comunidad'
-        : `${this.selectedSectorIds().length} sector(es)`
-      : `${this.selectedContratoIds().length} contrato(s)`;
+  // Navigation between Step 1 (2 Tables) and Step 2 (Full Width Summary)
+  goToSummary(): void {
+    if (this.totalSessionAssignedSectorsCount() === 0) {
+      this.toastService.show(
+        'No has asignado ningún sector en esta sesión todavía.',
+        'warning',
+      );
+      return;
+    }
+    this.currentStep.set(2);
+  }
 
+  backToAssignment(): void {
+    this.currentStep.set(1);
+  }
+
+  // Execution: Dispatch routes for all assigned operators
+  confirmAndDispatchAll(): void {
+    const period = this.selectedPeriod();
+    if (!period || period.estado !== 'ABIERTO') {
+      this.toastService.show('El período operativo debe estar abierto.', 'error');
+      return;
+    }
+
+    const assignedOperators = this.assignedOperatorsInSession();
+    if (assignedOperators.length === 0) {
+      this.toastService.show('No hay asignaciones para despachar.', 'warning');
+      return;
+    }
+
+    const totalSectors = this.totalSessionAssignedSectorsCount();
     this.dialogService
       .confirm({
-        title: 'Confirmar Asignación de Rutas',
-        message: `¿Estás seguro de asignar ${coverageDescription} a ${this.getOperarioName()} para el período ${this.selectedPeriod()?.nombre}?`,
-        confirmText: 'Sí, Asignar',
+        title: 'Confirmar y Despachar Rutas',
+        message: `¿Estás seguro de confirmar y generar las rutas de trabajo para ${assignedOperators.length} operario(s) con un total de ${totalSectors} sector(es) para el período ${period.nombre}?`,
+        confirmText: 'Sí, Despachar Rutas',
         cancelText: 'Revisar',
       })
       .subscribe((confirmed) => {
         if (confirmed) {
-          this.executeAssignment();
+          this.executeBatchAssignments();
         }
       });
   }
 
-  executeAssignment(): void {
+  executeBatchAssignments(): void {
     this.isLoading.set(true);
-
-    // Si fechaPlanificada viene como 'YYYY-MM', normalizar a 'YYYY-MM-01' para compatibilidad con Date ISO en backend
+    const periodId = this.selectedPeriodId()!;
     let fechaToSend = this.fechaPlanificada() || undefined;
     if (fechaToSend && /^\d{4}-\d{2}$/.test(fechaToSend)) {
       fechaToSend = `${fechaToSend}-01`;
     }
 
-    const tipo = this.tipoActividadSeleccionada();
-    const isLectura = this.isLecturaActivity(tipo);
-    const dto: ICreateRouteAssignmentsDto = {
-      periodoId: this.selectedPeriodId()!,
-      operarioId: this.selectedOperarioId()!,
-      comunidadId: this.selectedComunidadId()!,
-      tipoRuta: tipo ?? undefined,
-      sectorIds: isLectura
-        ? this.isAllCommunitySelected()
-          ? undefined
-          : this.selectedSectorIds()
-        : undefined,
-      contratoIds: !isLectura ? this.selectedContratoIds() : undefined,
-      fechaPlanificada: fechaToSend,
-      nombreBase: this.nombreBase().trim() || undefined,
-    };
+    // Group session assignments by operarioId and then by comunidadId
+    const operatorCommunityMap = new Map<number, Map<number, number[]>>();
+    this.sessionSectorAssignments().forEach((opId, sectorId) => {
+      const sector = this.sectores().find((s) => s.sectorId === sectorId);
+      if (!sector) return;
+      const comId = sector.comunidadId;
 
-    this.routesService.createAssignments(dto).subscribe({
-      next: (routes) => {
+      if (!operatorCommunityMap.has(opId)) {
+        operatorCommunityMap.set(opId, new Map());
+      }
+      const comMap = operatorCommunityMap.get(opId)!;
+      const secList = comMap.get(comId) || [];
+      secList.push(sectorId);
+      comMap.set(comId, secList);
+    });
+
+    const requests: ICreateRouteAssignmentsDto[] = [];
+    operatorCommunityMap.forEach((comMap, opId) => {
+      comMap.forEach((sectorIds, comunidadId) => {
+        requests.push({
+          periodoId: periodId,
+          operarioId: opId,
+          comunidadId,
+          tipoRuta: (this.tipoActividadSeleccionada() as TipoRuta) || 'LECTURA',
+          sectorIds,
+          fechaPlanificada: fechaToSend,
+          nombreBase: this.nombreBase().trim() || undefined,
+        });
+      });
+    });
+
+    if (requests.length === 0) {
+      this.isLoading.set(false);
+      return;
+    }
+
+    // Dispatch all requests via forkJoin
+    const observables = requests.map((dto) => this.routesService.createAssignments(dto));
+    forkJoin(observables).subscribe({
+      next: (results) => {
         this.isLoading.set(false);
+        const totalCreated = results.reduce((acc, curr) => acc + curr.length, 0);
         this.toastService.show(
-          `Se generaron exitosamente ${routes.length} ruta(s) de trabajo.`,
+          `¡Rutas despachadas con éxito! Se generaron ${totalCreated} ruta(s) de lectura.`,
           'success',
         );
         this.router.navigate(['/app/Contratos/RutasDeLectura']);
@@ -464,14 +737,25 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       error: (err) => {
         this.isLoading.set(false);
         this.toastService.show(
-          err.error?.message || 'Error al procesar la asignación de rutas',
+          err.error?.message || 'Ocurrió un error al despachar las rutas.',
           'error',
         );
       },
     });
   }
 
+  getOperarioName(operarioId: number): string {
+    const op = this.operarios().find((u) => u.usuarioId === operarioId);
+    return op ? `${op.nombres} ${op.apellidos}` : `Operario #${operarioId}`;
+  }
+
+  getComunidadName(comunidadId: number): string {
+    const com = this.comunidades().find((c) => c.id === comunidadId);
+    return com ? com.nombre : `Comunidad #${comunidadId}`;
+  }
+
   goBack(): void {
     this.router.navigate(['/app/Contratos/RutasDeLectura']);
   }
 }
+
