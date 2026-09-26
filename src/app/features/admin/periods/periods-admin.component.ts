@@ -236,13 +236,20 @@ export class PeriodsAdminComponent implements OnInit {
   }
 
   savePeriod(): void {
-    if (!this.periodForm.nombre.trim() || !this.periodForm.fechaInicio || !this.periodForm.fechaFin) {
+    if (
+      !this.periodForm.nombre.trim() ||
+      !this.periodForm.fechaInicio ||
+      !this.periodForm.fechaFin
+    ) {
       this.toastService.show('Por favor, completa todos los campos requeridos.', 'warning');
       return;
     }
 
     if (new Date(this.periodForm.fechaInicio) > new Date(this.periodForm.fechaFin)) {
-      this.toastService.show('La fecha de inicio no puede ser posterior a la fecha de fin.', 'warning');
+      this.toastService.show(
+        'La fecha de inicio no puede ser posterior a la fecha de fin.',
+        'warning',
+      );
       return;
     }
 
@@ -357,21 +364,22 @@ export class PeriodsAdminComponent implements OnInit {
       .subscribe((confirmed) => {
         if (confirmed) {
           this.isLoading.set(true);
-          this.periodsService
-            .updatePeriod(period.periodoId, { estado: nextStatus })
-            .subscribe({
-              next: () => {
-                this.toastService.show(`Período ${period.nombre} ahora está ${nextStatus}.`, 'success');
-                this.loadPeriods();
-              },
-              error: (err) => {
-                this.isLoading.set(false);
-                this.toastService.show(
-                  this.extractErrorMessage(err, 'Error al cambiar estado'),
-                  'error',
-                );
-              },
-            });
+          this.periodsService.updatePeriod(period.periodoId, { estado: nextStatus }).subscribe({
+            next: () => {
+              this.toastService.show(
+                `Período ${period.nombre} ahora está ${nextStatus}.`,
+                'success',
+              );
+              this.loadPeriods();
+            },
+            error: (err) => {
+              this.isLoading.set(false);
+              this.toastService.show(
+                this.extractErrorMessage(err, 'Error al cambiar estado'),
+                'error',
+              );
+            },
+          });
         }
       });
   }

@@ -9,7 +9,8 @@
         <div>
           <h4 class="fw-bold text-dark mb-0 fs-5">Administración de Períodos Contables</h4>
           <p class="text-muted small mb-0">
-            Gestión de meses operativos, fechas de inicio, corte, vencimiento y generador del ejercicio anual.
+            Gestión de meses operativos, fechas de inicio, corte, vencimiento y generador del
+            ejercicio anual.
           </p>
         </div>
       </div>
@@ -87,8 +88,10 @@
   <!-- Filters and Periods Table -->
   <div class="card border-0 shadow-sm rounded-4 p-4 bg-white d-flex flex-column gap-3">
     <!-- Filter Bar -->
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 pb-3 border-bottom">
-      <div class="d-flex align-items-center gap-3 flex-wrap" style="min-width: 320px;">
+    <div
+      class="d-flex align-items-center justify-content-between flex-wrap gap-3 pb-3 border-bottom"
+    >
+      <div class="d-flex align-items-center gap-3 flex-wrap" style="min-width: 320px">
         <app-picker-input
           inputId="periodsSearchInput"
           placeholder="Buscar período por nombre (ej. 2026)..."
@@ -155,7 +158,11 @@
       <app-empty-state
         icon="bi bi-calendar-x"
         title="Sin períodos encontrados"
-        [description]="searchQuery() ? 'No hay períodos que coincidan con la búsqueda actual.' : 'No se encontraron períodos registrados.'"
+        [description]="
+          searchQuery()
+            ? 'No hay períodos que coincidan con la búsqueda actual.'
+            : 'No se encontraron períodos registrados.'
+        "
         [actionLabel]="searchQuery() ? 'Limpiar filtro' : 'Nuevo Período'"
         actionIcon="bi bi-arrow-counterclockwise"
         (actionClicked)="searchQuery() ? searchQuery.set('') : openCreateModal()"
@@ -170,7 +177,7 @@
               <th>Fecha Fin / Corte</th>
               <th>Fecha Vencimiento</th>
               <th>Estado</th>
-              <th class="text-center pe-3" style="width: 70px;">Acciones</th>
+              <th class="text-center pe-3" style="width: 70px">Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -184,9 +191,9 @@
                       [ngClass]="{
                         'bg-success-subtle text-success': period.estado === 'ABIERTO',
                         'bg-info-subtle text-info': period.estado === 'PROCESANDO',
-                        'bg-secondary-subtle text-secondary': period.estado === 'CERRADO'
+                        'bg-secondary-subtle text-secondary': period.estado === 'CERRADO',
                       }"
-                      style="width: 32px; height: 32px;"
+                      style="width: 32px; height: 32px"
                     >
                       <i class="bi bi-calendar2-check"></i>
                     </div>
@@ -197,21 +204,21 @@
                 <!-- Fecha Inicio -->
                 <td>
                   <span class="small font-monospace text-dark">
-                    {{ period.fechaInicio | date:'dd/MM/yyyy':'UTC' }}
+                    {{ period.fechaInicio | date: 'dd/MM/yyyy' : 'UTC' }}
                   </span>
                 </td>
 
                 <!-- Fecha Fin -->
                 <td>
                   <span class="small font-monospace text-dark">
-                    {{ period.fechaFin | date:'dd/MM/yyyy':'UTC' }}
+                    {{ period.fechaFin | date: 'dd/MM/yyyy' : 'UTC' }}
                   </span>
                 </td>
 
                 <!-- Fecha Vencimiento -->
                 <td>
                   <span class="small font-monospace text-danger-emphasis fw-semibold">
-                    {{ period.fechaVencimiento | date:'dd/MM/yyyy':'UTC' }}
+                    {{ period.fechaVencimiento | date: 'dd/MM/yyyy' : 'UTC' }}
                   </span>
                 </td>
 
@@ -246,7 +253,10 @@
                             class="dropdown-item d-flex align-items-center gap-2"
                             (click)="togglePeriodStatus(period)"
                           >
-                            <i class="bi bi-lock-fill text-secondary" style="font-size: 0.85rem"></i>
+                            <i
+                              class="bi bi-lock-fill text-secondary"
+                              style="font-size: 0.85rem"
+                            ></i>
                             Cerrar Período
                           </button>
                         } @else {
@@ -255,7 +265,10 @@
                             class="dropdown-item d-flex align-items-center gap-2"
                             (click)="togglePeriodStatus(period)"
                           >
-                            <i class="bi bi-unlock-fill text-success" style="font-size: 0.85rem"></i>
+                            <i
+                              class="bi bi-unlock-fill text-success"
+                              style="font-size: 0.85rem"
+                            ></i>
                             Abrir Período
                           </button>
                         }
@@ -299,7 +312,11 @@
 <!-- MODAL: CREAR / EDITAR PERÍODO INDIVIDUAL                                  -->
 <!-- ========================================================================= -->
 @if (showEditModal()) {
-  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.45); z-index: 1050;">
+  <div
+    class="modal fade show d-block"
+    tabindex="-1"
+    style="background: rgba(0, 0, 0, 0.45); z-index: 1050"
+  >
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content rounded-4 border-0 shadow-lg">
         <div class="modal-header border-bottom pb-3">
@@ -307,7 +324,14 @@
             <i class="bi bi-calendar-event me-2 text-primary"></i>
             {{ isEditing() ? 'Editar Período Contable' : 'Nuevo Período Contable' }}
           </h5>
-          <button type="button" class="btn-close shadow-none" (click)="closeEditModal()"></button>
+          <button
+            type="button"
+            class="btn-close shadow-none"
+            (click)="closeEditModal()"
+            aria-label="Cerrar"
+          >
+            <span class="visually-hidden">Cerrar</span>
+          </button>
         </div>
 
         <div class="modal-body d-flex flex-column gap-3 py-4">
@@ -369,7 +393,11 @@
             <label for="periodStateSelect" class="form-label small fw-semibold text-dark mb-1">
               Estado del Período
             </label>
-            <select id="periodStateSelect" class="form-select shadow-none" [(ngModel)]="periodForm.estado">
+            <select
+              id="periodStateSelect"
+              class="form-select shadow-none"
+              [(ngModel)]="periodForm.estado"
+            >
               <option value="ABIERTO">ABIERTO (En operaciones y lecturas)</option>
               <option value="PROCESANDO">PROCESANDO (En proceso de facturación)</option>
               <option value="CERRADO">CERRADO (Lecturas y emisión finalizadas)</option>
@@ -378,7 +406,11 @@
         </div>
 
         <div class="modal-footer border-top pt-3">
-          <button type="button" class="btn btn-outline-secondary px-3 py-2 rounded-3" (click)="closeEditModal()">
+          <button
+            type="button"
+            class="btn btn-outline-secondary px-3 py-2 rounded-3"
+            (click)="closeEditModal()"
+          >
             Cancelar
           </button>
           <button
@@ -399,12 +431,18 @@
 <!-- MODAL: ASISTENTE DE GENERACIÓN DE EJERCICIO ANUAL                         -->
 <!-- ========================================================================= -->
 @if (showAnnualModal()) {
-  <div class="modal fade show d-block" tabindex="-1" style="background: rgba(0, 0, 0, 0.45); z-index: 1050;">
+  <div
+    class="modal fade show d-block"
+    tabindex="-1"
+    style="background: rgba(0, 0, 0, 0.45); z-index: 1050"
+  >
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content rounded-4 border-0 shadow-lg">
         <div class="modal-header border-bottom pb-3">
           <div class="d-flex align-items-center gap-2">
-            <div class="rounded-circle bg-primary-subtle text-primary p-2 d-flex align-items-center justify-content-center">
+            <div
+              class="rounded-circle bg-primary-subtle text-primary p-2 d-flex align-items-center justify-content-center"
+            >
               <i class="bi bi-magic fs-5"></i>
             </div>
             <div>
@@ -412,15 +450,23 @@
               <span class="text-muted small">Crea automáticamente los 12 meses del año</span>
             </div>
           </div>
-          <button type="button" class="btn-close shadow-none" (click)="closeAnnualModal()"></button>
+          <button
+            type="button"
+            class="btn-close shadow-none"
+            (click)="closeAnnualModal()"
+            aria-label="Cerrar"
+          >
+            <span class="visually-hidden">Cerrar</span>
+          </button>
         </div>
 
         <div class="modal-body d-flex flex-column gap-3 py-4">
           <div class="alert alert-primary d-flex align-items-center gap-3 rounded-3 mb-1">
             <i class="bi bi-info-circle-fill fs-4 text-primary"></i>
             <div class="small">
-              Este asistente generará <strong>12 períodos mensuales</strong> (Enero a Diciembre) para el año seleccionado,
-              con fechas de corte a fin de mes y fecha de vencimiento estándar.
+              Este asistente generará <strong>12 períodos mensuales</strong> (Enero a Diciembre)
+              para el año seleccionado, con fechas de corte a fin de mes y fecha de vencimiento
+              estándar.
             </div>
           </div>
 
@@ -454,17 +500,24 @@
               max="28"
               [(ngModel)]="annualForm.diaVencimiento"
             />
-            <span class="text-muted" style="font-size: 0.72rem;">
+            <span class="text-muted" style="font-size: 0.72rem">
               Ejemplo: Día 15 -> El período de Enero vencerá el 15 de Febrero.
             </span>
           </div>
 
           <!-- Estado Inicial -->
           <div>
-            <label for="annualInitialStateSelect" class="form-label small fw-semibold text-dark mb-1">
+            <label
+              for="annualInitialStateSelect"
+              class="form-label small fw-semibold text-dark mb-1"
+            >
               Estado Inicial de los 12 Períodos
             </label>
-            <select id="annualInitialStateSelect" class="form-select shadow-none" [(ngModel)]="annualForm.estadoInicial">
+            <select
+              id="annualInitialStateSelect"
+              class="form-select shadow-none"
+              [(ngModel)]="annualForm.estadoInicial"
+            >
               <option value="CERRADO">CERRADO (Recomendado - se abren mes a mes)</option>
               <option value="ABIERTO">ABIERTO (Todos activos inmediatamente)</option>
               <option value="PROCESANDO">PROCESANDO (En proceso)</option>
@@ -473,7 +526,11 @@
         </div>
 
         <div class="modal-footer border-top pt-3">
-          <button type="button" class="btn btn-outline-secondary px-3 py-2 rounded-3" (click)="closeAnnualModal()">
+          <button
+            type="button"
+            class="btn btn-outline-secondary px-3 py-2 rounded-3"
+            (click)="closeAnnualModal()"
+          >
             Cancelar
           </button>
           <button
@@ -483,7 +540,11 @@
             [disabled]="isGeneratingAnnual()"
           >
             @if (isGeneratingAnnual()) {
-              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span
+                class="spinner-border spinner-border-sm"
+                role="status"
+                aria-hidden="true"
+              ></span>
               <span>Generando 12 Meses...</span>
             } @else {
               <i class="bi bi-calendar-plus-fill"></i>

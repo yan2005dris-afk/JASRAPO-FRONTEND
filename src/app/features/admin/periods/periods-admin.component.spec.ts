@@ -1,5 +1,5 @@
 import { signal, computed } from '@angular/core';
-import { of, throwError } from 'rxjs';
+import { of } from 'rxjs';
 import { PeriodsAdminComponent } from './periods-admin.component';
 import { IPeriod } from '../../../shared/services/periods.service';
 
@@ -44,9 +44,7 @@ describe('PeriodsAdminComponent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
 
-    component = Object.create(
-      PeriodsAdminComponent.prototype,
-    ) as PeriodsAdminComponent;
+    component = Object.create(PeriodsAdminComponent.prototype) as PeriodsAdminComponent;
 
     const periods = signal<IPeriod[]>(samplePeriods);
     const searchQuery = signal<string>('');
