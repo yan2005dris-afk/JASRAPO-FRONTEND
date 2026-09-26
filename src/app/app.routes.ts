@@ -197,6 +197,14 @@ export const routes: Routes = [
             ],
           },
           {
+            path: 'periods',
+            data: { breadcrumb: 'Períodos' },
+            loadComponent: () =>
+              import('./features/admin/periods/periods-admin.component').then(
+                (m) => m.PeriodsAdminComponent,
+              ),
+          },
+          {
             path: 'config',
             data: { breadcrumb: 'Configuración' },
             loadComponent: () =>
