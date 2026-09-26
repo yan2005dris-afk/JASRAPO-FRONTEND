@@ -487,7 +487,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       next: (res) => this.tiposActividad.set(res),
     });
 
-    this.comunidadesService.getAllComunidades(1, 200).subscribe({
+    this.comunidadesService.getAllComunidades(1, 100).subscribe({
       next: (res) => this.comunidades.set(res.data),
     });
 
