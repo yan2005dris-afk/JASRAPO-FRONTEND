@@ -185,21 +185,21 @@
                 <!-- Fecha Inicio -->
                 <td>
                   <span class="small font-monospace text-dark">
-                    {{ period.fechaInicio | date:'dd/MM/yyyy' }}
+                    {{ period.fechaInicio | date:'dd/MM/yyyy':'UTC' }}
                   </span>
                 </td>
 
                 <!-- Fecha Fin -->
                 <td>
                   <span class="small font-monospace text-dark">
-                    {{ period.fechaFin | date:'dd/MM/yyyy' }}
+                    {{ period.fechaFin | date:'dd/MM/yyyy':'UTC' }}
                   </span>
                 </td>
 
                 <!-- Fecha Vencimiento -->
                 <td>
                   <span class="small font-monospace text-danger-emphasis fw-semibold">
-                    {{ period.fechaVencimiento | date:'dd/MM/yyyy' }}
+                    {{ period.fechaVencimiento | date:'dd/MM/yyyy':'UTC' }}
                   </span>
                 </td>
 
