@@ -231,7 +231,7 @@ describe('PeriodsAdminComponent', () => {
       estadoInicial: 'CERRADO',
     });
     expect(mockToastService.show).toHaveBeenCalledWith(
-      expect.stringContaining('generado con éxito'),
+      expect.stringContaining('Se generaron 2 períodos nuevos'),
       'success',
     );
   });

@@ -397,6 +397,19 @@ export class PeriodsAdminComponent implements OnInit {
       return;
     }
 
+    const existingInYear = this.periods().filter((p) => {
+      const pYear = new Date(p.fechaInicio).getUTCFullYear();
+      return pYear === this.annualForm.year;
+    });
+
+    if (existingInYear.length >= 12) {
+      this.toastService.show(
+        `El año ${this.annualForm.year} ya cuenta con sus 12 períodos registrados en el sistema.`,
+        'warning',
+      );
+      return;
+    }
+
     this.isGeneratingAnnual.set(true);
     const dto: IGenerateAnnualPeriodsDto = {
       year: this.annualForm.year,
@@ -407,10 +420,22 @@ export class PeriodsAdminComponent implements OnInit {
     this.periodsService.generateAnnualPeriods(dto).subscribe({
       next: (created) => {
         this.isGeneratingAnnual.set(false);
-        this.toastService.show(
-          `¡Ejercicio anual generado con éxito! ${created.length} períodos listos para el año ${dto.year}.`,
-          'success',
-        );
+        if (created.length === 12) {
+          this.toastService.show(
+            `¡Ejercicio anual generado con éxito! Se crearon los 12 períodos para el año ${dto.year}.`,
+            'success',
+          );
+        } else if (created.length > 0) {
+          this.toastService.show(
+            `Se generaron ${created.length} períodos nuevos para el año ${dto.year} (los demás ya existían).`,
+            'success',
+          );
+        } else {
+          this.toastService.show(
+            `No se generaron períodos nuevos porque ya estaban registrados para el año ${dto.year}.`,
+            'info',
+          );
+        }
         this.closeAnnualModal();
         this.loadPeriods();
       },
@@ -418,7 +443,7 @@ export class PeriodsAdminComponent implements OnInit {
         this.isGeneratingAnnual.set(false);
         this.toastService.show(
           this.extractErrorMessage(err, 'Error al generar el ejercicio anual'),
-          'error',
+          'warning',
         );
       },
     });
