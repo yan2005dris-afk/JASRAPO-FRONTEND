@@ -12,8 +12,6 @@ describe('WorkOrderDispatcherComponent', () => {
     contratoId: 'CONT-1',
     clienteNombre: 'Carlos Gomez',
     fechaInstalacion: '2026-01-01',
-    latitud: null,
-    longitud: null,
   };
 
   beforeEach(() => {
