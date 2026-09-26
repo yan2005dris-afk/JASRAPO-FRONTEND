@@ -163,6 +163,51 @@ describe('CoordinateMapPickerComponent', () => {
     expect(fixture.nativeElement.querySelector('button.btn-outline-primary')).toBeNull();
   });
 
+  it('commits the typed value on Enter without submitting the parent form', async () => {
+    const fixture = TestBed.createComponent(CoordinateMapPickerComponent);
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r, 10));
+
+    const emitted: ICoordinates[] = [];
+    fixture.componentInstance.coordinatesChange.subscribe((value) => emitted.push(value));
+
+    const lngInput = fixture.nativeElement.querySelector(
+      '#coordenadas-longitud',
+    ) as HTMLInputElement;
+    lngInput.value = '-80.75';
+    const enter = new KeyboardEvent('keydown', { key: 'Enter', cancelable: true });
+    lngInput.dispatchEvent(enter);
+
+    expect(enter.defaultPrevented).toBe(true);
+    expect(emitted).toEqual([{ latitud: null, longitud: -80.75 }]);
+  });
+
+  it.each([
+    [1, 'Permiso de ubicación denegado en el navegador.'],
+    [
+      2,
+      'Ubicación no disponible. Verifique que los servicios de ubicación del sistema estén activados.',
+    ],
+    [3, 'Se agotó el tiempo para obtener la ubicación. Intente nuevamente.'],
+    [99, 'No se pudo obtener su ubicación.'],
+  ])('shows a specific message for geolocation error code %i', async (code, message) => {
+    vi.stubGlobal('navigator', {
+      ...navigator,
+      geolocation: {
+        getCurrentPosition: (_success: PositionCallback, error: PositionErrorCallback) =>
+          error({ code, message: 'error' } as GeolocationPositionError),
+      },
+    });
+
+    const fixture = TestBed.createComponent(CoordinateMapPickerComponent);
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r, 10));
+
+    fixture.componentInstance.useCurrentLocation();
+
+    expect(fixture.componentInstance.geolocationError()).toBe(message);
+  });
+
   it('surfaces a non-blocking error and does not change coordinates when geolocation fails', async () => {
     const getCurrentPositionSpy = vi.fn(
       (_success: PositionCallback, error: PositionErrorCallback) => {
@@ -186,7 +231,9 @@ describe('CoordinateMapPickerComponent', () => {
     fixture.detectChanges();
 
     expect(emitted).toEqual([]);
-    expect(fixture.componentInstance.geolocationError()).toBe('No se pudo obtener su ubicación.');
+    expect(fixture.componentInstance.geolocationError()).toBe(
+      'Permiso de ubicación denegado en el navegador.',
+    );
   });
 
   it('shows a degraded banner when offline and keeps the manual inputs usable', async () => {

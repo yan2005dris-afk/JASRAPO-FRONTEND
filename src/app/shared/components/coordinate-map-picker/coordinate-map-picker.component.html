@@ -26,6 +26,7 @@
         class="form-control"
         [value]="latitud() ?? ''"
         (change)="onLatitudChange($event)"
+        (keydown.enter)="onLatitudEnter($event)"
       />
     </div>
     <div class="col-sm-6">
@@ -39,6 +40,7 @@
         class="form-control"
         [value]="longitud() ?? ''"
         (change)="onLongitudChange($event)"
+        (keydown.enter)="onLongitudEnter($event)"
       />
     </div>
   </div>

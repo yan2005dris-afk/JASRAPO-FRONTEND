@@ -28,6 +28,13 @@ const ZOOM_WITH_PIN = 17;
 const ZOOM_WITHOUT_PIN = 15;
 const MAX_TILE_ERRORS = 5;
 
+const GEOLOCATION_ERROR_MESSAGES: Record<number, string> = {
+  1: 'Permiso de ubicación denegado en el navegador.',
+  2: 'Ubicación no disponible. Verifique que los servicios de ubicación del sistema estén activados.',
+  3: 'Se agotó el tiempo para obtener la ubicación. Intente nuevamente.',
+};
+const GEOLOCATION_FALLBACK_MESSAGE = 'No se pudo obtener su ubicación.';
+
 function isValidPair(latitud: number | null, longitud: number | null): boolean {
   return (
     latitud !== null &&
@@ -68,6 +75,7 @@ export class CoordinateMapPickerComponent implements OnInit, OnDestroy {
   private tileLayer?: L.TileLayer;
   private marker?: L.Marker;
   private initTimeoutId?: ReturnType<typeof setTimeout>;
+  private resizeObserver?: ResizeObserver;
   private isDestroyed = false;
   private consecutiveTileErrors = 0;
 
@@ -135,6 +143,11 @@ export class CoordinateMapPickerComponent implements OnInit, OnDestroy {
 
     this.map = L.map(container).setView(center, hasPin ? ZOOM_WITH_PIN : ZOOM_WITHOUT_PIN);
     this.map.invalidateSize();
+
+    if (typeof ResizeObserver !== 'undefined') {
+      this.resizeObserver = new ResizeObserver(() => this.map?.invalidateSize());
+      this.resizeObserver.observe(container);
+    }
 
     if (this.networkService.isOnline()) {
       this.ensureTileLayer();
@@ -240,6 +253,16 @@ export class CoordinateMapPickerComponent implements OnInit, OnDestroy {
     });
   }
 
+  onLatitudEnter(event: Event): void {
+    event.preventDefault();
+    this.onLatitudChange(event);
+  }
+
+  onLongitudEnter(event: Event): void {
+    event.preventDefault();
+    this.onLongitudChange(event);
+  }
+
   useCurrentLocation(): void {
     if (!this.canGeolocate || this.isLocating()) return;
 
@@ -251,15 +274,19 @@ export class CoordinateMapPickerComponent implements OnInit, OnDestroy {
         this.isLocating.set(false);
         this.selectPoint(position.coords.latitude, position.coords.longitude);
       },
-      () => {
+      (error) => {
         this.isLocating.set(false);
-        this.geolocationError.set('No se pudo obtener su ubicación.');
+        this.geolocationError.set(
+          GEOLOCATION_ERROR_MESSAGES[error.code] ?? GEOLOCATION_FALLBACK_MESSAGE,
+        );
       },
-      { enableHighAccuracy: true, timeout: 10000 },
+      { enableHighAccuracy: false, timeout: 20000, maximumAge: 300000 },
     );
   }
 
   private destroyMap(): void {
+    this.resizeObserver?.disconnect();
+    this.resizeObserver = undefined;
     this.marker = undefined;
     this.tileLayer = undefined;
     if (this.map) {
