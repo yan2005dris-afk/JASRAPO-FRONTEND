@@ -45,104 +45,99 @@ export interface OperatorColor {
 
 export const OPERATOR_PALETTE: OperatorColor[] = [
   {
-    id: 'blue',
-    name: 'Azul',
+    id: 'teal',
+    name: 'Teal Corporativo',
     badgeClass: 'text-bg-primary',
     bgClass: 'bg-primary-subtle',
     textClass: 'text-primary',
     borderClass: 'border-primary',
-    hex: '#0d6efd',
-    lightBg: '#e7f1ff',
-    contrastText: '#0a58ca',
+    hex: '#087a7d',
+    lightBg: '#f0fdfa',
+    contrastText: '#065e60',
+  },
+  {
+    id: 'marine',
+    name: 'Slate Marino',
+    badgeClass: 'text-bg-secondary',
+    bgClass: 'bg-secondary-subtle',
+    textClass: 'text-secondary',
+    borderClass: 'border-secondary',
+    hex: '#0f2938',
+    lightBg: '#f1f5f9',
+    contrastText: '#0f2938',
+  },
+  {
+    id: 'blue',
+    name: 'Azul Acuático',
+    badgeClass: 'text-bg-info',
+    bgClass: 'bg-info-subtle',
+    textClass: 'text-info',
+    borderClass: 'border-info',
+    hex: '#0284c7',
+    lightBg: '#e0f2fe',
+    contrastText: '#0369a1',
   },
   {
     id: 'emerald',
-    name: 'Verde',
+    name: 'Verde Bosque',
     badgeClass: 'text-bg-success',
     bgClass: 'bg-success-subtle',
     textClass: 'text-success',
     borderClass: 'border-success',
-    hex: '#198754',
-    lightBg: '#e8f5e9',
-    contrastText: '#0f5132',
+    hex: '#15803d',
+    lightBg: '#dcfce7',
+    contrastText: '#166534',
   },
   {
-    id: 'purple',
-    name: 'Morado',
+    id: 'slate',
+    name: 'Pizarra',
     badgeClass: 'text-bg-dark',
-    bgClass: 'bg-purple-subtle',
-    textClass: 'text-purple',
-    borderClass: 'border-purple',
-    hex: '#6f42c1',
-    lightBg: '#f3e8ff',
-    contrastText: '#59359a',
-  },
-  {
-    id: 'orange',
-    name: 'Naranja',
-    badgeClass: 'text-bg-warning',
-    bgClass: 'bg-warning-subtle',
-    textClass: 'text-warning-emphasis',
-    borderClass: 'border-warning',
-    hex: '#fd7e14',
-    lightBg: '#fff3e0',
-    contrastText: '#b35300',
+    bgClass: 'bg-light',
+    textClass: 'text-dark',
+    borderClass: 'border-dark-subtle',
+    hex: '#475569',
+    lightBg: '#f8fafc',
+    contrastText: '#334155',
   },
   {
     id: 'cyan',
     name: 'Cian',
     badgeClass: 'text-bg-info',
     bgClass: 'bg-info-subtle',
-    textClass: 'text-info-emphasis',
+    textClass: 'text-info',
     borderClass: 'border-info',
-    hex: '#0dcaf0',
-    lightBg: '#e0f7fa',
-    contrastText: '#055160',
-  },
-  {
-    id: 'pink',
-    name: 'Rosa',
-    badgeClass: 'text-bg-danger',
-    bgClass: 'bg-danger-subtle',
-    textClass: 'text-danger',
-    borderClass: 'border-danger',
-    hex: '#d63384',
-    lightBg: '#fce4ec',
-    contrastText: '#880e4f',
+    hex: '#0c9ea1',
+    lightBg: '#e6f7f8',
+    contrastText: '#087a7d',
   },
   {
     id: 'indigo',
-    name: 'Índigo',
+    name: 'Índigo Suave',
     badgeClass: 'text-bg-primary',
-    bgClass: 'bg-indigo-subtle',
-    textClass: 'text-indigo',
-    borderClass: 'border-indigo',
-    hex: '#6610f2',
-    lightBg: '#ede7f6',
-    contrastText: '#4527a0',
+    bgClass: 'bg-primary-subtle',
+    textClass: 'text-primary',
+    borderClass: 'border-primary',
+    hex: '#3b82f6',
+    lightBg: '#eff6ff',
+    contrastText: '#1d4ed8',
   },
   {
-    id: 'teal',
-    name: 'Teal',
-    badgeClass: 'text-bg-success',
-    bgClass: 'bg-teal-subtle',
-    textClass: 'text-teal',
-    borderClass: 'border-teal',
-    hex: '#20c997',
-    lightBg: '#e0f2f1',
-    contrastText: '#004d40',
+    id: 'steel',
+    name: 'Acero',
+    badgeClass: 'text-bg-secondary',
+    bgClass: 'bg-secondary-subtle',
+    textClass: 'text-secondary',
+    borderClass: 'border-secondary',
+    hex: '#64748b',
+    lightBg: '#f1f5f9',
+    contrastText: '#1e293b',
   },
 ];
 
 @Component({
   selector: 'app-route-assignment-workspace',
   standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    PeriodPickerComponent,
-    PickerInputComponent,
-  ],
+  imports: [CommonModule, FormsModule, PeriodPickerComponent, PickerInputComponent],
   templateUrl: './route-assignment-workspace.component.html',
   styleUrl: './route-assignment-workspace.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -182,9 +177,10 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   );
   readonly customNombreBase = signal<string | null>(null);
 
-  // Search queries
+  // Search queries & Quick filter tabs
   readonly workerSearch = signal<string>('');
   readonly communitySearch = signal<string>('');
+  readonly communityFilter = signal<'all' | 'pending' | 'completed'>('all');
   readonly contractSearch = signal<string>('');
 
   // Dynamic Session Assignments: Map of sectorId -> operarioId
@@ -265,10 +261,18 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     );
   });
 
-  // Filtered Communities list with search
+  // Filtered Communities list with search & quick tabs
   readonly filteredComunidades = computed(() => {
     const q = this.communitySearch().toLowerCase().trim();
-    const list = this.comunidades();
+    const filter = this.communityFilter();
+    let list = this.comunidades();
+
+    if (filter === 'completed') {
+      list = list.filter((c) => c.id != null && this.isCommunityCompleted(c.id));
+    } else if (filter === 'pending') {
+      list = list.filter((c) => c.id != null && !this.isCommunityCompleted(c.id));
+    }
+
     if (!q) return list;
     return list.filter((c) => {
       const matchName = c.nombre?.toLowerCase().includes(q);
@@ -279,6 +283,10 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       return matchName || matchCode || hasMatchingSector;
     });
   });
+
+  setCommunityFilter(filter: 'all' | 'pending' | 'completed'): void {
+    this.communityFilter.set(filter);
+  }
 
   // Helper to get sectors for a community
   getSectoresForComunidad(comunidadId: number): Sectores[] {
@@ -339,17 +347,15 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     };
   }
 
-  // Check if community is 100% completed (Yellow Border indicator)
+  // Check if community is 100% completed (Golden Border indicator)
   isCommunityCompleted(comunidadId: number | undefined): boolean {
     if (comunidadId == null) return false;
     const communitySectors = this.getSectoresForComunidad(comunidadId);
     if (communitySectors.length === 0) {
-      // If community has no sectors, check if whole community route exists
       const existing = this.existingCommunityRoutes().get(comunidadId);
       return (existing && existing.length > 0) || false;
     }
 
-    // Check if every sector is assigned either in DB or in current session
     return communitySectors.every((s) => {
       if (s.sectorId == null) return true;
       const status = this.getSectorStatus(s.sectorId);
@@ -381,8 +387,8 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   }
 
   // Get list of session sectors assigned to an operator
-  getOperatorSessionSectors(operarioId: number): Array<{ sector: Sectores; comunidad?: Comunidad }> {
-    const result: Array<{ sector: Sectores; comunidad?: Comunidad }> = [];
+  getOperatorSessionSectors(operarioId: number): { sector: Sectores; comunidad?: Comunidad }[] {
+    const result: { sector: Sectores; comunidad?: Comunidad }[] = [];
     this.sessionSectorAssignments().forEach((opId, sectorId) => {
       if (opId === operarioId) {
         const sector = this.sectores().find((s) => s.sectorId === sectorId);
@@ -430,6 +436,10 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       }
     }
 
+    const totalCommunities = allComunidades.length;
+    const completedPct =
+      totalCommunities > 0 ? Math.round((fullyCompletedCommunities / totalCommunities) * 100) : 0;
+
     return {
       fullyCompletedCommunities,
       partialCommunities,
@@ -437,6 +447,8 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       totalSectors,
       totalAssignedSectors,
       pendingSectors: Math.max(0, totalSectors - totalAssignedSectors),
+      totalCommunities,
+      completedPct,
     };
   });
 
@@ -581,10 +593,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   toggleAllSectorsInCommunity(comunidadId: number): void {
     const opId = this.selectedOperarioId();
     if (!opId) {
-      this.toastService.show(
-        'Por favor, seleccioná un operario en la Tabla 1 primero.',
-        'warning',
-      );
+      this.toastService.show('Por favor, seleccioná un operario en la Tabla 1 primero.', 'warning');
       return;
     }
 
@@ -603,18 +612,48 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       availableSectors.every((s) => currentMap.get(s.sectorId!) === opId);
 
     if (allAssignedToMe) {
-      // Unassign all my sectors in this community
       for (const s of availableSectors) {
         if (s.sectorId) currentMap.delete(s.sectorId);
       }
     } else {
-      // Assign all available sectors to me
       for (const s of availableSectors) {
         if (s.sectorId) currentMap.set(s.sectorId, opId);
       }
     }
 
     this.sessionSectorAssignments.set(currentMap);
+  }
+
+  // Assign all available sectors across all communities to currently active operator
+  assignAllAvailable(): void {
+    const opId = this.selectedOperarioId();
+    if (!opId) {
+      this.toastService.show('Por favor, seleccioná un operario en la Tabla 1 primero.', 'warning');
+      return;
+    }
+
+    const currentMap = new Map(this.sessionSectorAssignments());
+    let assignedCount = 0;
+
+    for (const sec of this.sectores()) {
+      if (!sec.sectorId) continue;
+      const status = this.getSectorStatus(sec.sectorId);
+      if (!status.isDbAssigned && !status.isAssigned) {
+        currentMap.set(sec.sectorId, opId);
+        assignedCount++;
+      }
+    }
+
+    if (assignedCount === 0) {
+      this.toastService.show('No hay sectores libres disponibles para asignar.', 'info');
+      return;
+    }
+
+    this.sessionSectorAssignments.set(currentMap);
+    this.toastService.show(
+      `Se asignaron ${assignedCount} sector(es) libres al operario activo.`,
+      'success',
+    );
   }
 
   removeOperatorSector(sectorId: number): void {
@@ -633,13 +672,16 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     this.sessionSectorAssignments.set(currentMap);
   }
 
+  resetSessionAssignments(): void {
+    if (this.sessionSectorAssignments().size === 0) return;
+    this.sessionSectorAssignments.set(new Map());
+    this.toastService.show('Se descartaron todas las asignaciones de la sesión.', 'info');
+  }
+
   // Navigation between Step 1 (2 Tables) and Step 2 (Full Width Summary)
   goToSummary(): void {
     if (this.totalSessionAssignedSectorsCount() === 0) {
-      this.toastService.show(
-        'No has asignado ningún sector en esta sesión todavía.',
-        'warning',
-      );
+      this.toastService.show('No has asignado ningún sector en esta sesión todavía.', 'warning');
       return;
     }
     this.currentStep.set(2);
@@ -686,7 +728,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       fechaToSend = `${fechaToSend}-01`;
     }
 
-    // Group session assignments by operarioId and then by comunidadId
     const operatorCommunityMap = new Map<number, Map<number, number[]>>();
     this.sessionSectorAssignments().forEach((opId, sectorId) => {
       const sector = this.sectores().find((s) => s.sectorId === sectorId);
@@ -722,7 +763,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       return;
     }
 
-    // Dispatch all requests via forkJoin
     const observables = requests.map((dto) => this.routesService.createAssignments(dto));
     forkJoin(observables).subscribe({
       next: (results) => {
@@ -758,4 +798,3 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     this.router.navigate(['/app/Contratos/RutasDeLectura']);
   }
 }
-

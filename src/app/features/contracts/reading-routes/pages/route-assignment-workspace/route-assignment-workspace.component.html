@@ -10,36 +10,27 @@
         <div>
           <h4 class="fw-bold text-dark mb-0 fs-5">Asignación de Rutas de Trabajo</h4>
           <p class="text-muted small mb-0">
-            Distribución mensual de sectores por operario con validación de no solapamiento y vista de cobertura.
+            Distribución mensual de sectores por operario con validación de no solapamiento y vista
+            de cobertura.
           </p>
         </div>
       </div>
 
       <!-- Action Buttons / Stepper Indicator -->
       <div class="d-flex align-items-center gap-2">
-        <div class="btn-group p-1 bg-light rounded-3" role="group">
-          <button
-            type="button"
-            class="btn btn-sm px-3 rounded-2 fw-medium"
-            [class.btn-primary]="currentStep() === 1"
-            [class.btn-light]="currentStep() !== 1"
-            (click)="backToAssignment()"
-          >
-            <i class="bi bi-layout-split me-1"></i> Paso 1 & 2: Asignación
+        <div class="stepper-switch">
+          <button type="button" [class.active]="currentStep() === 1" (click)="backToAssignment()">
+            <i class="bi bi-layout-split"></i> Paso 1 & 2: Asignación
           </button>
           <button
             type="button"
-            class="btn btn-sm px-3 rounded-2 fw-medium position-relative"
-            [class.btn-primary]="currentStep() === 2"
-            [class.btn-light]="currentStep() !== 2"
+            [class.active]="currentStep() === 2"
             [disabled]="totalSessionAssignedSectorsCount() === 0"
             (click)="goToSummary()"
           >
-            <i class="bi bi-check2-all me-1"></i> Paso 3: Resumen
+            <i class="bi bi-check2-all"></i> Paso 3: Resumen
             @if (totalSessionAssignedSectorsCount() > 0) {
-              <span
-                class="badge rounded-pill bg-danger position-absolute top-0 start-100 translate-middle"
-              >
+              <span class="badge rounded-pill bg-danger ms-1">
                 {{ totalSessionAssignedSectorsCount() }}
               </span>
             }
@@ -52,7 +43,7 @@
           (click)="goBack()"
         >
           <i class="bi bi-arrow-left"></i>
-          Volver
+          Volver a Rutas
         </button>
       </div>
     </div>
@@ -74,7 +65,10 @@
 
         <!-- Planned Month/Date -->
         <div style="min-width: 200px">
-          <label for="workspaceFechaPlanificada" class="form-label fw-semibold text-dark small mb-1">
+          <label
+            for="workspaceFechaPlanificada"
+            class="form-label fw-semibold text-dark small mb-1"
+          >
             Mes / Fecha Planificada
           </label>
           <input
@@ -99,6 +93,10 @@
               : 'bg-secondary-subtle text-secondary'
           "
         >
+          <i
+            class="bi me-1"
+            [ngClass]="selectedPeriod()?.estado === 'ABIERTO' ? 'bi-unlock-fill' : 'bi-lock-fill'"
+          ></i>
           {{ selectedPeriod() ? selectedPeriod()!.estado : 'Seleccione período' }}
         </span>
       </div>
@@ -116,58 +114,84 @@
         </div>
         <h5 class="fw-bold text-dark mb-1">Seleccioná un período contable para comenzar</h5>
         <p class="text-muted small mx-auto mb-0" style="max-width: 520px">
-          Elegí el período en el selector superior para cargar las rutas ya planificadas en el mes y habilitar
-          la distribución interactiva entre operarios.
+          Elegí el período en el selector superior para cargar las rutas ya planificadas en el mes y
+          habilitar la distribución interactiva entre operarios.
         </p>
       </div>
     </div>
   } @else if (currentStep() === 1) {
     <!-- ========================================================================= -->
-    <!-- PASO 1 Y 2: 2 TABLES VIEW (OPERADORES + COMUNIDADES/SECTORES)             -->
+    <!-- PASO 1 Y 2: 2 TABLAS INTERACTIVAS (OPERARIOS + COMUNIDADES/SECTORES)      -->
     <!-- ========================================================================= -->
-    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
-      <!-- Visual Legend Bar -->
-      <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4 p-3 bg-light rounded-3 border">
+    <div class="d-flex flex-column gap-3">
+      <!-- Guide Banner -->
+      <div
+        class="d-flex align-items-center justify-content-between flex-wrap gap-2 p-3 bg-white rounded-4 border shadow-sm"
+      >
         <div class="d-flex align-items-center gap-3 flex-wrap small">
-          <span class="fw-bold text-secondary text-uppercase" style="font-size: 0.75rem;">Guía Visual:</span>
+          <span
+            class="fw-bold text-secondary text-uppercase"
+            style="font-size: 0.72rem; letter-spacing: 0.05em"
+          >
+            Guía de Estados:
+          </span>
+
           <span class="d-inline-flex align-items-center gap-1">
-            <span class="badge rounded-pill bg-warning text-dark px-2 py-1 border">Borde Amarillo</span>
+            <span class="badge rounded-pill fw-bold bg-warning text-dark px-2 py-1"
+              >Borde Dorado</span
+            >
             <span class="text-muted">Comunidad 100% Cubierta</span>
           </span>
+
           <span class="d-inline-flex align-items-center gap-1">
-            <span class="badge rounded-pill bg-primary px-2 py-1">Color de Operario</span>
-            <span class="text-muted">Sector asignado en sesión</span>
+            <span
+              class="rounded-circle d-inline-block bg-primary"
+              style="width: 10px; height: 10px"
+            ></span>
+            <span class="text-muted">Sector Seleccionado (Operario Activo)</span>
           </span>
+
           <span class="d-inline-flex align-items-center gap-1">
-            <span class="badge rounded-pill bg-secondary text-white px-2 py-1">Gris / Bloqueado</span>
-            <span class="text-muted">Ruta ya creada en BD</span>
+            <span
+              class="rounded-circle d-inline-block bg-secondary"
+              style="width: 10px; height: 10px"
+            ></span>
+            <span class="text-muted">Bloqueado en BD (No repetible)</span>
           </span>
         </div>
 
-        <div class="text-end">
-          <span class="badge bg-white text-dark border px-3 py-2 fw-semibold">
-            Sectores en Sesión: <strong class="text-primary">{{ totalSessionAssignedSectorsCount() }}</strong>
-          </span>
-        </div>
+        <span class="badge bg-light text-dark border px-3 py-2 fw-semibold">
+          Sectores asignados en sesión:
+          <strong class="text-primary">{{ totalSessionAssignedSectorsCount() }}</strong>
+        </span>
       </div>
 
+      <!-- Grid of 2 Interactive Tables -->
       <div class="row g-4">
         <!-- ================================================================= -->
-        <!-- TABLA 1: OPERADORES                                               -->
+        <!-- TABLA 1: OPERARIOS (Izquierda)                                    -->
         <!-- ================================================================= -->
-        <div class="col-lg-4 col-md-12">
-          <div class="workspace-column">
-            <!-- Header Tabla 1 -->
-            <div class="column-header d-flex flex-column gap-2">
-              <div class="d-flex justify-content-between align-items-center">
-                <span class="fw-bold text-dark small text-uppercase">1. Operarios Activos</span>
-                <span class="badge bg-primary-subtle text-primary">
-                  {{ filteredOperarios().length }} disponibles
-                </span>
+        <div class="col-xl-4 col-lg-5">
+          <div
+            class="card border-0 shadow-sm rounded-4 p-3 bg-white d-flex flex-column"
+            style="min-height: 600px"
+          >
+            <!-- Tabla 1 Header -->
+            <div class="d-flex align-items-center justify-content-between pb-3 border-bottom mb-3">
+              <div>
+                <h6 class="fw-bold text-dark mb-0">1. Operarios de Campo</h6>
+                <span class="text-muted small">Elegí un operario para asignarle sectores</span>
               </div>
+              <span class="badge rounded-pill bg-primary-subtle text-primary fw-semibold px-2 py-1">
+                {{ filteredOperarios().length }} disponibles
+              </span>
+            </div>
+
+            <!-- Operarios Search -->
+            <div class="mb-3">
               <app-picker-input
                 inputId="workspacePageWorkerSearch"
-                placeholder="Buscar operario por nombre..."
+                placeholder="Buscar operario..."
                 icon="bi-search"
                 [query]="workerSearch()"
                 [disabled]="isLoading()"
@@ -176,8 +200,11 @@
               />
             </div>
 
-            <!-- Body Tabla 1 -->
-            <div class="column-body">
+            <!-- List of Operators -->
+            <div
+              class="d-flex flex-column gap-2 scrollbar-subtle overflow-y-auto pe-1"
+              style="max-height: 480px"
+            >
               @if (filteredOperarios().length === 0) {
                 <div class="text-center py-5 text-muted small">
                   <i class="bi bi-person-x fs-2 d-block mb-1 text-secondary"></i>
@@ -190,9 +217,8 @@
                 @let isSelected = selectedOperarioId() === op.usuarioId;
 
                 <div
-                  class="worker-card"
-                  [class.selected]="isSelected"
-                  [style.borderLeftColor]="isSelected ? opColor.hex : ''"
+                  class="operator-tile"
+                  [class.is-active]="isSelected"
                   (click)="selectOperario(op.usuarioId)"
                   role="button"
                   tabindex="0"
@@ -200,21 +226,19 @@
                 >
                   <div class="d-flex align-items-center justify-content-between">
                     <div class="d-flex align-items-center gap-2">
-                      <!-- Operator Color Avatar -->
                       <div
-                        class="rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm"
+                        class="op-avatar-disc shadow-sm"
                         [style.backgroundColor]="opColor.lightBg"
                         [style.color]="opColor.contrastText"
                         [style.border]="'2px solid ' + opColor.hex"
-                        style="width: 36px; height: 36px; font-size: 0.8rem"
                       >
                         {{ op.nombres.charAt(0) }}{{ op.apellidos.charAt(0) }}
                       </div>
                       <div>
-                        <div class="fw-bold text-dark small d-flex align-items-center gap-1">
+                        <div class="fw-bold text-dark small">
                           {{ op.nombres }} {{ op.apellidos }}
                         </div>
-                        <span class="text-muted" style="font-size: 0.72rem;">
+                        <span class="text-muted" style="font-size: 0.72rem">
                           {{ op.email || 'Operario de Campo' }}
                         </span>
                       </div>
@@ -224,14 +248,16 @@
                     <div class="text-end">
                       @if (sessionCount > 0) {
                         <span
-                          class="badge rounded-pill px-2 py-1 fw-semibold"
+                          class="badge rounded-pill px-2 py-1 fw-semibold text-white"
                           [style.backgroundColor]="opColor.hex"
-                          [style.color]="'#ffffff'"
                         >
                           +{{ sessionCount }} sect.
                         </span>
                       } @else {
-                        <span class="badge bg-light text-secondary border" style="font-size: 0.7rem;">
+                        <span
+                          class="badge bg-light text-secondary border"
+                          style="font-size: 0.7rem"
+                        >
                           0 sect.
                         </span>
                       }
@@ -243,10 +269,16 @@
                     <div class="mt-2 pt-2 border-top">
                       <!-- Active Routes in Database for this month -->
                       <div class="d-flex align-items-center justify-content-between mb-1">
-                        <span class="text-muted fw-semibold" style="font-size: 0.7rem; text-transform: uppercase;">
+                        <span
+                          class="text-muted fw-semibold"
+                          style="font-size: 0.7rem; text-transform: uppercase"
+                        >
                           Rutas del Mes en BD:
                         </span>
-                        <span class="badge bg-secondary-subtle text-secondary" style="font-size: 0.68rem;">
+                        <span
+                          class="badge bg-secondary-subtle text-secondary"
+                          style="font-size: 0.68rem"
+                        >
                           {{ selectedOperatorExistingRoutes().length }} existente(s)
                         </span>
                       </div>
@@ -256,31 +288,39 @@
                           @for (r of selectedOperatorExistingRoutes(); track r.rutaId) {
                             <span
                               class="badge bg-white text-dark border d-inline-flex align-items-center gap-1"
-                              style="font-size: 0.68rem;"
+                              style="font-size: 0.68rem"
                               [title]="r.nombre"
                             >
-                              <i class="bi bi-check-circle-fill text-success" style="font-size: 0.65rem;"></i>
-                              {{ r.nombre.slice(0, 22) }}...
+                              <i
+                                class="bi bi-check-circle-fill text-success"
+                                style="font-size: 0.65rem"
+                              ></i>
+                              {{ r.nombre.slice(0, 20) }}...
                             </span>
                           }
                         </div>
                       } @else {
-                        <div class="text-muted fst-italic mb-2" style="font-size: 0.7rem;">
-                          Sin rutas asignadas previamente en este período.
+                        <div class="text-muted fst-italic mb-2" style="font-size: 0.7rem">
+                          Sin rutas previas en este período.
                         </div>
                       }
 
                       <!-- Session Assignments Clear Button -->
                       @if (sessionCount > 0) {
-                        <div class="d-flex justify-content-between align-items-center mt-2 pt-1 border-top">
-                          <span class="text-primary fw-medium" style="font-size: 0.75rem;">
+                        <div
+                          class="d-flex justify-content-between align-items-center mt-2 pt-1 border-top"
+                        >
+                          <span class="text-primary fw-medium" style="font-size: 0.75rem">
                             {{ sessionCount }} sector(es) listos
                           </span>
                           <button
                             type="button"
-                            class="btn btn-outline-danger btn-xs py-0 px-2 rounded-2"
-                            style="font-size: 0.7rem;"
-                            (click)="clearOperatorSessionAssignments(op.usuarioId); $event.stopPropagation()"
+                            class="btn btn-outline-danger btn-sm py-0 px-2 rounded-2"
+                            style="font-size: 0.7rem"
+                            (click)="
+                              clearOperatorSessionAssignments(op.usuarioId);
+                              $event.stopPropagation()
+                            "
                           >
                             <i class="bi bi-trash3 me-1"></i>Limpiar
                           </button>
@@ -291,21 +331,29 @@
                 </div>
               }
             </div>
+
+            <div class="mt-auto pt-3 border-top text-center text-muted small">
+              <i class="bi bi-info-circle me-1"></i> Seleccioná un operario y hacé clic en los
+              sectores libres para asignarlos.
+            </div>
           </div>
         </div>
 
         <!-- ================================================================= -->
-        <!-- TABLA 2: COMUNIDADES Y SECTORES (CHECKLIST INTERACTIVO)            -->
+        <!-- TABLA 2: COMUNIDADES Y SECTORES (Derecha)                         -->
         <!-- ================================================================= -->
-        <div class="col-lg-8 col-md-12">
-          <div class="workspace-column" style="height: 600px;">
-            <!-- Header Tabla 2 -->
-            <div class="column-header d-flex flex-column gap-2">
-              <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="col-xl-8 col-lg-7">
+          <div
+            class="card border-0 shadow-sm rounded-4 p-3 bg-white d-flex flex-column"
+            style="min-height: 600px"
+          >
+            <!-- Tabla 2 Header -->
+            <div
+              class="d-flex align-items-center justify-content-between flex-wrap gap-2 pb-3 border-bottom mb-3"
+            >
+              <div>
                 <div class="d-flex align-items-center gap-2">
-                  <span class="fw-bold text-dark small text-uppercase">
-                    2. Comunidades y Sectores
-                  </span>
+                  <h6 class="fw-bold text-dark mb-0">2. Comunidades y Sectores</h6>
                   @if (selectedOperarioId()) {
                     @let activeOpColor = getOperatorColor(selectedOperarioId()!);
                     <span
@@ -318,29 +366,78 @@
                     </span>
                   }
                 </div>
-
-                <span class="badge bg-secondary-subtle text-secondary">
-                  {{ filteredComunidades().length }} comunidades
-                </span>
+                <span class="text-muted small">Marcá los sectores para el operario activo</span>
               </div>
 
-              <app-picker-input
-                inputId="workspacePageCommunitySearch"
-                placeholder="Buscar comunidad o sector..."
-                icon="bi-search"
-                [query]="communitySearch()"
-                [disabled]="isLoading()"
-                (queryChange)="communitySearch.set($event)"
-                (clear)="communitySearch.set('')"
-              />
+              <button
+                type="button"
+                class="btn btn-outline-primary btn-sm rounded-3 fw-medium"
+                (click)="assignAllAvailable()"
+              >
+                <i class="bi bi-check2-all me-1"></i> Asignar todos los libres
+              </button>
             </div>
 
-            <!-- Body Tabla 2: List of Communities with Sectors -->
-            <div class="column-body d-flex flex-column gap-3">
+            <!-- Filter Bar (Search + Quick Tabs) -->
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+              <div style="max-width: 280px; width: 100%">
+                <app-picker-input
+                  inputId="workspacePageCommunitySearch"
+                  placeholder="Buscar comunidad o sector..."
+                  icon="bi-search"
+                  [query]="communitySearch()"
+                  [disabled]="isLoading()"
+                  (queryChange)="communitySearch.set($event)"
+                  (clear)="communitySearch.set('')"
+                />
+              </div>
+
+              <div class="btn-group btn-group-sm p-1 bg-light rounded-3" role="group">
+                <button
+                  type="button"
+                  class="btn btn-sm rounded-2 fw-medium"
+                  [class.bg-white]="communityFilter() === 'all'"
+                  [class.shadow-sm]="communityFilter() === 'all'"
+                  [class.text-dark]="communityFilter() === 'all'"
+                  [class.text-secondary]="communityFilter() !== 'all'"
+                  (click)="setCommunityFilter('all')"
+                >
+                  Todas
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm rounded-2 fw-medium"
+                  [class.bg-white]="communityFilter() === 'pending'"
+                  [class.shadow-sm]="communityFilter() === 'pending'"
+                  [class.text-dark]="communityFilter() === 'pending'"
+                  [class.text-secondary]="communityFilter() !== 'pending'"
+                  (click)="setCommunityFilter('pending')"
+                >
+                  Pendientes
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-sm rounded-2 fw-medium"
+                  [class.bg-white]="communityFilter() === 'completed'"
+                  [class.shadow-sm]="communityFilter() === 'completed'"
+                  [class.text-dark]="communityFilter() === 'completed'"
+                  [class.text-secondary]="communityFilter() !== 'completed'"
+                  (click)="setCommunityFilter('completed')"
+                >
+                  100% Cubiertas
+                </button>
+              </div>
+            </div>
+
+            <!-- Communities List Grid -->
+            <div
+              class="d-flex flex-column gap-3 scrollbar-subtle overflow-y-auto pe-1"
+              style="max-height: 480px"
+            >
               @if (filteredComunidades().length === 0) {
                 <div class="text-center py-5 text-muted small">
                   <i class="bi bi-geo-alt-fill fs-2 d-block mb-1 text-secondary"></i>
-                  No se encontraron comunidades coincidentes.
+                  No se encontraron comunidades coincidentes con el filtro.
                 </div>
               }
 
@@ -349,30 +446,35 @@
                 @let countData = getCommunityAssignedCount(com.id);
                 @let sectors = getSectoresForComunidad(com.id);
 
-                <div
-                  class="community-card card border p-3 rounded-3 transition-all"
-                  [class.community-card-completed]="isCompleted"
-                >
+                <div class="community-box" [class.is-complete]="isCompleted">
                   <!-- Community Card Header -->
-                  <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 pb-2 border-bottom mb-2">
+                  <div
+                    class="d-flex align-items-center justify-content-between flex-wrap gap-2 pb-2 border-bottom mb-2"
+                  >
                     <div class="d-flex align-items-center gap-2">
                       <div
                         class="rounded-circle d-flex align-items-center justify-content-center"
                         [ngClass]="isCompleted ? 'bg-warning text-dark' : 'bg-light text-secondary'"
-                        style="width: 28px; height: 28px; font-size: 0.8rem;"
+                        style="width: 28px; height: 28px; font-size: 0.8rem"
                       >
-                        <i class="bi" [ngClass]="isCompleted ? 'bi-check-circle-fill' : 'bi-geo-alt'"></i>
+                        <i
+                          class="bi"
+                          [ngClass]="isCompleted ? 'bi-check-circle-fill' : 'bi-geo-alt'"
+                        ></i>
                       </div>
                       <div>
                         <h6 class="fw-bold mb-0 text-dark small d-flex align-items-center gap-2">
                           {{ com.nombre }}
                           @if (com.codigo) {
-                            <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.65rem;">
+                            <span
+                              class="badge bg-light text-secondary border font-monospace"
+                              style="font-size: 0.65rem"
+                            >
                               {{ com.codigo }}
                             </span>
                           }
                           @if (isCompleted) {
-                            <span class="badge bg-warning text-dark fw-bold px-2 py-0" style="font-size: 0.65rem;">
+                            <span class="badge badge-gold-complete rounded-pill px-2 py-1">
                               100% CUBIERTA
                             </span>
                           }
@@ -381,15 +483,22 @@
                     </div>
 
                     <div class="d-flex align-items-center gap-2">
-                      <span class="badge" [ngClass]="isCompleted ? 'bg-warning-subtle text-warning-emphasis' : 'bg-light text-muted border'">
+                      <span
+                        class="badge"
+                        [ngClass]="
+                          isCompleted
+                            ? 'bg-warning-subtle text-warning-emphasis fw-bold'
+                            : 'bg-light text-muted border'
+                        "
+                      >
                         {{ countData.assigned }} / {{ countData.total }} sectores asignados
                       </span>
 
                       @if (!isCompleted && sectors.length > 0 && selectedOperarioId()) {
                         <button
                           type="button"
-                          class="btn btn-outline-primary btn-xs py-1 px-2 rounded-2"
-                          style="font-size: 0.7rem;"
+                          class="btn btn-outline-primary btn-sm py-1 px-2 rounded-2"
+                          style="font-size: 0.72rem"
                           (click)="toggleAllSectorsInCommunity(com.id)"
                         >
                           <i class="bi bi-check-all me-1"></i>Asignar libres
@@ -400,24 +509,26 @@
 
                   <!-- Sectors Grid for this Community -->
                   @if (sectors.length === 0) {
-                    <div class="text-muted small py-2 fst-italic" style="font-size: 0.78rem;">
+                    <div class="text-muted small py-2 fst-italic" style="font-size: 0.78rem">
                       Esta comunidad no tiene sectores configurados.
                     </div>
                   } @else {
                     <div class="row g-2">
                       @for (sec of sectors; track sec.sectorId) {
                         @let status = getSectorStatus(sec.sectorId);
-                        @let isMyAssigned = status.isAssigned && status.operarioId === selectedOperarioId() && !status.isDbAssigned;
-                        @let isOtherAssigned = status.isAssigned && status.operarioId !== selectedOperarioId();
+                        @let isMyAssigned =
+                          status.isAssigned &&
+                          status.operarioId === selectedOperarioId() &&
+                          !status.isDbAssigned;
+                        @let isOtherAssigned =
+                          status.isAssigned && status.operarioId !== selectedOperarioId();
 
                         <div class="col-sm-6 col-md-4">
                           <div
-                            class="sector-badge-card d-flex align-items-center justify-content-between p-2 rounded-2 border transition-all"
-                            [class.sector-db-assigned]="status.isDbAssigned"
-                            [class.sector-session-active]="isMyAssigned"
-                            [class.sector-other-assigned]="isOtherAssigned"
-                            [style.borderColor]="status.color ? status.color.hex : ''"
-                            [style.backgroundColor]="isMyAssigned ? status.color?.lightBg : ''"
+                            class="sector-card d-flex align-items-center justify-content-between"
+                            [class.is-session-selected]="isMyAssigned"
+                            [class.is-db-locked]="status.isDbAssigned"
+                            [class.is-other-assigned]="isOtherAssigned"
                             (click)="toggleSector(sec)"
                             role="button"
                             tabindex="0"
@@ -427,41 +538,38 @@
                               <i
                                 class="bi"
                                 [ngClass]="{
-                                  'bi-check-square-fill': isMyAssigned,
-                                  'bi-lock-fill': status.isDbAssigned || isOtherAssigned,
-                                  'bi-square': !status.isAssigned
+                                  'bi-check-square-fill text-primary': isMyAssigned,
+                                  'bi-lock-fill text-secondary': status.isDbAssigned,
+                                  'bi-person-badge-fill text-secondary': isOtherAssigned,
+                                  'bi-square text-muted': !status.isAssigned,
                                 }"
-                                [style.color]="status.color ? status.color.hex : '#94a3b8'"
                               ></i>
                               <div class="text-truncate">
-                                <div class="fw-semibold text-dark small text-truncate" style="font-size: 0.78rem;">
+                                <div
+                                  class="fw-semibold text-dark small text-truncate"
+                                  style="font-size: 0.8rem"
+                                >
                                   {{ sec.nombre }}
                                 </div>
                                 @if (status.isAssigned) {
-                                  <div
-                                    class="text-truncate"
-                                    style="font-size: 0.67rem;"
-                                    [style.color]="status.color ? status.color.contrastText : '#64748b'"
-                                  >
+                                  <div class="text-truncate text-muted" style="font-size: 0.68rem">
                                     @if (status.isDbAssigned) {
-                                      <i class="bi bi-database me-1"></i>{{ status.operarioName }}
+                                      <i class="bi bi-database me-1"></i>Ruta en BD ({{
+                                        status.operarioName
+                                      }})
+                                    } @else if (isMyAssigned) {
+                                      <span class="text-primary fw-semibold">Asignado</span>
                                     } @else {
-                                      <i class="bi bi-person-badge me-1"></i>{{ status.operarioName }}
+                                      <i class="bi bi-person me-1"></i>{{ status.operarioName }}
                                     }
                                   </div>
                                 } @else {
-                                  <span class="text-muted" style="font-size: 0.67rem;">Disponible</span>
+                                  <span class="text-muted" style="font-size: 0.68rem"
+                                    >Disponible</span
+                                  >
                                 }
                               </div>
                             </div>
-
-                            @if (status.color && status.isAssigned) {
-                              <span
-                                class="badge rounded-circle p-1 ms-1"
-                                [style.backgroundColor]="status.color.hex"
-                                style="width: 10px; height: 10px;"
-                              ></span>
-                            }
                           </div>
                         </div>
                       }
@@ -474,274 +582,362 @@
         </div>
       </div>
 
-      <!-- Bottom Step 1 Action Bar -->
-      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mt-4 pt-3 border-top">
-        <div class="d-flex align-items-center gap-2">
-          <span class="badge bg-primary px-3 py-2 fs-6">
-            {{ totalSessionAssignedSectorsCount() }}
-          </span>
-          <div>
-            <div class="fw-bold text-dark small">Sectores asignados en esta sesión</div>
-            <span class="text-muted" style="font-size: 0.75rem;">
-              Distribuidos entre {{ assignedOperatorsInSession().length }} operario(s)
-            </span>
+      <!-- Sticky Bottom Action Bar -->
+      <div
+        class="card border-0 shadow-lg rounded-4 p-3 bg-white border position-sticky bottom-0 z-3"
+        style="border-color: var(--border-color, #cbdedf) !important"
+      >
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <div
+              class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center"
+              style="width: 42px; height: 42px"
+            >
+              <i class="bi bi-layers-fill fs-5"></i>
+            </div>
+            <div>
+              <div class="fw-bold text-dark small">Resumen de la sesión</div>
+              <div class="text-muted small">
+                {{ totalSessionAssignedSectorsCount() }} sector(es) asignados a
+                {{ assignedOperatorsInSession().length }} operario(s)
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <button
+              type="button"
+              class="btn btn-outline-danger btn-sm rounded-3 px-3 py-2 fw-medium"
+              [disabled]="totalSessionAssignedSectorsCount() === 0"
+              (click)="resetSessionAssignments()"
+            >
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Descartar Cambios
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary btn-sm rounded-3 px-4 py-2 fw-semibold shadow-sm"
+              [disabled]="totalSessionAssignedSectorsCount() === 0"
+              (click)="goToSummary()"
+            >
+              Continuar al Resumen <i class="bi bi-arrow-right ms-1"></i>
+            </button>
           </div>
         </div>
-
-        <button
-          type="button"
-          class="btn btn-primary px-4 py-2 rounded-3 d-flex align-items-center gap-2 fw-semibold"
-          [disabled]="totalSessionAssignedSectorsCount() === 0"
-          (click)="goToSummary()"
-        >
-          <span>Ir al Resumen y Despacho (Paso 3)</span>
-          <i class="bi bi-arrow-right"></i>
-        </button>
       </div>
     </div>
   } @else if (currentStep() === 2) {
     <!-- ========================================================================= -->
-    <!-- PASO 3: RESUMEN Y CONFIRMACIÓN FULL-WIDTH (PANTALLA COMPLETA)             -->
+    <!-- PASO 3: RESUMEN Y DESPACHO FULL-WIDTH (PANTALLA COMPLETA)                 -->
     <!-- ========================================================================= -->
-    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white d-flex flex-column gap-4">
+    <div class="d-flex flex-column gap-4">
       <!-- Step 3 Header -->
-      <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 pb-3 border-bottom">
+      <div
+        class="d-flex align-items-center justify-content-between flex-wrap gap-3 pb-3 border-bottom"
+      >
         <div>
-          <span class="badge bg-primary-subtle text-primary text-uppercase fw-bold px-3 py-1 mb-1">
-            Paso 3 de 3: Confirmación Final
-          </span>
-          <h4 class="fw-bold text-dark mb-1">Resumen de Distribución y Despacho de Rutas</h4>
+          <h4 class="fw-bold text-dark mb-1 fs-5">Resumen de Distribución y Despacho</h4>
           <p class="text-muted small mb-0">
-            Revisá la cobertura global de las comunidades y el desglose de sectores por operario antes de generar las órdenes de lectura.
+            Revisá la carga de trabajo asignada antes de generar los lotes en base de datos.
           </p>
         </div>
 
-        <div class="d-flex align-items-center gap-2">
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm rounded-3 px-3 py-2 fw-medium"
+          (click)="backToAssignment()"
+          [disabled]="isLoading()"
+        >
+          <i class="bi bi-arrow-left me-1"></i> Volver a la Asignación
+        </button>
+      </div>
+
+      <!-- 4 KPI Cards (Matching app-kpi-card design system tokens) -->
+      @let coverage = globalCoverageSummary();
+      <div class="row g-3">
+        <!-- KPI 1: Comunidades Cubiertas (Tone Warning / Gold) -->
+        <div class="col-md-3 col-sm-6">
+          <div class="kpi-card-root tone-warning">
+            <div class="kpi-card-body">
+              <div class="kpi-content">
+                <span class="kpi-label">Comunidades Cubiertas</span>
+                <div class="kpi-value-wrapper">
+                  <span class="kpi-value"
+                    >{{ coverage.fullyCompletedCommunities }} /
+                    {{ coverage.totalCommunities }}</span
+                  >
+                </div>
+                <span class="kpi-subtext">
+                  <span class="kpi-indicator-dot"></span> {{ coverage.completedPct }}% del catastro
+                  regional
+                </span>
+              </div>
+              <div class="kpi-icon-container">
+                <i class="bi bi-shield-check"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 2: Sectores Planificados (Tone Primary / Teal) -->
+        <div class="col-md-3 col-sm-6">
+          <div class="kpi-card-root tone-primary">
+            <div class="kpi-card-body">
+              <div class="kpi-content">
+                <span class="kpi-label">Sectores Planificados</span>
+                <div class="kpi-value-wrapper">
+                  <span class="kpi-value">{{ totalSessionAssignedSectorsCount() }}</span>
+                </div>
+                <span class="kpi-subtext">
+                  <span class="kpi-indicator-dot"></span> En sesión actual
+                </span>
+              </div>
+              <div class="kpi-icon-container">
+                <i class="bi bi-geo-alt-fill"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 3: Sectores Pendientes (Tone Info / Aqua) -->
+        <div class="col-md-3 col-sm-6">
+          <div class="kpi-card-root tone-info">
+            <div class="kpi-card-body">
+              <div class="kpi-content">
+                <span class="kpi-label">Sectores Pendientes</span>
+                <div class="kpi-value-wrapper">
+                  <span class="kpi-value">{{ coverage.pendingSectors }}</span>
+                </div>
+                <span class="kpi-subtext">
+                  <span class="kpi-indicator-dot"></span> Sin asignar en el mes
+                </span>
+              </div>
+              <div class="kpi-icon-container">
+                <i class="bi bi-layers-half"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPI 4: Operarios con Carga (Tone Success / Green) -->
+        <div class="col-md-3 col-sm-6">
+          <div class="kpi-card-root tone-success">
+            <div class="kpi-card-body">
+              <div class="kpi-content">
+                <span class="kpi-label">Operarios con Carga</span>
+                <div class="kpi-value-wrapper">
+                  <span class="kpi-value">{{ assignedOperatorsInSession().length }}</span>
+                </div>
+                <span class="kpi-subtext">
+                  <span class="kpi-indicator-dot"></span> Equipos asignados
+                </span>
+              </div>
+              <div class="kpi-icon-container">
+                <i class="bi bi-people-fill"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Breakdown Grid (2 Columns: Operators & Coverage Matrix) -->
+      <div class="row g-4">
+        <!-- Column 1: Desglose por Operador Asignado -->
+        <div class="col-lg-7">
+          <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
+            <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+              <i class="bi bi-person-badge-fill text-primary"></i>
+              Desglose por Operador Asignado
+            </h6>
+
+            <div class="d-flex flex-column gap-3">
+              @for (op of assignedOperatorsInSession(); track op.usuarioId) {
+                @let opColor = getOperatorColor(op.usuarioId);
+                @let assignedSectors = getOperatorSessionSectors(op.usuarioId);
+
+                <div class="card border rounded-3 p-3 bg-light">
+                  <!-- Operator Header -->
+                  <div
+                    class="d-flex align-items-center justify-content-between pb-2 border-bottom mb-2"
+                  >
+                    <div class="d-flex align-items-center gap-2">
+                      <div
+                        class="op-avatar-disc shadow-sm"
+                        [style.backgroundColor]="opColor.lightBg"
+                        [style.color]="opColor.contrastText"
+                        [style.border]="'2px solid ' + opColor.hex"
+                      >
+                        {{ op.nombres.charAt(0) }}{{ op.apellidos.charAt(0) }}
+                      </div>
+                      <div>
+                        <div class="fw-bold text-dark small">
+                          {{ op.nombres }} {{ op.apellidos }}
+                        </div>
+                        <span class="text-muted" style="font-size: 0.72rem">{{
+                          op.email || 'Operario de Campo'
+                        }}</span>
+                      </div>
+                    </div>
+
+                    <span
+                      class="badge rounded-pill px-3 py-1 fw-semibold text-white"
+                      [style.backgroundColor]="opColor.hex"
+                    >
+                      {{ assignedSectors.length }} sector(es)
+                    </span>
+                  </div>
+
+                  <!-- Sectors List -->
+                  <div class="d-flex flex-column gap-1" style="max-height: 200px; overflow-y: auto">
+                    @for (item of assignedSectors; track item.sector.sectorId) {
+                      <div
+                        class="d-flex align-items-center justify-content-between p-2 rounded-2 bg-white border"
+                      >
+                        <div class="d-flex align-items-center gap-2">
+                          <i class="bi bi-geo-alt-fill text-primary"></i>
+                          <div>
+                            <div class="fw-semibold text-dark small">{{ item.sector.nombre }}</div>
+                            <span class="text-muted" style="font-size: 0.72rem">
+                              Comunidad:
+                              {{
+                                item.comunidad?.nombre || 'Comunidad #' + item.sector.comunidadId
+                              }}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          class="btn btn-outline-danger btn-sm py-0 px-2 rounded-2"
+                          (click)="removeOperatorSector(item.sector.sectorId!)"
+                          title="Quitar sector"
+                        >
+                          <i class="bi bi-x-lg"></i>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 2: Cobertura por Comunidad -->
+        <div class="col-lg-5">
+          <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
+            <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+              <i class="bi bi-pie-chart-fill text-warning"></i>
+              Cobertura por Comunidad
+            </h6>
+
+            <div
+              class="d-flex flex-column gap-3 scrollbar-subtle overflow-y-auto"
+              style="max-height: 480px"
+            >
+              @for (com of comunidades(); track com.id) {
+                @let isCompleted = isCommunityCompleted(com.id);
+                @let countData = getCommunityAssignedCount(com.id);
+                @let pct =
+                  countData.total > 0
+                    ? (countData.assigned / countData.total) * 100
+                    : isCompleted
+                      ? 100
+                      : 0;
+
+                <div
+                  class="p-3 rounded-3 border"
+                  [class.border-warning]="isCompleted"
+                  [style.backgroundColor]="isCompleted ? '#fffdf5' : '#ffffff'"
+                >
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                      <i
+                        class="bi"
+                        [ngClass]="
+                          isCompleted
+                            ? 'bi-check-circle-fill text-warning'
+                            : 'bi-geo-alt text-muted'
+                        "
+                      ></i>
+                      <span class="fw-bold text-dark small">{{ com.nombre }}</span>
+                    </div>
+
+                    @if (isCompleted) {
+                      <span class="badge badge-gold-complete rounded-pill px-2 py-1">
+                        100% CUBIERTA
+                      </span>
+                    } @else if (countData.assigned > 0) {
+                      <span class="badge bg-info-subtle text-info-emphasis px-2 py-1">
+                        PARCIAL ({{ countData.assigned }}/{{ countData.total }})
+                      </span>
+                    } @else {
+                      <span class="badge bg-light text-muted border px-2 py-1"> PENDIENTE </span>
+                    }
+                  </div>
+
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="progress flex-grow-1" style="height: 6px">
+                      <div
+                        class="progress-bar"
+                        [ngClass]="isCompleted ? 'bg-warning' : 'bg-primary'"
+                        role="progressbar"
+                        [style.width.%]="pct"
+                      ></div>
+                    </div>
+                    <span class="small fw-semibold text-muted">{{ pct | number: '1.0-0' }}%</span>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirmation Callout Card -->
+      <div
+        class="card border-0 shadow-sm rounded-4 p-4 bg-white text-center d-flex flex-column align-items-center"
+      >
+        <div
+          class="rounded-circle d-flex align-items-center justify-content-center mb-3"
+          style="width: 52px; height: 52px; background: #dcfce7; color: #15803d"
+        >
+          <i class="bi bi-send-check-fill fs-3"></i>
+        </div>
+        <h5 class="fw-bold text-dark mb-1">Confirmar Asignación Mensual</h5>
+        <p class="text-muted small mb-4" style="max-width: 540px">
+          Al confirmar, el sistema registrará los lotes de rutas en la base de datos para el período
+          <strong>{{ selectedPeriod()?.nombre || 'seleccionado' }}</strong> y quedarán disponibles
+          para sincronización en la app móvil de los operarios.
+        </p>
+
+        <div class="d-flex align-items-center gap-3">
           <button
             type="button"
-            class="btn btn-outline-secondary px-3 py-2 rounded-3 d-flex align-items-center gap-2"
+            class="btn btn-outline-secondary px-4 py-2 rounded-3 fw-medium"
             (click)="backToAssignment()"
             [disabled]="isLoading()"
           >
-            <i class="bi bi-arrow-left"></i>
-            Volver a Asignación
+            Modificar Rutas
           </button>
           <button
             type="button"
-            class="btn btn-success px-4 py-2 rounded-3 d-flex align-items-center gap-2 fw-bold shadow-sm"
-            (click)="confirmAndDispatchAll()"
+            class="btn btn-primary px-5 py-2 rounded-3 fw-semibold shadow-sm"
             [disabled]="isLoading() || totalSessionAssignedSectorsCount() === 0"
+            (click)="confirmAndDispatchAll()"
           >
             @if (isLoading()) {
-              <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+              <span
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+              ></span>
               <span>Despachando Rutas...</span>
             } @else {
-              <i class="bi bi-send-check-fill"></i>
+              <i class="bi bi-check-lg me-1"></i>
               <span>Confirmar y Despachar Rutas</span>
             }
           </button>
         </div>
-      </div>
-
-      <!-- KPI Summary Cards Row -->
-      @let coverage = globalCoverageSummary();
-      <div class="row g-3">
-        <div class="col-md-3 col-sm-6">
-          <div class="card border p-3 rounded-4 bg-light">
-            <span class="text-muted small fw-medium">Operarios con Rutas</span>
-            <h3 class="fw-bold text-dark mb-0 mt-1">{{ assignedOperatorsInSession().length }}</h3>
-            <span class="text-muted" style="font-size: 0.75rem;">Listos para despacho</span>
-          </div>
-        </div>
-        <div class="col-md-3 col-sm-6">
-          <div class="card border p-3 rounded-4 bg-primary-subtle border-primary-subtle">
-            <span class="text-primary small fw-semibold">Sectores Asignados (Sesión)</span>
-            <h3 class="fw-bold text-primary mb-0 mt-1">{{ totalSessionAssignedSectorsCount() }}</h3>
-            <span class="text-primary-emphasis" style="font-size: 0.75rem;">Nuevas rutas a crear</span>
-          </div>
-        </div>
-        <div class="col-md-3 col-sm-6">
-          <div class="card border-warning border-2 p-3 rounded-4 bg-warning-subtle shadow-sm">
-            <span class="text-warning-emphasis small fw-bold">Comunidades 100% Cubiertas</span>
-            <h3 class="fw-bold text-warning-emphasis mb-0 mt-1">{{ coverage.fullyCompletedCommunities }}</h3>
-            <span class="text-dark" style="font-size: 0.75rem;">Resaltadas con borde amarillo</span>
-          </div>
-        </div>
-        <div class="col-md-3 col-sm-6">
-          <div class="card border p-3 rounded-4 bg-light">
-            <span class="text-muted small fw-medium">Sectores Pendientes</span>
-            <h3 class="fw-bold text-secondary mb-0 mt-1">{{ coverage.pendingSectors }}</h3>
-            <span class="text-muted" style="font-size: 0.75rem;">Sin asignar en el mes</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Breakdown by Operator -->
-      <div>
-        <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-          <i class="bi bi-people-fill text-primary"></i>
-          Desglose de Rutas por Operador
-        </h5>
-
-        <div class="row g-4">
-          @for (op of assignedOperatorsInSession(); track op.usuarioId) {
-            @let opColor = getOperatorColor(op.usuarioId);
-            @let assignedSectors = getOperatorSessionSectors(op.usuarioId);
-
-            <div class="col-lg-6 col-md-12">
-              <div
-                class="card border rounded-4 p-3 shadow-sm h-100"
-                [style.borderTop]="'4px solid ' + opColor.hex"
-              >
-                <!-- Operator Info Header -->
-                <div class="d-flex align-items-center justify-content-between pb-3 border-bottom mb-3">
-                  <div class="d-flex align-items-center gap-3">
-                    <div
-                      class="rounded-circle d-flex align-items-center justify-content-center fw-bold shadow-sm"
-                      [style.backgroundColor]="opColor.lightBg"
-                      [style.color]="opColor.contrastText"
-                      [style.border]="'2px solid ' + opColor.hex"
-                      style="width: 44px; height: 44px; font-size: 0.9rem"
-                    >
-                      {{ op.nombres.charAt(0) }}{{ op.apellidos.charAt(0) }}
-                    </div>
-                    <div>
-                      <h6 class="fw-bold text-dark mb-0">{{ op.nombres }} {{ op.apellidos }}</h6>
-                      <span class="text-muted small">{{ op.email || 'Operario de Campo' }}</span>
-                    </div>
-                  </div>
-
-                  <span
-                    class="badge rounded-pill px-3 py-2 fw-semibold"
-                    [style.backgroundColor]="opColor.hex"
-                    [style.color]="'#ffffff'"
-                  >
-                    {{ assignedSectors.length }} sector(es)
-                  </span>
-                </div>
-
-                <!-- List of Assigned Sectors -->
-                <div class="d-flex flex-column gap-2" style="max-height: 240px; overflow-y: auto;">
-                  @for (item of assignedSectors; track item.sector.sectorId) {
-                    <div class="d-flex align-items-center justify-content-between p-2 rounded-2 bg-light border">
-                      <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-geo-alt-fill" [style.color]="opColor.hex"></i>
-                        <div>
-                          <div class="fw-semibold text-dark small">{{ item.sector.nombre }}</div>
-                          <span class="text-muted" style="font-size: 0.72rem;">
-                            Comunidad: {{ item.comunidad?.nombre || 'Comunidad #' + item.sector.comunidadId }}
-                          </span>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        class="btn btn-outline-danger btn-xs py-1 px-2 rounded-2"
-                        (click)="removeOperatorSector(item.sector.sectorId!)"
-                        title="Quitar sector de este operario"
-                      >
-                        <i class="bi bi-x-lg"></i>
-                      </button>
-                    </div>
-                  }
-                </div>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-
-      <!-- Global Community Coverage Table -->
-      <div>
-        <h5 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
-          <i class="bi bi-grid-3x3 text-warning"></i>
-          Estado Global de Cobertura por Comunidad
-        </h5>
-
-        <div class="table-responsive border rounded-3">
-          <table class="table table-hover align-middle mb-0">
-            <thead class="table-light">
-              <tr>
-                <th class="ps-3">Comunidad</th>
-                <th>Sectores Totales</th>
-                <th>Sectores Asignados</th>
-                <th>Porcentaje de Cobertura</th>
-                <th class="text-end pe-3">Estado</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (com of comunidades(); track com.id) {
-                @let isCompleted = isCommunityCompleted(com.id);
-                @let countData = getCommunityAssignedCount(com.id);
-                @let pct = countData.total > 0 ? (countData.assigned / countData.total) * 100 : (isCompleted ? 100 : 0);
-
-                <tr [class.table-warning]="isCompleted">
-                  <td class="ps-3 fw-semibold">
-                    <i class="bi me-2" [ngClass]="isCompleted ? 'bi-star-fill text-warning' : 'bi-geo-alt text-muted'"></i>
-                    {{ com.nombre }}
-                  </td>
-                  <td>{{ countData.total }}</td>
-                  <td>{{ countData.assigned }}</td>
-                  <td style="min-width: 140px;">
-                    <div class="d-flex align-items-center gap-2">
-                      <div class="progress flex-grow-1" style="height: 6px;">
-                        <div
-                          class="progress-bar"
-                          [ngClass]="isCompleted ? 'bg-warning' : 'bg-primary'"
-                          role="progressbar"
-                          [style.width.%]="pct"
-                        ></div>
-                      </div>
-                      <span class="small fw-semibold">{{ pct | number:'1.0-0' }}%</span>
-                    </div>
-                  </td>
-                  <td class="text-end pe-3">
-                    @if (isCompleted) {
-                      <span class="badge bg-warning text-dark fw-bold px-3 py-1 border border-warning">
-                        100% CUBIERTA
-                      </span>
-                    } @else if (countData.assigned > 0) {
-                      <span class="badge bg-info-subtle text-info-emphasis px-3 py-1">
-                        PARCIAL ({{ countData.assigned }}/{{ countData.total }})
-                      </span>
-                    } @else {
-                      <span class="badge bg-light text-muted border px-3 py-1">
-                        PENDIENTE
-                      </span>
-                    }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Bottom Confirm Button in Step 3 -->
-      <div class="d-flex align-items-center justify-content-between pt-3 border-top">
-        <button
-          type="button"
-          class="btn btn-outline-secondary px-4 py-2 rounded-3"
-          (click)="backToAssignment()"
-          [disabled]="isLoading()"
-        >
-          <i class="bi bi-arrow-left me-1"></i> Volver a Modificar
-        </button>
-
-        <button
-          type="button"
-          class="btn btn-success px-4 py-2 rounded-3 d-flex align-items-center gap-2 fw-bold shadow-sm"
-          (click)="confirmAndDispatchAll()"
-          [disabled]="isLoading() || totalSessionAssignedSectorsCount() === 0"
-        >
-          @if (isLoading()) {
-            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-            <span>Despachando Rutas...</span>
-          } @else {
-            <i class="bi bi-send-check-fill"></i>
-            <span>Confirmar y Despachar Rutas</span>
-          }
-        </button>
       </div>
     </div>
   }
