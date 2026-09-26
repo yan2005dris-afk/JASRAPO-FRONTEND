@@ -137,10 +137,17 @@
           </span>
 
           <span class="d-inline-flex align-items-center gap-1">
-            <span class="badge rounded-pill fw-bold bg-warning text-dark px-2 py-1"
-              >Borde Dorado</span
+            <span class="badge rounded-pill fw-bold bg-success text-white px-2 py-1"
+              >Borde Verde</span
             >
             <span class="text-muted">Comunidad 100% Cubierta</span>
+          </span>
+
+          <span class="d-inline-flex align-items-center gap-1">
+            <span class="badge rounded-pill fw-bold bg-info text-white px-2 py-1"
+              >Borde Azul</span
+            >
+            <span class="text-muted">Asignación Parcial</span>
           </span>
 
           <span class="d-inline-flex align-items-center gap-1">
@@ -454,7 +461,11 @@
                 @let countData = getCommunityAssignedCount(com.id);
                 @let sectors = getSectoresForComunidad(com.id);
 
-                <div class="community-box" [class.is-complete]="isCompleted">
+                <div
+                  class="community-box"
+                  [class.is-complete]="isCompleted"
+                  [class.is-partial]="!isCompleted && countData.assigned > 0"
+                >
                   <!-- Community Card Header -->
                   <div
                     class="d-flex align-items-center justify-content-between flex-wrap gap-2 pb-2 border-bottom mb-2"
@@ -462,12 +473,24 @@
                     <div class="d-flex align-items-center gap-2">
                       <div
                         class="rounded-circle d-flex align-items-center justify-content-center"
-                        [ngClass]="isCompleted ? 'bg-warning text-dark' : 'bg-light text-secondary'"
+                        [ngClass]="
+                          isCompleted
+                            ? 'bg-success text-white'
+                            : countData.assigned > 0
+                              ? 'bg-info text-white'
+                              : 'bg-light text-secondary'
+                        "
                         style="width: 28px; height: 28px; font-size: 0.8rem"
                       >
                         <i
                           class="bi"
-                          [ngClass]="isCompleted ? 'bi-check-circle-fill' : 'bi-geo-alt'"
+                          [ngClass]="
+                            isCompleted
+                              ? 'bi-check-circle-fill'
+                              : countData.assigned > 0
+                                ? 'bi-pie-chart-fill'
+                                : 'bi-geo-alt'
+                          "
                         ></i>
                       </div>
                       <div>
@@ -482,8 +505,12 @@
                             </span>
                           }
                           @if (isCompleted) {
-                            <span class="badge badge-gold-complete rounded-pill px-2 py-1">
+                            <span class="badge badge-green-complete rounded-pill px-2 py-1">
                               100% CUBIERTA
+                            </span>
+                          } @else if (countData.assigned > 0) {
+                            <span class="badge badge-blue-partial rounded-pill px-2 py-1">
+                              PARCIAL
                             </span>
                           }
                         </h6>
@@ -495,8 +522,10 @@
                         class="badge"
                         [ngClass]="
                           isCompleted
-                            ? 'bg-warning-subtle text-warning-emphasis fw-bold'
-                            : 'bg-light text-muted border'
+                            ? 'bg-success-subtle text-success fw-bold border border-success-subtle'
+                            : countData.assigned > 0
+                              ? 'bg-info-subtle text-primary fw-bold border border-info-subtle'
+                              : 'bg-light text-muted border'
                         "
                       >
                         {{ countData.assigned }} / {{ countData.total }} {{ sectors.length > 0 ? 'sectores asignados' : 'asignada' }}
@@ -969,8 +998,20 @@
 
                 <div
                   class="p-3 rounded-3 border"
-                  [class.border-warning]="isCompleted"
-                  [style.backgroundColor]="isCompleted ? '#fffdf5' : '#ffffff'"
+                  [ngClass]="
+                    isCompleted
+                      ? 'border-success'
+                      : countData.assigned > 0
+                        ? 'border-info'
+                        : ''
+                  "
+                  [style.backgroundColor]="
+                    isCompleted
+                      ? '#f0fdf4'
+                      : countData.assigned > 0
+                        ? '#f0f9ff'
+                        : '#ffffff'
+                  "
                 >
                   <div class="d-flex align-items-center justify-content-between mb-2">
                     <div class="d-flex align-items-center gap-2">
@@ -978,19 +1019,21 @@
                         class="bi"
                         [ngClass]="
                           isCompleted
-                            ? 'bi-check-circle-fill text-warning'
-                            : 'bi-geo-alt text-muted'
+                            ? 'bi-check-circle-fill text-success'
+                            : countData.assigned > 0
+                              ? 'bi-pie-chart-fill text-info'
+                              : 'bi-geo-alt text-muted'
                         "
                       ></i>
                       <span class="fw-bold text-dark small">{{ com.nombre }}</span>
                     </div>
 
                     @if (isCompleted) {
-                      <span class="badge badge-gold-complete rounded-pill px-2 py-1">
+                      <span class="badge badge-green-complete rounded-pill px-2 py-1">
                         100% CUBIERTA
                       </span>
                     } @else if (countData.assigned > 0) {
-                      <span class="badge bg-info-subtle text-info-emphasis px-2 py-1">
+                      <span class="badge badge-blue-partial rounded-pill px-2 py-1">
                         PARCIAL ({{ countData.assigned }}/{{ countData.total }})
                       </span>
                     } @else {
@@ -1002,7 +1045,7 @@
                     <div class="progress flex-grow-1" style="height: 6px">
                       <div
                         class="progress-bar"
-                        [ngClass]="isCompleted ? 'bg-warning' : 'bg-primary'"
+                        [ngClass]="isCompleted ? 'bg-success' : 'bg-info'"
                         role="progressbar"
                         [style.width.%]="pct"
                       ></div>
