@@ -43,32 +43,44 @@
   @let stats = kpis();
   <div class="row g-3">
     <div class="col-md-3 col-sm-6">
-      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white">
-        <span class="text-muted small fw-medium">Total de Períodos</span>
-        <h3 class="fw-bold text-dark mb-0 mt-1">{{ stats.total }}</h3>
-        <span class="text-muted" style="font-size: 0.75rem;">Registrados en el sistema</span>
-      </div>
+      <app-kpi-card
+        label="Total de Períodos"
+        [value]="stats.total"
+        subtext="Registrados en el sistema"
+        icon="bi-calendar-range"
+        tone="primary"
+        [loading]="isLoading()"
+      />
     </div>
     <div class="col-md-3 col-sm-6">
-      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-success border-4">
-        <span class="text-success small fw-semibold">Períodos Abiertos</span>
-        <h3 class="fw-bold text-success mb-0 mt-1">{{ stats.abiertos }}</h3>
-        <span class="text-muted" style="font-size: 0.75rem;">En operación activa</span>
-      </div>
+      <app-kpi-card
+        label="Períodos Abiertos"
+        [value]="stats.abiertos"
+        subtext="En operación activa"
+        icon="bi-calendar-check"
+        tone="success"
+        [loading]="isLoading()"
+      />
     </div>
     <div class="col-md-3 col-sm-6">
-      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-info border-4">
-        <span class="text-info small fw-semibold">En Proceso</span>
-        <h3 class="fw-bold text-info mb-0 mt-1">{{ stats.procesando }}</h3>
-        <span class="text-muted" style="font-size: 0.75rem;">En facturación o cierre</span>
-      </div>
+      <app-kpi-card
+        label="En Proceso"
+        [value]="stats.procesando"
+        subtext="En facturación o cierre"
+        icon="bi-arrow-repeat"
+        tone="info"
+        [loading]="isLoading()"
+      />
     </div>
     <div class="col-md-3 col-sm-6">
-      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-secondary border-4">
-        <span class="text-secondary small fw-medium">Períodos Cerrados</span>
-        <h3 class="fw-bold text-secondary mb-0 mt-1">{{ stats.cerrados }}</h3>
-        <span class="text-muted" style="font-size: 0.75rem;">Planificados o finalizados</span>
-      </div>
+      <app-kpi-card
+        label="Períodos Cerrados"
+        [value]="stats.cerrados"
+        subtext="Planificados o liquidados"
+        icon="bi-archive"
+        tone="neutral"
+        [loading]="isLoading()"
+      />
     </div>
   </div>
 

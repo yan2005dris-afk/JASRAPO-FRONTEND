@@ -28,6 +28,7 @@ import {
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
+import { KpiCardComponent } from '../../../shared/components/kpi-card/kpi-card.component';
 
 @Component({
   selector: 'app-periods-admin',
@@ -40,6 +41,7 @@ import { DatePickerComponent } from '../../../shared/components/date-picker/date
     TableSkeletonComponent,
     EmptyStateComponent,
     DatePickerComponent,
+    KpiCardComponent,
   ],
   templateUrl: './periods-admin.component.html',
   styleUrl: './periods-admin.component.scss',
