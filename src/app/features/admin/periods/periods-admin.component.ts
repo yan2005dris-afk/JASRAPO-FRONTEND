@@ -94,6 +94,7 @@ export class PeriodsAdminComponent implements OnInit {
   readonly showEditModal = signal<boolean>(false);
   readonly isEditing = signal<boolean>(false);
   readonly editingPeriodId = signal<number | null>(null);
+  readonly creationMode = signal<'individual' | 'annual'>('individual');
 
   readonly showAnnualModal = signal<boolean>(false);
   readonly isGeneratingAnnual = signal<boolean>(false);
@@ -185,6 +186,8 @@ export class PeriodsAdminComponent implements OnInit {
   openCreateModal(): void {
     this.isEditing.set(false);
     this.editingPeriodId.set(null);
+    this.creationMode.set('individual');
+
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -207,6 +210,13 @@ export class PeriodsAdminComponent implements OnInit {
       fechaVencimiento: dueStr,
       estado: 'CERRADO',
     };
+
+    this.annualForm = {
+      year: new Date().getFullYear(),
+      diaVencimiento: 15,
+      estadoInicial: 'CERRADO',
+    };
+
     this.showEditModal.set(true);
   }
 
@@ -233,6 +243,8 @@ export class PeriodsAdminComponent implements OnInit {
 
   closeEditModal(): void {
     this.showEditModal.set(false);
+    this.showAnnualModal.set(false);
+    this.creationMode.set('individual');
   }
 
   savePeriod(): void {
@@ -305,16 +317,12 @@ export class PeriodsAdminComponent implements OnInit {
   }
 
   openAnnualModal(): void {
-    this.annualForm = {
-      year: new Date().getFullYear(),
-      diaVencimiento: 15,
-      estadoInicial: 'CERRADO',
-    };
-    this.showAnnualModal.set(true);
+    this.openCreateModal();
+    this.creationMode.set('annual');
   }
 
   closeAnnualModal(): void {
-    this.showAnnualModal.set(false);
+    this.closeEditModal();
   }
 
   executeGenerateAnnual(): void {

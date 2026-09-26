@@ -99,6 +99,7 @@ describe('PeriodsAdminComponent', () => {
       showEditModal: signal(false),
       isEditing: signal(false),
       editingPeriodId: signal<number | null>(null),
+      creationMode: signal<'individual' | 'annual'>('individual'),
       showAnnualModal: signal(false),
       isGeneratingAnnual: signal(false),
       filteredPeriods,
@@ -133,7 +134,11 @@ describe('PeriodsAdminComponent', () => {
     component.openCreateModal();
     expect(component.showEditModal()).toBe(true);
     expect(component.isEditing()).toBe(false);
+    expect(component.creationMode()).toBe('individual');
     expect(component.periodForm.estado).toBe('CERRADO');
+
+    component.creationMode.set('annual');
+    expect(component.creationMode()).toBe('annual');
   });
 
   it('should open modal for editing existing period', () => {
