@@ -145,7 +145,7 @@
               class="rounded-circle d-inline-block bg-secondary"
               style="width: 10px; height: 10px"
             ></span>
-            <span class="text-muted">Bloqueado en BD (No repetible)</span>
+            <span class="text-muted">Ruta asignada previamente</span>
           </span>
         </div>
 
@@ -270,7 +270,7 @@
                           class="text-muted fw-semibold"
                           style="font-size: 0.7rem; text-transform: uppercase"
                         >
-                          Rutas del Mes en BD:
+                          Rutas del período:
                         </span>
                         <span
                           class="badge bg-secondary-subtle text-secondary"
@@ -566,7 +566,7 @@
                           @if (status.isAssigned) {
                             <div class="text-truncate text-muted" style="font-size: 0.7rem">
                               @if (status.isDbAssigned) {
-                                <i class="bi bi-database me-1"></i>Ruta en BD ({{ status.operarioName }})
+                                <i class="bi bi-person-check-fill me-1"></i>Ruta asignada a {{ status.operarioName }}
                               } @else if (isMyAssigned) {
                                 <span class="text-primary fw-semibold">Asignada a este operario en sesión</span>
                               } @else {
@@ -634,9 +634,9 @@
                                 @if (status.isAssigned) {
                                   <div class="text-truncate text-muted" style="font-size: 0.68rem">
                                     @if (status.isDbAssigned) {
-                                      <i class="bi bi-database me-1"></i>Ruta en BD ({{
+                                      <i class="bi bi-person-check-fill me-1"></i>Ruta asignada a {{
                                         status.operarioName
-                                      }})
+                                      }}
                                     } @else if (isMyAssigned) {
                                       <span class="text-primary fw-semibold">Asignado</span>
                                     } @else {
