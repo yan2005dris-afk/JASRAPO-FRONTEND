@@ -194,6 +194,24 @@ describe('PeriodsAdminComponent', () => {
     );
   });
 
+  it('should reject savePeriod() if date range overlaps with an existing period', () => {
+    component.periodForm = {
+      nombre: 'Enero Solapado',
+      fechaInicio: '2026-01-15',
+      fechaFin: '2026-02-15',
+      fechaVencimiento: '2026-03-01',
+      estado: 'CERRADO',
+    };
+
+    component.savePeriod();
+
+    expect(mockToastService.show).toHaveBeenCalledWith(
+      expect.stringContaining('se solapa con el período "Enero 2026"'),
+      'warning',
+    );
+    expect(mockPeriodsService.createPeriod).not.toHaveBeenCalled();
+  });
+
   it('should execute annual generation on executeGenerateAnnual()', () => {
     mockPeriodsService.generateAnnualPeriods.mockReturnValue(of(samplePeriods));
     mockPeriodsService.getAllPeriods.mockReturnValue(of({ data: samplePeriods }));

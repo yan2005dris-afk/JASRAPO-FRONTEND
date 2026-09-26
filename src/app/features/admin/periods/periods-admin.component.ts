@@ -260,9 +260,36 @@ export class PeriodsAdminComponent implements OnInit {
       return;
     }
 
-    if (new Date(this.periodForm.fechaInicio) > new Date(this.periodForm.fechaFin)) {
+    const newStart = new Date(this.periodForm.fechaInicio);
+    const newEnd = new Date(this.periodForm.fechaFin);
+
+    if (newStart > newEnd) {
       this.toastService.show(
         'La fecha de inicio no puede ser posterior a la fecha de fin.',
+        'warning',
+      );
+      return;
+    }
+
+    if (this.periodForm.fechaVencimiento && newEnd > new Date(this.periodForm.fechaVencimiento)) {
+      this.toastService.show(
+        'La fecha de vencimiento no puede ser anterior a la fecha de fin.',
+        'warning',
+      );
+      return;
+    }
+
+    const currentId = this.isEditing() ? this.editingPeriodId() : null;
+    const overlapping = this.periods().find((p) => {
+      if (currentId && p.periodoId === currentId) return false;
+      const pStart = new Date(p.fechaInicio);
+      const pEnd = new Date(p.fechaFin);
+      return newStart <= pEnd && newEnd >= pStart;
+    });
+
+    if (overlapping) {
+      this.toastService.show(
+        `El rango seleccionado se solapa con el período "${overlapping.nombre}".`,
         'warning',
       );
       return;
