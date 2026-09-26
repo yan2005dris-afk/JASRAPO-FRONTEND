@@ -246,12 +246,20 @@
 
                     <!-- Session Assigned Badge -->
                     <div class="text-end">
+                      @let dbCount = getOperatorExistingRoutesCount(op.usuarioId);
                       @if (sessionCount > 0) {
                         <span
                           class="badge rounded-pill px-2 py-1 fw-semibold text-white"
                           [style.backgroundColor]="opColor.hex"
                         >
-                          +{{ sessionCount }} sect.
+                          {{ dbCount + sessionCount }} sect. (+{{ sessionCount }})
+                        </span>
+                      } @else if (dbCount > 0) {
+                        <span
+                          class="badge rounded-pill px-2 py-1 fw-semibold text-white"
+                          [style.backgroundColor]="opColor.hex"
+                        >
+                          {{ dbCount }} sect.
                         </span>
                       } @else {
                         <span

@@ -484,6 +484,11 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     return { assigned, total };
   }
 
+  // Count routes already in database for this operator in the active period
+  getOperatorExistingRoutesCount(operarioId: number): number {
+    return this.periodExistingRoutes().filter((r) => r.operarioId === operarioId).length;
+  }
+
   // Count assigned sectors in session for an operator
   getOperatorSessionSectorsCount(operarioId: number): number {
     let count = 0;
