@@ -585,19 +585,10 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   // Suggested Base Name
   readonly sugeridoNombreBase = computed(() => {
     const periodoSeleccionado = this.selectedPeriod();
-    const fechaObjetivo = this.fechaPlanificada();
     const fragmentosNombre: string[] = ['Ruta Lectura'];
 
     if (periodoSeleccionado?.nombre) {
       fragmentosNombre.push(periodoSeleccionado.nombre);
-    }
-
-    if (fechaObjetivo && /^\d{4}-\d{2}/.test(fechaObjetivo)) {
-      const [, mesString] = fechaObjetivo.split('-');
-      const indiceMes = parseInt(mesString, 10) - 1;
-      if (indiceMes >= 0 && indiceMes < this.MONTH_NAMES.length) {
-        fragmentosNombre.push(this.MONTH_NAMES[indiceMes]);
-      }
     }
 
     return fragmentosNombre.join(' - ');
@@ -923,10 +914,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   executeBatchAssignments(): void {
     this.isLoading.set(true);
     const periodId = this.selectedPeriodId()!;
-    let fechaToSend = this.fechaPlanificada() || undefined;
-    if (fechaToSend && /^\d{4}-\d{2}$/.test(fechaToSend)) {
-      fechaToSend = `${fechaToSend}-01`;
-    }
 
     const operatorCommunityMap = new Map<number, Map<number, number[]>>();
     this.sessionSectorAssignments().forEach((opId, sectorId) => {
@@ -952,7 +939,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
           comunidadId,
           tipoRuta: (this.tipoActividadSeleccionada() as TipoRuta) || 'LECTURA',
           sectorIds,
-          fechaPlanificada: fechaToSend,
           nombreBase: this.nombreBase().trim() || undefined,
         });
       });
@@ -966,7 +952,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
         comunidadId,
         tipoRuta: (this.tipoActividadSeleccionada() as TipoRuta) || 'LECTURA',
         sectorIds: [],
-        fechaPlanificada: fechaToSend,
         nombreBase: this.nombreBase().trim() || undefined,
       });
     });

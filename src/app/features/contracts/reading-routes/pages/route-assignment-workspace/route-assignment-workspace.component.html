@@ -52,7 +52,7 @@
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 pt-3 border-top">
       <div class="d-flex align-items-center gap-3 flex-wrap">
         <!-- Period Picker -->
-        <div style="min-width: 280px">
+        <div style="min-width: 320px">
           <app-period-picker
             inputId="workspacePagePeriodPicker"
             label="Período Operativo"
@@ -60,24 +60,6 @@
             [required]="true"
             [disabled]="isLoading()"
             (periodSelected)="onPeriodSelected($event)"
-          />
-        </div>
-
-        <!-- Planned Month/Date -->
-        <div style="min-width: 200px">
-          <label
-            for="workspaceFechaPlanificada"
-            class="form-label fw-semibold text-dark small mb-1"
-          >
-            Mes / Fecha Planificada
-          </label>
-          <input
-            id="workspaceFechaPlanificada"
-            type="month"
-            class="form-control form-control-sm"
-            [ngModel]="fechaPlanificada()"
-            (ngModelChange)="fechaPlanificada.set($event)"
-            [disabled]="isLoading()"
           />
         </div>
       </div>
