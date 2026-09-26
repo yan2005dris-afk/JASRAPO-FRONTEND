@@ -387,8 +387,8 @@
                   icon="bi-search"
                   [query]="communitySearch()"
                   [disabled]="isLoading()"
-                  (queryChange)="communitySearch.set($event)"
-                  (clear)="communitySearch.set('')"
+                  (queryChange)="communitySearch.set($event); communityCurrentPage.set(1)"
+                  (clear)="communitySearch.set(''); communityCurrentPage.set(1)"
                 />
               </div>
 
@@ -441,7 +441,7 @@
                 </div>
               }
 
-              @for (com of filteredComunidades(); track com.id) {
+              @for (com of paginatedComunidades(); track com.id) {
                 @let isCompleted = isCommunityCompleted(com.id);
                 @let countData = getCommunityAssignedCount(com.id);
                 @let sectors = getSectoresForComunidad(com.id);
@@ -491,26 +491,87 @@
                             : 'bg-light text-muted border'
                         "
                       >
-                        {{ countData.assigned }} / {{ countData.total }} sectores asignados
+                        {{ countData.assigned }} / {{ countData.total }} {{ sectors.length > 0 ? 'sectores asignados' : 'asignada' }}
                       </span>
 
-                      @if (!isCompleted && sectors.length > 0 && selectedOperarioId()) {
+                      @if (!isCompleted && selectedOperarioId()) {
                         <button
                           type="button"
                           class="btn btn-outline-primary btn-sm py-1 px-2 rounded-2"
                           style="font-size: 0.72rem"
                           (click)="toggleAllSectorsInCommunity(com.id)"
                         >
-                          <i class="bi bi-check-all me-1"></i>Asignar libres
+                          <i class="bi bi-check-all me-1"></i>{{ sectors.length > 0 ? 'Asignar libres' : 'Asignar comunidad' }}
                         </button>
                       }
                     </div>
                   </div>
 
-                  <!-- Sectors Grid for this Community -->
+                  <!-- Direct Community Assignment (when no sectors exist) -->
                   @if (sectors.length === 0) {
-                    <div class="text-muted small py-2 fst-italic" style="font-size: 0.78rem">
-                      Esta comunidad no tiene sectores configurados.
+                    @let status = getCommunityStatus(com.id);
+                    @let isMyAssigned =
+                      status.isAssigned &&
+                      status.operarioId === selectedOperarioId() &&
+                      !status.isDbAssigned;
+                    @let isOtherAssigned =
+                      status.isAssigned && status.operarioId !== selectedOperarioId();
+
+                    <div
+                      class="sector-card d-flex align-items-center justify-content-between p-3 rounded-2 border"
+                      [class.is-session-selected]="isMyAssigned"
+                      [class.is-db-locked]="status.isDbAssigned"
+                      [class.is-other-assigned]="isOtherAssigned"
+                      (click)="toggleCommunityAssignment(com.id)"
+                      role="button"
+                      tabindex="0"
+                      (keydown.enter)="toggleCommunityAssignment(com.id)"
+                    >
+                      <div class="d-flex align-items-center gap-2 overflow-hidden">
+                        <i
+                          class="bi"
+                          [ngClass]="{
+                            'bi-check-square-fill text-primary': isMyAssigned,
+                            'bi-lock-fill text-secondary': status.isDbAssigned,
+                            'bi-person-badge-fill text-secondary': isOtherAssigned,
+                            'bi-square text-muted': !status.isAssigned,
+                          }"
+                        ></i>
+                        <div class="text-truncate">
+                          <div
+                            class="fw-semibold text-dark small text-truncate"
+                            style="font-size: 0.82rem"
+                          >
+                            Asignar {{ com.nombre }} (Comunidad completa)
+                          </div>
+                          @if (status.isAssigned) {
+                            <div class="text-truncate text-muted" style="font-size: 0.7rem">
+                              @if (status.isDbAssigned) {
+                                <i class="bi bi-database me-1"></i>Ruta en BD ({{ status.operarioName }})
+                              } @else if (isMyAssigned) {
+                                <span class="text-primary fw-semibold">Asignada a este operario en sesión</span>
+                              } @else {
+                                <i class="bi bi-person me-1"></i>Asignada a {{ status.operarioName }} en sesión
+                              }
+                            </div>
+                          } @else {
+                            <span class="text-muted" style="font-size: 0.72rem">
+                              Comunidad rural sin subdivisión de sectores &bull; Click para asignar ruta directa
+                            </span>
+                          }
+                        </div>
+                      </div>
+
+                      @if (status.isAssigned && status.color) {
+                        <span
+                          class="badge rounded-pill ms-2 text-truncate"
+                          [style.background-color]="status.color.lightBg"
+                          [style.color]="status.color.contrastText"
+                          style="font-size: 0.7rem; max-width: 150px"
+                        >
+                          {{ status.operarioName }}
+                        </span>
+                      }
                     </div>
                   } @else {
                     <div class="row g-2">
@@ -578,6 +639,43 @@
                 </div>
               }
             </div>
+
+            <!-- Community Cards Pagination Controls -->
+            @if (communityTotalPages() > 1) {
+              <div class="d-flex align-items-center justify-content-between pt-3 border-top mt-2">
+                <span class="text-muted small" style="font-size: 0.75rem">
+                  Página {{ communityCurrentPage() }} de {{ communityTotalPages() }} ({{ filteredComunidades().length }} comunidades)
+                </span>
+                <div class="btn-group btn-group-sm">
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    [disabled]="communityCurrentPage() <= 1"
+                    (click)="prevCommunityPage()"
+                  >
+                    <i class="bi bi-chevron-left me-1"></i>Anterior
+                  </button>
+                  @for (p of communityPagesArray(); track p) {
+                    <button
+                      type="button"
+                      class="btn btn-sm"
+                      [ngClass]="p === communityCurrentPage() ? 'btn-primary' : 'btn-outline-secondary'"
+                      (click)="setCommunityCurrentPage(p)"
+                    >
+                      {{ p }}
+                    </button>
+                  }
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    [disabled]="communityCurrentPage() >= communityTotalPages()"
+                    (click)="nextCommunityPage()"
+                  >
+                    Siguiente<i class="bi bi-chevron-right ms-1"></i>
+                  </button>
+                </div>
+              </div>
+            }
           </div>
         </div>
       </div>
@@ -782,37 +880,54 @@
                       class="badge rounded-pill px-3 py-1 fw-semibold text-white"
                       [style.backgroundColor]="opColor.hex"
                     >
-                      {{ assignedSectors.length }} sector(es)
+                      {{ assignedSectors.length }} ruta(s)
                     </span>
                   </div>
 
-                  <!-- Sectors List -->
+                  <!-- Sectors and Communities List -->
                   <div class="d-flex flex-column gap-1" style="max-height: 200px; overflow-y: auto">
-                    @for (item of assignedSectors; track item.sector.sectorId) {
+                    @for (item of assignedSectors; track (item.sector?.sectorId || 'com-' + item.comunidad?.id)) {
                       <div
                         class="d-flex align-items-center justify-content-between p-2 rounded-2 bg-white border"
                       >
                         <div class="d-flex align-items-center gap-2">
-                          <i class="bi bi-geo-alt-fill text-primary"></i>
+                          <i
+                            class="bi text-primary"
+                            [ngClass]="item.isFullCommunity ? 'bi-shield-check' : 'bi-geo-alt-fill'"
+                          ></i>
                           <div>
-                            <div class="fw-semibold text-dark small">{{ item.sector.nombre }}</div>
+                            <div class="fw-semibold text-dark small">
+                              {{ item.isFullCommunity ? item.comunidad?.nombre + ' (Comunidad completa)' : item.sector?.nombre }}
+                            </div>
                             <span class="text-muted" style="font-size: 0.72rem">
-                              Comunidad:
                               {{
-                                item.comunidad?.nombre || 'Comunidad #' + item.sector.comunidadId
+                                item.isFullCommunity
+                                  ? 'Ruta directa a nivel de comunidad'
+                                  : 'Comunidad: ' + (item.comunidad?.nombre || 'Comunidad #' + item.sector?.comunidadId)
                               }}
                             </span>
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          class="btn btn-outline-danger btn-sm py-0 px-2 rounded-2"
-                          (click)="removeOperatorSector(item.sector.sectorId!)"
-                          title="Quitar sector"
-                        >
-                          <i class="bi bi-x-lg"></i>
-                        </button>
+                        @if (item.isFullCommunity) {
+                          <button
+                            type="button"
+                            class="btn btn-outline-danger btn-sm py-0 px-2 rounded-2"
+                            (click)="removeOperatorCommunity(item.comunidad!.id)"
+                            title="Quitar comunidad"
+                          >
+                            <i class="bi bi-x-lg"></i>
+                          </button>
+                        } @else {
+                          <button
+                            type="button"
+                            class="btn btn-outline-danger btn-sm py-0 px-2 rounded-2"
+                            (click)="removeOperatorSector(item.sector!.sectorId!)"
+                            title="Quitar sector"
+                          >
+                            <i class="bi bi-x-lg"></i>
+                          </button>
+                        }
                       </div>
                     }
                   </div>

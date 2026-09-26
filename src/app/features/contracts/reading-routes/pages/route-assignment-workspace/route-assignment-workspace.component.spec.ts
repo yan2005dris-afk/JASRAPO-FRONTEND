@@ -84,6 +84,9 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
 
     const periodExistingRoutes = signal<IReadingRoute[]>([]);
     const sessionSectorAssignments = signal(new Map<number, number>());
+    const sessionCommunityAssignments = signal(new Map<number, number>());
+    const communityCurrentPage = signal<number>(1);
+    const communityPageSize = signal<number>(4);
     const operarios = signal(mockOperarios);
     const comunidades = signal(mockComunidades);
     const sectores = signal(mockSectores);
@@ -94,6 +97,16 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
       for (const r of periodExistingRoutes()) {
         if (r.sectorId != null) {
           map.set(r.sectorId, r);
+        }
+      }
+      return map;
+    });
+
+    const existingAssignedCommunityMap = computed(() => {
+      const map = new Map<number, IReadingRoute>();
+      for (const r of periodExistingRoutes()) {
+        if (r.comunidadId != null && r.sectorId == null) {
+          map.set(r.comunidadId, r);
         }
       }
       return map;
@@ -111,11 +124,14 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
       return map;
     });
 
-    const totalSessionAssignedSectorsCount = computed(() => sessionSectorAssignments().size);
+    const totalSessionAssignedSectorsCount = computed(
+      () => sessionSectorAssignments().size + sessionCommunityAssignments().size,
+    );
 
     const assignedOperatorsInSession = computed(() => {
       const opIds = new Set<number>();
       sessionSectorAssignments().forEach((opId) => opIds.add(opId));
+      sessionCommunityAssignments().forEach((opId) => opIds.add(opId));
       return operarios().filter((op) => opIds.has(op.usuarioId));
     });
 
@@ -183,16 +199,35 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
       communityFilter: signal('all'),
       contractSearch: signal(''),
       sessionSectorAssignments,
+      sessionCommunityAssignments,
+      communityCurrentPage,
+      communityPageSize,
       selectedContratoIds: signal([]),
       isLoading: signal(false),
       isLoadingContracts: signal(false),
       existingAssignedSectorMap,
+      existingAssignedCommunityMap,
       existingCommunityRoutes,
       totalSessionAssignedSectorsCount,
       assignedOperatorsInSession,
       globalCoverageSummary,
       sugeridoNombreBase,
       nombreBase,
+      communityTotalPages: computed(() => {
+        const total = component.filteredComunidades().length;
+        return Math.max(1, Math.ceil(total / component.communityPageSize()));
+      }),
+      paginatedComunidades: computed(() => {
+        const list = component.filteredComunidades();
+        const page = component.communityCurrentPage();
+        const size = component.communityPageSize();
+        const start = (page - 1) * size;
+        return list.slice(start, start + size);
+      }),
+      communityPagesArray: computed(() => {
+        const total = component.communityTotalPages();
+        return Array.from({ length: total }, (_, i) => i + 1);
+      }),
       filteredComunidades: computed(() => {
         const q = component.communitySearch().toLowerCase().trim();
         const filter = component.communityFilter();
@@ -422,9 +457,55 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
 
     expect(component.totalSessionAssignedSectorsCount()).toBe(3);
     expect(mockToastService.show).toHaveBeenCalledWith(
-      expect.stringContaining('Se asignaron 3 sector(es) libres al operario activo.'),
+      expect.stringContaining('Se asignaron 3'),
       'success',
     );
+  });
+
+  it('should toggle direct community assignment for communities without sectors', () => {
+    // Comunidad 3 has no sectors
+    component.comunidades.set([
+      ...mockComunidades,
+      { id: 3, nombre: 'Curia', codigo: '003', porcentajeTasaSeguridad: 0 },
+    ]);
+
+    component.selectedOperarioId.set(5);
+    component.toggleCommunityAssignment(3);
+
+    expect(component.sessionCommunityAssignments().get(3)).toBe(5);
+    expect(component.totalSessionAssignedSectorsCount()).toBe(1);
+
+    // Toggle off
+    component.toggleCommunityAssignment(3);
+    expect(component.sessionCommunityAssignments().has(3)).toBe(false);
+    expect(component.totalSessionAssignedSectorsCount()).toBe(0);
+  });
+
+  it('should paginate community cards correctly', () => {
+    component.comunidades.set([
+      { id: 1, nombre: 'Olon', codigo: '001', porcentajeTasaSeguridad: 5 },
+      { id: 2, nombre: 'Nuñez', codigo: '002', porcentajeTasaSeguridad: 0 },
+      { id: 3, nombre: 'La Entrada', codigo: '003', porcentajeTasaSeguridad: 3 },
+      { id: 4, nombre: 'San Jose', codigo: '004', porcentajeTasaSeguridad: 2 },
+      { id: 5, nombre: 'Curia', codigo: '005', porcentajeTasaSeguridad: 0 },
+    ]);
+    component.communityPageSize.set(2);
+
+    expect(component.communityTotalPages()).toBe(3);
+    expect(component.paginatedComunidades().length).toBe(2);
+    expect(component.paginatedComunidades()[0].id).toBe(1);
+
+    component.nextCommunityPage();
+    expect(component.communityCurrentPage()).toBe(2);
+    expect(component.paginatedComunidades()[0].id).toBe(3);
+
+    component.prevCommunityPage();
+    expect(component.communityCurrentPage()).toBe(1);
+
+    component.setCommunityCurrentPage(3);
+    expect(component.communityCurrentPage()).toBe(3);
+    expect(component.paginatedComunidades().length).toBe(1);
+    expect(component.paginatedComunidades()[0].id).toBe(5);
   });
 
   it('should reset session assignments when resetSessionAssignments is called', () => {

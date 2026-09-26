@@ -183,10 +183,15 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   readonly communityFilter = signal<'all' | 'pending' | 'completed'>('all');
   readonly contractSearch = signal<string>('');
 
-  // Dynamic Session Assignments: Map of sectorId -> operarioId
+  // Dynamic Session Assignments: Map of sectorId -> operarioId, and comunidadId -> operarioId (for communities without sectors)
   readonly sessionSectorAssignments = signal<Map<number, number>>(new Map());
+  readonly sessionCommunityAssignments = signal<Map<number, number>>(new Map());
   // Non-lectura: selected contract IDs
   readonly selectedContratoIds = signal<number[]>([]);
+
+  // Community Card Pagination
+  readonly communityCurrentPage = signal<number>(1);
+  readonly communityPageSize = signal<number>(4);
 
   readonly isLoading = signal<boolean>(false);
   readonly isLoadingContracts = signal<boolean>(false);
@@ -224,6 +229,17 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     for (const r of this.periodExistingRoutes()) {
       if (r.sectorId != null) {
         map.set(r.sectorId, r);
+      }
+    }
+    return map;
+  });
+
+  // Pre-existing assigned routes for whole communities (without sectors)
+  readonly existingAssignedCommunityMap = computed(() => {
+    const map = new Map<number, IReadingRoute>();
+    for (const r of this.periodExistingRoutes()) {
+      if (r.comunidadId != null && r.sectorId == null) {
+        map.set(r.comunidadId, r);
       }
     }
     return map;
@@ -284,13 +300,101 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     });
   });
 
+  // Card Pagination Computed Properties
+  readonly communityTotalPages = computed(() => {
+    const total = this.filteredComunidades().length;
+    return Math.max(1, Math.ceil(total / this.communityPageSize()));
+  });
+
+  readonly paginatedComunidades = computed(() => {
+    const list = this.filteredComunidades();
+    const page = this.communityCurrentPage();
+    const size = this.communityPageSize();
+    const start = (page - 1) * size;
+    return list.slice(start, start + size);
+  });
+
+  readonly communityPagesArray = computed(() => {
+    const total = this.communityTotalPages();
+    return Array.from({ length: total }, (_, i) => i + 1);
+  });
+
+  setCommunityCurrentPage(page: number): void {
+    if (page >= 1 && page <= this.communityTotalPages()) {
+      this.communityCurrentPage.set(page);
+    }
+  }
+
+  nextCommunityPage(): void {
+    if (this.communityCurrentPage() < this.communityTotalPages()) {
+      this.communityCurrentPage.update((p) => p + 1);
+    }
+  }
+
+  prevCommunityPage(): void {
+    if (this.communityCurrentPage() > 1) {
+      this.communityCurrentPage.update((p) => p - 1);
+    }
+  }
+
   setCommunityFilter(filter: 'all' | 'pending' | 'completed'): void {
     this.communityFilter.set(filter);
+    this.communityCurrentPage.set(1);
   }
 
   // Helper to get sectors for a community
   getSectoresForComunidad(comunidadId: number): Sectores[] {
     return this.sectores().filter((s) => s.comunidadId === comunidadId);
+  }
+
+  // Get current assignment status for a whole community (without sectors)
+  getCommunityStatus(comunidadId: number | undefined): {
+    isAssigned: boolean;
+    isDbAssigned: boolean;
+    isCurrentOperator: boolean;
+    operarioId?: number;
+    operarioName?: string;
+    color?: OperatorColor;
+    routeName?: string;
+  } {
+    if (comunidadId == null) {
+      return { isAssigned: false, isDbAssigned: false, isCurrentOperator: false };
+    }
+
+    const dbRoute = this.existingAssignedCommunityMap().get(comunidadId);
+    if (dbRoute) {
+      const op = this.operarios().find((u) => u.usuarioId === dbRoute.operarioId);
+      const color = dbRoute.operarioId ? this.getOperatorColor(dbRoute.operarioId) : undefined;
+      return {
+        isAssigned: true,
+        isDbAssigned: true,
+        isCurrentOperator: dbRoute.operarioId === this.selectedOperarioId(),
+        operarioId: dbRoute.operarioId,
+        operarioName: op ? `${op.nombres} ${op.apellidos}` : `Operario #${dbRoute.operarioId}`,
+        color,
+        routeName: dbRoute.nombre,
+      };
+    }
+
+    const sessionOpId = this.sessionCommunityAssignments().get(comunidadId);
+    if (sessionOpId != null) {
+      const op = this.operarios().find((u) => u.usuarioId === sessionOpId);
+      const color = this.getOperatorColor(sessionOpId);
+      return {
+        isAssigned: true,
+        isDbAssigned: false,
+        isCurrentOperator: sessionOpId === this.selectedOperarioId(),
+        operarioId: sessionOpId,
+        operarioName: op ? `${op.nombres} ${op.apellidos}` : `Operario #${sessionOpId}`,
+        color,
+      };
+    }
+
+    return {
+      isAssigned: false,
+      isDbAssigned: false,
+      isCurrentOperator: false,
+    };
   }
 
   // Get current assignment status for a sector
@@ -352,8 +456,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     if (comunidadId == null) return false;
     const communitySectors = this.getSectoresForComunidad(comunidadId);
     if (communitySectors.length === 0) {
-      const existing = this.existingCommunityRoutes().get(comunidadId);
-      return (existing && existing.length > 0) || false;
+      return this.getCommunityStatus(comunidadId).isAssigned;
     }
 
     return communitySectors.every((s) => {
@@ -367,6 +470,10 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   getCommunityAssignedCount(comunidadId: number | undefined): { assigned: number; total: number } {
     if (comunidadId == null) return { assigned: 0, total: 0 };
     const communitySectors = this.getSectoresForComunidad(comunidadId);
+    if (communitySectors.length === 0) {
+      const isAssigned = this.getCommunityStatus(comunidadId).isAssigned;
+      return { assigned: isAssigned ? 1 : 0, total: 1 };
+    }
     const total = communitySectors.length;
     let assigned = 0;
     for (const s of communitySectors) {
@@ -383,33 +490,51 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     this.sessionSectorAssignments().forEach((opId) => {
       if (opId === operarioId) count++;
     });
+    this.sessionCommunityAssignments().forEach((opId) => {
+      if (opId === operarioId) count++;
+    });
     return count;
   }
 
-  // Get list of session sectors assigned to an operator
-  getOperatorSessionSectors(operarioId: number): { sector: Sectores; comunidad?: Comunidad }[] {
-    const result: { sector: Sectores; comunidad?: Comunidad }[] = [];
+  // Get list of session sectors and communities assigned to an operator
+  getOperatorSessionSectors(operarioId: number): {
+    sector?: Sectores;
+    comunidad?: Comunidad;
+    isFullCommunity?: boolean;
+  }[] {
+    const result: { sector?: Sectores; comunidad?: Comunidad; isFullCommunity?: boolean }[] = [];
     this.sessionSectorAssignments().forEach((opId, sectorId) => {
       if (opId === operarioId) {
         const sector = this.sectores().find((s) => s.sectorId === sectorId);
         if (sector) {
           const comunidad = this.comunidades().find((c) => c.id === sector.comunidadId);
-          result.push({ sector, comunidad });
+          result.push({ sector, comunidad, isFullCommunity: false });
         }
       }
     });
+
+    this.sessionCommunityAssignments().forEach((opId, comId) => {
+      if (opId === operarioId) {
+        const comunidad = this.comunidades().find((c) => c.id === comId);
+        if (comunidad) {
+          result.push({ comunidad, isFullCommunity: true });
+        }
+      }
+    });
+
     return result;
   }
 
-  // Total sectors assigned across all operators in this session
+  // Total sectors and whole communities assigned across all operators in this session
   readonly totalSessionAssignedSectorsCount = computed(() => {
-    return this.sessionSectorAssignments().size;
+    return this.sessionSectorAssignments().size + this.sessionCommunityAssignments().size;
   });
 
-  // Operators that have at least 1 sector assigned in session
+  // Operators that have at least 1 sector or whole community assigned in session
   readonly assignedOperatorsInSession = computed(() => {
     const opIds = new Set<number>();
     this.sessionSectorAssignments().forEach((opId) => opIds.add(opId));
+    this.sessionCommunityAssignments().forEach((opId) => opIds.add(opId));
     return this.operarios().filter((op) => opIds.has(op.usuarioId));
   });
 
@@ -532,6 +657,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     this.selectedPeriod.set(period);
     this.selectedPeriodId.set(period ? period.periodoId : null);
     this.sessionSectorAssignments.set(new Map());
+    this.sessionCommunityAssignments.set(new Map());
     if (period?.periodoId) {
       this.loadPeriodRoutes(period.periodoId);
     } else {
@@ -589,6 +715,43 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     this.sessionSectorAssignments.set(currentMap);
   }
 
+  // Toggle direct community assignment for communities without sectors
+  toggleCommunityAssignment(comunidadId: number): void {
+    const opId = this.selectedOperarioId();
+    if (!opId) {
+      this.toastService.show('Por favor, seleccioná un operario en la Tabla 1 primero.', 'warning');
+      return;
+    }
+
+    const status = this.getCommunityStatus(comunidadId);
+    if (status.isDbAssigned) {
+      this.toastService.show(
+        `Esta comunidad ya tiene una ruta creada en el mes para ${status.operarioName}.`,
+        'warning',
+      );
+      return;
+    }
+
+    const currentMap = new Map(this.sessionCommunityAssignments());
+
+    if (status.operarioId === opId) {
+      currentMap.delete(comunidadId);
+      this.sessionCommunityAssignments.set(currentMap);
+      return;
+    }
+
+    if (status.operarioId && status.operarioId !== opId) {
+      this.toastService.show(
+        `Esta comunidad ya está asignada a ${status.operarioName} en esta sesión.`,
+        'warning',
+      );
+      return;
+    }
+
+    currentMap.set(comunidadId, opId);
+    this.sessionCommunityAssignments.set(currentMap);
+  }
+
   // Assign or toggle all available sectors in a community to current operator
   toggleAllSectorsInCommunity(comunidadId: number): void {
     const opId = this.selectedOperarioId();
@@ -598,7 +761,10 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     }
 
     const communitySectors = this.getSectoresForComunidad(comunidadId);
-    if (communitySectors.length === 0) return;
+    if (communitySectors.length === 0) {
+      this.toggleCommunityAssignment(comunidadId);
+      return;
+    }
 
     const currentMap = new Map(this.sessionSectorAssignments());
     const availableSectors = communitySectors.filter((s) => {
@@ -633,6 +799,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     }
 
     const currentMap = new Map(this.sessionSectorAssignments());
+    const currentComMap = new Map(this.sessionCommunityAssignments());
     let assignedCount = 0;
 
     for (const sec of this.sectores()) {
@@ -644,14 +811,27 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       }
     }
 
+    for (const com of this.comunidades()) {
+      if (!com.id) continue;
+      const comSectors = this.getSectoresForComunidad(com.id);
+      if (comSectors.length === 0) {
+        const comStatus = this.getCommunityStatus(com.id);
+        if (!comStatus.isDbAssigned && !comStatus.isAssigned) {
+          currentComMap.set(com.id, opId);
+          assignedCount++;
+        }
+      }
+    }
+
     if (assignedCount === 0) {
-      this.toastService.show('No hay sectores libres disponibles para asignar.', 'info');
+      this.toastService.show('No hay sectores ni comunidades libres disponibles para asignar.', 'info');
       return;
     }
 
     this.sessionSectorAssignments.set(currentMap);
+    this.sessionCommunityAssignments.set(currentComMap);
     this.toastService.show(
-      `Se asignaron ${assignedCount} sector(es) libres al operario activo.`,
+      `Se asignaron ${assignedCount} sector(es)/comunidad(es) libres al operario activo.`,
       'success',
     );
   }
@@ -662,6 +842,12 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     this.sessionSectorAssignments.set(currentMap);
   }
 
+  removeOperatorCommunity(comunidadId: number): void {
+    const currentMap = new Map(this.sessionCommunityAssignments());
+    currentMap.delete(comunidadId);
+    this.sessionCommunityAssignments.set(currentMap);
+  }
+
   clearOperatorSessionAssignments(operarioId: number): void {
     const currentMap = new Map(this.sessionSectorAssignments());
     currentMap.forEach((opId, sectorId) => {
@@ -670,18 +856,27 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       }
     });
     this.sessionSectorAssignments.set(currentMap);
+
+    const currentComMap = new Map(this.sessionCommunityAssignments());
+    currentComMap.forEach((opId, comId) => {
+      if (opId === operarioId) {
+        currentComMap.delete(comId);
+      }
+    });
+    this.sessionCommunityAssignments.set(currentComMap);
   }
 
   resetSessionAssignments(): void {
-    if (this.sessionSectorAssignments().size === 0) return;
+    if (this.sessionSectorAssignments().size === 0 && this.sessionCommunityAssignments().size === 0) return;
     this.sessionSectorAssignments.set(new Map());
+    this.sessionCommunityAssignments.set(new Map());
     this.toastService.show('Se descartaron todas las asignaciones de la sesión.', 'info');
   }
 
   // Navigation between Step 1 (2 Tables) and Step 2 (Full Width Summary)
   goToSummary(): void {
     if (this.totalSessionAssignedSectorsCount() === 0) {
-      this.toastService.show('No has asignado ningún sector en esta sesión todavía.', 'warning');
+      this.toastService.show('No has asignado ningún sector o comunidad en esta sesión todavía.', 'warning');
       return;
     }
     this.currentStep.set(2);
@@ -709,7 +904,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     this.dialogService
       .confirm({
         title: 'Confirmar y Despachar Rutas',
-        message: `¿Estás seguro de confirmar y generar las rutas de trabajo para ${assignedOperators.length} operario(s) con un total de ${totalSectors} sector(es) para el período ${period.nombre}?`,
+        message: `¿Estás seguro de confirmar y generar las rutas de trabajo para ${assignedOperators.length} operario(s) con un total de ${totalSectors} sector(es)/comunidad(es) para el período ${period.nombre}?`,
         confirmText: 'Sí, Despachar Rutas',
         cancelText: 'Revisar',
       })
@@ -755,6 +950,19 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
           fechaPlanificada: fechaToSend,
           nombreBase: this.nombreBase().trim() || undefined,
         });
+      });
+    });
+
+    // Whole community assignments (without sectors)
+    this.sessionCommunityAssignments().forEach((opId, comunidadId) => {
+      requests.push({
+        periodoId: periodId,
+        operarioId: opId,
+        comunidadId,
+        tipoRuta: (this.tipoActividadSeleccionada() as TipoRuta) || 'LECTURA',
+        sectorIds: [],
+        fechaPlanificada: fechaToSend,
+        nombreBase: this.nombreBase().trim() || undefined,
       });
     });
 
