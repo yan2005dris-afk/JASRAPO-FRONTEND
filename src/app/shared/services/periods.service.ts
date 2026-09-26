@@ -18,7 +18,7 @@ export interface IPeriod {
   fechaInicio: string | Date;
   fechaFin: string | Date;
   fechaVencimiento: string | Date;
-  estado: EstadoPeriodo | string;
+  estado: EstadoPeriodo;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -28,7 +28,7 @@ export interface ICreatePeriodDto {
   fechaInicio: string;
   fechaFin: string;
   fechaVencimiento: string;
-  estado?: EstadoPeriodo | string;
+  estado?: EstadoPeriodo;
 }
 
 export interface IUpdatePeriodDto {
@@ -36,13 +36,13 @@ export interface IUpdatePeriodDto {
   fechaInicio?: string;
   fechaFin?: string;
   fechaVencimiento?: string;
-  estado?: EstadoPeriodo | string;
+  estado?: EstadoPeriodo;
 }
 
 export interface IGenerateAnnualPeriodsDto {
   year: number;
   diaVencimiento?: number;
-  estadoInicial?: EstadoPeriodo | string;
+  estadoInicial?: EstadoPeriodo;
 }
 
 export interface IPeriodFilters {

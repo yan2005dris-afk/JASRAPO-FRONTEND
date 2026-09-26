@@ -49,14 +49,21 @@
         <span class="text-muted" style="font-size: 0.75rem;">Registrados en el sistema</span>
       </div>
     </div>
-    <div class="col-md-4 col-sm-6">
+    <div class="col-md-3 col-sm-6">
       <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-success border-4">
         <span class="text-success small fw-semibold">Períodos Abiertos</span>
         <h3 class="fw-bold text-success mb-0 mt-1">{{ stats.abiertos }}</h3>
         <span class="text-muted" style="font-size: 0.75rem;">En operación activa</span>
       </div>
     </div>
-    <div class="col-md-4 col-sm-6">
+    <div class="col-md-3 col-sm-6">
+      <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-info border-4">
+        <span class="text-info small fw-semibold">En Proceso</span>
+        <h3 class="fw-bold text-info mb-0 mt-1">{{ stats.procesando }}</h3>
+        <span class="text-muted" style="font-size: 0.75rem;">En facturación o cierre</span>
+      </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
       <div class="card border-0 shadow-sm rounded-4 p-3 bg-white border-start border-secondary border-4">
         <span class="text-secondary small fw-medium">Períodos Cerrados</span>
         <h3 class="fw-bold text-secondary mb-0 mt-1">{{ stats.cerrados }}</h3>
@@ -103,6 +110,16 @@
           <button
             type="button"
             class="btn rounded-2"
+            [class.btn-info]="statusFilter() === 'PROCESANDO'"
+            [class.text-white]="statusFilter() === 'PROCESANDO'"
+            [class.btn-light]="statusFilter() !== 'PROCESANDO'"
+            (click)="statusFilter.set('PROCESANDO')"
+          >
+            En Proceso
+          </button>
+          <button
+            type="button"
+            class="btn rounded-2"
             [class.btn-secondary]="statusFilter() === 'CERRADO'"
             [class.btn-light]="statusFilter() !== 'CERRADO'"
             (click)="statusFilter.set('CERRADO')"
@@ -117,142 +134,152 @@
       </span>
     </div>
 
-    <!-- Table -->
-    <div class="table-responsive">
-      <table class="table table-hover align-middle mb-0">
-        <thead class="table-light">
-          <tr>
-            <th class="ps-3">Nombre del Período</th>
-            <th>Fecha Inicio</th>
-            <th>Fecha Fin / Corte</th>
-            <th>Fecha Vencimiento</th>
-            <th>Estado</th>
-            <th class="text-end pe-3">Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          @if (isLoading()) {
+    <!-- Table Content -->
+    @if (isLoading()) {
+      <div class="py-2">
+        <app-table-skeleton [cols]="6" [rows]="5" />
+      </div>
+    } @else if (filteredPeriods().length === 0) {
+      <app-empty-state
+        icon="bi bi-calendar-x"
+        title="Sin períodos encontrados"
+        [description]="searchQuery() ? 'No hay períodos que coincidan con la búsqueda actual.' : 'No se encontraron períodos registrados.'"
+        [actionLabel]="searchQuery() ? 'Limpiar filtro' : 'Nuevo Período'"
+        actionIcon="bi bi-arrow-counterclockwise"
+        (actionClicked)="searchQuery() ? searchQuery.set('') : openCreateModal()"
+      />
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 custom-table">
+          <thead>
             <tr>
-              <td colspan="6" class="text-center py-5 text-muted">
-                <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
-                Cargando períodos contables...
-              </td>
+              <th class="ps-3">Nombre del Período</th>
+              <th>Fecha Inicio</th>
+              <th>Fecha Fin / Corte</th>
+              <th>Fecha Vencimiento</th>
+              <th>Estado</th>
+              <th class="text-center pe-3" style="width: 70px;">Acciones</th>
             </tr>
-          } @else if (filteredPeriods().length === 0) {
-            <tr>
-              <td colspan="6" class="text-center py-5 text-muted">
-                <i class="bi bi-calendar-x fs-2 d-block mb-1 text-secondary"></i>
-                No se encontraron períodos registrados.
-              </td>
-            </tr>
-          }
-          @for (period of filteredPeriods(); track period.periodoId) {
-            <tr>
-              <!-- Nombre -->
-              <td class="ps-3">
-                <div class="d-flex align-items-center gap-2">
-                  <div
-                    class="rounded-circle d-flex align-items-center justify-content-center"
-                    [ngClass]="{
-                      'bg-success-subtle text-success': period.estado === 'ABIERTO',
-                      'bg-warning-subtle text-warning-emphasis': period.estado === 'PENDIENTE',
-                      'bg-secondary-subtle text-secondary': period.estado === 'CERRADO',
-                      'bg-info-subtle text-info': period.estado === 'FACTURADO'
-                    }"
-                    style="width: 32px; height: 32px;"
-                  >
-                    <i class="bi bi-calendar2-check"></i>
+          </thead>
+          <tbody>
+            @for (period of filteredPeriods(); track period.periodoId) {
+              <tr>
+                <!-- Nombre -->
+                <td class="ps-3">
+                  <div class="d-flex align-items-center gap-2">
+                    <div
+                      class="rounded-circle d-flex align-items-center justify-content-center"
+                      [ngClass]="{
+                        'bg-success-subtle text-success': period.estado === 'ABIERTO',
+                        'bg-info-subtle text-info': period.estado === 'PROCESANDO',
+                        'bg-secondary-subtle text-secondary': period.estado === 'CERRADO'
+                      }"
+                      style="width: 32px; height: 32px;"
+                    >
+                      <i class="bi bi-calendar2-check"></i>
+                    </div>
+                    <span class="fw-bold text-dark">{{ period.nombre }}</span>
                   </div>
-                  <span class="fw-bold text-dark">{{ period.nombre }}</span>
-                </div>
-              </td>
+                </td>
 
-              <!-- Fecha Inicio -->
-              <td>
-                <span class="small font-monospace text-dark">
-                  {{ period.fechaInicio | date:'dd/MM/yyyy' }}
-                </span>
-              </td>
+                <!-- Fecha Inicio -->
+                <td>
+                  <span class="small font-monospace text-dark">
+                    {{ period.fechaInicio | date:'dd/MM/yyyy' }}
+                  </span>
+                </td>
 
-              <!-- Fecha Fin -->
-              <td>
-                <span class="small font-monospace text-dark">
-                  {{ period.fechaFin | date:'dd/MM/yyyy' }}
-                </span>
-              </td>
+                <!-- Fecha Fin -->
+                <td>
+                  <span class="small font-monospace text-dark">
+                    {{ period.fechaFin | date:'dd/MM/yyyy' }}
+                  </span>
+                </td>
 
-              <!-- Fecha Vencimiento -->
-              <td>
-                <span class="small font-monospace text-danger-emphasis fw-semibold">
-                  {{ period.fechaVencimiento | date:'dd/MM/yyyy' }}
-                </span>
-              </td>
+                <!-- Fecha Vencimiento -->
+                <td>
+                  <span class="small font-monospace text-danger-emphasis fw-semibold">
+                    {{ period.fechaVencimiento | date:'dd/MM/yyyy' }}
+                  </span>
+                </td>
 
-              <!-- Estado Badge -->
-              <td>
-                <span
-                  class="badge px-3 py-2 fw-semibold"
-                  [ngClass]="{
-                    'bg-success-subtle text-success border border-success-subtle': period.estado === 'ABIERTO',
-                    'bg-warning-subtle text-warning-emphasis border border-warning-subtle': period.estado === 'PENDIENTE',
-                    'bg-secondary-subtle text-secondary border': period.estado === 'CERRADO',
-                    'bg-info-subtle text-info border border-info-subtle': period.estado === 'FACTURADO'
-                  }"
-                >
-                  {{ period.estado }}
-                </span>
-              </td>
+                <!-- Estado Badge -->
+                <td>
+                  <app-status-badge
+                    [status]="period.estado"
+                    [customTone]="getPeriodTone(period.estado)"
+                  />
+                </td>
 
-              <!-- Acciones -->
-              <td class="text-end pe-3">
-                <div class="d-inline-flex align-items-center gap-1">
-                  <!-- Toggle Open/Close -->
-                  @if (period.estado === 'ABIERTO') {
+                <!-- Acciones (3 puntos) -->
+                <td class="text-center pe-3">
+                  <div class="dropdown">
                     <button
                       type="button"
-                      class="btn btn-outline-secondary btn-sm"
-                      title="Cerrar Período"
-                      (click)="togglePeriodStatus(period)"
+                      class="btn btn-link text-muted p-0 shadow-none"
+                      (click)="toggleDropdown(period.periodoId, $event)"
+                      aria-label="Menú de acciones"
                     >
-                      <i class="bi bi-lock-fill me-1"></i> Cerrar
+                      <i class="bi bi-three-dots-vertical"></i>
                     </button>
-                  } @else {
-                    <button
-                      type="button"
-                      class="btn btn-outline-success btn-sm"
-                      title="Abrir Período"
-                      (click)="togglePeriodStatus(period)"
+                    <ul
+                      class="dropdown-menu dropdown-menu-end shadow-sm border-0"
+                      [class.show]="openDropdownId() === period.periodoId"
+                      style="min-width: 150px"
                     >
-                      <i class="bi bi-unlock-fill me-1"></i> Abrir
-                    </button>
-                  }
-
-                  <!-- Edit -->
-                  <button
-                    type="button"
-                    class="btn btn-light btn-sm border"
-                    title="Editar Período"
-                    (click)="openEditModal(period)"
-                  >
-                    <i class="bi bi-pencil"></i>
-                  </button>
-
-                  <!-- Delete -->
-                  <button
-                    type="button"
-                    class="btn btn-light btn-sm border text-danger"
-                    title="Eliminar Período"
-                    (click)="deletePeriod(period)"
-                  >
-                    <i class="bi bi-trash3"></i>
-                  </button>
-                </div>
-              </td>
-            </tr>
-          }
-        </tbody>
-      </table>
-    </div>
+                      <li>
+                        @if (period.estado === 'ABIERTO') {
+                          <button
+                            type="button"
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            (click)="togglePeriodStatus(period)"
+                          >
+                            <i class="bi bi-lock-fill text-secondary" style="font-size: 0.85rem"></i>
+                            Cerrar Período
+                          </button>
+                        } @else {
+                          <button
+                            type="button"
+                            class="dropdown-item d-flex align-items-center gap-2"
+                            (click)="togglePeriodStatus(period)"
+                          >
+                            <i class="bi bi-unlock-fill text-success" style="font-size: 0.85rem"></i>
+                            Abrir Período
+                          </button>
+                        }
+                      </li>
+                      <li>
+                        <button
+                          type="button"
+                          class="dropdown-item d-flex align-items-center gap-2"
+                          (click)="openEditModal(period)"
+                        >
+                          <i class="bi bi-pencil-fill text-primary" style="font-size: 0.85rem"></i>
+                          Editar
+                        </button>
+                      </li>
+                      <li>
+                        <hr class="dropdown-divider my-1" />
+                      </li>
+                      <li>
+                        <button
+                          type="button"
+                          class="dropdown-item d-flex align-items-center gap-2 text-danger"
+                          (click)="deletePeriod(period)"
+                        >
+                          <i class="bi bi-trash3-fill" style="font-size: 0.85rem"></i>
+                          Eliminar
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
   </div>
 </div>
 
@@ -292,22 +319,22 @@
               <label for="periodStartInput" class="form-label small fw-semibold text-dark mb-1">
                 Fecha Inicio <span class="text-danger">*</span>
               </label>
-              <input
-                id="periodStartInput"
-                type="date"
-                class="form-control shadow-none"
-                [(ngModel)]="periodForm.fechaInicio"
+              <app-date-picker
+                inputId="periodStartInput"
+                [value]="periodForm.fechaInicio"
+                [disabled]="isLoading()"
+                (valueChange)="periodForm.fechaInicio = $event"
               />
             </div>
             <div class="col-6">
               <label for="periodEndInput" class="form-label small fw-semibold text-dark mb-1">
                 Fecha Fin / Corte <span class="text-danger">*</span>
               </label>
-              <input
-                id="periodEndInput"
-                type="date"
-                class="form-control shadow-none"
-                [(ngModel)]="periodForm.fechaFin"
+              <app-date-picker
+                inputId="periodEndInput"
+                [value]="periodForm.fechaFin"
+                [disabled]="isLoading()"
+                (valueChange)="periodForm.fechaFin = $event"
               />
             </div>
           </div>
@@ -317,11 +344,11 @@
             <label for="periodDueInput" class="form-label small fw-semibold text-dark mb-1">
               Fecha de Vencimiento de Pago <span class="text-danger">*</span>
             </label>
-            <input
-              id="periodDueInput"
-              type="date"
-              class="form-control shadow-none"
-              [(ngModel)]="periodForm.fechaVencimiento"
+            <app-date-picker
+              inputId="periodDueInput"
+              [value]="periodForm.fechaVencimiento"
+              [disabled]="isLoading()"
+              (valueChange)="periodForm.fechaVencimiento = $event"
             />
           </div>
 
@@ -331,10 +358,9 @@
               Estado del Período
             </label>
             <select id="periodStateSelect" class="form-select shadow-none" [(ngModel)]="periodForm.estado">
-              <option value="PENDIENTE">PENDIENTE (Planificado)</option>
               <option value="ABIERTO">ABIERTO (En operaciones y lecturas)</option>
-              <option value="CERRADO">CERRADO (Lecturas finalizadas)</option>
-              <option value="FACTURADO">FACTURADO (Emisión realizada)</option>
+              <option value="PROCESANDO">PROCESANDO (En proceso de facturación)</option>
+              <option value="CERRADO">CERRADO (Lecturas y emisión finalizadas)</option>
             </select>
           </div>
         </div>
@@ -427,8 +453,9 @@
               Estado Inicial de los 12 Períodos
             </label>
             <select id="annualInitialStateSelect" class="form-select shadow-none" [(ngModel)]="annualForm.estadoInicial">
-              <option value="PENDIENTE">PENDIENTE (Recomendado - se abren mes a mes)</option>
+              <option value="CERRADO">CERRADO (Recomendado - se abren mes a mes)</option>
               <option value="ABIERTO">ABIERTO (Todos activos inmediatamente)</option>
+              <option value="PROCESANDO">PROCESANDO (En proceso)</option>
             </select>
           </div>
         </div>

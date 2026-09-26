@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  HostListener,
   computed,
   inject,
   signal,
@@ -20,10 +21,26 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PickerInputComponent } from '../../../shared/components/picker-input/picker-input.component';
 
+import {
+  StatusBadgeComponent,
+  BadgeTone,
+} from '../../../shared/components/status-badge/status-badge.component';
+import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { DatePickerComponent } from '../../../shared/components/date-picker/date-picker.component';
+
 @Component({
   selector: 'app-periods-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, PickerInputComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    PickerInputComponent,
+    StatusBadgeComponent,
+    TableSkeletonComponent,
+    EmptyStateComponent,
+    DatePickerComponent,
+  ],
   templateUrl: './periods-admin.component.html',
   styleUrl: './periods-admin.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,11 +50,43 @@ export class PeriodsAdminComponent implements OnInit {
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
 
+  getPeriodTone(estado: EstadoPeriodo): BadgeTone {
+    switch (estado) {
+      case 'ABIERTO':
+        return 'success';
+      case 'PROCESANDO':
+        return 'info';
+      case 'CERRADO':
+      default:
+        return 'secondary';
+    }
+  }
+
+  private extractErrorMessage(err: unknown, fallback: string): string {
+    const errorObj = err as { error?: { message?: string | string[] } };
+    const msg = errorObj?.error?.message;
+    if (Array.isArray(msg)) {
+      return msg.join('; ');
+    }
+    return typeof msg === 'string' && msg.trim() ? msg : fallback;
+  }
+
   // State
   readonly periods = signal<IPeriod[]>([]);
   readonly isLoading = signal<boolean>(false);
   readonly searchQuery = signal<string>('');
   readonly statusFilter = signal<string>('TODOS');
+  readonly openDropdownId = signal<number | null>(null);
+
+  toggleDropdown(periodId: number, event: MouseEvent): void {
+    event.stopPropagation();
+    this.openDropdownId.update((id) => (id === periodId ? null : periodId));
+  }
+
+  @HostListener('document:click')
+  closeDropdowns(): void {
+    this.openDropdownId.set(null);
+  }
 
   // Modals state
   readonly showEditModal = signal<boolean>(false);
@@ -214,7 +263,10 @@ export class PeriodsAdminComponent implements OnInit {
         },
         error: (err) => {
           this.isLoading.set(false);
-          this.toastService.show(err.error?.message || 'Error al actualizar el período', 'error');
+          this.toastService.show(
+            this.extractErrorMessage(err, 'Error al actualizar el período'),
+            'error',
+          );
         },
       });
     } else {
@@ -234,7 +286,10 @@ export class PeriodsAdminComponent implements OnInit {
         },
         error: (err) => {
           this.isLoading.set(false);
-          this.toastService.show(err.error?.message || 'Error al crear el período', 'error');
+          this.toastService.show(
+            this.extractErrorMessage(err, 'Error al crear el período'),
+            'error',
+          );
         },
       });
     }
@@ -279,7 +334,7 @@ export class PeriodsAdminComponent implements OnInit {
       error: (err) => {
         this.isGeneratingAnnual.set(false);
         this.toastService.show(
-          err.error?.message || 'Error al generar el ejercicio anual',
+          this.extractErrorMessage(err, 'Error al generar el ejercicio anual'),
           'error',
         );
       },
@@ -309,7 +364,10 @@ export class PeriodsAdminComponent implements OnInit {
               },
               error: (err) => {
                 this.isLoading.set(false);
-                this.toastService.show(err.error?.message || 'Error al cambiar estado', 'error');
+                this.toastService.show(
+                  this.extractErrorMessage(err, 'Error al cambiar estado'),
+                  'error',
+                );
               },
             });
         }
