@@ -463,39 +463,45 @@
               </div>
             </div>
 
-            <!-- Año -->
+            <!-- Año Fiscal -->
             <div>
               <label for="annualYearInput" class="form-label small fw-semibold text-dark mb-1">
                 Año Fiscal / Operativo <span class="text-danger">*</span>
               </label>
-              <input
-                id="annualYearInput"
-                type="number"
-                class="form-control shadow-none"
-                placeholder="Ej: 2026"
-                min="2020"
-                max="2100"
-                [(ngModel)]="annualForm.year"
+              <app-date-picker
+                inputId="annualYearInput"
+                [value]="annualForm.year.toString()"
+                [selectionMode]="'year'"
+                [disabled]="isGeneratingAnnual()"
+                (valueChange)="onAnnualYearChange($event)"
               />
             </div>
 
-            <!-- Día de Vencimiento de Pago -->
+            <!-- Fecha de Vencimiento de Referencia (Shared DatePicker) -->
             <div>
-              <label for="annualDueDayInput" class="form-label small fw-semibold text-dark mb-1">
-                Día de Vencimiento mensual <span class="text-muted">(Día del mes siguiente)</span>
+              <label for="annualDueDateInput" class="form-label small fw-semibold text-dark mb-1">
+                Fecha de Vencimiento de Pago <span class="text-muted">(Día de cobro mensual)</span>
+                <span class="text-danger">*</span>
               </label>
-              <input
-                id="annualDueDayInput"
-                type="number"
-                class="form-control shadow-none"
-                placeholder="15"
-                min="1"
-                max="28"
-                [(ngModel)]="annualForm.diaVencimiento"
+              <app-date-picker
+                inputId="annualDueDateInput"
+                [value]="annualForm.fechaVencimientoReferencia"
+                [disabled]="isGeneratingAnnual()"
+                (valueChange)="onAnnualDueDateChange($event)"
               />
-              <span class="text-muted" style="font-size: 0.72rem">
-                Ejemplo: Día 15 -> El período de Enero vencerá el 15 de Febrero.
-              </span>
+              <div class="d-flex align-items-center gap-2 mt-2 p-2 bg-light rounded-3 border">
+                <i class="bi bi-calendar-check text-primary fs-6"></i>
+                <span class="text-muted small">
+                  Día mensual seleccionado:
+                  <strong class="text-dark">Día {{ annualForm.diaVencimiento }}</strong> de cada mes
+                  siguiente.
+                  <span class="d-block text-secondary" style="font-size: 0.73rem">
+                    Ejemplo: Enero vencerá el {{ annualForm.diaVencimiento }}/02/{{
+                      annualForm.year
+                    }}, Febrero el {{ annualForm.diaVencimiento }}/03/{{ annualForm.year }}, etc.
+                  </span>
+                </span>
+              </div>
             </div>
 
             <!-- Estado Inicial -->

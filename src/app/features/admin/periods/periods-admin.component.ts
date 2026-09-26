@@ -116,10 +116,12 @@ export class PeriodsAdminComponent implements OnInit {
 
   annualForm: {
     year: number;
+    fechaVencimientoReferencia: string;
     diaVencimiento: number;
     estadoInicial: EstadoPeriodo;
   } = {
     year: new Date().getFullYear(),
+    fechaVencimientoReferencia: `${new Date().getFullYear()}-02-15`,
     diaVencimiento: 15,
     estadoInicial: 'CERRADO',
   };
@@ -213,6 +215,7 @@ export class PeriodsAdminComponent implements OnInit {
 
     this.annualForm = {
       year: new Date().getFullYear(),
+      fechaVencimientoReferencia: `${new Date().getFullYear()}-02-15`,
       diaVencimiento: 15,
       estadoInicial: 'CERRADO',
     };
@@ -325,16 +328,52 @@ export class PeriodsAdminComponent implements OnInit {
     this.closeEditModal();
   }
 
+  onAnnualYearChange(yearStr: string): void {
+    const y = parseInt(yearStr, 10);
+    if (!isNaN(y)) {
+      this.annualForm.year = y;
+      const day = this.annualForm.diaVencimiento || 15;
+      this.annualForm.fechaVencimientoReferencia = `${y}-02-${String(day).padStart(2, '0')}`;
+    }
+  }
+
+  onAnnualDueDateChange(val: string): void {
+    this.annualForm.fechaVencimientoReferencia = val;
+    if (val) {
+      const parts = val.split('-');
+      if (parts.length === 3) {
+        let day = parseInt(parts[2], 10);
+        if (day > 28) {
+          day = 28;
+          this.toastService.show(
+            'El día de vencimiento mensual se ajustó a 28 para asegurar compatibilidad con febrero.',
+            'info',
+          );
+        }
+        this.annualForm.diaVencimiento = day;
+      }
+    }
+  }
+
   executeGenerateAnnual(): void {
     if (!this.annualForm.year || this.annualForm.year < 2020 || this.annualForm.year > 2100) {
-      this.toastService.show('Por favor, ingresa un año válido (ej. 2026).', 'warning');
+      this.toastService.show('Por favor, selecciona un año válido (ej. 2026).', 'warning');
+      return;
+    }
+
+    if (
+      !this.annualForm.diaVencimiento ||
+      this.annualForm.diaVencimiento < 1 ||
+      this.annualForm.diaVencimiento > 28
+    ) {
+      this.toastService.show('El día de vencimiento debe estar entre el 1 y el 28.', 'warning');
       return;
     }
 
     this.isGeneratingAnnual.set(true);
     const dto: IGenerateAnnualPeriodsDto = {
       year: this.annualForm.year,
-      diaVencimiento: this.annualForm.diaVencimiento || 15,
+      diaVencimiento: this.annualForm.diaVencimiento,
       estadoInicial: this.annualForm.estadoInicial,
     };
 

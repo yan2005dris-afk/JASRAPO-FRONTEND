@@ -113,6 +113,7 @@ describe('PeriodsAdminComponent', () => {
       },
       annualForm: {
         year: 2026,
+        fechaVencimientoReferencia: '2026-02-15',
         diaVencimiento: 15,
         estadoInicial: 'CERRADO',
       },
@@ -139,6 +140,23 @@ describe('PeriodsAdminComponent', () => {
 
     component.creationMode.set('annual');
     expect(component.creationMode()).toBe('annual');
+  });
+
+  it('should handle annual datepicker changes and clamp days over 28', () => {
+    component.onAnnualYearChange('2027');
+    expect(component.annualForm.year).toBe(2027);
+    expect(component.annualForm.fechaVencimientoReferencia).toBe('2027-02-15');
+
+    component.onAnnualDueDateChange('2027-02-20');
+    expect(component.annualForm.diaVencimiento).toBe(20);
+
+    // Day > 28 clamped
+    component.onAnnualDueDateChange('2027-02-31');
+    expect(component.annualForm.diaVencimiento).toBe(28);
+    expect(mockToastService.show).toHaveBeenCalledWith(
+      expect.stringContaining('se ajustó a 28'),
+      'info',
+    );
   });
 
   it('should open modal for editing existing period', () => {
@@ -182,6 +200,7 @@ describe('PeriodsAdminComponent', () => {
 
     component.annualForm = {
       year: 2026,
+      fechaVencimientoReferencia: '2026-02-20',
       diaVencimiento: 20,
       estadoInicial: 'CERRADO',
     };
