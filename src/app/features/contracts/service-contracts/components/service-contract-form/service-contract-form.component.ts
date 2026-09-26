@@ -28,6 +28,11 @@ import { IMeter } from '../../../meters/interfaces/imeter.interface';
 import { ITariffCategory } from '../../../tariffs/interfaces/itariff.interface';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import {
+  CoordinateMapPickerComponent,
+  ICoordinates,
+} from '../../../../../shared/components/coordinate-map-picker/coordinate-map-picker.component';
+import { coordinatePairValidator } from '../../../../../shared/components/coordinate-map-picker/coordinate-pair.validator';
 
 /**
  * Formulario de contrato cliente–medidor. Sirve para CREAR y para EDITAR:
@@ -43,6 +48,7 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
     MetersIndexComponent,
     ReplaceMeterModalComponent,
     ComunidadesComponent,
+    CoordinateMapPickerComponent,
   ],
   templateUrl: './service-contract-form.component.html',
   styleUrl: './service-contract-form.component.scss',
@@ -82,12 +88,19 @@ export class ServiceContractFormComponent implements OnInit {
   // Medidor original (para detectar si se reemplazó al editar)
   private originalMeterId: string | null = null;
 
-  readonly form: FormGroup = this.fb.group({
-    numeroGuia: ['', [Validators.required, Validators.maxLength(15)]],
-    direccionSuministro: ['', [Validators.required, Validators.maxLength(200)]],
-    lecturaInicial: ['0', [Validators.required, Validators.pattern(/^\d{1,10}$/)]],
-    estadoServicio: [''],
-  });
+  readonly coordinates = signal<ICoordinates>({ latitud: null, longitud: null });
+
+  readonly form: FormGroup = this.fb.group(
+    {
+      numeroGuia: ['', [Validators.required, Validators.maxLength(15)]],
+      direccionSuministro: ['', [Validators.required, Validators.maxLength(200)]],
+      lecturaInicial: ['0', [Validators.required, Validators.pattern(/^\d{1,10}$/)]],
+      estadoServicio: [''],
+      latitud: [null as number | null, [Validators.min(-90), Validators.max(90)]],
+      longitud: [null as number | null, [Validators.min(-180), Validators.max(180)]],
+    },
+    { validators: coordinatePairValidator },
+  );
 
   ngOnInit(): void {
     const contract = this.contractToEdit();
@@ -98,11 +111,17 @@ export class ServiceContractFormComponent implements OnInit {
 
   /** Precarga en el formulario los datos del contrato a editar. */
   private preloadContract(contract: IContract): void {
+    const latitud = contract.latitud ?? null;
+    const longitud = contract.longitud ?? null;
+
     this.form.patchValue({
       numeroGuia: contract.numeroGuia,
       direccionSuministro: contract.direccionSuministro,
       estadoServicio: getContractServiceState(contract),
+      latitud,
+      longitud,
     });
+    this.coordinates.set({ latitud, longitud });
 
     // Cliente, tarifa y comunidad (vienen anidados en el contrato)
     this.selectedClient.set(contract.cliente as unknown as IClient);
@@ -213,6 +232,38 @@ export class ServiceContractFormComponent implements OnInit {
     this.closeComunidadPicker();
   }
 
+  // ---------- Ubicación del predio ----------
+  onCoordinatesChange(value: ICoordinates): void {
+    this.form.patchValue({ latitud: value.latitud, longitud: value.longitud });
+    this.form.markAsDirty();
+    this.coordinates.set(value);
+  }
+
+  coordinateError(): string | null {
+    const latControl = this.form.get('latitud');
+    const lngControl = this.form.get('longitud');
+    const isRelevant =
+      latControl?.dirty ||
+      latControl?.touched ||
+      lngControl?.dirty ||
+      lngControl?.touched ||
+      this.submitted();
+
+    if (!isRelevant) {
+      return null;
+    }
+    if (this.form.hasError('coordinatePair')) {
+      return 'Ingrese latitud y longitud, o deje ambas vacías.';
+    }
+    if (latControl?.hasError('min') || latControl?.hasError('max')) {
+      return 'La latitud debe estar entre -90 y 90.';
+    }
+    if (lngControl?.hasError('min') || lngControl?.hasError('max')) {
+      return 'La longitud debe estar entre -180 y 180.';
+    }
+    return null;
+  }
+
   /** Acciones aún no definidas con el backend (registrar nuevo cliente/medidor, documentos). */
   comingSoon(): void {
     this.toast.info('Esta funcionalidad estará disponible próximamente.', 'En construcción');
@@ -307,6 +358,9 @@ export class ServiceContractFormComponent implements OnInit {
       direccionSuministro: value.direccionSuministro,
       comunidadId: String(comunidad.id),
       lecturaInicial: Number(value.lecturaInicial),
+      ...(value.latitud != null && value.longitud != null
+        ? { latitud: value.latitud, longitud: value.longitud }
+        : {}),
     };
 
     this.isSaving.set(true);
@@ -361,6 +415,8 @@ export class ServiceContractFormComponent implements OnInit {
       clienteId: String(clientId),
       comunidadId: String(comunidad.id),
       categoriaTarifaId: String(tariff.categoriaTarifaId),
+      latitud: value.latitud ?? null,
+      longitud: value.longitud ?? null,
     };
 
     this.isSaving.set(true);
