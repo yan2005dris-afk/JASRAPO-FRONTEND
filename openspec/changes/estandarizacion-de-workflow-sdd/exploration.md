@@ -49,10 +49,12 @@ The copilot file also omits critical operational knowledge:
 
 ## Affected Areas
 
-- `/home/carlosfpatino/Workspaces/JASRAPO-FRONTEND/AGENTS.md` — **new**, single source of truth
-- `/home/carlosfpatino/Workspaces/JASRAPO-FRONTEND/CLAUDE.md` — **new**, one-line pointer stub
-- `/home/carlosfpatino/Workspaces/JASRAPO-FRONTEND/GEMINI.md` — **new**, one-line pointer stub
-- `/home/carlosfpatino/Workspaces/JASRAPO-FRONTEND/.github/copilot-instructions.md` — **delete**, obsolete
+Paths are relative to the repository root.
+
+- `AGENTS.md` — **new**, single source of truth
+- `CLAUDE.md` — **new**, one-line pointer stub
+- `GEMINI.md` — **new**, one-line pointer stub
+- `.github/copilot-instructions.md` — **delete**, obsolete
 
 ## Approaches
 
