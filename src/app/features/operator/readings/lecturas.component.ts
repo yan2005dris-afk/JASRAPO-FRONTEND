@@ -46,11 +46,12 @@ interface ReadingRecord {
   lecturaId?: string;
   _lecturaId?: string;
   medidorId?: string | number;
-  medidor?: { medidorId?: string | number };
+  medidor?: { medidorId?: string | number; serie?: string };
   lecturaActual?: number;
   lecturaAnterior?: number;
   estado?: string;
   syncState?: string;
+  contratoId?: string | number;
   [key: string]: unknown;
 }
 
@@ -157,22 +158,31 @@ export class LecturasComponent implements OnInit {
   // Filtro de estado activo
   readonly selectedEstadoFilter = signal<string>('todas');
 
-  // Mapa medidorId → lectura existente (de registeredReadings + pendingReadings)
+  // Mapa medidorId, serie y contratoId → lectura existente (de registeredReadings + pendingReadings)
   readonly existingReadingMap = computed<Map<string, ReadingRecord>>(() => {
     const map = new Map<string, ReadingRecord>();
     for (const r of this.registeredReadings()) {
       // Backend response nests medidorId inside medidor object
       const mId = r.medidor?.medidorId ?? r.medidorId;
       if (mId != null) map.set(mId.toString(), r as ReadingRecord);
+      if (r.medidor?.serie) map.set(r.medidor.serie, r as ReadingRecord);
+      if (r.contratoId) map.set(r.contratoId.toString(), r as ReadingRecord);
     }
     for (const p of this.pendingReadings()) {
       const mId = p['medidorId'];
+      const record = {
+        ...(mId != null ? map.get(mId.toString()) : undefined),
+        ...p,
+        estado: (p['estado'] as string) || 'POR_REVISION',
+      };
       if (mId != null) {
-        map.set(mId.toString(), {
-          ...map.get(mId.toString()),
-          ...p,
-          estado: (p['estado'] as string) || 'POR_REVISION',
-        });
+        map.set(mId.toString(), record);
+      }
+      if (p['medidorSerie']) {
+        map.set(p['medidorSerie'] as string, record);
+      }
+      if (p['contratoId']) {
+        map.set(String(p['contratoId']), record);
       }
     }
     return map;
@@ -328,8 +338,21 @@ export class LecturasComponent implements OnInit {
       await this.meterCache.load();
       const operatorId = this.authService.currentUser()?.id;
       const scope = operatorId ? `operator:${operatorId}` : undefined;
-      const cachedReadings = await this.dbService.getRegisteredReadingsCache(scope);
-      this.registeredReadings.set(cachedReadings);
+      let cachedReadings = await this.dbService.getRegisteredReadingsCache(scope);
+
+      if ((!cachedReadings || cachedReadings.length === 0) && this.networkService.isOnline()) {
+        try {
+          const readings = (await this.syncService.getCurrentPeriodReadings()) as ReadingRecord[];
+          if (readings?.length) {
+            await this.dbService.saveRegisteredReadingsCache(readings);
+            cachedReadings = readings;
+          }
+        } catch {
+          // Ignorar fallas silenciosas en prefetch de fondo
+        }
+      }
+
+      this.registeredReadings.set(cachedReadings ?? []);
 
       // Si se pasó una serie específica fuera del flujo de ruta y no estaba seleccionada
       const singleSerie = this.activatedRoute.snapshot.queryParamMap.get('serie');
@@ -378,8 +401,14 @@ export class LecturasComponent implements OnInit {
       if (activeRoute.ordenesTrabajo?.length) {
         for (const wo of activeRoute.ordenesTrabajo) {
           const id = wo.medidor?.serie || wo.contrato?.numeroContrato || `OT-${wo.ordenTrabajoId}`;
+          const realMedidorId =
+            wo.medidor?.medidorId != null && Number(wo.medidor.medidorId) > 0
+              ? Number(wo.medidor.medidorId)
+              : Number(wo.ordenTrabajoId)
+                ? -Math.abs(Number(wo.ordenTrabajoId))
+                : -1;
           synthetics.push({
-            medidorId: Number(wo.ordenTrabajoId) ? -Math.abs(Number(wo.ordenTrabajoId)) : -1,
+            medidorId: realMedidorId,
             serie: id,
             marca: wo.tipoActividad,
             modelo: wo.contrato?.direccion || '',
@@ -422,11 +451,15 @@ export class LecturasComponent implements OnInit {
         if (!serie || !assignmentsCsv) continue;
         const assignments = new Map<WorkOrderActivityType, AssignedWorkOrder>();
         for (const assignment of assignmentsCsv.split(';')) {
-          const [tipo, ordenTrabajoId = '', estado = 'PENDIENTE'] = assignment.split(':');
+          const [tipo, ordenTrabajoId = '', estado = 'PENDIENTE', lecturaId = ''] = assignment.split(':');
           const t = tipo.trim() as WorkOrderActivityType;
           const workOrderState = estado.trim() as WorkOrderState;
           if (t && ordenTrabajoId.trim()) {
-            assignments.set(t, { id: ordenTrabajoId.trim(), estado: workOrderState });
+            assignments.set(t, {
+              id: ordenTrabajoId.trim(),
+              estado: workOrderState,
+              ...(lecturaId.trim() ? { lecturaId: lecturaId.trim() } : {}),
+            });
           }
         }
         if (assignments.size) workOrdersByMeter.set(serie.trim(), assignments);
@@ -643,29 +676,47 @@ export class LecturasComponent implements OnInit {
   }
 
   private resolveLecturaIdFor(meter: IMeterDto): string | null {
-    const existingReading = this.existingReadingMap().get(meter.medidorId.toString());
+    // 1. Existing reading map (indexed by medidorId, serie, and contratoId)
+    const existingReading =
+      this.existingReadingMap().get(meter.medidorId.toString()) ||
+      this.existingReadingMap().get(meter.serie) ||
+      (meter.contratoId ? this.existingReadingMap().get(meter.contratoId.toString()) : null);
     if (existingReading?.lecturaId) return String(existingReading.lecturaId);
     if (existingReading?._lecturaId) return String(existingReading._lecturaId);
 
-    const woLectura = this.workOrdersByMeter().get(meter.serie)?.get('LECTURA');
-    if (woLectura?.lecturaId) return String(woLectura.lecturaId);
-
-    const allAssignments = this.workOrdersByMeter().get(meter.serie);
-    if (allAssignments) {
-      for (const wo of allAssignments.values()) {
+    // 2. Assigned work orders by meter
+    const checkAssignments = (assignments?: Map<WorkOrderActivityType, AssignedWorkOrder>) => {
+      if (!assignments) return null;
+      const woLectura = assignments.get('LECTURA');
+      if (woLectura?.lecturaId) return String(woLectura.lecturaId);
+      for (const wo of assignments.values()) {
         if (wo.lecturaId) return String(wo.lecturaId);
       }
-    }
+      return null;
+    };
 
+    const fromByMeter =
+      checkAssignments(this.workOrdersByMeter().get(meter.serie)) ||
+      (meter.contratoId ? checkAssignments(this.workOrdersByMeter().get(meter.contratoId.toString())) : null) ||
+      checkAssignments(this.workOrdersByMeter().get(meter.medidorId.toString()));
+    if (fromByMeter) return fromByMeter;
+
+    // 3. From activeOperatorRoute in state or sessionStorage
     try {
-      const raw = sessionStorage.getItem('activeOperatorRoute');
-      if (raw) {
-        const route = JSON.parse(raw);
-        const match = route?.ordenesTrabajo?.find(
+      let route: any = null;
+      if (history.state && history.state.route) {
+        route = history.state.route;
+      } else {
+        const raw = sessionStorage.getItem('activeOperatorRoute');
+        if (raw) route = JSON.parse(raw);
+      }
+      if (route?.ordenesTrabajo?.length) {
+        const match = route.ordenesTrabajo.find(
           (o: any) =>
             o.medidor?.serie === meter.serie ||
-            o.medidor?.medidorId?.toString() === meter.medidorId.toString() ||
-            o.contrato?.numeroContrato === meter.contratoId,
+            (o.medidor?.medidorId != null && String(o.medidor.medidorId) === String(meter.medidorId)) ||
+            (meter.contratoId && (o.contrato?.numeroContrato === meter.contratoId || String(o.contratoId) === String(meter.contratoId))) ||
+            `OT-${o.ordenTrabajoId}` === meter.serie,
         );
         if (match?.lecturaId) return String(match.lecturaId);
       }
@@ -716,6 +767,7 @@ export class LecturasComponent implements OnInit {
         const lecturaPayload = {
           fecha: new Date().toISOString(),
           medidorId: meter.medidorId.toString(),
+          medidorSerie: meter.serie,
           lecturaAnterior: formPayload.lecturaAnterior,
           lecturaActual: formPayload.lecturaActual,
           lecturaInicial: formPayload.lecturaInicial,
@@ -759,6 +811,26 @@ export class LecturasComponent implements OnInit {
       await this.loadCachedMeters();
     } catch (e) {
       console.error('Error al registrar orden de trabajo:', e);
+      // Fallback a almacenamiento local offline si falló la llamada remota para no perder los datos del operario
+      if (formPayload.tipoActividad === 'LECTURA') {
+        try {
+          await this.dbService.savePendingReading({
+            fecha: new Date().toISOString(),
+            medidorId: meter.medidorId.toString(),
+            medidorSerie: meter.serie,
+            ...formPayload,
+          });
+          await this.syncService.refreshPendingCounts();
+          this.setSubmissionSuccess({ offline: true });
+          this.completedWorkOrderIds.update((set) => new Set([...set, meter.medidorId.toString()]));
+          this.goBackToSearch();
+          await this.loadPendingReadings();
+          await this.loadCachedMeters();
+          return;
+        } catch (dbErr) {
+          console.error('Error al guardar fallback en IndexedDB:', dbErr);
+        }
+      }
       this.failedSubmission.set(formPayload);
       this.submissionFeedback.set({
         kind: 'error',

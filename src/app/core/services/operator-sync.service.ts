@@ -222,8 +222,19 @@ export class OperatorSyncService {
         this.toastService.success('Lectura registrada en el servidor correctamente.', 'Éxito');
         return response;
       } catch (error: unknown) {
+        const httpError = error as HttpErrorResponse;
+        if (!httpError.status || httpError.status === 0 || httpError.status >= 500) {
+          console.warn('Fallo de red al enviar lectura, guardando localmente:', error);
+          await this.dbService.savePendingReading(reading);
+          await this.refreshPendingCounts();
+          this.toastService.warning(
+            'Error de conexión con el servidor. Lectura guardada localmente; se sincronizará automáticamente.',
+            'Guardado Local',
+          );
+          return { offline: true };
+        }
         this.toastService.error(
-          (error as HttpErrorResponse).error?.message || 'Error al enviar lectura al servidor.',
+          httpError.error?.message || 'Error al enviar lectura al servidor.',
           'Error',
         );
         throw error;
@@ -272,8 +283,19 @@ export class OperatorSyncService {
         this.toastService.success('Novedad registrada en el servidor.', 'Éxito');
         return response;
       } catch (error: unknown) {
+        const httpError = error as HttpErrorResponse;
+        if (!httpError.status || httpError.status === 0 || httpError.status >= 500) {
+          console.warn('Fallo de red al enviar novedad, guardando localmente:', error);
+          await this.dbService.savePendingAnomaly(anomaly);
+          await this.refreshPendingCounts();
+          this.toastService.warning(
+            'Error de conexión con el servidor. Novedad guardada localmente; se sincronizará automáticamente.',
+            'Guardado Local',
+          );
+          return { offline: true };
+        }
         this.toastService.error(
-          (error as HttpErrorResponse).error?.message || 'Error al enviar novedad al servidor.',
+          httpError.error?.message || 'Error al enviar novedad al servidor.',
           'Error',
         );
         throw error;
@@ -327,8 +349,19 @@ export class OperatorSyncService {
         this.toastService.success('Orden de trabajo registrada correctamente.', 'Éxito');
         return response;
       } catch (error: unknown) {
+        const httpError = error as HttpErrorResponse;
+        if (!httpError.status || httpError.status === 0 || httpError.status >= 500) {
+          console.warn('Fallo de red al enviar orden de trabajo, guardando localmente:', error);
+          await this.dbService.savePendingReading({ ...workOrder, recordType: 'WORK_ORDER' });
+          await this.refreshPendingCounts();
+          this.toastService.warning(
+            'Error de conexión con el servidor. Orden guardada localmente; se sincronizará automáticamente.',
+            'Guardado Local',
+          );
+          return { offline: true };
+        }
         this.toastService.error(
-          (error as HttpErrorResponse).error?.message || 'Error al enviar orden al servidor.',
+          httpError.error?.message || 'Error al enviar orden al servidor.',
           'Error',
         );
         throw error;

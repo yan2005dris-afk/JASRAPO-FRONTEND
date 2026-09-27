@@ -513,7 +513,8 @@ export class RutasComponent implements OnInit, OnDestroy {
         orderIdentifiers.push(id);
         const actTipo = ord.tipoActividad || (ord as any).ruta?.tipoActividad?.codigo || tipoRuta;
         if (actTipo && ord.ordenTrabajoId) {
-          workOrderEntries.push(`${id}:${actTipo}:${ord.ordenTrabajoId}:${ord.estado || 'PENDIENTE'}`);
+          const lecId = ord.lecturaId ? String(ord.lecturaId) : '';
+          workOrderEntries.push(`${id}:${actTipo}:${ord.ordenTrabajoId}:${ord.estado || 'PENDIENTE'}:${lecId}`);
         }
       }
     } else if (paradas.length > 0) {
@@ -522,7 +523,7 @@ export class RutasComponent implements OnInit, OnDestroy {
         orderIdentifiers.push(id);
         const actTipo = p.tipoActividad || tipoRuta;
         if (actTipo && p.ordenTrabajoId) {
-          workOrderEntries.push(`${id}:${actTipo}:${p.ordenTrabajoId}:${p.estado || 'PENDIENTE'}`);
+          workOrderEntries.push(`${id}:${actTipo}:${p.ordenTrabajoId}:${p.estado || 'PENDIENTE'}:`);
         }
       }
     } else if (tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos?.length) {
@@ -541,9 +542,11 @@ export class RutasComponent implements OnInit, OnDestroy {
     if (workOrderEntries.length > 0) {
       const grouped = new Map<string, string[]>();
       for (const wo of workOrderEntries) {
-        const [id, tipo, ordenTrabajoId, estado] = wo.split(':');
+        const [id, tipo, ordenTrabajoId, estado, lecturaId = ''] = wo.split(':');
         const assignments = grouped.get(id) ?? [];
-        assignments.push(`${tipo}:${ordenTrabajoId}:${estado}`);
+        assignments.push(
+          lecturaId ? `${tipo}:${ordenTrabajoId}:${estado}:${lecturaId}` : `${tipo}:${ordenTrabajoId}:${estado}`,
+        );
         grouped.set(id, assignments);
       }
       const merged: string[] = [];
