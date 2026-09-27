@@ -273,6 +273,26 @@ describe('ServiceContractFormComponent', () => {
     expect(mockContractsService.createContract.mock.calls[0][0]).not.toHaveProperty('estado');
     expect(savedEmitSpy).toHaveBeenCalled();
   });
+  it.each(['PENDIENTE_INSPECCION', 'PENDIENTE_PAGO', 'PENDIENTE_INSTALACION', 'RECHAZADO'])(
+    'keeps %s controlled by the workflow while allowing detail edits',
+    (estadoServicio) => {
+      const contract = { ...mockContract, estadoServicio };
+      fixture.componentRef.setInput('contractToEdit', contract);
+      fixture.componentRef.setInput('states', [
+        { codigo: estadoServicio, nombre: estadoServicio, orden: 1 },
+        { codigo: 'ACTIVO', nombre: 'Activo', orden: 2 },
+      ]);
+      fixture.detectChanges();
+      expect(component.availableStates().map((state) => state.codigo)).toEqual([estadoServicio]);
+      mockContractsService.updateContract.mockReturnValue(of(contract));
+      component.form.patchValue({ direccionSuministro: 'New address' });
+      component.save();
+      expect(mockContractsService.updateContract).toHaveBeenCalled();
+      expect(mockContractsService.updateContract.mock.calls[0][1]).not.toHaveProperty(
+        'estadoServicio',
+      );
+    },
+  );
 
   it('should include picked coordinates in the create payload when both are set', () => {
     fixture.detectChanges();

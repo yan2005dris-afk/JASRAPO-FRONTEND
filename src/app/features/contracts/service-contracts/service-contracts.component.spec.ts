@@ -125,7 +125,16 @@ describe('ServiceContractsComponent', () => {
     expect(collectionFilter.options[0].text).toBe('Todos');
     expect(
       Array.from<HTMLOptionElement>(serviceFilter.options).map((option) => option.value),
-    ).toEqual(['', 'PENDIENTE_PAGO', 'PENDIENTE_INSTALACION', 'ACTIVO', 'SUSPENDIDO', 'RETIRADO']);
+    ).toEqual([
+      '',
+      'PENDIENTE_INSPECCION',
+      'RECHAZADO',
+      'PENDIENTE_PAGO',
+      'PENDIENTE_INSTALACION',
+      'ACTIVO',
+      'SUSPENDIDO',
+      'RETIRADO',
+    ]);
     expect(
       Array.from<HTMLOptionElement>(collectionFilter.options).map((option) => option.value),
     ).toEqual(['', 'NO_APLICA', 'AL_DIA', 'EN_MORA']);

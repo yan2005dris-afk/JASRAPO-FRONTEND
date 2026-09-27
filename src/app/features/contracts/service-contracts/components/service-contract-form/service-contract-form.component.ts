@@ -63,6 +63,20 @@ export class ServiceContractFormComponent implements OnInit {
   readonly contractToEdit = input<IContract | null>(null);
   readonly states = input<IContractState[]>([]);
 
+  readonly availableStates = computed(() => {
+    const contract = this.contractToEdit();
+    const current = contract ? getContractServiceState(contract) : '';
+    const managed = [
+      'PENDIENTE_INSPECCION',
+      'PENDIENTE_PAGO',
+      'PENDIENTE_INSTALACION',
+      'RECHAZADO',
+    ];
+    return this.states().filter((state) =>
+      managed.includes(current) ? state.codigo === current : !managed.includes(state.codigo),
+    );
+  });
+
   readonly saved = output<void>();
   readonly cancelled = output<void>();
 
@@ -410,7 +424,9 @@ export class ServiceContractFormComponent implements OnInit {
     const value = this.form.value;
     // Solo se actualizan datos contractuales. El medidor se gestiona por POST /meters/replace.
     const payload: IUpdateContractRequest = {
-      ...(value.estadoServicio ? { estadoServicio: value.estadoServicio } : {}),
+      ...(value.estadoServicio && value.estadoServicio !== getContractServiceState(contract)
+        ? { estadoServicio: value.estadoServicio }
+        : {}),
       direccionSuministro: value.direccionSuministro,
       clienteId: String(clientId),
       comunidadId: String(comunidad.id),

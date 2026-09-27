@@ -338,7 +338,7 @@
                 >Estado del servicio</label
               >
               <select id="estadoServicio" class="form-select" formControlName="estadoServicio">
-                @for (state of states(); track state.codigo) {
+                @for (state of availableStates(); track state.codigo) {
                   <option [value]="state.codigo">{{ state.nombre }}</option>
                 }
               </select>
