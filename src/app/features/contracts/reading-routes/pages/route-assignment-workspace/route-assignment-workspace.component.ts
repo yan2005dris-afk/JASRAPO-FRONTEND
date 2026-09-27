@@ -29,7 +29,10 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PeriodPickerComponent } from '../../../../../shared/components/period-picker/period-picker.component';
 import { PickerInputComponent } from '../../../../../shared/components/picker-input/picker-input.component';
-import { PeriodsService, type IAccountingPeriod } from '../../../../../shared/services/periods.service';
+import {
+  PeriodsService,
+  type IAccountingPeriod,
+} from '../../../../../shared/services/periods.service';
 
 export interface OperatorColor {
   id: string;
@@ -852,7 +855,10 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     }
 
     if (assignedCount === 0) {
-      this.toastService.show('No hay sectores ni comunidades libres disponibles para asignar.', 'info');
+      this.toastService.show(
+        'No hay sectores ni comunidades libres disponibles para asignar.',
+        'info',
+      );
       return;
     }
 
@@ -895,7 +901,8 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   }
 
   resetSessionAssignments(): void {
-    if (this.sessionSectorAssignments().size === 0 && this.sessionCommunityAssignments().size === 0) return;
+    if (this.sessionSectorAssignments().size === 0 && this.sessionCommunityAssignments().size === 0)
+      return;
     this.sessionSectorAssignments.set(new Map());
     this.sessionCommunityAssignments.set(new Map());
     this.toastService.show('Se descartaron todas las asignaciones de la sesión.', 'info');
@@ -913,7 +920,10 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     }
 
     if (this.totalSessionAssignedSectorsCount() === 0) {
-      this.toastService.show('No has asignado ningún sector o comunidad en esta sesión todavía.', 'warning');
+      this.toastService.show(
+        'No has asignado ningún sector o comunidad en esta sesión todavía.',
+        'warning',
+      );
       return;
     }
     this.currentStep.set(2);

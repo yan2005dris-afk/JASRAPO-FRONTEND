@@ -85,10 +85,16 @@
     </div>
 
     @if (selectedPeriod() && selectedPeriod()!.estado !== 'ABIERTO') {
-      <div class="alert alert-warning d-flex align-items-center gap-2 rounded-3 py-2 px-3 mt-2 mb-0" role="alert">
+      <div
+        class="alert alert-warning d-flex align-items-center gap-2 rounded-3 py-2 px-3 mt-2 mb-0"
+        role="alert"
+      >
         <i class="bi bi-exclamation-triangle-fill fs-5 text-warning flex-shrink-0"></i>
         <div class="small">
-          <strong>Período cerrado:</strong> El período seleccionado se encuentra en estado <strong>{{ selectedPeriod()!.estado }}</strong>. Solo se permite consultar rutas preexistentes; la asignación y despacho de nuevas rutas están deshabilitados.
+          <strong>Período cerrado:</strong> El período seleccionado se encuentra en estado
+          <strong>{{ selectedPeriod()!.estado }}</strong
+          >. Solo se permite consultar rutas preexistentes; la asignación y despacho de nuevas rutas
+          están deshabilitados.
         </div>
       </div>
     }
@@ -135,9 +141,7 @@
           </span>
 
           <span class="d-inline-flex align-items-center gap-1">
-            <span class="badge rounded-pill fw-bold bg-info text-white px-2 py-1"
-              >Borde Azul</span
-            >
+            <span class="badge rounded-pill fw-bold bg-info text-white px-2 py-1">Borde Azul</span>
             <span class="text-muted">Asignación Parcial</span>
           </span>
 
@@ -519,7 +523,8 @@
                               : 'bg-light text-muted border'
                         "
                       >
-                        {{ countData.assigned }} / {{ countData.total }} {{ sectors.length > 0 ? 'sectores asignados' : 'asignada' }}
+                        {{ countData.assigned }} / {{ countData.total }}
+                        {{ sectors.length > 0 ? 'sectores asignados' : 'asignada' }}
                       </span>
 
                       @if (!isCompleted && selectedOperarioId()) {
@@ -529,7 +534,8 @@
                           style="font-size: 0.72rem"
                           (click)="toggleAllSectorsInCommunity(com.id)"
                         >
-                          <i class="bi bi-check-all me-1"></i>{{ sectors.length > 0 ? 'Asignar libres' : 'Asignar comunidad' }}
+                          <i class="bi bi-check-all me-1"></i
+                          >{{ sectors.length > 0 ? 'Asignar libres' : 'Asignar comunidad' }}
                         </button>
                       }
                     </div>
@@ -575,16 +581,21 @@
                           @if (status.isAssigned) {
                             <div class="text-truncate text-muted" style="font-size: 0.7rem">
                               @if (status.isDbAssigned) {
-                                <i class="bi bi-person-check-fill me-1"></i>Ruta asignada a {{ status.operarioName }}
+                                <i class="bi bi-person-check-fill me-1"></i>Ruta asignada a
+                                {{ status.operarioName }}
                               } @else if (isMyAssigned) {
-                                <span class="text-primary fw-semibold">Asignada a este operario en sesión</span>
+                                <span class="text-primary fw-semibold"
+                                  >Asignada a este operario en sesión</span
+                                >
                               } @else {
-                                <i class="bi bi-person me-1"></i>Asignada a {{ status.operarioName }} en sesión
+                                <i class="bi bi-person me-1"></i>Asignada a
+                                {{ status.operarioName }} en sesión
                               }
                             </div>
                           } @else {
                             <span class="text-muted" style="font-size: 0.72rem">
-                              Comunidad rural sin subdivisión de sectores &bull; Click para asignar ruta directa
+                              Comunidad rural sin subdivisión de sectores &bull; Click para asignar
+                              ruta directa
                             </span>
                           }
                         </div>
@@ -643,9 +654,8 @@
                                 @if (status.isAssigned) {
                                   <div class="text-truncate text-muted" style="font-size: 0.68rem">
                                     @if (status.isDbAssigned) {
-                                      <i class="bi bi-person-check-fill me-1"></i>Ruta asignada a {{
-                                        status.operarioName
-                                      }}
+                                      <i class="bi bi-person-check-fill me-1"></i>Ruta asignada a
+                                      {{ status.operarioName }}
                                     } @else if (isMyAssigned) {
                                       <span class="text-primary fw-semibold">Asignado</span>
                                     } @else {
@@ -672,7 +682,10 @@
             @if (communityTotalPages() > 1) {
               <div class="d-flex align-items-center justify-content-between pt-3 border-top mt-2">
                 <span class="text-muted small" style="font-size: 0.75rem">
-                  Página {{ communityCurrentPage() }} de {{ communityTotalPages() }} ({{ filteredComunidades().length }} comunidades)
+                  Página {{ communityCurrentPage() }} de {{ communityTotalPages() }} ({{
+                    filteredComunidades().length
+                  }}
+                  comunidades)
                 </span>
                 <div class="btn-group btn-group-sm">
                   <button
@@ -687,7 +700,9 @@
                     <button
                       type="button"
                       class="btn btn-sm"
-                      [ngClass]="p === communityCurrentPage() ? 'btn-primary' : 'btn-outline-secondary'"
+                      [ngClass]="
+                        p === communityCurrentPage() ? 'btn-primary' : 'btn-outline-secondary'
+                      "
                       (click)="setCommunityCurrentPage(p)"
                     >
                       {{ p }}
@@ -742,7 +757,9 @@
             <button
               type="button"
               class="btn btn-primary btn-sm rounded-3 px-4 py-2 fw-semibold shadow-sm"
-              [disabled]="totalSessionAssignedSectorsCount() === 0 || selectedPeriod()?.estado !== 'ABIERTO'"
+              [disabled]="
+                totalSessionAssignedSectorsCount() === 0 || selectedPeriod()?.estado !== 'ABIERTO'
+              "
               (click)="goToSummary()"
             >
               Continuar al Resumen <i class="bi bi-arrow-right ms-1"></i>
@@ -914,7 +931,10 @@
 
                   <!-- Sectors and Communities List -->
                   <div class="d-flex flex-column gap-1" style="max-height: 200px; overflow-y: auto">
-                    @for (item of assignedSectors; track (item.sector?.sectorId || 'com-' + item.comunidad?.id)) {
+                    @for (
+                      item of assignedSectors;
+                      track item.sector?.sectorId || 'com-' + item.comunidad?.id
+                    ) {
                       <div
                         class="d-flex align-items-center justify-content-between p-2 rounded-2 bg-white border"
                       >
@@ -925,13 +945,19 @@
                           ></i>
                           <div>
                             <div class="fw-semibold text-dark small">
-                              {{ item.isFullCommunity ? item.comunidad?.nombre + ' (Comunidad completa)' : item.sector?.nombre }}
+                              {{
+                                item.isFullCommunity
+                                  ? item.comunidad?.nombre + ' (Comunidad completa)'
+                                  : item.sector?.nombre
+                              }}
                             </div>
                             <span class="text-muted" style="font-size: 0.72rem">
                               {{
                                 item.isFullCommunity
                                   ? 'Ruta directa a nivel de comunidad'
-                                  : 'Comunidad: ' + (item.comunidad?.nombre || 'Comunidad #' + item.sector?.comunidadId)
+                                  : 'Comunidad: ' +
+                                    (item.comunidad?.nombre ||
+                                      'Comunidad #' + item.sector?.comunidadId)
                               }}
                             </span>
                           </div>
@@ -990,18 +1016,10 @@
                 <div
                   class="p-3 rounded-3 border"
                   [ngClass]="
-                    isCompleted
-                      ? 'border-success'
-                      : countData.assigned > 0
-                        ? 'border-info'
-                        : ''
+                    isCompleted ? 'border-success' : countData.assigned > 0 ? 'border-info' : ''
                   "
                   [style.backgroundColor]="
-                    isCompleted
-                      ? '#f0fdf4'
-                      : countData.assigned > 0
-                        ? '#f0f9ff'
-                        : '#ffffff'
+                    isCompleted ? '#f0fdf4' : countData.assigned > 0 ? '#f0f9ff' : '#ffffff'
                   "
                 >
                   <div class="d-flex align-items-center justify-content-between mb-2">
