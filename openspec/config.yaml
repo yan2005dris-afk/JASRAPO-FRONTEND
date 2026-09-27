@@ -1,0 +1,47 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Angular 21.2.20, TypeScript 5.9.2, pnpm 12.3.4
+  Architecture: PWA for water-board administration with role-based access (admin, operator, president, secretary, treasurer, customer portal)
+  Testing: Vitest 4 + jsdom (unit), Playwright (e2e), no integration layer
+  Style: Tailwind 4 + Angular Material 21 + Bootstrap 5 coexisting; Prettier for formatting; ESLint with angular-eslint
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Reference existing feature folders under src/app/features/
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+    - Align with existing domain boundaries in src/app/features/
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+    - Account for offline sync via IndexedDB + service worker
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    guidelines:
+      - Follow existing code patterns
+      - Respect strict TypeScript compiler settings (strict: true, strictTemplates: true, noPropertyAccessFromIndexSignature: true)
+    tdd: true
+    test_command: "pnpm test"
+  verify:
+    test_command: "pnpm test"
+    build_command: "pnpm build"
+    coverage_threshold: 0
+    e2e_command: "pnpm e2e"
+    e2e_note: "Requires backend at 127.0.0.1:3000; 5 logins/min rate limit enforced via global-setup + chromium-authed/chromium-clean projects"
+  archive:
+    - Warn before merging destructive deltas
+
+testing:
+  unit_test_command: "pnpm test"
+  e2e_test_command: "pnpm e2e"
+  lint_command: "pnpm lint"
+  build_command: "pnpm build"
+  format_check_command: "pnpm format:check"
+  ci_command: "pnpm run format:check && pnpm run lint && pnpm run build && pnpm test"
+  strict_tdd: true
+  strict_tdd_rationale: "A single non-empty project set (Angular frontend at repo root) is discovered, and the workspace-level test command `pnpm test` (resolves to `ng test --watch=false`) covers every in-scope project. Strict TDD mode is enabled per the default rule for non-empty discovered sets with a workspace-wide test command."
