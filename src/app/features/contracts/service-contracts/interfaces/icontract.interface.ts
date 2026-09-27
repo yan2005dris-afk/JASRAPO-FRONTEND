@@ -26,6 +26,8 @@ export interface IUpdateContractRequest {
   clienteId?: string;
   comunidadId?: string;
   categoriaTarifaId?: string;
+  latitud?: number | null;
+  longitud?: number | null;
 }
 
 // Categoría tarifaria anidada en el contrato (viene por JOIN)
@@ -113,6 +115,8 @@ export interface IContract {
   comunidad: IComunidad;
   sector: ISector | null;
   historialMedidores: IHistorialMedidor[];
+  latitud?: number | null;
+  longitud?: number | null;
 }
 
 // Parámetros de filtro del listado de contratos
@@ -146,6 +150,8 @@ export interface ICreateContractRequest {
   lecturaInicial?: number;
   estadoServicio?: EstadoServicio;
   creadoPor?: string;
+  latitud?: number;
+  longitud?: number;
 }
 
 /** Returns the service lifecycle state used by contract consumers. */

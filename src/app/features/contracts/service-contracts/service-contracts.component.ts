@@ -23,6 +23,8 @@ import {
 } from '../../../shared/components/dropdown/dropdown.component';
 
 const SERVICE_STATE_OPTIONS = [
+  { value: 'PENDIENTE_INSPECCION', label: 'Pendiente de inspecci\u00f3n' },
+  { value: 'RECHAZADO', label: 'Rechazado' },
   { value: 'PENDIENTE_PAGO', label: 'Pendiente de pago' },
   { value: 'PENDIENTE_INSTALACION', label: 'Pendiente de instalación' },
   { value: 'ACTIVO', label: 'Activo' },

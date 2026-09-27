@@ -115,6 +115,23 @@ describe('ServiceContractFormComponent', () => {
     expect(component.form.get('estadoServicio')?.value).toBe('ACTIVO');
     expect(component.selectedClient()?.identificacion).toBe('0999999999');
     expect(component.selectedMeter()?.serie).toBe('METER-200');
+    expect(component.form.get('latitud')?.value).toBeNull();
+    expect(component.form.get('longitud')?.value).toBeNull();
+    expect(component.coordinates()).toEqual({ latitud: null, longitud: null });
+  });
+
+  it('should preload the stored pin coordinates in edit mode when the contract has them', () => {
+    const contractWithCoordinates: IContract = {
+      ...mockContract,
+      latitud: -1.8021,
+      longitud: -80.7554,
+    };
+    fixture.componentRef.setInput('contractToEdit', contractWithCoordinates);
+    fixture.detectChanges();
+
+    expect(component.form.get('latitud')?.value).toBe(-1.8021);
+    expect(component.form.get('longitud')?.value).toBe(-80.7554);
+    expect(component.coordinates()).toEqual({ latitud: -1.8021, longitud: -80.7554 });
   });
 
   it('should send only contractual fields without medidorId in updateContract payload', () => {
@@ -137,6 +154,8 @@ describe('ServiceContractFormComponent', () => {
       clienteId: '100',
       comunidadId: '5',
       categoriaTarifaId: '1',
+      latitud: null,
+      longitud: null,
     });
     expect(
       (mockContractsService.updateContract.mock.calls[0][1] as unknown as Record<string, unknown>)[
@@ -253,5 +272,125 @@ describe('ServiceContractFormComponent', () => {
     });
     expect(mockContractsService.createContract.mock.calls[0][0]).not.toHaveProperty('estado');
     expect(savedEmitSpy).toHaveBeenCalled();
+  });
+  it.each(['PENDIENTE_INSPECCION', 'PENDIENTE_PAGO', 'PENDIENTE_INSTALACION', 'RECHAZADO'])(
+    'keeps %s controlled by the workflow while allowing detail edits',
+    (estadoServicio) => {
+      const contract = { ...mockContract, estadoServicio };
+      fixture.componentRef.setInput('contractToEdit', contract);
+      fixture.componentRef.setInput('states', [
+        { codigo: estadoServicio, nombre: estadoServicio, orden: 1 },
+        { codigo: 'ACTIVO', nombre: 'Activo', orden: 2 },
+      ]);
+      fixture.detectChanges();
+      expect(component.availableStates().map((state) => state.codigo)).toEqual([estadoServicio]);
+      mockContractsService.updateContract.mockReturnValue(of(contract));
+      component.form.patchValue({ direccionSuministro: 'New address' });
+      component.save();
+      expect(mockContractsService.updateContract).toHaveBeenCalled();
+      expect(mockContractsService.updateContract.mock.calls[0][1]).not.toHaveProperty(
+        'estadoServicio',
+      );
+    },
+  );
+
+  it('should include picked coordinates in the create payload when both are set', () => {
+    fixture.detectChanges();
+
+    mockContractsService.createContract.mockReturnValue(of(mockContract));
+
+    component.form.patchValue({
+      numeroGuia: 'CTR-NEW-02',
+      direccionSuministro: 'Calle Nueva 789',
+      lecturaInicial: '0',
+    });
+    component.selectedClient.set({
+      clienteId: '101',
+      identificacion: '0988888888',
+      nombres: 'Ana',
+      apellidos: 'Gomez',
+    } as unknown as IClient);
+    component.selectedMeter.set({
+      medidorId: 500,
+      serie: 'METER-500',
+      marca: 'Actaris',
+      modelo: 'A1',
+    } as unknown as IMeter);
+    component.selectedTariff.set({
+      categoriaTarifaId: 2,
+      nombre: 'Comercial',
+    } as unknown as ITariffCategory);
+    component.selectedComunidad.set({
+      id: 3,
+      nombre: 'Comunidad Norte',
+      codigo: 'COM-02',
+      porcentajeTasaSeguridad: 0,
+    } as Comunidad);
+    component.onCoordinatesChange({ latitud: -1.8021, longitud: -80.7554 });
+
+    component.save();
+
+    expect(mockContractsService.createContract).toHaveBeenCalledWith(
+      expect.objectContaining({ latitud: -1.8021, longitud: -80.7554 }),
+    );
+  });
+
+  it('should send explicit null coordinates in the update payload when the stored pin is cleared', () => {
+    const contractWithCoordinates: IContract = {
+      ...mockContract,
+      latitud: -1.8021,
+      longitud: -80.7554,
+    };
+    fixture.componentRef.setInput('contractToEdit', contractWithCoordinates);
+    fixture.detectChanges();
+
+    mockContractsService.updateContract.mockReturnValue(of(mockContract));
+
+    component.onCoordinatesChange({ latitud: null, longitud: null });
+    component.save();
+
+    expect(mockContractsService.updateContract).toHaveBeenCalledWith(
+      '10',
+      expect.objectContaining({ latitud: null, longitud: null }),
+    );
+  });
+
+  it('should block save and warn when only one coordinate of the pair is set', () => {
+    fixture.detectChanges();
+
+    component.form.patchValue({
+      numeroGuia: 'CTR-NEW-03',
+      direccionSuministro: 'Calle Nueva 789',
+      lecturaInicial: '0',
+    });
+    component.selectedClient.set({
+      clienteId: '101',
+      identificacion: '0988888888',
+      nombres: 'Ana',
+      apellidos: 'Gomez',
+    } as unknown as IClient);
+    component.selectedMeter.set({
+      medidorId: 500,
+      serie: 'METER-500',
+      marca: 'Actaris',
+      modelo: 'A1',
+    } as unknown as IMeter);
+    component.selectedTariff.set({
+      categoriaTarifaId: 2,
+      nombre: 'Comercial',
+    } as unknown as ITariffCategory);
+    component.selectedComunidad.set({
+      id: 3,
+      nombre: 'Comunidad Norte',
+      codigo: 'COM-02',
+      porcentajeTasaSeguridad: 0,
+    } as Comunidad);
+    component.form.patchValue({ latitud: -1.8021 });
+
+    component.save();
+
+    expect(mockContractsService.createContract).not.toHaveBeenCalled();
+    expect(mockToastService.warning).toHaveBeenCalled();
+    expect(component.coordinateError()).toBe('Ingrese latitud y longitud, o deje ambas vacías.');
   });
 });

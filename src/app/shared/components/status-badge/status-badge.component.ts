@@ -106,6 +106,7 @@ export class StatusBadgeComponent {
     if (
       [
         'PENDIENTE',
+        'PENDIENTE_INSPECCION',
         'PENDIENTE_PAGO',
         'PENDIENTE_INSTALACION',
         'IN_REVIEW',

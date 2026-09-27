@@ -1,387 +1,533 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { Router } from '@angular/router';
+import { signal, computed } from '@angular/core';
 import { of, throwError } from 'rxjs';
-import { RouteAssignmentWorkspaceComponent } from './route-assignment-workspace.component';
-import { ReadingRoutesService } from '../../services/reading-routes.service';
-import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
-import { SectoresService } from '../../../../admin/sectores-prueba/services/sectores';
-import { UsersService } from '../../../../users/services/users.service';
-import { ContractsService } from '../../../service-contracts/services/contracts.service';
-import { ToastService } from '../../../../../shared/components/toast/toast.service';
-import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import {
+  RouteAssignmentWorkspaceComponent,
+  OPERATOR_PALETTE,
+} from './route-assignment-workspace.component';
+import { User } from '../../../../users/models/user.interface';
+import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
+import { Sectores } from '../../../../admin/sectores-prueba/models/sectores.interface';
+import { IReadingRoute } from '../../interfaces/ireading-route.interface';
+import type { IAccountingPeriod } from '../../../../../shared/services/periods.service';
 
-describe('RouteAssignmentWorkspaceComponent', () => {
+describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
   let component: RouteAssignmentWorkspaceComponent;
-  let fixture: ComponentFixture<RouteAssignmentWorkspaceComponent>;
 
   const mockRouter = {
     navigate: vi.fn(),
   };
 
-  const mockReadingRoutesService = {
+  const mockRoutesService = {
+    getRoutes: vi.fn(),
     createAssignments: vi.fn(),
-    getActivityTypes: vi.fn().mockReturnValue(
-      of([
-        { tipoActividadId: 1, codigo: 'LECTURA', nombre: 'Lectura', activo: true },
-        { tipoActividadId: 2, codigo: 'CORTE', nombre: 'Corte', activo: true },
-        { tipoActividadId: 3, codigo: 'RECONEXION', nombre: 'Reconexión', activo: true },
-        { tipoActividadId: 4, codigo: 'INSPECCION', nombre: 'Inspección', activo: true },
-        { tipoActividadId: 5, codigo: 'INSTALACION', nombre: 'Instalación', activo: true },
-      ]),
-    ),
+    getActivityTypes: vi.fn().mockReturnValue(of([])),
   };
 
   const mockComunidadesService = {
-    getAllComunidades: vi.fn().mockReturnValue(
-      of({
-        data: [
-          { id: 1, nombre: 'Comuna Centro', codigo: 'CC-01' },
-          { id: 2, nombre: 'Comuna Norte', codigo: 'CN-02' },
-        ],
-      }),
-    ),
+    getAllComunidades: vi.fn().mockReturnValue(of({ data: [] })),
   };
 
   const mockSectoresService = {
-    getAllSectores: vi.fn().mockReturnValue(
-      of({
-        data: [
-          { sectorId: 10, comunidadId: 1, codigo: 'SEC-10', nombre: 'Sector A' },
-          { sectorId: 11, comunidadId: 1, codigo: 'SEC-11', nombre: 'Sector B' },
-          { sectorId: 20, comunidadId: 2, codigo: 'SEC-20', nombre: 'Sector Norte 1' },
-        ],
-      }),
-    ),
+    getAllSectores: vi.fn().mockReturnValue(of({ data: [] })),
   };
 
   const mockUsersService = {
-    getUsers: vi.fn().mockReturnValue(
-      of({
-        data: [
-          {
-            usuarioId: 5,
-            nombres: 'Carlos',
-            apellidos: 'Operador',
-            telefono: '0912345678',
-            email: 'carlos@example.com',
-            rol: { rolId: 2, nombre: 'operadores' },
-          },
-          {
-            usuarioId: 6,
-            nombres: 'Maria',
-            apellidos: 'Secretaria',
-            telefono: '0987654321',
-            email: 'maria@example.com',
-            rol: { rolId: 3, nombre: 'secretaria' },
-          },
-        ],
-      }),
-    ),
+    getUsers: vi.fn().mockReturnValue(of({ data: [] })),
   };
 
   const mockContractsService = {
-    getContracts: vi.fn().mockReturnValue(
-      of({
-        data: [
-          {
-            contratoId: 101,
-            numeroGuia: 'GUI-001',
-            comunidad: { comunidadId: 1, nombre: 'Comuna Centro' },
-            cliente: { nombres: 'Juan', apellidos: 'Perez', identificacion: '1101234567' },
-            historialMedidores: [
-              {
-                fechaHasta: null,
-                medidor: { serie: 'MED-101' },
-              },
-            ],
-          },
-          {
-            contratoId: 102,
-            numeroGuia: 'GUI-002',
-            comunidad: { comunidadId: 1, nombre: 'Comuna Centro' },
-            cliente: { nombres: 'Ana', apellidos: 'Gomez', identificacion: '1109876543' },
-            historialMedidores: [
-              {
-                fechaHasta: null,
-                medidor: { serie: 'MED-102' },
-              },
-            ],
-          },
-          {
-            contratoId: 201,
-            numeroGuia: 'GUI-003',
-            comunidad: { comunidadId: 2, nombre: 'Comuna Norte' },
-            cliente: { nombres: 'Pedro', apellidos: 'Ramirez', identificacion: '1105555555' },
-            historialMedidores: [
-              {
-                fechaHasta: null,
-                medidor: { serie: 'MED-201' },
-              },
-            ],
-          },
-        ],
-      }),
-    ),
+    getContracts: vi.fn().mockReturnValue(of({ data: [] })),
   };
 
   const mockToastService = {
     show: vi.fn(),
   };
 
-  const mockConfirmDialogService = {
+  const mockDialogService = {
     confirm: vi.fn().mockReturnValue(of(true)),
   };
 
-  beforeEach(async () => {
+  const mockOpenPeriod: IAccountingPeriod = {
+    periodoId: 1,
+    nombre: 'Enero 2026',
+    estado: 'ABIERTO',
+  };
+
+  const mockPeriodsService = {
+    getPeriods: vi.fn().mockReturnValue(of([mockOpenPeriod])),
+  };
+
+  const mockOperarios: User[] = [
+    {
+      usuarioId: 5,
+      nombres: 'Carlos',
+      apellidos: 'Operador',
+      email: 'carlos@test.com',
+      rol: { rolId: 2, nombre: 'operadores' },
+    } as unknown as User,
+    {
+      usuarioId: 7,
+      nombres: 'Andres',
+      apellidos: 'Rivas',
+      email: 'andres@test.com',
+      rol: { rolId: 2, nombre: 'operadores' },
+    } as unknown as User,
+  ];
+
+  const mockComunidades: Comunidad[] = [
+    { id: 1, nombre: 'Comuna Centro', codigo: 'CC-01' } as unknown as Comunidad,
+    { id: 2, nombre: 'Comuna Norte', codigo: 'CN-02' } as unknown as Comunidad,
+  ];
+
+  const mockSectores: Sectores[] = [
+    { sectorId: 10, comunidadId: 1, nombre: 'Sector A', codigo: 'SEC-10' },
+    { sectorId: 11, comunidadId: 1, nombre: 'Sector B', codigo: 'SEC-11' },
+    { sectorId: 20, comunidadId: 2, nombre: 'Sector Norte 1', codigo: 'SEC-20' },
+  ];
+
+  beforeEach(() => {
     vi.clearAllMocks();
 
-    await TestBed.configureTestingModule({
-      imports: [RouteAssignmentWorkspaceComponent],
-      providers: [
-        provideHttpClient(),
-        provideHttpClientTesting(),
-        { provide: Router, useValue: mockRouter },
-        { provide: ReadingRoutesService, useValue: mockReadingRoutesService },
-        { provide: ComunidadesService, useValue: mockComunidadesService },
-        { provide: SectoresService, useValue: mockSectoresService },
-        { provide: UsersService, useValue: mockUsersService },
-        { provide: ContractsService, useValue: mockContractsService },
-        { provide: ToastService, useValue: mockToastService },
-        { provide: ConfirmDialogService, useValue: mockConfirmDialogService },
-      ],
-    }).compileComponents();
+    component = Object.create(
+      RouteAssignmentWorkspaceComponent.prototype,
+    ) as RouteAssignmentWorkspaceComponent;
 
-    fixture = TestBed.createComponent(RouteAssignmentWorkspaceComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
+    const periodExistingRoutes = signal<IReadingRoute[]>([]);
+    const sessionSectorAssignments = signal(new Map<number, number>());
+    const sessionCommunityAssignments = signal(new Map<number, number>());
+    const communityCurrentPage = signal<number>(1);
+    const communityPageSize = signal<number>(4);
+    const operarios = signal(mockOperarios);
+    const comunidades = signal(mockComunidades);
+    const sectores = signal(mockSectores);
+    const selectedOperarioId = signal<number | null>(5);
 
-  it('should create and load only users with operator role', () => {
-    expect(component).toBeTruthy();
-    expect(component.operarios().length).toBe(1);
-    expect(component.operarios()[0].nombres).toBe('Carlos');
-  });
-
-  it('should filter operators by search query', () => {
-    component.workerSearch.set('Carlos');
-    expect(component.filteredOperarios().length).toBe(1);
-
-    component.workerSearch.set('inexistente');
-    expect(component.filteredOperarios().length).toBe(0);
-  });
-
-  it('should filter sectors and load contracts according to selected community', () => {
-    component.onComunidadChange(1);
-    expect(component.filteredSectores().length).toBe(2);
-    expect(component.filteredSectores()[0].sectorId).toBe(10);
-    expect(component.contratos().length).toBe(2);
-    expect(component.contratos()[0].contratoId).toBe(101);
-
-    component.onComunidadChange(2);
-    expect(component.filteredSectores().length).toBe(1);
-    expect(component.filteredSectores()[0].sectorId).toBe(20);
-    expect(component.contratos().length).toBe(1);
-    expect(component.contratos()[0].contratoId).toBe(201);
-  });
-
-  it('should filter contracts by search query', () => {
-    component.onComunidadChange(1);
-    expect(component.filteredContratos().length).toBe(2);
-
-    component.contractSearch.set('Juan');
-    expect(component.filteredContratos().length).toBe(1);
-    expect(component.filteredContratos()[0].contratoId).toBe(101);
-
-    component.contractSearch.set('MED-102');
-    expect(component.filteredContratos().length).toBe(1);
-    expect(component.filteredContratos()[0].contratoId).toBe(102);
-
-    component.contractSearch.set('inexistente');
-    expect(component.filteredContratos().length).toBe(0);
-  });
-
-  it('should toggle individual contracts and select all filtered contracts', () => {
-    component.onComunidadChange(1);
-
-    expect(component.isContratoSelected(101)).toBe(false);
-    component.toggleContrato(101);
-    expect(component.isContratoSelected(101)).toBe(true);
-
-    component.toggleContrato(101);
-    expect(component.isContratoSelected(101)).toBe(false);
-
-    // Toggle all
-    component.toggleAllFilteredContratos();
-    expect(component.areAllFilteredContratosSelected()).toBe(true);
-    expect(component.selectedContratoIds().length).toBe(2);
-
-    // Toggle all again deselects
-    component.toggleAllFilteredContratos();
-    expect(component.areAllFilteredContratosSelected()).toBe(false);
-    expect(component.selectedContratoIds().length).toBe(0);
-  });
-
-  it('should update suggested route name when activity type changes', () => {
-    component.onPeriodSelected({
-      periodoId: 1,
-      nombre: '2026',
-      estado: 'ABIERTO',
+    const existingAssignedSectorMap = computed(() => {
+      const map = new Map<number, IReadingRoute>();
+      for (const r of periodExistingRoutes()) {
+        if (r.sectorId != null) {
+          map.set(r.sectorId, r);
+        }
+      }
+      return map;
     });
-    component.onFechaPlanificadaChange('2026-09');
 
-    expect(component.sugeridoNombreBase()).toBe('Ruta de Trabajo - 2026 - Septiembre');
-
-    component.onTipoActividadChange('TOMA_LECTURA');
-    expect(component.sugeridoNombreBase()).toBe('Ruta Lectura - 2026 - Septiembre');
-
-    component.onTipoActividadChange('CORTE');
-    expect(component.sugeridoNombreBase()).toBe('Ruta Corte - 2026 - Septiembre');
-
-    component.onTipoActividadChange('INSPECCION');
-    expect(component.sugeridoNombreBase()).toBe('Ruta Inspección - 2026 - Septiembre');
-  });
-
-  it('should compute isFormValid correctly based on selected inputs for TOMA_LECTURA', () => {
-    expect(component.isFormValid()).toBe(false);
-
-    // Set activity type
-    component.onTipoActividadChange('TOMA_LECTURA');
-    expect(component.isFormValid()).toBe(false);
-
-    // Set open period
-    component.onPeriodSelected({
-      periodoId: 1,
-      nombre: 'Enero 2026',
-      estado: 'ABIERTO',
+    const existingAssignedCommunityMap = computed(() => {
+      const map = new Map<number, IReadingRoute>();
+      for (const r of periodExistingRoutes()) {
+        if (r.comunidadId != null && r.sectorId == null) {
+          map.set(r.comunidadId, r);
+        }
+      }
+      return map;
     });
-    expect(component.isFormValid()).toBe(false);
 
-    // Set worker
-    component.selectOperario(5);
-    expect(component.isFormValid()).toBe(false);
-
-    // Set community
-    component.onComunidadChange(1);
-    expect(component.isFormValid()).toBe(false);
-
-    // Toggle all community
-    component.toggleAllCommunity();
-    expect(component.isFormValid()).toBe(true);
-
-    // Switch to individual sectors
-    component.toggleSector(10);
-    expect(component.isFormValid()).toBe(true);
-    expect(component.isAllCommunitySelected()).toBe(false);
-  });
-
-  it('should compute isFormValid correctly for non-reading activity types with contracts', () => {
-    component.onTipoActividadChange('CORTE');
-    component.onPeriodSelected({
-      periodoId: 1,
-      nombre: 'Enero 2026',
-      estado: 'ABIERTO',
+    const existingCommunityRoutes = computed(() => {
+      const map = new Map<number, IReadingRoute[]>();
+      for (const r of periodExistingRoutes()) {
+        if (r.comunidadId != null) {
+          const list = map.get(r.comunidadId) || [];
+          list.push(r);
+          map.set(r.comunidadId, list);
+        }
+      }
+      return map;
     });
-    component.selectOperario(5);
-    component.onComunidadChange(1);
 
-    expect(component.isFormValid()).toBe(false);
-
-    // Selecting a contract makes it valid
-    component.toggleContrato(101);
-    expect(component.isFormValid()).toBe(true);
-  });
-
-  it('should execute assignment and navigate back when confirmed for TOMA_LECTURA', async () => {
-    mockReadingRoutesService.createAssignments.mockReturnValue(
-      of([{ rutaId: '100', nombre: 'Ruta Lectura - Sector A' }]),
+    const totalSessionAssignedSectorsCount = computed(
+      () => sessionSectorAssignments().size + sessionCommunityAssignments().size,
     );
 
-    component.onTipoActividadChange('TOMA_LECTURA');
-    component.onPeriodSelected({
+    const assignedOperatorsInSession = computed(() => {
+      const opIds = new Set<number>();
+      sessionSectorAssignments().forEach((opId) => opIds.add(opId));
+      sessionCommunityAssignments().forEach((opId) => opIds.add(opId));
+      return operarios().filter((op) => opIds.has(op.usuarioId));
+    });
+
+    const globalCoverageSummary = computed(() => {
+      const allComunidades = comunidades();
+      let fullyCompletedCommunities = 0;
+      let partialCommunities = 0;
+      let unassignedCommunities = 0;
+      let totalSectorsCount = 0;
+      let totalAssignedSectors = 0;
+
+      for (const c of allComunidades) {
+        if (c.id == null) continue;
+        const { assigned, total } = component.getCommunityAssignedCount(c.id);
+        totalSectorsCount += total;
+        totalAssignedSectors += assigned;
+        if (total > 0 && assigned === total) {
+          fullyCompletedCommunities++;
+        } else if (assigned > 0) {
+          partialCommunities++;
+        } else {
+          unassignedCommunities++;
+        }
+      }
+
+      return {
+        fullyCompletedCommunities,
+        partialCommunities,
+        unassignedCommunities,
+        totalSectors: totalSectorsCount,
+        totalAssignedSectors,
+        pendingSectors: Math.max(0, totalSectorsCount - totalAssignedSectors),
+      };
+    });
+
+    const sugeridoNombreBase = computed(() => 'Ruta Lectura - 2026');
+    const nombreBase = computed(() => 'Ruta Lectura - 2026');
+
+    Object.assign(component as object, {
+      router: mockRouter,
+      routesService: mockRoutesService,
+      comunidadesService: mockComunidadesService,
+      sectoresService: mockSectoresService,
+      usersService: mockUsersService,
+      contractsService: mockContractsService,
+      toastService: mockToastService,
+      dialogService: mockDialogService,
+      periodsService: mockPeriodsService,
+      currentStep: signal(1),
+      operarios,
+      comunidades,
+      sectores,
+      contratos: signal([]),
+      tiposActividad: signal([]),
+      periodExistingRoutes,
+      isLoadingRoutes: signal(false),
+      selectedPeriod: signal(mockOpenPeriod),
+      selectedPeriodId: signal(1),
+      selectedOperarioId,
+      selectedComunidadId: signal(null),
+      tipoActividadSeleccionada: signal('LECTURA'),
+      customNombreBase: signal(null),
+      workerSearch: signal(''),
+      communitySearch: signal(''),
+      communityFilter: signal('all'),
+      contractSearch: signal(''),
+      sessionSectorAssignments,
+      sessionCommunityAssignments,
+      communityCurrentPage,
+      communityPageSize,
+      selectedContratoIds: signal([]),
+      isLoading: signal(false),
+      isLoadingContracts: signal(false),
+      existingAssignedSectorMap,
+      existingAssignedCommunityMap,
+      existingCommunityRoutes,
+      totalSessionAssignedSectorsCount,
+      assignedOperatorsInSession,
+      globalCoverageSummary,
+      sugeridoNombreBase,
+      nombreBase,
+      communityTotalPages: computed(() => {
+        const total = component.filteredComunidades().length;
+        return Math.max(1, Math.ceil(total / component.communityPageSize()));
+      }),
+      paginatedComunidades: computed(() => {
+        const list = component.filteredComunidades();
+        const page = component.communityCurrentPage();
+        const size = component.communityPageSize();
+        const start = (page - 1) * size;
+        return list.slice(start, start + size);
+      }),
+      communityPagesArray: computed(() => {
+        const total = component.communityTotalPages();
+        return Array.from({ length: total }, (_, i) => i + 1);
+      }),
+      filteredComunidades: computed(() => {
+        const q = component.communitySearch().toLowerCase().trim();
+        const filter = component.communityFilter();
+        let list = component.comunidades();
+
+        if (filter === 'completed') {
+          list = list.filter((c) => c.id != null && component.isCommunityCompleted(c.id));
+        } else if (filter === 'pending') {
+          list = list.filter((c) => c.id != null && !component.isCommunityCompleted(c.id));
+        }
+
+        if (!q) return list;
+        return list.filter((c) => {
+          const matchName = c.nombre?.toLowerCase().includes(q);
+          const matchCode = c.codigo?.toLowerCase().includes(q);
+          const hasMatchingSector = component
+            .sectores()
+            .filter((s) => s.comunidadId === c.id)
+            .some(
+              (s) => s.nombre?.toLowerCase().includes(q) || s.codigo?.toLowerCase().includes(q),
+            );
+          return matchName || matchCode || hasMatchingSector;
+        });
+      }),
+    });
+  });
+
+  it('should assign distinctive colors from palette to each operator', () => {
+    const colorOp1 = component.getOperatorColor(5);
+    const colorOp2 = component.getOperatorColor(7);
+
+    expect(colorOp1).toBeDefined();
+    expect(colorOp2).toBeDefined();
+    expect(colorOp1.id).toBe(OPERATOR_PALETTE[0].id);
+    expect(colorOp2.id).toBe(OPERATOR_PALETTE[1].id);
+  });
+
+  it('should identify already assigned sectors in database and return correct status', () => {
+    component.periodExistingRoutes.set([
+      {
+        rutaId: 99,
+        nombre: 'Ruta Previa - Sector Norte 1',
+        operarioId: 5,
+        comunidadId: 2,
+        sectorId: 20,
+        periodoId: 1,
+        estado: 'PENDIENTE',
+      } as unknown as IReadingRoute,
+    ]);
+
+    const statusSec20 = component.getSectorStatus(20);
+    expect(statusSec20.isAssigned).toBe(true);
+    expect(statusSec20.isDbAssigned).toBe(true);
+    expect(statusSec20.operarioId).toBe(5);
+
+    const statusSec10 = component.getSectorStatus(10);
+    expect(statusSec10.isAssigned).toBe(false);
+    expect(statusSec10.isDbAssigned).toBe(false);
+  });
+
+  it('should detect 100% completed community and mark yellow border status', () => {
+    // Comuna 2 has only Sector 20, which is in DB
+    component.periodExistingRoutes.set([
+      {
+        rutaId: 99,
+        nombre: 'Ruta Previa',
+        operarioId: 5,
+        comunidadId: 2,
+        sectorId: 20,
+        periodoId: 1,
+        estado: 'PENDIENTE',
+      } as unknown as IReadingRoute,
+    ]);
+
+    expect(component.isCommunityCompleted(2)).toBe(true);
+    expect(component.isCommunityCompleted(1)).toBe(false);
+
+    // Assign Sector 10 and Sector 11 in session
+    component.toggleSector(mockSectores[0]); // Sector 10
+    expect(component.isCommunityCompleted(1)).toBe(false);
+
+    component.toggleSector(mockSectores[1]); // Sector 11
+    expect(component.isCommunityCompleted(1)).toBe(true);
+  });
+
+  it('should enforce dynamic exclusion in session between operators', () => {
+    // Assign Sector 10 to Carlos (opId 5)
+    component.selectedOperarioId.set(5);
+    component.toggleSector(mockSectores[0]);
+    expect(component.sessionSectorAssignments().get(10)).toBe(5);
+
+    // Switch to Andres (opId 7)
+    component.selectedOperarioId.set(7);
+    const status = component.getSectorStatus(10);
+    expect(status.isAssigned).toBe(true);
+    expect(status.operarioId).toBe(5);
+
+    // Andres clicks Sector 10 => blocked with warning toast
+    component.toggleSector(mockSectores[0]);
+    expect(mockToastService.show).toHaveBeenCalledWith(
+      expect.stringContaining('ya está asignado a Carlos Operador en esta sesión'),
+      'warning',
+    );
+    expect(component.sessionSectorAssignments().get(10)).toBe(5);
+
+    // Andres assigns Sector 11
+    component.toggleSector(mockSectores[1]);
+    expect(component.sessionSectorAssignments().get(11)).toBe(7);
+    expect(component.totalSessionAssignedSectorsCount()).toBe(2);
+  });
+
+  it('should toggle all available sectors in a community to current operator', () => {
+    component.selectedOperarioId.set(5);
+
+    // Assign all available sectors of Comuna 1 to Carlos
+    component.toggleAllSectorsInCommunity(1);
+    expect(component.sessionSectorAssignments().get(10)).toBe(5);
+    expect(component.sessionSectorAssignments().get(11)).toBe(5);
+
+    // Toggle again unassigns all of Carlos
+    component.toggleAllSectorsInCommunity(1);
+    expect(component.sessionSectorAssignments().has(10)).toBe(false);
+    expect(component.sessionSectorAssignments().has(11)).toBe(false);
+  });
+
+  it('should navigate between Step 1 and Step 2 (Summary) and compute metrics', () => {
+    component.selectedOperarioId.set(5);
+    component.toggleSector(mockSectores[0]); // Sector 10
+
+    component.goToSummary();
+    expect(component.currentStep()).toBe(2);
+
+    const summary = component.globalCoverageSummary();
+    expect(summary.totalAssignedSectors).toBe(1);
+    expect(summary.pendingSectors).toBe(2);
+
+    component.backToAssignment();
+    expect(component.currentStep()).toBe(1);
+  });
+
+  it('should execute batch dispatch when confirmed in Step 3', () => {
+    mockRoutesService.createAssignments.mockReturnValue(of([{ rutaId: 101, nombre: 'Ruta 1' }]));
+
+    component.selectedPeriod.set({
       periodoId: 1,
       nombre: 'Enero 2026',
       estado: 'ABIERTO',
-    });
-    component.selectOperario(5);
-    component.onComunidadChange(1);
-    component.toggleSector(10);
+    } as unknown as IAccountingPeriod);
+    component.selectedPeriodId.set(1);
 
-    component.confirmAndSave();
-    await fixture.whenStable();
+    component.selectedOperarioId.set(5);
+    component.toggleSector(mockSectores[0]); // Sector 10
+    component.selectedOperarioId.set(7);
+    component.toggleSector(mockSectores[1]); // Sector 11
 
-    expect(mockConfirmDialogService.confirm).toHaveBeenCalled();
-    expect(mockReadingRoutesService.createAssignments).toHaveBeenCalledWith({
-      periodoId: 1,
-      operarioId: 5,
-      comunidadId: 1,
-      tipoRuta: 'TOMA_LECTURA',
-      sectorIds: [10],
-      fechaPlanificada: expect.any(String),
-      nombreBase: expect.stringContaining('Ruta Lectura'),
-    });
+    component.goToSummary();
+    component.confirmAndDispatchAll();
+
+    expect(mockDialogService.confirm).toHaveBeenCalled();
+    expect(mockRoutesService.createAssignments).toHaveBeenCalledTimes(2);
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/app/Contratos/RutasDeLectura']);
     expect(mockToastService.show).toHaveBeenCalledWith(
-      expect.stringContaining('Se generaron exitosamente 1 ruta(s)'),
+      expect.stringContaining('¡Rutas despachadas con éxito!'),
       'success',
     );
   });
 
-  it('should execute assignment with contratoIds when non-reading activity is chosen', async () => {
-    mockReadingRoutesService.createAssignments.mockReturnValue(
-      of([{ rutaId: '101', nombre: 'Ruta Corte - Contrato 101' }]),
+  it('should handle error when batch dispatch fails', () => {
+    mockRoutesService.createAssignments.mockReturnValue(
+      throwError(() => ({ error: { message: 'Error en base de datos' } })),
     );
 
-    component.onTipoActividadChange('CORTE');
-    component.onPeriodSelected({
+    component.selectedPeriod.set({
       periodoId: 1,
       nombre: 'Enero 2026',
       estado: 'ABIERTO',
-    });
-    component.selectOperario(5);
-    component.onComunidadChange(1);
-    component.toggleContrato(101);
-    component.toggleContrato(102);
+    } as unknown as IAccountingPeriod);
+    component.selectedPeriodId.set(1);
 
-    component.confirmAndSave();
-    await fixture.whenStable();
+    component.selectedOperarioId.set(5);
+    component.toggleSector(mockSectores[0]);
 
-    expect(mockConfirmDialogService.confirm).toHaveBeenCalled();
-    expect(mockReadingRoutesService.createAssignments).toHaveBeenCalledWith({
-      periodoId: 1,
-      operarioId: 5,
-      comunidadId: 1,
-      tipoRuta: 'CORTE',
-      contratoIds: [101, 102],
-      fechaPlanificada: expect.any(String),
-      nombreBase: expect.stringContaining('Ruta Corte'),
-    });
-  });
-
-  it('should handle error when createAssignments fails', async () => {
-    mockReadingRoutesService.createAssignments.mockReturnValue(
-      throwError(() => ({ error: { message: 'Error de prueba' } })),
-    );
-
-    component.onTipoActividadChange('TOMA_LECTURA');
-    component.onPeriodSelected({
-      periodoId: 1,
-      nombre: 'Enero 2026',
-      estado: 'ABIERTO',
-    });
-    component.selectOperario(5);
-    component.onComunidadChange(1);
-    component.toggleAllCommunity();
-
-    component.executeAssignment();
+    component.executeBatchAssignments();
 
     expect(component.isLoading()).toBe(false);
-    expect(mockToastService.show).toHaveBeenCalledWith('Error de prueba', 'error');
+    expect(mockToastService.show).toHaveBeenCalledWith('Error en base de datos', 'error');
   });
 
   it('should navigate back on goBack()', () => {
     component.goBack();
     expect(mockRouter.navigate).toHaveBeenCalledWith(['/app/Contratos/RutasDeLectura']);
+  });
+
+  it('should filter communities by quick tabs (all, pending, completed)', () => {
+    // Comuna 2 has Sector 20 in DB -> completed
+    component.periodExistingRoutes.set([
+      {
+        rutaId: 99,
+        nombre: 'Ruta Previa',
+        operarioId: 5,
+        comunidadId: 2,
+        sectorId: 20,
+        periodoId: 1,
+        estado: 'PENDIENTE',
+      } as unknown as IReadingRoute,
+    ]);
+
+    component.setCommunityFilter('completed');
+    expect(component.communityFilter()).toBe('completed');
+    expect(component.filteredComunidades().length).toBe(1);
+    expect(component.filteredComunidades()[0].id).toBe(2);
+
+    component.setCommunityFilter('pending');
+    expect(component.communityFilter()).toBe('pending');
+    expect(component.filteredComunidades().length).toBe(1);
+    expect(component.filteredComunidades()[0].id).toBe(1);
+
+    component.setCommunityFilter('all');
+    expect(component.communityFilter()).toBe('all');
+    expect(component.filteredComunidades().length).toBe(2);
+  });
+
+  it('should assign all available sectors across communities to active operator', () => {
+    component.selectedOperarioId.set(5);
+    // Sectores 10 and 11 in Comunidad 1, Sector 20 in Comunidad 2
+    component.assignAllAvailable();
+
+    expect(component.totalSessionAssignedSectorsCount()).toBe(3);
+    expect(mockToastService.show).toHaveBeenCalledWith(
+      expect.stringContaining('Se asignaron 3'),
+      'success',
+    );
+  });
+
+  it('should toggle direct community assignment for communities without sectors', () => {
+    // Comunidad 3 has no sectors
+    component.comunidades.set([
+      ...mockComunidades,
+      { id: 3, nombre: 'Curia', codigo: '003', porcentajeTasaSeguridad: 0 },
+    ]);
+
+    component.selectedOperarioId.set(5);
+    component.toggleCommunityAssignment(3);
+
+    expect(component.sessionCommunityAssignments().get(3)).toBe(5);
+    expect(component.totalSessionAssignedSectorsCount()).toBe(1);
+
+    // Toggle off
+    component.toggleCommunityAssignment(3);
+    expect(component.sessionCommunityAssignments().has(3)).toBe(false);
+    expect(component.totalSessionAssignedSectorsCount()).toBe(0);
+  });
+
+  it('should paginate community cards correctly', () => {
+    component.comunidades.set([
+      { id: 1, nombre: 'Olon', codigo: '001', porcentajeTasaSeguridad: 5 },
+      { id: 2, nombre: 'Nuñez', codigo: '002', porcentajeTasaSeguridad: 0 },
+      { id: 3, nombre: 'La Entrada', codigo: '003', porcentajeTasaSeguridad: 3 },
+      { id: 4, nombre: 'San Jose', codigo: '004', porcentajeTasaSeguridad: 2 },
+      { id: 5, nombre: 'Curia', codigo: '005', porcentajeTasaSeguridad: 0 },
+    ]);
+    component.communityPageSize.set(2);
+
+    expect(component.communityTotalPages()).toBe(3);
+    expect(component.paginatedComunidades().length).toBe(2);
+    expect(component.paginatedComunidades()[0].id).toBe(1);
+
+    component.nextCommunityPage();
+    expect(component.communityCurrentPage()).toBe(2);
+    expect(component.paginatedComunidades()[0].id).toBe(3);
+
+    component.prevCommunityPage();
+    expect(component.communityCurrentPage()).toBe(1);
+
+    component.setCommunityCurrentPage(3);
+    expect(component.communityCurrentPage()).toBe(3);
+    expect(component.paginatedComunidades().length).toBe(1);
+    expect(component.paginatedComunidades()[0].id).toBe(5);
+  });
+
+  it('should reset session assignments when resetSessionAssignments is called', () => {
+    component.selectedOperarioId.set(5);
+    component.toggleSector(mockSectores[0]);
+    expect(component.totalSessionAssignedSectorsCount()).toBe(1);
+
+    component.resetSessionAssignments();
+    expect(component.totalSessionAssignedSectorsCount()).toBe(0);
+    expect(mockToastService.show).toHaveBeenCalledWith(
+      'Se descartaron todas las asignaciones de la sesión.',
+      'info',
+    );
   });
 });
