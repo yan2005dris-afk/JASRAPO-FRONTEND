@@ -16,8 +16,6 @@ describe('MeterTableComponent', () => {
       estado: { codigo: 'BODEGA', nombre: 'Bodega', orden: 1 },
       fechaInstalacion: null,
       contratoId: null,
-      latitud: null,
-      longitud: null,
     },
     {
       medidorId: 2,
@@ -27,8 +25,6 @@ describe('MeterTableComponent', () => {
       estado: { codigo: 'INSTALADO', nombre: 'Instalado', orden: 2 },
       fechaInstalacion: '2026-01-01',
       contratoId: '10',
-      latitud: null,
-      longitud: null,
     },
   ];
 

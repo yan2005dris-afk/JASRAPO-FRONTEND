@@ -22,8 +22,6 @@ describe('ReplaceMeterModalComponent', () => {
       estado: { codigo: 'BODEGA', nombre: 'Bodega', orden: 1 },
       fechaInstalacion: null,
       contratoId: null,
-      latitud: null,
-      longitud: null,
     },
     {
       medidorId: 201,
@@ -33,8 +31,6 @@ describe('ReplaceMeterModalComponent', () => {
       estado: { codigo: 'BODEGA', nombre: 'Bodega', orden: 1 },
       fechaInstalacion: null,
       contratoId: null,
-      latitud: null,
-      longitud: null,
     },
   ];
 
