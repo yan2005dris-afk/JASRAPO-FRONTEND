@@ -83,6 +83,15 @@
         </span>
       </div>
     </div>
+
+    @if (selectedPeriod() && selectedPeriod()!.estado !== 'ABIERTO') {
+      <div class="alert alert-warning d-flex align-items-center gap-2 rounded-3 py-2 px-3 mt-2 mb-0" role="alert">
+        <i class="bi bi-exclamation-triangle-fill fs-5 text-warning flex-shrink-0"></i>
+        <div class="small">
+          <strong>Período cerrado:</strong> El período seleccionado se encuentra en estado <strong>{{ selectedPeriod()!.estado }}</strong>. Solo se permite consultar rutas preexistentes; la asignación y despacho de nuevas rutas están deshabilitados.
+        </div>
+      </div>
+    }
   </div>
 
   @if (!selectedPeriod()) {
@@ -701,7 +710,7 @@
 
       <!-- Sticky Bottom Action Bar -->
       <div
-        class="card border-0 shadow-lg rounded-4 p-3 bg-white border position-sticky bottom-0 z-3"
+        class="card border-0 rounded-4 p-3 bg-white border position-sticky bottom-0 z-3 workspace-action-bar"
         style="border-color: var(--border-color, #cbdedf) !important"
       >
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
@@ -733,7 +742,7 @@
             <button
               type="button"
               class="btn btn-primary btn-sm rounded-3 px-4 py-2 fw-semibold shadow-sm"
-              [disabled]="totalSessionAssignedSectorsCount() === 0"
+              [disabled]="totalSessionAssignedSectorsCount() === 0 || selectedPeriod()?.estado !== 'ABIERTO'"
               (click)="goToSummary()"
             >
               Continuar al Resumen <i class="bi bi-arrow-right ms-1"></i>

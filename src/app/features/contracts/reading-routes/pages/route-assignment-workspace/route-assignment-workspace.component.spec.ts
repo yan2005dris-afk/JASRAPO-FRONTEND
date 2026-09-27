@@ -47,6 +47,16 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
     confirm: vi.fn().mockReturnValue(of(true)),
   };
 
+  const mockOpenPeriod: IAccountingPeriod = {
+    periodoId: 1,
+    nombre: 'Enero 2026',
+    estado: 'ABIERTO',
+  };
+
+  const mockPeriodsService = {
+    getPeriods: vi.fn().mockReturnValue(of([mockOpenPeriod])),
+  };
+
   const mockOperarios: User[] = [
     {
       usuarioId: 5,
@@ -179,6 +189,7 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
       contractsService: mockContractsService,
       toastService: mockToastService,
       dialogService: mockDialogService,
+      periodsService: mockPeriodsService,
       currentStep: signal(1),
       operarios,
       comunidades,
@@ -187,8 +198,8 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
       tiposActividad: signal([]),
       periodExistingRoutes,
       isLoadingRoutes: signal(false),
-      selectedPeriod: signal(null),
-      selectedPeriodId: signal(null),
+      selectedPeriod: signal(mockOpenPeriod),
+      selectedPeriodId: signal(1),
       selectedOperarioId,
       selectedComunidadId: signal(null),
       tipoActividadSeleccionada: signal('LECTURA'),

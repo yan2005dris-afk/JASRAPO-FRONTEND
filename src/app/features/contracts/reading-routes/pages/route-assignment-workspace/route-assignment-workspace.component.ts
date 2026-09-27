@@ -29,7 +29,7 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PeriodPickerComponent } from '../../../../../shared/components/period-picker/period-picker.component';
 import { PickerInputComponent } from '../../../../../shared/components/picker-input/picker-input.component';
-import type { IAccountingPeriod } from '../../../../../shared/services/periods.service';
+import { PeriodsService, type IAccountingPeriod } from '../../../../../shared/services/periods.service';
 
 export interface OperatorColor {
   id: string;
@@ -151,6 +151,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   private readonly contractsService = inject(ContractsService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
+  private readonly periodsService = inject(PeriodsService);
 
   // Wizard Step (1: Asignación 2 Tablas, 2: Resumen Full Width)
   readonly currentStep = signal<1 | 2>(1);
@@ -625,6 +626,15 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
         }
       },
     });
+
+    this.periodsService.getPeriods().subscribe({
+      next: (periods) => {
+        if (!this.selectedPeriodId() && periods && periods.length > 0) {
+          const openPeriod = periods.find((p) => p.estado === 'ABIERTO') || periods[0];
+          this.onPeriodSelected(openPeriod);
+        }
+      },
+    });
   }
 
   loadPeriodRoutes(periodoId: number): void {
@@ -656,6 +666,13 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     } else {
       this.periodExistingRoutes.set([]);
     }
+
+    if (period && period.estado !== 'ABIERTO') {
+      this.toastService.show(
+        `El período "${period.nombre ?? ''}" se encuentra ${period.estado}. Solo es posible consultar rutas; la asignación y despacho requieren un período ABIERTO.`,
+        'warning',
+      );
+    }
   }
 
   selectOperario(operarioId: number): void {
@@ -665,6 +682,15 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   // Toggle sector selection for currently active operator
   toggleSector(sector: Sectores): void {
     if (!sector.sectorId) return;
+
+    const period = this.selectedPeriod();
+    if (!period || period.estado !== 'ABIERTO') {
+      this.toastService.show(
+        'El período operativo no está abierto. No se pueden realizar asignaciones.',
+        'warning',
+      );
+      return;
+    }
 
     const opId = this.selectedOperarioId();
     if (!opId) {
@@ -710,6 +736,15 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
 
   // Toggle direct community assignment for communities without sectors
   toggleCommunityAssignment(comunidadId: number): void {
+    const period = this.selectedPeriod();
+    if (!period || period.estado !== 'ABIERTO') {
+      this.toastService.show(
+        'El período operativo no está abierto. No se pueden realizar asignaciones.',
+        'warning',
+      );
+      return;
+    }
+
     const opId = this.selectedOperarioId();
     if (!opId) {
       this.toastService.show('Por favor, seleccioná un operario en la Tabla 1 primero.', 'warning');
@@ -868,6 +903,15 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
 
   // Navigation between Step 1 (2 Tables) and Step 2 (Full Width Summary)
   goToSummary(): void {
+    const period = this.selectedPeriod();
+    if (!period || period.estado !== 'ABIERTO') {
+      this.toastService.show(
+        'Solo se pueden planificar y despachar rutas para un período abierto.',
+        'warning',
+      );
+      return;
+    }
+
     if (this.totalSessionAssignedSectorsCount() === 0) {
       this.toastService.show('No has asignado ningún sector o comunidad en esta sesión todavía.', 'warning');
       return;
