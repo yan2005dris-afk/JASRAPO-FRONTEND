@@ -205,14 +205,18 @@ describe('LecturasComponent State Machine', () => {
       expect(synthetic.clienteNombre).toBe('MARLON BRANDO ZAMBRANO SAAVEDRA');
       expect(synthetic.marca).toBe('INSPECCION');
 
-      // Lands on search step (Órdenes de Trabajo view) to list orders with Atender button
+      // Lands on search step (Órdenes de Trabajo view) to list orders
       expect(component.currentStep()).toBe('search');
 
-      // Tapping Atender transitions directly to form for execution
-      component.openOrderExecution(synthetic);
+      // Selecting the order transitions to the actions step
+      component.selectMeter(synthetic);
+      expect(component.currentStep()).toBe('actions');
+      expect(component.selectedMeter()?.serie).toBe('GUIA-2005-05');
+
+      // From actions step, completing the activity transitions to form
+      component.goToWorkOrderForm('INSPECCION');
       expect(component.currentStep()).toBe('form');
       expect(component.activeTipoActividad()).toBe('INSPECCION');
-      expect(component.selectedMeter()?.serie).toBe('GUIA-2005-05');
 
       // Cleanup
       sessionStorage.removeItem('activeOperatorRoute');

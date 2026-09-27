@@ -130,8 +130,8 @@
                 [class.completed]="isDone"
                 role="button"
                 tabindex="0"
-                (click)="openOrderExecution(meter)"
-                (keydown.enter)="openOrderExecution(meter)"
+                (click)="selectMeter(meter)"
+                (keydown.enter)="selectMeter(meter)"
                 [attr.id]="'order-card-' + idx"
               >
                 <div class="radial-card-content">
@@ -174,7 +174,7 @@
                         <button
                           type="button"
                           class="btn-atender font-mono"
-                          (click)="$event.stopPropagation(); openOrderExecution(meter)"
+                          (click)="$event.stopPropagation(); selectMeter(meter)"
                         >
                           Atender
                         </button>
