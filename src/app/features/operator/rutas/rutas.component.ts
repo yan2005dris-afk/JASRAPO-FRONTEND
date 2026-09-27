@@ -220,8 +220,8 @@ export class RutasComponent implements OnInit, OnDestroy {
         // Backend puede no garantizar orden estable entre requests; ordenamos acá
         // por ordenVisita para que la secuencia de visita sea consistente en UI.
         for (const ord of ordenes.slice().sort((a, b) => a.ordenVisita - b.ordenVisita)) {
-          const lat = ord.medidor?.latitud;
-          const lng = ord.medidor?.longitud;
+          const lat = ord.contrato?.latitud;
+          const lng = ord.contrato?.longitud;
           const serie = ord.medidor?.serie;
           if (lat != null && lng != null) {
             points.push({
@@ -258,21 +258,6 @@ export class RutasComponent implements OnInit, OnDestroy {
             `,
           });
         }
-      } else if (task.medidor?.latitud != null && task.medidor?.longitud != null) {
-        points.push({
-          routeId: task.rutaId,
-          lat: task.medidor.latitud,
-          lng: task.medidor.longitud,
-          estado: statusMap.get(task.medidor.serie) ?? '__SIN_LECTURA__',
-          tipoRuta: task.tipoRuta,
-          popupHtml: `
-            <div class="map-info">
-              <strong>${task.nombre}</strong>
-              <p style="margin:4px 0 0;font-size:11px;"><strong>Serie:</strong> ${task.medidor.serie}</p>
-              ${task.descripcion ? `<p style="margin:2px 0 0;font-size:10px;color:#597b7d;">${task.descripcion}</p>` : ''}
-            </div>
-          `,
-        });
       }
     }
 
@@ -561,7 +546,7 @@ export class RutasComponent implements OnInit, OnDestroy {
   }
 
   taskHasMeterCoordinates(task: OperatorRouteResponse): boolean {
-    return Number.isFinite(task.medidor?.latitud) && Number.isFinite(task.medidor?.longitud);
+    return this.taskHasMapPoints(task);
   }
 
   getTaskPointCount(task: OperatorRouteResponse): number {
@@ -572,7 +557,7 @@ export class RutasComponent implements OnInit, OnDestroy {
       return task.ordenesTrabajo.length;
     }
     if (task.rutaPuntos?.length) return task.rutaPuntos.length;
-    return task.medidor ? 1 : 0;
+    return 0;
   }
 
   getTaskFirstClient(task: OperatorRouteResponse): string | null {
