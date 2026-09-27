@@ -136,6 +136,10 @@ export class LecturaFormComponent
     });
   }
 
+  protected override isPhotoRequired(): boolean {
+    return false;
+  }
+
   protected buildPayload(
     formValue: Record<string, unknown>,
     photo: Blob | null,

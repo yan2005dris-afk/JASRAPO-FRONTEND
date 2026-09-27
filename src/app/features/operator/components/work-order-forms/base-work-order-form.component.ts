@@ -65,6 +65,14 @@ export abstract class BaseWorkOrderFormComponent<T extends WorkOrderFormPayload>
   protected abstract buildPayload(formValue: Record<string, unknown>, photo: Blob | null): T;
 
   /**
+   * Hook que define si la fotografía es obligatoria para este formulario.
+   * Por defecto true; formularios como LECTURA lo sobreescriben a false.
+   */
+  protected isPhotoRequired(): boolean {
+    return true;
+  }
+
+  /**
    * Resetea el flag `submitted` cuando el operador carga una foto nueva.
    * Sin esto, un submit fallido deja el gate prendido y la nueva foto no
    * "limpia" el error visible.
@@ -75,16 +83,16 @@ export abstract class BaseWorkOrderFormComponent<T extends WorkOrderFormPayload>
   }
 
   /**
-   * Handler de submit. Valida form + foto, marca como touched si falla,
+   * Handler de submit. Valida form + foto (si es requerida), marca como touched si falla,
    * emite el payload tipado si pasa.
    */
   submit(): void {
     this.submitted.set(true);
-    if (this.form.invalid || !this.photoPreview()) {
+    if (this.form.invalid || (this.isPhotoRequired() && !this.photoPreview())) {
       this.form.markAllAsTouched();
       return;
     }
-    this.formSubmit.emit(this.buildPayload(this.form.value, this.photoPreview()));
+    this.formSubmit.emit(this.buildPayload(this.form.getRawValue(), this.photoPreview()));
   }
 
   /** Handler de cancel. */
