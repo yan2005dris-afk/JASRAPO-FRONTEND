@@ -69,7 +69,7 @@ export class OperatorHomeComponent implements OnInit {
         count += 1;
       }
     }
-    return count > 0 ? count : 120;
+    return count;
   });
 
   readonly totalReadMeters = computed<number>(() => {
@@ -91,7 +91,7 @@ export class OperatorHomeComponent implements OnInit {
         }
       }
     }
-    return readCount > 0 ? readCount : 78;
+    return readCount;
   });
 
   readonly readingProgressPct = computed<number>(() => {
@@ -107,7 +107,7 @@ export class OperatorHomeComponent implements OnInit {
         count += t.ordenesTrabajo?.length || 1;
       }
     }
-    return count > 0 ? count : 4;
+    return count;
   });
 
   readonly heroActiveRoute = computed<OperatorRouteResponse | null>(() => {

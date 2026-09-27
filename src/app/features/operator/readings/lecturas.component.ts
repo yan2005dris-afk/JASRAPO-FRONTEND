@@ -305,7 +305,9 @@ export class LecturasComponent implements OnInit {
     const primary = this.primaryWorkOrderFor(meter);
     const tipo = primary
       ? primary[0]
-      : (this.routeContext()?.tipo as WorkOrderActivityType) || 'LECTURA';
+      : (meter.marca as WorkOrderActivityType) ||
+        (this.routeContext()?.tipo as WorkOrderActivityType) ||
+        'LECTURA';
     this.goToWorkOrderForm(tipo);
   }
 
@@ -328,12 +330,10 @@ export class LecturasComponent implements OnInit {
       const cachedReadings = await this.dbService.getRegisteredReadingsCache(scope);
       this.registeredReadings.set(cachedReadings);
 
-      // Si se pasó una serie específica en la query URL y no estaba seleccionada
+      // Si se pasó una serie específica fuera del flujo de ruta y no estaba seleccionada
       const singleSerie = this.activatedRoute.snapshot.queryParamMap.get('serie');
-      const synthetics = this.routeSyntheticMeters();
-      const targetSerie = singleSerie || (synthetics.length === 1 ? synthetics[0].serie : null);
-      if (targetSerie && !this.selectedMeter()) {
-        const meter = this.combinedMetersList().find((m) => m.serie === targetSerie);
+      if (!this.routeContext() && singleSerie && !this.selectedMeter()) {
+        const meter = this.combinedMetersList().find((m) => m.serie === singleSerie);
         if (meter) this.selectMeter(meter);
       }
     } catch (e) {
@@ -410,6 +410,10 @@ export class LecturasComponent implements OnInit {
     // Build a lookup map: serie → activity type → assigned work-order ID.
     // Format: "SERIE1:INSTALACION:ORDER_ID:ESTADO;INSPECCION:OTHER_ID:ESTADO".
     // Legacy assignments without estado default to PENDIENTE.
+    if (activeRoute && !this.routeContext()) {
+      this.routeContext.set({ nombre: activeRoute.nombre, tipo: activeRoute.tipoRuta });
+    }
+
     if (workOrdersParam) {
       const workOrdersByMeter = new Map<string, Map<WorkOrderActivityType, AssignedWorkOrder>>();
       for (const entry of workOrdersParam.split(',')) {
@@ -427,6 +431,18 @@ export class LecturasComponent implements OnInit {
         if (assignments.size) workOrdersByMeter.set(serie.trim(), assignments);
       }
       this.workOrdersByMeter.set(workOrdersByMeter);
+    } else if (activeRoute?.ordenesTrabajo?.length) {
+      const workOrdersByMeter = new Map<string, Map<WorkOrderActivityType, AssignedWorkOrder>>();
+      for (const wo of activeRoute.ordenesTrabajo) {
+        const id = wo.medidor?.serie || wo.contrato?.numeroContrato || `OT-${wo.ordenTrabajoId}`;
+        const assignments = new Map<WorkOrderActivityType, AssignedWorkOrder>();
+        assignments.set(wo.tipoActividad as WorkOrderActivityType, {
+          id: String(wo.ordenTrabajoId),
+          estado: (wo.estado as WorkOrderState) || 'PENDIENTE',
+        });
+        workOrdersByMeter.set(id, assignments);
+      }
+      this.workOrdersByMeter.set(workOrdersByMeter);
     }
 
     if (seriesParam) {
@@ -441,10 +457,9 @@ export class LecturasComponent implements OnInit {
       }
     }
 
-    // Si viene una sola orden o parada, auto-seleccionar para ahorrar clicks al operador
-    const targetSerie = singleSerie || (synthetics.length === 1 ? synthetics[0].serie : null);
-    if (targetSerie && !this.selectedMeter()) {
-      const meter = this.combinedMetersList().find((m) => m.serie === targetSerie);
+    // Solo auto-seleccionar si NO estamos en el flujo de órdenes de una ruta
+    if (!this.routeContext() && singleSerie && !this.selectedMeter()) {
+      const meter = this.combinedMetersList().find((m) => m.serie === singleSerie);
       if (meter) this.selectMeter(meter);
     }
   }
