@@ -22,7 +22,11 @@ import {
 } from './readings.models';
 import { WorkOrderDispatcherComponent } from '../components/work-order-dispatcher/work-order-dispatcher.component';
 import { calculateConsumo, type WorkOrderFormPayload } from '../models/work-order-form.models';
-import type { WorkOrderActivityType, WorkOrderState } from '../models/operator.models';
+import type {
+  WorkOrderActivityType,
+  WorkOrderState,
+  OperatorRouteResponse,
+} from '../models/operator.models';
 
 type AssignedWorkOrderType = Exclude<WorkOrderActivityType, 'LECTURA'>;
 
@@ -95,6 +99,17 @@ export class LecturasComponent implements OnInit {
 
   // Catálogo de medidores cargado (memoria local)
   readonly metersList = this.meterCache.metersList;
+  readonly routeSyntheticMeters = signal<IMeterDto[]>([]);
+
+  readonly combinedMetersList = computed<IMeterDto[]>(() => {
+    const cached = this.metersList();
+    const synthetics = this.routeSyntheticMeters();
+    if (!synthetics.length) return cached;
+    const cachedSeries = new Set(cached.map((m) => m.serie));
+    const toAdd = synthetics.filter((s) => !cachedSeries.has(s.serie));
+    return [...cached, ...toAdd];
+  });
+
   readonly searchQuery = signal<string>('');
   readonly isLoadingMeters = signal<boolean>(false);
   readonly isSaving = signal<boolean>(false);
@@ -189,8 +204,13 @@ export class LecturasComponent implements OnInit {
     // Orden consistente importado desde readings.models.ts
     return READING_STATE_ORDER.filter((key) => groups.has(key)).map((key) => {
       const isSinLectura = key === '__SIN_LECTURA__';
+      const isWorkOrderRoute = this.routeContext() && this.routeContext()?.tipo !== 'TOMA_LECTURA';
       const info = isSinLectura
-        ? { label: 'Sin Lectura', icon: 'bi-clock', cssClass: null as string | null }
+        ? {
+            label: isWorkOrderRoute ? 'Pendiente' : 'Sin Lectura',
+            icon: isWorkOrderRoute ? 'bi-clipboard-check' : 'bi-clock',
+            cssClass: null as string | null,
+          }
         : {
             label: estadoInfo.get(key)?.label ?? key,
             icon: estadoInfo.get(key)?.icon ?? 'bi-question',
@@ -226,7 +246,7 @@ export class LecturasComponent implements OnInit {
   readonly filteredMeters = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
     const allowed = this.allowedSeries();
-    let list = this.metersList();
+    let list = this.combinedMetersList();
 
     if (allowed !== null) {
       list = list.filter((m) => allowed.has(m.serie));
@@ -259,8 +279,10 @@ export class LecturasComponent implements OnInit {
 
       // Si se pasó una serie específica en la query URL y no estaba seleccionada
       const singleSerie = this.activatedRoute.snapshot.queryParamMap.get('serie');
-      if (singleSerie && !this.selectedMeter()) {
-        const meter = this.metersList().find((m) => m.serie === singleSerie);
+      const synthetics = this.routeSyntheticMeters();
+      const targetSerie = singleSerie || (synthetics.length === 1 ? synthetics[0].serie : null);
+      if (targetSerie && !this.selectedMeter()) {
+        const meter = this.combinedMetersList().find((m) => m.serie === targetSerie);
         if (meter) this.selectMeter(meter);
       }
     } catch (e) {
@@ -270,6 +292,7 @@ export class LecturasComponent implements OnInit {
 
   private autoSelectFromQueryParam(): void {
     const params = this.activatedRoute.snapshot.queryParamMap;
+    const rutaId = params.get('rutaId');
     const rutaNombre = params.get('rutaNombre');
     const rutaTipo = params.get('rutaTipo');
     const seriesParam = params.get('series');
@@ -278,6 +301,57 @@ export class LecturasComponent implements OnInit {
 
     if (rutaNombre && rutaTipo) {
       this.routeContext.set({ nombre: rutaNombre, tipo: rutaTipo });
+    }
+
+    // Recuperar datos de la ruta (desde router state o sessionStorage)
+    let activeRoute: OperatorRouteResponse | null = null;
+    if (history.state && history.state.route) {
+      activeRoute = history.state.route as OperatorRouteResponse;
+    } else {
+      try {
+        const stored = sessionStorage.getItem('activeOperatorRoute');
+        if (stored) activeRoute = JSON.parse(stored);
+      } catch {
+        // ignore
+      }
+    }
+
+    const synthetics: IMeterDto[] = [];
+    if (
+      activeRoute &&
+      (!rutaId || String(activeRoute.rutaId) === String(rutaId) || activeRoute.nombre === rutaNombre)
+    ) {
+      if (activeRoute.ordenesTrabajo?.length) {
+        for (const wo of activeRoute.ordenesTrabajo) {
+          const id = wo.medidor?.serie || wo.contrato?.numeroContrato || `OT-${wo.ordenTrabajoId}`;
+          synthetics.push({
+            medidorId: Number(wo.ordenTrabajoId) ? -Math.abs(Number(wo.ordenTrabajoId)) : -1,
+            serie: id,
+            marca: wo.tipoActividad,
+            modelo: wo.contrato?.direccion || '',
+            clienteNombre: wo.contrato?.clienteNombre || 'Cliente sin nombre',
+            contratoId: wo.contrato?.numeroContrato || wo.contratoId || null,
+            fechaInstalacion: null,
+          });
+        }
+      } else if (activeRoute.paradas?.length) {
+        for (const p of activeRoute.paradas) {
+          const id = p.serie || p.clienteNombre || `OT-${p.ordenTrabajoId}`;
+          synthetics.push({
+            medidorId: Number(p.ordenTrabajoId) ? -Math.abs(Number(p.ordenTrabajoId)) : -1,
+            serie: id,
+            marca: p.tipoActividad,
+            modelo: p.direccionSuministro || '',
+            clienteNombre: p.clienteNombre || 'Cliente sin nombre',
+            contratoId: null,
+            fechaInstalacion: null,
+          });
+        }
+      }
+    }
+
+    if (synthetics.length > 0) {
+      this.routeSyntheticMeters.set(synthetics);
     }
 
     // Build a lookup map: serie → activity type → assigned work-order ID.
@@ -309,11 +383,15 @@ export class LecturasComponent implements OnInit {
           .map((s) => s.trim())
           .filter(Boolean),
       );
-      this.allowedSeries.set(set);
+      if (set.size > 0) {
+        this.allowedSeries.set(set);
+      }
     }
 
-    if (singleSerie) {
-      const meter = this.metersList().find((m) => m.serie === singleSerie);
+    // Si viene una sola orden o parada, auto-seleccionar para ahorrar clicks al operador
+    const targetSerie = singleSerie || (synthetics.length === 1 ? synthetics[0].serie : null);
+    if (targetSerie && !this.selectedMeter()) {
+      const meter = this.combinedMetersList().find((m) => m.serie === targetSerie);
       if (meter) this.selectMeter(meter);
     }
   }
@@ -475,10 +553,14 @@ export class LecturasComponent implements OnInit {
 
   private workOrderIdFor(meter: IMeterDto, tipo: AssignedWorkOrderType): string | undefined {
     const workOrder = this.workOrdersByMeter().get(meter.serie)?.get(tipo);
-    if (workOrder?.estado !== 'PENDIENTE' && workOrder?.estado !== 'EN_PROGRESO') {
-      return undefined;
+    if (workOrder?.estado === 'PENDIENTE' || workOrder?.estado === 'EN_PROGRESO') {
+      return workOrder.id;
     }
-    return workOrder.id;
+    if (workOrder?.id) return workOrder.id;
+    if (meter.medidorId < 0) {
+      return Math.abs(meter.medidorId).toString();
+    }
+    return undefined;
   }
 
   goBackToSearch(): void {

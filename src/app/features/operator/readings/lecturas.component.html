@@ -32,7 +32,7 @@
   @if (currentStep() === 'search') {
     <div class="step-view">
       <div class="screen-header">
-        <h1 class="screen-title">Medidores</h1>
+        <h1 class="screen-title">{{ routeContext() ? 'Órdenes de Trabajo' : 'Medidores' }}</h1>
         @if (networkService.isOnline()) {
           <button
             class="btn-icon"

@@ -200,13 +200,14 @@
           @let totalPts = getTaskPointCount(task);
           @let readPts = getTaskReadCount(task);
           @let pct = getTaskProgressPct(task);
+          @let effectiveTipo = resolveTaskTipoRuta(task);
           <div class="task-card">
             <!-- Header de tarjeta -->
             <div class="task-card-top">
               <span class="task-orden">#{{ $index + 1 }}</span>
-              <span class="route-badge badge-{{ (task.tipoRuta || 'TOMA_LECTURA').toLowerCase() }}">
+              <span class="route-badge badge-{{ effectiveTipo.toLowerCase() }}">
                 <i class="bi" [class]="actionIconFor(task)"></i>
-                {{ task.tipoRuta | routeType }}
+                {{ effectiveTipo | routeType }}
               </span>
               <span class="state-badge state-{{ (task.estado || 'PENDIENTE').toLowerCase() }}">
                 {{ getStateLabel(task.estado) }}
@@ -242,7 +243,7 @@
 
               <div class="task-info-body">
                 <h3 class="task-nombre">
-                  {{ task.nombre || 'Ruta ' + (task.tipoRuta | routeType) + ' #' + ($index + 1) }}
+                  {{ task.nombre || 'Ruta ' + (effectiveTipo | routeType) + ' #' + ($index + 1) }}
                 </h3>
 
                 <div class="task-details-grid">

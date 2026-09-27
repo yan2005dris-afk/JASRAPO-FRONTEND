@@ -1,5 +1,5 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { vi, describe, beforeEach, it, expect } from 'vitest';
 import { RutasComponent } from './rutas.component';
@@ -204,5 +204,87 @@ describe('RutasComponent', () => {
     expect(component.getTaskComunidadDescription(task1)).toBe('Olón');
     expect(component.getTaskSectorDescription(task1)).toBe('Sector Norte Olón');
     expect(component.getTaskComunidadDescription(task2)).toBe('Núñez');
+  });
+
+  describe('resolveTaskTipoRuta y openRoute', () => {
+    it('resolveTaskTipoRuta resuelve correctamente con fallback a órdenes de inspección', () => {
+      const inspectionTask: OperatorRouteResponse = {
+        rutaId: 'r-insp',
+        tipoRuta: undefined as unknown as RouteType,
+        nombre: 'Inspección GUIA-2005-05',
+        estado: 'PENDIENTE',
+        operarioId: 10,
+        comunidadId: 1,
+        medidor: null,
+        operario: { usuarioId: 10, nombres: 'Carlos', apellidos: 'Mora' },
+        ordenesTrabajo: [
+          {
+            ordenTrabajoId: 'ot-45',
+            rutaId: 'r-insp',
+            tipoActividad: 'INSPECCION',
+            estado: 'PENDIENTE',
+            ordenVisita: 1,
+            contratoId: 'c-1',
+            contrato: {
+              numeroContrato: 'GUIA-2005-05',
+              clienteNombre: 'MARLON BRANDO ZAMBRANO SAAVEDRA',
+              direccion: 'Curia',
+            },
+          },
+        ],
+      };
+
+      expect(component.resolveTaskTipoRuta(inspectionTask)).toBe('INSPECCION');
+      expect(component.actionLabelFor(inspectionTask)).toBe('Inspección');
+      expect(component.actionIconFor(inspectionTask)).toBe('bi-search');
+    });
+
+    it('openRoute maneja órdenes sin medidor instalado y genera identificadores para navegación', () => {
+      const router = TestBed.inject(Router);
+      const navigateSpy = vi.spyOn(router, 'navigate');
+
+      const inspectionTask: OperatorRouteResponse = {
+        rutaId: 'r-insp-1',
+        tipoRuta: 'INSPECCION',
+        nombre: 'Inspección GUIA-2005-05',
+        estado: 'PENDIENTE',
+        operarioId: 10,
+        comunidadId: 1,
+        medidor: null,
+        operario: { usuarioId: 10, nombres: 'Carlos', apellidos: 'Mora' },
+        ordenesTrabajo: [
+          {
+            ordenTrabajoId: 'ot-45',
+            rutaId: 'r-insp-1',
+            tipoActividad: 'INSPECCION',
+            estado: 'PENDIENTE',
+            ordenVisita: 1,
+            contratoId: 'c-1',
+            contrato: {
+              numeroContrato: 'GUIA-2005-05',
+              clienteNombre: 'MARLON BRANDO ZAMBRANO SAAVEDRA',
+              direccion: 'Curia',
+            },
+          },
+        ],
+      };
+
+      component.openRoute(inspectionTask);
+
+      expect(navigateSpy).toHaveBeenCalledWith(
+        ['/app/operador/lecturas'],
+        expect.objectContaining({
+          queryParams: expect.objectContaining({
+            rutaId: 'r-insp-1',
+            rutaNombre: 'Inspección GUIA-2005-05',
+            rutaTipo: 'INSPECCION',
+            series: 'GUIA-2005-05',
+            serie: 'GUIA-2005-05',
+            workOrders: 'GUIA-2005-05:INSPECCION:ot-45:PENDIENTE',
+          }),
+          state: { route: inspectionTask },
+        }),
+      );
+    });
   });
 });
