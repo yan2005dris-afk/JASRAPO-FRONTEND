@@ -262,6 +262,57 @@ export class LecturasComponent implements OnInit {
     );
   });
 
+  // Segmented control de órdenes para el flujo de ruta
+  readonly orderFilter = signal<'TODAS' | 'PENDIENTES' | 'COMPLETADAS'>('TODAS');
+  readonly completedWorkOrderIds = signal<Set<string>>(new Set());
+
+  isOrderCompleted(meter: IMeterDto): boolean {
+    if (this.completedWorkOrderIds().has(meter.medidorId.toString())) return true;
+    if (this.readMetersIds().has(meter.medidorId.toString())) return true;
+    const existing = this.existingReadingMap().get(meter.medidorId.toString());
+    return (
+      !!existing && existing.estado !== 'PENDIENTE' && existing.estado !== 'RECHAZADA_VERIFICACION'
+    );
+  }
+
+  readonly orderCounts = computed(() => {
+    const list = this.filteredMeters();
+    const total = list.length;
+    let completed = 0;
+    for (const m of list) {
+      if (this.isOrderCompleted(m)) {
+        completed++;
+      }
+    }
+    const pending = Math.max(0, total - completed);
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { total, pending, completed, pct };
+  });
+
+  readonly segmentedOrders = computed(() => {
+    const list = this.filteredMeters();
+    const filter = this.orderFilter();
+    return list.filter((m) => {
+      const done = this.isOrderCompleted(m);
+      if (filter === 'PENDIENTES') return !done;
+      if (filter === 'COMPLETADAS') return done;
+      return true;
+    });
+  });
+
+  openOrderExecution(meter: IMeterDto): void {
+    this.selectMeter(meter);
+    const primary = this.primaryWorkOrderFor(meter);
+    const tipo = primary
+      ? primary[0]
+      : (this.routeContext()?.tipo as WorkOrderActivityType) || 'LECTURA';
+    this.goToWorkOrderForm(tipo);
+  }
+
+  goBackToRoutes(): void {
+    this.router.navigate(['/app/operador/rutas']);
+  }
+
   ngOnInit(): void {
     this.autoSelectFromQueryParam();
     this.loadCachedMeters();
@@ -319,7 +370,9 @@ export class LecturasComponent implements OnInit {
     const synthetics: IMeterDto[] = [];
     if (
       activeRoute &&
-      (!rutaId || String(activeRoute.rutaId) === String(rutaId) || activeRoute.nombre === rutaNombre)
+      (!rutaId ||
+        String(activeRoute.rutaId) === String(rutaId) ||
+        activeRoute.nombre === rutaNombre)
     ) {
       if (activeRoute.ordenesTrabajo?.length) {
         for (const wo of activeRoute.ordenesTrabajo) {
@@ -640,6 +693,7 @@ export class LecturasComponent implements OnInit {
         };
         const response = await this.syncService.submitWorkOrder(workOrderPayload);
         this.setSubmissionSuccess(response as { offline?: boolean });
+        this.completedWorkOrderIds.update((set) => new Set([...set, meter.medidorId.toString()]));
       }
 
       this.goBackToSearch();

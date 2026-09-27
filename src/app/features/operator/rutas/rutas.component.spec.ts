@@ -210,7 +210,7 @@ describe('RutasComponent', () => {
     it('resolveTaskTipoRuta resuelve correctamente con fallback a órdenes de inspección', () => {
       const inspectionTask: OperatorRouteResponse = {
         rutaId: 'r-insp',
-        tipoRuta: undefined as unknown as RouteType,
+        tipoRuta: undefined as unknown as OperatorRouteResponse['tipoRuta'],
         nombre: 'Inspección GUIA-2005-05',
         estado: 'PENDIENTE',
         operarioId: 10,
