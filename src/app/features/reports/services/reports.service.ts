@@ -13,6 +13,7 @@ import {
   IReportResponse,
   ISendClientsListEmailBody,
   ISendReportEmailBody,
+  IZoneConsumptionFilters,
 } from '../interfaces/ireport.interface';
 
 @Injectable({
@@ -240,6 +241,47 @@ export class ReportsService {
   /** Envía por email el reporte de recaudación y morosidad (destinatario obligatorio). */
   sendOverdueAccountsEmail(body: ISendReportEmailBody): Observable<unknown> {
     return this.http.post(`${this.endpoint}/overdue-accounts/email`, body);
+  }
+
+  // ---------- Consumo por Zonas (PDF-11) ----------
+
+  /** Obtiene el reporte de consumo por zonas en formato JSON. */
+  getZoneConsumption(
+    filters: IZoneConsumptionFilters = {},
+  ): Observable<IReportResponse> {
+    const params = this.buildParams(filters);
+    return this.http.get<IReportResponse>(`${this.endpoint}/zone-consumption`, {
+      params,
+    });
+  }
+
+  /** Obtiene el reporte de consumo por zonas en PDF. */
+  getZoneConsumptionPdf(
+    filters: IZoneConsumptionFilters = {},
+  ): Observable<Blob> {
+    const params = this.buildParams(filters);
+    return this.http.get(`${this.endpoint}/zone-consumption`, {
+      params,
+      headers: { Accept: 'application/pdf' },
+      responseType: 'blob',
+    });
+  }
+
+  /** Exporta el reporte de consumo por zonas en streaming (CSV o XLSX). */
+  exportZoneConsumption(
+    filters: IZoneConsumptionFilters = {},
+    format: 'csv' | 'xlsx',
+  ): Observable<Blob> {
+    const params = this.buildParams({ ...filters, format });
+    return this.http.get(`${this.endpoint}/zone-consumption`, {
+      params,
+      responseType: 'blob',
+    });
+  }
+
+  /** Envía por email el reporte de consumo por zonas (destinatario obligatorio). */
+  sendZoneConsumptionEmail(body: ISendReportEmailBody): Observable<unknown> {
+    return this.http.post(`${this.endpoint}/zone-consumption/email`, body);
   }
 
   // ---------- Utilidad de descarga ----------

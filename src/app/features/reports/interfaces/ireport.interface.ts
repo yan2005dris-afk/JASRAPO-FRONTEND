@@ -43,6 +43,13 @@ export interface IOverdueAccountsFilters {
   fechaCorte?: string;
 }
 
+/** Filtros para el reporte de consumo por zonas (PDF-11). */
+export interface IZoneConsumptionFilters {
+  periodoId?: string;
+  comunidadId?: string;
+  sectorId?: string;
+}
+
 /** Cuerpo de envío por email de la mayoría de los reportes. */
 export interface ISendReportEmailBody {
   idempotencyKey?: string;
@@ -53,6 +60,8 @@ export interface ISendReportEmailBody {
   contratoId?: string;
   convenioId?: string;
   sectorId?: string;
+  periodoId?: string;
+  comunidadId?: string;
   destinatario?: string;
   subject?: string;
 }
