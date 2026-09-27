@@ -172,9 +172,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   readonly selectedOperarioId = signal<number | null>(null);
   readonly selectedComunidadId = signal<number | null>(null);
   readonly tipoActividadSeleccionada = signal<TipoRuta | string | null>('LECTURA');
-  readonly fechaPlanificada = signal<string>(
-    new Date().toISOString().slice(0, 7), // 'YYYY-MM'
-  );
   readonly customNombreBase = signal<string | null>(null);
 
   // Search queries & Quick filter tabs

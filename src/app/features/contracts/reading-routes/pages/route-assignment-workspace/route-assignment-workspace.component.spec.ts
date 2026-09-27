@@ -192,7 +192,6 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
       selectedOperarioId,
       selectedComunidadId: signal(null),
       tipoActividadSeleccionada: signal('LECTURA'),
-      fechaPlanificada: signal('2026-09'),
       customNombreBase: signal(null),
       workerSearch: signal(''),
       communitySearch: signal(''),
