@@ -21,7 +21,7 @@
   <!-- Route context banner -->
   @if (routeContext(); as ctx) {
     <div class="route-context-banner">
-      <span class="route-ctx-badge badge-{{ ctx.tipo.toLowerCase() }}">
+      <span class="route-ctx-badge badge-{{ (ctx.tipo || 'LECTURA').toLowerCase() }}">
         {{ ctx.tipo | routeType }}
       </span>
       <span class="route-ctx-name">{{ ctx.nombre }}</span>
@@ -43,7 +43,7 @@
             >
               <i class="bi bi-chevron-left"></i> Volver a Rutas
             </button>
-            <span class="route-header-badge badge-{{ ctx.tipo.toLowerCase() }}">
+            <span class="route-header-badge badge-{{ (ctx.tipo || 'LECTURA').toLowerCase() }}">
               {{ ctx.tipo | routeType }}
             </span>
           </div>
@@ -124,7 +124,7 @@
             @for (meter of segmentedOrders(); track meter.serie; let idx = $index) {
               @let isDone = isOrderCompleted(meter);
               @let primaryOrder = primaryWorkOrderFor(meter);
-              @let actTipo = primaryOrder ? primaryOrder[0] : ctx.tipo || 'LECTURA';
+              @let actTipo = (primaryOrder && primaryOrder[0]) ? primaryOrder[0] : (ctx.tipo || 'LECTURA');
               <div
                 class="radial-card clickable"
                 [class.completed]="isDone"
@@ -153,8 +153,8 @@
                     </small>
                     <div class="radial-card-meta-row">
                       <div class="meta-tags">
-                        <span class="activity-badge badge-act-{{ actTipo.toLowerCase() }}">
-                          {{ actTipo | routeType }}
+                        <span class="activity-badge badge-act-{{ (actTipo || 'LECTURA').toLowerCase() }}">
+                          {{ (actTipo || 'LECTURA') | routeType }}
                         </span>
                         <span class="meter-code font-mono">
                           {{

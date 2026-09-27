@@ -436,7 +436,12 @@ export class LecturasComponent implements OnInit {
       for (const wo of activeRoute.ordenesTrabajo) {
         const id = wo.medidor?.serie || wo.contrato?.numeroContrato || `OT-${wo.ordenTrabajoId}`;
         const assignments = new Map<WorkOrderActivityType, AssignedWorkOrder>();
-        assignments.set(wo.tipoActividad as WorkOrderActivityType, {
+        const tipo =
+          (wo.tipoActividad as WorkOrderActivityType) ||
+          ((wo as any).ruta?.tipoActividad?.codigo as WorkOrderActivityType) ||
+          (activeRoute.tipoRuta as WorkOrderActivityType) ||
+          'LECTURA';
+        assignments.set(tipo, {
           id: String(wo.ordenTrabajoId),
           estado: (wo.estado as WorkOrderState) || 'PENDIENTE',
         });
@@ -600,7 +605,12 @@ export class LecturasComponent implements OnInit {
   }
 
   primaryWorkOrderFor(meter: IMeterDto): [WorkOrderActivityType, AssignedWorkOrder] | undefined {
-    return this.actionableWorkOrdersFor(meter)[0];
+    const actionable = this.actionableWorkOrdersFor(meter)[0];
+    if (actionable && actionable[0]) return actionable;
+    const all = [...(this.workOrdersByMeter().get(meter.serie)?.entries() ?? [])];
+    const fallback = all.find(([type]) => !!type);
+    if (fallback) return fallback;
+    return undefined;
   }
 
   workOrderStateLabel(state: WorkOrderState): string {

@@ -511,16 +511,18 @@ export class RutasComponent implements OnInit, OnDestroy {
       for (const ord of ordenes) {
         const id = ord.medidor?.serie || ord.contrato?.numeroContrato || `OT-${ord.ordenTrabajoId}`;
         orderIdentifiers.push(id);
-        if (ord.tipoActividad && ord.ordenTrabajoId) {
-          workOrderEntries.push(`${id}:${ord.tipoActividad}:${ord.ordenTrabajoId}:${ord.estado}`);
+        const actTipo = ord.tipoActividad || (ord as any).ruta?.tipoActividad?.codigo || tipoRuta;
+        if (actTipo && ord.ordenTrabajoId) {
+          workOrderEntries.push(`${id}:${actTipo}:${ord.ordenTrabajoId}:${ord.estado || 'PENDIENTE'}`);
         }
       }
     } else if (paradas.length > 0) {
       for (const p of paradas) {
         const id = p.serie || `OT-${p.ordenTrabajoId}`;
         orderIdentifiers.push(id);
-        if (p.tipoActividad && p.ordenTrabajoId) {
-          workOrderEntries.push(`${id}:${p.tipoActividad}:${p.ordenTrabajoId}:${p.estado}`);
+        const actTipo = p.tipoActividad || tipoRuta;
+        if (actTipo && p.ordenTrabajoId) {
+          workOrderEntries.push(`${id}:${actTipo}:${p.ordenTrabajoId}:${p.estado || 'PENDIENTE'}`);
         }
       }
     } else if (tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos?.length) {
