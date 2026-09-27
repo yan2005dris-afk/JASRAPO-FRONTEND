@@ -111,8 +111,6 @@ describe('MetersIndexComponent', () => {
       serie: '123',
       fechaInstalacion: null,
       contratoId: null,
-      latitud: null,
-      longitud: null,
     };
     component.openEdit(meterMock);
     expect(component.showModal).toBeTruthy();

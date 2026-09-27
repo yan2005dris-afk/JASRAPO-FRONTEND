@@ -393,6 +393,28 @@
       </div>
     </div>
 
+    <!-- Ubicación del predio -->
+    <div class="card form-section mb-4">
+      <div class="card-body p-4">
+        <div class="section-title mb-3">
+          <span class="section-icon"><i class="bi bi-geo-alt"></i></span>
+          <div>
+            <h5 class="fw-bold mb-0">Ubicación del Predio</h5>
+            <p class="text-muted small mb-0">
+              Opcional. Marque el punto en el mapa o ingrese las coordenadas.
+            </p>
+          </div>
+        </div>
+
+        <app-coordinate-map-picker
+          [latitud]="coordinates().latitud"
+          [longitud]="coordinates().longitud"
+          [errorMessage]="coordinateError()"
+          (coordinatesChange)="onCoordinatesChange($event)"
+        />
+      </div>
+    </div>
+
     <!--
       SECCIÓN DE DOCUMENTACIÓN LEGAL (subida de documentos) — PENDIENTE DE IMPLEMENTAR.
       Se deja comentada a propósito (oculta en el frontend por ahora). Esta funcionalidad
