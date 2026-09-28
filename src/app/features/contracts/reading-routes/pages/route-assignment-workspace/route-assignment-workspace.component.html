@@ -766,183 +766,27 @@
 
             } @else {
             <!-- NON-LECTURA: Contracts Selection Panel -->
-
-            <!-- Community Picker for loading contracts -->
-            <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
-              <div style="min-width: 240px; max-width: 320px; width: 100%">
-                <select
-                  class="form-select form-select-sm rounded-3"
-                  [ngModel]="selectedComunidadId()"
-                  (ngModelChange)="loadContractsForCommunity($event)"
-                  [disabled]="isLoadingContracts()"
-                >
-                  <option [ngValue]="null" disabled>Seleccionar comunidad...</option>
-                  @for (com of comunidades(); track com.id) {
-                    <option [ngValue]="com.id">{{ com.nombre }} ({{ com.codigo }})</option>
-                  }
-                </select>
-              </div>
-
-              <div style="max-width: 280px; width: 100%">
-                <app-picker-input
-                  inputId="workspacePageContractSearch"
-                  placeholder="Buscar contrato, cliente, guía..."
-                  icon="bi-search"
-                  [query]="contractSearch()"
-                  [disabled]="isLoadingContracts() || !selectedComunidadId()"
-                  (queryChange)="onContractSearchChange($event)"
-                  (clear)="onContractSearchChange('')"
-                />
-              </div>
-
-              @if (selectedComunidadId()) {
-                <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1 fw-semibold small">
-                  {{ contractTotalEnComunidad() }} contrato(s) en la comunidad
-                </span>
-              }
-            </div>
-
-            <!-- Contracts List -->
-            @if (!selectedComunidadId()) {
-              <div class="text-center py-5 text-muted small">
-                <i class="bi bi-collection fs-2 d-block mb-1 text-secondary"></i>
-                Seleccioná una comunidad para cargar los contratos disponibles.
-              </div>
-            } @else if (isLoadingContracts()) {
-              <div class="text-center py-5">
-                <span class="spinner-border spinner-border-sm text-primary me-2" role="status"></span>
-                <span class="text-muted small">Cargando contratos...</span>
-              </div>
-            } @else if (contractTotalEnComunidad() === 0) {
-              <div class="text-center py-5 text-muted small">
-                <i class="bi bi-file-earmark-x fs-2 d-block mb-1 text-secondary"></i>
-                No se encontraron contratos activos para esta comunidad.
-              </div>
-            } @else if (paginatedContratos().length === 0) {
-              <div class="text-center py-5 text-muted small">
-                <i class="bi bi-arrow-left-right fs-2 d-block mb-1 text-secondary"></i>
-                Esta página no tiene contratos. Volvé a la página 1.
-                <div class="mt-2">
-                  <button
-                    type="button"
-                    class="btn btn-outline-primary btn-sm rounded-3"
-                    (click)="setContractCurrentPage(1)"
-                  >
-                    <i class="bi bi-arrow-counterclockwise me-1"></i>Ir a página 1
-                  </button>
-                </div>
-              </div>
-            } @else {
-              <div
-                class="contracts-scroll-area d-flex flex-column gap-2 scrollbar-subtle overflow-y-auto pe-1"
-                style="max-height: 380px"
-              >
-                @for (contrato of paginatedContratos(); track contrato.contratoId) {
-                  @let cStatus = getContratoStatus(+contrato.contratoId);
-                  @let isMyAssigned = cStatus.isAssigned && cStatus.isCurrentOperator;
-                  @let isOtherAssigned = cStatus.isAssigned && !cStatus.isCurrentOperator;
-
-                  <div
-                    class="sector-card d-flex align-items-center justify-content-between"
-                    [class.is-session-selected]="isMyAssigned"
-                    [class.is-other-assigned]="isOtherAssigned"
-                    (click)="toggleContrato(+contrato.contratoId)"
-                    role="button"
-                    tabindex="0"
-                    (keydown.enter)="toggleContrato(+contrato.contratoId)"
-                  >
-                    <div class="d-flex align-items-center gap-2 overflow-hidden">
-                      <i
-                        class="bi"
-                        [ngClass]="{
-                          'bi-check-square-fill text-primary': isMyAssigned,
-                          'bi-person-badge-fill text-secondary': isOtherAssigned,
-                          'bi-square text-muted': !cStatus.isAssigned
-                        }"
-                      ></i>
-                      <div class="text-truncate">
-                        <div
-                          class="fw-semibold text-dark small text-truncate"
-                          style="font-size: 0.82rem"
-                        >
-                          {{ contrato.numeroGuia }} — {{ contrato.cliente.nombres }} {{ contrato.cliente.apellidos }}
-                        </div>
-                        <div class="text-muted text-truncate" style="font-size: 0.7rem">
-                          {{ contrato.direccionSuministro }}
-                          @if (contrato.sector) {
-                            · {{ contrato.sector.nombre }}
-                          }
-                        </div>
-                        @if (cStatus.isAssigned) {
-                          <div class="text-truncate" style="font-size: 0.68rem">
-                            @if (isMyAssigned) {
-                              <span class="text-primary fw-semibold">Asignado a este operario</span>
-                            } @else {
-                              <i class="bi bi-person me-1 text-muted"></i>
-                              <span class="text-muted">{{ cStatus.operarioName }}</span>
-                            }
-                          </div>
-                        }
-                      </div>
-                    </div>
-
-                    @if (cStatus.isAssigned && cStatus.color) {
-                      <span
-                        class="badge rounded-pill ms-2 text-truncate flex-shrink-0"
-                        [style.background-color]="cStatus.color.lightBg"
-                        [style.color]="cStatus.color.contrastText"
-                        style="font-size: 0.7rem; max-width: 130px"
-                      >
-                        {{ cStatus.operarioName }}
-                      </span>
-                    }
-                  </div>
-                }
-              </div>
-
-              <!-- Contracts pagination controls -->
-              @if (contractTotalPages() > 1) {
-                <div
-                  class="d-flex align-items-center justify-content-between pt-2 border-top mt-2 flex-wrap gap-2"
-                >
-                  <span class="text-muted small" style="font-size: 0.72rem">
-                    Página {{ contractCurrentPage() }} de {{ contractTotalPages() }}
-                    · {{ contractTotalEnComunidad() }} contrato(s)
-                  </span>
-                  <div class="btn-group btn-group-sm">
-                    <button
-                      type="button"
-                      class="btn btn-outline-secondary btn-sm"
-                      [disabled]="contractCurrentPage() <= 1"
-                      (click)="prevContractPage()"
-                    >
-                      <i class="bi bi-chevron-left me-1"></i>Anterior
-                    </button>
-                    @for (p of contractPagesArray(); track p) {
-                      <button
-                        type="button"
-                        class="btn btn-sm"
-                        [ngClass]="
-                          p === contractCurrentPage() ? 'btn-primary' : 'btn-outline-secondary'
-                        "
-                        (click)="setContractCurrentPage(p)"
-                      >
-                        {{ p }}
-                      </button>
-                    }
-                    <button
-                      type="button"
-                      class="btn btn-outline-secondary btn-sm"
-                      [disabled]="contractCurrentPage() >= contractTotalPages()"
-                      (click)="nextContractPage()"
-                    >
-                      Siguiente<i class="bi bi-chevron-right ms-1"></i>
-                    </button>
-                  </div>
-                </div>
-              }
-            }
-
+            <app-route-contracts-table
+              [comunidades]="comunidades()"
+              [selectedComunidadId]="selectedComunidadId()"
+              [contracts]="contratos()"
+              [totalContracts]="contractTotalEnComunidad()"
+              [searchQuery]="contractSearch()"
+              [currentPage]="contractCurrentPage()"
+              [pageSize]="contractPageSize()"
+              [totalPages]="contractTotalPages()"
+              [isLoading]="isLoadingContracts()"
+              [selectedOperarioId]="selectedOperarioId()"
+              [assignments]="sessionContractAssignments()"
+              [operatorColorResolver]="getOperatorColorBound"
+              [operatorNameResolver]="getOperarioNameBound"
+              (comunidadChange)="loadContractsForCommunity($event)"
+              (searchChange)="onContractSearchChange($event)"
+              (pageChange)="setContractCurrentPage($event)"
+              (pageSizeChange)="setContractPageSize($event)"
+              (contractToggled)="toggleContrato($event)"
+              (toggleAllVisibleRequested)="toggleAllFilteredContracts()"
+            />
             } <!-- end @else non-lectura -->
 
           </div>
