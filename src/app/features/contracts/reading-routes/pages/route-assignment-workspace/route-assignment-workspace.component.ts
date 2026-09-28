@@ -773,64 +773,19 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   // Global coverage metrics for Step 3 Summary
   readonly globalCoverageSummary = computed(() => {
     const allComunidades = this.comunidades();
-    let fullyCompletedCommunities = 0;
-    let partialCommunities = 0;
-    let unassignedCommunities = 0;
-    let totalSectors = 0;
-    let totalAssignedSectors = 0;
-
-    for (const c of allComunidades) {
-      if (c.id == null) continue;
-      const { assigned, total } = this.getCommunityAssignedCount(c.id);
-      totalSectors += total;
-      totalAssignedSectors += assigned;
-      if (total > 0 && assigned === total) {
-        fullyCompletedCommunities++;
-      } else if (assigned > 0) {
-        partialCommunities++;
-      } else {
-        unassignedCommunities++;
-      }
-    }
-
-    const totalCommunities = allComunidades.length;
-    const completedPct =
-      totalCommunities > 0 ? Math.round((fullyCompletedCommunities / totalCommunities) * 100) : 0;
-
-    return {
-      fullyCompletedCommunities,
-      partialCommunities,
-      unassignedCommunities,
-      totalSectors,
-      totalAssignedSectors,
-      pendingSectors: Math.max(0, totalSectors - totalAssignedSectors),
-      totalCommunities,
-      completedPct,
-    };
+    return calculateGlobalCoverage(allComunidades, (comunidadId) =>
+      this.getCommunityAssignedCount(comunidadId),
+    );
   });
 
   // Non-lectura coverage metrics for Step 2 Summary (contracts-focused)
-  readonly nonLecturaCoverageSummary = computed(() => {
-    const assignedMap = this.sessionContractAssignments();
-    const assignedIds = new Set(assignedMap.keys());
-    const totalContratosEnComunidad = this.contractTotalEnComunidad();
-    const assignedContratosCount = assignedIds.size;
-    const pendingContratos = Math.max(0, totalContratosEnComunidad - assignedContratosCount);
-
-    // Distinct communities with at least one contract assigned in session
-    const assignedComunidades = new Set<number>();
-    assignedMap.forEach((_opId, contratoId) => {
-      const c = this.contratos().find((x) => Number(x.contratoId) === contratoId);
-      if (c) assignedComunidades.add(c.comunidadId);
-    });
-
-    return {
-      totalContratosEnComunidad,
-      assignedContratosCount,
-      pendingContratos,
-      comunidadesConContratos: assignedComunidades.size,
-    };
-  });
+  readonly nonLecturaCoverageSummary = computed(() =>
+    calculateNonLecturaCoverage(
+      this.contractTotalEnComunidad(),
+      this.sessionContractAssignments(),
+      this.contratos(),
+    ),
+  );
 
   // Suggested Base Name
   readonly sugeridoNombreBase = computed(() => {
