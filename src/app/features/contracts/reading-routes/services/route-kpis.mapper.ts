@@ -1,5 +1,5 @@
-import { IReading } from '../../../readings/interfaces/ireading.interface';
-import { IReadingRowItem } from '../../../readings/components/readings-table/readings-table.component';
+import { IReading } from '../../readings/interfaces/ireading.interface';
+import { IReadingRowItem } from '../../readings/components/readings-table/readings-table.component';
 import {
   ILecturaKpis,
   IReadingForRoute,

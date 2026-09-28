@@ -1,7 +1,7 @@
 import { Injectable, WritableSignal, inject } from '@angular/core';
 
-import { ToastService } from '../../../../../shared/components/toast/toast.service';
-import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { ToastService } from '../../../../shared/components/toast/toast.service';
+import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { OrderWork } from '../interfaces/ireading-route.interface';
 import { ReadingRoutesService } from './reading-routes.service';
 

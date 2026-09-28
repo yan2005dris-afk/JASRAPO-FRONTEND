@@ -1,9 +1,9 @@
 import { Injectable, WritableSignal, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { ToastService } from '../../../../../shared/components/toast/toast.service';
-import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
-import { IRouteKpis } from '../interfaces/ireading-route.interface';
+import { ToastService } from '../../../../shared/components/toast/toast.service';
+import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { IReadingRoute, IRouteKpis } from '../interfaces/ireading-route.interface';
 import { ReadingRoutesService } from './reading-routes.service';
 
 export type RouteEstado =
