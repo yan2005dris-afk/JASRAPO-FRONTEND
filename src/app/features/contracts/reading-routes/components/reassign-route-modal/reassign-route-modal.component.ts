@@ -1,11 +1,11 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   OnInit,
   inject,
   input,
   output,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -32,53 +32,47 @@ export class ReassignRouteModalComponent implements OnInit {
   private readonly routesService = inject(ReadingRoutesService);
   private readonly usersService = inject(UsersService);
   private readonly toastService = inject(ToastService);
-  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly route = input.required<IReadingRoute>();
   readonly reassigned = output<void>();
   readonly closed = output<void>();
 
-  operarios: User[] = [];
-  nuevoOperarioId: number | null = null;
-  isLoading = false;
+  readonly operarios = signal<User[]>([]);
+  readonly nuevoOperarioId = signal<number | null>(null);
+  readonly isLoading = signal(false);
 
   ngOnInit(): void {
     this.usersService.getUsers(1, 100).subscribe({
-      next: (res) => {
-        this.operarios = filterOperariosByRole(res.data);
-        this.cdr.markForCheck();
-      },
+      next: (res) => this.operarios.set(filterOperariosByRole(res.data)),
     });
   }
 
   getOperarioNombre(operarioId: number | null | undefined): string {
-    return resolveOperarioNombre(this.operarios, operarioId);
+    return resolveOperarioNombre(this.operarios(), operarioId);
   }
 
   get isValid(): boolean {
-    return (
-      !!this.nuevoOperarioId &&
-      this.nuevoOperarioId > 0 &&
-      this.nuevoOperarioId !== this.route().operarioId
-    );
+    const nuevo = this.nuevoOperarioId();
+    return !!nuevo && nuevo > 0 && nuevo !== this.route().operarioId;
   }
 
   submit(): void {
-    if (!this.isValid || this.isLoading || !this.nuevoOperarioId) return;
+    const nuevo = this.nuevoOperarioId();
+    if (!nuevo || !this.isValid || this.isLoading()) return;
 
     const dto: IReassignRouteDto = {
-      operarioId: Number(this.nuevoOperarioId),
+      operarioId: Number(nuevo),
     };
 
-    this.isLoading = true;
+    this.isLoading.set(true);
     this.routesService.reassignRoute(this.route().rutaId, dto).subscribe({
       next: () => {
-        this.isLoading = false;
+        this.isLoading.set(false);
         this.toastService.show('Ruta reasignada exitosamente', 'success');
         this.reassigned.emit();
       },
       error: (err) => {
-        this.isLoading = false;
+        this.isLoading.set(false);
         const msg = err?.error?.message || 'Error al reasignar ruta';
         this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
       },

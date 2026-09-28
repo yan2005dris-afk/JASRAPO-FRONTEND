@@ -1,11 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReadingRoutesService } from './services/reading-routes.service';
@@ -32,10 +25,7 @@ import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/
 import { Router } from '@angular/router';
 import { ReassignRouteModalComponent } from './components/reassign-route-modal/reassign-route-modal.component';
 import { TIPO_RUTA_LABEL } from './constants/route-detail.constants';
-import {
-  resolveComunidadNombre,
-  resolveOperarioNombre,
-} from './services/operator-name.helpers';
+import { resolveComunidadNombre, resolveOperarioNombre } from './services/operator-name.helpers';
 import { filterOperariosByRole } from './services/users.helpers';
 import { ExportColumn } from '../../../shared/services/table-export.service';
 
@@ -333,14 +323,24 @@ export class ReadingRoutesComponent implements OnInit {
     });
   }
 
+  private stripWidthAndAlign(
+    columns: ExportColumn<IReadingRoute>[],
+  ): ExportColumn<Record<string, unknown>>[] {
+    return columns.map((c) => {
+      void c.width;
+      void c.align;
+      const { width, align, ...rest } = c;
+      void width;
+      void align;
+      return { ...rest } as unknown as ExportColumn<Record<string, unknown>>;
+    });
+  }
+
   exportToExcel(): void {
     if (this.routes().length === 0) return;
     this.tableExportService.exportToExcel({
       ...this.baseExportOptions('LISTADO DE RUTAS DE TRABAJO'),
-      columns: this.buildExportColumns().map((c) => {
-        const { width: _width, align: _align, ...rest } = c;
-        return rest;
-      }) as unknown as ExportColumn<Record<string, unknown>>[],
+      columns: this.stripWidthAndAlign(this.buildExportColumns()),
     });
   }
 
@@ -349,10 +349,7 @@ export class ReadingRoutesComponent implements OnInit {
     this.tableExportService.exportToCsv({
       title: 'LISTADO DE RUTAS DE TRABAJO',
       fileName: `Rutas_Trabajo_${new Date().toISOString().slice(0, 10)}`,
-      columns: this.buildExportColumns().map((c) => {
-        const { width: _width, align: _align, ...rest } = c;
-        return rest;
-      }) as unknown as ExportColumn<Record<string, unknown>>[],
+      columns: this.stripWidthAndAlign(this.buildExportColumns()),
       data: this.routes() as unknown as Record<string, unknown>[],
     });
   }
