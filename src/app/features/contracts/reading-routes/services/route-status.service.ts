@@ -6,12 +6,7 @@ import { ConfirmDialogService } from '../../../../shared/components/confirm-dial
 import { IReadingRoute, IRouteKpis } from '../interfaces/ireading-route.interface';
 import { ReadingRoutesService } from './reading-routes.service';
 
-export type RouteEstado =
-  | 'PENDIENTE'
-  | 'EN_PROGRESO'
-  | 'COMPLETADA'
-  | 'PARCIAL'
-  | 'CANCELADA';
+export type RouteEstado = 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'PARCIAL' | 'CANCELADA';
 
 /**
  * Owns the full status-transition flow for a `IReadingRoute`:

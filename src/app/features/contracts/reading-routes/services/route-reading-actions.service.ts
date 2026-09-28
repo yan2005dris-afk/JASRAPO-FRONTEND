@@ -25,16 +25,11 @@ export class RouteReadingActionsService {
   private readonly dialogService = inject(ConfirmDialogService);
 
   /** Marks the reading as APROBADA. Updates the row in the local signal. */
-  approve(
-    reading: IReadingRowItem,
-    readings: WritableSignal<IReadingRowItem[]>,
-  ): void {
+  approve(reading: IReadingRowItem, readings: WritableSignal<IReadingRowItem[]>): void {
     this.routesService.updateReadingStatus(reading.lecturaId, 'APROBADA').subscribe({
       next: () => {
         readings.update((list) =>
-          list.map((r) =>
-            r.lecturaId === reading.lecturaId ? { ...r, estado: 'APROBADA' } : r,
-          ),
+          list.map((r) => (r.lecturaId === reading.lecturaId ? { ...r, estado: 'APROBADA' } : r)),
         );
         this.toastService.success('Lectura aprobada');
       },
@@ -43,17 +38,12 @@ export class RouteReadingActionsService {
   }
 
   /** Marks the reading as RECHAZADA_VERIFICACION (verification queue). */
-  reject(
-    reading: IReadingRowItem,
-    readings: WritableSignal<IReadingRowItem[]>,
-  ): void {
+  reject(reading: IReadingRowItem, readings: WritableSignal<IReadingRowItem[]>): void {
     this.routesService.updateReadingStatus(reading.lecturaId, 'RECHAZADA_VERIFICACION').subscribe({
       next: () => {
         readings.update((list) =>
           list.map((r) =>
-            r.lecturaId === reading.lecturaId
-              ? { ...r, estado: 'RECHAZADA_VERIFICACION' }
-              : r,
+            r.lecturaId === reading.lecturaId ? { ...r, estado: 'RECHAZADA_VERIFICACION' } : r,
           ),
         );
         this.toastService.warning('Lectura rechazada');

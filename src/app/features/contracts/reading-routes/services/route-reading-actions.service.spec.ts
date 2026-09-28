@@ -12,7 +12,12 @@ import { RouteReadingActionsService } from './route-reading-actions.service';
 describe('RouteReadingActionsService', () => {
   let service: RouteReadingActionsService;
   let routesService: { updateReadingStatus: ReturnType<typeof vi.fn> };
-  let toast: { success: ReturnType<typeof vi.fn>; warning: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn>; info: ReturnType<typeof vi.fn> };
+  let toast: {
+    success: ReturnType<typeof vi.fn>;
+    warning: ReturnType<typeof vi.fn>;
+    error: ReturnType<typeof vi.fn>;
+    info: ReturnType<typeof vi.fn>;
+  };
   let dialog: { confirm: ReturnType<typeof vi.fn> };
 
   const sample: IReadingRowItem = {
@@ -67,10 +72,7 @@ describe('RouteReadingActionsService', () => {
 
     service.reject(sample, readings);
 
-    expect(routesService.updateReadingStatus).toHaveBeenCalledWith(
-      'L-1',
-      'RECHAZADA_VERIFICACION',
-    );
+    expect(routesService.updateReadingStatus).toHaveBeenCalledWith('L-1', 'RECHAZADA_VERIFICACION');
     expect(readings()[0].estado).toBe('RECHAZADA_VERIFICACION');
     expect(toast.warning).toHaveBeenCalledWith('Lectura rechazada');
   });

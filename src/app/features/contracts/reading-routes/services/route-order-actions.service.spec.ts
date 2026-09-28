@@ -12,7 +12,11 @@ import { RouteOrderActionsService } from './route-order-actions.service';
 describe('RouteOrderActionsService', () => {
   let service: RouteOrderActionsService;
   let routesService: { updateOrdenEstado: ReturnType<typeof vi.fn> };
-  let toast: { success: ReturnType<typeof vi.fn>; warning: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
+  let toast: {
+    success: ReturnType<typeof vi.fn>;
+    warning: ReturnType<typeof vi.fn>;
+    error: ReturnType<typeof vi.fn>;
+  };
   let dialog: { confirm: ReturnType<typeof vi.fn> };
 
   const sampleOrden: OrderWork = {

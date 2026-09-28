@@ -20,7 +20,13 @@ describe('ReadingRouteDetailComponent', () => {
       }),
       isChangingStatus: signal(false),
       isLecturaRoute: signal(true),
-      routeKpis: signal({ total: 10, completadas: 10, pendientes: 0, conNovedad: 0, canceladas: 0 }),
+      routeKpis: signal({
+        total: 10,
+        completadas: 10,
+        pendientes: 0,
+        conNovedad: 0,
+        canceladas: 0,
+      }),
       ordenes: signal([]),
       routeStatus: { update },
     });

@@ -49,7 +49,6 @@ import {
   TIPO_ACTIVIDAD_LABEL,
   TIPO_RUTA_LABEL,
   ESTADO_FILTER_MAP,
-  FALLBACK_BADGE,
 } from '../../constants/route-detail.constants';
 import {
   buildReadingFallback,

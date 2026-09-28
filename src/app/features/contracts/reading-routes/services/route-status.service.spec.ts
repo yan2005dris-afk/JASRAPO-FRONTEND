@@ -41,19 +41,33 @@ describe('RouteStatusService', () => {
     service = TestBed.inject(RouteStatusService);
   });
 
-  function makeCtx(overrides: Partial<{
-    route: IReadingRoute | null;
-    isLecturaRoute: boolean;
-    routeKpis: { total: number; completadas: number; pendientes: number; conNovedad: number; canceladas: number } | null;
-    pendingOrders: number;
-  }> = {}) {
+  function makeCtx(
+    overrides: Partial<{
+      route: IReadingRoute | null;
+      isLecturaRoute: boolean;
+      routeKpis: {
+        total: number;
+        completadas: number;
+        pendientes: number;
+        conNovedad: number;
+        canceladas: number;
+      } | null;
+      pendingOrders: number;
+    }> = {},
+  ) {
     const route = signal<IReadingRoute | null>(overrides.route ?? baseRoute);
     const isChangingStatus = signal(false);
     return {
       route,
       isChangingStatus,
       isLecturaRoute: overrides.isLecturaRoute ?? true,
-      routeKpis: overrides.routeKpis ?? { total: 10, completadas: 10, pendientes: 0, conNovedad: 0, canceladas: 0 },
+      routeKpis: overrides.routeKpis ?? {
+        total: 10,
+        completadas: 10,
+        pendientes: 0,
+        conNovedad: 0,
+        canceladas: 0,
+      },
       pendingOrders: overrides.pendingOrders ?? 0,
     };
   }
