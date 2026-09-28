@@ -52,6 +52,7 @@ import {
   calculateGlobalCoverage,
   calculateNonLecturaCoverage,
 } from '../../services/coverage-calculator';
+import { resetScrollNextMicrotask } from '../../services/scroll.helpers';
 
 @Component({
   selector: 'app-route-assignment-workspace',
@@ -311,11 +312,12 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   setContractCurrentPage(page: number): void {
     if (page >= 1 && page <= this.contractTotalPages()) {
       this.contractCurrentPage.set(page);
-      // Reset scroll inside the contracts panel
-      queueMicrotask(() => {
-        const el = document.querySelector('.contracts-scroll-area');
-        if (el) el.scrollTop = 0;
-      });
+      // The contracts panel is rendered inside <app-route-contracts-table>
+      // (a child component), so we cannot reach its scroll container with
+      // a @ViewChild here. The same helper is wired in the child
+      // component's own onPageSelect; this call is intentionally a no-op
+      // until a cross-component scroll-reset contract is introduced.
+      resetScrollNextMicrotask(null);
     }
   }
 
@@ -330,20 +332,14 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   nextContractPage(): void {
     if (this.contractCurrentPage() < this.contractTotalPages()) {
       this.contractCurrentPage.update((p) => p + 1);
-      queueMicrotask(() => {
-        const el = document.querySelector('.contracts-scroll-area');
-        if (el) el.scrollTop = 0;
-      });
+      resetScrollNextMicrotask(null);
     }
   }
 
   prevContractPage(): void {
     if (this.contractCurrentPage() > 1) {
       this.contractCurrentPage.update((p) => p - 1);
-      queueMicrotask(() => {
-        const el = document.querySelector('.contracts-scroll-area');
-        if (el) el.scrollTop = 0;
-      });
+      resetScrollNextMicrotask(null);
     }
   }
 
