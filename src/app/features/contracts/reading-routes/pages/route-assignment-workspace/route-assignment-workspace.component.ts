@@ -36,6 +36,27 @@ import {
 import { OperatorColor, OPERATOR_PALETTE } from '../../../../../shared/types/operator-color';
 
 import { RouteContractsTableComponent } from '../../components/route-contracts-table/route-contracts-table.component';
+import {
+  assertOperatorSelected,
+  assertPeriodOpen,
+} from '../../services/route-assignment-validators';
+import {
+  AssignmentStatus,
+  clearAssignmentsForOperator,
+  groupContractAssignmentsByOperatorCommunity,
+  groupSectorAssignmentsByOperatorCommunity,
+  resolveAssignmentStatus,
+  ResolvedAssignmentStatus,
+  toggleAssignment,
+} from '../../services/session-assignments.helpers';
+
+/** Shape returned by `getCommunityStatus` / `getSectorStatus` (concrete `color` type). */
+type AssignmentStatusView = ResolvedAssignmentStatus<OperatorColor>;
+import {
+  calculateGlobalCoverage,
+  calculateNonLecturaCoverage,
+} from '../../services/coverage-calculator';
+import { resetScrollNextMicrotask } from '../../services/scroll.helpers';
 
 @Component({
   selector: 'app-route-assignment-workspace',
@@ -100,8 +121,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   // Dynamic Session Assignments: Map of sectorId -> operarioId, and comunidadId -> operarioId (for communities without sectors)
   readonly sessionSectorAssignments = signal<Map<number, number>>(new Map());
   readonly sessionCommunityAssignments = signal<Map<number, number>>(new Map());
-  // Non-lectura: selected contract IDs
-  readonly selectedContratoIds = signal<number[]>([]);
 
   // Community Card Pagination
   readonly communityCurrentPage = signal<number>(1);
@@ -109,21 +128,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
 
   readonly isLoading = signal<boolean>(false);
   readonly isLoadingContracts = signal<boolean>(false);
-
-  private readonly MONTH_NAMES = [
-    'Enero',
-    'Febrero',
-    'Marzo',
-    'Abril',
-    'Mayo',
-    'Junio',
-    'Julio',
-    'Agosto',
-    'Septiembre',
-    'Octubre',
-    'Noviembre',
-    'Diciembre',
-  ];
 
   // Operator Color Mapper
   getOperatorColor(operarioId: number): OperatorColor {
@@ -133,10 +137,13 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     return OPERATOR_PALETTE[colorIndex];
   }
 
-  readonly getOperatorColorBound = (operarioId: number): OperatorColor =>
+  /** Arrow alias used by `<app-route-contracts-table>` to avoid `this` rebinding. */
+  readonly getOperatorColorForChild = (operarioId: number): OperatorColor =>
     this.getOperatorColor(operarioId);
 
-  readonly getOperarioNameBound = (operarioId: number): string => this.getOperarioName(operarioId);
+  /** Arrow alias used by `<app-route-contracts-table>` to avoid `this` rebinding. */
+  readonly getOperarioNameForChild = (operarioId: number): string =>
+    this.getOperarioName(operarioId);
 
   isLecturaActivity(tipo: TipoRuta | string | null): boolean {
     return tipo === 'LECTURA' || tipo === 'TOMA_LECTURA' || !tipo;
@@ -190,7 +197,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     this.tipoActividadSeleccionada.set(codigo as TipoRuta);
     // Reset contract-related state when switching
     this.sessionContractAssignments.set(new Map());
-    this.selectedContratoIds.set([]);
     this.contratos.set([]);
     this.contractSearch.set('');
     this.selectedComunidadId.set(null);
@@ -311,11 +317,12 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   setContractCurrentPage(page: number): void {
     if (page >= 1 && page <= this.contractTotalPages()) {
       this.contractCurrentPage.set(page);
-      // Reset scroll inside the contracts panel
-      queueMicrotask(() => {
-        const el = document.querySelector('.contracts-scroll-area');
-        if (el) el.scrollTop = 0;
-      });
+      // The contracts panel is rendered inside <app-route-contracts-table>
+      // (a child component), so we cannot reach its scroll container with
+      // a @ViewChild here. The same helper is wired in the child
+      // component's own onPageSelect; this call is intentionally a no-op
+      // until a cross-component scroll-reset contract is introduced.
+      resetScrollNextMicrotask(null);
     }
   }
 
@@ -330,20 +337,14 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   nextContractPage(): void {
     if (this.contractCurrentPage() < this.contractTotalPages()) {
       this.contractCurrentPage.update((p) => p + 1);
-      queueMicrotask(() => {
-        const el = document.querySelector('.contracts-scroll-area');
-        if (el) el.scrollTop = 0;
-      });
+      resetScrollNextMicrotask(null);
     }
   }
 
   prevContractPage(): void {
     if (this.contractCurrentPage() > 1) {
       this.contractCurrentPage.update((p) => p - 1);
-      queueMicrotask(() => {
-        const el = document.querySelector('.contracts-scroll-area');
-        if (el) el.scrollTop = 0;
-      });
+      resetScrollNextMicrotask(null);
     }
   }
 
@@ -360,43 +361,34 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   // Toggle a single contract assignment to the current operator
   toggleContrato(contratoId: number): void {
     const opId = this.selectedOperarioId();
-    if (!opId) {
-      this.toastService.show('Por favor, seleccioná un operario en la Tabla 1 primero.', 'warning');
-      return;
+    if (!assertOperatorSelected(opId, this.toastService)) return;
+    if (!assertPeriodOpen(this.selectedPeriod(), this.toastService)) return;
+    const opIdNonNull = opId!;
+
+    const status: AssignmentStatus = { isDbAssigned: false };
+    const outcome = toggleAssignment(
+      this.sessionContractAssignments(),
+      contratoId,
+      opIdNonNull,
+      status,
+    );
+
+    switch (outcome.kind) {
+      case 'assigned':
+      case 'deselected':
+        this.sessionContractAssignments.set(outcome.next);
+        break;
+      case 'blocked-by-db':
+        // Contracts are never DB-assigned at toggle time; the contracts
+        // panel is purely session-driven. Defensive no-op.
+        break;
+      case 'blocked-by-other-operator':
+        this.toastService.show(
+          `Este contrato ya está asignado a ${this.getOperarioName(outcome.existingOperatorId)} en esta sesión.`,
+          'warning',
+        );
+        break;
     }
-
-    const period = this.selectedPeriod();
-    if (!period || period.estado !== 'ABIERTO') {
-      this.toastService.show(
-        'El período operativo no está abierto. No se pueden realizar asignaciones.',
-        'warning',
-      );
-      return;
-    }
-
-    const currentMap = new Map(this.sessionContractAssignments());
-    const existingOpId = currentMap.get(contratoId);
-
-    // If assigned to current operator -> deselect
-    if (existingOpId === opId) {
-      currentMap.delete(contratoId);
-      this.sessionContractAssignments.set(currentMap);
-      return;
-    }
-
-    // If assigned to another operator -> block
-    if (existingOpId != null && existingOpId !== opId) {
-      const otherName = this.getOperarioName(existingOpId);
-      this.toastService.show(
-        `Este contrato ya está asignado a ${otherName} en esta sesión.`,
-        'warning',
-      );
-      return;
-    }
-
-    // Available -> assign
-    currentMap.set(contratoId, opId);
-    this.sessionContractAssignments.set(currentMap);
   }
 
   // Select/deselect all contracts visible on the current page for the current operator
@@ -432,13 +424,9 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
 
   // Clear all contract assignments for a specific operator
   clearOperatorContractAssignments(operarioId: number): void {
-    const currentMap = new Map(this.sessionContractAssignments());
-    currentMap.forEach((opId, contratoId) => {
-      if (opId === operarioId) {
-        currentMap.delete(contratoId);
-      }
-    });
-    this.sessionContractAssignments.set(currentMap);
+    this.sessionContractAssignments.set(
+      clearAssignmentsForOperator(this.sessionContractAssignments(), operarioId),
+    );
   }
 
   // Get contract assignment status
@@ -480,18 +468,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     for (const r of this.periodExistingRoutes()) {
       if (r.comunidadId != null && r.sectorId == null) {
         map.set(r.comunidadId, r);
-      }
-    }
-    return map;
-  });
-
-  readonly existingCommunityRoutes = computed(() => {
-    const map = new Map<number, IReadingRoute[]>();
-    for (const r of this.periodExistingRoutes()) {
-      if (r.comunidadId != null) {
-        const list = map.get(r.comunidadId) || [];
-        list.push(r);
-        map.set(r.comunidadId, list);
       }
     }
     return map;
@@ -588,107 +564,43 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   }
 
   // Get current assignment status for a whole community (without sectors)
-  getCommunityStatus(comunidadId: number | undefined): {
-    isAssigned: boolean;
-    isDbAssigned: boolean;
-    isCurrentOperator: boolean;
-    operarioId?: number;
-    operarioName?: string;
-    color?: OperatorColor;
-    routeName?: string;
-  } {
-    if (comunidadId == null) {
-      return { isAssigned: false, isDbAssigned: false, isCurrentOperator: false };
-    }
-
-    const dbRoute = this.existingAssignedCommunityMap().get(comunidadId);
-    if (dbRoute) {
-      const op = this.operarios().find((u) => u.usuarioId === dbRoute.operarioId);
-      const color = dbRoute.operarioId ? this.getOperatorColor(dbRoute.operarioId) : undefined;
-      return {
-        isAssigned: true,
-        isDbAssigned: true,
-        isCurrentOperator: dbRoute.operarioId === this.selectedOperarioId(),
-        operarioId: dbRoute.operarioId,
-        operarioName: op ? `${op.nombres} ${op.apellidos}` : `Operario #${dbRoute.operarioId}`,
-        color,
-        routeName: dbRoute.nombre,
-      };
-    }
-
-    const sessionOpId = this.sessionCommunityAssignments().get(comunidadId);
-    if (sessionOpId != null) {
-      const op = this.operarios().find((u) => u.usuarioId === sessionOpId);
-      const color = this.getOperatorColor(sessionOpId);
-      return {
-        isAssigned: true,
-        isDbAssigned: false,
-        isCurrentOperator: sessionOpId === this.selectedOperarioId(),
-        operarioId: sessionOpId,
-        operarioName: op ? `${op.nombres} ${op.apellidos}` : `Operario #${sessionOpId}`,
-        color,
-      };
-    }
-
-    return {
-      isAssigned: false,
-      isDbAssigned: false,
-      isCurrentOperator: false,
-    };
+  getCommunityStatus(comunidadId: number | undefined): AssignmentStatusView {
+    return this.resolveAssignmentStatus(
+      comunidadId,
+      this.existingAssignedCommunityMap() as ReadonlyMap<
+        number,
+        { operarioId: number; nombre: string }
+      >,
+      this.sessionCommunityAssignments(),
+    );
   }
 
   // Get current assignment status for a sector
-  getSectorStatus(sectorId: number | undefined): {
-    isAssigned: boolean;
-    isDbAssigned: boolean;
-    isCurrentOperator: boolean;
-    operarioId?: number;
-    operarioName?: string;
-    color?: OperatorColor;
-    routeName?: string;
-  } {
-    if (sectorId == null) {
-      return {
-        isAssigned: false,
-        isDbAssigned: false,
-        isCurrentOperator: false,
-      };
-    }
+  getSectorStatus(sectorId: number | undefined): AssignmentStatusView {
+    return this.resolveAssignmentStatus(
+      sectorId,
+      this.existingAssignedSectorMap() as ReadonlyMap<
+        number,
+        { operarioId: number; nombre: string }
+      >,
+      this.sessionSectorAssignments(),
+    );
+  }
 
-    const dbRoute = this.existingAssignedSectorMap().get(sectorId);
-    if (dbRoute) {
-      const op = this.operarios().find((u) => u.usuarioId === dbRoute.operarioId);
-      const color = dbRoute.operarioId ? this.getOperatorColor(dbRoute.operarioId) : undefined;
-      return {
-        isAssigned: true,
-        isDbAssigned: true,
-        isCurrentOperator: dbRoute.operarioId === this.selectedOperarioId(),
-        operarioId: dbRoute.operarioId,
-        operarioName: op ? `${op.nombres} ${op.apellidos}` : `Operario #${dbRoute.operarioId}`,
-        color,
-        routeName: dbRoute.nombre,
-      };
-    }
-
-    const sessionOpId = this.sessionSectorAssignments().get(sectorId);
-    if (sessionOpId != null) {
-      const op = this.operarios().find((u) => u.usuarioId === sessionOpId);
-      const color = this.getOperatorColor(sessionOpId);
-      return {
-        isAssigned: true,
-        isDbAssigned: false,
-        isCurrentOperator: sessionOpId === this.selectedOperarioId(),
-        operarioId: sessionOpId,
-        operarioName: op ? `${op.nombres} ${op.apellidos}` : `Operario #${sessionOpId}`,
-        color,
-      };
-    }
-
-    return {
-      isAssigned: false,
-      isDbAssigned: false,
-      isCurrentOperator: false,
-    };
+  private resolveAssignmentStatus(
+    id: number | undefined,
+    dbMap: ReadonlyMap<number, { operarioId: number; nombre: string }>,
+    sessionMap: ReadonlyMap<number, number>,
+  ): AssignmentStatusView {
+    return resolveAssignmentStatus<number>({
+      id: id ?? null,
+      dbMap,
+      sessionMap,
+      operarios: this.operarios(),
+      selectedOperarioId: this.selectedOperarioId(),
+      getOperatorColor: (operatorId) => this.getOperatorColor(operatorId),
+      fallbackName: (operatorId) => `Operario #${operatorId}`,
+    }) as AssignmentStatusView;
   }
 
   // Check if community is 100% completed (Golden Border indicator)
@@ -786,64 +698,19 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   // Global coverage metrics for Step 3 Summary
   readonly globalCoverageSummary = computed(() => {
     const allComunidades = this.comunidades();
-    let fullyCompletedCommunities = 0;
-    let partialCommunities = 0;
-    let unassignedCommunities = 0;
-    let totalSectors = 0;
-    let totalAssignedSectors = 0;
-
-    for (const c of allComunidades) {
-      if (c.id == null) continue;
-      const { assigned, total } = this.getCommunityAssignedCount(c.id);
-      totalSectors += total;
-      totalAssignedSectors += assigned;
-      if (total > 0 && assigned === total) {
-        fullyCompletedCommunities++;
-      } else if (assigned > 0) {
-        partialCommunities++;
-      } else {
-        unassignedCommunities++;
-      }
-    }
-
-    const totalCommunities = allComunidades.length;
-    const completedPct =
-      totalCommunities > 0 ? Math.round((fullyCompletedCommunities / totalCommunities) * 100) : 0;
-
-    return {
-      fullyCompletedCommunities,
-      partialCommunities,
-      unassignedCommunities,
-      totalSectors,
-      totalAssignedSectors,
-      pendingSectors: Math.max(0, totalSectors - totalAssignedSectors),
-      totalCommunities,
-      completedPct,
-    };
+    return calculateGlobalCoverage(allComunidades, (comunidadId) =>
+      this.getCommunityAssignedCount(comunidadId),
+    );
   });
 
   // Non-lectura coverage metrics for Step 2 Summary (contracts-focused)
-  readonly nonLecturaCoverageSummary = computed(() => {
-    const assignedMap = this.sessionContractAssignments();
-    const assignedIds = new Set(assignedMap.keys());
-    const totalContratosEnComunidad = this.contractTotalEnComunidad();
-    const assignedContratosCount = assignedIds.size;
-    const pendingContratos = Math.max(0, totalContratosEnComunidad - assignedContratosCount);
-
-    // Distinct communities with at least one contract assigned in session
-    const assignedComunidades = new Set<number>();
-    assignedMap.forEach((_opId, contratoId) => {
-      const c = this.contratos().find((x) => Number(x.contratoId) === contratoId);
-      if (c) assignedComunidades.add(c.comunidadId);
-    });
-
-    return {
-      totalContratosEnComunidad,
-      assignedContratosCount,
-      pendingContratos,
-      comunidadesConContratos: assignedComunidades.size,
-    };
-  });
+  readonly nonLecturaCoverageSummary = computed(() =>
+    calculateNonLecturaCoverage(
+      this.contractTotalEnComunidad(),
+      this.sessionContractAssignments(),
+      this.contratos(),
+    ),
+  );
 
   // Suggested Base Name
   readonly sugeridoNombreBase = computed(() => {
@@ -957,101 +824,86 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   toggleSector(sector: Sectores): void {
     if (!sector.sectorId) return;
 
-    const period = this.selectedPeriod();
-    if (!period || period.estado !== 'ABIERTO') {
-      this.toastService.show(
-        'El período operativo no está abierto. No se pueden realizar asignaciones.',
-        'warning',
-      );
+    if (
+      !assertPeriodOpen(this.selectedPeriod(), this.toastService) ||
+      !assertOperatorSelected(this.selectedOperarioId(), this.toastService, {
+        message: 'Por favor, seleccioná un operario en la Tabla 1 para asignarle sectores.',
+      })
+    ) {
       return;
     }
 
-    const opId = this.selectedOperarioId();
-    if (!opId) {
-      this.toastService.show(
-        'Por favor, seleccioná un operario en la Tabla 1 para asignarle sectores.',
-        'warning',
-      );
-      return;
-    }
-
-    const currentMap = new Map(this.sessionSectorAssignments());
+    const opId = this.selectedOperarioId()!;
     const status = this.getSectorStatus(sector.sectorId);
+    const assignmentStatus: AssignmentStatus = {
+      isDbAssigned: status.isDbAssigned,
+    };
+    const outcome = toggleAssignment(
+      this.sessionSectorAssignments(),
+      sector.sectorId,
+      opId,
+      assignmentStatus,
+    );
 
-    // If already in database, block
-    if (status.isDbAssigned) {
-      this.toastService.show(
-        `Este sector ya tiene una ruta creada en el mes para ${status.operarioName}.`,
-        'warning',
-      );
-      return;
+    switch (outcome.kind) {
+      case 'assigned':
+      case 'deselected':
+        this.sessionSectorAssignments.set(outcome.next);
+        break;
+      case 'blocked-by-db':
+        this.toastService.show(
+          `Este sector ya tiene una ruta creada en el mes para ${status.operarioName}.`,
+          'warning',
+        );
+        break;
+      case 'blocked-by-other-operator':
+        this.toastService.show(
+          `El sector ${sector.nombre ?? sector.sectorId} ya está asignado a ${this.getOperarioName(outcome.existingOperatorId)} en esta sesión.`,
+          'warning',
+        );
+        break;
     }
-
-    // If assigned to current operator in session => deselect
-    if (status.operarioId === opId) {
-      currentMap.delete(sector.sectorId);
-      this.sessionSectorAssignments.set(currentMap);
-      return;
-    }
-
-    // If assigned to another operator in session => dynamic exclusion block with friendly notice
-    if (status.operarioId && status.operarioId !== opId) {
-      this.toastService.show(
-        `El sector ${sector.nombre ?? sector.sectorId} ya está asignado a ${status.operarioName} en esta sesión.`,
-        'warning',
-      );
-      return;
-    }
-
-    // Available => assign to current operator
-    currentMap.set(sector.sectorId, opId);
-    this.sessionSectorAssignments.set(currentMap);
   }
 
   // Toggle direct community assignment for communities without sectors
   toggleCommunityAssignment(comunidadId: number): void {
-    const period = this.selectedPeriod();
-    if (!period || period.estado !== 'ABIERTO') {
-      this.toastService.show(
-        'El período operativo no está abierto. No se pueden realizar asignaciones.',
-        'warning',
-      );
+    if (
+      !assertPeriodOpen(this.selectedPeriod(), this.toastService) ||
+      !assertOperatorSelected(this.selectedOperarioId(), this.toastService)
+    ) {
       return;
     }
 
-    const opId = this.selectedOperarioId();
-    if (!opId) {
-      this.toastService.show('Por favor, seleccioná un operario en la Tabla 1 primero.', 'warning');
-      return;
-    }
-
+    const opId = this.selectedOperarioId()!;
     const status = this.getCommunityStatus(comunidadId);
-    if (status.isDbAssigned) {
-      this.toastService.show(
-        `Esta comunidad ya tiene una ruta creada en el mes para ${status.operarioName}.`,
-        'warning',
-      );
-      return;
+    const assignmentStatus: AssignmentStatus = {
+      isDbAssigned: status.isDbAssigned,
+    };
+    const outcome = toggleAssignment(
+      this.sessionCommunityAssignments(),
+      comunidadId,
+      opId,
+      assignmentStatus,
+    );
+
+    switch (outcome.kind) {
+      case 'assigned':
+      case 'deselected':
+        this.sessionCommunityAssignments.set(outcome.next);
+        break;
+      case 'blocked-by-db':
+        this.toastService.show(
+          `Esta comunidad ya tiene una ruta creada en el mes para ${status.operarioName}.`,
+          'warning',
+        );
+        break;
+      case 'blocked-by-other-operator':
+        this.toastService.show(
+          `Esta comunidad ya está asignada a ${this.getOperarioName(outcome.existingOperatorId)} en esta sesión.`,
+          'warning',
+        );
+        break;
     }
-
-    const currentMap = new Map(this.sessionCommunityAssignments());
-
-    if (status.operarioId === opId) {
-      currentMap.delete(comunidadId);
-      this.sessionCommunityAssignments.set(currentMap);
-      return;
-    }
-
-    if (status.operarioId && status.operarioId !== opId) {
-      this.toastService.show(
-        `Esta comunidad ya está asignada a ${status.operarioName} en esta sesión.`,
-        'warning',
-      );
-      return;
-    }
-
-    currentMap.set(comunidadId, opId);
-    this.sessionCommunityAssignments.set(currentMap);
   }
 
   // Assign or toggle all available sectors in a community to current operator
@@ -1160,21 +1012,12 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   }
 
   clearOperatorSessionAssignments(operarioId: number): void {
-    const currentMap = new Map(this.sessionSectorAssignments());
-    currentMap.forEach((opId, sectorId) => {
-      if (opId === operarioId) {
-        currentMap.delete(sectorId);
-      }
-    });
-    this.sessionSectorAssignments.set(currentMap);
-
-    const currentComMap = new Map(this.sessionCommunityAssignments());
-    currentComMap.forEach((opId, comId) => {
-      if (opId === operarioId) {
-        currentComMap.delete(comId);
-      }
-    });
-    this.sessionCommunityAssignments.set(currentComMap);
+    this.sessionSectorAssignments.set(
+      clearAssignmentsForOperator(this.sessionSectorAssignments(), operarioId),
+    );
+    this.sessionCommunityAssignments.set(
+      clearAssignmentsForOperator(this.sessionCommunityAssignments(), operarioId),
+    );
   }
 
   resetSessionAssignments(): void {
@@ -1260,27 +1103,17 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     this.isLoading.set(true);
     const periodId = this.selectedPeriodId()!;
     const tipoRuta = (this.tipoActividadSeleccionada() as TipoRuta) || 'LECTURA';
+    const nombreBase = this.nombreBase().trim() || undefined;
 
     const requests: ICreateRouteAssignmentsDto[] = [];
 
     if (this.isLecturaMode()) {
       // Lectura flow: group by operator -> community -> sectorIds
-      const operatorCommunityMap = new Map<number, Map<number, number[]>>();
-      this.sessionSectorAssignments().forEach((opId, sectorId) => {
-        const sector = this.sectores().find((s) => s.sectorId === sectorId);
-        if (!sector) return;
-        const comId = sector.comunidadId;
-
-        if (!operatorCommunityMap.has(opId)) {
-          operatorCommunityMap.set(opId, new Map());
-        }
-        const comMap = operatorCommunityMap.get(opId)!;
-        const secList = comMap.get(comId) || [];
-        secList.push(sectorId);
-        comMap.set(comId, secList);
-      });
-
-      operatorCommunityMap.forEach((comMap, opId) => {
+      const grouped = groupSectorAssignmentsByOperatorCommunity(
+        this.sessionSectorAssignments(),
+        this.sectores() as readonly { sectorId: number; comunidadId: number }[],
+      );
+      grouped.forEach((comMap, opId) => {
         comMap.forEach((sectorIds, comunidadId) => {
           requests.push({
             periodoId: periodId,
@@ -1288,12 +1121,13 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
             comunidadId,
             tipoRuta,
             sectorIds,
-            nombreBase: this.nombreBase().trim() || undefined,
+            nombreBase,
           });
         });
       });
 
-      // Whole community assignments (without sectors)
+      // Whole community assignments (without sectors) stay inline because
+      // they bypass the sector grouping helper.
       this.sessionCommunityAssignments().forEach((opId, comunidadId) => {
         requests.push({
           periodoId: periodId,
@@ -1301,27 +1135,16 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
           comunidadId,
           tipoRuta,
           sectorIds: [],
-          nombreBase: this.nombreBase().trim() || undefined,
+          nombreBase,
         });
       });
     } else {
       // Non-lectura flow: group by operator -> community -> contratoIds
-      const operatorCommunityContracts = new Map<number, Map<number, number[]>>();
-      this.sessionContractAssignments().forEach((opId, contratoId) => {
-        const contrato = this.contratos().find((c) => Number(c.contratoId) === contratoId);
-        if (!contrato) return;
-        const comId = contrato.comunidadId;
-
-        if (!operatorCommunityContracts.has(opId)) {
-          operatorCommunityContracts.set(opId, new Map());
-        }
-        const comMap = operatorCommunityContracts.get(opId)!;
-        const idList = comMap.get(comId) || [];
-        idList.push(contratoId);
-        comMap.set(comId, idList);
-      });
-
-      operatorCommunityContracts.forEach((comMap, opId) => {
+      const grouped = groupContractAssignmentsByOperatorCommunity(
+        this.sessionContractAssignments(),
+        this.contratos(),
+      );
+      grouped.forEach((comMap, opId) => {
         comMap.forEach((contratoIds, comunidadId) => {
           requests.push({
             periodoId: periodId,
@@ -1329,7 +1152,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
             comunidadId,
             tipoRuta,
             contratoIds,
-            nombreBase: this.nombreBase().trim() || undefined,
+            nombreBase,
           });
         });
       });
