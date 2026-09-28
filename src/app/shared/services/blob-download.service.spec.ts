@@ -3,26 +3,25 @@ import { BlobDownloadService } from './blob-download.service';
 
 describe('BlobDownloadService', () => {
   let service: BlobDownloadService;
-  let createObjectURL: ReturnType<typeof vi.fn>;
-  let revokeObjectURL: ReturnType<typeof vi.fn>;
+  let createObjectURL: ReturnType<typeof vi.spyOn>;
+  let revokeObjectURL: ReturnType<typeof vi.spyOn>;
   let clickSpy: ReturnType<typeof vi.fn>;
   let originalCreateElement: typeof document.createElement;
-  let lastAnchor: HTMLAnchorElement;
+  let lastAnchor: HTMLAnchorElement | undefined;
 
   beforeEach(() => {
-    createObjectURL = vi.fn(() => 'blob:fake-url');
-    revokeObjectURL = vi.fn();
+    lastAnchor = undefined;
     clickSpy = vi.fn();
 
-    URL.createObjectURL = createObjectURL;
-    URL.revokeObjectURL = revokeObjectURL;
+    createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:fake-url');
+    revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
 
     originalCreateElement = document.createElement.bind(document);
     document.createElement = ((tag: string) => {
       const el = originalCreateElement(tag);
       if (tag === 'a') {
         Object.defineProperty(el, 'click', { configurable: true, value: clickSpy });
-        lastAnchor = el;
+        lastAnchor = el as HTMLAnchorElement;
       }
       return el;
     }) as typeof document.createElement;
@@ -41,8 +40,8 @@ describe('BlobDownloadService', () => {
     service.download(blob, 'test.pdf');
 
     expect(createObjectURL).toHaveBeenCalledWith(blob);
-    expect(lastAnchor.href).toBe('blob:fake-url');
-    expect(lastAnchor.download).toBe('test.pdf');
+    expect(lastAnchor?.href).toBe('blob:fake-url');
+    expect(lastAnchor?.download).toBe('test.pdf');
     expect(clickSpy).toHaveBeenCalledTimes(1);
     expect(revokeObjectURL).toHaveBeenCalledWith('blob:fake-url');
   });
