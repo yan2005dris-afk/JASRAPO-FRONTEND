@@ -865,7 +865,7 @@
                           class="fw-semibold text-dark small text-truncate"
                           style="font-size: 0.82rem"
                         >
-                          {{ contrato.numeroGuia }} — {{ contrato.cliente?.nombres }} {{ contrato.cliente?.apellidos }}
+                          {{ contrato.numeroGuia }} — {{ contrato.cliente.nombres }} {{ contrato.cliente.apellidos }}
                         </div>
                         <div class="text-muted text-truncate" style="font-size: 0.7rem">
                           {{ contrato.direccionSuministro }}
@@ -1371,8 +1371,8 @@
                                 class="fw-semibold text-dark small text-truncate"
                                 style="font-size: 0.78rem"
                               >
-                                {{ contrato.numeroGuia }} — {{ contrato.cliente?.nombres }}
-                                {{ contrato.cliente?.apellidos }}
+                                {{ contrato.numeroGuia }} — {{ contrato.cliente.nombres }}
+                                {{ contrato.cliente.apellidos }}
                               </div>
                               <span class="text-muted text-truncate d-block" style="font-size: 0.7rem">
                                 {{ contrato.direccionSuministro }}
