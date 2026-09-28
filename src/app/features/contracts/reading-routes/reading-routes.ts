@@ -30,6 +30,12 @@ import {
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Router } from '@angular/router';
 import { ReassignRouteModalComponent } from './components/reassign-route-modal/reassign-route-modal.component';
+import { TIPO_RUTA_LABEL } from './constants/route-detail.constants';
+import {
+  getComunidadNombre,
+  getOperarioNombre,
+} from './services/operator-name.helpers';
+import { filterOperariosByRole } from './services/users.helpers';
 
 @Component({
   selector: 'app-reading-routes',
@@ -208,19 +214,9 @@ export class ReadingRoutesComponent implements OnInit {
     }
   }
 
-  getTipoLabel(tipo: TipoRuta | string): string {
-    switch (tipo) {
-      case 'TOMA_LECTURA':
-        return 'Toma de Lectura';
-      case 'RECONEXION':
-        return 'Reconexión';
-      case 'INSTALACION':
-        return 'Instalación';
-      case 'INSPECCION':
-        return 'Inspección';
-      default:
-        return String(tipo).replace(/_/g, ' ');
-    }
+  getTipoLabel(tipo: TipoRuta | string | undefined): string {
+    if (!tipo) return '—';
+    return TIPO_RUTA_LABEL[tipo as TipoRuta] ?? String(tipo).replace(/_/g, ' ');
   }
 
   goToAssignment(): void {
