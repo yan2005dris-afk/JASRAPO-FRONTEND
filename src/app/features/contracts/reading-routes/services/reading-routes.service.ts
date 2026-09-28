@@ -1,7 +1,8 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
+import { buildHttpParams } from '../../../../shared/services/http-params.helpers';
 import { IPaginatedResult } from '../../../billing/payments/interfaces/ipayments.interface';
 import {
   ICreateRouteAssignmentsDto,
@@ -27,32 +28,8 @@ export class ReadingRoutesService {
   private readonly endpoint = `${this.baseUrl}/routes`;
 
   getRoutes(params?: IFindAllRoutesParams): Observable<IPaginatedResult<IReadingRoute>> {
-    let httpParams = new HttpParams();
-
-    if (params?.page !== undefined) {
-      httpParams = httpParams.set('page', String(params.page));
-    }
-    if (params?.limit !== undefined) {
-      httpParams = httpParams.set('limit', String(params.limit));
-    }
-    if (params?.estado) {
-      httpParams = httpParams.set('estado', params.estado);
-    }
-    if (params?.operarioId) {
-      httpParams = httpParams.set('operarioId', String(params.operarioId));
-    }
-    if (params?.comunidadId) {
-      httpParams = httpParams.set('comunidadId', String(params.comunidadId));
-    }
-    if (params?.periodoId) {
-      httpParams = httpParams.set('periodoId', String(params.periodoId));
-    }
-    if (params?.tipoRuta) {
-      httpParams = httpParams.set('tipoRuta', params.tipoRuta);
-    }
-
     return this.http.get<IPaginatedResult<IReadingRoute>>(this.endpoint, {
-      params: httpParams,
+      params: buildHttpParams(params),
     });
   }
 
@@ -93,37 +70,10 @@ export class ReadingRoutesService {
   getEligibleReadings(
     params?: IFilterReadingsParams,
   ): Observable<IPaginatedResult<IReadingForRoute, ILecturaKpis>> {
-    let httpParams = new HttpParams();
-
-    if (params?.page !== undefined) {
-      httpParams = httpParams.set('page', String(params.page));
-    }
-    if (params?.limit !== undefined) {
-      httpParams = httpParams.set('limit', String(params.limit));
-    }
-    if (params?.comunidadId) {
-      httpParams = httpParams.set('comunidadId', String(params.comunidadId));
-    }
-    if (params?.sectorId) {
-      httpParams = httpParams.set('sectorId', String(params.sectorId));
-    }
-    if (params?.periodoId) {
-      httpParams = httpParams.set('periodoId', String(params.periodoId));
-    }
-    if (params?.tipoRuta) {
-      httpParams = httpParams.set('tipoRuta', String(params.tipoRuta));
-    }
-    if (params?.fechaPlanificada) {
-      httpParams = httpParams.set('fechaPlanificada', String(params.fechaPlanificada));
-    }
-    if (params?.search) {
-      httpParams = httpParams.set('search', params.search);
-    }
-
     return this.http.get<IPaginatedResult<IReadingForRoute, ILecturaKpis>>(
       `${this.endpoint}/eligible-readings`,
       {
-        params: httpParams,
+        params: buildHttpParams(params),
       },
     );
   }
@@ -132,16 +82,9 @@ export class ReadingRoutesService {
     rutaId: string | number,
     params?: { page?: number; limit?: number },
   ): Observable<IPaginatedResult<IReadingForRoute, ILecturaKpis>> {
-    let httpParams = new HttpParams();
-    if (params?.page !== undefined) {
-      httpParams = httpParams.set('page', String(params.page));
-    }
-    if (params?.limit !== undefined) {
-      httpParams = httpParams.set('limit', String(params.limit));
-    }
     return this.http.get<IPaginatedResult<IReadingForRoute, ILecturaKpis>>(
       `${this.endpoint}/${rutaId}/readings`,
-      { params: httpParams },
+      { params: buildHttpParams(params) },
     );
   }
 
@@ -158,20 +101,8 @@ export class ReadingRoutesService {
     routeId: string | number,
     params?: IFilterOrdenParams,
   ): Observable<PaginatedOrdenResponse> {
-    let httpParams = new HttpParams();
-
-    if (params?.estado) {
-      httpParams = httpParams.set('estado', params.estado);
-    }
-    if (params?.page !== undefined) {
-      httpParams = httpParams.set('page', String(params.page));
-    }
-    if (params?.limit !== undefined) {
-      httpParams = httpParams.set('limit', String(params.limit));
-    }
-
     return this.http.get<PaginatedOrdenResponse>(`${this.endpoint}/${routeId}/work-orders`, {
-      params: httpParams,
+      params: buildHttpParams(params),
     });
   }
 
