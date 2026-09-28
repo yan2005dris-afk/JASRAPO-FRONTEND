@@ -45,7 +45,6 @@ import {
   clearAssignmentsForOperator,
   groupContractAssignmentsByOperatorCommunity,
   groupSectorAssignmentsByOperatorCommunity,
-  resolveAssignmentStatus,
   toggleAssignment,
 } from '../../services/session-assignments.helpers';
 import {
@@ -138,7 +137,8 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     this.getOperatorColor(operarioId);
 
   /** Arrow alias used by `<app-route-contracts-table>` to avoid `this` rebinding. */
-  readonly getOperarioNameForChild = (operarioId: number): string => this.getOperarioName(operarioId);
+  readonly getOperarioNameForChild = (operarioId: number): string =>
+    this.getOperarioName(operarioId);
 
   isLecturaActivity(tipo: TipoRuta | string | null): boolean {
     return tipo === 'LECTURA' || tipo === 'TOMA_LECTURA' || !tipo;
@@ -896,7 +896,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     const status = this.getSectorStatus(sector.sectorId);
     const assignmentStatus: AssignmentStatus = {
       isDbAssigned: status.isDbAssigned,
-      assignedOperatorId: status.operarioId,
     };
     const outcome = toggleAssignment(
       this.sessionSectorAssignments(),
@@ -938,7 +937,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     const status = this.getCommunityStatus(comunidadId);
     const assignmentStatus: AssignmentStatus = {
       isDbAssigned: status.isDbAssigned,
-      assignedOperatorId: status.operarioId,
     };
     const outcome = toggleAssignment(
       this.sessionCommunityAssignments(),
@@ -1172,7 +1170,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       // Lectura flow: group by operator -> community -> sectorIds
       const grouped = groupSectorAssignmentsByOperatorCommunity(
         this.sessionSectorAssignments(),
-        this.sectores() as ReadonlyArray<{ sectorId: number; comunidadId: number }>,
+        this.sectores() as readonly { sectorId: number; comunidadId: number }[],
       );
       grouped.forEach((comMap, opId) => {
         comMap.forEach((sectorIds, comunidadId) => {

@@ -34,10 +34,8 @@ export interface GlobalCoverageSummary {
  * Communities whose `id` is null/undefined are skipped (matches the
  * original computed).
  */
-export function calculateGlobalCoverage<
-  C extends { id: number | null | undefined },
->(
-  comunidades: ReadonlyArray<C>,
+export function calculateGlobalCoverage<C extends { id: number | null | undefined }>(
+  comunidades: readonly C[],
   coverageResolver: (communityId: number) => CoverageByCommunity,
 ): GlobalCoverageSummary {
   let fullyCompletedCommunities = 0;
@@ -96,7 +94,7 @@ export function calculateNonLecturaCoverage<
 >(
   totalContratosEnComunidad: number,
   sessionAssignments: ReadonlyMap<number, number>,
-  contracts: ReadonlyArray<C>,
+  contracts: readonly C[],
 ): NonLecturaCoverageSummary {
   const assignedContratosCount = sessionAssignments.size;
   const pendingContratos = Math.max(0, totalContratosEnComunidad - assignedContratosCount);

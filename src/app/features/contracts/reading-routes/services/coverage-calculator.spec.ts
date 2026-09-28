@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  calculateGlobalCoverage,
-  calculateNonLecturaCoverage,
-} from './coverage-calculator';
+import { calculateGlobalCoverage, calculateNonLecturaCoverage } from './coverage-calculator';
 
 describe('coverage-calculator', () => {
   describe('calculateGlobalCoverage', () => {

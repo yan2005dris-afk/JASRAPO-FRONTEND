@@ -38,10 +38,7 @@ export function assertPeriodOpen(
     return true;
   }
 
-  toast.show(
-    opts.message ?? DEFAULT_PERIOD_MESSAGE,
-    opts.severity ?? 'warning',
-  );
+  toast.show(opts.message ?? DEFAULT_PERIOD_MESSAGE, opts.severity ?? 'warning');
   return false;
 }
 
@@ -65,9 +62,6 @@ export function assertOperatorSelected(
     return true;
   }
 
-  toast.show(
-    opts.message ?? DEFAULT_OPERATOR_MESSAGE,
-    opts.severity ?? 'warning',
-  );
+  toast.show(opts.message ?? DEFAULT_OPERATOR_MESSAGE, opts.severity ?? 'warning');
   return false;
 }

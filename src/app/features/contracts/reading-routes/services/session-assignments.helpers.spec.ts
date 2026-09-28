@@ -26,7 +26,6 @@ describe('session-assignments.helpers', () => {
       const current = new Map<number, number>([[42, 1]]);
       const result = toggleAssignment(current, 42, 1, {
         isDbAssigned: false,
-        assignedOperatorId: 1,
       });
 
       expect(result.kind).toBe('deselected');
@@ -46,7 +45,6 @@ describe('session-assignments.helpers', () => {
       const current = new Map<number, number>([[42, 2]]);
       const result = toggleAssignment(current, 42, 1, {
         isDbAssigned: false,
-        assignedOperatorId: 2,
       });
 
       expect(result.kind).toBe('blocked-by-other-operator');
@@ -161,10 +159,7 @@ describe('session-assignments.helpers', () => {
 
     it('prefers the DB route over the session assignment and sets routeName', () => {
       const dbMapWithRoute = new Map<number, IReadingRoute>([
-        [
-          5,
-          { operarioId: 2, nombre: 'Ruta Oct', sectorId: 5 } as IReadingRoute,
-        ],
+        [5, { operarioId: 2, nombre: 'Ruta Oct', sectorId: 5 } as IReadingRoute],
       ]);
       const sessionMapWithConflict = new Map<number, number>([[5, 1]]);
 

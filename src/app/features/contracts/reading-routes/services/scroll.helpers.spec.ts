@@ -1,34 +1,25 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { resetScrollNextMicrotask } from './scroll.helpers';
 
 describe('resetScrollNextMicrotask', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   it('is a no-op when the element is null', () => {
     expect(() => resetScrollNextMicrotask(null)).not.toThrow();
-    vi.runAllTimers();
   });
 
   it('is a no-op when the element is undefined', () => {
     expect(() => resetScrollNextMicrotask(undefined)).not.toThrow();
-    vi.runAllTimers();
   });
 
-  it('resets scrollTop to zero on the next microtask when the element is provided', () => {
+  it('resets scrollTop to zero on the next microtask when the element is provided', async () => {
     const el = { scrollTop: 250 } as HTMLElement;
 
     resetScrollNextMicrotask(el);
 
-    // Not synchronous — microtask has not been flushed yet.
+    // Not synchronous — the microtask has not run yet.
     expect(el.scrollTop).toBe(250);
 
-    vi.runAllTimers();
+    // Flush microtasks.
+    await Promise.resolve();
 
     expect(el.scrollTop).toBe(0);
   });

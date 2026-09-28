@@ -1,15 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  assertOperatorSelected,
-  assertPeriodOpen,
-} from './route-assignment-validators';
+import { assertOperatorSelected, assertPeriodOpen } from './route-assignment-validators';
 import { IAccountingPeriod } from '../../../../shared/services/periods.service';
 
 describe('route-assignment-validators', () => {
   describe('assertPeriodOpen', () => {
     it('returns true when the period is in ABIERTO state', () => {
       const toast = { show: vi.fn() };
-      const period = { estado: 'ABIERTO', periodoId: 1, nombre: 'Octubre 2026' } as IAccountingPeriod;
+      const period = {
+        estado: 'ABIERTO',
+        periodoId: 1,
+        nombre: 'Octubre 2026',
+      } as IAccountingPeriod;
 
       expect(assertPeriodOpen(period, toast as never)).toBe(true);
       expect(toast.show).not.toHaveBeenCalled();

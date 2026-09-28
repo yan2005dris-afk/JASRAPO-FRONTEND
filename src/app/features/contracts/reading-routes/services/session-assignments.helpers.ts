@@ -24,8 +24,6 @@
 export interface AssignmentStatus {
   /** True when the assignment already exists in the database (terminal). */
   isDbAssigned: boolean;
-  /** Operator id currently assigned in session, if any. */
-  assignedOperatorId?: number;
 }
 
 export interface ResolvedAssignmentStatus {
@@ -45,7 +43,7 @@ interface ResolvedAssignmentInputs<K> {
   /** Map of in-session assignments (e.g. sessionSectorAssignments). */
   sessionMap: ReadonlyMap<K, number>;
   /** Operators catalog, used to resolve the name. */
-  operarios: ReadonlyArray<{ usuarioId: number; nombres: string; apellidos: string }>;
+  operarios: readonly { usuarioId: number; nombres: string; apellidos: string }[];
   /** Currently selected operator in the workspace. */
   selectedOperarioId: number | null;
   /** Color resolver (pass-through, kept in the returned status). */
@@ -138,7 +136,7 @@ export function toggleAssignment<K>(
   }
 
   const next = new Map(currentMap);
-  const existingOpId = status.assignedOperatorId;
+  const existingOpId = currentMap.get(key);
 
   if (existingOpId === currentOperatorId) {
     next.delete(key);
@@ -185,7 +183,7 @@ export function groupSectorAssignmentsByOperatorCommunity<
   S extends { sectorId: number; comunidadId: number },
 >(
   assignments: ReadonlyMap<number, number>,
-  sectores: ReadonlyArray<S>,
+  sectores: readonly S[],
 ): Map<number, Map<number, number[]>> {
   const byOperator = new Map<number, Map<number, number[]>>();
   const sectorById = new Map<number, S>();
@@ -221,7 +219,7 @@ export function groupContractAssignmentsByOperatorCommunity<
   C extends { contratoId: string | number; comunidadId: number },
 >(
   assignments: ReadonlyMap<number, number>,
-  contracts: ReadonlyArray<C>,
+  contracts: readonly C[],
 ): Map<number, Map<number, number[]>> {
   const byOperator = new Map<number, Map<number, number[]>>();
   const contractById = new Map<number, C>();
