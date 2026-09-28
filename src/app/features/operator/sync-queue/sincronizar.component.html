@@ -335,6 +335,9 @@
                 (canceled)="cancelEdit()"
               />
             } @else {
+              <button type="button" class="btn-retry" (click)="retryReading(record)">
+                <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Reintentar
+              </button>
               <button type="button" class="btn-edit" (click)="startEditReading(record)">
                 <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
               </button>
@@ -373,6 +376,9 @@
                 (canceled)="cancelEdit()"
               />
             } @else {
+              <button type="button" class="btn-retry" (click)="retryAnomaly(record)">
+                <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Reintentar
+              </button>
               <button type="button" class="btn-edit" (click)="startEditAnomaly(record)">
                 <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
               </button>

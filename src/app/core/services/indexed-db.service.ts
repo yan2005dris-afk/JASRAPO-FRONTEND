@@ -362,7 +362,7 @@ export class IndexedDbService {
     // Si se pasa scope (e.g. 'operator:42'), buscar primero en el snapshot del operador
     if (scope && db.objectStoreNames.contains('assigned_snapshots')) {
       const snapshot = await this.getAssignedSnapshot(scope);
-      if (snapshot?.registeredReadings) {
+      if (snapshot?.registeredReadings && snapshot.registeredReadings.length > 0) {
         return snapshot.registeredReadings;
       }
     }

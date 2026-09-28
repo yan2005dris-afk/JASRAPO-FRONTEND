@@ -367,6 +367,7 @@
   margin-top: 0.65rem;
   flex-wrap: wrap;
 
+  .btn-retry,
   .btn-edit,
   .btn-discard {
     display: flex;
@@ -382,6 +383,15 @@
 
     &:active {
       transform: scale(0.96);
+    }
+  }
+
+  .btn-retry {
+    background: #e0f2fe;
+    color: #0369a1;
+
+    &:hover {
+      background: #bae6fd;
     }
   }
 

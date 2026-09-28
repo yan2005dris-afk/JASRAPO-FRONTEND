@@ -280,7 +280,10 @@ export class LecturasComponent implements OnInit {
   isOrderCompleted(meter: IMeterDto): boolean {
     if (this.completedWorkOrderIds().has(meter.medidorId.toString())) return true;
     if (this.readMetersIds().has(meter.medidorId.toString())) return true;
-    const existing = this.existingReadingMap().get(meter.medidorId.toString());
+    const existing =
+      this.existingReadingMap().get(meter.medidorId.toString()) ||
+      this.existingReadingMap().get(meter.serie) ||
+      (meter.contratoId ? this.existingReadingMap().get(meter.contratoId.toString()) : null);
     return (
       !!existing && existing.estado !== 'PENDIENTE' && existing.estado !== 'RECHAZADA_VERIFICACION'
     );
@@ -451,7 +454,8 @@ export class LecturasComponent implements OnInit {
         if (!serie || !assignmentsCsv) continue;
         const assignments = new Map<WorkOrderActivityType, AssignedWorkOrder>();
         for (const assignment of assignmentsCsv.split(';')) {
-          const [tipo, ordenTrabajoId = '', estado = 'PENDIENTE', lecturaId = ''] = assignment.split(':');
+          const [tipo, ordenTrabajoId = '', estado = 'PENDIENTE', lecturaId = ''] =
+            assignment.split(':');
           const t = tipo.trim() as WorkOrderActivityType;
           const workOrderState = estado.trim() as WorkOrderState;
           if (t && ordenTrabajoId.trim()) {
@@ -590,8 +594,16 @@ export class LecturasComponent implements OnInit {
     this.state.set({ kind: 'actions', meter });
 
     // Pre-load previous reading value for the Lectura sub-form
-    const existing = this.existingReadingMap().get(meter.medidorId.toString());
-    this.lecturaAnteriorPreloaded.set(existing?.lecturaActual ?? 0);
+    const existing =
+      this.existingReadingMap().get(meter.medidorId.toString()) ||
+      this.existingReadingMap().get(meter.serie) ||
+      (meter.contratoId ? this.existingReadingMap().get(meter.contratoId.toString()) : null);
+
+    const prevReading =
+      existing?.estado === 'PENDIENTE'
+        ? (existing.lecturaAnterior ?? 0)
+        : (existing?.lecturaActual ?? existing?.lecturaAnterior ?? 0);
+    this.lecturaAnteriorPreloaded.set(prevReading);
   }
 
   goToReadingForm(): void {
@@ -658,7 +670,11 @@ export class LecturasComponent implements OnInit {
   }
 
   readingStateLabel(meter: IMeterDto): string {
-    const state = this.existingReadingMap().get(meter.medidorId.toString())?.estado;
+    const existing =
+      this.existingReadingMap().get(meter.medidorId.toString()) ||
+      this.existingReadingMap().get(meter.serie) ||
+      (meter.contratoId ? this.existingReadingMap().get(meter.contratoId.toString()) : null);
+    const state = existing?.estado;
     if (!state) return 'Sin lectura';
     return this.estadosCatalog().find((item) => item.codigo === state)?.nombre ?? state;
   }
@@ -684,7 +700,19 @@ export class LecturasComponent implements OnInit {
     if (existingReading?.lecturaId) return String(existingReading.lecturaId);
     if (existingReading?._lecturaId) return String(existingReading._lecturaId);
 
-    // 2. Assigned work orders by meter
+    // 2. Direct search in registeredReadings
+    const reg = this.registeredReadings().find((r: any) => {
+      const mId = r.medidor?.medidorId ?? r.medidorId;
+      const s = r.medidor?.serie ?? r.medidorSerie;
+      return (
+        (mId != null && String(mId) === String(meter.medidorId)) ||
+        (s && s === meter.serie) ||
+        (r.contratoId && meter.contratoId && String(r.contratoId) === String(meter.contratoId))
+      );
+    });
+    if (reg?.lecturaId) return String(reg.lecturaId);
+
+    // 3. Assigned work orders by meter
     const checkAssignments = (assignments?: Map<WorkOrderActivityType, AssignedWorkOrder>) => {
       if (!assignments) return null;
       const woLectura = assignments.get('LECTURA');
@@ -697,11 +725,13 @@ export class LecturasComponent implements OnInit {
 
     const fromByMeter =
       checkAssignments(this.workOrdersByMeter().get(meter.serie)) ||
-      (meter.contratoId ? checkAssignments(this.workOrdersByMeter().get(meter.contratoId.toString())) : null) ||
+      (meter.contratoId
+        ? checkAssignments(this.workOrdersByMeter().get(meter.contratoId.toString()))
+        : null) ||
       checkAssignments(this.workOrdersByMeter().get(meter.medidorId.toString()));
     if (fromByMeter) return fromByMeter;
 
-    // 3. From activeOperatorRoute in state or sessionStorage
+    // 4. From activeOperatorRoute in state or sessionStorage
     try {
       let route: any = null;
       if (history.state && history.state.route) {
@@ -714,8 +744,11 @@ export class LecturasComponent implements OnInit {
         const match = route.ordenesTrabajo.find(
           (o: any) =>
             o.medidor?.serie === meter.serie ||
-            (o.medidor?.medidorId != null && String(o.medidor.medidorId) === String(meter.medidorId)) ||
-            (meter.contratoId && (o.contrato?.numeroContrato === meter.contratoId || String(o.contratoId) === String(meter.contratoId))) ||
+            (o.medidor?.medidorId != null &&
+              String(o.medidor.medidorId) === String(meter.medidorId)) ||
+            (meter.contratoId &&
+              (o.contrato?.numeroContrato === meter.contratoId ||
+                String(o.contratoId) === String(meter.contratoId))) ||
             `OT-${o.ordenTrabajoId}` === meter.serie,
         );
         if (match?.lecturaId) return String(match.lecturaId);
@@ -760,7 +793,20 @@ export class LecturasComponent implements OnInit {
     this.submissionFeedback.set(null);
     this.failedSubmission.set(null);
     this.isSaving.set(true);
-    const existingId = this.resolveLecturaIdFor(meter);
+    let existingId = this.resolveLecturaIdFor(meter);
+
+    if (!existingId && this.networkService.isOnline()) {
+      try {
+        const fresh = (await this.syncService.getCurrentPeriodReadings()) as ReadingRecord[];
+        if (fresh?.length) {
+          await this.dbService.saveRegisteredReadingsCache(fresh);
+          this.registeredReadings.set(fresh);
+          existingId = this.resolveLecturaIdFor(meter);
+        }
+      } catch {
+        // Silencioso
+      }
+    }
 
     try {
       if (formPayload.tipoActividad === 'LECTURA') {

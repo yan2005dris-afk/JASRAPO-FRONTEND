@@ -218,8 +218,51 @@ export class OperatorSyncService {
    */
   async submitReading(reading: ReadingSubmission & { fotoBlob?: Blob | null }): Promise<unknown> {
     const { _lecturaId, fotoBlob, ...payload } = reading;
+    let targetLecturaId = _lecturaId;
+
+    if (!targetLecturaId || String(targetLecturaId).trim() === '') {
+      try {
+        const cached = await this.dbService.getRegisteredReadingsCache();
+        const targetMeterId = payload['medidorId'] ? String(payload['medidorId']) : null;
+        const targetSerie = (payload as any).medidorSerie
+          ? String((payload as any).medidorSerie)
+          : null;
+
+        let match = cached.find((r: any) => {
+          const mId = r.medidor?.medidorId ?? r.medidorId;
+          const s = r.medidor?.serie ?? r.medidorSerie;
+          return (
+            (targetMeterId && String(mId) === targetMeterId) || (targetSerie && s === targetSerie)
+          );
+        });
+
+        if (!match && this.networkService.isOnline()) {
+          const fresh = await this.getCurrentPeriodReadings();
+          if (fresh?.length) {
+            await this.dbService.saveRegisteredReadingsCache(fresh);
+            match = fresh.find((r: any) => {
+              const mId = r.medidor?.medidorId ?? r.medidorId;
+              const s = r.medidor?.serie ?? r.medidorSerie;
+              return (
+                (targetMeterId && String(mId) === targetMeterId) ||
+                (targetSerie && s === targetSerie)
+              );
+            });
+          }
+        }
+
+        if (match?.lecturaId) {
+          targetLecturaId = String(match.lecturaId);
+        }
+      } catch {
+        // Silencioso
+      }
+    }
+
     const hasId =
-      _lecturaId !== null && _lecturaId !== undefined && String(_lecturaId).trim() !== '';
+      targetLecturaId !== null &&
+      targetLecturaId !== undefined &&
+      String(targetLecturaId).trim() !== '';
     if (this.networkService.isOnline() && !hasId) {
       throw new Error(
         'No se puede enviar una lectura nueva en línea: el backend no expone un endpoint de creación.',
@@ -238,7 +281,7 @@ export class OperatorSyncService {
         this.appendPhoto(formData, fotoBlob, 'foto', 'foto.jpg');
 
         const request$ = this.http.patch<unknown>(
-          `${this.OPERATOR_API}/readings/${_lecturaId}`,
+          `${this.OPERATOR_API}/readings/${targetLecturaId}`,
           formData,
           {
             withCredentials: true,
@@ -246,7 +289,7 @@ export class OperatorSyncService {
         );
 
         const response = await firstValueFrom(request$);
-        await this.dbService.saveSyncedReading({ ...payload, _lecturaId });
+        await this.dbService.saveSyncedReading({ ...payload, _lecturaId: targetLecturaId });
         this.toastService.success('Lectura registrada en el servidor correctamente.', 'Éxito');
         return response;
       } catch (error: unknown) {
@@ -503,6 +546,54 @@ export class OperatorSyncService {
           ...payload
         } = pending;
 
+        let targetLecturaId = _lecturaId;
+        if (
+          targetLecturaId === null ||
+          targetLecturaId === undefined ||
+          String(targetLecturaId).trim() === ''
+        ) {
+          try {
+            const cached = await this.dbService.getRegisteredReadingsCache();
+            const targetMeterId = pending['medidorId'] ? String(pending['medidorId']) : null;
+            const targetSerie = (pending as any).medidorSerie
+              ? String((pending as any).medidorSerie)
+              : null;
+
+            let match = cached.find((r: any) => {
+              const mId = r.medidor?.medidorId ?? r.medidorId;
+              const s = r.medidor?.serie ?? r.medidorSerie;
+              return (
+                (targetMeterId && String(mId) === targetMeterId) ||
+                (targetSerie && s === targetSerie)
+              );
+            });
+
+            if (!match && this.networkService.isOnline()) {
+              const fresh = await this.getCurrentPeriodReadings();
+              if (fresh?.length) {
+                await this.dbService.saveRegisteredReadingsCache(fresh);
+                match = fresh.find((r: any) => {
+                  const mId = r.medidor?.medidorId ?? r.medidorId;
+                  const s = r.medidor?.serie ?? r.medidorSerie;
+                  return (
+                    (targetMeterId && String(mId) === targetMeterId) ||
+                    (targetSerie && s === targetSerie)
+                  );
+                });
+              }
+            }
+
+            if (match?.lecturaId) {
+              targetLecturaId = String(match.lecturaId);
+              await this.dbService.updatePendingReading(pending.id!, {
+                _lecturaId: targetLecturaId,
+              } as any);
+            }
+          } catch {
+            // Silencioso
+          }
+        }
+
         const formData = new FormData();
         const normalized = this.normalizeReadingPayload(payload);
         for (const [key, value] of Object.entries(normalized)) {
@@ -512,7 +603,11 @@ export class OperatorSyncService {
         }
         this.appendPhoto(formData, fotoBlob, 'foto', 'foto.jpg');
 
-        if (_lecturaId === null || _lecturaId === undefined || String(_lecturaId).trim() === '') {
+        if (
+          targetLecturaId === null ||
+          targetLecturaId === undefined ||
+          String(targetLecturaId).trim() === ''
+        ) {
           await this.dbService.updatePendingReading(pending.id!, {
             syncState: 'RECHAZADA',
             errorMessage:
@@ -522,11 +617,11 @@ export class OperatorSyncService {
           continue;
         }
         await firstValueFrom(
-          this.http.patch<unknown>(`${this.OPERATOR_API}/readings/${_lecturaId}`, formData, {
+          this.http.patch<unknown>(`${this.OPERATOR_API}/readings/${targetLecturaId}`, formData, {
             withCredentials: true,
           }),
         );
-        await this.dbService.saveSyncedReading({ ...payload, _lecturaId });
+        await this.dbService.saveSyncedReading({ ...payload, _lecturaId: targetLecturaId });
         await this.dbService.deletePendingReading(id!);
         successReadingsCount++;
       } catch (error) {

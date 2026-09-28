@@ -222,6 +222,36 @@ export class SincronizarComponent implements OnInit {
     await this.syncService.refreshPendingCounts();
   }
 
+  async retryReading(record: PendingRecord): Promise<void> {
+    if (!record.id) return;
+    await this.dbService.updatePendingReading(record.id, {
+      syncState: 'PENDIENTE_SYNC',
+      errorMessage: null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    this.toastService.info('Lectura encolada para reintentar sincronización.', 'Reintento');
+    await this.loadQueue();
+    await this.syncService.refreshPendingCounts();
+    if (this.networkService.isOnline()) {
+      await this.forceSync();
+    }
+  }
+
+  async retryAnomaly(record: PendingRecord): Promise<void> {
+    if (!record.id) return;
+    await this.dbService.updatePendingAnomaly(record.id, {
+      syncState: 'PENDIENTE_SYNC',
+      errorMessage: null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    this.toastService.info('Novedad encolada para reintentar sincronización.', 'Reintento');
+    await this.loadQueue();
+    await this.syncService.refreshPendingCounts();
+    if (this.networkService.isOnline()) {
+      await this.forceSync();
+    }
+  }
+
   async discardReading(record: PendingRecord): Promise<void> {
     if (!record.id) return;
 
