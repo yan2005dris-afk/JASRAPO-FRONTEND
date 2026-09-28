@@ -41,6 +41,7 @@ import {
   assertPeriodOpen,
 } from '../../services/route-assignment-validators';
 import {
+  AssignmentStatus,
   clearAssignmentsForOperator,
   groupContractAssignmentsByOperatorCommunity,
   groupSectorAssignmentsByOperatorCommunity,
@@ -359,43 +360,34 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   // Toggle a single contract assignment to the current operator
   toggleContrato(contratoId: number): void {
     const opId = this.selectedOperarioId();
-    if (!opId) {
-      this.toastService.show('Por favor, seleccioná un operario en la Tabla 1 primero.', 'warning');
-      return;
+    if (!assertOperatorSelected(opId, this.toastService)) return;
+    if (!assertPeriodOpen(this.selectedPeriod(), this.toastService)) return;
+    const opIdNonNull = opId!;
+
+    const status: AssignmentStatus = { isDbAssigned: false };
+    const outcome = toggleAssignment(
+      this.sessionContractAssignments(),
+      contratoId,
+      opIdNonNull,
+      status,
+    );
+
+    switch (outcome.kind) {
+      case 'assigned':
+      case 'deselected':
+        this.sessionContractAssignments.set(outcome.next);
+        break;
+      case 'blocked-by-db':
+        // Contracts are never DB-assigned at toggle time; the contracts
+        // panel is purely session-driven. Defensive no-op.
+        break;
+      case 'blocked-by-other-operator':
+        this.toastService.show(
+          `Este contrato ya está asignado a ${this.getOperarioName(outcome.existingOperatorId)} en esta sesión.`,
+          'warning',
+        );
+        break;
     }
-
-    const period = this.selectedPeriod();
-    if (!period || period.estado !== 'ABIERTO') {
-      this.toastService.show(
-        'El período operativo no está abierto. No se pueden realizar asignaciones.',
-        'warning',
-      );
-      return;
-    }
-
-    const currentMap = new Map(this.sessionContractAssignments());
-    const existingOpId = currentMap.get(contratoId);
-
-    // If assigned to current operator -> deselect
-    if (existingOpId === opId) {
-      currentMap.delete(contratoId);
-      this.sessionContractAssignments.set(currentMap);
-      return;
-    }
-
-    // If assigned to another operator -> block
-    if (existingOpId != null && existingOpId !== opId) {
-      const otherName = this.getOperarioName(existingOpId);
-      this.toastService.show(
-        `Este contrato ya está asignado a ${otherName} en esta sesión.`,
-        'warning',
-      );
-      return;
-    }
-
-    // Available -> assign
-    currentMap.set(contratoId, opId);
-    this.sessionContractAssignments.set(currentMap);
   }
 
   // Select/deselect all contracts visible on the current page for the current operator
@@ -431,13 +423,9 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
 
   // Clear all contract assignments for a specific operator
   clearOperatorContractAssignments(operarioId: number): void {
-    const currentMap = new Map(this.sessionContractAssignments());
-    currentMap.forEach((opId, contratoId) => {
-      if (opId === operarioId) {
-        currentMap.delete(contratoId);
-      }
-    });
-    this.sessionContractAssignments.set(currentMap);
+    this.sessionContractAssignments.set(
+      clearAssignmentsForOperator(this.sessionContractAssignments(), operarioId),
+    );
   }
 
   // Get contract assignment status
@@ -899,101 +887,88 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   toggleSector(sector: Sectores): void {
     if (!sector.sectorId) return;
 
-    const period = this.selectedPeriod();
-    if (!period || period.estado !== 'ABIERTO') {
-      this.toastService.show(
-        'El período operativo no está abierto. No se pueden realizar asignaciones.',
-        'warning',
-      );
+    if (
+      !assertPeriodOpen(this.selectedPeriod(), this.toastService) ||
+      !assertOperatorSelected(this.selectedOperarioId(), this.toastService, {
+        message: 'Por favor, seleccioná un operario en la Tabla 1 para asignarle sectores.',
+      })
+    ) {
       return;
     }
 
-    const opId = this.selectedOperarioId();
-    if (!opId) {
-      this.toastService.show(
-        'Por favor, seleccioná un operario en la Tabla 1 para asignarle sectores.',
-        'warning',
-      );
-      return;
-    }
-
-    const currentMap = new Map(this.sessionSectorAssignments());
+    const opId = this.selectedOperarioId()!;
     const status = this.getSectorStatus(sector.sectorId);
+    const assignmentStatus: AssignmentStatus = {
+      isDbAssigned: status.isDbAssigned,
+      assignedOperatorId: status.operarioId,
+    };
+    const outcome = toggleAssignment(
+      this.sessionSectorAssignments(),
+      sector.sectorId,
+      opId,
+      assignmentStatus,
+    );
 
-    // If already in database, block
-    if (status.isDbAssigned) {
-      this.toastService.show(
-        `Este sector ya tiene una ruta creada en el mes para ${status.operarioName}.`,
-        'warning',
-      );
-      return;
+    switch (outcome.kind) {
+      case 'assigned':
+      case 'deselected':
+        this.sessionSectorAssignments.set(outcome.next);
+        break;
+      case 'blocked-by-db':
+        this.toastService.show(
+          `Este sector ya tiene una ruta creada en el mes para ${status.operarioName}.`,
+          'warning',
+        );
+        break;
+      case 'blocked-by-other-operator':
+        this.toastService.show(
+          `El sector ${sector.nombre ?? sector.sectorId} ya está asignado a ${this.getOperarioName(outcome.existingOperatorId)} en esta sesión.`,
+          'warning',
+        );
+        break;
     }
-
-    // If assigned to current operator in session => deselect
-    if (status.operarioId === opId) {
-      currentMap.delete(sector.sectorId);
-      this.sessionSectorAssignments.set(currentMap);
-      return;
-    }
-
-    // If assigned to another operator in session => dynamic exclusion block with friendly notice
-    if (status.operarioId && status.operarioId !== opId) {
-      this.toastService.show(
-        `El sector ${sector.nombre ?? sector.sectorId} ya está asignado a ${status.operarioName} en esta sesión.`,
-        'warning',
-      );
-      return;
-    }
-
-    // Available => assign to current operator
-    currentMap.set(sector.sectorId, opId);
-    this.sessionSectorAssignments.set(currentMap);
   }
 
   // Toggle direct community assignment for communities without sectors
   toggleCommunityAssignment(comunidadId: number): void {
-    const period = this.selectedPeriod();
-    if (!period || period.estado !== 'ABIERTO') {
-      this.toastService.show(
-        'El período operativo no está abierto. No se pueden realizar asignaciones.',
-        'warning',
-      );
+    if (
+      !assertPeriodOpen(this.selectedPeriod(), this.toastService) ||
+      !assertOperatorSelected(this.selectedOperarioId(), this.toastService)
+    ) {
       return;
     }
 
-    const opId = this.selectedOperarioId();
-    if (!opId) {
-      this.toastService.show('Por favor, seleccioná un operario en la Tabla 1 primero.', 'warning');
-      return;
-    }
-
+    const opId = this.selectedOperarioId()!;
     const status = this.getCommunityStatus(comunidadId);
-    if (status.isDbAssigned) {
-      this.toastService.show(
-        `Esta comunidad ya tiene una ruta creada en el mes para ${status.operarioName}.`,
-        'warning',
-      );
-      return;
+    const assignmentStatus: AssignmentStatus = {
+      isDbAssigned: status.isDbAssigned,
+      assignedOperatorId: status.operarioId,
+    };
+    const outcome = toggleAssignment(
+      this.sessionCommunityAssignments(),
+      comunidadId,
+      opId,
+      assignmentStatus,
+    );
+
+    switch (outcome.kind) {
+      case 'assigned':
+      case 'deselected':
+        this.sessionCommunityAssignments.set(outcome.next);
+        break;
+      case 'blocked-by-db':
+        this.toastService.show(
+          `Esta comunidad ya tiene una ruta creada en el mes para ${status.operarioName}.`,
+          'warning',
+        );
+        break;
+      case 'blocked-by-other-operator':
+        this.toastService.show(
+          `Esta comunidad ya está asignada a ${this.getOperarioName(outcome.existingOperatorId)} en esta sesión.`,
+          'warning',
+        );
+        break;
     }
-
-    const currentMap = new Map(this.sessionCommunityAssignments());
-
-    if (status.operarioId === opId) {
-      currentMap.delete(comunidadId);
-      this.sessionCommunityAssignments.set(currentMap);
-      return;
-    }
-
-    if (status.operarioId && status.operarioId !== opId) {
-      this.toastService.show(
-        `Esta comunidad ya está asignada a ${status.operarioName} en esta sesión.`,
-        'warning',
-      );
-      return;
-    }
-
-    currentMap.set(comunidadId, opId);
-    this.sessionCommunityAssignments.set(currentMap);
   }
 
   // Assign or toggle all available sectors in a community to current operator
@@ -1102,21 +1077,12 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   }
 
   clearOperatorSessionAssignments(operarioId: number): void {
-    const currentMap = new Map(this.sessionSectorAssignments());
-    currentMap.forEach((opId, sectorId) => {
-      if (opId === operarioId) {
-        currentMap.delete(sectorId);
-      }
-    });
-    this.sessionSectorAssignments.set(currentMap);
-
-    const currentComMap = new Map(this.sessionCommunityAssignments());
-    currentComMap.forEach((opId, comId) => {
-      if (opId === operarioId) {
-        currentComMap.delete(comId);
-      }
-    });
-    this.sessionCommunityAssignments.set(currentComMap);
+    this.sessionSectorAssignments.set(
+      clearAssignmentsForOperator(this.sessionSectorAssignments(), operarioId),
+    );
+    this.sessionCommunityAssignments.set(
+      clearAssignmentsForOperator(this.sessionCommunityAssignments(), operarioId),
+    );
   }
 
   resetSessionAssignments(): void {
