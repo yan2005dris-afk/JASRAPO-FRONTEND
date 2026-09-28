@@ -104,6 +104,14 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'perfil',
+        data: { breadcrumb: 'Mi Perfil' },
+        loadComponent: () =>
+          import('./features/operator/profile/operator-profile.component').then(
+            (m) => m.OperatorProfileComponent,
+          ),
+      },
+      {
         path: '',
         redirectTo: 'inicio',
         pathMatch: 'full',

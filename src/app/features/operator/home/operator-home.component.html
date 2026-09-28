@@ -1,10 +1,20 @@
 <div class="operator-home-screen">
   <!-- 1. Cabecera con Avatar, Nombre y Chip de Estado Online/Offline -->
   <header class="operator-profile-bar">
-    <div class="profile-avatar-btn" title="Perfil del Operador">
+    <a
+      routerLink="/app/operador/perfil"
+      class="profile-avatar-btn text-decoration-none"
+      title="Ver mi perfil"
+      style="cursor: pointer"
+    >
       <span>{{ userInitials() }}</span>
-    </div>
-    <div class="operator-info">
+    </a>
+    <div
+      class="operator-info"
+      routerLink="/app/operador/perfil"
+      style="cursor: pointer"
+      title="Ver mi perfil"
+    >
       <div class="operator-name-row">
         <h2 class="operator-name">{{ currentUser().nombre }}</h2>
         <span class="operator-role-badge">{{ currentUser().rol }}</span>
@@ -64,7 +74,12 @@
         <button class="btn-hero-primary" (click)="resumeActiveRoute()" type="button">
           <i class="bi bi-arrow-right-circle"></i> Continuar Recorrido
         </button>
-        <button class="btn-hero-secondary" (click)="goToRoutesMap()" type="button" title="Ver ruta en mapa">
+        <button
+          class="btn-hero-secondary"
+          (click)="goToRoutesMap()"
+          type="button"
+          title="Ver ruta en mapa"
+        >
           <i class="bi bi-map-fill"></i> Mapa
         </button>
       </div>
@@ -75,13 +90,20 @@
   <div class="ios-group-title">Siguiente Parada en Ruta</div>
   <div class="ios-group-box">
     @if (nextPendingStop(); as nextStop) {
-      <div class="ios-row next-stop-row" (click)="goToPendingStop(nextStop)" role="button" tabindex="0">
+      <div
+        class="ios-row next-stop-row"
+        (click)="goToPendingStop(nextStop)"
+        role="button"
+        tabindex="0"
+      >
         <div class="stop-avatar-col">
           <div class="radial-badge-circle radial-badge-active">#{{ nextStop.ordenVisita }}</div>
         </div>
         <div class="stop-details-col">
           <strong class="stop-client-name">{{ nextStop.cliente }}</strong>
-          <small class="stop-address">{{ nextStop.direccion }} · Medidor: {{ nextStop.serie }}</small>
+          <small class="stop-address"
+            >{{ nextStop.direccion }} · Medidor: {{ nextStop.serie }}</small
+          >
         </div>
         <div class="stop-action-col">
           <span class="badge-activity">{{ nextStop.tipoActividad }}</span>

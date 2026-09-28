@@ -162,6 +162,33 @@ export class OperatorSyncService {
     }
   }
 
+  /** Normaliza el contrato estricto aceptado por PATCH /operator/readings/:id (UpdateOperatorReadingDto). */
+  private normalizeReadingPayload(reading: Record<string, unknown>): Record<string, unknown> {
+    const payload: Record<string, unknown> = {};
+    const acceptedFields = [
+      'fecha',
+      'lecturaAnterior',
+      'lecturaActual',
+      'descripcionAnomalia',
+      'lecturaInicial',
+    ];
+
+    for (const field of acceptedFields) {
+      const value = reading[field];
+      if (value !== null && value !== undefined && value !== '') {
+        if (field === 'lecturaAnterior' || field === 'lecturaActual') {
+          payload[field] = Number(value);
+        } else if (field === 'lecturaInicial') {
+          payload[field] = Boolean(value);
+        } else {
+          payload[field] = value;
+        }
+      }
+    }
+
+    return payload;
+  }
+
   /**
    * Refresca el contador de registros pendientes en IndexedDB
    */
@@ -202,7 +229,8 @@ export class OperatorSyncService {
     if (this.networkService.isOnline()) {
       try {
         const formData = new FormData();
-        for (const [key, value] of Object.entries(payload)) {
+        const normalized = this.normalizeReadingPayload(payload);
+        for (const [key, value] of Object.entries(normalized)) {
           if (value !== null && value !== undefined) {
             formData.append(key, String(value));
           }
@@ -476,7 +504,8 @@ export class OperatorSyncService {
         } = pending;
 
         const formData = new FormData();
-        for (const [key, value] of Object.entries(payload)) {
+        const normalized = this.normalizeReadingPayload(payload);
+        for (const [key, value] of Object.entries(normalized)) {
           if (value !== null && value !== undefined) {
             formData.append(key, String(value));
           }

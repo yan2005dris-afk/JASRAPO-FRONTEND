@@ -95,6 +95,76 @@
   gap: 0.25rem;
 }
 
+.consumption-preview-box {
+  background: linear-gradient(135deg, rgba(8, 122, 125, 0.08) 0%, rgba(10, 147, 150, 0.03) 100%);
+  border: 1.5px solid rgba(8, 122, 125, 0.22);
+  border-radius: 14px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+
+  &.initial-reading {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    border-style: dashed;
+  }
+
+  .consumption-preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .consumption-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #087a7d;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .consumption-tag {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #64748b;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 0.15rem 0.5rem;
+      border-radius: 9999px;
+      border: 1px solid rgba(203, 213, 225, 0.7);
+    }
+  }
+
+  .consumption-preview-main {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+
+    .consumption-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #0a191b;
+      line-height: 1;
+    }
+
+    .consumption-unit {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #087a7d;
+    }
+  }
+
+  .consumption-preview-formula {
+    font-size: 0.72rem;
+    color: #64748b;
+    line-height: 1.35;
+  }
+}
+
 .form-switch-field,
 .switch-field {
   display: flex;

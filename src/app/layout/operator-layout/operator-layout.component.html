@@ -52,16 +52,16 @@
         }
       </div>
 
-      <!-- Logout button in Header -->
-      <button
-        (click)="onLogout()"
-        class="header-logout-btn"
-        id="btn-header-logout"
-        title="Cerrar sesión"
-        aria-label="Cerrar sesión"
+      <!-- User Profile link in Header -->
+      <a
+        routerLink="/app/operador/perfil"
+        class="header-profile-btn"
+        id="btn-header-profile"
+        title="Mi Perfil"
+        aria-label="Mi Perfil"
       >
-        <i class="bi bi-box-arrow-right"></i>
-      </button>
+        <i class="bi bi-person-circle"></i>
+      </a>
     </div>
   </header>
 

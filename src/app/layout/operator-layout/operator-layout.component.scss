@@ -47,27 +47,39 @@
     gap: 0.6rem;
   }
 
-  .header-logout-btn {
+  .header-logout-btn,
+  .header-profile-btn {
     width: 38px;
     height: 38px;
     border-radius: 50%;
     border: 1px solid var(--op-border-subtle, #d1e7e8);
     background: var(--op-bg-surface, #ffffff);
-    color: var(--op-status-danger, #b91c1c);
+    color: var(--op-brand-primary, #087a7d);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 1rem;
+    text-decoration: none;
+    font-size: 1.15rem;
     transition: all 0.2s ease;
 
     &:hover {
-      background: var(--op-status-danger-bg, #fce8e6);
-      border-color: #fca5a5;
+      background: var(--op-brand-primary-light, #e6f4f4);
+      color: var(--op-brand-primary-dark, #005f73);
+      border-color: #087a7d;
     }
 
     &:active {
       transform: scale(0.92);
+    }
+  }
+
+  .header-logout-btn {
+    color: var(--op-status-danger, #b91c1c);
+
+    &:hover {
+      background: var(--op-status-danger-bg, #fce8e6);
+      border-color: #fca5a5;
     }
   }
 
