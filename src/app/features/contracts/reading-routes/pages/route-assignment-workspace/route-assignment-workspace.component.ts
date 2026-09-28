@@ -36,6 +36,21 @@ import {
 import { OperatorColor, OPERATOR_PALETTE } from '../../../../../shared/types/operator-color';
 
 import { RouteContractsTableComponent } from '../../components/route-contracts-table/route-contracts-table.component';
+import {
+  assertOperatorSelected,
+  assertPeriodOpen,
+} from '../../services/route-assignment-validators';
+import {
+  clearAssignmentsForOperator,
+  groupContractAssignmentsByOperatorCommunity,
+  groupSectorAssignmentsByOperatorCommunity,
+  resolveAssignmentStatus,
+  toggleAssignment,
+} from '../../services/session-assignments.helpers';
+import {
+  calculateGlobalCoverage,
+  calculateNonLecturaCoverage,
+} from '../../services/coverage-calculator';
 
 @Component({
   selector: 'app-route-assignment-workspace',
@@ -100,8 +115,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   // Dynamic Session Assignments: Map of sectorId -> operarioId, and comunidadId -> operarioId (for communities without sectors)
   readonly sessionSectorAssignments = signal<Map<number, number>>(new Map());
   readonly sessionCommunityAssignments = signal<Map<number, number>>(new Map());
-  // Non-lectura: selected contract IDs
-  readonly selectedContratoIds = signal<number[]>([]);
 
   // Community Card Pagination
   readonly communityCurrentPage = signal<number>(1);
@@ -109,21 +122,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
 
   readonly isLoading = signal<boolean>(false);
   readonly isLoadingContracts = signal<boolean>(false);
-
-  private readonly MONTH_NAMES = [
-    'Enero',
-    'Febrero',
-    'Marzo',
-    'Abril',
-    'Mayo',
-    'Junio',
-    'Julio',
-    'Agosto',
-    'Septiembre',
-    'Octubre',
-    'Noviembre',
-    'Diciembre',
-  ];
 
   // Operator Color Mapper
   getOperatorColor(operarioId: number): OperatorColor {
@@ -133,10 +131,12 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     return OPERATOR_PALETTE[colorIndex];
   }
 
-  readonly getOperatorColorBound = (operarioId: number): OperatorColor =>
+  /** Arrow alias used by `<app-route-contracts-table>` to avoid `this` rebinding. */
+  readonly getOperatorColorForChild = (operarioId: number): OperatorColor =>
     this.getOperatorColor(operarioId);
 
-  readonly getOperarioNameBound = (operarioId: number): string => this.getOperarioName(operarioId);
+  /** Arrow alias used by `<app-route-contracts-table>` to avoid `this` rebinding. */
+  readonly getOperarioNameForChild = (operarioId: number): string => this.getOperarioName(operarioId);
 
   isLecturaActivity(tipo: TipoRuta | string | null): boolean {
     return tipo === 'LECTURA' || tipo === 'TOMA_LECTURA' || !tipo;
@@ -190,7 +190,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     this.tipoActividadSeleccionada.set(codigo as TipoRuta);
     // Reset contract-related state when switching
     this.sessionContractAssignments.set(new Map());
-    this.selectedContratoIds.set([]);
     this.contratos.set([]);
     this.contractSearch.set('');
     this.selectedComunidadId.set(null);
@@ -480,18 +479,6 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     for (const r of this.periodExistingRoutes()) {
       if (r.comunidadId != null && r.sectorId == null) {
         map.set(r.comunidadId, r);
-      }
-    }
-    return map;
-  });
-
-  readonly existingCommunityRoutes = computed(() => {
-    const map = new Map<number, IReadingRoute[]>();
-    for (const r of this.periodExistingRoutes()) {
-      if (r.comunidadId != null) {
-        const list = map.get(r.comunidadId) || [];
-        list.push(r);
-        map.set(r.comunidadId, list);
       }
     }
     return map;
