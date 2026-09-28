@@ -54,11 +54,12 @@ describe('OperatorProfileComponent', () => {
     expect(compiled.textContent).toContain('Operador de Campo');
   });
 
-  it('no debe mostrar las secciones removidas de asignación operativa o dispositivo', () => {
+  it('no debe mostrar las secciones removidas ni el C.I / ID', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.textContent).not.toContain('Asignación Operativa');
     expect(compiled.textContent).not.toContain('Dispositivo y Aplicación');
     expect(compiled.textContent).not.toContain('Sector Olón');
+    expect(compiled.textContent).not.toContain('C.I');
   });
 
   it('debe navegar de vuelta a inicio cuando se hace click en Volver', () => {

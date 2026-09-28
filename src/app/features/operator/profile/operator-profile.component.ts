@@ -21,7 +21,6 @@ export class OperatorProfileComponent {
     return {
       nombre,
       email: user?.email ?? 'operador@jasrapo.gob.ec',
-      identificacion: user?.id ?? '0928374651',
       rol: user?.roleName || 'Operador de Campo',
       telefono: '+593 98 765 4321',
     };
