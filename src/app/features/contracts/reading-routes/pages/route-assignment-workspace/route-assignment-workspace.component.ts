@@ -33,114 +33,23 @@ import {
   PeriodsService,
   type IAccountingPeriod,
 } from '../../../../../shared/services/periods.service';
+import {
+  OperatorColor,
+  OPERATOR_PALETTE,
+} from '../../../../../shared/types/operator-color';
 
-export interface OperatorColor {
-  id: string;
-  name: string;
-  badgeClass: string;
-  bgClass: string;
-  textClass: string;
-  borderClass: string;
-  hex: string;
-  lightBg: string;
-  contrastText: string;
-}
-
-export const OPERATOR_PALETTE: OperatorColor[] = [
-  {
-    id: 'teal',
-    name: 'Teal Corporativo',
-    badgeClass: 'text-bg-primary',
-    bgClass: 'bg-primary-subtle',
-    textClass: 'text-primary',
-    borderClass: 'border-primary',
-    hex: '#087a7d',
-    lightBg: '#f0fdfa',
-    contrastText: '#065e60',
-  },
-  {
-    id: 'marine',
-    name: 'Slate Marino',
-    badgeClass: 'text-bg-secondary',
-    bgClass: 'bg-secondary-subtle',
-    textClass: 'text-secondary',
-    borderClass: 'border-secondary',
-    hex: '#0f2938',
-    lightBg: '#f1f5f9',
-    contrastText: '#0f2938',
-  },
-  {
-    id: 'blue',
-    name: 'Azul Acuático',
-    badgeClass: 'text-bg-info',
-    bgClass: 'bg-info-subtle',
-    textClass: 'text-info',
-    borderClass: 'border-info',
-    hex: '#0284c7',
-    lightBg: '#e0f2fe',
-    contrastText: '#0369a1',
-  },
-  {
-    id: 'emerald',
-    name: 'Verde Bosque',
-    badgeClass: 'text-bg-success',
-    bgClass: 'bg-success-subtle',
-    textClass: 'text-success',
-    borderClass: 'border-success',
-    hex: '#15803d',
-    lightBg: '#dcfce7',
-    contrastText: '#166534',
-  },
-  {
-    id: 'slate',
-    name: 'Pizarra',
-    badgeClass: 'text-bg-dark',
-    bgClass: 'bg-light',
-    textClass: 'text-dark',
-    borderClass: 'border-dark-subtle',
-    hex: '#475569',
-    lightBg: '#f8fafc',
-    contrastText: '#334155',
-  },
-  {
-    id: 'cyan',
-    name: 'Cian',
-    badgeClass: 'text-bg-info',
-    bgClass: 'bg-info-subtle',
-    textClass: 'text-info',
-    borderClass: 'border-info',
-    hex: '#0c9ea1',
-    lightBg: '#e6f7f8',
-    contrastText: '#087a7d',
-  },
-  {
-    id: 'indigo',
-    name: 'Índigo Suave',
-    badgeClass: 'text-bg-primary',
-    bgClass: 'bg-primary-subtle',
-    textClass: 'text-primary',
-    borderClass: 'border-primary',
-    hex: '#3b82f6',
-    lightBg: '#eff6ff',
-    contrastText: '#1d4ed8',
-  },
-  {
-    id: 'steel',
-    name: 'Acero',
-    badgeClass: 'text-bg-secondary',
-    bgClass: 'bg-secondary-subtle',
-    textClass: 'text-secondary',
-    borderClass: 'border-secondary',
-    hex: '#64748b',
-    lightBg: '#f1f5f9',
-    contrastText: '#1e293b',
-  },
-];
+import { RouteContractsTableComponent } from '../../components/route-contracts-table/route-contracts-table.component';
 
 @Component({
   selector: 'app-route-assignment-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule, PeriodPickerComponent, PickerInputComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    PeriodPickerComponent,
+    PickerInputComponent,
+    RouteContractsTableComponent,
+  ],
   templateUrl: './route-assignment-workspace.component.html',
   styleUrl: './route-assignment-workspace.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -187,7 +96,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
 
   // Contract pagination (server-side + visible)
   readonly contractCurrentPage = signal<number>(1);
-  readonly contractPageSize = signal<number>(50);
+  readonly contractPageSize = signal<number>(10);
   readonly contractTotalPages = signal<number>(1);
   readonly contractTotalEnComunidad = signal<number>(0);
 
@@ -226,6 +135,12 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     const colorIndex = idx >= 0 ? idx % OPERATOR_PALETTE.length : 0;
     return OPERATOR_PALETTE[colorIndex];
   }
+
+  readonly getOperatorColorBound = (operarioId: number): OperatorColor =>
+    this.getOperatorColor(operarioId);
+
+  readonly getOperarioNameBound = (operarioId: number): string =>
+    this.getOperarioName(operarioId);
 
   isLecturaActivity(tipo: TipoRuta | string | null): boolean {
     return tipo === 'LECTURA' || tipo === 'TOMA_LECTURA' || !tipo;
@@ -407,6 +322,16 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
         const el = document.querySelector('.contracts-scroll-area');
         if (el) el.scrollTop = 0;
       });
+    }
+  }
+
+  setContractPageSize(size: number): void {
+    if (size > 0) {
+      this.contractPageSize.set(size);
+      this.contractTotalPages.set(
+        Math.max(1, Math.ceil(this.contractTotalEnComunidad() / size)),
+      );
+      this.contractCurrentPage.set(1);
     }
   }
 

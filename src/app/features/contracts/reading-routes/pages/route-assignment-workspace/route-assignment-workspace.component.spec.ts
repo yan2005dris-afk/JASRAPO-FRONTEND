@@ -1,9 +1,7 @@
 import { signal, computed } from '@angular/core';
 import { of, throwError } from 'rxjs';
-import {
-  RouteAssignmentWorkspaceComponent,
-  OPERATOR_PALETTE,
-} from './route-assignment-workspace.component';
+import { RouteAssignmentWorkspaceComponent } from './route-assignment-workspace.component';
+import { OPERATOR_PALETTE } from '../../../../../shared/types/operator-color';
 import { User } from '../../../../users/models/user.interface';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { Sectores } from '../../../../admin/sectores-prueba/models/sectores.interface';
