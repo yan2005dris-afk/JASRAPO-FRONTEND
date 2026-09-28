@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { IndexedDbService, PendingRecord } from '../../../core/services/indexed-db.service';
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
 import { NetworkService } from '../../../core/services/network.service';
@@ -34,7 +33,6 @@ type QueueTab = 'pendientes' | 'rechazados' | 'sincronizados';
     CommonModule,
     FormsModule,
     DatePipe,
-    RouterLink,
     SyncReadingEditorComponent,
     SyncAnomalyEditorComponent,
   ],
@@ -224,6 +222,36 @@ export class SincronizarComponent implements OnInit {
     await this.syncService.refreshPendingCounts();
   }
 
+  async retryReading(record: PendingRecord): Promise<void> {
+    if (!record.id) return;
+    await this.dbService.updatePendingReading(record.id, {
+      syncState: 'PENDIENTE_SYNC',
+      errorMessage: null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    this.toastService.info('Lectura encolada para reintentar sincronización.', 'Reintento');
+    await this.loadQueue();
+    await this.syncService.refreshPendingCounts();
+    if (this.networkService.isOnline()) {
+      await this.forceSync();
+    }
+  }
+
+  async retryAnomaly(record: PendingRecord): Promise<void> {
+    if (!record.id) return;
+    await this.dbService.updatePendingAnomaly(record.id, {
+      syncState: 'PENDIENTE_SYNC',
+      errorMessage: null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    this.toastService.info('Novedad encolada para reintentar sincronización.', 'Reintento');
+    await this.loadQueue();
+    await this.syncService.refreshPendingCounts();
+    if (this.networkService.isOnline()) {
+      await this.forceSync();
+    }
+  }
+
   async discardReading(record: PendingRecord): Promise<void> {
     if (!record.id) return;
 
@@ -269,5 +297,38 @@ export class SincronizarComponent implements OnInit {
   async forceSync(): Promise<void> {
     await this.syncService.syncPendingData();
     await this.loadQueue();
+  }
+
+  async clearLocalDatabase(): Promise<void> {
+    const hasPending = this.totalPendientes() > 0;
+    const warningMsg = hasPending
+      ? '¡Atención! Tienes registros pendientes de envío. Se conservarán tus pendientes, pero se reiniciará el catálogo descargado (rutas, medidores). Luego deberás volver a descargar los datos desde el servidor.'
+      : 'Esta acción limpiará el caché local de rutas, medidores y snapshots descargados para permitir una sincronización limpia desde el servidor. ¿Deseas continuar?';
+
+    const confirmed = await firstValueFrom(
+      this.confirmService.confirm({
+        title: 'Reiniciar Base de Datos Local',
+        message: warningMsg,
+        confirmText: 'Reiniciar',
+        cancelText: 'Cancelar',
+        isDanger: true,
+      }),
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const operatorId = this.authService.currentUser()?.id;
+      const scope = operatorId ? `operator:${operatorId}` : undefined;
+      await this.dbService.clearAssignedCache(scope);
+      await this.loadQueue();
+      this.toastService.success(
+        'Almacenamiento local reiniciado con éxito. Podés descargar datos frescos.',
+        'Base de Datos Reiniciada',
+      );
+    } catch (e) {
+      console.error('Error al limpiar base de datos local:', e);
+      this.toastService.error('No se pudo reiniciar la base de datos local.', 'Error');
+    }
   }
 }

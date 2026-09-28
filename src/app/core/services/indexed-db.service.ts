@@ -362,7 +362,7 @@ export class IndexedDbService {
     // Si se pasa scope (e.g. 'operator:42'), buscar primero en el snapshot del operador
     if (scope && db.objectStoreNames.contains('assigned_snapshots')) {
       const snapshot = await this.getAssignedSnapshot(scope);
-      if (snapshot?.registeredReadings) {
+      if (snapshot?.registeredReadings && snapshot.registeredReadings.length > 0) {
         return snapshot.registeredReadings;
       }
     }
@@ -914,6 +914,31 @@ export class IndexedDbService {
       const transaction = db.transaction('anomalias_pendientes', 'readwrite');
       const store = transaction.objectStore('anomalias_pendientes');
       store.clear();
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  /**
+   * Limpia los almacenes locales de datos asignados y snapshots para permitir una
+   * sincronización limpia/descarga fresca desde el backend sin destruir lecturas pendientes.
+   */
+  async clearAssignedCache(scope?: string): Promise<void> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(
+        ['medidores_cache', 'lecturas_registradas', 'rutas_cache', 'assigned_snapshots'],
+        'readwrite',
+      );
+      transaction.objectStore('medidores_cache').clear();
+      transaction.objectStore('lecturas_registradas').clear();
+      if (scope) {
+        transaction.objectStore('rutas_cache').delete(scope);
+        transaction.objectStore('assigned_snapshots').delete(scope);
+      } else {
+        transaction.objectStore('rutas_cache').clear();
+        transaction.objectStore('assigned_snapshots').clear();
+      }
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
     });

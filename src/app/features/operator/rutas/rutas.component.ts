@@ -14,7 +14,7 @@ import { Router } from '@angular/router';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { NetworkService } from '../../../core/services/network.service';
 import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
-import type { OperatorRouteResponse } from '../models/operator.models';
+import type { OperatorRouteResponse, RouteType } from '../models/operator.models';
 import { OperatorRouteOfflineService } from '../service/operator-route-offline.service';
 import { STATE_LABELS, FILTER_OPTIONS, STATE_FILTER_OPTIONS } from './rutas.constants';
 import { RutasMapComponent, type MapPoint } from '../components/rutas-map/rutas-map.component';
@@ -220,8 +220,8 @@ export class RutasComponent implements OnInit, OnDestroy {
         // Backend puede no garantizar orden estable entre requests; ordenamos acá
         // por ordenVisita para que la secuencia de visita sea consistente en UI.
         for (const ord of ordenes.slice().sort((a, b) => a.ordenVisita - b.ordenVisita)) {
-          const lat = ord.medidor?.latitud;
-          const lng = ord.medidor?.longitud;
+          const lat = ord.contrato?.latitud;
+          const lng = ord.contrato?.longitud;
           const serie = ord.medidor?.serie;
           if (lat != null && lng != null) {
             points.push({
@@ -258,21 +258,6 @@ export class RutasComponent implements OnInit, OnDestroy {
             `,
           });
         }
-      } else if (task.medidor?.latitud != null && task.medidor?.longitud != null) {
-        points.push({
-          routeId: task.rutaId,
-          lat: task.medidor.latitud,
-          lng: task.medidor.longitud,
-          estado: statusMap.get(task.medidor.serie) ?? '__SIN_LECTURA__',
-          tipoRuta: task.tipoRuta,
-          popupHtml: `
-            <div class="map-info">
-              <strong>${task.nombre}</strong>
-              <p style="margin:4px 0 0;font-size:11px;"><strong>Serie:</strong> ${task.medidor.serie}</p>
-              ${task.descripcion ? `<p style="margin:2px 0 0;font-size:10px;color:#597b7d;">${task.descripcion}</p>` : ''}
-            </div>
-          `,
-        });
       }
     }
 
@@ -463,12 +448,16 @@ export class RutasComponent implements OnInit, OnDestroy {
     this.selectedTaskId.set(null);
   }
 
-  toggleView(): void {
-    const newMode = this.viewMode() === 'list' ? 'map' : 'list';
-    this.viewMode.set(newMode);
-    if (newMode === 'list') {
+  setViewMode(mode: ViewMode): void {
+    this.viewMode.set(mode);
+    if (mode === 'list') {
       this.selectedTaskId.set(null);
     }
+  }
+
+  toggleView(): void {
+    const newMode = this.viewMode() === 'list' ? 'map' : 'list';
+    this.setViewMode(newMode);
   }
 
   selectTask(taskId: string | null): void {
@@ -481,75 +470,102 @@ export class RutasComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Navega a la pantalla de lecturas filtrando por los medidores de esta ruta.
-   * Usa click simple (compatible con táctil y escritorio).
+   * Resuelve el tipo de ruta de forma robusta con fallback a las actividades de sus órdenes/paradas.
+   */
+  resolveTaskTipoRuta(task: OperatorRouteResponse): RouteType {
+    if (task?.tipoRuta) return task.tipoRuta;
+    if (task?.paradas?.length && task.paradas[0].tipoActividad) {
+      return task.paradas[0].tipoActividad as RouteType;
+    }
+    if (task?.ordenesTrabajo?.length && task.ordenesTrabajo[0].tipoActividad) {
+      return task.ordenesTrabajo[0].tipoActividad as RouteType;
+    }
+    return 'TOMA_LECTURA';
+  }
+
+  /**
+   * Navega a la pantalla de lecturas/órdenes filtrando por los medidores u órdenes de esta ruta.
+   * Soporta tanto órdenes con medidor instalado como órdenes sin medidor (Inspección, Instalación nueva).
    */
   openRoute(task: OperatorRouteResponse): void {
+    const tipoRuta = this.resolveTaskTipoRuta(task);
     const queryParams: Record<string, string> = {
+      rutaId: task.rutaId,
       rutaNombre: task.nombre,
-      rutaTipo: task.tipoRuta,
+      rutaTipo: tipoRuta,
     };
 
-    const paradas = task.paradas;
-    const ordenes = task.ordenesTrabajo;
-
-    if (paradas && paradas.length > 0) {
-      queryParams['series'] = paradas
-        .map((p) => p.serie)
-        .filter((s): s is string => !!s)
-        .join(',');
-      // Para que LecturasComponent resuelva `activeTipoActividad` por medidor
-      // y renderice el form correcto via @switch.
-      const workOrders = paradas
-        .filter((p) => !!p.serie && !!p.tipoActividad && !!p.ordenTrabajoId)
-        .map((p) => `${p.serie}:${p.tipoActividad}:${p.ordenTrabajoId}:${p.estado}`);
-      if (workOrders.length) {
-        // Agrupa por serie para soportar multiples ordenes del mismo medidor:
-        // SERIE1:TIPO1:ID1:ESTADO1;TIPO2:ID2:ESTADO2
-        const grouped = new Map<string, string[]>();
-        for (const wo of workOrders) {
-          const [serie, tipo, ordenTrabajoId, estado] = wo.split(':');
-          const assignments = grouped.get(serie) ?? [];
-          assignments.push(`${tipo}:${ordenTrabajoId}:${estado}`);
-          grouped.set(serie, assignments);
-        }
-        const merged: string[] = [];
-        for (const [serie, assignments] of grouped) {
-          merged.push(`${serie}:${assignments.join(';')}`);
-        }
-        queryParams['workOrders'] = merged.join(',');
-      }
-    } else if (ordenes && ordenes.length > 0) {
-      queryParams['series'] = ordenes
-        .map((ord) => ord.medidor?.serie)
-        .filter((s): s is string => !!s)
-        .join(',');
-      // Misma idea: si las órdenes declaran tipoActividad (INSTALACION/INSPECCION/RECONEXION),
-      // lo pasamos al form dinámico. Sin esto, los 3 forms nuevos son código muerto en producción.
-      const workOrders = ordenes
-        .filter((o) => !!o.medidor?.serie && !!o.tipoActividad && !!o.ordenTrabajoId)
-        .map((o) => `${o.medidor!.serie}:${o.tipoActividad}:${o.ordenTrabajoId}:${o.estado}`);
-      if (workOrders.length) {
-        const grouped = new Map<string, string[]>();
-        for (const wo of workOrders) {
-          const [serie, tipo, ordenTrabajoId, estado] = wo.split(':');
-          const assignments = grouped.get(serie) ?? [];
-          assignments.push(`${tipo}:${ordenTrabajoId}:${estado}`);
-          grouped.set(serie, assignments);
-        }
-        const merged: string[] = [];
-        for (const [serie, assignments] of grouped) {
-          merged.push(`${serie}:${assignments.join(';')}`);
-        }
-        queryParams['workOrders'] = merged.join(',');
-      }
-    } else if (task.tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos?.length) {
-      queryParams['series'] = task.rutaPuntos.map((pt) => pt.serie).join(',');
-    } else if (task.medidor) {
-      queryParams['serie'] = task.medidor.serie;
+    try {
+      sessionStorage.setItem('activeOperatorRoute', JSON.stringify(task));
+    } catch {
+      // Ignore quota error if any
     }
 
-    this.router.navigate(['/app/operador/lecturas'], { queryParams });
+    const paradas = task.paradas ?? [];
+    const ordenes = task.ordenesTrabajo ?? [];
+
+    const orderIdentifiers: string[] = [];
+    const workOrderEntries: string[] = [];
+
+    if (ordenes.length > 0) {
+      for (const ord of ordenes) {
+        const id = ord.medidor?.serie || ord.contrato?.numeroContrato || `OT-${ord.ordenTrabajoId}`;
+        orderIdentifiers.push(id);
+        const rutaRef = (ord as unknown as Record<string, unknown>)['ruta'] as
+          { tipoActividad?: { codigo?: string } } | undefined;
+        const actTipo = ord.tipoActividad || rutaRef?.tipoActividad?.codigo || tipoRuta;
+        if (actTipo && ord.ordenTrabajoId) {
+          const lecId = ord.lecturaId ? String(ord.lecturaId) : '';
+          workOrderEntries.push(
+            `${id}:${actTipo}:${ord.ordenTrabajoId}:${ord.estado || 'PENDIENTE'}:${lecId}`,
+          );
+        }
+      }
+    } else if (paradas.length > 0) {
+      for (const p of paradas) {
+        const id = p.serie || `OT-${p.ordenTrabajoId}`;
+        orderIdentifiers.push(id);
+        const actTipo = p.tipoActividad || tipoRuta;
+        if (actTipo && p.ordenTrabajoId) {
+          workOrderEntries.push(`${id}:${actTipo}:${p.ordenTrabajoId}:${p.estado || 'PENDIENTE'}:`);
+        }
+      }
+    } else if (tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos?.length) {
+      orderIdentifiers.push(...task.rutaPuntos.map((pt) => pt.serie));
+    } else if (task.medidor) {
+      orderIdentifiers.push(task.medidor.serie);
+    }
+
+    if (orderIdentifiers.length > 0) {
+      queryParams['series'] = orderIdentifiers.join(',');
+      if (orderIdentifiers.length === 1) {
+        queryParams['serie'] = orderIdentifiers[0];
+      }
+    }
+
+    if (workOrderEntries.length > 0) {
+      const grouped = new Map<string, string[]>();
+      for (const wo of workOrderEntries) {
+        const [id, tipo, ordenTrabajoId, estado, lecturaId = ''] = wo.split(':');
+        const assignments = grouped.get(id) ?? [];
+        assignments.push(
+          lecturaId
+            ? `${tipo}:${ordenTrabajoId}:${estado}:${lecturaId}`
+            : `${tipo}:${ordenTrabajoId}:${estado}`,
+        );
+        grouped.set(id, assignments);
+      }
+      const merged: string[] = [];
+      for (const [id, assignments] of grouped) {
+        merged.push(`${id}:${assignments.join(';')}`);
+      }
+      queryParams['workOrders'] = merged.join(',');
+    }
+
+    this.router.navigate(['/app/operador/lecturas'], {
+      queryParams,
+      state: { route: task },
+    });
   }
 
   getStateLabel(estado: string): string {
@@ -561,7 +577,7 @@ export class RutasComponent implements OnInit, OnDestroy {
   }
 
   taskHasMeterCoordinates(task: OperatorRouteResponse): boolean {
-    return Number.isFinite(task.medidor?.latitud) && Number.isFinite(task.medidor?.longitud);
+    return this.taskHasMapPoints(task);
   }
 
   getTaskPointCount(task: OperatorRouteResponse): number {
@@ -572,7 +588,7 @@ export class RutasComponent implements OnInit, OnDestroy {
       return task.ordenesTrabajo.length;
     }
     if (task.rutaPuntos?.length) return task.rutaPuntos.length;
-    return task.medidor ? 1 : 0;
+    return 0;
   }
 
   getTaskFirstClient(task: OperatorRouteResponse): string | null {
@@ -616,7 +632,7 @@ export class RutasComponent implements OnInit, OnDestroy {
    * Antes mostraba "Lecturas" universal — bug UX.
    */
   actionLabelFor(task: OperatorRouteResponse): string {
-    const tipo = task?.tipoRuta || 'TOMA_LECTURA';
+    const tipo = this.resolveTaskTipoRuta(task);
     switch (tipo) {
       case 'INSTALACION':
         return 'Instalación';
@@ -630,7 +646,7 @@ export class RutasComponent implements OnInit, OnDestroy {
   }
 
   actionIconFor(task: OperatorRouteResponse): string {
-    const tipo = task?.tipoRuta || 'TOMA_LECTURA';
+    const tipo = this.resolveTaskTipoRuta(task);
     switch (tipo) {
       case 'INSTALACION':
         return 'bi-tools';

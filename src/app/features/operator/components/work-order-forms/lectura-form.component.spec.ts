@@ -55,6 +55,19 @@ describe('LecturaFormComponent', () => {
     expect((emitted[0] as { fotoBlob: Blob }).fotoBlob).toBe(photoBlob);
   });
 
+  it('should emit correct LecturaFormPayload on valid submit without photo (photo is optional)', () => {
+    const comp = createComponent(10);
+    comp.form.patchValue({ lecturaActual: 25 });
+    const emitted: unknown[] = [];
+    comp.formSubmit.subscribe((v) => emitted.push(v));
+    comp.submit();
+    expect(emitted).toHaveLength(1);
+    expect((emitted[0] as { tipoActividad: string }).tipoActividad).toBe('LECTURA');
+    expect((emitted[0] as { lecturaActual: number }).lecturaActual).toBe(25);
+    expect((emitted[0] as { lecturaAnterior: number }).lecturaAnterior).toBe(10);
+    expect((emitted[0] as { fotoBlob?: Blob }).fotoBlob).toBeUndefined();
+  });
+
   it('should not emit if form is invalid', () => {
     const comp = createComponent(0);
     comp.form.patchValue({ lecturaActual: -1 });

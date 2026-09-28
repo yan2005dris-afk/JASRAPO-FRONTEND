@@ -1,5 +1,9 @@
 .sync-queue-view {
-  padding: 0.5rem 0;
+  padding: 0.85rem;
+  max-width: 600px;
+  margin: 0 auto;
+  min-height: 100%;
+  box-sizing: border-box;
 }
 
 /* --- Header --- */
@@ -363,6 +367,7 @@
   margin-top: 0.65rem;
   flex-wrap: wrap;
 
+  .btn-retry,
   .btn-edit,
   .btn-discard {
     display: flex;
@@ -378,6 +383,15 @@
 
     &:active {
       transform: scale(0.96);
+    }
+  }
+
+  .btn-retry {
+    background: #e0f2fe;
+    color: #0369a1;
+
+    &:hover {
+      background: #bae6fd;
     }
   }
 
@@ -511,4 +525,114 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* --- Mockup Inset Boxes, Hero Ring & Online Status Chip --- */
+.online-status-chip {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #047857;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.08);
+}
+
+.online-dot-pulse {
+  width: 7px;
+  height: 7px;
+  background: #10b981;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.7;
+  }
+}
+
+.btn-auto-sync {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #64748b;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &.active {
+    background: #087a7d;
+    border-color: #087a7d;
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(8, 122, 125, 0.2);
+  }
+}
+
+.ios-group-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-left: 12px;
+  margin-bottom: 6px;
+}
+
+.ios-group-box {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  margin-bottom: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.ios-row {
+  padding: 11px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.btn-brand-primary {
+  background: #087a7d;
+  color: #ffffff;
+  font-weight: 700;
+  border: none;
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 4px 12px rgba(8, 122, 125, 0.25);
+  transition: all 0.2s ease;
+  font-size: 0.85rem;
+
+  &:hover {
+    background: #004d4f;
+    color: #ffffff;
+  }
+}
+
+.font-mono {
+  font-family: 'JetBrains Mono', monospace;
 }

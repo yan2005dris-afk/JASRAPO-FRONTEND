@@ -1,10 +1,20 @@
 <div class="operator-home-screen">
-  <!-- 1. BARRA DE OPERADOR (HEADER DEL PANEL) -->
+  <!-- 1. Cabecera con Avatar, Nombre y Chip de Estado Online/Offline -->
   <header class="operator-profile-bar">
-    <div class="operator-avatar">
-      <i class="bi bi-person-badge-fill"></i>
-    </div>
-    <div class="operator-info">
+    <a
+      routerLink="/app/operador/perfil"
+      class="profile-avatar-btn text-decoration-none"
+      title="Ver mi perfil"
+      style="cursor: pointer"
+    >
+      <span>{{ userInitials() }}</span>
+    </a>
+    <div
+      class="operator-info"
+      routerLink="/app/operador/perfil"
+      style="cursor: pointer"
+      title="Ver mi perfil"
+    >
       <div class="operator-name-row">
         <h2 class="operator-name">{{ currentUser().nombre }}</h2>
         <span class="operator-role-badge">{{ currentUser().rol }}</span>
@@ -15,12 +25,133 @@
         <span>Turno: {{ currentUser().turno }}</span>
       </p>
     </div>
+
+    <!-- Online/Offline Chip -->
+    <div class="online-status-chip" [class.offline]="!networkService.isOnline()">
+      <span class="online-dot-pulse" [class.offline]="!networkService.isOnline()"></span>
+      <span>{{ networkService.isOnline() ? 'Online' : 'Offline' }}</span>
+    </div>
   </header>
 
-  <!-- 2. GRILLA DE KPIS DEL TURNO (2x2) -->
+  <!-- 2. RUTA ACTIVA: Radial Progress Card (Hero) -->
+  @if (heroActiveRoute(); as hero) {
+    <section class="radial-hero-card">
+      <div class="hero-top-row">
+        <div class="hero-radial-wrapper">
+          <svg width="78" height="78" viewBox="0 0 100 100" class="radial-svg" aria-hidden="true">
+            <circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" stroke-width="8" />
+            <circle
+              cx="50"
+              cy="50"
+              r="40"
+              fill="none"
+              stroke="#087a7d"
+              stroke-width="8"
+              stroke-dasharray="251"
+              [attr.stroke-dashoffset]="251 - (251 * getHeroProgressPct()) / 100"
+              stroke-linecap="round"
+              transform="rotate(-90 50 50)"
+            />
+          </svg>
+          <div class="radial-center-val">
+            <span class="radial-pct-number">{{ getHeroProgressPct() }}%</span>
+          </div>
+        </div>
+
+        <div class="hero-info-col">
+          <span class="badge-hero-active">
+            <i class="bi bi-play-circle-fill"></i> RUTA ACTIVA
+          </span>
+          <h3 class="hero-route-title">{{ hero.nombre || 'Ruta Asignada' }}</h3>
+          <p class="hero-route-sub">
+            {{ hero.comunidadNombre || 'Comuna Olón' }} ·
+            <strong>{{ getHeroReadCount() }} de {{ getHeroStopsCount() }}</strong> listas
+          </p>
+        </div>
+      </div>
+
+      <div class="hero-actions-row">
+        <button class="btn-hero-primary" (click)="resumeActiveRoute()" type="button">
+          <i class="bi bi-arrow-right-circle"></i> Continuar Recorrido
+        </button>
+        <button
+          class="btn-hero-secondary"
+          (click)="goToRoutesMap()"
+          type="button"
+          title="Ver ruta en mapa"
+        >
+          <i class="bi bi-map-fill"></i> Mapa
+        </button>
+      </div>
+    </section>
+  }
+
+  <!-- 3. SIGUIENTE PARADA EN RUTA -->
+  <div class="ios-group-title">Siguiente Parada en Ruta</div>
+  <div class="ios-group-box">
+    @if (nextPendingStop(); as nextStop) {
+      <div
+        class="ios-row next-stop-row"
+        (click)="goToPendingStop(nextStop)"
+        role="button"
+        tabindex="0"
+      >
+        <div class="stop-avatar-col">
+          <div class="radial-badge-circle radial-badge-active">#{{ nextStop.ordenVisita }}</div>
+        </div>
+        <div class="stop-details-col">
+          <strong class="stop-client-name">{{ nextStop.cliente }}</strong>
+          <small class="stop-address"
+            >{{ nextStop.direccion }} · Medidor: {{ nextStop.serie }}</small
+          >
+        </div>
+        <div class="stop-action-col">
+          <span class="badge-activity">{{ nextStop.tipoActividad }}</span>
+          <i class="bi bi-chevron-right chevron-icon"></i>
+        </div>
+      </div>
+    } @else {
+      <div class="ios-row all-done-row">
+        <div class="all-done-content">
+          <i class="bi bi-check-circle-fill text-success"></i>
+          <span>Todas las paradas de la ruta activa están completadas</span>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- 4. MONITOREO Y DIAGNÓSTICO -->
+  <div class="ios-group-title">Monitoreo y Diagnóstico</div>
+  <div class="ios-group-box">
+    <div class="ios-row" (click)="goToNewNovelty()" role="button" tabindex="0">
+      <div class="monitoring-row-content">
+        <div class="monitoring-icon warning">
+          <i class="bi bi-exclamation-triangle-fill"></i>
+        </div>
+        <span class="monitoring-label">Reportar Novedad en Terreno</span>
+      </div>
+      <span class="badge-monitoring warning">Fugas / Daños</span>
+    </div>
+    <div class="ios-row" (click)="goToSync()" role="button" tabindex="0">
+      <div class="monitoring-row-content">
+        <div class="monitoring-icon success">
+          <i class="bi bi-cloud-arrow-up-fill"></i>
+        </div>
+        <span class="monitoring-label">Sincronización Offline</span>
+      </div>
+      @if (syncService.totalPending() > 0) {
+        <span class="badge-monitoring pending">{{ syncService.totalPending() }} pendientes</span>
+      } @else {
+        <span class="badge-monitoring success">Al Día</span>
+      }
+    </div>
+  </div>
+
+  <!-- 5. RESUMEN DE JORNADA (KPIS) -->
+  <div class="ios-group-title">Resumen de la Jornada</div>
   <section class="kpi-grid">
-    <!-- KPI 1: Lecturas Hoy -->
-    <div class="kpi-card kpi-lecturas">
+    <!-- Lecturas Hoy -->
+    <div class="kpi-card">
       <div class="kpi-top">
         <span class="kpi-label">Lecturas Hoy</span>
         <span class="kpi-badge-pct">{{ readingProgressPct() }}%</span>
@@ -34,8 +165,8 @@
       </div>
     </div>
 
-    <!-- KPI 2: Órdenes Asignadas -->
-    <div class="kpi-card kpi-ordenes">
+    <!-- Órdenes Asignadas -->
+    <div class="kpi-card" (click)="goToRoutesMap()" role="button" tabindex="0">
       <div class="kpi-top">
         <span class="kpi-label">Órdenes Asignadas</span>
         <span class="kpi-badge-pill urgent">{{ totalWorkOrders() }} activas</span>
@@ -46,98 +177,27 @@
       </div>
       <span class="kpi-subtext">Cortes & Reconexiones</span>
     </div>
-
-    <!-- KPI 3: Novedades Reportadas -->
-    <div class="kpi-card kpi-novedades">
-      <div class="kpi-top">
-        <span class="kpi-label">Novedades</span>
-        <span class="kpi-badge-pill warning">Fugas / Daños</span>
-      </div>
-      <div class="kpi-value-row">
-        <h3 class="kpi-number">Reportar</h3>
-        <i class="bi bi-exclamation-triangle-fill kpi-icon warning"></i>
-      </div>
-      <span class="kpi-subtext">Georreferenciadas</span>
-    </div>
-
-    <!-- KPI 4: Dispositivo / Almacenamiento -->
-    <div class="kpi-card kpi-device">
-      <div class="kpi-top">
-        <span class="kpi-label">Dispositivo</span>
-        <span class="kpi-badge-pill success">Offline OK</span>
-      </div>
-      <div class="kpi-value-row">
-        <h3 class="kpi-number">Listo</h3>
-        <i class="bi bi-shield-check kpi-icon success"></i>
-      </div>
-      <span class="kpi-subtext">Sync local activo</span>
-    </div>
   </section>
 
-  <!-- 3. FEATURED HERO CARD: RUTA ACTIVA -->
-  @if (heroActiveRoute(); as hero) {
-    <section class="hero-active-route-card">
-      <div class="hero-top-tag">
-        <span class="hero-pill"> <i class="bi bi-play-circle-fill"></i> RUTA ACTIVA </span>
-        <span class="hero-sector">
-          {{ hero.nombre || 'Sector Olón' }}
-        </span>
-      </div>
-      <h3 class="hero-title">Continuar: {{ hero.nombre || 'Ruta de Campo' }}</h3>
-      <p class="hero-progress-text">
-        <span
-          >Progreso de paradas:
-          <strong>{{ getHeroReadCount() }} / {{ getHeroStopsCount() }}</strong></span
-        >
-        <span>{{ getHeroProgressPct() }}% completado</span>
-      </p>
-      <div class="hero-progress-track">
-        <div class="hero-progress-fill" [style.width.%]="getHeroProgressPct()"></div>
-      </div>
-      <div class="hero-actions">
-        <button class="hero-btn-primary" (click)="resumeActiveRoute()" type="button">
-          <i class="bi bi-play-fill"></i> Reanudar Ruta
-        </button>
-        <button class="hero-btn-secondary" (click)="goToRoutesMap()" type="button">
-          <i class="bi bi-map-fill"></i> Ver Mapa
-        </button>
-      </div>
-    </section>
-  }
-
-  <!-- 4. ACCIONES RÁPIDAS (QUICK ACTIONS) -->
+  <!-- 6. ACCIONES RÁPIDAS -->
   <section class="quick-actions-section">
+    <button class="quick-action-btn" (click)="goToSearchOrQR()" type="button">
+      <div class="quick-action-icon primary">
+        <i class="bi bi-search"></i>
+      </div>
+      <span>Buscar Medidor</span>
+    </button>
     <button class="quick-action-btn" (click)="goToNewNovelty()" type="button">
       <div class="quick-action-icon warning">
         <i class="bi bi-plus-circle-fill"></i>
       </div>
       <span>Nueva Novedad</span>
     </button>
-
-    <button class="quick-action-btn" (click)="goToSearchOrQR()" type="button">
-      <div class="quick-action-icon primary">
-        <i class="bi bi-qr-code-scan"></i>
-      </div>
-      <span>Buscar Medidor</span>
-    </button>
-
     <button class="quick-action-btn" (click)="goToSync()" type="button">
       <div class="quick-action-icon sync">
-        <i class="bi bi-cloud-arrow-up-fill"></i>
+        <i class="bi bi-arrow-repeat"></i>
       </div>
       <span>Sincronizar</span>
     </button>
-  </section>
-
-  <!-- 5. BANNER DE ESTADO Y RESUMEN OPERATIVO -->
-  <section class="critical-order-banner">
-    <div class="banner-icon">
-      <i class="bi bi-geo-alt-fill"></i>
-    </div>
-    <div class="banner-content">
-      <h4 class="banner-title">Sector Asignado: Olón Centro</h4>
-      <p class="banner-meta">Rutas y órdenes sincronizadas para trabajo en campo</p>
-    </div>
-    <button class="banner-action-btn" (click)="goToSearchOrQR()" type="button">Ver Todo</button>
   </section>
 </div>

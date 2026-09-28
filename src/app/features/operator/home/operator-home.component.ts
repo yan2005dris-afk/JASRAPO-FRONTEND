@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { NetworkService } from '../../../core/services/network.service';
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
@@ -19,7 +19,7 @@ import type { OperatorRouteResponse } from '../models/operator.models';
   selector: 'app-operator-home',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './operator-home.component.html',
   styleUrl: './operator-home.component.scss',
 })
@@ -47,6 +47,15 @@ export class OperatorHomeComponent implements OnInit {
     };
   });
 
+  readonly userInitials = computed(() => {
+    const nombre = this.currentUser().nombre;
+    const parts = nombre.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return nombre.slice(0, 2).toUpperCase() || 'OP';
+  });
+
   readonly totalAssignedMeters = computed<number>(() => {
     let count = 0;
     for (const t of this.tasks()) {
@@ -60,7 +69,7 @@ export class OperatorHomeComponent implements OnInit {
         count += 1;
       }
     }
-    return count > 0 ? count : 120;
+    return count;
   });
 
   readonly totalReadMeters = computed<number>(() => {
@@ -82,7 +91,7 @@ export class OperatorHomeComponent implements OnInit {
         }
       }
     }
-    return readCount > 0 ? readCount : 78;
+    return readCount;
   });
 
   readonly readingProgressPct = computed<number>(() => {
@@ -98,12 +107,55 @@ export class OperatorHomeComponent implements OnInit {
         count += t.ordenesTrabajo?.length || 1;
       }
     }
-    return count > 0 ? count : 4;
+    return count;
   });
 
   readonly heroActiveRoute = computed<OperatorRouteResponse | null>(() => {
     const all = this.tasks();
     return all.find((t) => t.estado !== 'COMPLETADA' && t.estado !== 'CANCELADA') ?? all[0] ?? null;
+  });
+
+  readonly nextPendingStop = computed(() => {
+    const hero = this.heroActiveRoute();
+    if (!hero) return null;
+    const statusMap = this.readingStatusBySerie();
+
+    if (hero.ordenesTrabajo?.length) {
+      const sorted = hero.ordenesTrabajo.slice().sort((a, b) => a.ordenVisita - b.ordenVisita);
+      for (const ord of sorted) {
+        const serie = ord.medidor?.serie ?? '';
+        const st = statusMap.get(serie) ?? ord.estado;
+        if (!st || st === 'PENDIENTE' || st === '__SIN_LECTURA__') {
+          return {
+            ordenVisita: ord.ordenVisita,
+            cliente: ord.contrato?.clienteNombre || 'Cliente sin nombre',
+            direccion: ord.contrato?.direccion || 'Dirección no registrada',
+            serie: ord.medidor?.serie || 'S/N',
+            tipoActividad: ord.tipoActividad,
+            ordenTrabajoId: ord.ordenTrabajoId,
+          };
+        }
+      }
+    }
+
+    if (hero.paradas?.length) {
+      for (let i = 0; i < hero.paradas.length; i++) {
+        const p = hero.paradas[i];
+        const st = statusMap.get(p.serie ?? '') ?? p.estado;
+        if (!st || st === 'PENDIENTE' || st === '__SIN_LECTURA__') {
+          return {
+            ordenVisita: i + 1,
+            cliente: p.clienteNombre || 'Cliente sin nombre',
+            direccion: p.direccionSuministro || 'Dirección no registrada',
+            serie: p.serie || 'S/N',
+            tipoActividad: p.tipoActividad,
+            ordenTrabajoId: p.ordenTrabajoId,
+          };
+        }
+      }
+    }
+
+    return null;
   });
 
   ngOnInit(): void {
@@ -222,5 +274,16 @@ export class OperatorHomeComponent implements OnInit {
 
   goToSync(): void {
     this.router.navigate(['/app/operador/sincronizar']);
+  }
+
+  goToPendingStop(stop: { serie?: string; tipoActividad?: string }): void {
+    const hero = this.heroActiveRoute();
+    this.router.navigate(['/app/operador/lecturas'], {
+      queryParams: {
+        rutaNombre: hero?.nombre,
+        rutaTipo: hero?.tipoRuta,
+        serie: stop.serie,
+      },
+    });
   }
 }

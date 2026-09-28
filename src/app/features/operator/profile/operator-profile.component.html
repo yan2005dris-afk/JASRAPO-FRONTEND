@@ -1,0 +1,47 @@
+<div class="operator-profile-screen">
+  <!-- Cabecera de Navegación -->
+  <div class="flow-nav-header">
+    <button type="button" class="flow-back-btn" (click)="goBack()" id="btn-profile-back">
+      <i class="bi bi-chevron-left"></i> Volver a Inicio
+    </button>
+    <span class="badge bg-light text-dark border font-mono">MI CUENTA</span>
+  </div>
+
+  <!-- Cabecera de Perfil con Avatar -->
+  <div class="profile-header-card text-center mb-2 pt-2">
+    <div class="profile-avatar-btn mx-auto mb-2">
+      <span>{{ userInitials() }}</span>
+    </div>
+    <h5 class="fw-bold text-dark mb-0">{{ currentUser().nombre }}</h5>
+    <span class="badge bg-success-subtle text-success border border-success mt-1 font-mono">
+      {{ currentUser().rol }}
+    </span>
+  </div>
+
+  <!-- Grupo Inset: Datos del Usuario -->
+  <div class="ios-group-title">Datos Personales y Contacto</div>
+  <div class="ios-group-box">
+    <div class="ios-row">
+      <span class="text-muted small">Correo Electrónico</span>
+      <span class="text-dark font-mono small">{{ currentUser().email }}</span>
+    </div>
+    <div class="ios-row">
+      <span class="text-muted small">Teléfono Móvil</span>
+      <span class="text-dark font-mono small">{{ currentUser().telefono }}</span>
+    </div>
+  </div>
+
+  <!-- Acción Crítica: Cerrar Sesión -->
+  <div class="ios-group-title">Sesión</div>
+  <div class="ios-group-box">
+    <button
+      type="button"
+      class="ios-row danger-row text-center justify-content-center w-100 bg-transparent border-0"
+      (click)="onLogout()"
+      id="btn-logout"
+    >
+      <i class="bi bi-box-arrow-right me-2 fs-5"></i>
+      <span>Cerrar Sesión</span>
+    </button>
+  </div>
+</div>

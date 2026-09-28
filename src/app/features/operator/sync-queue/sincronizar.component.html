@@ -1,13 +1,18 @@
 <div class="sync-queue-view">
-  <!-- Header -->
-  <div class="queue-header">
-    <h1 class="queue-title">
-      <i class="bi bi-cloud-arrow-up" aria-hidden="true"></i>
-      Cola de Sincronización
-    </h1>
-
-    <!-- Header Actions -->
-    <div class="header-actions">
+  <!-- Header del Mockup -->
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+      <h1 class="app-title text-dark mb-0 fs-4">Sincronización</h1>
+      <small class="text-muted">Sincronización Offline y Estado de Red</small>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      @if (networkService.isOnline()) {
+        <span class="online-status-chip"> <span class="online-dot-pulse"></span> ONLINE </span>
+      } @else {
+        <span class="badge bg-secondary font-mono">
+          <i class="bi bi-wifi-off me-1"></i> OFFLINE
+        </span>
+      }
       <button
         class="btn-auto-sync"
         [class.active]="syncService.autoSyncEnabled()"
@@ -26,107 +31,156 @@
         ></i>
         Auto
       </button>
-
-      @if (syncService.totalPending() > 0 && networkService.isOnline()) {
-        <button
-          class="btn-sync"
-          (click)="forceSync()"
-          [disabled]="syncService.isSyncing()"
-          id="btn-sync-now"
-        >
-          @if (syncService.isSyncing()) {
-            <span class="spinner-border spinner-border-sm" role="status"></span>
-          } @else {
-            <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
-          }
-          Sincronizar Subida
-        </button>
-      }
     </div>
   </div>
 
-  <!-- Offline Data Hub / Download Section -->
-  <div class="download-hub-card">
-    <div class="hub-main-info">
-      <div class="hub-icon-wrapper">
-        <i class="bi bi-cloud-download" aria-hidden="true"></i>
-      </div>
-      <div class="hub-text">
-        <h2 class="hub-title">Datos asignados offline</h2>
-        <p class="hub-subtitle">
-          @if (syncService.lastDownloadTimestamp()) {
-            Última descarga: {{ syncService.lastDownloadTimestamp() | date: 'dd/MM/yyyy HH:mm' }}
-          } @else {
-            Aún no se han descargado datos para tu jornada.
-          }
-        </p>
+  <!-- Hero Status Box con Anillo Radial del Mockup -->
+  <div class="ios-group-box p-3 text-center mb-3">
+    <div class="position-relative d-inline-block mb-2">
+      <svg width="86" height="86" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" stroke-width="8" />
+        @if (totalPendientes() === 0) {
+          <circle
+            cx="50"
+            cy="50"
+            r="40"
+            fill="none"
+            stroke="#16a34a"
+            stroke-width="8"
+            stroke-dasharray="251"
+            stroke-dashoffset="0"
+            stroke-linecap="round"
+          />
+        } @else {
+          <circle
+            cx="50"
+            cy="50"
+            r="40"
+            fill="none"
+            stroke="#f59e0b"
+            stroke-width="8"
+            stroke-dasharray="251"
+            stroke-dashoffset="60"
+            stroke-linecap="round"
+            transform="rotate(-90 50 50)"
+          />
+        }
+      </svg>
+      <div class="position-absolute top-50 start-50 translate-middle text-center">
+        @if (totalPendientes() === 0) {
+          <i class="bi bi-cloud-check-fill text-success fs-3"></i>
+        } @else {
+          <i class="bi bi-cloud-arrow-up-fill text-warning fs-3"></i>
+        }
       </div>
     </div>
+    @if (totalPendientes() === 0) {
+      <h6 class="fw-bold text-dark mb-0">Base de Datos al Día</h6>
+      <small class="text-muted">Todos los registros locales están sincronizados con JASRAPO</small>
+    } @else {
+      <h6 class="fw-bold text-dark mb-0">{{ totalPendientes() }} Registros por Sincronizar</h6>
+      <small class="text-muted">Hay cambios locales pendientes de subir a JASRAPO</small>
+    }
+  </div>
 
-    <!-- Metrics -->
-    <div class="hub-metrics">
-      <div class="metric-badge">
-        <i class="bi bi-map" aria-hidden="true"></i>
-        <span
-          ><strong>{{ cachedRoutesCount() }}</strong> Rutas</span
-        >
-      </div>
-      <div class="metric-badge">
-        <i class="bi bi-speedometer2" aria-hidden="true"></i>
-        <span
-          ><strong>{{ cachedMetersCount() }}</strong> Medidores</span
-        >
-      </div>
-      <div class="metric-badge">
-        <i class="bi bi-journal-check" aria-hidden="true"></i>
-        <span
-          ><strong>{{ cachedReadingsCount() }}</strong> Lecturas</span
-        >
-      </div>
+  <!-- Inset Group: Datos asignados offline -->
+  <div class="ios-group-title">Datos asignados offline</div>
+  <div class="ios-group-box">
+    <div class="ios-row">
+      <span class="text-muted small">Registros en Cola Local</span>
+      @if (totalPendientes() === 0) {
+        <span class="badge bg-success-subtle text-success font-mono">0 pendientes</span>
+      } @else {
+        <span class="badge bg-warning-subtle text-warning font-mono">
+          {{ totalPendientes() }} pendientes
+        </span>
+      }
     </div>
+    <div class="ios-row">
+      <span class="text-muted small">Rutas y Medidores en Caché</span>
+      <span class="font-mono text-dark small">
+        {{ cachedRoutesCount() }} rutas · {{ cachedMetersCount() }} medidores
+      </span>
+    </div>
+    <div class="ios-row">
+      <span class="text-muted small">Lecturas Registradas Locales</span>
+      <span class="font-mono text-dark small">{{ cachedReadingsCount() }} registradas</span>
+    </div>
+    <div class="ios-row">
+      <span class="text-muted small">Última Descarga Asignada</span>
+      <span class="font-mono text-dark small">
+        @if (syncService.lastDownloadTimestamp()) {
+          {{ syncService.lastDownloadTimestamp() | date: 'dd/MM/yyyy HH:mm' }}
+        } @else {
+          Sin descarga previa
+        }
+      </span>
+    </div>
+  </div>
 
-    @if (authorizationWarning()) {
-      <div class="authorization-warning" role="alert">
-        <i class="bi bi-shield-exclamation"></i>
-        <span
-          >No tenés autorización para actualizar los datos asignados. Los datos guardados siguen
-          visibles.</span
-        >
-      </div>
+  @if (authorizationWarning()) {
+    <div class="authorization-warning mb-3" role="alert">
+      <i class="bi bi-shield-exclamation"></i>
+      <span
+        >No tenés autorización para actualizar datos asignados. Los datos guardados siguen
+        visibles.</span
+      >
+    </div>
+  }
+
+  <!-- Botones de Acción de Sincronización y Mantenimiento -->
+  <div class="sync-actions-group mb-3">
+    @if (totalPendientes() > 0 && networkService.isOnline()) {
+      <button
+        class="btn btn-brand-primary w-100 py-2 fw-bold rounded-3 mb-2"
+        (click)="forceSync()"
+        [disabled]="syncService.isSyncing()"
+        id="btn-sync-now"
+      >
+        @if (syncService.isSyncing()) {
+          <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+          <span>Sincronizando registros...</span>
+        } @else {
+          <i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>
+          <span>Sincronizar y Subir Pendientes ({{ totalPendientes() }})</span>
+        }
+      </button>
     }
 
-    <!-- Download Action -->
-    <div class="hub-action">
+    <div class="d-flex gap-2">
       <button
-        class="btn-download"
+        class="btn btn-outline-secondary flex-grow-1 py-2 small fw-semibold font-mono"
         (click)="downloadData()"
         [disabled]="syncService.isDownloading() || !networkService.isOnline()"
         id="btn-download-data"
       >
         @if (syncService.isDownloading()) {
-          <span class="spinner-border spinner-border-sm" role="status"></span>
+          <span class="spinner-border spinner-border-sm me-1" role="status"></span>
           <span>Descargando...</span>
         } @else {
-          <i class="bi bi-arrow-down-circle" aria-hidden="true"></i>
+          <i class="bi bi-cloud-arrow-down me-1" aria-hidden="true"></i>
           <span>Descargar / Actualizar Datos</span>
         }
       </button>
-      <a class="routes-link" routerLink="/app/operador/rutas">
-        <i class="bi bi-signpost-2"></i> Ver rutas asignadas
-      </a>
-      @if (!networkService.isOnline()) {
-        <small class="offline-hint"
-          ><i class="bi bi-wifi-off" aria-hidden="true"></i> Sin conexión: podés consultar los datos
-          guardados</small
-        >
-      }
+
+      <button
+        type="button"
+        class="btn btn-outline-danger py-2 px-3 small fw-semibold font-mono"
+        (click)="clearLocalDatabase()"
+        title="Reiniciar base de datos local y caché"
+        id="btn-clear-db"
+      >
+        <i class="bi bi-trash3 me-1"></i> Reiniciar BD
+      </button>
     </div>
   </div>
 
   <!-- Local upload queue -->
   <div class="local-changes-heading">
-    <h2 id="local-changes-title">Cambios locales por subir</h2>
-    <p>Lecturas, novedades y órdenes de trabajo guardadas en este dispositivo.</p>
+    <h2 id="local-changes-title" class="fs-6 fw-bold text-dark mb-1">Cambios locales por subir</h2>
+    <p class="text-muted small mb-2">
+      Lecturas, novedades y órdenes de trabajo guardadas en este dispositivo.
+    </p>
   </div>
 
   <!-- Tab Switcher -->
@@ -281,6 +335,9 @@
                 (canceled)="cancelEdit()"
               />
             } @else {
+              <button type="button" class="btn-retry" (click)="retryReading(record)">
+                <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Reintentar
+              </button>
               <button type="button" class="btn-edit" (click)="startEditReading(record)">
                 <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
               </button>
@@ -319,6 +376,9 @@
                 (canceled)="cancelEdit()"
               />
             } @else {
+              <button type="button" class="btn-retry" (click)="retryAnomaly(record)">
+                <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Reintentar
+              </button>
               <button type="button" class="btn-edit" (click)="startEditAnomaly(record)">
                 <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
               </button>
