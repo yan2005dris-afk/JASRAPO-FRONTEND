@@ -32,44 +32,6 @@
     </div>
   </div>
 
-  <!-- Grupo Inset: Asignación Operativa -->
-  <div class="ios-group-title">Asignación Operativa</div>
-  <div class="ios-group-box">
-    <div class="ios-row">
-      <span class="text-muted small">Sector Asignado</span>
-      <strong class="text-dark small">{{ currentUser().sector }}</strong>
-    </div>
-    <div class="ios-row">
-      <span class="text-muted small">Horario de Turno</span>
-      <span class="text-dark small font-mono">{{ currentUser().turno }}</span>
-    </div>
-  </div>
-
-  <!-- Grupo Inset: Dispositivo y App -->
-  <div class="ios-group-title">Dispositivo y Aplicación</div>
-  <div class="ios-group-box">
-    <div class="ios-row">
-      <span class="text-muted small">Equipo</span>
-      <span class="text-dark small">{{ deviceInfo() }}</span>
-    </div>
-    <div class="ios-row">
-      <span class="text-muted small">Versión PWA</span>
-      <span class="badge bg-light text-dark border font-mono">v1.2.4-pwa</span>
-    </div>
-    <div class="ios-row">
-      <span class="text-muted small">Modo de Red</span>
-      @if (networkService.isOnline()) {
-        <span class="text-success fw-bold small">
-          <i class="bi bi-shield-check"></i> Sincronización Offline Activa
-        </span>
-      } @else {
-        <span class="text-warning fw-bold small">
-          <i class="bi bi-cloud-slash"></i> Sin Conexión (Modo Offline)
-        </span>
-      }
-    </div>
-  </div>
-
   <!-- Acción Crítica: Cerrar Sesión -->
   <div class="ios-group-title">Sesión</div>
   <div class="ios-group-box">
