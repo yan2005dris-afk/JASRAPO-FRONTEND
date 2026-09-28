@@ -28,6 +28,88 @@ export interface AssignmentStatus {
   assignedOperatorId?: number;
 }
 
+export interface ResolvedAssignmentStatus {
+  isAssigned: boolean;
+  isDbAssigned: boolean;
+  isCurrentOperator: boolean;
+  operarioId?: number;
+  operarioName?: string;
+  color?: unknown;
+  routeName?: string;
+}
+
+interface ResolvedAssignmentInputs<K> {
+  id: K;
+  /** Map of pre-existing DB routes (e.g. existingAssignedSectorMap). */
+  dbMap: ReadonlyMap<K, { operarioId: number; nombre: string }>;
+  /** Map of in-session assignments (e.g. sessionSectorAssignments). */
+  sessionMap: ReadonlyMap<K, number>;
+  /** Operators catalog, used to resolve the name. */
+  operarios: ReadonlyArray<{ usuarioId: number; nombres: string; apellidos: string }>;
+  /** Currently selected operator in the workspace. */
+  selectedOperarioId: number | null;
+  /** Color resolver (pass-through, kept in the returned status). */
+  getOperatorColor: (operatorId: number) => unknown;
+  /** Pre-formatted fallback when the operator is not in the catalog. */
+  fallbackName: (operatorId: number) => string;
+}
+
+/**
+ * Resolves the assignment status of a single key (sector, community or
+ * contract). Mirrors the shape returned by the original
+ * `getCommunityStatus` / `getSectorStatus` methods so callers can keep
+ * using the same interface.
+ *
+ * Precedence:
+ 1. Pre-existing DB route wins (isDbAssigned = true, routeName set).
+ 2. Session assignment (isDbAssigned = false).
+ 3. Otherwise unassigned.
+ */
+export function resolveAssignmentStatus<K>({
+  id,
+  dbMap,
+  sessionMap,
+  operarios,
+  selectedOperarioId,
+  getOperatorColor,
+  fallbackName,
+}: ResolvedAssignmentInputs<K>): ResolvedAssignmentStatus {
+  if (id == null) {
+    return { isAssigned: false, isDbAssigned: false, isCurrentOperator: false };
+  }
+
+  const dbRoute = dbMap.get(id);
+  if (dbRoute) {
+    const op = operarios.find((u) => u.usuarioId === dbRoute.operarioId);
+    const color = getOperatorColor(dbRoute.operarioId);
+    return {
+      isAssigned: true,
+      isDbAssigned: true,
+      isCurrentOperator: dbRoute.operarioId === selectedOperarioId,
+      operarioId: dbRoute.operarioId,
+      operarioName: op ? `${op.nombres} ${op.apellidos}` : fallbackName(dbRoute.operarioId),
+      color,
+      routeName: dbRoute.nombre,
+    };
+  }
+
+  const sessionOpId = sessionMap.get(id);
+  if (sessionOpId != null) {
+    const op = operarios.find((u) => u.usuarioId === sessionOpId);
+    const color = getOperatorColor(sessionOpId);
+    return {
+      isAssigned: true,
+      isDbAssigned: false,
+      isCurrentOperator: sessionOpId === selectedOperarioId,
+      operarioId: sessionOpId,
+      operarioName: op ? `${op.nombres} ${op.apellidos}` : fallbackName(sessionOpId),
+      color,
+    };
+  }
+
+  return { isAssigned: false, isDbAssigned: false, isCurrentOperator: false };
+}
+
 export type ToggleAssignmentOutcome<K> =
   | { kind: 'assigned'; next: Map<K, number> }
   | { kind: 'deselected'; next: Map<K, number> }
