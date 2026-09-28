@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  resolveComunidadNombre,
-  resolveOperarioNombre,
-} from './operator-name.helpers';
+import { resolveComunidadNombre, resolveOperarioNombre } from './operator-name.helpers';
 
 describe('operator-name.helpers', () => {
   describe('resolveOperarioNombre', () => {
@@ -55,9 +52,7 @@ describe('operator-name.helpers', () => {
     });
 
     it('returns the caller-provided fallback when supplied', () => {
-      expect(resolveComunidadNombre(comunidades, 99, (id) => `fallback-${id}`)).toBe(
-        'fallback-99',
-      );
+      expect(resolveComunidadNombre(comunidades, 99, (id) => `fallback-${id}`)).toBe('fallback-99');
     });
   });
 });

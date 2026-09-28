@@ -33,13 +33,13 @@ const identitySerializer: ParamSerializer = (value) =>
  *     `.set()` on it without affecting other calls.
  */
 export function buildHttpParams(
-  raw: Record<string, unknown> | null | undefined,
+  raw: object | null | undefined,
   serializers?: Record<string, ParamSerializer>,
 ): HttpParams {
   let params = new HttpParams();
   if (!raw) return params;
 
-  for (const [key, value] of Object.entries(raw)) {
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
     const serializer = serializers?.[key] ?? identitySerializer;
     const wire = serializer(value);
     if (wire === undefined) continue;
