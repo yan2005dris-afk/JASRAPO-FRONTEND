@@ -511,10 +511,14 @@ export class RutasComponent implements OnInit, OnDestroy {
       for (const ord of ordenes) {
         const id = ord.medidor?.serie || ord.contrato?.numeroContrato || `OT-${ord.ordenTrabajoId}`;
         orderIdentifiers.push(id);
-        const actTipo = ord.tipoActividad || (ord as any).ruta?.tipoActividad?.codigo || tipoRuta;
+        const rutaRef = (ord as unknown as Record<string, unknown>)['ruta'] as
+          { tipoActividad?: { codigo?: string } } | undefined;
+        const actTipo = ord.tipoActividad || rutaRef?.tipoActividad?.codigo || tipoRuta;
         if (actTipo && ord.ordenTrabajoId) {
           const lecId = ord.lecturaId ? String(ord.lecturaId) : '';
-          workOrderEntries.push(`${id}:${actTipo}:${ord.ordenTrabajoId}:${ord.estado || 'PENDIENTE'}:${lecId}`);
+          workOrderEntries.push(
+            `${id}:${actTipo}:${ord.ordenTrabajoId}:${ord.estado || 'PENDIENTE'}:${lecId}`,
+          );
         }
       }
     } else if (paradas.length > 0) {
@@ -545,7 +549,9 @@ export class RutasComponent implements OnInit, OnDestroy {
         const [id, tipo, ordenTrabajoId, estado, lecturaId = ''] = wo.split(':');
         const assignments = grouped.get(id) ?? [];
         assignments.push(
-          lecturaId ? `${tipo}:${ordenTrabajoId}:${estado}:${lecturaId}` : `${tipo}:${ordenTrabajoId}:${estado}`,
+          lecturaId
+            ? `${tipo}:${ordenTrabajoId}:${estado}:${lecturaId}`
+            : `${tipo}:${ordenTrabajoId}:${estado}`,
         );
         grouped.set(id, assignments);
       }

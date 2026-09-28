@@ -224,13 +224,14 @@ export class OperatorSyncService {
       try {
         const cached = await this.dbService.getRegisteredReadingsCache();
         const targetMeterId = payload['medidorId'] ? String(payload['medidorId']) : null;
-        const targetSerie = (payload as any).medidorSerie
-          ? String((payload as any).medidorSerie)
+        const targetSerie = (payload as Record<string, unknown>)['medidorSerie']
+          ? String((payload as Record<string, unknown>)['medidorSerie'])
           : null;
 
-        let match = cached.find((r: any) => {
-          const mId = r.medidor?.medidorId ?? r.medidorId;
-          const s = r.medidor?.serie ?? r.medidorSerie;
+        let match = cached.find((r: Record<string, unknown>) => {
+          const medidor = r['medidor'] as Record<string, unknown> | undefined;
+          const mId = medidor?.['medidorId'] ?? r['medidorId'];
+          const s = medidor?.['serie'] ?? r['medidorSerie'];
           return (
             (targetMeterId && String(mId) === targetMeterId) || (targetSerie && s === targetSerie)
           );
@@ -240,14 +241,17 @@ export class OperatorSyncService {
           const fresh = await this.getCurrentPeriodReadings();
           if (fresh?.length) {
             await this.dbService.saveRegisteredReadingsCache(fresh);
-            match = fresh.find((r: any) => {
-              const mId = r.medidor?.medidorId ?? r.medidorId;
-              const s = r.medidor?.serie ?? r.medidorSerie;
-              return (
-                (targetMeterId && String(mId) === targetMeterId) ||
-                (targetSerie && s === targetSerie)
-              );
-            });
+            match = (fresh as unknown as Record<string, unknown>[]).find(
+              (r: Record<string, unknown>) => {
+                const medidor = r['medidor'] as Record<string, unknown> | undefined;
+                const mId = medidor?.['medidorId'] ?? r['medidorId'];
+                const s = medidor?.['serie'] ?? r['medidorSerie'];
+                return (
+                  (targetMeterId && String(mId) === targetMeterId) ||
+                  (targetSerie && s === targetSerie)
+                );
+              },
+            );
           }
         }
 
@@ -555,13 +559,14 @@ export class OperatorSyncService {
           try {
             const cached = await this.dbService.getRegisteredReadingsCache();
             const targetMeterId = pending['medidorId'] ? String(pending['medidorId']) : null;
-            const targetSerie = (pending as any).medidorSerie
-              ? String((pending as any).medidorSerie)
+            const targetSerie = (pending as Record<string, unknown>)['medidorSerie']
+              ? String((pending as Record<string, unknown>)['medidorSerie'])
               : null;
 
-            let match = cached.find((r: any) => {
-              const mId = r.medidor?.medidorId ?? r.medidorId;
-              const s = r.medidor?.serie ?? r.medidorSerie;
+            let match = cached.find((r: Record<string, unknown>) => {
+              const medidor = r['medidor'] as Record<string, unknown> | undefined;
+              const mId = medidor?.['medidorId'] ?? r['medidorId'];
+              const s = medidor?.['serie'] ?? r['medidorSerie'];
               return (
                 (targetMeterId && String(mId) === targetMeterId) ||
                 (targetSerie && s === targetSerie)
@@ -572,22 +577,25 @@ export class OperatorSyncService {
               const fresh = await this.getCurrentPeriodReadings();
               if (fresh?.length) {
                 await this.dbService.saveRegisteredReadingsCache(fresh);
-                match = fresh.find((r: any) => {
-                  const mId = r.medidor?.medidorId ?? r.medidorId;
-                  const s = r.medidor?.serie ?? r.medidorSerie;
-                  return (
-                    (targetMeterId && String(mId) === targetMeterId) ||
-                    (targetSerie && s === targetSerie)
-                  );
-                });
+                match = (fresh as unknown as Record<string, unknown>[]).find(
+                  (r: Record<string, unknown>) => {
+                    const medidor = r['medidor'] as Record<string, unknown> | undefined;
+                    const mId = medidor?.['medidorId'] ?? r['medidorId'];
+                    const s = medidor?.['serie'] ?? r['medidorSerie'];
+                    return (
+                      (targetMeterId && String(mId) === targetMeterId) ||
+                      (targetSerie && s === targetSerie)
+                    );
+                  },
+                );
               }
             }
 
-            if (match?.lecturaId) {
-              targetLecturaId = String(match.lecturaId);
+            if (match && typeof match === 'object' && 'lecturaId' in match && match['lecturaId']) {
+              targetLecturaId = String(match['lecturaId']);
               await this.dbService.updatePendingReading(pending.id!, {
                 _lecturaId: targetLecturaId,
-              } as any);
+              });
             }
           } catch {
             // Silencioso

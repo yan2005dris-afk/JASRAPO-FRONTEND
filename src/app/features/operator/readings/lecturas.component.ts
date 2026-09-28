@@ -474,9 +474,11 @@ export class LecturasComponent implements OnInit {
       for (const wo of activeRoute.ordenesTrabajo) {
         const id = wo.medidor?.serie || wo.contrato?.numeroContrato || `OT-${wo.ordenTrabajoId}`;
         const assignments = new Map<WorkOrderActivityType, AssignedWorkOrder>();
+        const routeRef = (wo as unknown as Record<string, unknown>)['ruta'] as
+          { tipoActividad?: { codigo?: string } } | undefined;
         const tipo =
           (wo.tipoActividad as WorkOrderActivityType) ||
-          ((wo as any).ruta?.tipoActividad?.codigo as WorkOrderActivityType) ||
+          (routeRef?.tipoActividad?.codigo as WorkOrderActivityType) ||
           (activeRoute.tipoRuta as WorkOrderActivityType) ||
           'LECTURA';
         assignments.set(tipo, {
@@ -701,16 +703,21 @@ export class LecturasComponent implements OnInit {
     if (existingReading?._lecturaId) return String(existingReading._lecturaId);
 
     // 2. Direct search in registeredReadings
-    const reg = this.registeredReadings().find((r: any) => {
-      const mId = r.medidor?.medidorId ?? r.medidorId;
-      const s = r.medidor?.serie ?? r.medidorSerie;
-      return (
-        (mId != null && String(mId) === String(meter.medidorId)) ||
-        (s && s === meter.serie) ||
-        (r.contratoId && meter.contratoId && String(r.contratoId) === String(meter.contratoId))
-      );
-    });
-    if (reg?.lecturaId) return String(reg.lecturaId);
+    const reg = (this.registeredReadings() as unknown as Record<string, unknown>[]).find(
+      (r: Record<string, unknown>) => {
+        const medidor = r['medidor'] as Record<string, unknown> | undefined;
+        const mId = medidor?.['medidorId'] ?? r['medidorId'];
+        const s = medidor?.['serie'] ?? r['medidorSerie'];
+        return (
+          (mId != null && String(mId) === String(meter.medidorId)) ||
+          (s && s === meter.serie) ||
+          (r['contratoId'] &&
+            meter.contratoId &&
+            String(r['contratoId']) === String(meter.contratoId))
+        );
+      },
+    );
+    if (reg && 'lecturaId' in reg && reg['lecturaId']) return String(reg['lecturaId']);
 
     // 3. Assigned work orders by meter
     const checkAssignments = (assignments?: Map<WorkOrderActivityType, AssignedWorkOrder>) => {
@@ -733,25 +740,30 @@ export class LecturasComponent implements OnInit {
 
     // 4. From activeOperatorRoute in state or sessionStorage
     try {
-      let route: any = null;
+      let route: Record<string, unknown> | null = null;
       if (history.state && history.state.route) {
-        route = history.state.route;
+        route = history.state.route as Record<string, unknown>;
       } else {
         const raw = sessionStorage.getItem('activeOperatorRoute');
-        if (raw) route = JSON.parse(raw);
+        if (raw) route = JSON.parse(raw) as Record<string, unknown>;
       }
-      if (route?.ordenesTrabajo?.length) {
-        const match = route.ordenesTrabajo.find(
-          (o: any) =>
-            o.medidor?.serie === meter.serie ||
-            (o.medidor?.medidorId != null &&
-              String(o.medidor.medidorId) === String(meter.medidorId)) ||
+      const rawOrdenes = route?.['ordenesTrabajo'];
+      if (Array.isArray(rawOrdenes) && rawOrdenes.length) {
+        const match = rawOrdenes.find((item) => {
+          const o = item as Record<string, unknown>;
+          const med = o['medidor'] as Record<string, unknown> | undefined;
+          const con = o['contrato'] as Record<string, unknown> | undefined;
+          return (
+            med?.['serie'] === meter.serie ||
+            (med?.['medidorId'] != null && String(med['medidorId']) === String(meter.medidorId)) ||
             (meter.contratoId &&
-              (o.contrato?.numeroContrato === meter.contratoId ||
-                String(o.contratoId) === String(meter.contratoId))) ||
-            `OT-${o.ordenTrabajoId}` === meter.serie,
-        );
-        if (match?.lecturaId) return String(match.lecturaId);
+              (con?.['numeroContrato'] === meter.contratoId ||
+                String(o['contratoId']) === String(meter.contratoId))) ||
+            `OT-${o['ordenTrabajoId']}` === meter.serie
+          );
+        });
+        const m = match as Record<string, unknown> | undefined;
+        if (m && 'lecturaId' in m && m['lecturaId']) return String(m['lecturaId']);
       }
     } catch {
       // Ignorar errores de parseo
