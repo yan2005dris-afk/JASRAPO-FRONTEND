@@ -14,6 +14,8 @@ import { UsersService } from '../../../../users/services/users.service';
 import { User } from '../../../../users/models/user.interface';
 import { IReadingRoute, IReassignRouteDto } from '../../interfaces/ireading-route.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { resolveOperarioNombre } from '../../services/operator-name.helpers';
+import { filterOperariosByRole } from '../../services/users.helpers';
 
 @Component({
   selector: 'app-reassign-route-modal',
@@ -43,21 +45,14 @@ export class ReassignRouteModalComponent implements OnInit {
   ngOnInit(): void {
     this.usersService.getUsers(1, 100).subscribe({
       next: (res) => {
-        this.operarios = res.data.filter((u) => {
-          const roleName = u.rol?.nombre?.toLowerCase() || '';
-          return roleName.includes('operador') || roleName.includes('operario');
-        });
+        this.operarios = filterOperariosByRole(res.data);
         this.cdr.markForCheck();
       },
     });
   }
 
-  getOperarioNombre(operarioId: number): string {
-    const user = this.operarios.find((u) => u.usuarioId === operarioId);
-    if (user) {
-      return `${user.nombres} ${user.apellidos}`.trim();
-    }
-    return `Operario #${operarioId}`;
+  getOperarioNombre(operarioId: number | null | undefined): string {
+    return resolveOperarioNombre(this.operarios, operarioId);
   }
 
   get isValid(): boolean {

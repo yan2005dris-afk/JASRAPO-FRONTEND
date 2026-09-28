@@ -45,8 +45,18 @@ import {
   clearAssignmentsForOperator,
   groupContractAssignmentsByOperatorCommunity,
   groupSectorAssignmentsByOperatorCommunity,
+  resolveAssignmentStatus,
+  ResolvedAssignmentStatus,
   toggleAssignment,
 } from '../../services/session-assignments.helpers';
+import {
+  resolveComunidadNombre,
+  resolveOperarioNombre,
+} from '../../services/operator-name.helpers';
+import { filterOperariosByRole } from '../../services/users.helpers';
+
+/** Shape returned by `getCommunityStatus` / `getSectorStatus` (concrete `color` type). */
+type AssignmentStatusView = ResolvedAssignmentStatus<OperatorColor>;
 import {
   calculateGlobalCoverage,
   calculateNonLecturaCoverage,
@@ -559,107 +569,43 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   }
 
   // Get current assignment status for a whole community (without sectors)
-  getCommunityStatus(comunidadId: number | undefined): {
-    isAssigned: boolean;
-    isDbAssigned: boolean;
-    isCurrentOperator: boolean;
-    operarioId?: number;
-    operarioName?: string;
-    color?: OperatorColor;
-    routeName?: string;
-  } {
-    if (comunidadId == null) {
-      return { isAssigned: false, isDbAssigned: false, isCurrentOperator: false };
-    }
-
-    const dbRoute = this.existingAssignedCommunityMap().get(comunidadId);
-    if (dbRoute) {
-      const op = this.operarios().find((u) => u.usuarioId === dbRoute.operarioId);
-      const color = dbRoute.operarioId ? this.getOperatorColor(dbRoute.operarioId) : undefined;
-      return {
-        isAssigned: true,
-        isDbAssigned: true,
-        isCurrentOperator: dbRoute.operarioId === this.selectedOperarioId(),
-        operarioId: dbRoute.operarioId,
-        operarioName: op ? `${op.nombres} ${op.apellidos}` : `Operario #${dbRoute.operarioId}`,
-        color,
-        routeName: dbRoute.nombre,
-      };
-    }
-
-    const sessionOpId = this.sessionCommunityAssignments().get(comunidadId);
-    if (sessionOpId != null) {
-      const op = this.operarios().find((u) => u.usuarioId === sessionOpId);
-      const color = this.getOperatorColor(sessionOpId);
-      return {
-        isAssigned: true,
-        isDbAssigned: false,
-        isCurrentOperator: sessionOpId === this.selectedOperarioId(),
-        operarioId: sessionOpId,
-        operarioName: op ? `${op.nombres} ${op.apellidos}` : `Operario #${sessionOpId}`,
-        color,
-      };
-    }
-
-    return {
-      isAssigned: false,
-      isDbAssigned: false,
-      isCurrentOperator: false,
-    };
+  getCommunityStatus(comunidadId: number | undefined): AssignmentStatusView {
+    return this.resolveAssignmentStatus(
+      comunidadId,
+      this.existingAssignedCommunityMap() as ReadonlyMap<
+        number,
+        { operarioId: number; nombre: string }
+      >,
+      this.sessionCommunityAssignments(),
+    );
   }
 
   // Get current assignment status for a sector
-  getSectorStatus(sectorId: number | undefined): {
-    isAssigned: boolean;
-    isDbAssigned: boolean;
-    isCurrentOperator: boolean;
-    operarioId?: number;
-    operarioName?: string;
-    color?: OperatorColor;
-    routeName?: string;
-  } {
-    if (sectorId == null) {
-      return {
-        isAssigned: false,
-        isDbAssigned: false,
-        isCurrentOperator: false,
-      };
-    }
+  getSectorStatus(sectorId: number | undefined): AssignmentStatusView {
+    return this.resolveAssignmentStatus(
+      sectorId,
+      this.existingAssignedSectorMap() as ReadonlyMap<
+        number,
+        { operarioId: number; nombre: string }
+      >,
+      this.sessionSectorAssignments(),
+    );
+  }
 
-    const dbRoute = this.existingAssignedSectorMap().get(sectorId);
-    if (dbRoute) {
-      const op = this.operarios().find((u) => u.usuarioId === dbRoute.operarioId);
-      const color = dbRoute.operarioId ? this.getOperatorColor(dbRoute.operarioId) : undefined;
-      return {
-        isAssigned: true,
-        isDbAssigned: true,
-        isCurrentOperator: dbRoute.operarioId === this.selectedOperarioId(),
-        operarioId: dbRoute.operarioId,
-        operarioName: op ? `${op.nombres} ${op.apellidos}` : `Operario #${dbRoute.operarioId}`,
-        color,
-        routeName: dbRoute.nombre,
-      };
-    }
-
-    const sessionOpId = this.sessionSectorAssignments().get(sectorId);
-    if (sessionOpId != null) {
-      const op = this.operarios().find((u) => u.usuarioId === sessionOpId);
-      const color = this.getOperatorColor(sessionOpId);
-      return {
-        isAssigned: true,
-        isDbAssigned: false,
-        isCurrentOperator: sessionOpId === this.selectedOperarioId(),
-        operarioId: sessionOpId,
-        operarioName: op ? `${op.nombres} ${op.apellidos}` : `Operario #${sessionOpId}`,
-        color,
-      };
-    }
-
-    return {
-      isAssigned: false,
-      isDbAssigned: false,
-      isCurrentOperator: false,
-    };
+  private resolveAssignmentStatus(
+    id: number | undefined,
+    dbMap: ReadonlyMap<number, { operarioId: number; nombre: string }>,
+    sessionMap: ReadonlyMap<number, number>,
+  ): AssignmentStatusView {
+    return resolveAssignmentStatus<number>({
+      id: id ?? null,
+      dbMap,
+      sessionMap,
+      operarios: this.operarios(),
+      selectedOperarioId: this.selectedOperarioId(),
+      getOperatorColor: (operatorId) => this.getOperatorColor(operatorId),
+      fallbackName: (operatorId) => `Operario #${operatorId}`,
+    }) as AssignmentStatusView;
   }
 
   // Check if community is 100% completed (Golden Border indicator)
@@ -816,10 +762,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
 
     this.usersService.getUsers(1, 100).subscribe({
       next: (res) => {
-        const filtered = res.data.filter((u) => {
-          const roleName = u.rol?.nombre?.toLowerCase() || '';
-          return roleName.includes('operador') || roleName.includes('operario');
-        });
+        const filtered = filterOperariosByRole(res.data);
         this.operarios.set(filtered);
         if (filtered.length > 0 && !this.selectedOperarioId()) {
           this.selectedOperarioId.set(filtered[0].usuarioId);
@@ -1246,14 +1189,12 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     });
   }
 
-  getOperarioName(operarioId: number): string {
-    const op = this.operarios().find((u) => u.usuarioId === operarioId);
-    return op ? `${op.nombres} ${op.apellidos}` : `Operario #${operarioId}`;
+  getOperarioName(operarioId: number | null | undefined): string {
+    return resolveOperarioNombre(this.operarios(), operarioId);
   }
 
-  getComunidadName(comunidadId: number): string {
-    const com = this.comunidades().find((c) => c.id === comunidadId);
-    return com ? com.nombre : `Comunidad #${comunidadId}`;
+  getComunidadName(comunidadId: number | null | undefined): string {
+    return resolveComunidadNombre(this.comunidades(), comunidadId);
   }
 
   goBack(): void {

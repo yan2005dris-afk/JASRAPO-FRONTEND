@@ -27,7 +27,7 @@ const DEFAULT_COMUNIDAD_FALLBACK = (id: number) => `Comunidad #${id}`;
  * caller-provided fallback (default `Operario #<id>`) when the id is
  * nullish, the catalog is empty, or the id is not present.
  */
-export function getOperarioNombre(
+export function resolveOperarioNombre(
   operarios: readonly OperarioLike[] | null | undefined,
   operarioId: number | null | undefined,
   fallback: (id: number) => string = DEFAULT_OPERARIO_FALLBACK,
@@ -44,7 +44,7 @@ export function getOperarioNombre(
  * is nullish the function returns an em-dash so it is safe to drop into
  * templates without an extra guard.
  */
-export function getComunidadNombre(
+export function resolveComunidadNombre(
   comunidades: readonly ComunidadLike[] | null | undefined,
   comunidadId: number | null | undefined,
   fallback: (id: number) => string = DEFAULT_COMUNIDAD_FALLBACK,

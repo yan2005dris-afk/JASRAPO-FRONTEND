@@ -26,18 +26,19 @@ export interface AssignmentStatus {
   isDbAssigned: boolean;
 }
 
-export interface ResolvedAssignmentStatus {
+export interface ResolvedAssignmentStatus<TColor = unknown> {
   isAssigned: boolean;
   isDbAssigned: boolean;
   isCurrentOperator: boolean;
   operarioId?: number;
   operarioName?: string;
-  color?: unknown;
+  color?: TColor;
   routeName?: string;
 }
 
 interface ResolvedAssignmentInputs<K> {
-  id: K;
+  /** Resolved key. `null` / `undefined` short-circuits the resolver to "unassigned". */
+  id: K | null | undefined;
   /** Map of pre-existing DB routes (e.g. existingAssignedSectorMap). */
   dbMap: ReadonlyMap<K, { operarioId: number; nombre: string }>;
   /** Map of in-session assignments (e.g. sessionSectorAssignments). */
@@ -71,7 +72,7 @@ export function resolveAssignmentStatus<K>({
   selectedOperarioId,
   getOperatorColor,
   fallbackName,
-}: ResolvedAssignmentInputs<K>): ResolvedAssignmentStatus {
+}: ResolvedAssignmentInputs<K>): ResolvedAssignmentStatus<unknown> {
   if (id == null) {
     return { isAssigned: false, isDbAssigned: false, isCurrentOperator: false };
   }
