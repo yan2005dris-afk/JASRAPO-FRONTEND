@@ -134,7 +134,15 @@ describe('RouteStatusService', () => {
   });
 
   it('does nothing when the route signal is null', async () => {
-    const ctx = makeCtx({ route: null });
+    const route = signal<IReadingRoute | null>(null);
+    const isChangingStatus = signal(false);
+    const ctx = {
+      route,
+      isChangingStatus,
+      isLecturaRoute: true,
+      routeKpis: { total: 0, completadas: 0, pendientes: 0, conNovedad: 0, canceladas: 0 },
+      pendingOrders: 0,
+    };
 
     await service.update('EN_PROGRESO', ctx);
 
