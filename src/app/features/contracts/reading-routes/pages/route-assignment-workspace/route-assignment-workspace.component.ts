@@ -1247,27 +1247,17 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     this.isLoading.set(true);
     const periodId = this.selectedPeriodId()!;
     const tipoRuta = (this.tipoActividadSeleccionada() as TipoRuta) || 'LECTURA';
+    const nombreBase = this.nombreBase().trim() || undefined;
 
     const requests: ICreateRouteAssignmentsDto[] = [];
 
     if (this.isLecturaMode()) {
       // Lectura flow: group by operator -> community -> sectorIds
-      const operatorCommunityMap = new Map<number, Map<number, number[]>>();
-      this.sessionSectorAssignments().forEach((opId, sectorId) => {
-        const sector = this.sectores().find((s) => s.sectorId === sectorId);
-        if (!sector) return;
-        const comId = sector.comunidadId;
-
-        if (!operatorCommunityMap.has(opId)) {
-          operatorCommunityMap.set(opId, new Map());
-        }
-        const comMap = operatorCommunityMap.get(opId)!;
-        const secList = comMap.get(comId) || [];
-        secList.push(sectorId);
-        comMap.set(comId, secList);
-      });
-
-      operatorCommunityMap.forEach((comMap, opId) => {
+      const grouped = groupSectorAssignmentsByOperatorCommunity(
+        this.sessionSectorAssignments(),
+        this.sectores() as ReadonlyArray<{ sectorId: number; comunidadId: number }>,
+      );
+      grouped.forEach((comMap, opId) => {
         comMap.forEach((sectorIds, comunidadId) => {
           requests.push({
             periodoId: periodId,
@@ -1275,12 +1265,13 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
             comunidadId,
             tipoRuta,
             sectorIds,
-            nombreBase: this.nombreBase().trim() || undefined,
+            nombreBase,
           });
         });
       });
 
-      // Whole community assignments (without sectors)
+      // Whole community assignments (without sectors) stay inline because
+      // they bypass the sector grouping helper.
       this.sessionCommunityAssignments().forEach((opId, comunidadId) => {
         requests.push({
           periodoId: periodId,
@@ -1288,27 +1279,16 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
           comunidadId,
           tipoRuta,
           sectorIds: [],
-          nombreBase: this.nombreBase().trim() || undefined,
+          nombreBase,
         });
       });
     } else {
       // Non-lectura flow: group by operator -> community -> contratoIds
-      const operatorCommunityContracts = new Map<number, Map<number, number[]>>();
-      this.sessionContractAssignments().forEach((opId, contratoId) => {
-        const contrato = this.contratos().find((c) => Number(c.contratoId) === contratoId);
-        if (!contrato) return;
-        const comId = contrato.comunidadId;
-
-        if (!operatorCommunityContracts.has(opId)) {
-          operatorCommunityContracts.set(opId, new Map());
-        }
-        const comMap = operatorCommunityContracts.get(opId)!;
-        const idList = comMap.get(comId) || [];
-        idList.push(contratoId);
-        comMap.set(comId, idList);
-      });
-
-      operatorCommunityContracts.forEach((comMap, opId) => {
+      const grouped = groupContractAssignmentsByOperatorCommunity(
+        this.sessionContractAssignments(),
+        this.contratos(),
+      );
+      grouped.forEach((comMap, opId) => {
         comMap.forEach((contratoIds, comunidadId) => {
           requests.push({
             periodoId: periodId,
@@ -1316,7 +1296,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
             comunidadId,
             tipoRuta,
             contratoIds,
-            nombreBase: this.nombreBase().trim() || undefined,
+            nombreBase,
           });
         });
       });
