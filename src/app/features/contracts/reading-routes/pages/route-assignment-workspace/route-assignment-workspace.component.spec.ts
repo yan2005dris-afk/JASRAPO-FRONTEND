@@ -272,8 +272,12 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
       globalCoverageSummary,
       sugeridoNombreBase,
       nombreBase,
-      isLecturaMode: computed(() => component.isLecturaActivity(component.tipoActividadSeleccionada())),
-      totalSessionAssignedContractsCount: computed(() => component.sessionContractAssignments().size),
+      isLecturaMode: computed(() =>
+        component.isLecturaActivity(component.tipoActividadSeleccionada()),
+      ),
+      totalSessionAssignedContractsCount: computed(
+        () => component.sessionContractAssignments().size,
+      ),
       assignedOperatorsInContractSession: computed(() => {
         const opIds = new Set<number>();
         component.sessionContractAssignments().forEach((opId) => opIds.add(opId));
@@ -695,7 +699,16 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
         mockContractsService.getContracts.mockReturnValue(
           of({
             data: [mockContratos[0]],
-            meta: { total: 1, page: 1, limit: 100, ultimaPagina: 1, paginaActual: 1, porPagina: 100, anterior: null, siguiente: null },
+            meta: {
+              total: 1,
+              page: 1,
+              limit: 100,
+              ultimaPagina: 1,
+              paginaActual: 1,
+              porPagina: 100,
+              anterior: null,
+              siguiente: null,
+            },
           }),
         );
 
@@ -714,7 +727,16 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
         mockContractsService.getContracts.mockReturnValue(
           of({
             data: mockContratos, // includes both comunidad 1 and comunidad 2 contracts
-            meta: { total: 4, page: 1, limit: 100, ultimaPagina: 1, paginaActual: 1, porPagina: 100, anterior: null, siguiente: null },
+            meta: {
+              total: 4,
+              page: 1,
+              limit: 100,
+              ultimaPagina: 1,
+              paginaActual: 1,
+              porPagina: 100,
+              anterior: null,
+              siguiente: null,
+            },
           }),
         );
         component.contractPageSize.set(2);
@@ -731,15 +753,42 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
       it('should iterate remaining backend pages when ultimaPagina > 1', () => {
         const page1Response = {
           data: [mockContratos[0]],
-          meta: { total: 4, page: 1, limit: 100, ultimaPagina: 3, paginaActual: 1, porPagina: 100, anterior: null, siguiente: 2 },
+          meta: {
+            total: 4,
+            page: 1,
+            limit: 100,
+            ultimaPagina: 3,
+            paginaActual: 1,
+            porPagina: 100,
+            anterior: null,
+            siguiente: 2,
+          },
         };
         const page2Response = {
           data: [mockContratos[1], mockContratos[2]],
-          meta: { total: 4, page: 2, limit: 100, ultimaPagina: 3, paginaActual: 2, porPagina: 100, anterior: 1, siguiente: 3 },
+          meta: {
+            total: 4,
+            page: 2,
+            limit: 100,
+            ultimaPagina: 3,
+            paginaActual: 2,
+            porPagina: 100,
+            anterior: 1,
+            siguiente: 3,
+          },
         };
         const page3Response = {
           data: [mockContratos[3]],
-          meta: { total: 4, page: 3, limit: 100, ultimaPagina: 3, paginaActual: 3, porPagina: 100, anterior: 2, siguiente: null },
+          meta: {
+            total: 4,
+            page: 3,
+            limit: 100,
+            ultimaPagina: 3,
+            paginaActual: 3,
+            porPagina: 100,
+            anterior: 2,
+            siguiente: null,
+          },
         };
 
         mockContractsService.getContracts
@@ -762,7 +811,16 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
         mockContractsService.getContracts.mockReturnValue(
           of({
             data: [mockContratos[0]],
-            meta: { total: 1, page: 1, limit: 100, ultimaPagina: 1, paginaActual: 1, porPagina: 100, anterior: null, siguiente: null },
+            meta: {
+              total: 1,
+              page: 1,
+              limit: 100,
+              ultimaPagina: 1,
+              paginaActual: 1,
+              porPagina: 100,
+              anterior: null,
+              siguiente: null,
+            },
           }),
         );
 

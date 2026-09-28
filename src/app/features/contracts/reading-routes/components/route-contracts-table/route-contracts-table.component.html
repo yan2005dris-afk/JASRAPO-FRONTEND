@@ -75,10 +75,7 @@
           [checked]="areAllVisibleAssigned()"
           (change)="onToggleAll()"
         />
-        <label
-          class="form-check-label small fw-semibold text-dark"
-          for="checkSelectAllContracts"
-        >
+        <label class="form-check-label small fw-semibold text-dark" for="checkSelectAllContracts">
           Seleccionar todos los visibles
         </label>
       </div>
@@ -113,14 +110,11 @@
             [ngClass]="{
               'bi-check-square-fill text-primary': isMyAssigned,
               'bi-person-badge-fill text-secondary': isOtherAssigned,
-              'bi-square text-muted': !cStatus.isAssigned
+              'bi-square text-muted': !cStatus.isAssigned,
             }"
           ></i>
           <div class="text-truncate">
-            <div
-              class="fw-semibold text-dark small text-truncate"
-              style="font-size: 0.82rem"
-            >
+            <div class="fw-semibold text-dark small text-truncate" style="font-size: 0.82rem">
               {{ contrato.numeroGuia }} — {{ formatClient(contrato.cliente) }}
             </div>
             <div class="text-muted text-truncate" style="font-size: 0.7rem">

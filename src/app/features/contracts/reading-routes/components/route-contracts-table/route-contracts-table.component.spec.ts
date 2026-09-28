@@ -12,25 +12,26 @@ describe('RouteContractsTableComponent', () => {
     { id: 2, nombre: 'Comunidad Manglaralto', codigo: 'MNG' } as Comunidad,
   ];
 
-  const buildContract = (id: string, guia: string, comunidadId = 1): IContract => ({
-    contratoId: id,
-    numeroGuia: guia,
-    comunidadId,
-    direccionSuministro: 'Av. Principal',
-    cliente: {
-      nombres: 'Juan',
-      apellidos: 'Pérez',
-      identificacion: '0912345678',
-      direccionDomicilio: 'Calle 1',
-    },
-    sector: {
-      sectorId: 101,
-      nombre: 'Sector Centro',
-      codigo: 'SEC-01',
-    },
-    estadoServicio: 'ACTIVO',
-    estadoCobranza: 'AL_DIA',
-  } as unknown as IContract);
+  const buildContract = (id: string, guia: string, comunidadId = 1): IContract =>
+    ({
+      contratoId: id,
+      numeroGuia: guia,
+      comunidadId,
+      direccionSuministro: 'Av. Principal',
+      cliente: {
+        nombres: 'Juan',
+        apellidos: 'Pérez',
+        identificacion: '0912345678',
+        direccionDomicilio: 'Calle 1',
+      },
+      sector: {
+        sectorId: 101,
+        nombre: 'Sector Centro',
+        codigo: 'SEC-01',
+      },
+      estadoServicio: 'ACTIVO',
+      estadoCobranza: 'AL_DIA',
+    }) as unknown as IContract;
 
   const mockContracts: IContract[] = [
     buildContract('101', 'GUI-001', 1),
@@ -45,7 +46,9 @@ describe('RouteContractsTableComponent', () => {
   const selectedOpIdSig = signal<number | null>(10);
 
   beforeEach(() => {
-    component = Object.create(RouteContractsTableComponent.prototype) as RouteContractsTableComponent;
+    component = Object.create(
+      RouteContractsTableComponent.prototype,
+    ) as RouteContractsTableComponent;
 
     assignmentsSig.set(new Map<number, number>());
     contractsSig.set(mockContracts);
@@ -57,7 +60,9 @@ describe('RouteContractsTableComponent', () => {
     (component as unknown as Record<string, unknown>)['comunidades'] = signal(mockComunidades);
     (component as unknown as Record<string, unknown>)['selectedComunidadId'] = signal(1);
     (component as unknown as Record<string, unknown>)['contracts'] = contractsSig;
-    (component as unknown as Record<string, unknown>)['totalContracts'] = signal(mockContracts.length);
+    (component as unknown as Record<string, unknown>)['totalContracts'] = signal(
+      mockContracts.length,
+    );
     (component as unknown as Record<string, unknown>)['searchQuery'] = signal('');
     (component as unknown as Record<string, unknown>)['currentPage'] = currentPageSig;
     (component as unknown as Record<string, unknown>)['pageSize'] = pageSizeSig;
@@ -65,15 +70,21 @@ describe('RouteContractsTableComponent', () => {
     (component as unknown as Record<string, unknown>)['isLoading'] = signal(false);
     (component as unknown as Record<string, unknown>)['selectedOperarioId'] = selectedOpIdSig;
     (component as unknown as Record<string, unknown>)['assignments'] = assignmentsSig;
-    (component as unknown as Record<string, unknown>)['operatorColorResolver'] = signal(() => OPERATOR_PALETTE[0]);
-    (component as unknown as Record<string, unknown>)['operatorNameResolver'] = signal(() => 'Carlos Mendoza');
+    (component as unknown as Record<string, unknown>)['operatorColorResolver'] = signal(
+      () => OPERATOR_PALETTE[0],
+    );
+    (component as unknown as Record<string, unknown>)['operatorNameResolver'] = signal(
+      () => 'Carlos Mendoza',
+    );
 
     // Mock outputs
     (component as unknown as Record<string, unknown>)['comunidadChange'] = { emit: vi.fn() };
     (component as unknown as Record<string, unknown>)['searchChange'] = { emit: vi.fn() };
     (component as unknown as Record<string, unknown>)['pageChange'] = { emit: vi.fn() };
     (component as unknown as Record<string, unknown>)['contractToggled'] = { emit: vi.fn() };
-    (component as unknown as Record<string, unknown>)['toggleAllVisibleRequested'] = { emit: vi.fn() };
+    (component as unknown as Record<string, unknown>)['toggleAllVisibleRequested'] = {
+      emit: vi.fn(),
+    };
 
     // Reconstruct computeds
     (component as unknown as Record<string, unknown>)['paginatedContracts'] = () => {
@@ -87,7 +98,9 @@ describe('RouteContractsTableComponent', () => {
     (component as unknown as Record<string, unknown>)['areAllVisibleAssigned'] = () => {
       const opId = selectedOpIdSig();
       if (!opId) return false;
-      const visible = (component as unknown as { paginatedContracts: () => IContract[] }).paginatedContracts();
+      const visible = (
+        component as unknown as { paginatedContracts: () => IContract[] }
+      ).paginatedContracts();
       if (visible.length === 0) return false;
       const map = assignmentsSig();
       return visible.every((c) => map.get(Number(c.contratoId)) === opId);

@@ -33,10 +33,7 @@ import {
   PeriodsService,
   type IAccountingPeriod,
 } from '../../../../../shared/services/periods.service';
-import {
-  OperatorColor,
-  OPERATOR_PALETTE,
-} from '../../../../../shared/types/operator-color';
+import { OperatorColor, OPERATOR_PALETTE } from '../../../../../shared/types/operator-color';
 
 import { RouteContractsTableComponent } from '../../components/route-contracts-table/route-contracts-table.component';
 
@@ -139,8 +136,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   readonly getOperatorColorBound = (operarioId: number): OperatorColor =>
     this.getOperatorColor(operarioId);
 
-  readonly getOperarioNameBound = (operarioId: number): string =>
-    this.getOperarioName(operarioId);
+  readonly getOperarioNameBound = (operarioId: number): string => this.getOperarioName(operarioId);
 
   isLecturaActivity(tipo: TipoRuta | string | null): boolean {
     return tipo === 'LECTURA' || tipo === 'TOMA_LECTURA' || !tipo;
@@ -177,9 +173,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     const result: IContract[] = [];
     this.sessionContractAssignments().forEach((opId, contratoId) => {
       if (opId === operarioId) {
-        const contrato = this.contratos().find(
-          (c) => Number(c.contratoId) === contratoId,
-        );
+        const contrato = this.contratos().find((c) => Number(c.contratoId) === contratoId);
         if (contrato) result.push(contrato);
       }
     });
@@ -328,9 +322,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   setContractPageSize(size: number): void {
     if (size > 0) {
       this.contractPageSize.set(size);
-      this.contractTotalPages.set(
-        Math.max(1, Math.ceil(this.contractTotalEnComunidad() / size)),
-      );
+      this.contractTotalPages.set(Math.max(1, Math.ceil(this.contractTotalEnComunidad() / size)));
       this.contractCurrentPage.set(1);
     }
   }
@@ -369,10 +361,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   toggleContrato(contratoId: number): void {
     const opId = this.selectedOperarioId();
     if (!opId) {
-      this.toastService.show(
-        'Por favor, seleccioná un operario en la Tabla 1 primero.',
-        'warning',
-      );
+      this.toastService.show('Por favor, seleccioná un operario en la Tabla 1 primero.', 'warning');
       return;
     }
 
@@ -414,10 +403,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   toggleAllFilteredContracts(): void {
     const opId = this.selectedOperarioId();
     if (!opId) {
-      this.toastService.show(
-        'Por favor, seleccioná un operario en la Tabla 1 primero.',
-        'warning',
-      );
+      this.toastService.show('Por favor, seleccioná un operario en la Tabla 1 primero.', 'warning');
       return;
     }
 
@@ -429,8 +415,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     });
 
     const allMine =
-      available.length > 0 &&
-      available.every((c) => currentMap.get(Number(c.contratoId)) === opId);
+      available.length > 0 && available.every((c) => currentMap.get(Number(c.contratoId)) === opId);
 
     if (allMine) {
       for (const c of available) {
@@ -843,10 +828,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     const assignedIds = new Set(assignedMap.keys());
     const totalContratosEnComunidad = this.contractTotalEnComunidad();
     const assignedContratosCount = assignedIds.size;
-    const pendingContratos = Math.max(
-      0,
-      totalContratosEnComunidad - assignedContratosCount,
-    );
+    const pendingContratos = Math.max(0, totalContratosEnComunidad - assignedContratosCount);
 
     // Distinct communities with at least one contract assigned in session
     const assignedComunidades = new Set<number>();
@@ -892,9 +874,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
         this.tiposActividad.set(res);
         // Default to LECTURA if not already set
         if (!this.tipoActividadSeleccionada()) {
-          const lectura = res.find(
-            (t) => t.codigo === 'LECTURA' || t.codigo === 'TOMA_LECTURA',
-          );
+          const lectura = res.find((t) => t.codigo === 'LECTURA' || t.codigo === 'TOMA_LECTURA');
           this.tipoActividadSeleccionada.set(lectura?.codigo ?? 'LECTURA');
         }
       },
@@ -1328,9 +1308,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       // Non-lectura flow: group by operator -> community -> contratoIds
       const operatorCommunityContracts = new Map<number, Map<number, number[]>>();
       this.sessionContractAssignments().forEach((opId, contratoId) => {
-        const contrato = this.contratos().find(
-          (c) => Number(c.contratoId) === contratoId,
-        );
+        const contrato = this.contratos().find((c) => Number(c.contratoId) === contratoId);
         if (!contrato) return;
         const comId = contrato.comunidadId;
 
@@ -1367,9 +1345,9 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       next: (results) => {
         this.isLoading.set(false);
         const totalCreated = results.reduce((acc, curr) => acc + curr.length, 0);
-        const tipoLabel = this.tiposActividad().find(
-          (t) => t.codigo === this.tipoActividadSeleccionada(),
-        )?.nombre ?? 'lectura';
+        const tipoLabel =
+          this.tiposActividad().find((t) => t.codigo === this.tipoActividadSeleccionada())
+            ?.nombre ?? 'lectura';
         this.toastService.show(
           `¡Rutas despachadas con éxito! Se generaron ${totalCreated} ruta(s) de ${tipoLabel.toLowerCase()}.`,
           'success',
