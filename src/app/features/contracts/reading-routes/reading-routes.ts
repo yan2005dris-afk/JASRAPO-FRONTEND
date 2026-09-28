@@ -32,8 +32,8 @@ import { Router } from '@angular/router';
 import { ReassignRouteModalComponent } from './components/reassign-route-modal/reassign-route-modal.component';
 import { TIPO_RUTA_LABEL } from './constants/route-detail.constants';
 import {
-  getComunidadNombre,
-  getOperarioNombre,
+  resolveComunidadNombre,
+  resolveOperarioNombre,
 } from './services/operator-name.helpers';
 import { filterOperariosByRole } from './services/users.helpers';
 
@@ -120,29 +120,18 @@ export class ReadingRoutesComponent implements OnInit {
 
     this.usersService.getUsers(1, 100).subscribe({
       next: (res) => {
-        this.operarios = res.data.filter((u) => {
-          const roleName = u.rol?.nombre?.toLowerCase() || '';
-          return roleName.includes('operador') || roleName.includes('operario');
-        });
+        this.operarios = filterOperariosByRole(res.data);
         this.cdr.markForCheck();
       },
     });
   }
 
-  getOperarioNombre(operarioId: number): string {
-    const user = this.operarios.find((u) => u.usuarioId === operarioId);
-    if (user) {
-      return `${user.nombres} ${user.apellidos}`.trim();
-    }
-    return `Operario #${operarioId}`;
+  getOperarioNombre(operarioId: number | null | undefined): string {
+    return resolveOperarioNombre(this.operarios, operarioId);
   }
 
-  getComunidadNombre(comunidadId: number): string {
-    const com = this.comunidades.find((c) => c.id === comunidadId);
-    if (com) {
-      return com.nombre;
-    }
-    return `Comunidad #${comunidadId}`;
+  getComunidadNombre(comunidadId: number | null | undefined): string {
+    return resolveComunidadNombre(this.comunidades, comunidadId);
   }
 
   loadRoutes(): void {
