@@ -55,7 +55,7 @@ type AssignmentStatusView = ResolvedAssignmentStatus<OperatorColor>;
 import {
   resolveComunidadNombre,
   resolveOperarioNombre,
-} from '../../services/operator-name.helpers';
+} from '../../../../../shared/utils/operator-name';
 import { filterOperariosByRole } from '../../services/users.helpers';
 import {
   calculateGlobalCoverage,

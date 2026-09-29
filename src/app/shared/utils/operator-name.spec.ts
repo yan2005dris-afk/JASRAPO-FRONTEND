@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveComunidadNombre, resolveOperarioNombre } from './operator-name.helpers';
+import { resolveComunidadNombre, resolveOperarioNombre } from './operator-name';
 
 describe('operator-name.helpers', () => {
   describe('resolveOperarioNombre', () => {

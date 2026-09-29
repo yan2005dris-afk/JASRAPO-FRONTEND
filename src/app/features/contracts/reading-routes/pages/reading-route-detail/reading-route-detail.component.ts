@@ -53,7 +53,7 @@ import {
 import {
   resolveComunidadNombre,
   resolveOperarioNombre,
-} from '../../services/operator-name.helpers';
+} from '../../../../../shared/utils/operator-name';
 import {
   buildReadingFallback,
   mapLecturaKpisToRouteKpis,

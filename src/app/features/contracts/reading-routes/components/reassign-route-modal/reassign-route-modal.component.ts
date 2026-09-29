@@ -14,7 +14,7 @@ import { UsersService } from '../../../../users/services/users.service';
 import { User } from '../../../../users/models/user.interface';
 import { IReadingRoute, IReassignRouteDto } from '../../interfaces/ireading-route.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
-import { resolveOperarioNombre } from '../../services/operator-name.helpers';
+import { resolveOperarioNombre } from '../../../../../shared/utils/operator-name';
 import { filterOperariosByRole } from '../../services/users.helpers';
 
 @Component({
