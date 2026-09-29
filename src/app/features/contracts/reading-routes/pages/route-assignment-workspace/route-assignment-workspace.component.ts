@@ -57,9 +57,6 @@ import {
   resolveOperarioNombre,
 } from '../../services/operator-name.helpers';
 import { filterOperariosByRole } from '../../services/users.helpers';
-
-/** Shape returned by `getCommunityStatus` / `getSectorStatus` (concrete `color` type). */
-type AssignmentStatusView = ResolvedAssignmentStatus<OperatorColor>;
 import {
   calculateGlobalCoverage,
   calculateNonLecturaCoverage,
