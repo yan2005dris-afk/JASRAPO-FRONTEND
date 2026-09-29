@@ -61,7 +61,7 @@ import {
   calculateGlobalCoverage,
   calculateNonLecturaCoverage,
 } from '../../services/coverage-calculator';
-import { resetScrollNextMicrotask } from '../../services/scroll.helpers';
+import { resetScrollNextMicrotask } from '../../../../../shared/utils/scroll';
 
 @Component({
   selector: 'app-route-assignment-workspace',
