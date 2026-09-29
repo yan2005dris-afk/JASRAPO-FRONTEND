@@ -2,11 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@ang
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReadingRoutesService } from '../../data/reading-routes.api';
-import {
-  IFindAllRoutesParams,
-  IReadingRoute,
-  TipoRuta,
-} from '../../models/reading-route.model';
+import { IFindAllRoutesParams, IReadingRoute, TipoRuta } from '../../models/reading-route.model';
 import { ComunidadesService } from '../../../admin/comunidades/services/comunidades.service';
 import { UsersService } from '../../../users/services/users.service';
 import { Comunidad } from '../../../admin/comunidades/models/comunidad.interface';
@@ -25,7 +21,10 @@ import { ConfirmDialogService } from '../../../../shared/components/confirm-dial
 import { Router } from '@angular/router';
 import { ReassignRouteModalComponent } from '../../components/reassign-route-modal/reassign-route-modal.component';
 import { TIPO_RUTA_LABEL } from '../../domain/constants';
-import { resolveComunidadNombre, resolveOperarioNombre } from '../../../../shared/utils/operator-name';
+import {
+  resolveComunidadNombre,
+  resolveOperarioNombre,
+} from '../../../../shared/utils/operator-name';
 import { filterOperariosByRole } from '../../../../shared/utils/users';
 import { ExportColumn } from '../../../../shared/services/table-export.service';
 
