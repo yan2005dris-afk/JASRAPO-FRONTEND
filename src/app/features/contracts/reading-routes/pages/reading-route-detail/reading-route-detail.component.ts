@@ -60,7 +60,7 @@ import {
   mapReadingForRouteToRow,
 } from '../../domain/rules/kpi-normalize.rules';
 import { RouteOrderActionsService } from '../../application/route-order.actions';
-import { RouteReadingActionsService } from '../../services/route-reading-actions.service';
+import { RouteReadingActionsService } from '../../application/route-reading.actions';
 import { RouteStatusService, RouteEstado } from '../../services/route-status.service';
 
 type ReadingSource = IReadingRowItem | IReading;
