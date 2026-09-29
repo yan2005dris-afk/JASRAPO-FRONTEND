@@ -40,7 +40,7 @@ import { ReadingFormModalComponent } from '../../../readings/components/reading-
 import { ReadingsService } from '../../../readings/services/readings.service';
 import { IReading } from '../../../readings/interfaces/ireading.interface';
 import { PeriodsService } from '../../../../../shared/services/periods.service';
-import { BlobDownloadService } from '../../../../../shared/services/blob-download.service';
+import { BlobDownloadService } from '../../../../../shared/infrastructure/blob-download.service';
 import {
   ESTADO_ORDEN_BADGE,
   ESTADO_ORDEN_FALLBACK_BADGE,
