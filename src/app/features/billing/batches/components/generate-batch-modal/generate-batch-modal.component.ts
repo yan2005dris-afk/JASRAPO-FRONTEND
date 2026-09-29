@@ -15,7 +15,7 @@ import { IGenerateBatchDto } from '../../interfaces/ibatch.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
 import { ReadingRoutesService } from '../../../../contracts/reading-routes/data/reading-routes.api';
-import { IReadingRoute } from '../../../../contracts/reading-routes/interfaces/ireading-route.interface';
+import { IReadingRoute } from '../../../../contracts/reading-routes/domain/models/reading-route.model';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 import { PeriodPickerComponent } from '../../../../../shared/components/period-picker/period-picker.component';

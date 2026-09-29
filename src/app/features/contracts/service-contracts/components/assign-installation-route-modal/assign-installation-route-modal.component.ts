@@ -17,7 +17,7 @@ import { IContract } from '../../interfaces/icontract.interface';
 import {
   IFindAllRoutesParams,
   IReadingRoute,
-} from '../../../reading-routes/interfaces/ireading-route.interface';
+} from '../../../reading-routes/domain/models/reading-route.model';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';

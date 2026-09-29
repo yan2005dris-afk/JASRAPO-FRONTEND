@@ -4,7 +4,7 @@ import {
   ILecturaKpis,
   IReadingForRoute,
   IRouteKpis,
-} from '../../interfaces/ireading-route.interface';
+} from '../../models/reading-route.model';
 
 /**
  * The backend exposes two KPI shapes for the same conceptual counters:

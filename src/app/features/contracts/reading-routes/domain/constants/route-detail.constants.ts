@@ -1,4 +1,4 @@
-import { EstadoOrden, TipoActividad, TipoRuta } from '../../interfaces/ireading-route.interface';
+import { EstadoOrden, TipoActividad, TipoRuta } from '../../models/reading-route.model';
 
 /**
  * Single source of truth for badge CSS classes, labels and human-readable

@@ -6,7 +6,7 @@ import {
   IFindAllRoutesParams,
   IReadingRoute,
   TipoRuta,
-} from '../../interfaces/ireading-route.interface';
+} from '../../models/reading-route.model';
 import { ComunidadesService } from '../../../admin/comunidades/services/comunidades.service';
 import { UsersService } from '../../../users/services/users.service';
 import { Comunidad } from '../../../admin/comunidades/models/comunidad.interface';

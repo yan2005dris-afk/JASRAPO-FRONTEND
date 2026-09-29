@@ -12,7 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { ReadingRoutesService } from '../../data/reading-routes.api';
 import { UsersService } from '../../../../users/services/users.service';
 import { User } from '../../../../users/models/user.interface';
-import { IReadingRoute, IReassignRouteDto } from '../../interfaces/ireading-route.interface';
+import { IReadingRoute, IReassignRouteDto } from '../../models/reading-route.model';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { resolveOperarioNombre } from '../../../../../shared/utils/operator-name';
 import { filterOperariosByRole } from '../../../../../shared/utils/users';
