@@ -288,9 +288,7 @@ describe('ServiceContractFormComponent', () => {
       component.form.patchValue({ direccionSuministro: 'New address' });
       component.save();
       expect(mockContractsApi.updateContract).toHaveBeenCalled();
-      expect(mockContractsApi.updateContract.mock.calls[0][1]).not.toHaveProperty(
-        'estadoServicio',
-      );
+      expect(mockContractsApi.updateContract.mock.calls[0][1]).not.toHaveProperty('estadoServicio');
     },
   );
 

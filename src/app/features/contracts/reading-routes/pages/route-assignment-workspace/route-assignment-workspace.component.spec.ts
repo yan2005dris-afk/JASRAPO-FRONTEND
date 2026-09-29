@@ -830,9 +830,7 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
       });
 
       it('should show error toast when backend fails', () => {
-        mockContractsApi.getContracts.mockReturnValue(
-          throwError(() => new Error('network error')),
-        );
+        mockContractsApi.getContracts.mockReturnValue(throwError(() => new Error('network error')));
 
         component.loadContractsForCommunity(1);
 

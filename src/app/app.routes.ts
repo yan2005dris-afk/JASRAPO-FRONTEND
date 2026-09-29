@@ -366,9 +366,9 @@ export const routes: Routes = [
             path: 'Contratos',
             data: { breadcrumb: 'Contratos de Servicios' },
             loadComponent: () =>
-              import(
-                './features/contracts/service-contracts/pages/service-contracts-list/service-contracts-list.component'
-              ).then((m) => m.ServiceContractsListComponent),
+              import('./features/contracts/service-contracts/pages/service-contracts-list/service-contracts-list.component').then(
+                (m) => m.ServiceContractsListComponent,
+              ),
           },
           {
             path: 'ConveniosDePago',
