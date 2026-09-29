@@ -59,7 +59,7 @@ import {
   mapLecturaKpisToRouteKpis,
   mapReadingForRouteToRow,
 } from '../../domain/rules/kpi-normalize.rules';
-import { RouteOrderActionsService } from '../../services/route-order-actions.service';
+import { RouteOrderActionsService } from '../../application/route-order.actions';
 import { RouteReadingActionsService } from '../../services/route-reading-actions.service';
 import { RouteStatusService, RouteEstado } from '../../services/route-status.service';
 

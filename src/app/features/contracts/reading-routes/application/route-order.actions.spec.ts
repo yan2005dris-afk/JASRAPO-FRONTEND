@@ -7,7 +7,7 @@ import { ToastService } from '../../../../shared/components/toast/toast.service'
 import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { OrderWork } from '../interfaces/ireading-route.interface';
 import { ReadingRoutesService } from '../data/reading-routes.api';
-import { RouteOrderActionsService } from './route-order-actions.service';
+import { RouteOrderActionsService } from './route-order.actions';
 
 describe('RouteOrderActionsService', () => {
   let service: RouteOrderActionsService;
