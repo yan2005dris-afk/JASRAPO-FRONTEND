@@ -10,12 +10,12 @@ import {
   IFindAllAgreementsParams,
   IInstallment,
   IUpdateAgreementDto,
-} from '../interfaces/ipayment-agreement.interface';
+} from '../domain/models/payment-agreement.model';
 
 @Injectable({
   providedIn: 'root',
 })
-export class PaymentAgreementsService {
+export class PaymentAgreementsApi {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl;
   private readonly endpoint = `${this.baseUrl}/agreements`;

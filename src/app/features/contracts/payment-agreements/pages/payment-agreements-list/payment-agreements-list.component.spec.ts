@@ -2,14 +2,14 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { Mock, vi } from 'vitest';
 
-import { PaymentAgreementsComponent } from './payment-agreements';
-import { PaymentAgreementsService } from './services/payment-agreements.service';
-import { ToastService } from '../../../shared/components/toast/toast.service';
-import { TableExportService } from '../../../shared/services/table-export.service';
+import { PaymentAgreementsListComponent } from './payment-agreements-list.component';
+import { PaymentAgreementsApi } from '../../data/payment-agreements.api';
+import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { TableExportService } from '../../../../../shared/services/table-export.service';
 
-describe('PaymentAgreementsComponent', () => {
-  let component: PaymentAgreementsComponent;
-  let fixture: ComponentFixture<PaymentAgreementsComponent>;
+describe('PaymentAgreementsListComponent', () => {
+  let component: PaymentAgreementsListComponent;
+  let fixture: ComponentFixture<PaymentAgreementsListComponent>;
   let agreementsServiceSpy: {
     getAgreements: Mock;
     getAgreementById: Mock;
@@ -33,9 +33,9 @@ describe('PaymentAgreementsComponent', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [PaymentAgreementsComponent],
+      imports: [PaymentAgreementsListComponent],
       providers: [
-        { provide: PaymentAgreementsService, useValue: agreementsServiceSpy },
+        { provide: PaymentAgreementsApi, useValue: agreementsServiceSpy },
         { provide: ToastService, useValue: { show: vi.fn() } },
         {
           provide: TableExportService,
@@ -44,7 +44,7 @@ describe('PaymentAgreementsComponent', () => {
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(PaymentAgreementsComponent);
+    fixture = TestBed.createComponent(PaymentAgreementsListComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

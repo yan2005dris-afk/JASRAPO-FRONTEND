@@ -9,12 +9,12 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { PaymentAgreementsService } from '../../services/payment-agreements.service';
+import { PaymentAgreementsApi } from '../../data/payment-agreements.api';
 import {
   ICreateAgreementDto,
   IDebtSummary,
   ISimulatedInstallment,
-} from '../../interfaces/ipayment-agreement.interface';
+} from '../../domain/models/payment-agreement.model';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
@@ -43,7 +43,7 @@ type WizardStep = 1 | 2;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PaymentAgreementCreateComponent implements OnInit, OnDestroy {
-  private readonly agreementsService = inject(PaymentAgreementsService);
+  private readonly agreementsService = inject(PaymentAgreementsApi);
   private readonly contractsService = inject(ContractsApi);
   private readonly toastService = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
