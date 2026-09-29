@@ -32,7 +32,7 @@ import {
 } from '../../../../../shared/components/dropdown/dropdown.component';
 
 @Component({
-  selector: 'app-clients-list-page',
+  selector: 'app-clients-list',
   imports: [
     CommonModule,
     FormsModule,
@@ -47,7 +47,7 @@ import {
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class ClientsListPageComponent implements OnInit, OnDestroy {
+export class ClientsListComponent implements OnInit, OnDestroy {
   readonly authService = inject(AuthService);
 
   readonly exportItems: DropdownItem[] = [

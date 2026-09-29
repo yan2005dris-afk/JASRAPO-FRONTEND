@@ -341,7 +341,7 @@ export const routes: Routes = [
                 pathMatch: 'full',
                 loadComponent: () =>
                   import('./features/contracts/clients/pages/clients-list/clients-list.component').then(
-                    (m) => m.ClientsListPageComponent,
+                    (m) => m.ClientsListComponent,
                   ),
               },
               {
@@ -594,8 +594,8 @@ export const routes: Routes = [
             path: 'listado-clientes',
             data: { breadcrumb: 'Listado de Clientes' },
             loadComponent: () =>
-              import('./features/reports/clients-list/clients-list').then(
-                (m) => m.ClientsListComponent,
+              import('./features/reports/clients-list/client-report-list').then(
+                (m) => m.ClientReportListComponent,
               ),
           },
           {

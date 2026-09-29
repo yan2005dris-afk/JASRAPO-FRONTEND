@@ -30,7 +30,7 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 type FailedReportAction = 'pdf' | 'email';
 
 @Component({
-  selector: 'app-clients-list',
+  selector: 'app-clients-report-list',
   imports: [
     FormsModule,
     DatePickerComponent,
@@ -38,11 +38,11 @@ type FailedReportAction = 'pdf' | 'email';
     ReportEmailDialogComponent,
     ReportWorkspaceComponent,
   ],
-  templateUrl: './clients-list.html',
-  styleUrl: './clients-list.scss',
+  templateUrl: './client-report-list.html',
+  styleUrl: './client-report-list.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ClientsListComponent implements OnInit, OnDestroy {
+export class ClientReportListComponent implements OnInit, OnDestroy {
   private readonly reportsService = inject(ReportsService);
   private readonly toastService = inject(ToastService);
   private readonly route = inject(ActivatedRoute);

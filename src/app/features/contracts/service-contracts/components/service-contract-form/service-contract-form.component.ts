@@ -18,7 +18,7 @@ import {
   IUpdateContractRequest,
   getContractServiceState,
 } from '../../interfaces/icontract.interface';
-import { ClientsListPageComponent } from '../../../clients/pages/clients-list/clients-list.component';
+import { ClientsListComponent } from '../../../clients/pages/clients-list/clients-list.component';
 import { TariffsComponent } from '../../../tariffs/tariffs.component';
 import { MetersIndexComponent } from '../../../meters/components/meters-index/meters-index.component';
 import { ReplaceMeterModalComponent } from '../../../meters/components/replace-meter-modal/replace-meter-modal.component';
@@ -43,7 +43,7 @@ import { coordinatePairValidator } from '../../../../../shared/components/coordi
   selector: 'app-service-contract-form',
   imports: [
     ReactiveFormsModule,
-    ClientsListPageComponent,
+    ClientsListComponent,
     TariffsComponent,
     MetersIndexComponent,
     ReplaceMeterModalComponent,

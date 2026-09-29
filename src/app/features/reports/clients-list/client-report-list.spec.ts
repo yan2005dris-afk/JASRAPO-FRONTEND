@@ -6,10 +6,10 @@ import { vi } from 'vitest';
 
 import { ReportsService } from '../services/reports.service';
 import { ReportWorkspaceComponent } from '../shared/report-workspace/report-workspace.component';
-import { ClientsListComponent } from './clients-list';
+import { ClientReportListComponent } from './client-report-list';
 
-describe('ClientsListComponent', () => {
-  let fixture: ComponentFixture<ClientsListComponent>;
+describe('ClientReportListComponent', () => {
+  let fixture: ComponentFixture<ClientReportListComponent>;
   let reportsService: {
     getClientsListPdf: ReturnType<typeof vi.fn>;
     sendClientsListEmail: ReturnType<typeof vi.fn>;
@@ -26,14 +26,14 @@ describe('ClientsListComponent', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [ClientsListComponent],
+      imports: [ClientReportListComponent],
       providers: [
         { provide: ReportsService, useValue: reportsService },
         { provide: ActivatedRoute, useValue: { queryParams: of({}) } },
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(ClientsListComponent);
+    fixture = TestBed.createComponent(ClientReportListComponent);
     fixture.detectChanges();
   });
 
