@@ -14,12 +14,21 @@ import {
   viewChild,
 } from '@angular/core';
 import * as L from 'leaflet';
+import { booleanPointInPolygon } from '@turf/boolean-point-in-polygon';
 import { NetworkService } from '../../../core/services/network.service';
 
 export interface ICoordinates {
   latitud: number | null;
   longitud: number | null;
 }
+
+export interface IPolygonGeometry {
+  type: 'Polygon';
+  coordinates: number[][][];
+}
+
+export const OUT_OF_SERVICE_AREA_MESSAGE =
+  'La ubicación seleccionada está fuera del perímetro del área de servicio';
 
 export const OLON_CENTER: L.LatLngTuple = [-1.7966, -80.7568];
 
@@ -48,6 +57,21 @@ function isValidPair(latitud: number | null, longitud: number | null): boolean {
   );
 }
 
+function toLatLng(point: ICoordinates | null): L.LatLngTuple | null {
+  return point && isValidPair(point.latitud, point.longitud)
+    ? [point.latitud as number, point.longitud as number]
+    : null;
+}
+
+function isWithinArea(latitud: number, longitud: number, area: IPolygonGeometry | null): boolean {
+  return !area || booleanPointInPolygon([longitud, latitud], area);
+}
+
+function parseInputValue(element: HTMLInputElement | undefined): number | null {
+  const value = element?.value ?? '';
+  return value === '' ? null : Number(value);
+}
+
 function roundCoordinate(value: number): number {
   return Number(value.toFixed(COORDINATE_DECIMALS));
 }
@@ -66,14 +90,19 @@ export class CoordinateMapPickerComponent implements OnInit, OnDestroy {
   readonly longitud = input<number | null>(null);
   readonly errorMessage = input<string | null>(null);
   readonly inputIdPrefix = input('coordenadas');
+  readonly serviceArea = input<IPolygonGeometry | null>(null);
+  readonly focusPoint = input<ICoordinates | null>(null);
 
   readonly coordinatesChange = output<ICoordinates>();
 
   readonly mapContainer = viewChild.required<ElementRef<HTMLDivElement>>('mapContainer');
+  private readonly latitudInput = viewChild<ElementRef<HTMLInputElement>>('latitudInput');
+  private readonly longitudInput = viewChild<ElementRef<HTMLInputElement>>('longitudInput');
 
   private map?: L.Map;
   private tileLayer?: L.TileLayer;
   private marker?: L.Marker;
+  private serviceAreaLayer?: L.GeoJSON;
   private initTimeoutId?: ReturnType<typeof setTimeout>;
   private resizeObserver?: ResizeObserver;
   private isDestroyed = false;
@@ -86,6 +115,7 @@ export class CoordinateMapPickerComponent implements OnInit, OnDestroy {
 
   readonly isLocating = signal(false);
   readonly geolocationError = signal<string | null>(null);
+  readonly serviceAreaError = signal<string | null>(null);
   readonly canGeolocate = typeof navigator !== 'undefined' && !!navigator.geolocation;
 
   constructor() {
@@ -94,6 +124,28 @@ export class CoordinateMapPickerComponent implements OnInit, OnDestroy {
       const lng = this.longitud();
       if (this.map && !this.isDestroyed) {
         untracked(() => this.syncMarker(lat, lng));
+      }
+    });
+
+    effect(() => {
+      const lat = this.latitud();
+      const lng = this.longitud();
+      const area = this.serviceArea();
+      const isOutside = isValidPair(lat, lng) && !isWithinArea(lat as number, lng as number, area);
+      untracked(() => this.serviceAreaError.set(isOutside ? OUT_OF_SERVICE_AREA_MESSAGE : null));
+    });
+
+    effect(() => {
+      const area = this.serviceArea();
+      if (this.map && !this.isDestroyed) {
+        untracked(() => this.renderServiceArea(area));
+      }
+    });
+
+    effect(() => {
+      const focus = toLatLng(this.focusPoint());
+      if (this.map && !this.isDestroyed) {
+        untracked(() => this.applyFocus(focus));
       }
     });
 
@@ -139,7 +191,9 @@ export class CoordinateMapPickerComponent implements OnInit, OnDestroy {
     const lat = this.latitud();
     const lng = this.longitud();
     const hasPin = isValidPair(lat, lng);
-    const center: L.LatLngExpression = hasPin ? [lat as number, lng as number] : OLON_CENTER;
+    const center: L.LatLngExpression = hasPin
+      ? [lat as number, lng as number]
+      : (toLatLng(this.focusPoint()) ?? OLON_CENTER);
 
     this.map = L.map(container).setView(center, hasPin ? ZOOM_WITH_PIN : ZOOM_WITHOUT_PIN);
     this.map.invalidateSize();
@@ -157,7 +211,37 @@ export class CoordinateMapPickerComponent implements OnInit, OnDestroy {
       this.selectPoint(e.latlng.lat, e.latlng.lng);
     });
 
+    this.renderServiceArea(this.serviceArea());
     this.syncMarker(lat, lng);
+  }
+
+  private renderServiceArea(area: IPolygonGeometry | null): void {
+    if (!this.map || this.isDestroyed) return;
+
+    if (this.serviceAreaLayer) {
+      this.map.removeLayer(this.serviceAreaLayer);
+      this.serviceAreaLayer = undefined;
+    }
+    if (!area) return;
+
+    this.serviceAreaLayer = L.geoJSON(area, {
+      interactive: false,
+      style: { className: 'service-area-boundary' },
+    }).addTo(this.map);
+
+    if (!isValidPair(this.latitud(), this.longitud()) && !toLatLng(this.focusPoint())) {
+      this.map.fitBounds(this.serviceAreaLayer.getBounds());
+    }
+  }
+
+  private applyFocus(focus: L.LatLngTuple | null): void {
+    if (!this.map || this.isDestroyed) return;
+
+    if (focus) {
+      this.map.flyTo(focus, ZOOM_WITHOUT_PIN);
+    } else if (this.serviceAreaLayer) {
+      this.map.fitBounds(this.serviceAreaLayer.getBounds());
+    }
   }
 
   private ensureTileLayer(): void {
@@ -231,36 +315,38 @@ export class CoordinateMapPickerComponent implements OnInit, OnDestroy {
   }
 
   selectPoint(lat: number, lng: number): void {
+    if (!isWithinArea(lat, lng, this.serviceArea())) {
+      this.serviceAreaError.set(OUT_OF_SERVICE_AREA_MESSAGE);
+      this.syncMarker(this.latitud(), this.longitud());
+      return;
+    }
+
+    this.serviceAreaError.set(null);
     this.coordinatesChange.emit({
       latitud: roundCoordinate(lat),
       longitud: roundCoordinate(lng),
     });
   }
 
-  onLatitudChange(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    this.coordinatesChange.emit({
-      latitud: value === '' ? null : Number(value),
-      longitud: this.longitud(),
-    });
+  onCoordinateInputChange(): void {
+    const latitud = parseInputValue(this.latitudInput()?.nativeElement);
+    const longitud = parseInputValue(this.longitudInput()?.nativeElement);
+
+    if (
+      isValidPair(latitud, longitud) &&
+      !isWithinArea(latitud as number, longitud as number, this.serviceArea())
+    ) {
+      this.serviceAreaError.set(OUT_OF_SERVICE_AREA_MESSAGE);
+      return;
+    }
+
+    this.serviceAreaError.set(null);
+    this.coordinatesChange.emit({ latitud, longitud });
   }
 
-  onLongitudChange(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    this.coordinatesChange.emit({
-      latitud: this.latitud(),
-      longitud: value === '' ? null : Number(value),
-    });
-  }
-
-  onLatitudEnter(event: Event): void {
+  onCoordinateInputEnter(event: Event): void {
     event.preventDefault();
-    this.onLatitudChange(event);
-  }
-
-  onLongitudEnter(event: Event): void {
-    event.preventDefault();
-    this.onLongitudChange(event);
+    this.onCoordinateInputChange();
   }
 
   useCurrentLocation(): void {
@@ -288,6 +374,7 @@ export class CoordinateMapPickerComponent implements OnInit, OnDestroy {
     this.resizeObserver?.disconnect();
     this.resizeObserver = undefined;
     this.marker = undefined;
+    this.serviceAreaLayer = undefined;
     this.tileLayer = undefined;
     if (this.map) {
       this.map.remove();

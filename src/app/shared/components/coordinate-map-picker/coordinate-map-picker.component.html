@@ -20,13 +20,14 @@
         Latitud
       </label>
       <input
+        #latitudInput
         [id]="inputIdPrefix() + '-latitud'"
         type="number"
         step="any"
         class="form-control"
         [value]="latitud() ?? ''"
-        (change)="onLatitudChange($event)"
-        (keydown.enter)="onLatitudEnter($event)"
+        (change)="onCoordinateInputChange()"
+        (keydown.enter)="onCoordinateInputEnter($event)"
       />
     </div>
     <div class="col-sm-6">
@@ -34,19 +35,24 @@
         Longitud
       </label>
       <input
+        #longitudInput
         [id]="inputIdPrefix() + '-longitud'"
         type="number"
         step="any"
         class="form-control"
         [value]="longitud() ?? ''"
-        (change)="onLongitudChange($event)"
-        (keydown.enter)="onLongitudEnter($event)"
+        (change)="onCoordinateInputChange()"
+        (keydown.enter)="onCoordinateInputEnter($event)"
       />
     </div>
   </div>
 
   @if (errorMessage()) {
     <span class="text-danger x-small d-block mt-1">{{ errorMessage() }}</span>
+  }
+
+  @if (serviceAreaError()) {
+    <span class="text-danger x-small d-block mt-1" role="alert">{{ serviceAreaError() }}</span>
   }
 
   @if (canGeolocate) {
