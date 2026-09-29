@@ -12,7 +12,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
 import { TariffsService } from '../../services/tariffs.service';
-import { ITariffCategory, UpdateTariffRequest } from '../../interfaces/itariff.interface';
+import { ITariffCategory, UpdateTariffRequest } from '../../domain/models/tariff.model';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 
 @Component({

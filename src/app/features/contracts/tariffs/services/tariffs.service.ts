@@ -6,7 +6,7 @@ import {
   ITariffCategory,
   CreateTariffRequest,
   UpdateTariffRequest,
-} from '../interfaces/itariff.interface';
+} from '../domain/models/tariff.model';
 
 export interface ITariffResponse {
   data: ITariffCategory[];
