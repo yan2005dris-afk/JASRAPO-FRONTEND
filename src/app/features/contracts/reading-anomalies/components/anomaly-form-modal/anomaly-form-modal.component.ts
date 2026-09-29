@@ -16,7 +16,7 @@ import {
   IUpdateReadingAnomalyDto,
   TipoAnomalia,
 } from '../../interfaces/ianomaly.interface';
-import { ContractsService } from '../../../service-contracts/services/contracts.service';
+import { ContractsApi } from '../../../service-contracts/data/contracts.api';
 import type { IContract } from '../../../service-contracts/domain/models/service-contract.model';
 import { ReadingsService } from '../../../readings/services/readings.service';
 import type { IReading } from '../../../readings/interfaces/ireading.interface';
@@ -33,7 +33,7 @@ import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
 })
 export class AnomalyFormModalComponent implements OnInit {
   private readonly anomaliesService = inject(ReadingAnomaliesService);
-  private readonly contractsService = inject(ContractsService);
+  private readonly contractsService = inject(ContractsApi);
   private readonly readingsService = inject(ReadingsService);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);

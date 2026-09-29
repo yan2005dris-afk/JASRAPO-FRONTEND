@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { ContractsService } from '../../services/contracts.service';
+import { ContractsApi } from '../../data/contracts.api';
 import {
   IContract,
   IContractState,
@@ -56,7 +56,7 @@ import { coordinatePairValidator } from '../../../../../shared/components/coordi
 })
 export class ServiceContractFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
-  private readonly contractsService = inject(ContractsService);
+  private readonly contractsService = inject(ContractsApi);
   private readonly toast = inject(ToastService);
 
   // Si viene un contrato, el formulario está en modo edición. Catálogo de estados (para editar).

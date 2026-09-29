@@ -5,7 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 
 import { PaymentAgreementCreateComponent } from './payment-agreement-create.component';
 import { PaymentAgreementsService } from '../../services/payment-agreements.service';
-import { ContractsService } from '../../../service-contracts/services/contracts.service';
+import { ContractsApi } from '../../../service-contracts/data/contracts.api';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import type { IContract } from '../../../service-contracts/domain/models/service-contract.model';
 
@@ -91,7 +91,7 @@ describe('PaymentAgreementCreateComponent', () => {
       imports: [PaymentAgreementCreateComponent],
       providers: [
         { provide: PaymentAgreementsService, useValue: agreementsServiceSpy },
-        { provide: ContractsService, useValue: contractsServiceSpy },
+        { provide: ContractsApi, useValue: contractsServiceSpy },
         { provide: ToastService, useValue: { show: vi.fn() } },
         { provide: Router, useValue: routerSpy },
         {

@@ -1,6 +1,16 @@
 // Estado del servicio (el valor real lo define el backend).
 export type EstadoServicio = string;
 
+/**
+ * Payload para asignar un contrato a una ruta de instalación (o crear una nueva
+ * si routeId es undefined). Es un DTO de dominio (qué datos quiere enviar
+ * el cliente al backend), no detalles de HTTP.
+ */
+export interface IAssignInstallationRoutePayload {
+  routeId?: number;
+  fechaPlanificada?: string;
+}
+
 export const COLLECTION_STATUS = {
   NO_APLICA: 'NO_APLICA',
   AL_DIA: 'AL_DIA',

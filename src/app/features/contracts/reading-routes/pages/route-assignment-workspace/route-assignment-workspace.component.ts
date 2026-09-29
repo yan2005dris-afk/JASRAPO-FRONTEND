@@ -20,7 +20,7 @@ import {
 import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
 import { SectoresService } from '../../../../admin/sectores-prueba/services/sectores';
 import { UsersService } from '../../../../users/services/users.service';
-import { ContractsService } from '../../../service-contracts/services/contracts.service';
+import { ContractsApi } from '../../../service-contracts/data/contracts.api';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { Sectores } from '../../../../admin/sectores-prueba/models/sectores.interface';
 import { User } from '../../../../users/models/user.interface';
@@ -78,7 +78,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   private readonly comunidadesService = inject(ComunidadesService);
   private readonly sectoresService = inject(SectoresService);
   private readonly usersService = inject(UsersService);
-  private readonly contractsService = inject(ContractsService);
+  private readonly contractsService = inject(ContractsApi);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
   private readonly periodsService = inject(PeriodsService);

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { ContractsService } from './services/contracts.service';
+import { ContractsApi } from '../data/contracts.api';
 import {
   IContract,
   IContractState,
@@ -58,7 +58,7 @@ const COLLECTION_STATE_OPTIONS = [
   },
 })
 export class ServiceContractsComponent implements OnInit {
-  private readonly contractsService = inject(ContractsService);
+  private readonly contractsService = inject(ContractsApi);
 
   readonly exportItems: DropdownItem[] = [
     { label: 'Exportar a PDF', action: 'pdf', icon: 'bi bi-file-earmark-pdf-fill text-danger' },

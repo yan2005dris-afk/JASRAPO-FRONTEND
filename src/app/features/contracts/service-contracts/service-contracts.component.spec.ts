@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { Mock, vi } from 'vitest';
 
-import { ContractsService } from './services/contracts.service';
+import { ContractsApi } from '../data/contracts.api';
 import { ServiceContractsComponent } from './service-contracts.component';
 
 describe('ServiceContractsComponent', () => {
@@ -23,7 +23,7 @@ describe('ServiceContractsComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [ServiceContractsComponent],
-      providers: [{ provide: ContractsService, useValue: contractsServiceMock }],
+      providers: [{ provide: ContractsApi, useValue: contractsServiceMock }],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ServiceContractsComponent);

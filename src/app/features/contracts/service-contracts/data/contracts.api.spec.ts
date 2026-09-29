@@ -1,18 +1,18 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
-import { ContractsService } from './contracts.service';
+import { ContractsApi } from './contracts.api';
 import type { ISearchContractsParams } from '../domain/models/service-contract.model';
 
-describe('ContractsService', () => {
-  let service: ContractsService;
+describe('ContractsApi', () => {
+  let service: ContractsApi;
   let http: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ContractsService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [ContractsApi, provideHttpClient(), provideHttpClientTesting()],
     });
-    service = TestBed.inject(ContractsService);
+    service = TestBed.inject(ContractsApi);
     http = TestBed.inject(HttpTestingController);
   });
 

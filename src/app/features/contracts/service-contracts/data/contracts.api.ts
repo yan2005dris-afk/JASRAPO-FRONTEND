@@ -10,18 +10,14 @@ import {
   ICreateContractRequest,
   ISearchContractsParams,
   IUpdateContractRequest,
+  IAssignInstallationRoutePayload,
 } from '../domain/models/service-contract.model';
 import type { IReadingRoute } from '../../reading-routes/domain/models/reading-route.model';
-
-export interface IAssignInstallationRoutePayload {
-  routeId?: number;
-  fechaPlanificada?: string;
-}
 
 @Injectable({
   providedIn: 'root',
 })
-export class ContractsService {
+export class ContractsApi {
   private readonly http = inject(HttpClient);
 
   private readonly baseUrl = environment.apiUrl;

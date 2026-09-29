@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ContractsService } from '../../services/contracts.service';
+import { ContractsApi } from '../../data/contracts.api';
 import { ReadingRoutesService } from '../../../reading-routes/data/reading-routes.api';
 import { IContract } from '../../domain/models/service-contract.model';
 import {
@@ -41,7 +41,7 @@ type AssignmentMode = (typeof ASSIGNMENT_MODE)[keyof typeof ASSIGNMENT_MODE];
   },
 })
 export class AssignInstallationRouteModalComponent implements OnInit {
-  private readonly contractsService = inject(ContractsService);
+  private readonly contractsService = inject(ContractsApi);
   private readonly routesService = inject(ReadingRoutesService);
   private readonly toastService = inject(ToastService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);

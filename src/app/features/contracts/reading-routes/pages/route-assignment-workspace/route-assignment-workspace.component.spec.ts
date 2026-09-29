@@ -34,7 +34,7 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
     getUsers: vi.fn().mockReturnValue(of({ data: [] })),
   };
 
-  const mockContractsService = {
+  const mockContractsApi = {
     getContracts: vi.fn().mockReturnValue(of({ data: [] })),
   };
 
@@ -225,7 +225,7 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
       comunidadesService: mockComunidadesService,
       sectoresService: mockSectoresService,
       usersService: mockUsersService,
-      contractsService: mockContractsService,
+      contractsService: mockContractsApi,
       toastService: mockToastService,
       dialogService: mockDialogService,
       periodsService: mockPeriodsService,
@@ -696,7 +696,7 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
 
     describe('loadContractsForCommunity()', () => {
       it('should call backend with page=1, limit=100 and estadoServicio=ACTIVO', () => {
-        mockContractsService.getContracts.mockReturnValue(
+        mockContractsApi.getContracts.mockReturnValue(
           of({
             data: [mockContratos[0]],
             meta: {
@@ -714,7 +714,7 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
 
         component.loadContractsForCommunity(1);
 
-        expect(mockContractsService.getContracts).toHaveBeenCalledWith(
+        expect(mockContractsApi.getContracts).toHaveBeenCalledWith(
           expect.objectContaining({
             page: 1,
             limit: 100,
@@ -724,7 +724,7 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
       });
 
       it('should filter client-side by comunidadId and set pagination meta', () => {
-        mockContractsService.getContracts.mockReturnValue(
+        mockContractsApi.getContracts.mockReturnValue(
           of({
             data: mockContratos, // includes both comunidad 1 and comunidad 2 contracts
             meta: {
@@ -791,24 +791,24 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
           },
         };
 
-        mockContractsService.getContracts
+        mockContractsApi.getContracts
           .mockReturnValueOnce(of(page1Response))
           .mockReturnValueOnce(of(page2Response))
           .mockReturnValueOnce(of(page3Response));
 
         component.loadContractsForCommunity(1);
 
-        expect(mockContractsService.getContracts).toHaveBeenCalledTimes(3);
-        expect(mockContractsService.getContracts.mock.calls[0][0]).toMatchObject({ page: 1 });
-        expect(mockContractsService.getContracts.mock.calls[1][0]).toMatchObject({ page: 2 });
-        expect(mockContractsService.getContracts.mock.calls[2][0]).toMatchObject({ page: 3 });
+        expect(mockContractsApi.getContracts).toHaveBeenCalledTimes(3);
+        expect(mockContractsApi.getContracts.mock.calls[0][0]).toMatchObject({ page: 1 });
+        expect(mockContractsApi.getContracts.mock.calls[1][0]).toMatchObject({ page: 2 });
+        expect(mockContractsApi.getContracts.mock.calls[2][0]).toMatchObject({ page: 3 });
         // Filter comunidad 1: should have 3 contracts (IDs 100, 101, 102)
         expect(component.contratos().length).toBe(3);
       });
 
       it('should reset contractCurrentPage to 1 when loading a new community', () => {
         component.contractCurrentPage.set(5);
-        mockContractsService.getContracts.mockReturnValue(
+        mockContractsApi.getContracts.mockReturnValue(
           of({
             data: [mockContratos[0]],
             meta: {
@@ -830,7 +830,7 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
       });
 
       it('should show error toast when backend fails', () => {
-        mockContractsService.getContracts.mockReturnValue(
+        mockContractsApi.getContracts.mockReturnValue(
           throwError(() => new Error('network error')),
         );
 

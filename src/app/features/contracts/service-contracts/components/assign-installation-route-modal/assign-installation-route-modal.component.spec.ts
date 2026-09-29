@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { AssignInstallationRouteModalComponent } from './assign-installation-route-modal.component';
 import type { IContract } from '../../domain/models/service-contract.model';
-import { ContractsService } from '../../services/contracts.service';
+import { ContractsApi } from '../../data/contracts.api';
 import { ReadingRoutesService } from '../../../reading-routes/data/reading-routes.api';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 
@@ -49,7 +49,7 @@ describe('AssignInstallationRouteModalComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AssignInstallationRouteModalComponent],
       providers: [
-        { provide: ContractsService, useValue: { assignInstallationRoute } },
+        { provide: ContractsApi, useValue: { assignInstallationRoute } },
         { provide: ReadingRoutesService, useValue: { getRoutes } },
         { provide: ToastService, useValue: { show: vi.fn() } },
       ],

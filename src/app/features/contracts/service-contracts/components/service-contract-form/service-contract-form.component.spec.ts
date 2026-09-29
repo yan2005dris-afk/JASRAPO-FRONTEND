@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { vi } from 'vitest';
 
 import { ServiceContractFormComponent } from './service-contract-form.component';
-import { ContractsService } from '../../services/contracts.service';
+import { ContractsApi } from '../../data/contracts.api';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { IContract } from '../../domain/models/service-contract.model';
 import { IMeter } from '../../../meters/domain/models/meter.model';
@@ -69,7 +69,7 @@ describe('ServiceContractFormComponent', () => {
     ],
   };
 
-  const mockContractsService = {
+  const mockContractsApi = {
     createContract: vi.fn(),
     updateContract: vi.fn(),
     getContractById: vi.fn(),
@@ -90,7 +90,7 @@ describe('ServiceContractFormComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: ContractsService, useValue: mockContractsService },
+        { provide: ContractsApi, useValue: mockContractsApi },
         { provide: ToastService, useValue: mockToastService },
       ],
     }).compileComponents();
@@ -138,7 +138,7 @@ describe('ServiceContractFormComponent', () => {
     fixture.componentRef.setInput('contractToEdit', mockContract);
     fixture.detectChanges();
 
-    mockContractsService.updateContract.mockReturnValue(of(mockContract));
+    mockContractsApi.updateContract.mockReturnValue(of(mockContract));
     const savedEmitSpy = vi.spyOn(component.saved, 'emit');
 
     component.form.patchValue({
@@ -148,7 +148,7 @@ describe('ServiceContractFormComponent', () => {
 
     component.save();
 
-    expect(mockContractsService.updateContract).toHaveBeenCalledWith('10', {
+    expect(mockContractsApi.updateContract).toHaveBeenCalledWith('10', {
       estadoServicio: 'SUSPENDIDO',
       direccionSuministro: 'Nueva Direccion 456',
       clienteId: '100',
@@ -158,12 +158,12 @@ describe('ServiceContractFormComponent', () => {
       longitud: null,
     });
     expect(
-      (mockContractsService.updateContract.mock.calls[0][1] as unknown as Record<string, unknown>)[
+      (mockContractsApi.updateContract.mock.calls[0][1] as unknown as Record<string, unknown>)[
         'medidorId'
       ],
     ).toBeUndefined();
     expect(
-      (mockContractsService.updateContract.mock.calls[0][1] as unknown as Record<string, unknown>)[
+      (mockContractsApi.updateContract.mock.calls[0][1] as unknown as Record<string, unknown>)[
         'lecturaInicial'
       ],
     ).toBeUndefined();
@@ -172,7 +172,7 @@ describe('ServiceContractFormComponent', () => {
       'Contrato actualizado correctamente',
       'Éxito',
     );
-    expect(mockContractsService.updateContract.mock.calls[0][1]).not.toHaveProperty('estado');
+    expect(mockContractsApi.updateContract.mock.calls[0][1]).not.toHaveProperty('estado');
   });
 
   it('should open and close replace meter modal in edit mode', () => {
@@ -209,14 +209,14 @@ describe('ServiceContractFormComponent', () => {
       ],
     };
 
-    mockContractsService.getContractById.mockReturnValue(of(updatedContract));
+    mockContractsApi.getContractById.mockReturnValue(of(updatedContract));
     const savedEmitSpy = vi.spyOn(component.saved, 'emit');
 
     component.openReplaceMeterModal();
     component.onMeterReplaced();
 
     expect(component.isReplaceMeterModalOpen()).toBeFalsy();
-    expect(mockContractsService.getContractById).toHaveBeenCalledWith('10');
+    expect(mockContractsApi.getContractById).toHaveBeenCalledWith('10');
     expect(component.selectedMeter()?.serie).toBe('METER-300');
     expect(savedEmitSpy).toHaveBeenCalled();
     expect(mockToastService.success).toHaveBeenCalledWith(
@@ -228,7 +228,7 @@ describe('ServiceContractFormComponent', () => {
   it('should create contract with medidorId and lecturaInicial in create mode', () => {
     fixture.detectChanges();
 
-    mockContractsService.createContract.mockReturnValue(of(mockContract));
+    mockContractsApi.createContract.mockReturnValue(of(mockContract));
     const savedEmitSpy = vi.spyOn(component.saved, 'emit');
 
     component.form.patchValue({
@@ -261,7 +261,7 @@ describe('ServiceContractFormComponent', () => {
 
     component.save();
 
-    expect(mockContractsService.createContract).toHaveBeenCalledWith({
+    expect(mockContractsApi.createContract).toHaveBeenCalledWith({
       clienteId: '101',
       categoriaTarifaId: '2',
       medidorId: '500',
@@ -270,7 +270,7 @@ describe('ServiceContractFormComponent', () => {
       comunidadId: '3',
       lecturaInicial: 0,
     });
-    expect(mockContractsService.createContract.mock.calls[0][0]).not.toHaveProperty('estado');
+    expect(mockContractsApi.createContract.mock.calls[0][0]).not.toHaveProperty('estado');
     expect(savedEmitSpy).toHaveBeenCalled();
   });
   it.each(['PENDIENTE_INSPECCION', 'PENDIENTE_PAGO', 'PENDIENTE_INSTALACION', 'RECHAZADO'])(
@@ -284,11 +284,11 @@ describe('ServiceContractFormComponent', () => {
       ]);
       fixture.detectChanges();
       expect(component.availableStates().map((state) => state.codigo)).toEqual([estadoServicio]);
-      mockContractsService.updateContract.mockReturnValue(of(contract));
+      mockContractsApi.updateContract.mockReturnValue(of(contract));
       component.form.patchValue({ direccionSuministro: 'New address' });
       component.save();
-      expect(mockContractsService.updateContract).toHaveBeenCalled();
-      expect(mockContractsService.updateContract.mock.calls[0][1]).not.toHaveProperty(
+      expect(mockContractsApi.updateContract).toHaveBeenCalled();
+      expect(mockContractsApi.updateContract.mock.calls[0][1]).not.toHaveProperty(
         'estadoServicio',
       );
     },
@@ -297,7 +297,7 @@ describe('ServiceContractFormComponent', () => {
   it('should include picked coordinates in the create payload when both are set', () => {
     fixture.detectChanges();
 
-    mockContractsService.createContract.mockReturnValue(of(mockContract));
+    mockContractsApi.createContract.mockReturnValue(of(mockContract));
 
     component.form.patchValue({
       numeroGuia: 'CTR-NEW-02',
@@ -330,7 +330,7 @@ describe('ServiceContractFormComponent', () => {
 
     component.save();
 
-    expect(mockContractsService.createContract).toHaveBeenCalledWith(
+    expect(mockContractsApi.createContract).toHaveBeenCalledWith(
       expect.objectContaining({ latitud: -1.8021, longitud: -80.7554 }),
     );
   });
@@ -344,12 +344,12 @@ describe('ServiceContractFormComponent', () => {
     fixture.componentRef.setInput('contractToEdit', contractWithCoordinates);
     fixture.detectChanges();
 
-    mockContractsService.updateContract.mockReturnValue(of(mockContract));
+    mockContractsApi.updateContract.mockReturnValue(of(mockContract));
 
     component.onCoordinatesChange({ latitud: null, longitud: null });
     component.save();
 
-    expect(mockContractsService.updateContract).toHaveBeenCalledWith(
+    expect(mockContractsApi.updateContract).toHaveBeenCalledWith(
       '10',
       expect.objectContaining({ latitud: null, longitud: null }),
     );
@@ -389,7 +389,7 @@ describe('ServiceContractFormComponent', () => {
 
     component.save();
 
-    expect(mockContractsService.createContract).not.toHaveBeenCalled();
+    expect(mockContractsApi.createContract).not.toHaveBeenCalled();
     expect(mockToastService.warning).toHaveBeenCalled();
     expect(component.coordinateError()).toBe('Ingrese latitud y longitud, o deje ambas vacías.');
   });

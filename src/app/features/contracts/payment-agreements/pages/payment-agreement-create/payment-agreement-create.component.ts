@@ -20,7 +20,7 @@ import { DatePickerComponent } from '../../../../../shared/components/date-picke
 import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
 import { TableSkeletonComponent } from '../../../../../shared/components/table-skeleton/table-skeleton.component';
 import { ContractsTableComponent } from '../../../service-contracts/components/contracts-table/contracts-table.component';
-import { ContractsService } from '../../../service-contracts/services/contracts.service';
+import { ContractsApi } from '../../../service-contracts/data/contracts.api';
 import type { IContract } from '../../../service-contracts/domain/models/service-contract.model';
 
 const CONTRACT_SEARCH_DEBOUNCE_MS = 400;
@@ -44,7 +44,7 @@ type WizardStep = 1 | 2;
 })
 export class PaymentAgreementCreateComponent implements OnInit, OnDestroy {
   private readonly agreementsService = inject(PaymentAgreementsService);
-  private readonly contractsService = inject(ContractsService);
+  private readonly contractsService = inject(ContractsApi);
   private readonly toastService = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
