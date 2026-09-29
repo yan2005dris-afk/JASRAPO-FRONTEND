@@ -58,7 +58,7 @@ import {
   buildReadingFallback,
   mapLecturaKpisToRouteKpis,
   mapReadingForRouteToRow,
-} from '../../services/route-kpis.mapper';
+} from '../../domain/rules/kpi-normalize.rules';
 import { RouteOrderActionsService } from '../../services/route-order-actions.service';
 import { RouteReadingActionsService } from '../../services/route-reading-actions.service';
 import { RouteStatusService, RouteEstado } from '../../services/route-status.service';
