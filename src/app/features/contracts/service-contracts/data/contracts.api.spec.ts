@@ -84,4 +84,20 @@ describe('ContractsApi', () => {
     expect(request.request.params.has('estado')).toBe(false);
     request.flush({ data: [], meta: { total: 0 } });
   });
+
+  it('requests the service area', () => {
+    const area = {
+      nombre: 'Parroquia Manglaralto',
+      fuente: 'OpenStreetMap (relation 278708), ODbL',
+      geometria: { type: 'Polygon', coordinates: [[[-80.78, -1.83]]] },
+    };
+    let received: unknown;
+
+    service.getServiceArea().subscribe((value) => (received = value));
+    const request = http.expectOne((req) => req.url.endsWith('/contracts/service-area'));
+    expect(request.request.method).toBe('GET');
+    request.flush(area);
+
+    expect(received).toEqual(area);
+  });
 });
