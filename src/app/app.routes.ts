@@ -426,9 +426,9 @@ export const routes: Routes = [
             path: 'AnomaliasDeLectura',
             data: { breadcrumb: 'Anomalías de Lectura' },
             loadComponent: () =>
-              import('./features/contracts/reading-anomalies/reading-anomalies').then(
-                (m) => m.ReadingAnomaliesComponent,
-              ),
+              import(
+                './features/contracts/reading-anomalies/pages/reading-anomalies-list/reading-anomalies-list.component'
+              ).then((m) => m.ReadingAnomaliesListComponent),
           },
           {
             path: 'Medidores',

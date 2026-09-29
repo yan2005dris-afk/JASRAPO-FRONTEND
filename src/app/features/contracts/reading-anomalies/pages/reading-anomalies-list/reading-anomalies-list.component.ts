@@ -9,29 +9,29 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ReadingAnomaliesApi } from './data/reading-anomalies.api';
+import { ReadingAnomaliesApi } from '../../data/reading-anomalies.api';
 import {
   IReadingAnomaly,
   IReadingAnomalyFilterParams,
   TipoAnomalia,
-} from './domain/models/reading-anomaly.model';
-import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
-import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
-import { ToastService } from '../../../shared/components/toast/toast.service';
-import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
-import { TableExportService } from '../../../shared/services/table-export.service';
+} from '../../domain/models/reading-anomaly.model';
+import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
+import { EmptyStateComponent } from '../../../../../shared/components/empty-state/empty-state.component';
+import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
+import { TableSkeletonComponent } from '../../../../../shared/components/table-skeleton/table-skeleton.component';
+import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { TableExportService } from '../../../../../shared/services/table-export.service';
 import {
   DropdownComponent,
   DropdownItem,
-} from '../../../shared/components/dropdown/dropdown.component';
-import { AnomalyFormModalComponent } from './components/anomaly-form-modal/anomaly-form-modal.component';
-import { AnomalyResolveModalComponent } from './components/anomaly-resolve-modal/anomaly-resolve-modal.component';
-import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
+} from '../../../../../shared/components/dropdown/dropdown.component';
+import { AnomalyFormModalComponent } from '../../components/anomaly-form-modal/anomaly-form-modal.component';
+import { AnomalyResolveModalComponent } from '../../components/anomaly-resolve-modal/anomaly-resolve-modal.component';
+import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
 
 @Component({
-  selector: 'app-reading-anomalies',
+  selector: 'app-reading-anomalies-list',
   standalone: true,
   imports: [
     CommonModule,
@@ -45,14 +45,14 @@ import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
     LocalDatePipe,
     DropdownComponent,
   ],
-  templateUrl: './reading-anomalies.html',
-  styleUrl: './reading-anomalies.scss',
+  templateUrl: './reading-anomalies-list.component.html',
+  styleUrl: './reading-anomalies-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
+export class ReadingAnomaliesListComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly anomaliesService = inject(ReadingAnomaliesApi);
