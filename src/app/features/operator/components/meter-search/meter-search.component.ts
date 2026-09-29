@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, computed, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { IMeterDto } from '../../../contracts/meters/interfaces/imeter.interface';
+import { IMeterDto } from '../../../contracts/meters/domain/models/meter.model';
 import { MeterCardComponent } from '../meter-card/meter-card.component';
 import { MeterSearchBoxComponent } from '../meter-search-box/meter-search-box.component';
 import { EstadoChip, MeterGroup } from '../../readings/readings.models';

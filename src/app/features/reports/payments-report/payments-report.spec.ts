@@ -4,7 +4,7 @@ import { By } from '@angular/platform-browser';
 import { Subject, of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
-import { ClientsService } from '../../contracts/clients/services/clients.service';
+import { ClientsApi } from '../../contracts/clients/data/clients.api';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ReportsService } from '../services/reports.service';
 import { PaymentsReportComponent } from './payments-report';
@@ -29,7 +29,7 @@ describe('PaymentsReportComponent', () => {
       providers: [
         { provide: ReportsService, useValue: reportsService },
         {
-          provide: ClientsService,
+          provide: ClientsApi,
           useValue: {
             searchClients: () => of({ data: [] }),
           },

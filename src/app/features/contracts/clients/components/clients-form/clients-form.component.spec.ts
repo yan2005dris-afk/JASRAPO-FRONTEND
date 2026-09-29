@@ -3,8 +3,8 @@ import { provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 
-import { ClientsService } from '../../services/clients.service';
-import { CreateClientRequest, IClient, IIdentificacion } from '../../interfaces/iclients.interface';
+import { ClientsApi } from '../../data/clients.api';
+import { CreateClientRequest, IClient, IIdentificacion } from '../../domain/models/client.model';
 import { ClientsFormComponent } from './clients-form.component';
 
 describe('ClientsFormComponent', () => {
@@ -68,7 +68,7 @@ describe('ClientsFormComponent', () => {
 
     await TestBed.configureTestingModule({
       imports: [ClientsFormComponent],
-      providers: [{ provide: ClientsService, useValue: clientsServiceSpy }, provideRouter([])],
+      providers: [{ provide: ClientsApi, useValue: clientsServiceSpy }, provideRouter([])],
     }).compileComponents();
 
     fixture = TestBed.createComponent(ClientsFormComponent);
@@ -183,7 +183,7 @@ describe('ClientsFormComponent', () => {
 
   it('emite el cliente creado para que el selector lo use sin volver a buscarlo', () => {
     const clienteCreado = { clienteId: '77', nombres: 'Luis', apellidos: 'Vera' } as IClient;
-    const clientsService = TestBed.inject(ClientsService);
+    const clientsService = TestBed.inject(ClientsApi);
     vi.spyOn(clientsService, 'createClient').mockReturnValue(of(clienteCreado));
 
     const emitido = vi.fn();

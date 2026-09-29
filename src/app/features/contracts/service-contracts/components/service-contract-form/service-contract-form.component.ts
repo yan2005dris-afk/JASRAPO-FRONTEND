@@ -10,21 +10,21 @@ import {
 } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { ContractsService } from '../../services/contracts.service';
+import { ContractsApi } from '../../data/contracts.api';
 import {
   IContract,
   IContractState,
   ICreateContractRequest,
   IUpdateContractRequest,
   getContractServiceState,
-} from '../../interfaces/icontract.interface';
-import { ClientsComponent } from '../../../clients/clients.component';
+} from '../../domain/models/service-contract.model';
+import { ClientsListComponent } from '../../../clients/pages/clients-list/clients-list.component';
 import { TariffsComponent } from '../../../tariffs/tariffs.component';
 import { MetersIndexComponent } from '../../../meters/components/meters-index/meters-index.component';
 import { ReplaceMeterModalComponent } from '../../../meters/components/replace-meter-modal/replace-meter-modal.component';
 import { ComunidadesComponent } from '../../../../admin/comunidades/comunidades.component';
-import { IClient } from '../../../clients/interfaces/iclients.interface';
-import { IMeter } from '../../../meters/interfaces/imeter.interface';
+import { IClient } from '../../../clients/domain/models/client.model';
+import { IMeter } from '../../../meters/domain/models/meter.model';
 import { ITariffCategory } from '../../../tariffs/interfaces/itariff.interface';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
@@ -43,7 +43,7 @@ import { coordinatePairValidator } from '../../../../../shared/components/coordi
   selector: 'app-service-contract-form',
   imports: [
     ReactiveFormsModule,
-    ClientsComponent,
+    ClientsListComponent,
     TariffsComponent,
     MetersIndexComponent,
     ReplaceMeterModalComponent,
@@ -56,7 +56,7 @@ import { coordinatePairValidator } from '../../../../../shared/components/coordi
 })
 export class ServiceContractFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
-  private readonly contractsService = inject(ContractsService);
+  private readonly contractsService = inject(ContractsApi);
   private readonly toast = inject(ToastService);
 
   // Si viene un contrato, el formulario está en modo edición. Catálogo de estados (para editar).

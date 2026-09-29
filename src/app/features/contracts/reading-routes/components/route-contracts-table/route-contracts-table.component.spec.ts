@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
 import { RouteContractsTableComponent } from './route-contracts-table.component';
-import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
+import { IContract } from '../../../service-contracts/domain/models/service-contract.model';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { OPERATOR_PALETTE } from '../../../../../shared/types/operator-color';
 

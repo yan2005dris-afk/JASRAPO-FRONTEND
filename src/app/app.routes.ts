@@ -340,8 +340,8 @@ export const routes: Routes = [
                 path: '',
                 pathMatch: 'full',
                 loadComponent: () =>
-                  import('./features/contracts/clients/clients.component').then(
-                    (m) => m.ClientsComponent,
+                  import('./features/contracts/clients/pages/clients-list/clients-list.component').then(
+                    (m) => m.ClientsListComponent,
                   ),
               },
               {
@@ -366,8 +366,8 @@ export const routes: Routes = [
             path: 'Contratos',
             data: { breadcrumb: 'Contratos de Servicios' },
             loadComponent: () =>
-              import('./features/contracts/service-contracts/service-contracts.component').then(
-                (m) => m.ServiceContractsComponent,
+              import('./features/contracts/service-contracts/pages/service-contracts-list/service-contracts-list.component').then(
+                (m) => m.ServiceContractsListComponent,
               ),
           },
           {
@@ -594,8 +594,8 @@ export const routes: Routes = [
             path: 'listado-clientes',
             data: { breadcrumb: 'Listado de Clientes' },
             loadComponent: () =>
-              import('./features/reports/clients-list/clients-list').then(
-                (m) => m.ClientsListComponent,
+              import('./features/reports/clients-list/client-report-list').then(
+                (m) => m.ClientReportListComponent,
               ),
           },
           {

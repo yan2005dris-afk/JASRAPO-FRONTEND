@@ -3,11 +3,11 @@ import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { ReplaceMeterModalComponent } from './replace-meter-modal.component';
-import { MetersService } from '../../services/meters.service';
+import { MetersApi } from '../../data/meters.api';
 import { PeriodsService } from '../../../../../shared/services/periods.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
-import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
-import { IMeter, IReplaceMeterResponse } from '../../interfaces/imeter.interface';
+import { IContract } from '../../../service-contracts/domain/models/service-contract.model';
+import { IMeter, IReplaceMeterResponse } from '../../domain/models/meter.model';
 
 describe('ReplaceMeterModalComponent', () => {
   let component: ReplaceMeterModalComponent;
@@ -115,7 +115,7 @@ describe('ReplaceMeterModalComponent', () => {
       imports: [ReplaceMeterModalComponent],
       providers: [
         FormBuilder,
-        { provide: MetersService, useValue: mockMetersService },
+        { provide: MetersApi, useValue: mockMetersService },
         { provide: PeriodsService, useValue: mockPeriodsService },
         { provide: ToastService, useValue: mockToastService },
       ],

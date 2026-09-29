@@ -17,8 +17,8 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 import { resolveClientDisplayName } from '../../../shared/utils/client-display-name';
 import { IPaymentsReportFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
-import { ClientsService } from '../../contracts/clients/services/clients.service';
-import type { IClient } from '../../contracts/clients/interfaces/iclients.interface';
+import { ClientsApi } from '../../contracts/clients/data/clients.api';
+import type { IClient } from '../../contracts/clients/domain/models/client.model';
 import { ReportEmailDialogComponent } from '../shared/report-email-dialog/report-email-dialog.component';
 import { ReportFormatTabsComponent } from '../shared/report-format-tabs/report-format-tabs.component';
 import {
@@ -101,7 +101,7 @@ export interface PaymentsReportData {
 export class PaymentsReportComponent implements OnDestroy {
   private readonly document = inject(DOCUMENT);
   private readonly reportsService = inject(ReportsService);
-  private readonly clientsService = inject(ClientsService);
+  private readonly clientsService = inject(ClientsApi);
   private readonly toast = inject(ToastService);
 
   // Filtros del reporte de abonos
