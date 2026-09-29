@@ -49,7 +49,7 @@ import {
   TIPO_ACTIVIDAD_LABEL,
   TIPO_RUTA_LABEL,
   ESTADO_FILTER_MAP,
-} from '../../constants/route-detail.constants';
+} from '../../domain/constants/route-detail.constants';
 import {
   resolveComunidadNombre,
   resolveOperarioNombre,
