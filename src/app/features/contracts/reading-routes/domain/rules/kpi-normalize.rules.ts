@@ -1,6 +1,10 @@
 import { IReading } from '../../../readings/interfaces/ireading.interface';
 import { IReadingRowItem } from '../../../readings/components/readings-table/readings-table.component';
-import { ILecturaKpis, IReadingForRoute, IRouteKpis } from '../../models/reading-route.model';
+import {
+  ILecturaKpis,
+  IReadingForRoute,
+  IRouteKpis,
+} from '../../domain/models/reading-route.model';
 
 /**
  * The backend exposes two KPI shapes for the same conceptual counters:

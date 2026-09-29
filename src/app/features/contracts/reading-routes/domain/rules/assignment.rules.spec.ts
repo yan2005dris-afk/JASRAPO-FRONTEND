@@ -6,7 +6,7 @@ import {
   resolveAssignmentStatus,
   toggleAssignment,
 } from './assignment.rules';
-import { IReadingRoute } from '../../models/reading-route.model';
+import { IReadingRoute } from '../../domain/models/reading-route.model';
 
 describe('session-assignments.helpers', () => {
   describe('toggleAssignment', () => {

@@ -16,7 +16,7 @@ import {
   IReadingRoute,
   ITipoActividad,
   TipoRuta,
-} from '../../models/reading-route.model';
+} from '../../domain/models/reading-route.model';
 import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
 import { SectoresService } from '../../../../admin/sectores-prueba/services/sectores';
 import { UsersService } from '../../../../users/services/users.service';

@@ -3,7 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { ReadingRoutesService } from './reading-routes.api';
 import { environment } from '../../../../../environments/environment';
-import { ICreateRouteAssignmentsDto } from '../models/reading-route.model';
+import { ICreateRouteAssignmentsDto } from '../domain/models/reading-route.model';
 
 describe('ReadingRoutesService', () => {
   let service: ReadingRoutesService;

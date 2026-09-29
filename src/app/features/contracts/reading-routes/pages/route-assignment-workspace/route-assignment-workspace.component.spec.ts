@@ -5,7 +5,7 @@ import { OPERATOR_PALETTE } from '../../../../../shared/types/operator-color';
 import { User } from '../../../../users/models/user.interface';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { Sectores } from '../../../../admin/sectores-prueba/models/sectores.interface';
-import { IReadingRoute } from '../../models/reading-route.model';
+import { IReadingRoute } from '../../domain/models/reading-route.model';
 import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
 import type { IAccountingPeriod } from '../../../../../shared/services/periods.service';
 

@@ -17,7 +17,7 @@ import {
   ITipoActividad,
   IUpdateRouteDto,
   PaginatedOrdenResponse,
-} from '../models/reading-route.model';
+} from '../domain/models/reading-route.model';
 
 @Injectable({
   providedIn: 'root',
