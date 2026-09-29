@@ -1,4 +1,4 @@
-import type { IRubro } from '../../../billing/rubros/interfaces/irubro.interface';
+import type { IRubro } from '../../../../billing/rubros/interfaces/irubro.interface';
 
 export interface ITariffCategory {
   categoriaTarifaId?: number;
