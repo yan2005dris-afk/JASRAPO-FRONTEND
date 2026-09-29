@@ -415,6 +415,110 @@
       </div>
     </div>
 
+    <section
+      class="card border-0 shadow-sm mb-4"
+      aria-labelledby="procedure-title"
+      formGroupName="procedure"
+    >
+      <div class="card-body">
+        <h5 id="procedure-title">Responsable del trámite</h5>
+        <label for="procedure-owner" class="form-label">¿Quién realiza el trámite?</label>
+        <select id="procedure-owner" class="form-select mb-3" formControlName="tramitadorEsTitular">
+          @if (isEditing() && (contractToEdit()?.tramitadorEsTitular ?? null) === null) {
+            <option [ngValue]="null">Sin información registrada</option>
+          }
+          <option [ngValue]="true">El titular del contrato</option>
+          <option [ngValue]="false">Otra persona</option>
+        </select>
+        @if (form.get('procedure.tramitadorEsTitular')?.value === false) {
+          <div class="row g-3 mb-3">
+            <div class="col-md-4">
+              <label for="procedure-name" class="form-label">Nombre completo *</label>
+              <input
+                id="procedure-name"
+                class="form-control"
+                formControlName="tramitadorNombre"
+                maxlength="200"
+                required
+              />
+            </div>
+            <div class="col-md-4">
+              <label for="procedure-identification" class="form-label">Identificación *</label>
+              <input
+                id="procedure-identification"
+                class="form-control"
+                formControlName="tramitadorIdentificacion"
+                maxlength="30"
+                required
+              />
+            </div>
+            <div class="col-md-4">
+              <label for="procedure-relationship" class="form-label"
+                >Relación con el titular *</label
+              >
+              <input
+                id="procedure-relationship"
+                class="form-control"
+                formControlName="relacionTramitador"
+                maxlength="100"
+                required
+              />
+            </div>
+          </div>
+        }
+        <div class="form-check mb-2">
+          <input
+            id="procedure-observations"
+            type="checkbox"
+            class="form-check-input"
+            formControlName="hasObservations"
+          />
+          <label for="procedure-observations" class="form-check-label"
+            >Registrar observaciones</label
+          >
+        </div>
+        @if (form.get('procedure.hasObservations')?.value) {
+          <label for="procedure-notes" class="form-label">Observaciones *</label>
+          <textarea
+            id="procedure-notes"
+            class="form-control mb-3"
+            formControlName="observacionesTramite"
+            maxlength="2000"
+            rows="3"
+            required
+          ></textarea>
+        }
+        <div class="form-check mb-2">
+          <input
+            id="procedure-other"
+            type="checkbox"
+            class="form-check-input"
+            formControlName="hasOtherIssues"
+          />
+          <label for="procedure-other" class="form-check-label">Otros</label>
+        </div>
+        @if (form.get('procedure.hasOtherIssues')?.value) {
+          <label for="procedure-other-notes" class="form-label">Detalle de otras novedades *</label>
+          <textarea
+            id="procedure-other-notes"
+            class="form-control mb-3"
+            formControlName="otrasNovedades"
+            maxlength="2000"
+            rows="3"
+            required
+          ></textarea>
+        }
+        @if (submitted() && form.get('procedure')?.invalid) {
+          <p class="text-danger" role="alert">
+            Complete los datos de quien tramita y los detalles de las opciones marcadas.
+          </p>
+        }
+        @if (contractToEdit()?.registradoPorId; as registrant) {
+          <p class="text-muted small mb-0">Registrado por el usuario {{ registrant }}.</p>
+        }
+      </div>
+    </section>
+
     <!--
       SECCIÓN DE DOCUMENTACIÓN LEGAL (subida de documentos) — PENDIENTE DE IMPLEMENTAR.
       Se deja comentada a propósito (oculta en el frontend por ahora). Esta funcionalidad

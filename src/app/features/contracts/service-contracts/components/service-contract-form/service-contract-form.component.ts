@@ -13,6 +13,7 @@ import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angula
 import { ContractsService } from '../../services/contracts.service';
 import {
   IContract,
+  IContractProcedureData,
   IContractState,
   ICreateContractRequest,
   IUpdateContractRequest,
@@ -106,6 +107,38 @@ export class ServiceContractFormComponent implements OnInit {
 
   readonly form: FormGroup = this.fb.group(
     {
+      procedure: this.fb.group(
+        {
+          tramitadorEsTitular: [true as boolean | null],
+          tramitadorNombre: ['', Validators.maxLength(200)],
+          tramitadorIdentificacion: ['', Validators.maxLength(30)],
+          relacionTramitador: ['', Validators.maxLength(100)],
+          hasObservations: [false],
+          observacionesTramite: ['', Validators.maxLength(2000)],
+          hasOtherIssues: [false],
+          otrasNovedades: ['', Validators.maxLength(2000)],
+        },
+        {
+          validators: (group) => {
+            const value = group.value;
+            if (
+              value.tramitadorEsTitular === false &&
+              [
+                value.tramitadorNombre,
+                value.tramitadorIdentificacion,
+                value.relacionTramitador,
+              ].some((text) => !text?.trim())
+            )
+              return { representativeRequired: true };
+            if (
+              (value.hasObservations && !value.observacionesTramite?.trim()) ||
+              (value.hasOtherIssues && !value.otrasNovedades?.trim())
+            )
+              return { observationRequired: true };
+            return null;
+          },
+        },
+      ),
       numeroGuia: ['', [Validators.required, Validators.maxLength(15)]],
       direccionSuministro: ['', [Validators.required, Validators.maxLength(200)]],
       lecturaInicial: ['0', [Validators.required, Validators.pattern(/^\d{1,10}$/)]],
@@ -134,6 +167,16 @@ export class ServiceContractFormComponent implements OnInit {
       estadoServicio: getContractServiceState(contract),
       latitud,
       longitud,
+    });
+    this.form.get('procedure')?.patchValue({
+      tramitadorEsTitular: contract.tramitadorEsTitular ?? null,
+      tramitadorNombre: contract.tramitadorNombre ?? '',
+      tramitadorIdentificacion: contract.tramitadorIdentificacion ?? '',
+      relacionTramitador: contract.relacionTramitador ?? '',
+      hasObservations: !!contract.observacionesTramite,
+      observacionesTramite: contract.observacionesTramite ?? '',
+      hasOtherIssues: !!contract.otrasNovedades,
+      otrasNovedades: contract.otrasNovedades ?? '',
     });
     this.coordinates.set({ latitud, longitud });
 
@@ -325,6 +368,38 @@ export class ServiceContractFormComponent implements OnInit {
     }
   }
 
+  private procedurePayload(): IContractProcedureData {
+    const group = this.form.get('procedure')!;
+    const value = group.value;
+    const original = this.contractToEdit();
+    if (
+      original &&
+      !group.dirty &&
+      original.tramitadorEsTitular == null &&
+      !original.observacionesTramite &&
+      !original.otrasNovedades
+    )
+      return {};
+    return {
+      ...(value.tramitadorEsTitular != null
+        ? { tramitadorEsTitular: value.tramitadorEsTitular }
+        : {}),
+      ...(value.tramitadorEsTitular === false
+        ? {
+            tramitadorNombre: value.tramitadorNombre.trim(),
+            tramitadorIdentificacion: value.tramitadorIdentificacion.trim(),
+            relacionTramitador: value.relacionTramitador.trim(),
+          }
+        : {}),
+      ...(original || value.hasObservations
+        ? { observacionesTramite: value.hasObservations ? value.observacionesTramite.trim() : null }
+        : {}),
+      ...(original || value.hasOtherIssues
+        ? { otrasNovedades: value.hasOtherIssues ? value.otrasNovedades.trim() : null }
+        : {}),
+    };
+  }
+
   // ---------- Envío ----------
   save(): void {
     if (this.isEditing()) {
@@ -365,6 +440,7 @@ export class ServiceContractFormComponent implements OnInit {
 
     const value = this.form.value;
     const payload: ICreateContractRequest = {
+      ...this.procedurePayload(),
       clienteId: String(clientId),
       categoriaTarifaId: String(tariff.categoriaTarifaId),
       medidorId: String(meter.medidorId),
@@ -424,6 +500,7 @@ export class ServiceContractFormComponent implements OnInit {
     const value = this.form.value;
     // Solo se actualizan datos contractuales. El medidor se gestiona por POST /meters/replace.
     const payload: IUpdateContractRequest = {
+      ...this.procedurePayload(),
       ...(value.estadoServicio && value.estadoServicio !== getContractServiceState(contract)
         ? { estadoServicio: value.estadoServicio }
         : {}),

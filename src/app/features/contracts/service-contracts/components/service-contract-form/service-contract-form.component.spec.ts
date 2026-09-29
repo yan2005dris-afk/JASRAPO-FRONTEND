@@ -262,6 +262,7 @@ describe('ServiceContractFormComponent', () => {
     component.save();
 
     expect(mockContractsService.createContract).toHaveBeenCalledWith({
+      tramitadorEsTitular: true,
       clienteId: '101',
       categoriaTarifaId: '2',
       medidorId: '500',
@@ -392,5 +393,53 @@ describe('ServiceContractFormComponent', () => {
     expect(mockContractsService.createContract).not.toHaveBeenCalled();
     expect(mockToastService.warning).toHaveBeenCalled();
     expect(component.coordinateError()).toBe('Ingrese latitud y longitud, o deje ambas vacías.');
+  });
+  it('requires representative details and hides them again when the owner performs the procedure', () => {
+    fixture.detectChanges();
+    component.form.get('procedure.tramitadorEsTitular')?.setValue(false);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#procedure-name')).toBeTruthy();
+    expect(component.form.get('procedure')?.hasError('representativeRequired')).toBe(true);
+    component.form.get('procedure')?.patchValue({
+      tramitadorNombre: 'Ana',
+      tramitadorIdentificacion: 'ABC',
+      relacionTramitador: 'Familiar',
+    });
+    expect(component.form.get('procedure')?.valid).toBe(true);
+    component.form.get('procedure.tramitadorEsTitular')?.setValue(true);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#procedure-name')).toBeNull();
+    expect(component.form.get('procedure')?.valid).toBe(true);
+  });
+  it('requires Other details only when selected and clears stored notes when unchecked', () => {
+    fixture.componentRef.setInput('contractToEdit', {
+      ...mockContract,
+      tramitadorEsTitular: false,
+      tramitadorNombre: 'Ana',
+      tramitadorIdentificacion: 'ABC',
+      relacionTramitador: 'Familiar',
+      otrasNovedades: 'Original',
+      registradoPorId: 7,
+    });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#procedure-other-notes')).toBeTruthy();
+    component.form.get('procedure.otrasNovedades')?.setValue('  ');
+    expect(component.form.get('procedure')?.hasError('observationRequired')).toBe(true);
+    const otherCheckbox = fixture.nativeElement.querySelector(
+      '#procedure-other',
+    ) as HTMLInputElement;
+    otherCheckbox.checked = false;
+    otherCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('#procedure-other-notes')).toBeNull();
+    mockContractsService.updateContract.mockReturnValue(of(mockContract));
+    component.save();
+    expect(mockContractsService.updateContract).toHaveBeenCalledWith(
+      '10',
+      expect.objectContaining({ tramitadorNombre: 'Ana', otrasNovedades: null }),
+    );
+    expect(mockContractsService.updateContract.mock.calls[0][1]).not.toHaveProperty(
+      'registradoPorId',
+    );
   });
 });
