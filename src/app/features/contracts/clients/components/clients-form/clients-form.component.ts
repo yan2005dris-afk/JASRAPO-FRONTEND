@@ -30,7 +30,7 @@ import {
   IClient,
   IIdentificacion,
 } from '../../domain/models/client.model';
-import { identificacionValidator } from '../../validators/identificacion.validator';
+import { identificacionValidator } from '../../domain/validators/identificacion.validator';
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 
 const EDAD_TERCERA_EDAD = 65;
