@@ -10,7 +10,7 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
 import { IContract } from '../../domain/models/service-contract.model';
 import { IMeter } from '../../../meters/domain/models/meter.model';
 import { IClient } from '../../../clients/domain/models/client.model';
-import { ITariffCategory } from '../../../tariffs/interfaces/itariff.interface';
+import { ITariffCategory } from '../../../tariffs/domain/models/tariff.model';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 
 describe('ServiceContractFormComponent', () => {

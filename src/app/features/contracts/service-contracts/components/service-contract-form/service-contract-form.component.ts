@@ -19,13 +19,13 @@ import {
   getContractServiceState,
 } from '../../domain/models/service-contract.model';
 import { ClientsListComponent } from '../../../clients/pages/clients-list/clients-list.component';
-import { TariffsComponent } from '../../../tariffs/tariffs.component';
+import { TariffsListComponent } from '../../../tariffs/pages/tariffs-list/tariffs-list.component';
 import { MetersIndexComponent } from '../../../meters/components/meters-index/meters-index.component';
 import { ReplaceMeterModalComponent } from '../../../meters/components/replace-meter-modal/replace-meter-modal.component';
 import { ComunidadesComponent } from '../../../../admin/comunidades/comunidades.component';
 import { IClient } from '../../../clients/domain/models/client.model';
 import { IMeter } from '../../../meters/domain/models/meter.model';
-import { ITariffCategory } from '../../../tariffs/interfaces/itariff.interface';
+import { ITariffCategory } from '../../../tariffs/domain/models/tariff.model';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import {
@@ -44,7 +44,7 @@ import { coordinatePairValidator } from '../../../../../shared/components/coordi
   imports: [
     ReactiveFormsModule,
     ClientsListComponent,
-    TariffsComponent,
+    TariffsListComponent,
     MetersIndexComponent,
     ReplaceMeterModalComponent,
     ComunidadesComponent,

@@ -2,16 +2,16 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of, throwError } from 'rxjs';
 import { Mock, vi } from 'vitest';
 
-import { TariffsComponent } from './tariffs.component';
-import { TariffsService } from './services/tariffs.service';
-import { RubrosService } from '../../billing/rubros/services/rubros.service';
-import { ToastService } from '../../../shared/components/toast/toast.service';
-import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
-import { TableExportService } from '../../../shared/services/table-export.service';
+import { TariffsListComponent } from './tariffs-list.component';
+import { TariffsApi } from '../../data/tariffs.api';
+import { RubrosService } from '../../../../billing/rubros/services/rubros.service';
+import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { TableExportService } from '../../../../../shared/services/table-export.service';
 
-describe('TariffsComponent', () => {
-  let component: TariffsComponent;
-  let fixture: ComponentFixture<TariffsComponent>;
+describe('TariffsListComponent', () => {
+  let component: TariffsListComponent;
+  let fixture: ComponentFixture<TariffsListComponent>;
   let tariffsServiceSpy: { getTariffs: Mock };
   let toastSpy: { show: Mock };
   let exportSpy: { exportToPdf: Mock; exportToExcel: Mock; exportToCsv: Mock };
@@ -36,9 +36,9 @@ describe('TariffsComponent', () => {
     exportSpy = { exportToPdf: vi.fn(), exportToExcel: vi.fn(), exportToCsv: vi.fn() };
 
     await TestBed.configureTestingModule({
-      imports: [TariffsComponent],
+      imports: [TariffsListComponent],
       providers: [
-        { provide: TariffsService, useValue: tariffsServiceSpy },
+        { provide: TariffsApi, useValue: tariffsServiceSpy },
         {
           provide: RubrosService,
           useValue: { getRubros: vi.fn().mockReturnValue(of({ data: [] })) },
@@ -49,7 +49,7 @@ describe('TariffsComponent', () => {
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(TariffsComponent);
+    fixture = TestBed.createComponent(TariffsListComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

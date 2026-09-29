@@ -9,13 +9,13 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ReadingAnomaliesService } from '../../services/reading-anomalies.service';
+import { ReadingAnomaliesApi } from '../../data/reading-anomalies.api';
 import {
   ICreateReadingAnomalyDto,
   IReadingAnomaly,
   IUpdateReadingAnomalyDto,
   TipoAnomalia,
-} from '../../interfaces/ianomaly.interface';
+} from '../../domain/models/reading-anomaly.model';
 import { ContractsApi } from '../../../service-contracts/data/contracts.api';
 import type { IContract } from '../../../service-contracts/domain/models/service-contract.model';
 import { ReadingsService } from '../../../readings/services/readings.service';
@@ -32,7 +32,7 @@ import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AnomalyFormModalComponent implements OnInit {
-  private readonly anomaliesService = inject(ReadingAnomaliesService);
+  private readonly anomaliesService = inject(ReadingAnomaliesApi);
   private readonly contractsService = inject(ContractsApi);
   private readonly readingsService = inject(ReadingsService);
   private readonly toastService = inject(ToastService);

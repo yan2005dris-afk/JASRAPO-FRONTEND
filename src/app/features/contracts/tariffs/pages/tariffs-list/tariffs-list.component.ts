@@ -13,28 +13,28 @@ import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
 
-import { TariffsService } from './services/tariffs.service';
-import { ITariffCategory } from './interfaces/itariff.interface';
-import { TariffsFormComponent } from './components/tariffs-form/tariffs-form.component';
-import { RubroFormModalComponent } from '../../billing/rubros/components/rubro-form-modal/rubro-form-modal.component';
-import { RubroTableComponent } from '../../billing/rubros/components/rubro-table/rubro-table.component';
-import { RubrosService } from '../../billing/rubros/services/rubros.service';
-import { IRubro } from '../../billing/rubros/interfaces/irubro.interface';
-import { ToastService } from '../../../shared/components/toast/toast.service';
-import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
-import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
-import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
-import { TableExportService } from '../../../shared/services/table-export.service';
+import { TariffsApi } from '../../data/tariffs.api';
+import { ITariffCategory } from '../../domain/models/tariff.model';
+import { TariffsFormComponent } from '../../components/tariffs-form/tariffs-form.component';
+import { RubroFormModalComponent } from '../../../../billing/rubros/components/rubro-form-modal/rubro-form-modal.component';
+import { RubroTableComponent } from '../../../../billing/rubros/components/rubro-table/rubro-table.component';
+import { RubrosService } from '../../../../billing/rubros/services/rubros.service';
+import { IRubro } from '../../../../billing/rubros/interfaces/irubro.interface';
+import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
+import { TableSkeletonComponent } from '../../../../../shared/components/table-skeleton/table-skeleton.component';
+import { TableExportService } from '../../../../../shared/services/table-export.service';
 import {
   DropdownComponent,
   DropdownItem,
-} from '../../../shared/components/dropdown/dropdown.component';
+} from '../../../../../shared/components/dropdown/dropdown.component';
 
 /** Tamaño de página al descargar el listado completo: el backend topa `limit` en 50. */
 const EXPORT_PAGE_SIZE = 50;
 
 @Component({
-  selector: 'app-tariffs',
+  selector: 'app-tariffs-list',
   imports: [
     CommonModule,
     FormsModule,
@@ -45,15 +45,15 @@ const EXPORT_PAGE_SIZE = 50;
     TableSkeletonComponent,
     DropdownComponent,
   ],
-  templateUrl: './tariffs.component.html',
-  styleUrl: './tariffs.component.scss',
+  templateUrl: './tariffs-list.component.html',
+  styleUrl: './tariffs-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class TariffsComponent implements OnInit {
-  private readonly tariffsService = inject(TariffsService);
+export class TariffsListComponent implements OnInit {
+  private readonly tariffsService = inject(TariffsApi);
   private readonly rubrosService = inject(RubrosService);
   private readonly toast = inject(ToastService);
   private readonly confirmDialog = inject(ConfirmDialogService);

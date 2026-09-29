@@ -2,11 +2,11 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
-import { TariffsService } from './tariffs.service';
+import { TariffsApi } from './tariffs.api';
 import { environment } from '../../../../../environments/environment';
 
-describe('TariffsService', () => {
-  let service: TariffsService;
+describe('TariffsApi', () => {
+  let service: TariffsApi;
   let httpMock: HttpTestingController;
 
   const endpoint = `${environment.apiUrl}/tariff-categories`;
@@ -15,7 +15,7 @@ describe('TariffsService', () => {
     TestBed.configureTestingModule({
       providers: [provideHttpClient(), provideHttpClientTesting()],
     });
-    service = TestBed.inject(TariffsService);
+    service = TestBed.inject(TariffsApi);
     httpMock = TestBed.inject(HttpTestingController);
   });
 
