@@ -3,11 +3,11 @@ import { of } from 'rxjs';
 import { Mock, vi } from 'vitest';
 
 import { ContractsApi } from '../data/contracts.api';
-import { ServiceContractsComponent } from './service-contracts.component';
+import { ServiceContractsListComponent } from './service-contracts-list.component';
 
-describe('ServiceContractsComponent', () => {
-  let component: ServiceContractsComponent;
-  let fixture: ComponentFixture<ServiceContractsComponent>;
+describe('ServiceContractsListComponent', () => {
+  let component: ServiceContractsListComponent;
+  let fixture: ComponentFixture<ServiceContractsListComponent>;
   let contractsServiceMock: {
     getContractStates: Mock;
     getContracts: Mock;
@@ -22,11 +22,11 @@ describe('ServiceContractsComponent', () => {
     contractsServiceMock.getContracts.mockReturnValue(of({ data: [], meta: { total: 0 } }));
 
     await TestBed.configureTestingModule({
-      imports: [ServiceContractsComponent],
+      imports: [ServiceContractsListComponent],
       providers: [{ provide: ContractsApi, useValue: contractsServiceMock }],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(ServiceContractsComponent);
+    fixture = TestBed.createComponent(ServiceContractsListComponent);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

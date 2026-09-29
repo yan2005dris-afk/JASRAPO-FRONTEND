@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { ContractsApi } from '../data/contracts.api';
+import { ContractsApi } from '../../data/contracts.api';
 import {
   IContract,
   IContractState,
@@ -9,18 +9,18 @@ import {
   ISearchContractsParams,
   type EstadoCobranza,
   getContractServiceState,
-} from './domain/models/service-contract.model';
-import { ServiceContractFormComponent } from './components/service-contract-form/service-contract-form.component';
-import { ReplaceMeterModalComponent } from '../meters/components/replace-meter-modal/replace-meter-modal.component';
-import { AssignInstallationRouteModalComponent } from './components/assign-installation-route-modal/assign-installation-route-modal.component';
-import { ContractsTableComponent } from './components/contracts-table/contracts-table.component';
-import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
-import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
-import { TableExportService } from '../../../shared/services/table-export.service';
+} from '../../domain/models/service-contract.model';
+import { ServiceContractFormComponent } from '../../components/service-contract-form/service-contract-form.component';
+import { ReplaceMeterModalComponent } from '../../../meters/components/replace-meter-modal/replace-meter-modal.component';
+import { AssignInstallationRouteModalComponent } from '../../components/assign-installation-route-modal/assign-installation-route-modal.component';
+import { ContractsTableComponent } from '../../components/contracts-table/contracts-table.component';
+import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
+import { TableSkeletonComponent } from '../../../../../shared/components/table-skeleton/table-skeleton.component';
+import { TableExportService } from '../../../../../shared/services/table-export.service';
 import {
   DropdownComponent,
   DropdownItem,
-} from '../../../shared/components/dropdown/dropdown.component';
+} from '../../../../../shared/components/dropdown/dropdown.component';
 
 const SERVICE_STATE_OPTIONS = [
   { value: 'PENDIENTE_INSPECCION', label: 'Pendiente de inspecci\u00f3n' },
@@ -39,7 +39,7 @@ const COLLECTION_STATE_OPTIONS = [
 ] as const;
 
 @Component({
-  selector: 'app-service-contracts',
+  selector: 'app-service-contracts-list',
   imports: [
     FormsModule,
     ServiceContractFormComponent,
@@ -50,14 +50,14 @@ const COLLECTION_STATE_OPTIONS = [
     TableSkeletonComponent,
     DropdownComponent,
   ],
-  templateUrl: './service-contracts.component.html',
-  styleUrl: './service-contracts.component.scss',
+  templateUrl: './service-contracts-list.component.html',
+  styleUrl: './service-contracts-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class ServiceContractsComponent implements OnInit {
+export class ServiceContractsListComponent implements OnInit {
   private readonly contractsService = inject(ContractsApi);
 
   readonly exportItems: DropdownItem[] = [
