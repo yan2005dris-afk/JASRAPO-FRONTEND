@@ -11,6 +11,7 @@ import {
   IExportMetersParams,
   IMeterHistory,
   IReplaceMeterResponse,
+  MeterExportFormat,
 } from '../domain/models/meter.model';
 import { environment } from '../../../../../environments/environment';
 
