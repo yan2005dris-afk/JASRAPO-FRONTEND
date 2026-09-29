@@ -14,7 +14,7 @@ import {
   ICreateAgreementDto,
   IDebtSummary,
   ISimulatedInstallment,
-} from '../../interfaces/ipayment-agreement.interface';
+} from '../../domain/models/payment-agreement.model';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';

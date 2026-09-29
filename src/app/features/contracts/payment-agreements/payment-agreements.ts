@@ -10,7 +10,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PaymentAgreementsService } from './services/payment-agreements.service';
-import { IAgreement, IFindAllAgreementsParams } from './interfaces/ipayment-agreement.interface';
+import { IAgreement, IFindAllAgreementsParams } from './domain/models/payment-agreement.model';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';

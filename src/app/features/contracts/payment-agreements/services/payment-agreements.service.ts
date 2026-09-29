@@ -10,7 +10,7 @@ import {
   IFindAllAgreementsParams,
   IInstallment,
   IUpdateAgreementDto,
-} from '../interfaces/ipayment-agreement.interface';
+} from '../domain/models/payment-agreement.model';
 
 @Injectable({
   providedIn: 'root',

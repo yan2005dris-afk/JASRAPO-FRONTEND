@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { PaymentAgreementsService } from '../../services/payment-agreements.service';
-import { IAgreement, IInstallment } from '../../interfaces/ipayment-agreement.interface';
+import { IAgreement, IInstallment } from '../../domain/models/payment-agreement.model';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
