@@ -23,7 +23,7 @@ import { TariffsComponent } from '../../../tariffs/tariffs.component';
 import { MetersIndexComponent } from '../../../meters/components/meters-index/meters-index.component';
 import { ReplaceMeterModalComponent } from '../../../meters/components/replace-meter-modal/replace-meter-modal.component';
 import { ComunidadesComponent } from '../../../../admin/comunidades/comunidades.component';
-import { IClient } from '../../../clients/interfaces/iclients.interface';
+import { IClient } from '../../../clients/domain/models/client.model';
 import { IMeter } from '../../../meters/domain/models/meter.model';
 import { ITariffCategory } from '../../../tariffs/interfaces/itariff.interface';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';

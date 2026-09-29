@@ -29,7 +29,7 @@ import {
   CreateClientRequest,
   IClient,
   IIdentificacion,
-} from '../../interfaces/iclients.interface';
+} from '../../domain/models/client.model';
 import { identificacionValidator } from '../../validators/identificacion.validator';
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 

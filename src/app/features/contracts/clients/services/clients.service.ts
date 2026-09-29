@@ -9,7 +9,7 @@ import {
   IClient,
   IIdentificacion,
   IPaginatedResult,
-} from '../interfaces/iclients.interface';
+} from '../domain/models/client.model';
 
 import { environment } from '../../../../../environments/environment';
 

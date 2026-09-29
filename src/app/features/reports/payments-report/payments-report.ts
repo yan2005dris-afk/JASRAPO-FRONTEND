@@ -18,7 +18,7 @@ import { resolveClientDisplayName } from '../../../shared/utils/client-display-n
 import { IPaymentsReportFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
 import { ClientsService } from '../../contracts/clients/services/clients.service';
-import type { IClient } from '../../contracts/clients/interfaces/iclients.interface';
+import type { IClient } from '../../contracts/clients/domain/models/client.model';
 import { ReportEmailDialogComponent } from '../shared/report-email-dialog/report-email-dialog.component';
 import { ReportFormatTabsComponent } from '../shared/report-format-tabs/report-format-tabs.component';
 import {

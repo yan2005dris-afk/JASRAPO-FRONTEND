@@ -20,7 +20,7 @@ import {
   EstadoBusquedaCliente,
   IClient,
   IIdentificacion,
-} from './interfaces/iclients.interface';
+} from './domain/models/client.model';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';

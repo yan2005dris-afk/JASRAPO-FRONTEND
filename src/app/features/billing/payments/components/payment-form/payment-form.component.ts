@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PaymentsService } from '../../services/payments.service';
-import { IClient } from '../../../../contracts/clients/interfaces/iclients.interface';
+import { IClient } from '../../../../contracts/clients/domain/models/client.model';
 import { PreInvoicesService } from '../../../pre-invoices/services/pre-invoices.service';
 import { IPreInvoice } from '../../../pre-invoices/interfaces/ipre-invoice.interface';
 import {

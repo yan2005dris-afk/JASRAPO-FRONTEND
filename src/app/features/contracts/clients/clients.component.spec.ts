@@ -6,7 +6,7 @@ import { vi } from 'vitest';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { ClientsService } from './services/clients.service';
-import { IClient } from './interfaces/iclients.interface';
+import { IClient } from './domain/models/client.model';
 import { ClientsComponent } from './clients.component';
 
 describe('ClientsComponent', () => {

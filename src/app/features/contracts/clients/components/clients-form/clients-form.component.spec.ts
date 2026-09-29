@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { vi } from 'vitest';
 
 import { ClientsService } from '../../services/clients.service';
-import { CreateClientRequest, IClient, IIdentificacion } from '../../interfaces/iclients.interface';
+import { CreateClientRequest, IClient, IIdentificacion } from '../../domain/models/client.model';
 import { ClientsFormComponent } from './clients-form.component';
 
 describe('ClientsFormComponent', () => {
