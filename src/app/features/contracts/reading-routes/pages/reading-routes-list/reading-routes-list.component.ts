@@ -24,7 +24,7 @@ import {
 import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Router } from '@angular/router';
 import { ReassignRouteModalComponent } from '../../components/reassign-route-modal/reassign-route-modal.component';
-import { TIPO_RUTA_LABEL } from '../../domain/constants/route-detail.constants';
+import { TIPO_RUTA_LABEL } from '../../domain/constants';
 import { resolveComunidadNombre, resolveOperarioNombre } from '../../../../shared/utils/operator-name';
 import { filterOperariosByRole } from '../../../../shared/utils/users';
 import { ExportColumn } from '../../../../shared/services/table-export.service';

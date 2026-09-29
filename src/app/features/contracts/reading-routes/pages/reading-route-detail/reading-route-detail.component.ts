@@ -49,7 +49,7 @@ import {
   TIPO_ACTIVIDAD_LABEL,
   TIPO_RUTA_LABEL,
   ESTADO_FILTER_MAP,
-} from '../../domain/constants/route-detail.constants';
+} from '../../domain/constants';
 import {
   resolveComunidadNombre,
   resolveOperarioNombre,
@@ -58,7 +58,7 @@ import {
   buildReadingFallback,
   mapLecturaKpisToRouteKpis,
   mapReadingForRouteToRow,
-} from '../../domain/rules/kpi-normalize.rules';
+} from '../../domain/rules';
 import { RouteOrderActionsService } from '../../application/route-order.actions';
 import { RouteReadingActionsService } from '../../application/route-reading.actions';
 import { RouteStatusService, RouteEstado } from '../../application/route-status.transitions';

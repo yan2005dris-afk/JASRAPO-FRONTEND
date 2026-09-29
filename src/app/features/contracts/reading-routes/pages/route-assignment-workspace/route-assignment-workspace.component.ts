@@ -36,16 +36,18 @@ import {
 import { OperatorColor, OPERATOR_PALETTE } from '../../../../../shared/types/operator-color';
 
 import { RouteContractsTableComponent } from '../../components/route-contracts-table/route-contracts-table.component';
-import { assertOperatorSelected, assertPeriodOpen } from '../../domain/validators/period.validator';
+import { assertOperatorSelected, assertPeriodOpen } from '../../domain/validators';
 import {
   AssignmentStatus,
+  calculateGlobalCoverage,
+  calculateNonLecturaCoverage,
   clearAssignmentsForOperator,
   groupContractAssignmentsByOperatorCommunity,
   groupSectorAssignmentsByOperatorCommunity,
   resolveAssignmentStatus,
   ResolvedAssignmentStatus,
   toggleAssignment,
-} from '../../domain/rules/assignment.rules';
+} from '../../domain/rules';
 
 /** Shape returned by `getCommunityStatus` / `getSectorStatus` (concrete `color` type). */
 type AssignmentStatusView = ResolvedAssignmentStatus<OperatorColor>;
@@ -54,10 +56,6 @@ import {
   resolveOperarioNombre,
 } from '../../../../../shared/utils/operator-name';
 import { filterOperariosByRole } from '../../../../../shared/utils/users';
-import {
-  calculateGlobalCoverage,
-  calculateNonLecturaCoverage,
-} from '../../domain/rules/coverage.rules';
 import { resetScrollNextMicrotask } from '../../../../../shared/utils/scroll';
 
 @Component({
