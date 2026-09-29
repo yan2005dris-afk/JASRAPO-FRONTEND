@@ -9,7 +9,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ReadingAnomaliesService } from './services/reading-anomalies.service';
+import { ReadingAnomaliesApi } from './data/reading-anomalies.api';
 import {
   IReadingAnomaly,
   IReadingAnomalyFilterParams,
@@ -55,7 +55,7 @@ import { LocalDatePipe } from '../../../shared/pipes/local-date.pipe';
 export class ReadingAnomaliesComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
-  private readonly anomaliesService = inject(ReadingAnomaliesService);
+  private readonly anomaliesService = inject(ReadingAnomaliesApi);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
 

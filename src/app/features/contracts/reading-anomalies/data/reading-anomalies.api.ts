@@ -10,34 +10,15 @@ import {
   IUpdateReadingAnomalyDto,
   IWorkOrderNoveltyRaw,
 } from '../domain/models/reading-anomaly.model';
+import { mapNoveltyToAnomaly } from '../domain/rules/reading-anomaly.mapper';
 
 @Injectable({
   providedIn: 'root',
 })
-export class ReadingAnomaliesService {
+export class ReadingAnomaliesApi {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl;
   private readonly endpoint = `${this.baseUrl}/work-order-novelties`;
-
-  private mapNoveltyToAnomaly(item: IWorkOrderNoveltyRaw): IReadingAnomaly {
-    const id = String(item.novedadId ?? item.anomaliaId ?? '');
-    return {
-      anomaliaId: id,
-      novedadId: id,
-      ordenTrabajoId: item.ordenTrabajoId ? String(item.ordenTrabajoId) : undefined,
-      lecturaId: item.lecturaId ? String(item.lecturaId) : null,
-      observacion: item.observacion ?? null,
-      tipo: item.tipo,
-      estado: item.estado,
-      resolucionTipo: item.resolucionTipo ?? null,
-      consumoAjustado: item.consumoAjustado !== undefined ? Number(item.consumoAjustado) : null,
-      observacionResolucion: item.observacionResolucion ?? null,
-      fotoUrl: item.fotoUrl ?? null,
-      lectura: item.lectura ?? null,
-      createdAt: item.createdAt,
-      updatedAt: item.updatedAt,
-    };
-  }
 
   getAnomalies(
     params?: IReadingAnomalyFilterParams,
@@ -70,7 +51,7 @@ export class ReadingAnomaliesService {
       .pipe(
         map((res) => {
           const total = res.total ?? res.meta?.totalItems ?? res.data.length;
-          const mappedData = res.data.map((item) => this.mapNoveltyToAnomaly(item));
+          const mappedData = res.data.map((item) => mapNoveltyToAnomaly(item));
           return {
             data: mappedData,
             meta: {
@@ -88,7 +69,7 @@ export class ReadingAnomaliesService {
   getAnomalyById(id: string | number): Observable<IReadingAnomaly> {
     return this.http
       .get<IWorkOrderNoveltyRaw>(`${this.endpoint}/${id}`)
-      .pipe(map((item) => this.mapNoveltyToAnomaly(item)));
+      .pipe(map((item) => mapNoveltyToAnomaly(item)));
   }
 
   getAnomalyStates(): Observable<{ codigo: string; nombre: string; icono?: string }[]> {
@@ -117,7 +98,7 @@ export class ReadingAnomaliesService {
 
     return this.http
       .post<IWorkOrderNoveltyRaw>(this.endpoint, formData)
-      .pipe(map((item) => this.mapNoveltyToAnomaly(item)));
+      .pipe(map((item) => mapNoveltyToAnomaly(item)));
   }
 
   updateAnomaly(
@@ -144,7 +125,7 @@ export class ReadingAnomaliesService {
 
     return this.http
       .patch<IWorkOrderNoveltyRaw>(`${this.endpoint}/${id}`, formData)
-      .pipe(map((item) => this.mapNoveltyToAnomaly(item)));
+      .pipe(map((item) => mapNoveltyToAnomaly(item)));
   }
 
   deleteAnomaly(id: string | number): Observable<{ message?: string }> {

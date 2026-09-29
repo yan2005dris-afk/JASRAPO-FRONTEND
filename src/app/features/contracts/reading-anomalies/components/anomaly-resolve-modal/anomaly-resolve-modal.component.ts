@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ReadingAnomaliesService } from '../../services/reading-anomalies.service';
+import { ReadingAnomaliesApi } from '../../data/reading-anomalies.api';
 import { IReadingAnomaly } from '../../domain/models/reading-anomaly.model';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
@@ -16,7 +16,7 @@ import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AnomalyResolveModalComponent {
-  private readonly anomaliesService = inject(ReadingAnomaliesService);
+  private readonly anomaliesService = inject(ReadingAnomaliesApi);
   private readonly toastService = inject(ToastService);
 
   readonly anomaly = input.required<IReadingAnomaly>();
