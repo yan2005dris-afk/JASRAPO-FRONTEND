@@ -450,9 +450,9 @@ export const routes: Routes = [
             path: 'TarifasYCategorias',
             data: { breadcrumb: 'Tarifas y Categorías' },
             loadComponent: () =>
-              import(
-                './features/contracts/tariffs/pages/tariffs-list/tariffs-list.component'
-              ).then((m) => m.TariffsListComponent),
+              import('./features/contracts/tariffs/pages/tariffs-list/tariffs-list.component').then(
+                (m) => m.TariffsListComponent,
+              ),
           },
         ],
       },
