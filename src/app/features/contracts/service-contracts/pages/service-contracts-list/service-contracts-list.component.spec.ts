@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { Mock, vi } from 'vitest';
 
-import { ContractsApi } from '../data/contracts.api';
+import { ContractsApi } from '../../data/contracts.api';
 import { ServiceContractsListComponent } from './service-contracts-list.component';
 
 describe('ServiceContractsListComponent', () => {
