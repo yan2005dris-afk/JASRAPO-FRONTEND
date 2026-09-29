@@ -5,7 +5,7 @@ import { of } from 'rxjs';
 import { vi } from 'vitest';
 
 import { AuthService } from '../../../core/services/auth.service';
-import { ClientsService } from './services/clients.service';
+import { ClientsApi } from './data/clients.api';
 import { IClient } from './domain/models/client.model';
 import { ClientsComponent } from './clients.component';
 
@@ -34,7 +34,7 @@ describe('ClientsComponent', () => {
       imports: [ClientsComponent],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
-        { provide: ClientsService, useValue: clientsServiceSpy },
+        { provide: ClientsApi, useValue: clientsServiceSpy },
         provideRouter([]),
       ],
     }).compileComponents();

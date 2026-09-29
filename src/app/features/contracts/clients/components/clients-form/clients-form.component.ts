@@ -22,7 +22,7 @@ import {
 import { Router, ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
-import { ClientsService } from '../../services/clients.service';
+import { ClientsApi } from '../../data/clients.api';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import {
   UpdateClientRequest,
@@ -77,7 +77,7 @@ export class ClientsFormComponent implements OnInit {
 
   readonly clienteAEditar = input<IClient | null>(null);
 
-  private readonly clientsService = inject(ClientsService);
+  private readonly clientsService = inject(ClientsApi);
   private readonly toastService = inject(ToastService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);

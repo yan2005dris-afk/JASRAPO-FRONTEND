@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 
-import { ClientsService } from './clients.service';
+import { ClientsApi } from './clients.api';
 import {
   UpdateClientRequest,
   CreateClientRequest,
@@ -12,8 +12,8 @@ import {
 } from '../domain/models/client.model';
 import { environment } from '../../../../../environments/environment';
 
-describe('ClientsService', () => {
-  let service: ClientsService;
+describe('ClientsApi', () => {
+  let service: ClientsApi;
   let httpMock: HttpTestingController;
 
   const endpoint = `${environment.apiUrl}/clients`;
@@ -74,10 +74,10 @@ describe('ClientsService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ClientsService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [ClientsApi, provideHttpClient(), provideHttpClientTesting()],
     });
 
-    service = TestBed.inject(ClientsService);
+    service = TestBed.inject(ClientsApi);
     httpMock = TestBed.inject(HttpTestingController);
   });
 

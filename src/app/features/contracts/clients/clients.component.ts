@@ -14,7 +14,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
 import { AuthService } from '../../../core/services/auth.service';
-import { ClientsService } from './services/clients.service';
+import { ClientsApi } from './data/clients.api';
 import {
   SearchClientsParams,
   EstadoBusquedaCliente,
@@ -66,7 +66,7 @@ export class ClientsComponent implements OnInit, OnDestroy {
     else if (action === 'csv') this.exportToCsv();
   }
 
-  private readonly clientsService = inject(ClientsService);
+  private readonly clientsService = inject(ClientsApi);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
   private readonly router = inject(Router);
