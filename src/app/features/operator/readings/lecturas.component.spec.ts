@@ -8,7 +8,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { MeterCacheService } from '../../../core/services/meter-cache.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { signal } from '@angular/core';
-import { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
+import { IMeterDto } from '../../contracts/meters/domain/models/meter.model';
 
 describe('LecturasComponent State Machine', () => {
   let component: LecturasComponent;
@@ -24,8 +24,6 @@ describe('LecturasComponent State Machine', () => {
     contratoId: 'CONT-1',
     clienteNombre: 'Carlos Gomez',
     fechaInstalacion: '2026-01-01',
-    latitud: null,
-    longitud: null,
   };
 
   beforeEach(() => {
@@ -234,5 +232,71 @@ describe('LecturasComponent State Machine', () => {
         message: expect.stringContaining('Activa el GPS'),
       }),
     );
+  });
+
+  describe('Route synthetic meters and meter-less work orders', () => {
+    it('synthesizes meters from activeOperatorRoute in sessionStorage and auto-selects single order', () => {
+      const routeData = {
+        rutaId: 'r-insp-1',
+        nombre: 'Inspección GUIA-2005-05',
+        tipoRuta: 'INSPECCION',
+        ordenesTrabajo: [
+          {
+            ordenTrabajoId: '45',
+            rutaId: 'r-insp-1',
+            tipoActividad: 'INSPECCION',
+            estado: 'PENDIENTE',
+            contratoId: 'c-1',
+            contrato: {
+              numeroContrato: 'GUIA-2005-05',
+              clienteNombre: 'MARLON BRANDO ZAMBRANO SAAVEDRA',
+              direccion: 'Curia',
+            },
+          },
+        ],
+      };
+
+      sessionStorage.setItem('activeOperatorRoute', JSON.stringify(routeData));
+
+      // Trigger autoSelectFromQueryParam
+      component['autoSelectFromQueryParam']();
+
+      expect(component.routeSyntheticMeters().length).toBe(1);
+      const synthetic = component.routeSyntheticMeters()[0];
+      expect(synthetic.serie).toBe('GUIA-2005-05');
+      expect(synthetic.clienteNombre).toBe('MARLON BRANDO ZAMBRANO SAAVEDRA');
+      expect(synthetic.marca).toBe('INSPECCION');
+
+      // Lands on search step (Órdenes de Trabajo view) to list orders
+      expect(component.currentStep()).toBe('search');
+
+      // Selecting the order transitions to the actions step
+      component.selectMeter(synthetic);
+      expect(component.currentStep()).toBe('actions');
+      expect(component.selectedMeter()?.serie).toBe('GUIA-2005-05');
+
+      // From actions step, completing the activity transitions to form
+      component.goToWorkOrderForm('INSPECCION');
+      expect(component.currentStep()).toBe('form');
+      expect(component.activeTipoActividad()).toBe('INSPECCION');
+
+      // Cleanup
+      sessionStorage.removeItem('activeOperatorRoute');
+    });
+
+    it('resolves workOrderIdFor synthetic meter from medidorId fallback', () => {
+      const syntheticMeter = {
+        medidorId: -45,
+        serie: 'GUIA-2005-05',
+        marca: 'INSPECCION',
+        modelo: 'Curia',
+        clienteNombre: 'MARLON BRANDO ZAMBRANO SAAVEDRA',
+        contratoId: 'GUIA-2005-05',
+        fechaInstalacion: null,
+      };
+
+      const orderId = component['workOrderIdFor'](syntheticMeter, 'INSPECCION');
+      expect(orderId).toBe('45');
+    });
   });
 });

@@ -1,11 +1,14 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   ElementRef,
   HostListener,
   inject,
   input,
+  OnDestroy,
   output,
+  viewChild,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -18,7 +21,7 @@ import { FormsModule } from '@angular/forms';
   styleUrl: './picker-input.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PickerInputComponent {
+export class PickerInputComponent implements AfterViewInit, OnDestroy {
   private readonly elementRef = inject(ElementRef);
 
   readonly inputId = input<string>('');
@@ -36,6 +39,34 @@ export class PickerInputComponent {
   readonly queryChange = output<string>();
   readonly openChange = output<boolean>();
   readonly clear = output<void>();
+
+  /** Reference to the native <input> element for focus management. */
+  readonly inputElement = viewChild<ElementRef<HTMLInputElement>>('nativeInput');
+
+  /**
+   * Track whether the native input had focus before a DOM swap (e.g. spinner
+   * replacing the clear button inside the input-group suffix).
+   */
+  private hadFocus = false;
+  private focusObserver: MutationObserver | null = null;
+
+  ngAfterViewInit(): void {
+    // Watch for attribute changes on the input (disabled toggling, etc.)
+    // and restore focus when the input is still in the DOM.
+    const inputEl = this.inputElement()?.nativeElement;
+    if (inputEl) {
+      this.focusObserver = new MutationObserver(() => {
+        if (this.hadFocus && document.activeElement !== inputEl && !inputEl.disabled) {
+          inputEl.focus();
+        }
+      });
+      this.focusObserver.observe(inputEl, { attributes: true, attributeFilter: ['disabled'] });
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.focusObserver?.disconnect();
+  }
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
@@ -59,8 +90,24 @@ export class PickerInputComponent {
     }
   }
 
+  onInputFocus(): void {
+    this.hadFocus = true;
+  }
+
+  onInputBlur(): void {
+    // Delay clearing hadFocus so the MutationObserver can act first.
+    setTimeout(() => {
+      this.hadFocus = false;
+    }, 100);
+  }
+
   onClearClick(event: MouseEvent): void {
     event.stopPropagation();
     this.clear.emit();
+  }
+
+  /** Programmatically restore focus to the search input. */
+  focus(): void {
+    this.inputElement()?.nativeElement.focus();
   }
 }

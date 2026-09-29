@@ -11,13 +11,13 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ContractsService } from '../../services/contracts.service';
-import { ReadingRoutesService } from '../../../reading-routes/services/reading-routes.service';
-import { IContract } from '../../interfaces/icontract.interface';
+import { ContractsApi } from '../../data/contracts.api';
+import { ReadingRoutesService } from '../../../reading-routes/data/reading-routes.api';
+import { IContract } from '../../domain/models/service-contract.model';
 import {
   IFindAllRoutesParams,
   IReadingRoute,
-} from '../../../reading-routes/interfaces/ireading-route.interface';
+} from '../../../reading-routes/domain/models/reading-route.model';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
@@ -41,7 +41,7 @@ type AssignmentMode = (typeof ASSIGNMENT_MODE)[keyof typeof ASSIGNMENT_MODE];
   },
 })
 export class AssignInstallationRouteModalComponent implements OnInit {
-  private readonly contractsService = inject(ContractsService);
+  private readonly contractsService = inject(ContractsApi);
   private readonly routesService = inject(ReadingRoutesService);
   private readonly toastService = inject(ToastService);
   private readonly elementRef = inject(ElementRef<HTMLElement>);

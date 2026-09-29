@@ -9,6 +9,10 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from './auth.service';
 import { OperatorLocationService } from './operator-location.service';
 import {
+  OperatorEvidencePhotoError,
+  prepareOperatorEvidencePhoto,
+} from './operator-evidence-photo';
+import {
   MANIFEST_PROTOCOL_VERSION,
   type OperatorManifestPage,
   type ReadingWithAnomaly,
@@ -35,6 +39,9 @@ interface WorkOrderSubmissionOptions {
   requireCoordinates: boolean;
   notify: boolean;
 }
+
+const OPERATOR_PHOTO_MAX_BYTES = 10 * 1024 * 1024;
+const NOVELTY_PHOTO_MAX_BYTES = 5 * 1024 * 1024;
 
 @Injectable({
   providedIn: 'root',
@@ -140,13 +147,8 @@ export class OperatorSyncService {
     });
   }
 
-  private appendPhoto(
-    formData: FormData,
-    photoBlob?: Blob | null,
-    field = 'foto',
-    filename = 'evidencia.jpg',
-  ): void {
-    if (photoBlob instanceof Blob) formData.append(field, photoBlob, filename);
+  private appendPhoto(formData: FormData, photoBlob?: Blob | null, field = 'foto'): void {
+    if (photoBlob instanceof Blob) formData.append(field, photoBlob, 'evidencia.jpg');
   }
 
   /** Normaliza el contrato estricto aceptado por PATCH /operator/work-orders/:id. */
@@ -181,6 +183,33 @@ export class OperatorSyncService {
     for (const [key, value] of Object.entries(payload)) {
       if (value !== null && value !== undefined) formData.append(key, String(value));
     }
+  }
+
+  /** Normaliza el contrato estricto aceptado por PATCH /operator/readings/:id (UpdateOperatorReadingDto). */
+  private normalizeReadingPayload(reading: Record<string, unknown>): Record<string, unknown> {
+    const payload: Record<string, unknown> = {};
+    const acceptedFields = [
+      'fecha',
+      'lecturaAnterior',
+      'lecturaActual',
+      'descripcionAnomalia',
+      'lecturaInicial',
+    ];
+
+    for (const field of acceptedFields) {
+      const value = reading[field];
+      if (value !== null && value !== undefined && value !== '') {
+        if (field === 'lecturaAnterior' || field === 'lecturaActual') {
+          payload[field] = Number(value);
+        } else if (field === 'lecturaInicial') {
+          payload[field] = Boolean(value);
+        } else {
+          payload[field] = value;
+        }
+      }
+    }
+
+    return payload;
   }
 
   /**
@@ -242,26 +271,82 @@ export class OperatorSyncService {
    */
   async submitReading(reading: ReadingSubmission & { fotoBlob?: Blob | null }): Promise<unknown> {
     const { _lecturaId, fotoBlob, ...payload } = reading;
+    let targetLecturaId = _lecturaId;
+
+    if (!targetLecturaId || String(targetLecturaId).trim() === '') {
+      try {
+        const cached = await this.dbService.getRegisteredReadingsCache();
+        const targetMeterId = payload['medidorId'] ? String(payload['medidorId']) : null;
+        const targetSerie = (payload as Record<string, unknown>)['medidorSerie']
+          ? String((payload as Record<string, unknown>)['medidorSerie'])
+          : null;
+
+        let match = cached.find((r: Record<string, unknown>) => {
+          const medidor = r['medidor'] as Record<string, unknown> | undefined;
+          const mId = medidor?.['medidorId'] ?? r['medidorId'];
+          const s = medidor?.['serie'] ?? r['medidorSerie'];
+          return (
+            (targetMeterId && String(mId) === targetMeterId) || (targetSerie && s === targetSerie)
+          );
+        });
+
+        if (!match && this.networkService.isOnline()) {
+          const fresh = await this.getCurrentPeriodReadings();
+          if (fresh?.length) {
+            await this.dbService.saveRegisteredReadingsCache(fresh);
+            match = (fresh as unknown as Record<string, unknown>[]).find(
+              (r: Record<string, unknown>) => {
+                const medidor = r['medidor'] as Record<string, unknown> | undefined;
+                const mId = medidor?.['medidorId'] ?? r['medidorId'];
+                const s = medidor?.['serie'] ?? r['medidorSerie'];
+                return (
+                  (targetMeterId && String(mId) === targetMeterId) ||
+                  (targetSerie && s === targetSerie)
+                );
+              },
+            );
+          }
+        }
+
+        if (match?.lecturaId) {
+          targetLecturaId = String(match.lecturaId);
+        }
+      } catch {
+        // Silencioso
+      }
+    }
+
     const hasId =
-      _lecturaId !== null && _lecturaId !== undefined && String(_lecturaId).trim() !== '';
+      targetLecturaId !== null &&
+      targetLecturaId !== undefined &&
+      String(targetLecturaId).trim() !== '';
     if (this.networkService.isOnline() && !hasId) {
       throw new Error(
         'No se puede enviar una lectura nueva en línea: el backend no expone un endpoint de creación.',
       );
     }
 
+    const preparedReading =
+      fotoBlob instanceof Blob
+        ? {
+            ...reading,
+            fotoBlob: await prepareOperatorEvidencePhoto(fotoBlob, OPERATOR_PHOTO_MAX_BYTES),
+          }
+        : reading;
+
     if (this.networkService.isOnline()) {
       try {
         const formData = new FormData();
-        for (const [key, value] of Object.entries(payload)) {
+        const normalized = this.normalizeReadingPayload(payload);
+        for (const [key, value] of Object.entries(normalized)) {
           if (value !== null && value !== undefined) {
             formData.append(key, String(value));
           }
         }
-        this.appendPhoto(formData, fotoBlob, 'foto', 'foto.jpg');
+        this.appendPhoto(formData, preparedReading.fotoBlob);
 
         const request$ = this.http.patch<unknown>(
-          `${this.OPERATOR_API}/readings/${_lecturaId}`,
+          `${this.OPERATOR_API}/readings/${targetLecturaId}`,
           formData,
           {
             withCredentials: true,
@@ -269,18 +354,29 @@ export class OperatorSyncService {
         );
 
         const response = await firstValueFrom(request$);
-        await this.dbService.saveSyncedReading({ ...payload, _lecturaId });
+        await this.dbService.saveSyncedReading({ ...payload, _lecturaId: targetLecturaId });
         this.toastService.success('Lectura registrada en el servidor correctamente.', 'Éxito');
         return response;
       } catch (error: unknown) {
+        const httpError = error as HttpErrorResponse;
+        if (!httpError.status || httpError.status === 0 || httpError.status >= 500) {
+          console.warn('Fallo de red al enviar lectura, guardando localmente:', error);
+          await this.dbService.savePendingReading(preparedReading);
+          await this.refreshPendingCounts();
+          this.toastService.warning(
+            'Error de conexión con el servidor. Lectura guardada localmente; se sincronizará automáticamente.',
+            'Guardado Local',
+          );
+          return { offline: true };
+        }
         this.toastService.error(
-          (error as HttpErrorResponse).error?.message || 'Error al enviar lectura al servidor.',
+          httpError.error?.message || 'Error al enviar lectura al servidor.',
           'Error',
         );
         throw error;
       }
     } else {
-      await this.dbService.savePendingReading(reading); // keeps _lecturaId in record
+      await this.dbService.savePendingReading(preparedReading); // keeps _lecturaId in record
       await this.refreshPendingCounts();
       this.toastService.warning(
         'Modo Offline: Lectura guardada localmente. Se sincronizará al recuperar internet.',
@@ -294,6 +390,16 @@ export class OperatorSyncService {
    * Envia una novedad al backend (/work-order-novelties) o la encola si está offline.
    */
   async submitAnomaly(anomaly: Record<string, unknown>): Promise<unknown> {
+    const preparedAnomaly =
+      anomaly['fotoBlob'] instanceof Blob
+        ? {
+            ...anomaly,
+            fotoBlob: await prepareOperatorEvidencePhoto(
+              anomaly['fotoBlob'],
+              NOVELTY_PHOTO_MAX_BYTES,
+            ),
+          }
+        : anomaly;
     const ordenTrabajoId =
       anomaly['ordenTrabajoId'] !== null && anomaly['ordenTrabajoId'] !== undefined
         ? String(anomaly['ordenTrabajoId']).trim()
@@ -315,7 +421,11 @@ export class OperatorSyncService {
         if (anomaly['observacion']) {
           formData.append('observacion', String(anomaly['observacion']));
         }
-        this.appendPhoto(formData, (anomaly['fotoBlob'] as Blob) || null, 'file');
+        this.appendPhoto(
+          formData,
+          preparedAnomaly['fotoBlob'] instanceof Blob ? preparedAnomaly['fotoBlob'] : null,
+          'file',
+        );
 
         const response = await firstValueFrom(
           this.http.post<unknown>(this.NOVELTIES_API, formData, { withCredentials: true }),
@@ -323,15 +433,26 @@ export class OperatorSyncService {
         this.toastService.success('Novedad registrada en el servidor.', 'Éxito');
         return response;
       } catch (error: unknown) {
+        const httpError = error as HttpErrorResponse;
+        if (!httpError.status || httpError.status === 0 || httpError.status >= 500) {
+          console.warn('Fallo de red al enviar novedad, guardando localmente:', error);
+          await this.dbService.savePendingAnomaly(preparedAnomaly);
+          await this.refreshPendingCounts();
+          this.toastService.warning(
+            'Error de conexión con el servidor. Novedad guardada localmente; se sincronizará automáticamente.',
+            'Guardado Local',
+          );
+          return { offline: true };
+        }
         this.toastService.error(
-          (error as HttpErrorResponse).error?.message || 'Error al enviar novedad al servidor.',
+          httpError.error?.message || 'Error al enviar novedad al servidor.',
           'Error',
         );
         throw error;
       }
     } else {
       // Guardar en cola local
-      await this.dbService.savePendingAnomaly(anomaly);
+      await this.dbService.savePendingAnomaly(preparedAnomaly);
       await this.refreshPendingCounts();
       this.toastService.warning(
         'Modo Offline: Novedad guardada localmente. Se sincronizará al recuperar internet.',
@@ -395,6 +516,12 @@ export class OperatorSyncService {
         'No se pudo obtener la ubicación. Activa el GPS y permite el acceso antes de registrar la lectura.',
       );
     }
+    if (submission.fotoBlob instanceof Blob) {
+      submission.fotoBlob = await prepareOperatorEvidencePhoto(
+        submission.fotoBlob,
+        OPERATOR_PHOTO_MAX_BYTES,
+      );
+    }
     const { fotoBlob } = submission;
 
     if (this.networkService.isOnline()) {
@@ -412,9 +539,20 @@ export class OperatorSyncService {
         }
         return response;
       } catch (error: unknown) {
+        const httpError = error as HttpErrorResponse;
+        if (!httpError.status || httpError.status === 0 || httpError.status >= 500) {
+          console.warn('Fallo de red al enviar orden de trabajo, guardando localmente:', error);
+          await this.dbService.savePendingWorkOrder({ ...submission });
+          await this.refreshPendingCounts();
+          this.toastService.warning(
+            'Error de conexión con el servidor. Orden guardada localmente; se sincronizará automáticamente.',
+            'Guardado Local',
+          );
+          return { offline: true };
+        }
         if (options.notify) {
           this.toastService.error(
-            (error as HttpErrorResponse).error?.message || 'Error al enviar orden al servidor.',
+            httpError.error?.message || 'Error al enviar orden al servidor.',
             'Error',
           );
         }
@@ -438,14 +576,18 @@ export class OperatorSyncService {
    * Determina si un error HTTP es de validación del servidor (4xx) o de red/infraestructura.
    * Errores de red: status 0, 502, 503, 504 o sin status.
    */
-  private isValidationError(error: HttpErrorResponse): boolean {
-    return error.status >= 400 && error.status < 500;
+  private isValidationError(error: unknown): boolean {
+    return (
+      error instanceof OperatorEvidencePhotoError ||
+      (error instanceof HttpErrorResponse && error.status >= 400 && error.status < 500)
+    );
   }
 
   /**
    * Extrae el mensaje de error legible del backend
    */
-  private extractErrorMessage(error: HttpErrorResponse): string {
+  private extractErrorMessage(error: HttpErrorResponse | OperatorEvidencePhotoError): string {
+    if (error instanceof OperatorEvidencePhotoError) return error.message;
     if (error.error?.message) {
       return typeof error.error.message === 'string'
         ? error.error.message
@@ -469,35 +611,203 @@ export class OperatorSyncService {
     if (readings.length === 0 && anomalies.length === 0 && workOrders.length === 0) return;
 
     this.isSyncing.set(true);
-    this.toastService.info(
-      'Iniciando sincronización de registros guardados offline...',
-      'Sincronizando',
-    );
+    try {
+      this.toastService.info(
+        'Iniciando sincronización de registros guardados offline...',
+        'Sincronizando',
+      );
 
-    let successReadingsCount = 0;
-    let successWorkOrdersCount = 0;
-    let successAnomaliesCount = 0;
-    let rejectedCount = 0;
+      let successReadingsCount = 0;
+      let successWorkOrdersCount = 0;
+      let successAnomaliesCount = 0;
+      let rejectedCount = 0;
+      let transportFailed = false;
 
-    // 1. Sincronizar primero las lecturas encoladas
-    for (const pending of readings) {
-      // Drain legacy (#267): órdenes encoladas por versiones previas aún viven en
-      // `lecturas_pendientes` con recordType WORK_ORDER. Se flushean aquí para no
-      // orfanar datos; los registros nuevos ya van al store `ordenes_pendientes`.
-      if (pending['recordType'] === 'WORK_ORDER') {
+      // 1. Sincronizar primero las lecturas encoladas
+      for (const pending of readings) {
+        // Drain legacy (#267): órdenes encoladas por versiones previas aún viven en
+        // `lecturas_pendientes` con recordType WORK_ORDER. Se flushean aquí para no
+        // orfanar datos; los registros nuevos ya van al store `ordenes_pendientes`.
+        if (pending['recordType'] === 'WORK_ORDER') {
+          try {
+            const {
+              id,
+              syncState: _syncState, // eslint-disable-line @typescript-eslint/no-unused-vars
+              errorMessage: _errorMessage, // eslint-disable-line @typescript-eslint/no-unused-vars
+              recordType: _recordType, // eslint-disable-line @typescript-eslint/no-unused-vars
+              ordenTrabajoId,
+              fotoBlob,
+              ...workOrderPayload
+            } = pending;
+            const formData = new FormData();
+            this.appendWorkOrderPayload(formData, this.normalizeWorkOrderPayload(workOrderPayload));
+            this.appendPhoto(
+              formData,
+              await prepareOperatorEvidencePhoto(fotoBlob, OPERATOR_PHOTO_MAX_BYTES),
+            );
+            await firstValueFrom(
+              this.http.patch<unknown>(
+                `${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`,
+                formData,
+                {
+                  withCredentials: true,
+                },
+              ),
+            );
+            await this.dbService.deletePendingReading(id!);
+            successWorkOrdersCount++;
+          } catch (error) {
+            const httpError = error as HttpErrorResponse;
+            if (this.isValidationError(httpError)) {
+              await this.dbService.updatePendingReading(pending.id!, {
+                syncState: 'RECHAZADA',
+                errorMessage: this.extractErrorMessage(httpError),
+              });
+              rejectedCount++;
+            } else {
+              console.error('Error de red al sincronizar orden, deteniendo cola:', error);
+              transportFailed = true;
+              break;
+            }
+          }
+          continue;
+        }
         try {
           const {
             id,
             syncState: _syncState, // eslint-disable-line @typescript-eslint/no-unused-vars
             errorMessage: _errorMessage, // eslint-disable-line @typescript-eslint/no-unused-vars
-            recordType: _recordType, // eslint-disable-line @typescript-eslint/no-unused-vars
+            _lecturaId,
+            fotoBlob,
+            ...payload
+          } = pending;
+
+          let targetLecturaId = _lecturaId;
+          if (
+            targetLecturaId === null ||
+            targetLecturaId === undefined ||
+            String(targetLecturaId).trim() === ''
+          ) {
+            try {
+              const cached = await this.dbService.getRegisteredReadingsCache();
+              const targetMeterId = pending['medidorId'] ? String(pending['medidorId']) : null;
+              const targetSerie = (pending as Record<string, unknown>)['medidorSerie']
+                ? String((pending as Record<string, unknown>)['medidorSerie'])
+                : null;
+
+              let match = cached.find((r: Record<string, unknown>) => {
+                const medidor = r['medidor'] as Record<string, unknown> | undefined;
+                const mId = medidor?.['medidorId'] ?? r['medidorId'];
+                const s = medidor?.['serie'] ?? r['medidorSerie'];
+                return (
+                  (targetMeterId && String(mId) === targetMeterId) ||
+                  (targetSerie && s === targetSerie)
+                );
+              });
+
+              if (!match && this.networkService.isOnline()) {
+                const fresh = await this.getCurrentPeriodReadings();
+                if (fresh?.length) {
+                  await this.dbService.saveRegisteredReadingsCache(fresh);
+                  match = (fresh as unknown as Record<string, unknown>[]).find(
+                    (r: Record<string, unknown>) => {
+                      const medidor = r['medidor'] as Record<string, unknown> | undefined;
+                      const mId = medidor?.['medidorId'] ?? r['medidorId'];
+                      const s = medidor?.['serie'] ?? r['medidorSerie'];
+                      return (
+                        (targetMeterId && String(mId) === targetMeterId) ||
+                        (targetSerie && s === targetSerie)
+                      );
+                    },
+                  );
+                }
+              }
+
+              if (
+                match &&
+                typeof match === 'object' &&
+                'lecturaId' in match &&
+                match['lecturaId']
+              ) {
+                targetLecturaId = String(match['lecturaId']);
+                await this.dbService.updatePendingReading(pending.id!, {
+                  _lecturaId: targetLecturaId,
+                });
+              }
+            } catch {
+              // Silencioso
+            }
+          }
+
+          const formData = new FormData();
+          const normalized = this.normalizeReadingPayload(payload);
+          for (const [key, value] of Object.entries(normalized)) {
+            if (value !== null && value !== undefined) {
+              formData.append(key, String(value));
+            }
+          }
+          this.appendPhoto(
+            formData,
+            await prepareOperatorEvidencePhoto(fotoBlob, OPERATOR_PHOTO_MAX_BYTES),
+          );
+
+          if (
+            targetLecturaId === null ||
+            targetLecturaId === undefined ||
+            String(targetLecturaId).trim() === ''
+          ) {
+            await this.dbService.updatePendingReading(pending.id!, {
+              syncState: 'RECHAZADA',
+              errorMessage:
+                'Lectura nueva conservada, pero no sincronizada: el backend no expone un endpoint de creación.',
+            });
+            rejectedCount++;
+            continue;
+          }
+          await firstValueFrom(
+            this.http.patch<unknown>(`${this.OPERATOR_API}/readings/${targetLecturaId}`, formData, {
+              withCredentials: true,
+            }),
+          );
+          await this.dbService.saveSyncedReading({ ...payload, _lecturaId: targetLecturaId });
+          await this.dbService.deletePendingReading(id!);
+          successReadingsCount++;
+        } catch (error) {
+          const httpError = error as HttpErrorResponse;
+          if (this.isValidationError(httpError)) {
+            // Error de validación: marcar como rechazada y CONTINUAR con la cola
+            await this.dbService.updatePendingReading(pending.id!, {
+              syncState: 'RECHAZADA',
+              errorMessage: this.extractErrorMessage(httpError),
+            });
+            rejectedCount++;
+          } else {
+            // Error de red: parar la cola
+            console.error('Error de red al sincronizar lectura, deteniendo cola:', error);
+            transportFailed = true;
+            break;
+          }
+        }
+      }
+
+      // 1b. Sincronizar las órdenes de trabajo encoladas en `ordenes_pendientes` (#267)
+      for (const pending of workOrders) {
+        if (transportFailed) break;
+        try {
+          const {
+            id,
+            syncState: _syncState, // eslint-disable-line @typescript-eslint/no-unused-vars
+            errorMessage: _errorMessage, // eslint-disable-line @typescript-eslint/no-unused-vars
             ordenTrabajoId,
             fotoBlob,
             ...workOrderPayload
           } = pending;
           const formData = new FormData();
           this.appendWorkOrderPayload(formData, this.normalizeWorkOrderPayload(workOrderPayload));
-          this.appendPhoto(formData, fotoBlob);
+          this.appendPhoto(
+            formData,
+            await prepareOperatorEvidencePhoto(fotoBlob, OPERATOR_PHOTO_MAX_BYTES),
+          );
           await firstValueFrom(
             this.http.patch<unknown>(
               `${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`,
@@ -507,187 +817,107 @@ export class OperatorSyncService {
               },
             ),
           );
-          await this.dbService.deletePendingReading(id!);
+          await this.dbService.deletePendingWorkOrder(id!);
           successWorkOrdersCount++;
         } catch (error) {
           const httpError = error as HttpErrorResponse;
           if (this.isValidationError(httpError)) {
-            await this.dbService.updatePendingReading(pending.id!, {
+            await this.dbService.updatePendingWorkOrder(pending.id!, {
               syncState: 'RECHAZADA',
               errorMessage: this.extractErrorMessage(httpError),
             });
             rejectedCount++;
           } else {
             console.error('Error de red al sincronizar orden, deteniendo cola:', error);
+            transportFailed = true;
             break;
           }
         }
-        continue;
       }
-      try {
-        const {
-          id,
-          syncState: _syncState, // eslint-disable-line @typescript-eslint/no-unused-vars
-          errorMessage: _errorMessage, // eslint-disable-line @typescript-eslint/no-unused-vars
-          _lecturaId,
-          fotoBlob,
-          ...payload
-        } = pending;
 
-        const formData = new FormData();
-        for (const [key, value] of Object.entries(payload)) {
-          if (value !== null && value !== undefined) {
-            formData.append(key, String(value));
+      // Actualizar contadores parciales
+      await this.refreshPendingCounts();
+
+      // 2. Sincronizar las anomalías
+      for (const pending of anomalies) {
+        if (transportFailed) break;
+        try {
+          const {
+            id,
+            syncState: _syncState2, // eslint-disable-line @typescript-eslint/no-unused-vars
+            errorMessage: _errorMessage2, // eslint-disable-line @typescript-eslint/no-unused-vars
+            fotoBlob,
+            ...payload
+          } = pending;
+
+          const ordenTrabajoId =
+            payload['ordenTrabajoId'] !== null && payload['ordenTrabajoId'] !== undefined
+              ? String(payload['ordenTrabajoId']).trim()
+              : '';
+
+          if (!ordenTrabajoId) {
+            await this.dbService.updatePendingAnomaly(pending.id!, {
+              syncState: 'RECHAZADA',
+              errorMessage:
+                'Novedad rechazada: no tiene orden de trabajo asociada para registrar en el servidor.',
+            });
+            rejectedCount++;
+            continue;
+          }
+
+          const formData = new FormData();
+          formData.append('ordenTrabajoId', ordenTrabajoId);
+          if (payload['lecturaId']) {
+            formData.append('lecturaId', String(payload['lecturaId']));
+          }
+          formData.append('tipo', String(payload['tipo']));
+          if (payload['observacion']) {
+            formData.append('observacion', String(payload['observacion']));
+          }
+          this.appendPhoto(
+            formData,
+            await prepareOperatorEvidencePhoto(fotoBlob, NOVELTY_PHOTO_MAX_BYTES),
+            'file',
+          );
+
+          await firstValueFrom(
+            this.http.post<unknown>(this.NOVELTIES_API, formData, { withCredentials: true }),
+          );
+          await this.dbService.deletePendingAnomaly(id!);
+          successAnomaliesCount++;
+        } catch (error) {
+          const httpError = error as HttpErrorResponse;
+          if (this.isValidationError(httpError)) {
+            await this.dbService.updatePendingAnomaly(pending.id!, {
+              syncState: 'RECHAZADA',
+              errorMessage: this.extractErrorMessage(httpError),
+            });
+            rejectedCount++;
+          } else {
+            console.error('Error de red al sincronizar anomalía, deteniendo cola:', error);
+            break;
           }
         }
-        this.appendPhoto(formData, fotoBlob, 'foto', 'foto.jpg');
-
-        if (_lecturaId === null || _lecturaId === undefined || String(_lecturaId).trim() === '') {
-          await this.dbService.updatePendingReading(pending.id!, {
-            syncState: 'RECHAZADA',
-            errorMessage:
-              'Lectura nueva conservada, pero no sincronizada: el backend no expone un endpoint de creación.',
-          });
-          rejectedCount++;
-          continue;
-        }
-        await firstValueFrom(
-          this.http.patch<unknown>(`${this.OPERATOR_API}/readings/${_lecturaId}`, formData, {
-            withCredentials: true,
-          }),
-        );
-        await this.dbService.saveSyncedReading({ ...payload, _lecturaId });
-        await this.dbService.deletePendingReading(id!);
-        successReadingsCount++;
-      } catch (error) {
-        const httpError = error as HttpErrorResponse;
-        if (this.isValidationError(httpError)) {
-          // Error de validación: marcar como rechazada y CONTINUAR con la cola
-          await this.dbService.updatePendingReading(pending.id!, {
-            syncState: 'RECHAZADA',
-            errorMessage: this.extractErrorMessage(httpError),
-          });
-          rejectedCount++;
-        } else {
-          // Error de red: parar la cola
-          console.error('Error de red al sincronizar lectura, deteniendo cola:', error);
-          break;
-        }
       }
-    }
 
-    // 1b. Sincronizar las órdenes de trabajo encoladas en `ordenes_pendientes` (#267)
-    for (const pending of workOrders) {
-      try {
-        const {
-          id,
-          syncState: _syncState, // eslint-disable-line @typescript-eslint/no-unused-vars
-          errorMessage: _errorMessage, // eslint-disable-line @typescript-eslint/no-unused-vars
-          ordenTrabajoId,
-          fotoBlob,
-          ...workOrderPayload
-        } = pending;
-        const formData = new FormData();
-        this.appendWorkOrderPayload(formData, this.normalizeWorkOrderPayload(workOrderPayload));
-        this.appendPhoto(formData, fotoBlob);
-        await firstValueFrom(
-          this.http.patch<unknown>(`${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`, formData, {
-            withCredentials: true,
-          }),
+      // Refrescar contadores finales
+      await this.refreshPendingCounts();
+
+      // Notificaciones de resultado
+      if (successReadingsCount > 0 || successWorkOrdersCount > 0 || successAnomaliesCount > 0) {
+        this.toastService.success(
+          `Sincronización completa. Enviado exitosamente: ${successReadingsCount} lecturas, ${successWorkOrdersCount} órdenes y ${successAnomaliesCount} novedades.`,
+          'Sincronizado',
         );
-        await this.dbService.deletePendingWorkOrder(id!);
-        successWorkOrdersCount++;
-      } catch (error) {
-        const httpError = error as HttpErrorResponse;
-        if (this.isValidationError(httpError)) {
-          await this.dbService.updatePendingWorkOrder(pending.id!, {
-            syncState: 'RECHAZADA',
-            errorMessage: this.extractErrorMessage(httpError),
-          });
-          rejectedCount++;
-        } else {
-          console.error('Error de red al sincronizar orden, deteniendo cola:', error);
-          break;
-        }
       }
-    }
-
-    // Actualizar contadores parciales
-    await this.refreshPendingCounts();
-
-    // 2. Sincronizar las anomalías
-    for (const pending of anomalies) {
-      try {
-        const {
-          id,
-          syncState: _syncState2, // eslint-disable-line @typescript-eslint/no-unused-vars
-          errorMessage: _errorMessage2, // eslint-disable-line @typescript-eslint/no-unused-vars
-          fotoBlob,
-          ...payload
-        } = pending;
-
-        const ordenTrabajoId =
-          payload['ordenTrabajoId'] !== null && payload['ordenTrabajoId'] !== undefined
-            ? String(payload['ordenTrabajoId']).trim()
-            : '';
-
-        if (!ordenTrabajoId) {
-          await this.dbService.updatePendingAnomaly(pending.id!, {
-            syncState: 'RECHAZADA',
-            errorMessage:
-              'Novedad rechazada: no tiene orden de trabajo asociada para registrar en el servidor.',
-          });
-          rejectedCount++;
-          continue;
-        }
-
-        const formData = new FormData();
-        formData.append('ordenTrabajoId', ordenTrabajoId);
-        if (payload['lecturaId']) {
-          formData.append('lecturaId', String(payload['lecturaId']));
-        }
-        formData.append('tipo', String(payload['tipo']));
-        if (payload['observacion']) {
-          formData.append('observacion', String(payload['observacion']));
-        }
-        this.appendPhoto(formData, fotoBlob, 'file');
-
-        await firstValueFrom(
-          this.http.post<unknown>(this.NOVELTIES_API, formData, { withCredentials: true }),
+      if (rejectedCount > 0) {
+        this.toastService.warning(
+          `${rejectedCount} registro(s) fueron rechazados por el servidor. Revísalos en "Sincronizar".`,
+          'Registros Rechazados',
         );
-        await this.dbService.deletePendingAnomaly(id!);
-        successAnomaliesCount++;
-      } catch (error) {
-        const httpError = error as HttpErrorResponse;
-        if (this.isValidationError(httpError)) {
-          await this.dbService.updatePendingAnomaly(pending.id!, {
-            syncState: 'RECHAZADA',
-            errorMessage: this.extractErrorMessage(httpError),
-          });
-          rejectedCount++;
-        } else {
-          console.error('Error de red al sincronizar anomalía, deteniendo cola:', error);
-          break;
-        }
       }
-    }
-
-    // Refrescar contadores finales
-    await this.refreshPendingCounts();
-    this.isSyncing.set(false);
-
-    // Notificaciones de resultado
-    if (successReadingsCount > 0 || successWorkOrdersCount > 0 || successAnomaliesCount > 0) {
-      this.toastService.success(
-        `Sincronización completa. Enviado exitosamente: ${successReadingsCount} lecturas, ${successWorkOrdersCount} órdenes y ${successAnomaliesCount} novedades.`,
-        'Sincronizado',
-      );
-    }
-    if (rejectedCount > 0) {
-      this.toastService.warning(
-        `${rejectedCount} registro(s) fueron rechazados por el servidor. Revísalos en "Sincronizar".`,
-        'Registros Rechazados',
-      );
+    } finally {
+      this.isSyncing.set(false);
     }
   }
 

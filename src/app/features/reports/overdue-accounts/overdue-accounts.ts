@@ -115,6 +115,7 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   // Resultados JSON (tabla)
   readonly reportData = signal<OverdueAccountsData | null>(null);
   readonly isLoadingData = signal(false);
+  readonly isExporting = signal(false);
   readonly workspaceError = signal('');
   readonly lastFailedAction = signal<FailedReportAction | null>(null);
 
@@ -430,6 +431,44 @@ export class OverdueAccountsComponent implements OnInit, OnDestroy {
   cerrarGeneralPdf(): void {
     this.cancelGeneralPdfRequest();
     this.isGeneralPdfOpen.set(false);
+  }
+
+  descargarExcel(): void {
+    const filters = this.buildFilters();
+    this.isExporting.set(true);
+    this.reportsService.exportOverdueAccounts(filters, 'xlsx').subscribe({
+      next: (blob) => {
+        this.isExporting.set(false);
+        this.reportsService.downloadBlob(
+          blob,
+          `reporte-recaudacion-morosidad-${this.contratoId() || 'general'}.xlsx`,
+        );
+        this.toast.success('Reporte Excel descargado exitosamente');
+      },
+      error: () => {
+        this.isExporting.set(false);
+        this.toast.error('No se pudo exportar el reporte en formato Excel');
+      },
+    });
+  }
+
+  descargarCsv(): void {
+    const filters = this.buildFilters();
+    this.isExporting.set(true);
+    this.reportsService.exportOverdueAccounts(filters, 'csv').subscribe({
+      next: (blob) => {
+        this.isExporting.set(false);
+        this.reportsService.downloadBlob(
+          blob,
+          `reporte-recaudacion-morosidad-${this.contratoId() || 'general'}.csv`,
+        );
+        this.toast.success('Reporte CSV descargado exitosamente');
+      },
+      error: () => {
+        this.isExporting.set(false);
+        this.toast.error('No se pudo exportar el reporte en formato CSV');
+      },
+    });
   }
 
   get generalPdfFileName(): string {

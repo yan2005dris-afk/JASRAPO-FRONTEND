@@ -12,7 +12,6 @@ function route(partial: Partial<OperatorRouteResponse>): OperatorRouteResponse {
     tipoRuta: 'TOMA_LECTURA',
     nombre: 'Ruta',
     estado: 'PENDIENTE',
-    orden: 1,
     operarioId: 1,
     comunidadId: 1,
     medidor: null,
@@ -23,26 +22,26 @@ function route(partial: Partial<OperatorRouteResponse>): OperatorRouteResponse {
 
 describe('compareRoutesCanonically', () => {
   it('orders first by comunidadId', () => {
-    const a = route({ comunidadId: 2, orden: 1 });
-    const b = route({ comunidadId: 1, orden: 1 });
+    const a = route({ comunidadId: 2 });
+    const b = route({ comunidadId: 1 });
     expect([a, b].sort(compareRoutesCanonically).map((r) => r.comunidadId)).toEqual([1, 2]);
   });
 
   it('orders by sectorId within the same comunidadId', () => {
-    const a = route({ comunidadId: 1, sectorId: 3, orden: 1 });
-    const b = route({ comunidadId: 1, sectorId: 1, orden: 1 });
+    const a = route({ comunidadId: 1, sectorId: 3 });
+    const b = route({ comunidadId: 1, sectorId: 1 });
     expect([a, b].sort(compareRoutesCanonically).map((r) => r.sectorId)).toEqual([1, 3]);
   });
 
-  it('orders by orden within the same comunidadId/sectorId', () => {
-    const a = route({ comunidadId: 1, sectorId: 1, orden: 5 });
-    const b = route({ comunidadId: 1, sectorId: 1, orden: 2 });
-    expect([a, b].sort(compareRoutesCanonically).map((r) => r.orden)).toEqual([2, 5]);
+  it('orders by rutaId within the same comunidadId/sectorId', () => {
+    const a = route({ comunidadId: 1, sectorId: 1, rutaId: '5' });
+    const b = route({ comunidadId: 1, sectorId: 1, rutaId: '2' });
+    expect([a, b].sort(compareRoutesCanonically).map((r) => r.rutaId)).toEqual(['2', '5']);
   });
 
-  it('treats missing sectorId and orden as the lowest values', () => {
-    const missing = route({ comunidadId: 1, sectorId: undefined, orden: undefined });
-    const withValues = route({ comunidadId: 1, sectorId: 4, orden: 7 });
+  it('treats missing sectorId as the lowest value', () => {
+    const missing = route({ comunidadId: 1, sectorId: undefined });
+    const withValues = route({ comunidadId: 1, sectorId: 4 });
     expect(compareRoutesCanonically(missing, withValues)).toBeLessThan(0);
   });
 });
@@ -76,6 +75,11 @@ function workOrder(partial: Partial<OperatorWorkOrder>): OperatorWorkOrder {
     medidor: partial.medidor ?? {
       medidorId: 'm-1',
       serie: 'SERIE-1',
+    },
+    contrato: {
+      numeroContrato: 'C-1',
+      clienteNombre: 'Cliente',
+      direccion: 'Dirección',
       latitud: -0.9677,
       longitud: -80.7089,
     },
@@ -105,10 +109,10 @@ describe('nextPendingWorkOrder', () => {
     expect(nextPendingWorkOrder(task)).toBeNull();
   });
 
-  it('skips work orders whose meter has no coordinates', () => {
+  it('skips work orders whose contract has no coordinates', () => {
     const task = route({
       ordenesTrabajo: [
-        workOrder({ ordenVisita: 1, ordenTrabajoId: 'wo-no-coords', medidor: null }),
+        workOrder({ ordenVisita: 1, ordenTrabajoId: 'wo-no-coords', contrato: undefined }),
         workOrder({ ordenVisita: 2, ordenTrabajoId: 'wo-with-coords' }),
       ],
     });
@@ -122,13 +126,25 @@ describe('nextPendingWorkOrder', () => {
         workOrder({
           ordenVisita: 1,
           ordenTrabajoId: 'wo-first-visit',
-          medidor: { medidorId: 'm-x', serie: 'SX', latitud: 41.3874, longitud: 2.1686 },
+          contrato: {
+            numeroContrato: 'C-x',
+            clienteNombre: 'X',
+            direccion: 'X',
+            latitud: 41.3874,
+            longitud: 2.1686,
+          },
         }),
         // First PENDIENTE by ordenVisita must win regardless of distance.
         workOrder({
           ordenVisita: 2,
           ordenTrabajoId: 'wo-second-visit',
-          medidor: { medidorId: 'm-y', serie: 'SY', latitud: -0.9677, longitud: -80.7089 },
+          contrato: {
+            numeroContrato: 'C-y',
+            clienteNombre: 'Y',
+            direccion: 'Y',
+            latitud: -0.9677,
+            longitud: -80.7089,
+          },
         }),
       ],
     });

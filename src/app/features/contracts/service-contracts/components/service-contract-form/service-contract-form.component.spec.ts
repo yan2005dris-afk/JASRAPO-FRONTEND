@@ -5,12 +5,13 @@ import { of } from 'rxjs';
 import { vi } from 'vitest';
 
 import { ServiceContractFormComponent } from './service-contract-form.component';
-import { ContractsService } from '../../services/contracts.service';
+import { ContractsApi } from '../../data/contracts.api';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
-import { IContract } from '../../interfaces/icontract.interface';
-import { IMeter } from '../../../meters/interfaces/imeter.interface';
-import { IClient } from '../../../clients/interfaces/iclients.interface';
-import { ITariffCategory } from '../../../tariffs/interfaces/itariff.interface';
+import { AuthService } from '../../../../../core/services/auth.service';
+import { IContract } from '../../domain/models/service-contract.model';
+import { IMeter } from '../../../meters/domain/models/meter.model';
+import { IClient } from '../../../clients/domain/models/client.model';
+import { ITariffCategory } from '../../../tariffs/domain/models/tariff.model';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 
 describe('ServiceContractFormComponent', () => {
@@ -69,7 +70,7 @@ describe('ServiceContractFormComponent', () => {
     ],
   };
 
-  const mockContractsService = {
+  const mockContractsApi = {
     createContract: vi.fn(),
     updateContract: vi.fn(),
     getContractById: vi.fn(),
@@ -82,6 +83,10 @@ describe('ServiceContractFormComponent', () => {
     info: vi.fn(),
   };
 
+  const mockAuthService = {
+    isSuperAdmin: vi.fn().mockReturnValue(true),
+  };
+
   beforeEach(async () => {
     vi.clearAllMocks();
 
@@ -90,8 +95,9 @@ describe('ServiceContractFormComponent', () => {
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: ContractsService, useValue: mockContractsService },
+        { provide: ContractsApi, useValue: mockContractsApi },
         { provide: ToastService, useValue: mockToastService },
+        { provide: AuthService, useValue: mockAuthService },
       ],
     }).compileComponents();
 
@@ -115,13 +121,30 @@ describe('ServiceContractFormComponent', () => {
     expect(component.form.get('estadoServicio')?.value).toBe('ACTIVO');
     expect(component.selectedClient()?.identificacion).toBe('0999999999');
     expect(component.selectedMeter()?.serie).toBe('METER-200');
+    expect(component.form.get('latitud')?.value).toBeNull();
+    expect(component.form.get('longitud')?.value).toBeNull();
+    expect(component.coordinates()).toEqual({ latitud: null, longitud: null });
+  });
+
+  it('should preload the stored pin coordinates in edit mode when the contract has them', () => {
+    const contractWithCoordinates: IContract = {
+      ...mockContract,
+      latitud: -1.8021,
+      longitud: -80.7554,
+    };
+    fixture.componentRef.setInput('contractToEdit', contractWithCoordinates);
+    fixture.detectChanges();
+
+    expect(component.form.get('latitud')?.value).toBe(-1.8021);
+    expect(component.form.get('longitud')?.value).toBe(-80.7554);
+    expect(component.coordinates()).toEqual({ latitud: -1.8021, longitud: -80.7554 });
   });
 
   it('should send only contractual fields without medidorId in updateContract payload', () => {
     fixture.componentRef.setInput('contractToEdit', mockContract);
     fixture.detectChanges();
 
-    mockContractsService.updateContract.mockReturnValue(of(mockContract));
+    mockContractsApi.updateContract.mockReturnValue(of(mockContract));
     const savedEmitSpy = vi.spyOn(component.saved, 'emit');
 
     component.form.patchValue({
@@ -131,20 +154,22 @@ describe('ServiceContractFormComponent', () => {
 
     component.save();
 
-    expect(mockContractsService.updateContract).toHaveBeenCalledWith('10', {
+    expect(mockContractsApi.updateContract).toHaveBeenCalledWith('10', {
       estadoServicio: 'SUSPENDIDO',
       direccionSuministro: 'Nueva Direccion 456',
       clienteId: '100',
       comunidadId: '5',
       categoriaTarifaId: '1',
+      latitud: null,
+      longitud: null,
     });
     expect(
-      (mockContractsService.updateContract.mock.calls[0][1] as unknown as Record<string, unknown>)[
+      (mockContractsApi.updateContract.mock.calls[0][1] as unknown as Record<string, unknown>)[
         'medidorId'
       ],
     ).toBeUndefined();
     expect(
-      (mockContractsService.updateContract.mock.calls[0][1] as unknown as Record<string, unknown>)[
+      (mockContractsApi.updateContract.mock.calls[0][1] as unknown as Record<string, unknown>)[
         'lecturaInicial'
       ],
     ).toBeUndefined();
@@ -153,7 +178,7 @@ describe('ServiceContractFormComponent', () => {
       'Contrato actualizado correctamente',
       'Éxito',
     );
-    expect(mockContractsService.updateContract.mock.calls[0][1]).not.toHaveProperty('estado');
+    expect(mockContractsApi.updateContract.mock.calls[0][1]).not.toHaveProperty('estado');
   });
 
   it('should open and close replace meter modal in edit mode', () => {
@@ -190,14 +215,14 @@ describe('ServiceContractFormComponent', () => {
       ],
     };
 
-    mockContractsService.getContractById.mockReturnValue(of(updatedContract));
+    mockContractsApi.getContractById.mockReturnValue(of(updatedContract));
     const savedEmitSpy = vi.spyOn(component.saved, 'emit');
 
     component.openReplaceMeterModal();
     component.onMeterReplaced();
 
     expect(component.isReplaceMeterModalOpen()).toBeFalsy();
-    expect(mockContractsService.getContractById).toHaveBeenCalledWith('10');
+    expect(mockContractsApi.getContractById).toHaveBeenCalledWith('10');
     expect(component.selectedMeter()?.serie).toBe('METER-300');
     expect(savedEmitSpy).toHaveBeenCalled();
     expect(mockToastService.success).toHaveBeenCalledWith(
@@ -209,7 +234,7 @@ describe('ServiceContractFormComponent', () => {
   it('should create contract with medidorId and lecturaInicial in create mode', () => {
     fixture.detectChanges();
 
-    mockContractsService.createContract.mockReturnValue(of(mockContract));
+    mockContractsApi.createContract.mockReturnValue(of(mockContract));
     const savedEmitSpy = vi.spyOn(component.saved, 'emit');
 
     component.form.patchValue({
@@ -242,7 +267,7 @@ describe('ServiceContractFormComponent', () => {
 
     component.save();
 
-    expect(mockContractsService.createContract).toHaveBeenCalledWith({
+    expect(mockContractsApi.createContract).toHaveBeenCalledWith({
       clienteId: '101',
       categoriaTarifaId: '2',
       medidorId: '500',
@@ -251,7 +276,125 @@ describe('ServiceContractFormComponent', () => {
       comunidadId: '3',
       lecturaInicial: 0,
     });
-    expect(mockContractsService.createContract.mock.calls[0][0]).not.toHaveProperty('estado');
+    expect(mockContractsApi.createContract.mock.calls[0][0]).not.toHaveProperty('estado');
     expect(savedEmitSpy).toHaveBeenCalled();
+  });
+  it.each(['PENDIENTE_INSPECCION', 'PENDIENTE_PAGO', 'PENDIENTE_INSTALACION', 'RECHAZADO'])(
+    'keeps %s controlled by the workflow while allowing detail edits',
+    (estadoServicio) => {
+      const contract = { ...mockContract, estadoServicio };
+      fixture.componentRef.setInput('contractToEdit', contract);
+      fixture.componentRef.setInput('states', [
+        { codigo: estadoServicio, nombre: estadoServicio, orden: 1 },
+        { codigo: 'ACTIVO', nombre: 'Activo', orden: 2 },
+      ]);
+      fixture.detectChanges();
+      expect(component.availableStates().map((state) => state.codigo)).toEqual([estadoServicio]);
+      mockContractsApi.updateContract.mockReturnValue(of(contract));
+      component.form.patchValue({ direccionSuministro: 'New address' });
+      component.save();
+      expect(mockContractsApi.updateContract).toHaveBeenCalled();
+      expect(mockContractsApi.updateContract.mock.calls[0][1]).not.toHaveProperty('estadoServicio');
+    },
+  );
+
+  it('should include picked coordinates in the create payload when both are set', () => {
+    fixture.detectChanges();
+
+    mockContractsApi.createContract.mockReturnValue(of(mockContract));
+
+    component.form.patchValue({
+      numeroGuia: 'CTR-NEW-02',
+      direccionSuministro: 'Calle Nueva 789',
+      lecturaInicial: '0',
+    });
+    component.selectedClient.set({
+      clienteId: '101',
+      identificacion: '0988888888',
+      nombres: 'Ana',
+      apellidos: 'Gomez',
+    } as unknown as IClient);
+    component.selectedMeter.set({
+      medidorId: 500,
+      serie: 'METER-500',
+      marca: 'Actaris',
+      modelo: 'A1',
+    } as unknown as IMeter);
+    component.selectedTariff.set({
+      categoriaTarifaId: 2,
+      nombre: 'Comercial',
+    } as unknown as ITariffCategory);
+    component.selectedComunidad.set({
+      id: 3,
+      nombre: 'Comunidad Norte',
+      codigo: 'COM-02',
+      porcentajeTasaSeguridad: 0,
+    } as Comunidad);
+    component.onCoordinatesChange({ latitud: -1.8021, longitud: -80.7554 });
+
+    component.save();
+
+    expect(mockContractsApi.createContract).toHaveBeenCalledWith(
+      expect.objectContaining({ latitud: -1.8021, longitud: -80.7554 }),
+    );
+  });
+
+  it('should send explicit null coordinates in the update payload when the stored pin is cleared', () => {
+    const contractWithCoordinates: IContract = {
+      ...mockContract,
+      latitud: -1.8021,
+      longitud: -80.7554,
+    };
+    fixture.componentRef.setInput('contractToEdit', contractWithCoordinates);
+    fixture.detectChanges();
+
+    mockContractsApi.updateContract.mockReturnValue(of(mockContract));
+
+    component.onCoordinatesChange({ latitud: null, longitud: null });
+    component.save();
+
+    expect(mockContractsApi.updateContract).toHaveBeenCalledWith(
+      '10',
+      expect.objectContaining({ latitud: null, longitud: null }),
+    );
+  });
+
+  it('should block save and warn when only one coordinate of the pair is set', () => {
+    fixture.detectChanges();
+
+    component.form.patchValue({
+      numeroGuia: 'CTR-NEW-03',
+      direccionSuministro: 'Calle Nueva 789',
+      lecturaInicial: '0',
+    });
+    component.selectedClient.set({
+      clienteId: '101',
+      identificacion: '0988888888',
+      nombres: 'Ana',
+      apellidos: 'Gomez',
+    } as unknown as IClient);
+    component.selectedMeter.set({
+      medidorId: 500,
+      serie: 'METER-500',
+      marca: 'Actaris',
+      modelo: 'A1',
+    } as unknown as IMeter);
+    component.selectedTariff.set({
+      categoriaTarifaId: 2,
+      nombre: 'Comercial',
+    } as unknown as ITariffCategory);
+    component.selectedComunidad.set({
+      id: 3,
+      nombre: 'Comunidad Norte',
+      codigo: 'COM-02',
+      porcentajeTasaSeguridad: 0,
+    } as Comunidad);
+    component.form.patchValue({ latitud: -1.8021 });
+
+    component.save();
+
+    expect(mockContractsApi.createContract).not.toHaveBeenCalled();
+    expect(mockToastService.warning).toHaveBeenCalled();
+    expect(component.coordinateError()).toBe('Ingrese latitud y longitud, o deje ambas vacías.');
   });
 });

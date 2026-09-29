@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PaymentsService } from '../../services/payments.service';
-import { IClient } from '../../../../contracts/clients/interfaces/iclients.interface';
+import { IClient } from '../../../../contracts/clients/domain/models/client.model';
 import { PreInvoicesService } from '../../../pre-invoices/services/pre-invoices.service';
 import { IPreInvoice } from '../../../pre-invoices/interfaces/ipre-invoice.interface';
 import {
@@ -26,7 +26,7 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
 import { ContractPickerComponent } from '../../../../../shared/components/contract-picker/contract-picker.component';
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 import { RubroPickerComponent } from '../../../../../shared/components/rubro-picker/rubro-picker.component';
-import type { IContract } from '../../../../contracts/service-contracts/interfaces/icontract.interface';
+import type { IContract } from '../../../../contracts/service-contracts/domain/models/service-contract.model';
 import type {
   ICobroPuntualItem,
   ICreateCobroPuntualDto,

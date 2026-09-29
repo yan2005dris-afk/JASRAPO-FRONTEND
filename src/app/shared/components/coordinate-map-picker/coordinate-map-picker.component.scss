@@ -1,0 +1,58 @@
+.coordinate-picker {
+  width: 100%;
+}
+
+.x-small {
+  font-size: 0.75rem;
+}
+
+.coordinate-picker-map-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.coordinate-picker-canvas {
+  width: 100%;
+  height: 320px;
+  min-height: 320px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #e2e8f0;
+  border: 1px solid var(--border-color);
+}
+
+.offline-map-banner {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: rgba(15, 23, 42, 0.85);
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+
+:host ::ng-deep .coordinate-pin {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--primary-color, #0c9ea1);
+  font-size: 1.6rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
+}
+
+:host ::ng-deep .leaflet-marker-icon:focus,
+:host ::ng-deep .leaflet-marker-icon:focus-visible {
+  outline: 3px solid var(--primary-color, #0c9ea1);
+  outline-offset: 2px;
+}

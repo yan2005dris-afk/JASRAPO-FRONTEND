@@ -280,6 +280,15 @@ export class AuthService {
   }
 
   /**
+   * Verifica si el usuario actual es Super Admin (admin o superadmin).
+   * Solo estos roles pueden modificar la lectura inicial de medidores.
+   */
+  isSuperAdmin(): boolean {
+    const role = this.currentUser()?.roleName?.toLowerCase() ?? '';
+    return role === 'admin' || role === 'superadmin';
+  }
+
+  /**
    * Retorna la ruta por defecto según el rol del usuario.
    * Operadores → panel del operador. El resto → dashboard.
    */

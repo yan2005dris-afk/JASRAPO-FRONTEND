@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ContractsTableComponent } from './contracts-table.component';
-import type { IContract } from '../../interfaces/icontract.interface';
+import type { IContract } from '../../domain/models/service-contract.model';
 
 describe('ContractsTableComponent', () => {
   let component: ContractsTableComponent;

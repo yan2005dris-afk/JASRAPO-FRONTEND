@@ -7,7 +7,7 @@ import { OperatorSyncService } from '../../../core/services/operator-sync.servic
 import { AuthService } from '../../../core/services/auth.service';
 import { MeterCacheService } from '../../../core/services/meter-cache.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
-import { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
+import { IMeterDto } from '../../contracts/meters/domain/models/meter.model';
 import { MeterSearchComponent } from '../components/meter-search/meter-search.component';
 import { SelectedMeterCardComponent } from '../components/selected-meter-card/selected-meter-card.component';
 import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
@@ -22,11 +22,16 @@ import {
 } from './readings.models';
 import { WorkOrderDispatcherComponent } from '../components/work-order-dispatcher/work-order-dispatcher.component';
 import { calculateConsumo, type WorkOrderFormPayload } from '../models/work-order-form.models';
-import type { WorkOrderActivityType, WorkOrderState } from '../models/operator.models';
+import type {
+  WorkOrderActivityType,
+  WorkOrderState,
+  OperatorRouteResponse,
+} from '../models/operator.models';
 
 interface AssignedWorkOrder {
   id: string;
   estado: WorkOrderState;
+  lecturaId?: string;
 }
 
 interface SubmissionFeedback {
@@ -39,11 +44,12 @@ interface ReadingRecord {
   lecturaId?: string;
   _lecturaId?: string;
   medidorId?: string | number;
-  medidor?: { medidorId?: string | number };
+  medidor?: { medidorId?: string | number; serie?: string };
   lecturaActual?: number;
   lecturaAnterior?: number;
   estado?: string;
   syncState?: string;
+  contratoId?: string | number;
   [key: string]: unknown;
 }
 
@@ -93,6 +99,17 @@ export class LecturasComponent implements OnInit {
 
   // Catálogo de medidores cargado (memoria local)
   readonly metersList = this.meterCache.metersList;
+  readonly routeSyntheticMeters = signal<IMeterDto[]>([]);
+
+  readonly combinedMetersList = computed<IMeterDto[]>(() => {
+    const cached = this.metersList();
+    const synthetics = this.routeSyntheticMeters();
+    if (!synthetics.length) return cached;
+    const cachedSeries = new Set(cached.map((m) => m.serie));
+    const toAdd = synthetics.filter((s) => !cachedSeries.has(s.serie));
+    return [...cached, ...toAdd];
+  });
+
   readonly searchQuery = signal<string>('');
   readonly isLoadingMeters = signal<boolean>(false);
   readonly isSaving = signal<boolean>(false);
@@ -139,22 +156,31 @@ export class LecturasComponent implements OnInit {
   // Filtro de estado activo
   readonly selectedEstadoFilter = signal<string>('todas');
 
-  // Mapa medidorId → lectura existente (de registeredReadings + pendingReadings)
+  // Mapa medidorId, serie y contratoId → lectura existente (de registeredReadings + pendingReadings)
   readonly existingReadingMap = computed<Map<string, ReadingRecord>>(() => {
     const map = new Map<string, ReadingRecord>();
     for (const r of this.registeredReadings()) {
       // Backend response nests medidorId inside medidor object
       const mId = r.medidor?.medidorId ?? r.medidorId;
       if (mId != null) map.set(mId.toString(), r as ReadingRecord);
+      if (r.medidor?.serie) map.set(r.medidor.serie, r as ReadingRecord);
+      if (r.contratoId) map.set(r.contratoId.toString(), r as ReadingRecord);
     }
     for (const p of this.pendingReadings()) {
       const mId = p['medidorId'];
+      const record = {
+        ...(mId != null ? map.get(mId.toString()) : undefined),
+        ...p,
+        estado: (p['estado'] as string) || 'POR_REVISION',
+      };
       if (mId != null) {
-        map.set(mId.toString(), {
-          ...map.get(mId.toString()),
-          ...p,
-          estado: (p['estado'] as string) || 'POR_REVISION',
-        });
+        map.set(mId.toString(), record);
+      }
+      if (p['medidorSerie']) {
+        map.set(p['medidorSerie'] as string, record);
+      }
+      if (p['contratoId']) {
+        map.set(String(p['contratoId']), record);
       }
     }
     return map;
@@ -187,8 +213,13 @@ export class LecturasComponent implements OnInit {
     // Orden consistente importado desde readings.models.ts
     return READING_STATE_ORDER.filter((key) => groups.has(key)).map((key) => {
       const isSinLectura = key === '__SIN_LECTURA__';
+      const isWorkOrderRoute = this.routeContext() && this.routeContext()?.tipo !== 'TOMA_LECTURA';
       const info = isSinLectura
-        ? { label: 'Sin Lectura', icon: 'bi-clock', cssClass: null as string | null }
+        ? {
+            label: isWorkOrderRoute ? 'Pendiente' : 'Sin Lectura',
+            icon: isWorkOrderRoute ? 'bi-clipboard-check' : 'bi-clock',
+            cssClass: null as string | null,
+          }
         : {
             label: estadoInfo.get(key)?.label ?? key,
             icon: estadoInfo.get(key)?.icon ?? 'bi-question',
@@ -224,7 +255,7 @@ export class LecturasComponent implements OnInit {
   readonly filteredMeters = computed(() => {
     const query = this.searchQuery().trim().toLowerCase();
     const allowed = this.allowedSeries();
-    let list = this.metersList();
+    let list = this.combinedMetersList();
 
     if (allowed !== null) {
       list = list.filter((m) => allowed.has(m.serie));
@@ -240,6 +271,62 @@ export class LecturasComponent implements OnInit {
     );
   });
 
+  // Segmented control de órdenes para el flujo de ruta
+  readonly orderFilter = signal<'TODAS' | 'PENDIENTES' | 'COMPLETADAS'>('TODAS');
+  readonly completedWorkOrderIds = signal<Set<string>>(new Set());
+
+  isOrderCompleted(meter: IMeterDto): boolean {
+    if (this.completedWorkOrderIds().has(meter.medidorId.toString())) return true;
+    if (this.readMetersIds().has(meter.medidorId.toString())) return true;
+    const existing =
+      this.existingReadingMap().get(meter.medidorId.toString()) ||
+      this.existingReadingMap().get(meter.serie) ||
+      (meter.contratoId ? this.existingReadingMap().get(meter.contratoId.toString()) : null);
+    return (
+      !!existing && existing.estado !== 'PENDIENTE' && existing.estado !== 'RECHAZADA_VERIFICACION'
+    );
+  }
+
+  readonly orderCounts = computed(() => {
+    const list = this.filteredMeters();
+    const total = list.length;
+    let completed = 0;
+    for (const m of list) {
+      if (this.isOrderCompleted(m)) {
+        completed++;
+      }
+    }
+    const pending = Math.max(0, total - completed);
+    const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { total, pending, completed, pct };
+  });
+
+  readonly segmentedOrders = computed(() => {
+    const list = this.filteredMeters();
+    const filter = this.orderFilter();
+    return list.filter((m) => {
+      const done = this.isOrderCompleted(m);
+      if (filter === 'PENDIENTES') return !done;
+      if (filter === 'COMPLETADAS') return done;
+      return true;
+    });
+  });
+
+  openOrderExecution(meter: IMeterDto): void {
+    this.selectMeter(meter);
+    const primary = this.primaryWorkOrderFor(meter);
+    const tipo = primary
+      ? primary[0]
+      : (meter.marca as WorkOrderActivityType) ||
+        (this.routeContext()?.tipo as WorkOrderActivityType) ||
+        'LECTURA';
+    this.goToWorkOrderForm(tipo);
+  }
+
+  goBackToRoutes(): void {
+    this.router.navigate(['/app/operador/rutas']);
+  }
+
   ngOnInit(): void {
     this.autoSelectFromQueryParam();
     this.loadCachedMeters();
@@ -252,17 +339,31 @@ export class LecturasComponent implements OnInit {
       await this.meterCache.load();
       const operatorId = this.authService.currentUser()?.id;
       const scope = operatorId ? `operator:${operatorId}` : undefined;
-      const [cachedReadings, assignedWorkOrders] = await Promise.all([
+      const [initialCachedReadings, assignedWorkOrders] = await Promise.all([
         this.dbService.getRegisteredReadingsCache(scope),
         this.dbService.getAssignedWorkOrders(scope),
       ]);
-      this.registeredReadings.set(cachedReadings);
       this.mergeAssignedWorkOrders(assignedWorkOrders);
+      let cachedReadings = initialCachedReadings;
 
-      // Si se pasó una serie específica en la query URL y no estaba seleccionada
+      if ((!cachedReadings || cachedReadings.length === 0) && this.networkService.isOnline()) {
+        try {
+          const readings = (await this.syncService.getCurrentPeriodReadings()) as ReadingRecord[];
+          if (readings?.length) {
+            await this.dbService.saveRegisteredReadingsCache(readings);
+            cachedReadings = readings;
+          }
+        } catch {
+          // Ignorar fallas silenciosas en prefetch de fondo
+        }
+      }
+
+      this.registeredReadings.set(cachedReadings ?? []);
+
+      // Si se pasó una serie específica fuera del flujo de ruta y no estaba seleccionada
       const singleSerie = this.activatedRoute.snapshot.queryParamMap.get('serie');
-      if (singleSerie && !this.selectedMeter()) {
-        const meter = this.metersList().find((m) => m.serie === singleSerie);
+      if (!this.routeContext() && singleSerie && !this.selectedMeter()) {
+        const meter = this.combinedMetersList().find((m) => m.serie === singleSerie);
         if (meter) this.selectMeter(meter);
       }
     } catch (e) {
@@ -300,6 +401,7 @@ export class LecturasComponent implements OnInit {
 
   private autoSelectFromQueryParam(): void {
     const params = this.activatedRoute.snapshot.queryParamMap;
+    const rutaId = params.get('rutaId');
     const rutaNombre = params.get('rutaNombre');
     const rutaTipo = params.get('rutaTipo');
     const seriesParam = params.get('series');
@@ -310,9 +412,72 @@ export class LecturasComponent implements OnInit {
       this.routeContext.set({ nombre: rutaNombre, tipo: rutaTipo });
     }
 
+    // Recuperar datos de la ruta (desde router state o sessionStorage)
+    let activeRoute: OperatorRouteResponse | null = null;
+    if (history.state && history.state.route) {
+      activeRoute = history.state.route as OperatorRouteResponse;
+    } else {
+      try {
+        const stored = sessionStorage.getItem('activeOperatorRoute');
+        if (stored) activeRoute = JSON.parse(stored);
+      } catch {
+        // ignore
+      }
+    }
+
+    const synthetics: IMeterDto[] = [];
+    if (
+      activeRoute &&
+      (!rutaId ||
+        String(activeRoute.rutaId) === String(rutaId) ||
+        activeRoute.nombre === rutaNombre)
+    ) {
+      if (activeRoute.ordenesTrabajo?.length) {
+        for (const wo of activeRoute.ordenesTrabajo) {
+          const id = wo.medidor?.serie || wo.contrato?.numeroContrato || `OT-${wo.ordenTrabajoId}`;
+          const realMedidorId =
+            wo.medidor?.medidorId != null && Number(wo.medidor.medidorId) > 0
+              ? Number(wo.medidor.medidorId)
+              : Number(wo.ordenTrabajoId)
+                ? -Math.abs(Number(wo.ordenTrabajoId))
+                : -1;
+          synthetics.push({
+            medidorId: realMedidorId,
+            serie: id,
+            marca: wo.tipoActividad,
+            modelo: wo.contrato?.direccion || '',
+            clienteNombre: wo.contrato?.clienteNombre || 'Cliente sin nombre',
+            contratoId: wo.contrato?.numeroContrato || wo.contratoId || null,
+            fechaInstalacion: null,
+          });
+        }
+      } else if (activeRoute.paradas?.length) {
+        for (const p of activeRoute.paradas) {
+          const id = p.serie || p.clienteNombre || `OT-${p.ordenTrabajoId}`;
+          synthetics.push({
+            medidorId: Number(p.ordenTrabajoId) ? -Math.abs(Number(p.ordenTrabajoId)) : -1,
+            serie: id,
+            marca: p.tipoActividad,
+            modelo: p.direccionSuministro || '',
+            clienteNombre: p.clienteNombre || 'Cliente sin nombre',
+            contratoId: null,
+            fechaInstalacion: null,
+          });
+        }
+      }
+    }
+
+    if (synthetics.length > 0) {
+      this.routeSyntheticMeters.set(synthetics);
+    }
+
     // Build a lookup map: serie → activity type → assigned work-order ID.
     // Format: "SERIE1:INSTALACION:ORDER_ID:ESTADO;INSPECCION:OTHER_ID:ESTADO".
     // Legacy assignments without estado default to PENDIENTE.
+    if (activeRoute && !this.routeContext()) {
+      this.routeContext.set({ nombre: activeRoute.nombre, tipo: activeRoute.tipoRuta });
+    }
+
     if (workOrdersParam) {
       const workOrdersByMeter = new Map<string, Map<WorkOrderActivityType, AssignedWorkOrder>>();
       for (const entry of workOrdersParam.split(',')) {
@@ -320,14 +485,39 @@ export class LecturasComponent implements OnInit {
         if (!serie || !assignmentsCsv) continue;
         const assignments = new Map<WorkOrderActivityType, AssignedWorkOrder>();
         for (const assignment of assignmentsCsv.split(';')) {
-          const [tipo, ordenTrabajoId = '', estado = 'PENDIENTE'] = assignment.split(':');
+          const [tipo, ordenTrabajoId = '', estado = 'PENDIENTE', lecturaId = ''] =
+            assignment.split(':');
           const t = tipo.trim() as WorkOrderActivityType;
           const workOrderState = estado.trim() as WorkOrderState;
           if (t && ordenTrabajoId.trim()) {
-            assignments.set(t, { id: ordenTrabajoId.trim(), estado: workOrderState });
+            assignments.set(t, {
+              id: ordenTrabajoId.trim(),
+              estado: workOrderState,
+              ...(lecturaId.trim() ? { lecturaId: lecturaId.trim() } : {}),
+            });
           }
         }
         if (assignments.size) workOrdersByMeter.set(serie.trim(), assignments);
+      }
+      this.workOrdersByMeter.set(workOrdersByMeter);
+    } else if (activeRoute?.ordenesTrabajo?.length) {
+      const workOrdersByMeter = new Map<string, Map<WorkOrderActivityType, AssignedWorkOrder>>();
+      for (const wo of activeRoute.ordenesTrabajo) {
+        const id = wo.medidor?.serie || wo.contrato?.numeroContrato || `OT-${wo.ordenTrabajoId}`;
+        const assignments = new Map<WorkOrderActivityType, AssignedWorkOrder>();
+        const routeRef = (wo as unknown as Record<string, unknown>)['ruta'] as
+          { tipoActividad?: { codigo?: string } } | undefined;
+        const tipo =
+          (wo.tipoActividad as WorkOrderActivityType) ||
+          (routeRef?.tipoActividad?.codigo as WorkOrderActivityType) ||
+          (activeRoute.tipoRuta as WorkOrderActivityType) ||
+          'LECTURA';
+        assignments.set(tipo, {
+          id: String(wo.ordenTrabajoId),
+          estado: (wo.estado as WorkOrderState) || 'PENDIENTE',
+          lecturaId: wo.lecturaId ? String(wo.lecturaId) : undefined,
+        });
+        workOrdersByMeter.set(id, assignments);
       }
       this.workOrdersByMeter.set(workOrdersByMeter);
     }
@@ -339,11 +529,14 @@ export class LecturasComponent implements OnInit {
           .map((s) => s.trim())
           .filter(Boolean),
       );
-      this.allowedSeries.set(set);
+      if (set.size > 0) {
+        this.allowedSeries.set(set);
+      }
     }
 
-    if (singleSerie) {
-      const meter = this.metersList().find((m) => m.serie === singleSerie);
+    // Solo auto-seleccionar si NO estamos en el flujo de órdenes de una ruta
+    if (!this.routeContext() && singleSerie && !this.selectedMeter()) {
+      const meter = this.combinedMetersList().find((m) => m.serie === singleSerie);
       if (meter) this.selectMeter(meter);
     }
   }
@@ -434,8 +627,16 @@ export class LecturasComponent implements OnInit {
     this.state.set({ kind: 'actions', meter });
 
     // Pre-load previous reading value for the Lectura sub-form
-    const existing = this.existingReadingMap().get(meter.medidorId.toString());
-    this.lecturaAnteriorPreloaded.set(existing?.lecturaActual ?? 0);
+    const existing =
+      this.existingReadingMap().get(meter.medidorId.toString()) ||
+      this.existingReadingMap().get(meter.serie) ||
+      (meter.contratoId ? this.existingReadingMap().get(meter.contratoId.toString()) : null);
+
+    const prevReading =
+      existing?.estado === 'PENDIENTE'
+        ? (existing.lecturaAnterior ?? 0)
+        : (existing?.lecturaActual ?? existing?.lecturaAnterior ?? 0);
+    this.lecturaAnteriorPreloaded.set(prevReading);
   }
 
   goToReadingForm(): void {
@@ -455,14 +656,13 @@ export class LecturasComponent implements OnInit {
   goToNoveltyForm(): void {
     const meter = this.selectedMeter();
     if (meter) {
-      const existing = this.existingReadingMap().get(meter.medidorId.toString());
-      const lecturaId = existing?.lecturaId ?? existing?._lecturaId ?? null;
+      const lecturaId = this.resolveLecturaIdFor(meter);
       const primaryOrder = this.primaryWorkOrderFor(meter);
       const ordenTrabajoId = primaryOrder ? primaryOrder[1].id : null;
       this.router.navigate(['/app/operador/novedades/new'], {
         queryParams: {
           medidorId: meter.medidorId,
-          lecturaId,
+          ...(lecturaId ? { lecturaId } : {}),
           ...(ordenTrabajoId ? { ordenTrabajoId } : {}),
         },
       });
@@ -484,7 +684,12 @@ export class LecturasComponent implements OnInit {
   }
 
   primaryWorkOrderFor(meter: IMeterDto): [WorkOrderActivityType, AssignedWorkOrder] | undefined {
-    return this.actionableWorkOrdersFor(meter)[0];
+    const actionable = this.actionableWorkOrdersFor(meter)[0];
+    if (actionable && actionable[0]) return actionable;
+    const all = [...(this.workOrdersByMeter().get(meter.serie)?.entries() ?? [])];
+    const fallback = all.find(([type]) => !!type);
+    if (fallback) return fallback;
+    return undefined;
   }
 
   workOrderStateLabel(state: WorkOrderState): string {
@@ -498,17 +703,104 @@ export class LecturasComponent implements OnInit {
   }
 
   readingStateLabel(meter: IMeterDto): string {
-    const state = this.existingReadingMap().get(meter.medidorId.toString())?.estado;
+    const existing =
+      this.existingReadingMap().get(meter.medidorId.toString()) ||
+      this.existingReadingMap().get(meter.serie) ||
+      (meter.contratoId ? this.existingReadingMap().get(meter.contratoId.toString()) : null);
+    const state = existing?.estado;
     if (!state) return 'Sin lectura';
     return this.estadosCatalog().find((item) => item.codigo === state)?.nombre ?? state;
   }
 
   private workOrderIdFor(meter: IMeterDto, tipo: WorkOrderActivityType): string | undefined {
     const workOrder = this.workOrdersByMeter().get(meter.serie)?.get(tipo);
-    if (workOrder?.estado !== 'PENDIENTE' && workOrder?.estado !== 'EN_PROGRESO') {
-      return undefined;
+    if (workOrder?.estado === 'PENDIENTE' || workOrder?.estado === 'EN_PROGRESO') {
+      return workOrder.id;
     }
-    return workOrder.id;
+    if (workOrder?.id) return workOrder.id;
+    if (meter.medidorId < 0) {
+      return Math.abs(meter.medidorId).toString();
+    }
+    return undefined;
+  }
+
+  private resolveLecturaIdFor(meter: IMeterDto): string | null {
+    // 1. Existing reading map (indexed by medidorId, serie, and contratoId)
+    const existingReading =
+      this.existingReadingMap().get(meter.medidorId.toString()) ||
+      this.existingReadingMap().get(meter.serie) ||
+      (meter.contratoId ? this.existingReadingMap().get(meter.contratoId.toString()) : null);
+    if (existingReading?.lecturaId) return String(existingReading.lecturaId);
+    if (existingReading?._lecturaId) return String(existingReading._lecturaId);
+
+    // 2. Direct search in registeredReadings
+    const reg = (this.registeredReadings() as unknown as Record<string, unknown>[]).find(
+      (r: Record<string, unknown>) => {
+        const medidor = r['medidor'] as Record<string, unknown> | undefined;
+        const mId = medidor?.['medidorId'] ?? r['medidorId'];
+        const s = medidor?.['serie'] ?? r['medidorSerie'];
+        return (
+          (mId != null && String(mId) === String(meter.medidorId)) ||
+          (s && s === meter.serie) ||
+          (r['contratoId'] &&
+            meter.contratoId &&
+            String(r['contratoId']) === String(meter.contratoId))
+        );
+      },
+    );
+    if (reg && 'lecturaId' in reg && reg['lecturaId']) return String(reg['lecturaId']);
+
+    // 3. Assigned work orders by meter
+    const checkAssignments = (assignments?: Map<WorkOrderActivityType, AssignedWorkOrder>) => {
+      if (!assignments) return null;
+      const woLectura = assignments.get('LECTURA');
+      if (woLectura?.lecturaId) return String(woLectura.lecturaId);
+      for (const wo of assignments.values()) {
+        if (wo.lecturaId) return String(wo.lecturaId);
+      }
+      return null;
+    };
+
+    const fromByMeter =
+      checkAssignments(this.workOrdersByMeter().get(meter.serie)) ||
+      (meter.contratoId
+        ? checkAssignments(this.workOrdersByMeter().get(meter.contratoId.toString()))
+        : null) ||
+      checkAssignments(this.workOrdersByMeter().get(meter.medidorId.toString()));
+    if (fromByMeter) return fromByMeter;
+
+    // 4. From activeOperatorRoute in state or sessionStorage
+    try {
+      let route: Record<string, unknown> | null = null;
+      if (history.state && history.state.route) {
+        route = history.state.route as Record<string, unknown>;
+      } else {
+        const raw = sessionStorage.getItem('activeOperatorRoute');
+        if (raw) route = JSON.parse(raw) as Record<string, unknown>;
+      }
+      const rawOrdenes = route?.['ordenesTrabajo'];
+      if (Array.isArray(rawOrdenes) && rawOrdenes.length) {
+        const match = rawOrdenes.find((item) => {
+          const o = item as Record<string, unknown>;
+          const med = o['medidor'] as Record<string, unknown> | undefined;
+          const con = o['contrato'] as Record<string, unknown> | undefined;
+          return (
+            med?.['serie'] === meter.serie ||
+            (med?.['medidorId'] != null && String(med['medidorId']) === String(meter.medidorId)) ||
+            (meter.contratoId &&
+              (con?.['numeroContrato'] === meter.contratoId ||
+                String(o['contratoId']) === String(meter.contratoId))) ||
+            `OT-${o['ordenTrabajoId']}` === meter.serie
+          );
+        });
+        const m = match as Record<string, unknown> | undefined;
+        if (m && 'lecturaId' in m && m['lecturaId']) return String(m['lecturaId']);
+      }
+    } catch {
+      // Ignorar errores de parseo
+    }
+
+    return null;
   }
 
   goBackToSearch(): void {
@@ -544,10 +836,20 @@ export class LecturasComponent implements OnInit {
     this.submissionFeedback.set(null);
     this.failedSubmission.set(null);
     this.isSaving.set(true);
-    const existingReading = this.existingReadingMap().get(meter.medidorId.toString());
-    // Cubrimos ambos nombres del id (`lecturaId` para backend actual, `_lecturaId` para
-    // serialización legacy en IndexedDB). Si existe, lo mandamos al endpoint para PATCH.
-    const existingId = existingReading?.lecturaId ?? existingReading?._lecturaId ?? null;
+    let existingId = this.resolveLecturaIdFor(meter);
+
+    if (!existingId && this.networkService.isOnline()) {
+      try {
+        const fresh = (await this.syncService.getCurrentPeriodReadings()) as ReadingRecord[];
+        if (fresh?.length) {
+          await this.dbService.saveRegisteredReadingsCache(fresh);
+          this.registeredReadings.set(fresh);
+          existingId = this.resolveLecturaIdFor(meter);
+        }
+      } catch {
+        // Silencioso
+      }
+    }
 
     try {
       if (formPayload.tipoActividad === 'LECTURA') {
@@ -563,6 +865,7 @@ export class LecturasComponent implements OnInit {
         const lecturaPayload = {
           fecha: new Date().toISOString(),
           medidorId: meter.medidorId.toString(),
+          medidorSerie: meter.serie,
           lecturaAnterior: formPayload.lecturaAnterior,
           lecturaActual: formPayload.lecturaActual,
           lecturaInicial: formPayload.lecturaInicial,
@@ -582,6 +885,7 @@ export class LecturasComponent implements OnInit {
         const response = await this.syncService.submitReading(lecturaPayload);
         await this.updateReadingsCacheAfterSubmit(response);
         this.setSubmissionSuccess(response as { offline?: boolean });
+        this.completedWorkOrderIds.update((set) => new Set([...set, meter.medidorId.toString()]));
       } else {
         // INSTALACION / INSPECCION / RECONEXION → endpoint dedicado (#261)
         const ordenTrabajoId = this.workOrderIdFor(meter, formPayload.tipoActividad);
@@ -594,6 +898,7 @@ export class LecturasComponent implements OnInit {
         };
         const response = await this.syncService.submitWorkOrder(workOrderPayload);
         this.setSubmissionSuccess(response as { offline?: boolean });
+        this.completedWorkOrderIds.update((set) => new Set([...set, meter.medidorId.toString()]));
       }
 
       this.goBackToSearch();
@@ -601,6 +906,26 @@ export class LecturasComponent implements OnInit {
       await this.loadCachedMeters();
     } catch (e) {
       console.error('Error al registrar orden de trabajo:', e);
+      // Fallback a almacenamiento local offline si falló la llamada remota para no perder los datos del operario
+      if (formPayload.tipoActividad === 'LECTURA') {
+        try {
+          await this.dbService.savePendingReading({
+            fecha: new Date().toISOString(),
+            medidorId: meter.medidorId.toString(),
+            medidorSerie: meter.serie,
+            ...formPayload,
+          });
+          await this.syncService.refreshPendingCounts();
+          this.setSubmissionSuccess({ offline: true });
+          this.completedWorkOrderIds.update((set) => new Set([...set, meter.medidorId.toString()]));
+          this.goBackToSearch();
+          await this.loadPendingReadings();
+          await this.loadCachedMeters();
+          return;
+        } catch (dbErr) {
+          console.error('Error al guardar fallback en IndexedDB:', dbErr);
+        }
+      }
       this.failedSubmission.set(formPayload);
       const localMessage =
         e instanceof Error &&

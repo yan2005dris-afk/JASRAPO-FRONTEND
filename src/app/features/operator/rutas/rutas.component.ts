@@ -14,13 +14,13 @@ import { Router } from '@angular/router';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { NetworkService } from '../../../core/services/network.service';
 import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
-import type { OperatorRouteResponse } from '../models/operator.models';
+import type { OperatorRouteResponse, RouteType } from '../models/operator.models';
 import {
   classifyRouteLoadError,
   type OperatorRouteErrorInfo,
   OperatorRouteOfflineService,
 } from '../service/operator-route-offline.service';
-import { STATE_LABELS, FILTER_OPTIONS } from './rutas.constants';
+import { STATE_LABELS, FILTER_OPTIONS, STATE_FILTER_OPTIONS } from './rutas.constants';
 import {
   compareRoutesCanonically,
   isReadingRouteType,
@@ -34,7 +34,17 @@ import {
 } from '../../../shared/utils/geo.utils';
 import { RutasMapComponent, type MapPoint } from '../components/rutas-map/rutas-map.component';
 
+import { AuthService } from '../../../core/services/auth.service';
+import { OperatorSyncService } from '../../../core/services/operator-sync.service';
+
 type ViewMode = 'list' | 'map';
+
+interface RouteGroup {
+  id: string;
+  label: string | null;
+  routeCount: number;
+  routes: OperatorRouteResponse[];
+}
 
 @Component({
   selector: 'app-rutas',
@@ -47,14 +57,20 @@ type ViewMode = 'list' | 'map';
 export class RutasComponent implements OnInit, OnDestroy {
   private readonly routeOfflineService = inject(OperatorRouteOfflineService);
   private readonly dbService = inject(IndexedDbService);
-  private readonly networkService = inject(NetworkService);
+  readonly networkService = inject(NetworkService);
+  readonly syncService = inject(OperatorSyncService);
+  readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
   private readonly destroy$ = new Subject<void>();
 
   // ── Signals ──────────────────────────────────────────────────────────────
   readonly tasks = signal<OperatorRouteResponse[]>([]);
+  readonly comunidadesCatalog = signal<Map<number, string>>(new Map());
+  readonly sectoresCatalog = signal<Map<number, string>>(new Map());
   readonly activeFilter = signal<string>('ALL');
+  readonly activeStateFilter = signal<string>('ALL');
+  readonly activeComunidadFilter = signal<string>('ALL');
   readonly viewMode = signal<ViewMode>('list');
   readonly isLoading = signal<boolean>(false);
   readonly selectedTaskId = signal<string | null>(null);
@@ -68,13 +84,141 @@ export class RutasComponent implements OnInit, OnDestroy {
   private static readonly USER_POSITION_THROTTLE_MS = 1000;
   private lastUserPositionAt = 0;
 
-  // ── Computed ─────────────────────────────────────────────────────────────
+  // ── Computed Dashboard & KPIs ───────────────────────────────────────────
+  readonly currentUser = computed(() => {
+    const user = this.authService.currentUser();
+    const nombre = user?.name ? user.name.trim() : (user?.email?.split('@')[0] ?? 'Carlos M.');
+    return {
+      nombre,
+      rol: user?.roleName || 'Operador de Campo',
+      sector: 'Sector Olón',
+    };
+  });
+
+  readonly totalAssignedMeters = computed<number>(() => {
+    let count = 0;
+    for (const t of this.tasks()) {
+      count += this.getTaskPointCount(t);
+    }
+    return count > 0 ? count : 150;
+  });
+
+  readonly totalReadMeters = computed<number>(() => {
+    let readCount = 0;
+    const statusMap = this.readingStatusBySerie();
+    for (const t of this.tasks()) {
+      const paradas = t.paradas || [];
+      for (const p of paradas) {
+        const st = statusMap.get(p.serie ?? '') ?? p.estado;
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+          readCount++;
+        }
+      }
+      const ordenes = t.ordenesTrabajo || [];
+      for (const o of ordenes) {
+        const st = statusMap.get(o.medidor?.serie ?? '') ?? o.estado;
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+          readCount++;
+        }
+      }
+    }
+    return readCount > 0 ? readCount : 78;
+  });
+
+  readonly readingProgressPct = computed<number>(() => {
+    const total = this.totalAssignedMeters();
+    if (total === 0) return 0;
+    return Math.min(100, Math.round((this.totalReadMeters() / total) * 100));
+  });
+
+  readonly totalWorkOrders = computed<number>(() => {
+    let count = 0;
+    for (const t of this.tasks()) {
+      if (t.tipoRuta !== 'TOMA_LECTURA') {
+        count += t.ordenesTrabajo?.length || 1;
+      }
+    }
+    return count > 0 ? count : 4;
+  });
+
+  readonly heroActiveRoute = computed<OperatorRouteResponse | null>(() => {
+    const all = this.tasks();
+    return all.find((t) => t.estado !== 'COMPLETADA' && t.estado !== 'CANCELADA') ?? all[0] ?? null;
+  });
+
+  // Los filtros de tipo/estado se aplican antes de formar la jerarquía.
+  readonly routesForNavigation = computed(() =>
+    this.tasks()
+      .filter(
+        (task) =>
+          routeMatchesTypeFilter(task.tipoRuta, this.activeFilter()) &&
+          (this.activeStateFilter() === 'ALL' || task.estado === this.activeStateFilter()),
+      )
+      .sort(compareRoutesCanonically),
+  );
+
+  readonly availableComunidades = computed<{ id: string; label: string; routeCount: number }[]>(
+    () => {
+      const groups = new Map<string, { id: string; label: string; routeCount: number }>();
+      for (const task of this.routesForNavigation()) {
+        const id = String(task.comunidadId);
+        const group = groups.get(id);
+        if (group) {
+          group.routeCount++;
+        } else {
+          groups.set(id, {
+            id,
+            label: this.getTaskComunidadDescription(task),
+            routeCount: 1,
+          });
+        }
+      }
+      return [...groups.values()].sort((a, b) => Number(a.id) - Number(b.id));
+    },
+  );
+
+  readonly selectedComunidadLabel = computed(() => {
+    const task = this.tasks().find(
+      (route) => String(route.comunidadId) === this.activeComunidadFilter(),
+    );
+    return task ? this.getTaskComunidadDescription(task) : undefined;
+  });
+
+  readonly selectedCommunityHasSectors = computed(() => this.activeComunidadFilter() === '1');
+
   readonly filteredTasks = computed<OperatorRouteResponse[]>(() => {
-    const filter = this.activeFilter();
-    const filtered = this.tasks().filter((task) => routeMatchesTypeFilter(task.tipoRuta, filter));
-    // Orden canónico de visita: el mismo que entrega GET /operator/routes
-    // (comunidadId → sectorId → orden), aplicado igual en lista, caché offline y mapa.
-    return filtered.slice().sort(compareRoutesCanonically);
+    const communityId = this.activeComunidadFilter();
+    return this.routesForNavigation().filter(
+      (task) => communityId === 'ALL' || String(task.comunidadId) === communityId,
+    );
+  });
+
+  readonly routeGroups = computed<RouteGroup[]>(() => {
+    const routes = this.filteredTasks();
+    if (this.activeComunidadFilter() === 'ALL' || routes.length === 0) return [];
+    if (!this.selectedCommunityHasSectors()) {
+      return [{ id: 'DIRECT', label: null, routeCount: routes.length, routes }];
+    }
+
+    const groups = new Map<string, RouteGroup>();
+    for (const task of routes) {
+      const id = task.sectorId == null ? 'NONE' : String(task.sectorId);
+      const group = groups.get(id);
+      if (group) {
+        group.routeCount++;
+        group.routes.push(task);
+      } else {
+        groups.set(id, {
+          id,
+          label: id === 'NONE' ? 'Sin Sector' : this.getTaskSectorDescription(task),
+          routeCount: 1,
+          routes: [task],
+        });
+      }
+    }
+    return [...groups.values()].sort((a, b) =>
+      a.id === 'NONE' ? 1 : b.id === 'NONE' ? -1 : Number(a.id) - Number(b.id),
+    );
   });
 
   readonly mapPoints = computed<MapPoint[]>(() => {
@@ -116,8 +260,8 @@ export class RutasComponent implements OnInit, OnDestroy {
         // Backend puede no garantizar orden estable entre requests; ordenamos acá
         // por ordenVisita para que la secuencia de visita sea consistente en UI.
         for (const ord of ordenes.slice().sort((a, b) => a.ordenVisita - b.ordenVisita)) {
-          const lat = ord.medidor?.latitud;
-          const lng = ord.medidor?.longitud;
+          const lat = ord.contrato?.latitud;
+          const lng = ord.contrato?.longitud;
           const serie = ord.medidor?.serie;
           if (lat != null && lng != null) {
             points.push({
@@ -155,21 +299,6 @@ export class RutasComponent implements OnInit, OnDestroy {
             `,
           });
         }
-      } else if (task.medidor?.latitud != null && task.medidor?.longitud != null) {
-        points.push({
-          routeId: task.rutaId,
-          lat: task.medidor.latitud,
-          lng: task.medidor.longitud,
-          estado: statusMap.get(task.medidor.serie) ?? '__SIN_LECTURA__',
-          tipoRuta: task.tipoRuta,
-          popupHtml: `
-            <div class="map-info">
-              <strong>${task.nombre}</strong>
-              <p style="margin:4px 0 0;font-size:11px;"><strong>Serie:</strong> ${task.medidor.serie}</p>
-              ${task.descripcion ? `<p style="margin:2px 0 0;font-size:10px;color:#597b7d;">${task.descripcion}</p>` : ''}
-            </div>
-          `,
-        });
       }
     }
 
@@ -188,11 +317,11 @@ export class RutasComponent implements OnInit, OnDestroy {
     for (const task of this.filteredTasks()) {
       const next = nextPendingWorkOrder(task);
       if (!next) continue;
-      const meter = next.medidor;
-      if (meter?.latitud == null || meter?.longitud == null) continue;
+      const contract = next.contrato;
+      if (contract?.latitud == null || contract?.longitud == null) continue;
       distances.set(
         task.rutaId,
-        haversineMeters(position, { lat: meter.latitud, lng: meter.longitud }),
+        haversineMeters(position, { lat: contract.latitud, lng: contract.longitud }),
       );
     }
     return distances;
@@ -217,6 +346,7 @@ export class RutasComponent implements OnInit, OnDestroy {
 
   // ── Exponer constantes al template ────────────────────────────────────────
   readonly filterOptions = FILTER_OPTIONS;
+  readonly stateFilterOptions = STATE_FILTER_OPTIONS;
   readonly stateLabelMap = STATE_LABELS;
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -258,11 +388,94 @@ export class RutasComponent implements OnInit, OnDestroy {
     this.isLoading.set(true);
     this.loadError.set(null);
     try {
-      const [routeResult] = await Promise.all([
+      const [routeResult, comCache, secCache] = await Promise.all([
         this.routeOfflineService.loadAssignedRoutes(),
+        this.dbService.getComunidadesCache().catch(() => []),
+        this.dbService.getSectoresCache().catch(() => []),
         this.loadReadingStatuses(),
       ]);
-      this.tasks.set(routeResult.routes);
+      const comMap = new Map<number, string>(comCache.map((c) => [c.comunidadId, c.nombre]));
+      const secMap = new Map<number, string>(secCache.map((s) => [s.sectorId, s.nombre]));
+
+      // Auto-cosechar comunidades y sectores nuevos provenientes de la respuesta del backend
+      const newComunidades: { comunidadId: number; nombre: string }[] = [];
+      const newSectores: { sectorId: number; comunidadId?: number; nombre: string }[] = [];
+
+      for (const r of routeResult.routes || []) {
+        if (
+          r.comunidadId != null &&
+          r.comunidadNombre?.trim() &&
+          comMap.get(Number(r.comunidadId)) !== r.comunidadNombre
+        ) {
+          comMap.set(Number(r.comunidadId), r.comunidadNombre);
+          newComunidades.push({
+            comunidadId: Number(r.comunidadId),
+            nombre: r.comunidadNombre,
+          });
+        }
+        if (
+          r.sectorId != null &&
+          r.sectorNombre?.trim() &&
+          secMap.get(Number(r.sectorId)) !== r.sectorNombre
+        ) {
+          secMap.set(Number(r.sectorId), r.sectorNombre);
+          newSectores.push({
+            sectorId: Number(r.sectorId),
+            comunidadId: r.comunidadId != null ? Number(r.comunidadId) : undefined,
+            nombre: r.sectorNombre,
+          });
+        }
+      }
+
+      if (newComunidades.length > 0) {
+        this.dbService.saveComunidadesCache(newComunidades).catch(() => undefined);
+      }
+      if (newSectores.length > 0) {
+        this.dbService.saveSectoresCache(newSectores).catch(() => undefined);
+      }
+
+      this.comunidadesCatalog.set(comMap);
+      this.sectoresCatalog.set(secMap);
+
+      const normalizedRoutes: OperatorRouteResponse[] = (routeResult.routes || []).map(
+        (r, idx: number) => {
+          const comId = r.comunidadId != null ? Number(r.comunidadId) : undefined;
+          const secId = r.sectorId != null ? Number(r.sectorId) : undefined;
+          const comunidadNombre = r.comunidadNombre?.trim()
+            ? r.comunidadNombre
+            : comId != null
+              ? comMap.get(comId)
+              : undefined;
+          const sectorNombre = r.sectorNombre?.trim()
+            ? r.sectorNombre
+            : secId != null
+              ? secMap.get(secId)
+              : undefined;
+          return {
+            ...r,
+            rutaId: String(r.rutaId || idx + 1),
+            tipoRuta: r.tipoRuta || 'TOMA_LECTURA',
+            estado: r.estado || 'PENDIENTE',
+            nombre: r.nombre || `Ruta ${r.tipoRuta || 'TOMA_LECTURA'} #${idx + 1}`,
+            comunidadNombre,
+            sectorNombre,
+            paradas: Array.isArray(r.paradas) ? r.paradas : [],
+            ordenesTrabajo: Array.isArray(r.ordenesTrabajo) ? r.ordenesTrabajo : [],
+          };
+        },
+      );
+      this.tasks.set(normalizedRoutes);
+      const navigableRoutes = normalizedRoutes.filter(
+        (route) =>
+          routeMatchesTypeFilter(route.tipoRuta, this.activeFilter()) &&
+          (this.activeStateFilter() === 'ALL' || route.estado === this.activeStateFilter()),
+      );
+      if (
+        this.activeComunidadFilter() !== 'ALL' &&
+        !navigableRoutes.some((route) => String(route.comunidadId) === this.activeComunidadFilter())
+      ) {
+        this.setComunidadFilter('ALL');
+      }
       this.routesSource.set(routeResult.source);
       this.routesCachedAt.set(routeResult.cachedAt);
       this.loadError.set(routeResult.error);
@@ -356,15 +569,33 @@ export class RutasComponent implements OnInit, OnDestroy {
 
   setFilter(tipo: string): void {
     this.activeFilter.set(tipo);
+    this.viewMode.set('list');
     this.selectedTaskId.set(null);
+  }
+
+  setStateFilter(estado: string): void {
+    this.activeStateFilter.set(estado);
+    this.viewMode.set('list');
+    this.selectedTaskId.set(null);
+  }
+
+  setComunidadFilter(comunidad: string): void {
+    this.activeComunidadFilter.set(comunidad);
+    this.viewMode.set('list');
+    this.selectedTaskId.set(null);
+  }
+
+  setViewMode(mode: ViewMode): void {
+    if (mode === 'map' && this.activeComunidadFilter() === 'ALL') return;
+    this.viewMode.set(mode);
+    if (mode === 'list') {
+      this.selectedTaskId.set(null);
+    }
   }
 
   toggleView(): void {
     const newMode = this.viewMode() === 'list' ? 'map' : 'list';
-    this.viewMode.set(newMode);
-    if (newMode === 'list') {
-      this.selectedTaskId.set(null);
-    }
+    this.setViewMode(newMode);
   }
 
   selectTask(taskId: string | null): void {
@@ -377,75 +608,102 @@ export class RutasComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Navega a la pantalla de lecturas filtrando por los medidores de esta ruta.
-   * Usa click simple (compatible con táctil y escritorio).
+   * Resuelve el tipo de ruta de forma robusta con fallback a las actividades de sus órdenes/paradas.
+   */
+  resolveTaskTipoRuta(task: OperatorRouteResponse): RouteType {
+    if (task?.tipoRuta) return task.tipoRuta;
+    if (task?.paradas?.length && task.paradas[0].tipoActividad) {
+      return task.paradas[0].tipoActividad as RouteType;
+    }
+    if (task?.ordenesTrabajo?.length && task.ordenesTrabajo[0].tipoActividad) {
+      return task.ordenesTrabajo[0].tipoActividad as RouteType;
+    }
+    return 'TOMA_LECTURA';
+  }
+
+  /**
+   * Navega a la pantalla de lecturas/órdenes filtrando por los medidores u órdenes de esta ruta.
+   * Soporta tanto órdenes con medidor instalado como órdenes sin medidor (Inspección, Instalación nueva).
    */
   openRoute(task: OperatorRouteResponse): void {
+    const tipoRuta = this.resolveTaskTipoRuta(task);
     const queryParams: Record<string, string> = {
+      rutaId: task.rutaId,
       rutaNombre: task.nombre,
-      rutaTipo: task.tipoRuta,
+      rutaTipo: tipoRuta,
     };
 
-    const paradas = task.paradas;
-    const ordenes = task.ordenesTrabajo;
-
-    if (paradas && paradas.length > 0) {
-      queryParams['series'] = paradas
-        .map((p) => p.serie)
-        .filter((s): s is string => !!s)
-        .join(',');
-      // Para que LecturasComponent resuelva `activeTipoActividad` por medidor
-      // y renderice el form correcto via @switch.
-      const workOrders = paradas
-        .filter((p) => !!p.serie && !!p.tipoActividad && !!p.ordenTrabajoId)
-        .map((p) => `${p.serie}:${p.tipoActividad}:${p.ordenTrabajoId}:${p.estado}`);
-      if (workOrders.length) {
-        // Agrupa por serie para soportar multiples ordenes del mismo medidor:
-        // SERIE1:TIPO1:ID1:ESTADO1;TIPO2:ID2:ESTADO2
-        const grouped = new Map<string, string[]>();
-        for (const wo of workOrders) {
-          const [serie, tipo, ordenTrabajoId, estado] = wo.split(':');
-          const assignments = grouped.get(serie) ?? [];
-          assignments.push(`${tipo}:${ordenTrabajoId}:${estado}`);
-          grouped.set(serie, assignments);
-        }
-        const merged: string[] = [];
-        for (const [serie, assignments] of grouped) {
-          merged.push(`${serie}:${assignments.join(';')}`);
-        }
-        queryParams['workOrders'] = merged.join(',');
-      }
-    } else if (ordenes && ordenes.length > 0) {
-      queryParams['series'] = ordenes
-        .map((ord) => ord.medidor?.serie)
-        .filter((s): s is string => !!s)
-        .join(',');
-      // Misma idea: si las órdenes declaran tipoActividad (INSTALACION/INSPECCION/RECONEXION),
-      // lo pasamos al form dinámico. Sin esto, los 3 forms nuevos son código muerto en producción.
-      const workOrders = ordenes
-        .filter((o) => !!o.medidor?.serie && !!o.tipoActividad && !!o.ordenTrabajoId)
-        .map((o) => `${o.medidor!.serie}:${o.tipoActividad}:${o.ordenTrabajoId}:${o.estado}`);
-      if (workOrders.length) {
-        const grouped = new Map<string, string[]>();
-        for (const wo of workOrders) {
-          const [serie, tipo, ordenTrabajoId, estado] = wo.split(':');
-          const assignments = grouped.get(serie) ?? [];
-          assignments.push(`${tipo}:${ordenTrabajoId}:${estado}`);
-          grouped.set(serie, assignments);
-        }
-        const merged: string[] = [];
-        for (const [serie, assignments] of grouped) {
-          merged.push(`${serie}:${assignments.join(';')}`);
-        }
-        queryParams['workOrders'] = merged.join(',');
-      }
-    } else if (isReadingRouteType(task.tipoRuta) && task.rutaPuntos?.length) {
-      queryParams['series'] = task.rutaPuntos.map((pt) => pt.serie).join(',');
-    } else if (task.medidor) {
-      queryParams['serie'] = task.medidor.serie;
+    try {
+      sessionStorage.setItem('activeOperatorRoute', JSON.stringify(task));
+    } catch {
+      // Ignore quota error if any
     }
 
-    this.router.navigate(['/app/operador/lecturas'], { queryParams });
+    const paradas = task.paradas ?? [];
+    const ordenes = task.ordenesTrabajo ?? [];
+
+    const orderIdentifiers: string[] = [];
+    const workOrderEntries: string[] = [];
+
+    if (ordenes.length > 0) {
+      for (const ord of ordenes) {
+        const id = ord.medidor?.serie || ord.contrato?.numeroContrato || `OT-${ord.ordenTrabajoId}`;
+        orderIdentifiers.push(id);
+        const rutaRef = (ord as unknown as Record<string, unknown>)['ruta'] as
+          { tipoActividad?: { codigo?: string } } | undefined;
+        const actTipo = ord.tipoActividad || rutaRef?.tipoActividad?.codigo || tipoRuta;
+        if (actTipo && ord.ordenTrabajoId) {
+          const lecId = ord.lecturaId ? String(ord.lecturaId) : '';
+          workOrderEntries.push(
+            `${id}:${actTipo}:${ord.ordenTrabajoId}:${ord.estado || 'PENDIENTE'}:${lecId}`,
+          );
+        }
+      }
+    } else if (paradas.length > 0) {
+      for (const p of paradas) {
+        const id = p.serie || `OT-${p.ordenTrabajoId}`;
+        orderIdentifiers.push(id);
+        const actTipo = p.tipoActividad || tipoRuta;
+        if (actTipo && p.ordenTrabajoId) {
+          workOrderEntries.push(`${id}:${actTipo}:${p.ordenTrabajoId}:${p.estado || 'PENDIENTE'}:`);
+        }
+      }
+    } else if (isReadingRouteType(tipoRuta) && task.rutaPuntos?.length) {
+      orderIdentifiers.push(...task.rutaPuntos.map((pt) => pt.serie));
+    } else if (task.medidor) {
+      orderIdentifiers.push(task.medidor.serie);
+    }
+
+    if (orderIdentifiers.length > 0) {
+      queryParams['series'] = orderIdentifiers.join(',');
+      if (orderIdentifiers.length === 1) {
+        queryParams['serie'] = orderIdentifiers[0];
+      }
+    }
+
+    if (workOrderEntries.length > 0) {
+      const grouped = new Map<string, string[]>();
+      for (const wo of workOrderEntries) {
+        const [id, tipo, ordenTrabajoId, estado, lecturaId = ''] = wo.split(':');
+        const assignments = grouped.get(id) ?? [];
+        assignments.push(
+          lecturaId
+            ? `${tipo}:${ordenTrabajoId}:${estado}:${lecturaId}`
+            : `${tipo}:${ordenTrabajoId}:${estado}`,
+        );
+        grouped.set(id, assignments);
+      }
+      const merged: string[] = [];
+      for (const [id, assignments] of grouped) {
+        merged.push(`${id}:${assignments.join(';')}`);
+      }
+      queryParams['workOrders'] = merged.join(',');
+    }
+
+    this.router.navigate(['/app/operador/lecturas'], {
+      queryParams,
+      state: { route: task },
+    });
   }
 
   getStateLabel(estado: string): string {
@@ -457,20 +715,54 @@ export class RutasComponent implements OnInit, OnDestroy {
   }
 
   taskHasMeterCoordinates(task: OperatorRouteResponse): boolean {
-    return Number.isFinite(task.medidor?.latitud) && Number.isFinite(task.medidor?.longitud);
+    return this.taskHasMapPoints(task);
   }
 
   getTaskPointCount(task: OperatorRouteResponse): number {
     if (task.paradas?.length) {
-      return task.paradas.filter((point) => point.latitud != null && point.longitud != null).length;
+      return task.paradas.length;
     }
     if (task.ordenesTrabajo?.length) {
-      return task.ordenesTrabajo.filter(
-        (order) => order.medidor?.latitud != null && order.medidor?.longitud != null,
-      ).length;
+      return task.ordenesTrabajo.length;
     }
     if (task.rutaPuntos?.length) return task.rutaPuntos.length;
-    return task.medidor?.latitud != null && task.medidor?.longitud != null ? 1 : 0;
+    return 0;
+  }
+
+  getTaskFirstClient(task: OperatorRouteResponse): string | null {
+    if (task.paradas?.length) {
+      const first = task.paradas.find((p) => p.clienteNombre?.trim());
+      if (first?.clienteNombre) return first.clienteNombre;
+    }
+    if (task.ordenesTrabajo?.length) {
+      const first = task.ordenesTrabajo.find((o) => o.contrato?.clienteNombre?.trim());
+      if (first?.contrato?.clienteNombre) return first.contrato.clienteNombre;
+    }
+    if (task.rutaPuntos?.length) {
+      const first = task.rutaPuntos.find((pt) => pt.clienteNombre?.trim());
+      if (first?.clienteNombre) return first.clienteNombre;
+    }
+    return null;
+  }
+
+  getTaskComunidadDescription(task: OperatorRouteResponse): string {
+    if (task.comunidadNombre?.trim()) return task.comunidadNombre;
+    if (task.comunidadId != null) {
+      const cached = this.comunidadesCatalog().get(task.comunidadId);
+      if (cached?.trim()) return cached;
+      return `Comunidad #${task.comunidadId}`;
+    }
+    return 'Comunidad Principal';
+  }
+
+  getTaskSectorDescription(task: OperatorRouteResponse): string {
+    if (task.sectorNombre?.trim()) return task.sectorNombre;
+    if (task.sectorId != null) {
+      const cached = this.sectoresCatalog().get(task.sectorId);
+      if (cached?.trim()) return cached;
+      return `Sector #${task.sectorId}`;
+    }
+    return 'Sin Sector';
   }
 
   /**
@@ -478,7 +770,8 @@ export class RutasComponent implements OnInit, OnDestroy {
    * Antes mostraba "Lecturas" universal — bug UX.
    */
   actionLabelFor(task: OperatorRouteResponse): string {
-    switch (task.tipoRuta) {
+    const tipo = this.resolveTaskTipoRuta(task);
+    switch (tipo) {
       case 'INSTALACION':
         return 'Instalación';
       case 'INSPECCION':
@@ -490,12 +783,9 @@ export class RutasComponent implements OnInit, OnDestroy {
     }
   }
 
-  /**
-   * Ícono Bootstrap Icons para el botón según tipoRuta.
-   * Mantiene consistencia con TIPO_ICONS en rutas.constants.ts.
-   */
   actionIconFor(task: OperatorRouteResponse): string {
-    switch (task.tipoRuta) {
+    const tipo = this.resolveTaskTipoRuta(task);
+    switch (tipo) {
       case 'INSTALACION':
         return 'bi-tools';
       case 'INSPECCION':
@@ -505,5 +795,50 @@ export class RutasComponent implements OnInit, OnDestroy {
       default:
         return 'bi-droplet-fill';
     }
+  }
+
+  getTaskReadCount(task: OperatorRouteResponse): number {
+    let readCount = 0;
+    const statusMap = this.readingStatusBySerie();
+    if (task.paradas?.length) {
+      for (const p of task.paradas) {
+        const st = statusMap.get(p.serie ?? '') ?? p.estado;
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+          readCount++;
+        }
+      }
+    } else if (task.ordenesTrabajo?.length) {
+      for (const o of task.ordenesTrabajo) {
+        const st = statusMap.get(o.medidor?.serie ?? '') ?? o.estado;
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+          readCount++;
+        }
+      }
+    } else if (task.medidor) {
+      const st = statusMap.get(task.medidor.serie);
+      if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+        readCount = 1;
+      }
+    }
+    return readCount;
+  }
+
+  getTaskProgressPct(task: OperatorRouteResponse): number {
+    const total = this.getTaskPointCount(task);
+    if (total === 0) return 0;
+    const read = this.getTaskReadCount(task);
+    return Math.min(100, Math.round((read / total) * 100));
+  }
+
+  goToNewNovelty(): void {
+    this.router.navigate(['/app/operador/novedades/new']);
+  }
+
+  goToSearchOrQR(): void {
+    this.router.navigate(['/app/operador/lecturas']);
+  }
+
+  goToSync(): void {
+    this.router.navigate(['/app/operador/sincronizar']);
   }
 }

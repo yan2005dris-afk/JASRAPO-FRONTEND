@@ -1,28 +1,77 @@
 <div class="rutas-screen">
-  <!-- Header -->
-  <div class="rutas-header">
-    <h1 class="rutas-title">Mis Rutas</h1>
-    <button class="view-toggle-btn" (click)="toggleView()" type="button" aria-label="Cambiar vista">
-      @if (viewMode() === 'list') {
-        <i class="bi bi-map"></i> Mapa
-      } @else {
-        <i class="bi bi-list-ul"></i> Lista
-      }
-    </button>
+  <!-- SECCIÓN DE RUTAS Y CATASTRO -->
+  <div class="rutas-section-header">
+    <div>
+      <h2 class="section-title">
+        {{ activeComunidadFilter() === 'ALL' ? 'Mis comunidades' : selectedComunidadLabel() }}
+      </h2>
+      <p class="section-subtitle">
+        @if (activeComunidadFilter() === 'ALL') {
+          Elegí una comunidad para ver tus rutas asignadas
+        } @else {
+          {{ filteredTasks().length }}
+          {{ filteredTasks().length === 1 ? 'ruta asignada' : 'rutas asignadas' }}
+          @if (selectedCommunityHasSectors()) {
+            por sector
+          }
+        }
+      </p>
+    </div>
+    @if (activeComunidadFilter() !== 'ALL') {
+      <div class="segmented-control" role="group" aria-label="Cambiar modo de vista">
+        <button
+          class="segmented-btn"
+          [class.active]="viewMode() === 'list'"
+          (click)="setViewMode('list')"
+          type="button"
+          aria-label="Ver lista"
+        >
+          <i class="bi bi-list-ul"></i> Lista
+        </button>
+        <button
+          class="segmented-btn"
+          [class.active]="viewMode() === 'map'"
+          (click)="setViewMode('map')"
+          type="button"
+          aria-label="Ver mapa"
+        >
+          <i class="bi bi-map-fill"></i> Mapa
+        </button>
+      </div>
+    }
   </div>
 
-  <!-- Filtros por tipo de ruta -->
-  <div class="filter-chips" role="group" aria-label="Filtrar rutas por tipo">
-    @for (option of filterOptions; track option.value) {
-      <button
-        class="filter-chip"
-        [class.active]="activeFilter() === option.value"
-        (click)="setFilter(option.value)"
-        type="button"
-      >
-        {{ option.label }}
-      </button>
-    }
+  <!-- Los filtros globales se aplican antes de agrupar las rutas asignadas. -->
+  <div class="filters-container">
+    <!-- 1. Tipo de ruta -->
+    <div class="filter-chips" role="group" aria-label="Filtrar rutas por tipo">
+      @for (option of filterOptions; track option.value) {
+        <button
+          class="filter-chip"
+          [class.active]="activeFilter() === option.value"
+          (click)="setFilter(option.value)"
+          type="button"
+        >
+          {{ option.label }}
+        </button>
+      }
+    </div>
+
+    <!-- 2. Estado -->
+    <div class="filter-secondary-row">
+      <div class="filter-chips compact" role="group" aria-label="Filtrar por estado">
+        @for (opt of stateFilterOptions; track opt.value) {
+          <button
+            class="filter-chip sub-chip"
+            [class.active]="activeStateFilter() === opt.value"
+            (click)="setStateFilter(opt.value)"
+            type="button"
+          >
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+    </div>
   </div>
 
   @if (routesSource() === 'cache') {
@@ -75,16 +124,30 @@
       </button>
     </div>
   } @else {
+    @if (activeComunidadFilter() !== 'ALL') {
+      <nav class="route-breadcrumb" aria-label="Ubicación en rutas asignadas">
+        <button type="button" (click)="setComunidadFilter('ALL')">
+          <i class="bi bi-arrow-left" aria-hidden="true"></i> Comunidades
+        </button>
+        <i class="bi bi-chevron-right" aria-hidden="true"></i>
+        <span aria-current="page">{{ selectedComunidadLabel() || 'Comunidad' }}</span>
+      </nav>
+    }
+
     <!-- ── Vista Mapa ─────────────────────────────────────────────────────── -->
     @if (viewMode() === 'map') {
       <div class="map-section">
-        @if (selectedTaskId()) {
-          <div class="map-toolbar">
+        <div class="map-header-bar">
+          <div class="map-gps-indicator">
+            <span class="online-dot-pulse"></span>
+            <span>GPS Activo</span>
+          </div>
+          @if (selectedTaskId()) {
             <button class="map-tool-btn btn-clear" (click)="selectTask(null)" type="button">
               <i class="bi bi-arrow-left-circle-fill"></i> Ver Todas
             </button>
-          </div>
-        }
+          }
+        </div>
 
         <app-rutas-map
           [points]="mapPoints()"
@@ -96,25 +159,19 @@
 
         <div class="map-legend" aria-label="Leyenda del mapa">
           <span class="legend-item"
-            ><span class="legend-dot" style="background: #d1d5db"></span>Sin lectura</span
+            ><span class="legend-dot" style="background: #22c55e"></span>Aprobada</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: #087a7d"></span>Activa</span
+          >
+          <span class="legend-item"
+            ><span class="legend-dot" style="background: #f59e0b"></span>Reconexión</span
           >
           <span class="legend-item"
             ><span class="legend-dot" style="background: #6b7280"></span>Pendiente</span
           >
           <span class="legend-item"
-            ><span class="legend-dot" style="background: #f59e0b"></span>Por revisión</span
-          >
-          <span class="legend-item"
             ><span class="legend-dot" style="background: #ef4444"></span>Rechazada</span
-          >
-          <span class="legend-item"
-            ><span class="legend-dot" style="background: #22c55e"></span>Aprobada</span
-          >
-          <span class="legend-item"
-            ><span class="legend-dot" style="background: #3b82f6"></span>Estimada</span
-          >
-          <span class="legend-item"
-            ><span class="legend-dot" style="background: #8b5cf6"></span>Planillada</span
           >
           <span class="legend-item"
             ><span class="legend-dot" style="background: #f97316"></span>Con novedad</span
@@ -122,7 +179,7 @@
         </div>
 
         <div class="map-task-list" role="list" aria-label="Rutas asignadas en mapa">
-          <h2 class="map-task-list-title">Rutas</h2>
+          <h3 class="map-task-list-title">Rutas en Mapa</h3>
           @for (task of filteredTasks(); track task.rutaId) {
             <div
               class="map-task-row"
@@ -133,13 +190,19 @@
               [attr.aria-label]="task.nombre"
               (click)="selectTask(selectedTaskId() === task.rutaId ? null : task.rutaId)"
               (keydown.enter)="selectTask(selectedTaskId() === task.rutaId ? null : task.rutaId)"
-              (keydown.space)="
-                $event.preventDefault();
-                selectTask(selectedTaskId() === task.rutaId ? null : task.rutaId)
-              "
             >
               <span class="task-orden-badge">{{ $index + 1 }}</span>
-              <span class="task-name">{{ task.nombre }}</span>
+              <div class="task-map-info">
+                <span class="task-name">{{
+                  task.nombre || 'Ruta ' + (task.tipoRuta | routeType)
+                }}</span>
+                <span class="task-sub">
+                  @if (selectedCommunityHasSectors()) {
+                    {{ getTaskSectorDescription(task) }} ·
+                  }
+                  {{ getTaskPointCount(task) }} paradas
+                </span>
+              </div>
               @let mapDistance = nextStopDistanceByRoute().get(task.rutaId);
               @if (mapDistance !== undefined) {
                 <span
@@ -151,20 +214,8 @@
                   {{ formatDistance(mapDistance) }}
                 </span>
               }
-              @if (taskHasMeterCoordinates(task)) {
-                <span class="task-coords">
-                  {{ task.medidor!.latitud | number: '1.4-4' }},
-                  {{ task.medidor!.longitud | number: '1.4-4' }}
-                </span>
-              } @else if (getTaskPointCount(task) > 0) {
-                <span class="task-coords task-coords--ok"> {{ getTaskPointCount(task) }} pts </span>
-              } @else {
-                <span class="task-no-coords">Sin coords</span>
-              }
+              <i class="bi bi-chevron-right text-muted"></i>
             </div>
-          }
-          @if (filteredTasks().length === 0) {
-            <p class="empty-state">No hay rutas para mostrar.</p>
           }
         </div>
       </div>
@@ -173,70 +224,180 @@
     <!-- ── Vista Lista ─────────────────────────────────────────────────────── -->
     @if (viewMode() === 'list') {
       <div class="task-list">
-        @for (task of filteredTasks(); track task.rutaId) {
-          <div class="task-card">
-            <div class="task-card-top">
-              <span class="task-orden">#{{ $index + 1 }}</span>
-              <span class="route-badge badge-{{ task.tipoRuta.toLowerCase() }}">
-                {{ task.tipoRuta | routeType }}
-              </span>
-              <span class="state-badge state-{{ task.estado.toLowerCase() }}">
-                {{ getStateLabel(task.estado) }}
-              </span>
-              @let cardDistance = nextStopDistanceByRoute().get(task.rutaId);
-              @if (cardDistance !== undefined) {
-                <span
-                  class="task-distance"
-                  role="status"
-                  [title]="'A ' + formatDistance(cardDistance) + ' de tu posición'"
+        @if (activeComunidadFilter() === 'ALL') {
+          <h3 class="route-level-title">Comunidades con trabajo asignado</h3>
+          @for (community of availableComunidades(); track community.id) {
+            <button
+              class="route-group-card"
+              type="button"
+              (click)="setComunidadFilter(community.id)"
+              [attr.aria-label]="
+                'Abrir comunidad ' + community.label + ', ' + community.routeCount + ' rutas'
+              "
+            >
+              <i class="bi bi-geo-alt-fill route-group-icon" aria-hidden="true"></i>
+              <span class="route-group-content">
+                <strong>{{ community.label }}</strong>
+                <small
+                  >{{ community.routeCount }}
+                  {{ community.routeCount === 1 ? 'ruta asignada' : 'rutas asignadas' }}</small
                 >
-                  <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
-                  {{ formatDistance(cardDistance) }}
-                </span>
+              </span>
+              <i class="bi bi-chevron-right" aria-hidden="true"></i>
+            </button>
+          }
+          @if (availableComunidades().length === 0) {
+            <div class="empty-state">No hay comunidades con rutas para el filtro seleccionado.</div>
+          }
+        } @else {
+          @for (group of routeGroups(); track group.id) {
+            <section
+              class="route-sector-section"
+              [class.direct-community-routes]="!group.label"
+              [attr.aria-label]="'Rutas de ' + (group.label || selectedComunidadLabel())"
+            >
+              @if (group.label) {
+                <div class="route-sector-heading">
+                  <div>
+                    <span class="route-sector-kicker">SECTOR</span>
+                    <h3>{{ group.label }}</h3>
+                  </div>
+                  <span class="route-sector-count"
+                    >{{ group.routeCount }} {{ group.routeCount === 1 ? 'ruta' : 'rutas' }}</span
+                  >
+                </div>
               }
+              <div class="sector-routes">
+                @for (task of group.routes; track task.rutaId) {
+                  @let totalPts = getTaskPointCount(task);
+                  @let readPts = getTaskReadCount(task);
+                  @let pct = getTaskProgressPct(task);
+                  @let effectiveTipo = resolveTaskTipoRuta(task);
+                  @let taskName =
+                    task.nombre || 'Ruta ' + (effectiveTipo | routeType) + ' #' + ($index + 1);
+                  <div class="task-card">
+                    <!-- Header de tarjeta -->
+                    <div class="task-card-top">
+                      <span class="task-orden">#{{ $index + 1 }}</span>
+                      <span class="route-badge badge-{{ effectiveTipo.toLowerCase() }}">
+                        <i class="bi" [class]="actionIconFor(task)"></i>
+                        {{ effectiveTipo | routeType }}
+                      </span>
+                      <span
+                        class="state-badge state-{{ (task.estado || 'PENDIENTE').toLowerCase() }}"
+                      >
+                        {{ getStateLabel(task.estado) }}
+                      </span>
+                      @let cardDistance = nextStopDistanceByRoute().get(task.rutaId);
+                      @if (cardDistance !== undefined) {
+                        <span
+                          class="task-distance"
+                          role="status"
+                          [title]="'A ' + formatDistance(cardDistance) + ' de tu posición'"
+                        >
+                          <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
+                          {{ formatDistance(cardDistance) }}
+                        </span>
+                      }
+                    </div>
+
+                    <!-- Contenido con Radial Progress Ring + Detalles -->
+                    <div class="task-card-main">
+                      <div class="task-radial-wrapper" [title]="pct + '% completado'">
+                        <svg
+                          width="52"
+                          height="52"
+                          viewBox="0 0 50 50"
+                          class="radial-svg"
+                          aria-hidden="true"
+                        >
+                          <circle
+                            cx="25"
+                            cy="25"
+                            r="20"
+                            fill="none"
+                            stroke="#e2e8f0"
+                            stroke-width="4.5"
+                          />
+                          <circle
+                            cx="25"
+                            cy="25"
+                            r="20"
+                            fill="none"
+                            [attr.stroke]="pct > 0 ? '#087a7d' : '#cbd5e1'"
+                            stroke-width="4.5"
+                            stroke-dasharray="125"
+                            [attr.stroke-dashoffset]="125 - (125 * pct) / 100"
+                            stroke-linecap="round"
+                            transform="rotate(-90 25 25)"
+                          />
+                        </svg>
+                        <span class="task-radial-pct">{{ pct }}%</span>
+                      </div>
+
+                      <div class="task-info-body">
+                        @if (group.label) {
+                          <h4 class="task-nombre">{{ taskName }}</h4>
+                        } @else {
+                          <h3 class="task-nombre">{{ taskName }}</h3>
+                        }
+
+                        <div class="task-details-grid">
+                          <div class="task-detail-item">
+                            <i class="bi bi-speedometer2 text-muted"></i>
+                            <span
+                              >{{ totalPts }} {{ totalPts === 1 ? 'parada' : 'paradas' }} ·
+                              <strong>{{ readPts }} listas</strong></span
+                            >
+                          </div>
+                          @if (getTaskFirstClient(task); as client) {
+                            <div class="task-detail-item">
+                              <i class="bi bi-person-fill text-muted"></i>
+                              <span
+                                >Inicio: <strong>{{ client }}</strong></span
+                              >
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Botones de Acción con estilo de alto contraste -->
+                    <div class="task-card-actions">
+                      @let actionLabel = actionLabelFor(task);
+                      @let actionIcon = actionIconFor(task);
+                      <button
+                        class="btn-card-lecturas"
+                        (click)="openRoute(task)"
+                        type="button"
+                        [attr.aria-label]="
+                          'Ir a ' + actionLabel.toLowerCase() + ' de ' + task.nombre
+                        "
+                      >
+                        <i class="bi" [class]="actionIcon"></i> {{ actionLabel }}
+                      </button>
+                      @if (taskHasMapPoints(task)) {
+                        <button
+                          class="btn-card-map"
+                          (click)="viewOnMap(task)"
+                          type="button"
+                          [attr.aria-label]="'Ver ' + task.nombre + ' en mapa'"
+                        >
+                          <i class="bi bi-map-fill"></i> Mapa
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </section>
+          }
+          @if (routeGroups().length === 0) {
+            <div class="empty-state">
+              <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+              No hay rutas en esta comunidad para el filtro seleccionado.
             </div>
-            <h3 class="task-nombre">{{ task.nombre }}</h3>
-            @if (task.medidor) {
-              <p class="task-medidor">
-                <i class="bi bi-speedometer"></i> Serie: {{ task.medidor.serie }}
-              </p>
-            }
-            @if (task.descripcion) {
-              <p class="task-descripcion">{{ task.descripcion }}</p>
-            }
-            <div class="task-card-actions">
-              <!--
-                    Botón principal: label/icon varía según tipo de actividad.
-                    Antes mostraba "Lecturas" universal (bug UX).
-                  -->
-              @let actionLabel = actionLabelFor(task);
-              @let actionIcon = actionIconFor(task);
-              <button
-                class="btn-card-lecturas"
-                (click)="openRoute(task)"
-                type="button"
-                [attr.aria-label]="'Ir a ' + actionLabel.toLowerCase() + ' de ' + task.nombre"
-              >
-                <i class="bi" [class]="actionIcon"></i> {{ actionLabel }}
-              </button>
-              @if (taskHasMapPoints(task)) {
-                <button
-                  class="btn-card-map"
-                  (click)="viewOnMap(task)"
-                  type="button"
-                  [attr.aria-label]="'Ver ' + task.nombre + ' en mapa'"
-                >
-                  <i class="bi bi-geo-alt-fill"></i> Mapa
-                </button>
-              }
-            </div>
-          </div>
-        }
-        @if (filteredTasks().length === 0) {
-          <div class="empty-state">
-            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-            No hay rutas para el filtro seleccionado.
-          </div>
+          }
         }
       </div>
     }

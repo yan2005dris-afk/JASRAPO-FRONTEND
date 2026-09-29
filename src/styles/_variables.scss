@@ -119,4 +119,24 @@
   --report-danger-border: rgba(239, 68, 68, 0.3);
   --report-danger-text: #a91d1d;
   --report-focus-outline: 3px solid rgba(var(--primary-rgb), 0.42);
+
+  /* Operator Tokens — Mapeados a la fuente única de verdad del Design System */
+  --op-bg-app: var(--surface-ground, #f0fdfa);
+  --op-bg-surface: var(--white, #ffffff);
+  --op-bg-header-dark: var(--marine-slate, #0b2938);
+  --op-bg-accent-card: var(--surface-ground, #f0fdfa);
+  --op-brand-primary: var(--primary-color, #087a7d);
+  --op-brand-primary-dark: var(--sidebar-text-hover, #044b4e);
+  --op-brand-pill-active: var(--secondary-color, #0c9ea1);
+  --op-status-success-bg: var(--forest-green-light, #dcfce7);
+  --op-status-success: var(--forest-green, #15803d);
+  --op-status-warning-bg: var(--brass-gold-light, #fef3c7);
+  --op-status-warning: var(--brass-gold, #d97706);
+  --op-status-danger-bg: rgba(239, 68, 68, 0.1);
+  --op-status-danger: var(--danger, #ef4444);
+  --op-status-badge-urgent: #fee2e2;
+  --op-text-primary: var(--dark-text, #0e2728);
+  --op-text-secondary: var(--muted-text, #597b7d);
+  --op-text-disabled: #94a3b8;
+  --op-border-subtle: var(--border-color, #cbdedf);
 }

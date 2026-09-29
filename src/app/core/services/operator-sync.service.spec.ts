@@ -125,6 +125,16 @@ describe('OperatorSyncService', () => {
   };
 
   beforeEach(() => {
+    vi.stubGlobal(
+      'createImageBitmap',
+      vi.fn().mockResolvedValue({ width: 4000, height: 3000, close: vi.fn() }),
+    );
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+      drawImage: vi.fn(),
+    } as unknown as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((callback) => {
+      callback(new Blob(['jpeg'], { type: 'image/jpeg' }));
+    });
     isOnline = vi.fn();
     connectedSubject = new Subject<void>();
 
@@ -170,6 +180,11 @@ describe('OperatorSyncService', () => {
 
     buildTestBed();
     service = TestBed.inject(OperatorSyncService);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   // Helper: extrae los campos del FormData para asserts.
@@ -267,6 +282,7 @@ describe('OperatorSyncService', () => {
     const fields = formDataToObject(httpPatch.mock.calls[0][1] as FormData);
     expect(fields['foto'][0]).toBeInstanceOf(Blob);
     expect((fields['foto'][0] as Blob).type).toBe('image/jpeg');
+    expect((fields['foto'][0] as File).name).toBe('evidencia.jpg');
   });
 
   // ── submitReading (offline) ───────────────────────────────────────────────
@@ -287,6 +303,17 @@ describe('OperatorSyncService', () => {
       expect(savePendingReading).toHaveBeenCalledWith(reading);
       expect(httpPost).not.toHaveBeenCalled();
       expect(httpPatch).not.toHaveBeenCalled();
+    });
+
+    it('guarda JPEG normalizado, no el HEIC original, para el replay', async () => {
+      isOnline.mockReturnValue(false);
+      const heic = new Blob(['heic'], { type: 'image/heic' });
+
+      await service.submitReading({ _lecturaId: 1, fotoBlob: heic });
+
+      const queued = savePendingReading.mock.calls[0][0];
+      expect(queued.fotoBlob.type).toBe('image/jpeg');
+      expect(queued.fotoBlob).not.toBe(heic);
     });
   });
 
@@ -528,6 +555,40 @@ describe('OperatorSyncService', () => {
       expect(httpPatch).toHaveBeenCalledOnce();
     });
 
+    it('si falla la red en lecturas no continúa con órdenes ni novedades', async () => {
+      isOnline.mockReturnValue(true);
+      getPendingReadingsByState.mockResolvedValue([
+        { id: 1, syncState: 'PENDIENTE_SYNC', _lecturaId: 99 },
+      ]);
+      getPendingWorkOrdersByState.mockResolvedValue([
+        { id: 2, syncState: 'PENDIENTE_SYNC', ordenTrabajoId: 'wo-2' },
+      ]);
+      getPendingAnomaliesByState.mockResolvedValue([
+        { id: 3, syncState: 'PENDIENTE_SYNC', ordenTrabajoId: 'wo-3', tipo: 'FUGA' },
+      ]);
+      httpPatch.mockReturnValue(throwError(() => makeHttpError(0, 'network down')));
+
+      await service.syncPendingData();
+
+      expect(httpPatch).toHaveBeenCalledOnce();
+      expect(httpPost).not.toHaveBeenCalled();
+      expect(deletePendingWorkOrder).not.toHaveBeenCalled();
+      expect(deletePendingAnomaly).not.toHaveBeenCalled();
+    });
+
+    it('libera el estado de sincronización si IndexedDB falla al actualizar la cola', async () => {
+      isOnline.mockReturnValue(true);
+      getPendingReadingsByState.mockResolvedValue([
+        { id: 1, syncState: 'PENDIENTE_SYNC', _lecturaId: 99 },
+      ]);
+      httpPatch.mockReturnValue(throwError(() => makeHttpError(400, 'invalid')));
+      updatePendingReading.mockRejectedValue(new Error('IndexedDB unavailable'));
+
+      await expect(service.syncPendingData()).rejects.toThrow('IndexedDB unavailable');
+
+      expect(service.isSyncing()).toBe(false);
+    });
+
     it('error de validación (400): marca como RECHAZADA y continúa con el resto', async () => {
       isOnline.mockReturnValue(true);
       getPendingReadingsByState.mockResolvedValue([
@@ -759,6 +820,27 @@ describe('OperatorSyncService', () => {
       expect(fields['observacion']).toEqual(['vidrio roto']);
       expect(fields['file']).toHaveLength(1);
       expect(deletePendingAnomaly).toHaveBeenCalledWith(42);
+    });
+
+    it('convierte una foto HEIC legacy de la cola antes de enviarla como file', async () => {
+      isOnline.mockReturnValue(true);
+      getPendingAnomaliesByState.mockResolvedValue([
+        {
+          id: 45,
+          syncState: 'PENDIENTE_SYNC',
+          ordenTrabajoId: 'wo-45',
+          tipo: 'FUGA',
+          fotoBlob: new Blob(['heic'], { type: 'image/heic' }),
+        },
+      ]);
+      httpPost.mockReturnValue(of({ id: 45 }));
+
+      await service.syncPendingData();
+
+      const fields = formDataToObject(httpPost.mock.calls[0][1] as FormData);
+      expect((fields['file'][0] as Blob).type).toBe('image/jpeg');
+      expect((fields['file'][0] as File).name).toBe('evidencia.jpg');
+      expect(deletePendingAnomaly).toHaveBeenCalledWith(45);
     });
 
     it('rechaza novedad pendiente sin ordenTrabajoId sin llamar al backend', async () => {

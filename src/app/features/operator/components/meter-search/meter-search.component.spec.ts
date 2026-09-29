@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { MeterSearchComponent } from './meter-search.component';
-import { IMeterDto } from '../../../contracts/meters/interfaces/imeter.interface';
+import { IMeterDto } from '../../../contracts/meters/domain/models/meter.model';
 import { EstadoChip, MeterGroup } from '../../readings/readings.models';
 
 describe('MeterSearchComponent', () => {
@@ -14,8 +14,6 @@ describe('MeterSearchComponent', () => {
       contratoId: 'CONT-1',
       clienteNombre: 'Juan Perez',
       fechaInstalacion: '2026-01-01',
-      latitud: null,
-      longitud: null,
     },
     {
       medidorId: 2,
@@ -26,8 +24,6 @@ describe('MeterSearchComponent', () => {
       contratoId: 'CONT-2',
       clienteNombre: 'Maria Lopez',
       fechaInstalacion: '2026-01-01',
-      latitud: null,
-      longitud: null,
     },
   ];
 

@@ -1,0 +1,39 @@
+.contract-card {
+  border: 1px solid var(--border-color, #cbdedf);
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 0.6rem 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    border-color: #94a3b8;
+    background-color: #f8fafc;
+  }
+
+  &.is-session-selected {
+    border-color: var(--primary-color, #087a7d);
+    background-color: #f0fdfa;
+    box-shadow: 0 0 0 1px var(--primary-color, #087a7d);
+  }
+
+  &.is-other-assigned {
+    border-color: #cbd5e1;
+    background-color: #f8fafc;
+    opacity: 0.85;
+  }
+}
+
+.contracts-scroll-area {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: #cbd5e1;
+    border-radius: 3px;
+  }
+}

@@ -52,6 +52,14 @@ export const routes: Routes = [
         pathMatch: 'full',
       },
       {
+        path: 'inicio',
+        data: { breadcrumb: 'Panel Principal' },
+        loadComponent: () =>
+          import('./features/operator/home/operator-home.component').then(
+            (m) => m.OperatorHomeComponent,
+          ),
+      },
+      {
         path: 'rutas',
         data: { breadcrumb: 'Rutas' },
         loadComponent: () =>
@@ -96,8 +104,16 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'perfil',
+        data: { breadcrumb: 'Mi Perfil' },
+        loadComponent: () =>
+          import('./features/operator/profile/operator-profile.component').then(
+            (m) => m.OperatorProfileComponent,
+          ),
+      },
+      {
         path: '',
-        redirectTo: 'rutas',
+        redirectTo: 'inicio',
         pathMatch: 'full',
       },
     ],
@@ -187,6 +203,14 @@ export const routes: Routes = [
                   ),
               },
             ],
+          },
+          {
+            path: 'periods',
+            data: { breadcrumb: 'Períodos' },
+            loadComponent: () =>
+              import('./features/admin/periods/periods-admin.component').then(
+                (m) => m.PeriodsAdminComponent,
+              ),
           },
           {
             path: 'config',
@@ -316,8 +340,8 @@ export const routes: Routes = [
                 path: '',
                 pathMatch: 'full',
                 loadComponent: () =>
-                  import('./features/contracts/clients/clients.component').then(
-                    (m) => m.ClientsComponent,
+                  import('./features/contracts/clients/pages/clients-list/clients-list.component').then(
+                    (m) => m.ClientsListComponent,
                   ),
               },
               {
@@ -342,8 +366,8 @@ export const routes: Routes = [
             path: 'Contratos',
             data: { breadcrumb: 'Contratos de Servicios' },
             loadComponent: () =>
-              import('./features/contracts/service-contracts/service-contracts.component').then(
-                (m) => m.ServiceContractsComponent,
+              import('./features/contracts/service-contracts/pages/service-contracts-list/service-contracts-list.component').then(
+                (m) => m.ServiceContractsListComponent,
               ),
           },
           {
@@ -354,8 +378,8 @@ export const routes: Routes = [
                 path: '',
                 pathMatch: 'full',
                 loadComponent: () =>
-                  import('./features/contracts/payment-agreements/payment-agreements').then(
-                    (m) => m.PaymentAgreementsComponent,
+                  import('./features/contracts/payment-agreements/pages/payment-agreements-list/payment-agreements-list.component').then(
+                    (m) => m.PaymentAgreementsListComponent,
                   ),
               },
               {
@@ -372,8 +396,8 @@ export const routes: Routes = [
             path: 'RutasDeLectura',
             data: { breadcrumb: 'Rutas de Trabajo' },
             loadComponent: () =>
-              import('./features/contracts/reading-routes/reading-routes').then(
-                (m) => m.ReadingRoutesComponent,
+              import('./features/contracts/reading-routes/pages/reading-routes-list/reading-routes-list.component').then(
+                (m) => m.ReadingRoutesListComponent,
               ),
           },
           {
@@ -402,8 +426,8 @@ export const routes: Routes = [
             path: 'AnomaliasDeLectura',
             data: { breadcrumb: 'Anomalías de Lectura' },
             loadComponent: () =>
-              import('./features/contracts/reading-anomalies/reading-anomalies').then(
-                (m) => m.ReadingAnomaliesComponent,
+              import('./features/contracts/reading-anomalies/pages/reading-anomalies-list/reading-anomalies-list.component').then(
+                (m) => m.ReadingAnomaliesListComponent,
               ),
           },
           {
@@ -426,8 +450,8 @@ export const routes: Routes = [
             path: 'TarifasYCategorias',
             data: { breadcrumb: 'Tarifas y Categorías' },
             loadComponent: () =>
-              import('./features/contracts/tariffs/tariffs.component').then(
-                (m) => m.TariffsComponent,
+              import('./features/contracts/tariffs/pages/tariffs-list/tariffs-list.component').then(
+                (m) => m.TariffsListComponent,
               ),
           },
         ],
@@ -570,8 +594,8 @@ export const routes: Routes = [
             path: 'listado-clientes',
             data: { breadcrumb: 'Listado de Clientes' },
             loadComponent: () =>
-              import('./features/reports/clients-list/clients-list').then(
-                (m) => m.ClientsListComponent,
+              import('./features/reports/clients-list/client-report-list').then(
+                (m) => m.ClientReportListComponent,
               ),
           },
           {

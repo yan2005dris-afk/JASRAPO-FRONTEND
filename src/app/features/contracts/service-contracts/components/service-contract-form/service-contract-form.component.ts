@@ -10,24 +10,30 @@ import {
 } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { ContractsService } from '../../services/contracts.service';
+import { ContractsApi } from '../../data/contracts.api';
 import {
   IContract,
   IContractState,
   ICreateContractRequest,
   IUpdateContractRequest,
   getContractServiceState,
-} from '../../interfaces/icontract.interface';
-import { ClientsComponent } from '../../../clients/clients.component';
-import { TariffsComponent } from '../../../tariffs/tariffs.component';
+} from '../../domain/models/service-contract.model';
+import { ClientsListComponent } from '../../../clients/pages/clients-list/clients-list.component';
+import { TariffsListComponent } from '../../../tariffs/pages/tariffs-list/tariffs-list.component';
 import { MetersIndexComponent } from '../../../meters/components/meters-index/meters-index.component';
 import { ReplaceMeterModalComponent } from '../../../meters/components/replace-meter-modal/replace-meter-modal.component';
 import { ComunidadesComponent } from '../../../../admin/comunidades/comunidades.component';
-import { IClient } from '../../../clients/interfaces/iclients.interface';
-import { IMeter } from '../../../meters/interfaces/imeter.interface';
-import { ITariffCategory } from '../../../tariffs/interfaces/itariff.interface';
+import { IClient } from '../../../clients/domain/models/client.model';
+import { IMeter } from '../../../meters/domain/models/meter.model';
+import { ITariffCategory } from '../../../tariffs/domain/models/tariff.model';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import {
+  CoordinateMapPickerComponent,
+  ICoordinates,
+} from '../../../../../shared/components/coordinate-map-picker/coordinate-map-picker.component';
+import { coordinatePairValidator } from '../../../../../shared/components/coordinate-map-picker/coordinate-pair.validator';
+import { AuthService } from '../../../../../core/services/auth.service';
 
 /**
  * Formulario de contrato cliente–medidor. Sirve para CREAR y para EDITAR:
@@ -38,11 +44,12 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
   selector: 'app-service-contract-form',
   imports: [
     ReactiveFormsModule,
-    ClientsComponent,
-    TariffsComponent,
+    ClientsListComponent,
+    TariffsListComponent,
     MetersIndexComponent,
     ReplaceMeterModalComponent,
     ComunidadesComponent,
+    CoordinateMapPickerComponent,
   ],
   templateUrl: './service-contract-form.component.html',
   styleUrl: './service-contract-form.component.scss',
@@ -50,12 +57,29 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
 })
 export class ServiceContractFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
-  private readonly contractsService = inject(ContractsService);
+  private readonly contractsService = inject(ContractsApi);
   private readonly toast = inject(ToastService);
+  private readonly authService = inject(AuthService);
 
   // Si viene un contrato, el formulario está en modo edición. Catálogo de estados (para editar).
   readonly contractToEdit = input<IContract | null>(null);
   readonly states = input<IContractState[]>([]);
+
+  readonly isSuperAdmin = computed(() => this.authService.isSuperAdmin());
+
+  readonly availableStates = computed(() => {
+    const contract = this.contractToEdit();
+    const current = contract ? getContractServiceState(contract) : '';
+    const managed = [
+      'PENDIENTE_INSPECCION',
+      'PENDIENTE_PAGO',
+      'PENDIENTE_INSTALACION',
+      'RECHAZADO',
+    ];
+    return this.states().filter((state) =>
+      managed.includes(current) ? state.codigo === current : !managed.includes(state.codigo),
+    );
+  });
 
   readonly saved = output<void>();
   readonly cancelled = output<void>();
@@ -82,14 +106,25 @@ export class ServiceContractFormComponent implements OnInit {
   // Medidor original (para detectar si se reemplazó al editar)
   private originalMeterId: string | null = null;
 
-  readonly form: FormGroup = this.fb.group({
-    numeroGuia: ['', [Validators.required, Validators.maxLength(15)]],
-    direccionSuministro: ['', [Validators.required, Validators.maxLength(200)]],
-    lecturaInicial: ['0', [Validators.required, Validators.pattern(/^\d{1,10}$/)]],
-    estadoServicio: [''],
-  });
+  readonly coordinates = signal<ICoordinates>({ latitud: null, longitud: null });
+
+  readonly form: FormGroup = this.fb.group(
+    {
+      numeroGuia: ['', [Validators.required, Validators.maxLength(15)]],
+      direccionSuministro: ['', [Validators.required, Validators.maxLength(200)]],
+      lecturaInicial: ['0', [Validators.required, Validators.pattern(/^\d{1,10}$/)]],
+      estadoServicio: [''],
+      latitud: [null as number | null, [Validators.min(-90), Validators.max(90)]],
+      longitud: [null as number | null, [Validators.min(-180), Validators.max(180)]],
+    },
+    { validators: coordinatePairValidator },
+  );
 
   ngOnInit(): void {
+    if (!this.isSuperAdmin()) {
+      this.form.get('lecturaInicial')?.disable();
+    }
+
     const contract = this.contractToEdit();
     if (contract) {
       this.preloadContract(contract);
@@ -98,11 +133,17 @@ export class ServiceContractFormComponent implements OnInit {
 
   /** Precarga en el formulario los datos del contrato a editar. */
   private preloadContract(contract: IContract): void {
+    const latitud = contract.latitud ?? null;
+    const longitud = contract.longitud ?? null;
+
     this.form.patchValue({
       numeroGuia: contract.numeroGuia,
       direccionSuministro: contract.direccionSuministro,
       estadoServicio: getContractServiceState(contract),
+      latitud,
+      longitud,
     });
+    this.coordinates.set({ latitud, longitud });
 
     // Cliente, tarifa y comunidad (vienen anidados en el contrato)
     this.selectedClient.set(contract.cliente as unknown as IClient);
@@ -213,6 +254,38 @@ export class ServiceContractFormComponent implements OnInit {
     this.closeComunidadPicker();
   }
 
+  // ---------- Ubicación del predio ----------
+  onCoordinatesChange(value: ICoordinates): void {
+    this.form.patchValue({ latitud: value.latitud, longitud: value.longitud });
+    this.form.markAsDirty();
+    this.coordinates.set(value);
+  }
+
+  coordinateError(): string | null {
+    const latControl = this.form.get('latitud');
+    const lngControl = this.form.get('longitud');
+    const isRelevant =
+      latControl?.dirty ||
+      latControl?.touched ||
+      lngControl?.dirty ||
+      lngControl?.touched ||
+      this.submitted();
+
+    if (!isRelevant) {
+      return null;
+    }
+    if (this.form.hasError('coordinatePair')) {
+      return 'Ingrese latitud y longitud, o deje ambas vacías.';
+    }
+    if (latControl?.hasError('min') || latControl?.hasError('max')) {
+      return 'La latitud debe estar entre -90 y 90.';
+    }
+    if (lngControl?.hasError('min') || lngControl?.hasError('max')) {
+      return 'La longitud debe estar entre -180 y 180.';
+    }
+    return null;
+  }
+
   /** Acciones aún no definidas con el backend (registrar nuevo cliente/medidor, documentos). */
   comingSoon(): void {
     this.toast.info('Esta funcionalidad estará disponible próximamente.', 'En construcción');
@@ -298,7 +371,8 @@ export class ServiceContractFormComponent implements OnInit {
       return;
     }
 
-    const value = this.form.value;
+    const value = this.form.getRawValue();
+    // Solo Super Admin puede definir lecturaInicial; para otros roles se omite (backend usará default 0)
     const payload: ICreateContractRequest = {
       clienteId: String(clientId),
       categoriaTarifaId: String(tariff.categoriaTarifaId),
@@ -306,7 +380,12 @@ export class ServiceContractFormComponent implements OnInit {
       numeroGuia: value.numeroGuia,
       direccionSuministro: value.direccionSuministro,
       comunidadId: String(comunidad.id),
-      lecturaInicial: Number(value.lecturaInicial),
+      ...(this.isSuperAdmin() && value.lecturaInicial !== undefined && value.lecturaInicial !== ''
+        ? { lecturaInicial: Number(value.lecturaInicial) }
+        : {}),
+      ...(value.latitud != null && value.longitud != null
+        ? { latitud: value.latitud, longitud: value.longitud }
+        : {}),
     };
 
     this.isSaving.set(true);
@@ -356,11 +435,15 @@ export class ServiceContractFormComponent implements OnInit {
     const value = this.form.value;
     // Solo se actualizan datos contractuales. El medidor se gestiona por POST /meters/replace.
     const payload: IUpdateContractRequest = {
-      ...(value.estadoServicio ? { estadoServicio: value.estadoServicio } : {}),
+      ...(value.estadoServicio && value.estadoServicio !== getContractServiceState(contract)
+        ? { estadoServicio: value.estadoServicio }
+        : {}),
       direccionSuministro: value.direccionSuministro,
       clienteId: String(clientId),
       comunidadId: String(comunidad.id),
       categoriaTarifaId: String(tariff.categoriaTarifaId),
+      latitud: value.latitud ?? null,
+      longitud: value.longitud ?? null,
     };
 
     this.isSaving.set(true);

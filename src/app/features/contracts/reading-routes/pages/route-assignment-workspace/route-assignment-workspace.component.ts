@@ -9,26 +9,54 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { ReadingRoutesService } from '../../services/reading-routes.service';
+import { forkJoin } from 'rxjs';
+import { ReadingRoutesService } from '../../data/reading-routes.api';
 import {
   ICreateRouteAssignmentsDto,
+  IReadingRoute,
   ITipoActividad,
   TipoRuta,
-} from '../../interfaces/ireading-route.interface';
+} from '../../domain/models/reading-route.model';
 import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
 import { SectoresService } from '../../../../admin/sectores-prueba/services/sectores';
 import { UsersService } from '../../../../users/services/users.service';
-import { ContractsService } from '../../../service-contracts/services/contracts.service';
+import { ContractsApi } from '../../../service-contracts/data/contracts.api';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { Sectores } from '../../../../admin/sectores-prueba/models/sectores.interface';
 import { User } from '../../../../users/models/user.interface';
-import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
+import { IContract } from '../../../service-contracts/domain/models/service-contract.model';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
-import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 import { PeriodPickerComponent } from '../../../../../shared/components/period-picker/period-picker.component';
 import { PickerInputComponent } from '../../../../../shared/components/picker-input/picker-input.component';
-import type { IAccountingPeriod } from '../../../../../shared/services/periods.service';
+import {
+  PeriodsService,
+  type IAccountingPeriod,
+} from '../../../../../shared/services/periods.service';
+import { OperatorColor, OPERATOR_PALETTE } from '../../../../../shared/types/operator-color';
+
+import { RouteContractsTableComponent } from '../../components/route-contracts-table/route-contracts-table.component';
+import { assertOperatorSelected, assertPeriodOpen } from '../../domain/validators';
+import {
+  AssignmentStatus,
+  calculateGlobalCoverage,
+  calculateNonLecturaCoverage,
+  clearAssignmentsForOperator,
+  groupContractAssignmentsByOperatorCommunity,
+  groupSectorAssignmentsByOperatorCommunity,
+  resolveAssignmentStatus,
+  ResolvedAssignmentStatus,
+  toggleAssignment,
+} from '../../domain/rules';
+
+/** Shape returned by `getCommunityStatus` / `getSectorStatus` (concrete `color` type). */
+type AssignmentStatusView = ResolvedAssignmentStatus<OperatorColor>;
+import {
+  resolveComunidadNombre,
+  resolveOperarioNombre,
+} from '../../../../../shared/utils/operator-name';
+import { filterOperariosByRole } from '../../../../../shared/utils/users';
+import { resetScrollNextMicrotask } from '../../../../../shared/utils/scroll';
 
 @Component({
   selector: 'app-route-assignment-workspace',
@@ -36,9 +64,9 @@ import type { IAccountingPeriod } from '../../../../../shared/services/periods.s
   imports: [
     CommonModule,
     FormsModule,
-    DatePickerComponent,
     PeriodPickerComponent,
     PickerInputComponent,
+    RouteContractsTableComponent,
   ],
   templateUrl: './route-assignment-workspace.component.html',
   styleUrl: './route-assignment-workspace.component.scss',
@@ -50,9 +78,13 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   private readonly comunidadesService = inject(ComunidadesService);
   private readonly sectoresService = inject(SectoresService);
   private readonly usersService = inject(UsersService);
-  private readonly contractsService = inject(ContractsService);
+  private readonly contractsService = inject(ContractsApi);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
+  private readonly periodsService = inject(PeriodsService);
+
+  // Wizard Step (1: Asignación 2 Tablas, 2: Resumen Full Width)
+  readonly currentStep = signal<1 | 2>(1);
 
   // Catalogs
   readonly operarios = signal<User[]>([]);
@@ -61,126 +93,394 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   readonly contratos = signal<IContract[]>([]);
   readonly tiposActividad = signal<ITipoActividad[]>([]);
 
-  // Selection & Form State
+  // Pre-existing routes in the active period (from Database)
+  readonly periodExistingRoutes = signal<IReadingRoute[]>([]);
+  readonly isLoadingRoutes = signal<boolean>(false);
+
+  // Selection & Filters
   readonly selectedPeriod = signal<IAccountingPeriod | null>(null);
   readonly selectedPeriodId = signal<number | null>(null);
   readonly selectedOperarioId = signal<number | null>(null);
   readonly selectedComunidadId = signal<number | null>(null);
-  readonly selectedSectorIds = signal<number[]>([]);
-  readonly selectedContratoIds = signal<number[]>([]);
-  readonly isAllCommunitySelected = signal<boolean>(false);
   readonly tipoActividadSeleccionada = signal<TipoRuta | string | null>(null);
-  readonly fechaPlanificada = signal<string>(
-    new Date().toISOString().slice(0, 7), // 'YYYY-MM'
-  );
   readonly customNombreBase = signal<string | null>(null);
+
+  // Search queries & Quick filter tabs
   readonly workerSearch = signal<string>('');
+  readonly communitySearch = signal<string>('');
+  readonly communityFilter = signal<'all' | 'pending' | 'completed'>('all');
   readonly contractSearch = signal<string>('');
+  private contractSearchDebounce: ReturnType<typeof setTimeout> | null = null;
+
+  // Contract pagination (server-side + visible)
+  readonly contractCurrentPage = signal<number>(1);
+  readonly contractPageSize = signal<number>(10);
+  readonly contractTotalPages = signal<number>(1);
+  readonly contractTotalEnComunidad = signal<number>(0);
+
+  // Dynamic Session Assignments: Map of sectorId -> operarioId, and comunidadId -> operarioId (for communities without sectors)
+  readonly sessionSectorAssignments = signal<Map<number, number>>(new Map());
+  readonly sessionCommunityAssignments = signal<Map<number, number>>(new Map());
+
+  // Community Card Pagination
+  readonly communityCurrentPage = signal<number>(1);
+  readonly communityPageSize = signal<number>(4);
+
   readonly isLoading = signal<boolean>(false);
   readonly isLoadingContracts = signal<boolean>(false);
 
-  // Nombres de meses para armado descriptivo del nombre sugerido
-  private readonly MONTH_NAMES = [
-    'Enero',
-    'Febrero',
-    'Marzo',
-    'Abril',
-    'Mayo',
-    'Junio',
-    'Julio',
-    'Agosto',
-    'Septiembre',
-    'Octubre',
-    'Noviembre',
-    'Diciembre',
-  ];
+  // Operator Color Mapper
+  getOperatorColor(operarioId: number): OperatorColor {
+    const ops = this.operarios();
+    const idx = ops.findIndex((u) => u.usuarioId === operarioId);
+    const colorIndex = idx >= 0 ? idx % OPERATOR_PALETTE.length : 0;
+    return OPERATOR_PALETTE[colorIndex];
+  }
+
+  /** Arrow alias used by `<app-route-contracts-table>` to avoid `this` rebinding. */
+  readonly getOperatorColorForChild = (operarioId: number): OperatorColor =>
+    this.getOperatorColor(operarioId);
+
+  /** Arrow alias used by `<app-route-contracts-table>` to avoid `this` rebinding. */
+  readonly getOperarioNameForChild = (operarioId: number): string =>
+    this.getOperarioName(operarioId);
 
   isLecturaActivity(tipo: TipoRuta | string | null): boolean {
-    return tipo === 'LECTURA' || tipo === 'TOMA_LECTURA';
+    return tipo === 'LECTURA' || tipo === 'TOMA_LECTURA' || !tipo;
   }
 
-  getActivityIcon(codigo: string): string {
-    switch (codigo) {
-      case 'LECTURA':
-      case 'TOMA_LECTURA':
-        return 'bi-speedometer2';
-      case 'CORTE':
-        return 'bi-slash-circle';
-      case 'RECONEXION':
-        return 'bi-arrow-repeat';
-      case 'INSPECCION':
-        return 'bi-search';
-      case 'INSTALACION':
-        return 'bi-tools';
-      default:
-        return 'bi-clipboard-check';
+  // Reactive mode flag derived from the selected activity type
+  readonly isLecturaMode = computed(() => this.isLecturaActivity(this.tipoActividadSeleccionada()));
+
+  // Non-lectura: Map of contratoId -> operarioId (who the contract is assigned to in session)
+  readonly sessionContractAssignments = signal<Map<number, number>>(new Map());
+
+  // Contracts currently displayed (after visible pagination); search is now server-side,
+  // so client-side filtering only handles the visible page slice (see `paginatedContratos`).
+  readonly filteredContratos = computed(() => this.paginatedContratos());
+
+  // Operators that have at least 1 contract assigned in session (non-lectura)
+  readonly assignedOperatorsInContractSession = computed(() => {
+    const opIds = new Set<number>();
+    this.sessionContractAssignments().forEach((opId) => opIds.add(opId));
+    return this.operarios().filter((op) => opIds.has(op.usuarioId));
+  });
+
+  // Count contracts assigned to an operator in session
+  getOperatorSessionContractsCount(operarioId: number): number {
+    let count = 0;
+    this.sessionContractAssignments().forEach((opId) => {
+      if (opId === operarioId) count++;
+    });
+    return count;
+  }
+
+  // Get contracts assigned to an operator in session
+  getOperatorSessionContracts(operarioId: number): IContract[] {
+    const result: IContract[] = [];
+    this.sessionContractAssignments().forEach((opId, contratoId) => {
+      if (opId === operarioId) {
+        const contrato = this.contratos().find((c) => Number(c.contratoId) === contratoId);
+        if (contrato) result.push(contrato);
+      }
+    });
+    return result;
+  }
+
+  // Total contracts assigned across all operators in this session
+  readonly totalSessionAssignedContractsCount = computed(() => {
+    return this.sessionContractAssignments().size;
+  });
+
+  // Handle activity type change from dropdown
+  onTipoActividadChange(codigo: string): void {
+    this.tipoActividadSeleccionada.set(codigo as TipoRuta);
+    // Reset contract-related state when switching
+    this.sessionContractAssignments.set(new Map());
+    this.contratos.set([]);
+    this.contractSearch.set('');
+    this.selectedComunidadId.set(null);
+    this.contractCurrentPage.set(1);
+    this.contractTotalPages.set(1);
+    this.contractTotalEnComunidad.set(0);
+
+    // If switching to non-lectura, reset sector assignments too (different flow)
+    if (!this.isLecturaActivity(codigo)) {
+      this.sessionSectorAssignments.set(new Map());
+      this.sessionCommunityAssignments.set(new Map());
     }
   }
 
-  private getTipoActividadPrefix(tipo: TipoRuta | string | null): string {
-    if (!tipo) return 'Ruta de Trabajo';
-    const found = this.tiposActividad().find((t) => t.codigo === tipo);
-    if (found) return `Ruta ${found.nombre}`;
-    switch (tipo) {
-      case 'LECTURA':
-      case 'TOMA_LECTURA':
-        return 'Ruta Lectura';
-      case 'CORTE':
-        return 'Ruta Corte';
-      case 'RECONEXION':
-        return 'Ruta Reconexión';
-      case 'INSPECCION':
-        return 'Ruta Inspección';
-      case 'INSTALACION':
-        return 'Ruta Instalación';
-      default:
-        return `Ruta ${tipo}`;
+  // Load contracts for a specific community (non-lectura mode).
+  // Strategy: backend doesn't expose comunidadId filter, so we iterate ALL backend pages
+  // (pageSize 100) and accumulate only contracts matching the selected community client-side.
+  // Once accumulated, the UI paginates visibly with `contractPageSize` (default 50) so the user
+  // never sees more than 50 rows at a time even if the community has thousands of contracts.
+  loadContractsForCommunity(comunidadId: number): void {
+    this.selectedComunidadId.set(comunidadId);
+    this.isLoadingContracts.set(true);
+    this.contractCurrentPage.set(1);
+
+    const backendLimit = 100;
+    const search = this.contractSearch().trim();
+
+    this.contractsService
+      .getContracts({
+        page: 1,
+        limit: backendLimit,
+        estadoServicio: 'ACTIVO',
+        ...(search ? { search } : {}),
+      })
+      .subscribe({
+        next: (firstPage) => {
+          const ultimaPagina = firstPage.meta?.ultimaPagina ?? 1;
+          const accumulate = (pages: { data: IContract[] }[]): void => {
+            const all = pages.flatMap((p) => p.data);
+            const filtered = all.filter((c) => c.comunidadId === comunidadId);
+            this.contratos.set(filtered);
+            this.contractTotalEnComunidad.set(filtered.length);
+            this.contractTotalPages.set(
+              Math.max(1, Math.ceil(filtered.length / this.contractPageSize())),
+            );
+            this.isLoadingContracts.set(false);
+          };
+
+          if (ultimaPagina <= 1) {
+            accumulate([firstPage]);
+            return;
+          }
+
+          const remaining = Array.from({ length: ultimaPagina - 1 }, (_, i) => i + 2).map((p) =>
+            this.contractsService.getContracts({
+              page: p,
+              limit: backendLimit,
+              estadoServicio: 'ACTIVO',
+              ...(search ? { search } : {}),
+            }),
+          );
+
+          forkJoin(remaining).subscribe({
+            next: (rest) => accumulate([firstPage, ...rest]),
+            error: () => {
+              this.contratos.set([]);
+              this.contractTotalEnComunidad.set(0);
+              this.contractTotalPages.set(1);
+              this.isLoadingContracts.set(false);
+              this.toastService.show(
+                'Error al cargar contratos para la comunidad seleccionada.',
+                'error',
+              );
+            },
+          });
+        },
+        error: () => {
+          this.contratos.set([]);
+          this.contractTotalEnComunidad.set(0);
+          this.contractTotalPages.set(1);
+          this.isLoadingContracts.set(false);
+          this.toastService.show(
+            'Error al cargar contratos para la comunidad seleccionada.',
+            'error',
+          );
+        },
+      });
+  }
+
+  // Search input change handler with debounce (triggers backend reload when community is selected)
+  onContractSearchChange(value: string): void {
+    this.contractSearch.set(value);
+    if (this.contractSearchDebounce) {
+      clearTimeout(this.contractSearchDebounce);
+    }
+    this.contractSearchDebounce = setTimeout(() => {
+      const comId = this.selectedComunidadId();
+      if (comId) {
+        this.loadContractsForCommunity(comId);
+      }
+    }, 350);
+  }
+
+  // Visible pagination computed: page slice over already-loaded community contracts
+  readonly paginatedContratos = computed(() => {
+    const all = this.contratos();
+    const page = this.contractCurrentPage();
+    const size = this.contractPageSize();
+    const start = (page - 1) * size;
+    return all.slice(start, start + size);
+  });
+
+  readonly contractPagesArray = computed(() => {
+    const total = this.contractTotalPages();
+    return Array.from({ length: total }, (_, i) => i + 1);
+  });
+
+  setContractCurrentPage(page: number): void {
+    if (page >= 1 && page <= this.contractTotalPages()) {
+      this.contractCurrentPage.set(page);
+      // The contracts panel is rendered inside <app-route-contracts-table>
+      // (a child component), so we cannot reach its scroll container with
+      // a @ViewChild here. The same helper is wired in the child
+      // component's own onPageSelect; this call is intentionally a no-op
+      // until a cross-component scroll-reset contract is introduced.
+      resetScrollNextMicrotask(null);
     }
   }
 
-  readonly sugeridoNombreBase = computed(() => {
-    const periodoSeleccionado = this.selectedPeriod();
-    const fechaObjetivo = this.fechaPlanificada();
-    const tipoActividad = this.tipoActividadSeleccionada();
-    const fragmentosNombre: string[] = [this.getTipoActividadPrefix(tipoActividad)];
+  setContractPageSize(size: number): void {
+    if (size > 0) {
+      this.contractPageSize.set(size);
+      this.contractTotalPages.set(Math.max(1, Math.ceil(this.contractTotalEnComunidad() / size)));
+      this.contractCurrentPage.set(1);
+    }
+  }
 
-    if (periodoSeleccionado?.nombre) {
-      fragmentosNombre.push(periodoSeleccionado.nombre);
+  nextContractPage(): void {
+    if (this.contractCurrentPage() < this.contractTotalPages()) {
+      this.contractCurrentPage.update((p) => p + 1);
+      resetScrollNextMicrotask(null);
+    }
+  }
+
+  prevContractPage(): void {
+    if (this.contractCurrentPage() > 1) {
+      this.contractCurrentPage.update((p) => p - 1);
+      resetScrollNextMicrotask(null);
+    }
+  }
+
+  // Apply visible selection state for "select all visible" (operates on paginated slice)
+  areAllVisibleContractsAssignedToCurrentOperator(): boolean {
+    const opId = this.selectedOperarioId();
+    if (!opId) return false;
+    const visible = this.paginatedContratos();
+    if (visible.length === 0) return false;
+    const map = this.sessionContractAssignments();
+    return visible.every((c) => map.get(Number(c.contratoId)) === opId);
+  }
+
+  // Toggle a single contract assignment to the current operator
+  toggleContrato(contratoId: number): void {
+    const opId = this.selectedOperarioId();
+    if (!assertOperatorSelected(opId, this.toastService)) return;
+    if (!assertPeriodOpen(this.selectedPeriod(), this.toastService)) return;
+    const opIdNonNull = opId!;
+
+    const status: AssignmentStatus = { isDbAssigned: false };
+    const outcome = toggleAssignment(
+      this.sessionContractAssignments(),
+      contratoId,
+      opIdNonNull,
+      status,
+    );
+
+    switch (outcome.kind) {
+      case 'assigned':
+      case 'deselected':
+        this.sessionContractAssignments.set(outcome.next);
+        break;
+      case 'blocked-by-db':
+        // Contracts are never DB-assigned at toggle time; the contracts
+        // panel is purely session-driven. Defensive no-op.
+        break;
+      case 'blocked-by-other-operator':
+        this.toastService.show(
+          `Este contrato ya está asignado a ${this.getOperarioName(outcome.existingOperatorId)} en esta sesión.`,
+          'warning',
+        );
+        break;
+    }
+  }
+
+  // Select/deselect all contracts visible on the current page for the current operator
+  toggleAllFilteredContracts(): void {
+    const opId = this.selectedOperarioId();
+    if (!opId) {
+      this.toastService.show('Por favor, seleccioná un operario en la Tabla 1 primero.', 'warning');
+      return;
     }
 
-    if (fechaObjetivo && /^\d{4}-\d{2}/.test(fechaObjetivo)) {
-      const [, mesString] = fechaObjetivo.split('-');
-      const indiceMes = parseInt(mesString, 10) - 1;
-      if (indiceMes >= 0 && indiceMes < this.MONTH_NAMES.length) {
-        fragmentosNombre.push(this.MONTH_NAMES[indiceMes]);
+    const currentMap = new Map(this.sessionContractAssignments());
+    const visible = this.paginatedContratos();
+    const available = visible.filter((c) => {
+      const existing = currentMap.get(Number(c.contratoId));
+      return existing === undefined || existing === opId;
+    });
+
+    const allMine =
+      available.length > 0 && available.every((c) => currentMap.get(Number(c.contratoId)) === opId);
+
+    if (allMine) {
+      for (const c of available) {
+        currentMap.delete(Number(c.contratoId));
+      }
+    } else {
+      for (const c of available) {
+        currentMap.set(Number(c.contratoId), opId);
       }
     }
 
-    return fragmentosNombre.join(' - ');
+    this.sessionContractAssignments.set(currentMap);
+  }
+
+  // Clear all contract assignments for a specific operator
+  clearOperatorContractAssignments(operarioId: number): void {
+    this.sessionContractAssignments.set(
+      clearAssignmentsForOperator(this.sessionContractAssignments(), operarioId),
+    );
+  }
+
+  // Get contract assignment status
+  getContratoStatus(contratoId: number): {
+    isAssigned: boolean;
+    isCurrentOperator: boolean;
+    operarioId?: number;
+    operarioName?: string;
+    color?: OperatorColor;
+  } {
+    const assignedOpId = this.sessionContractAssignments().get(contratoId);
+    if (assignedOpId == null) {
+      return { isAssigned: false, isCurrentOperator: false };
+    }
+    const op = this.operarios().find((u) => u.usuarioId === assignedOpId);
+    return {
+      isAssigned: true,
+      isCurrentOperator: assignedOpId === this.selectedOperarioId(),
+      operarioId: assignedOpId,
+      operarioName: op ? `${op.nombres} ${op.apellidos}` : `Operario #${assignedOpId}`,
+      color: this.getOperatorColor(assignedOpId),
+    };
+  }
+
+  // Pre-existing assigned routes mapping
+  readonly existingAssignedSectorMap = computed(() => {
+    const map = new Map<number, IReadingRoute>();
+    for (const r of this.periodExistingRoutes()) {
+      if (r.sectorId != null) {
+        map.set(r.sectorId, r);
+      }
+    }
+    return map;
   });
 
-  readonly nombreBase = computed(() => {
-    const valorPersonalizado = this.customNombreBase();
-    return valorPersonalizado !== null ? valorPersonalizado : this.sugeridoNombreBase();
+  // Pre-existing assigned routes for whole communities (without sectors)
+  readonly existingAssignedCommunityMap = computed(() => {
+    const map = new Map<number, IReadingRoute>();
+    for (const r of this.periodExistingRoutes()) {
+      if (r.comunidadId != null && r.sectorId == null) {
+        map.set(r.comunidadId, r);
+      }
+    }
+    return map;
   });
 
-  onTipoActividadChange(nuevoTipo: TipoRuta | string | null): void {
-    this.tipoActividadSeleccionada.set(nuevoTipo);
-  }
+  // Active routes already assigned to currently selected operator in the month
+  readonly selectedOperatorExistingRoutes = computed(() => {
+    const opId = this.selectedOperarioId();
+    if (!opId) return [];
+    return this.periodExistingRoutes().filter((r) => r.operarioId === opId);
+  });
 
-  onNombreBaseInput(valorIngresado: string): void {
-    this.customNombreBase.set(valorIngresado);
-  }
-
-  onNombreBaseClear(): void {
-    this.customNombreBase.set(null);
-  }
-
-  onFechaPlanificadaChange(nuevaFecha: string): void {
-    this.fechaPlanificada.set(nuevaFecha);
-  }
-
-  // Filtered Workers
+  // Filtered Workers list
   readonly filteredOperarios = computed(() => {
     const q = this.workerSearch().toLowerCase().trim();
     const ops = this.operarios();
@@ -193,66 +493,242 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     );
   });
 
-  // Filtered Sectors for selected Comunidad
-  readonly filteredSectores = computed(() => {
-    const comId = this.selectedComunidadId();
-    if (!comId) return [];
-    return this.sectores().filter((s) => s.comunidadId === comId);
-  });
+  // Filtered Communities list with search & quick tabs
+  readonly filteredComunidades = computed(() => {
+    const q = this.communitySearch().toLowerCase().trim();
+    const filter = this.communityFilter();
+    let list = this.comunidades();
 
-  getMedidorSerie(contrato: IContract): string | null {
-    const medidorActivo = contrato.historialMedidores?.find(
-      (historial) => historial.fechaHasta === null,
-    );
-    return medidorActivo?.medidor?.serie || null;
-  }
+    if (filter === 'completed') {
+      list = list.filter((c) => c.id != null && this.isCommunityCompleted(c.id));
+    } else if (filter === 'pending') {
+      list = list.filter((c) => c.id != null && !this.isCommunityCompleted(c.id));
+    }
 
-  // Filtered Contracts for selected Comunidad
-  readonly filteredContratos = computed(() => {
-    const q = this.contractSearch().toLowerCase().trim();
-    const list = this.contratos();
-
+    if (!q) return list;
     return list.filter((c) => {
-      const serie = this.getMedidorSerie(c);
-      const matchSearch =
-        !q ||
-        c.contratoId?.toString().includes(q) ||
-        c.cliente?.nombres?.toLowerCase().includes(q) ||
-        c.cliente?.apellidos?.toLowerCase().includes(q) ||
-        c.cliente?.identificacion?.toLowerCase().includes(q) ||
-        c.numeroGuia?.toLowerCase().includes(q) ||
-        (serie && serie.toLowerCase().includes(q));
-
-      return matchSearch;
+      const matchName = c.nombre?.toLowerCase().includes(q);
+      const matchCode = c.codigo?.toLowerCase().includes(q);
+      const hasMatchingSector = this.sectores()
+        .filter((s) => s.comunidadId === c.id)
+        .some((s) => s.nombre?.toLowerCase().includes(q) || s.codigo?.toLowerCase().includes(q));
+      return matchName || matchCode || hasMatchingSector;
     });
   });
 
-  readonly areAllFilteredContratosSelected = computed(() => {
-    const filtered = this.filteredContratos();
-    const current = this.selectedContratoIds();
-    return filtered.length > 0 && filtered.every((c) => current.includes(Number(c.contratoId)));
+  // Card Pagination Computed Properties
+  readonly communityTotalPages = computed(() => {
+    const total = this.filteredComunidades().length;
+    return Math.max(1, Math.ceil(total / this.communityPageSize()));
   });
 
-  // Validity
-  readonly isFormValid = computed(() => {
+  readonly paginatedComunidades = computed(() => {
+    const list = this.filteredComunidades();
+    const page = this.communityCurrentPage();
+    const size = this.communityPageSize();
+    const start = (page - 1) * size;
+    return list.slice(start, start + size);
+  });
+
+  readonly communityPagesArray = computed(() => {
+    const total = this.communityTotalPages();
+    return Array.from({ length: total }, (_, i) => i + 1);
+  });
+
+  setCommunityCurrentPage(page: number): void {
+    if (page >= 1 && page <= this.communityTotalPages()) {
+      this.communityCurrentPage.set(page);
+    }
+  }
+
+  nextCommunityPage(): void {
+    if (this.communityCurrentPage() < this.communityTotalPages()) {
+      this.communityCurrentPage.update((p) => p + 1);
+    }
+  }
+
+  prevCommunityPage(): void {
+    if (this.communityCurrentPage() > 1) {
+      this.communityCurrentPage.update((p) => p - 1);
+    }
+  }
+
+  setCommunityFilter(filter: 'all' | 'pending' | 'completed'): void {
+    this.communityFilter.set(filter);
+    this.communityCurrentPage.set(1);
+  }
+
+  // Helper to get sectors for a community
+  getSectoresForComunidad(comunidadId: number): Sectores[] {
+    return this.sectores().filter((s) => s.comunidadId === comunidadId);
+  }
+
+  // Get current assignment status for a whole community (without sectors)
+  getCommunityStatus(comunidadId: number | undefined): AssignmentStatusView {
+    return this.resolveAssignmentStatus(
+      comunidadId,
+      this.existingAssignedCommunityMap() as ReadonlyMap<
+        number,
+        { operarioId: number; nombre: string }
+      >,
+      this.sessionCommunityAssignments(),
+    );
+  }
+
+  // Get current assignment status for a sector
+  getSectorStatus(sectorId: number | undefined): AssignmentStatusView {
+    return this.resolveAssignmentStatus(
+      sectorId,
+      this.existingAssignedSectorMap() as ReadonlyMap<
+        number,
+        { operarioId: number; nombre: string }
+      >,
+      this.sessionSectorAssignments(),
+    );
+  }
+
+  private resolveAssignmentStatus(
+    id: number | undefined,
+    dbMap: ReadonlyMap<number, { operarioId: number; nombre: string }>,
+    sessionMap: ReadonlyMap<number, number>,
+  ): AssignmentStatusView {
+    return resolveAssignmentStatus<number>({
+      id: id ?? null,
+      dbMap,
+      sessionMap,
+      operarios: this.operarios(),
+      selectedOperarioId: this.selectedOperarioId(),
+      getOperatorColor: (operatorId) => this.getOperatorColor(operatorId),
+      fallbackName: (operatorId) => `Operario #${operatorId}`,
+    }) as AssignmentStatusView;
+  }
+
+  // Check if community is 100% completed (Golden Border indicator)
+  isCommunityCompleted(comunidadId: number | undefined): boolean {
+    if (comunidadId == null) return false;
+    const communitySectors = this.getSectoresForComunidad(comunidadId);
+    if (communitySectors.length === 0) {
+      return this.getCommunityStatus(comunidadId).isAssigned;
+    }
+
+    return communitySectors.every((s) => {
+      if (s.sectorId == null) return true;
+      const status = this.getSectorStatus(s.sectorId);
+      return status.isAssigned;
+    });
+  }
+
+  // Count assigned sectors for a community
+  getCommunityAssignedCount(comunidadId: number | undefined): { assigned: number; total: number } {
+    if (comunidadId == null) return { assigned: 0, total: 0 };
+    const communitySectors = this.getSectoresForComunidad(comunidadId);
+    if (communitySectors.length === 0) {
+      const isAssigned = this.getCommunityStatus(comunidadId).isAssigned;
+      return { assigned: isAssigned ? 1 : 0, total: 1 };
+    }
+    const total = communitySectors.length;
+    let assigned = 0;
+    for (const s of communitySectors) {
+      if (s.sectorId != null && this.getSectorStatus(s.sectorId).isAssigned) {
+        assigned++;
+      }
+    }
+    return { assigned, total };
+  }
+
+  // Count routes already in database for this operator in the active period
+  getOperatorExistingRoutesCount(operarioId: number): number {
+    return this.periodExistingRoutes().filter((r) => r.operarioId === operarioId).length;
+  }
+
+  // Count assigned sectors in session for an operator
+  getOperatorSessionSectorsCount(operarioId: number): number {
+    let count = 0;
+    this.sessionSectorAssignments().forEach((opId) => {
+      if (opId === operarioId) count++;
+    });
+    this.sessionCommunityAssignments().forEach((opId) => {
+      if (opId === operarioId) count++;
+    });
+    return count;
+  }
+
+  // Get list of session sectors and communities assigned to an operator
+  getOperatorSessionSectors(operarioId: number): {
+    sector?: Sectores;
+    comunidad?: Comunidad;
+    isFullCommunity?: boolean;
+  }[] {
+    const result: { sector?: Sectores; comunidad?: Comunidad; isFullCommunity?: boolean }[] = [];
+    this.sessionSectorAssignments().forEach((opId, sectorId) => {
+      if (opId === operarioId) {
+        const sector = this.sectores().find((s) => s.sectorId === sectorId);
+        if (sector) {
+          const comunidad = this.comunidades().find((c) => c.id === sector.comunidadId);
+          result.push({ sector, comunidad, isFullCommunity: false });
+        }
+      }
+    });
+
+    this.sessionCommunityAssignments().forEach((opId, comId) => {
+      if (opId === operarioId) {
+        const comunidad = this.comunidades().find((c) => c.id === comId);
+        if (comunidad) {
+          result.push({ comunidad, isFullCommunity: true });
+        }
+      }
+    });
+
+    return result;
+  }
+
+  // Total sectors and whole communities assigned across all operators in this session
+  readonly totalSessionAssignedSectorsCount = computed(() => {
+    return this.sessionSectorAssignments().size + this.sessionCommunityAssignments().size;
+  });
+
+  // Operators that have at least 1 sector or whole community assigned in session
+  readonly assignedOperatorsInSession = computed(() => {
+    const opIds = new Set<number>();
+    this.sessionSectorAssignments().forEach((opId) => opIds.add(opId));
+    this.sessionCommunityAssignments().forEach((opId) => opIds.add(opId));
+    return this.operarios().filter((op) => opIds.has(op.usuarioId));
+  });
+
+  // Global coverage metrics for Step 3 Summary
+  readonly globalCoverageSummary = computed(() => {
+    const allComunidades = this.comunidades();
+    return calculateGlobalCoverage(allComunidades, (comunidadId) =>
+      this.getCommunityAssignedCount(comunidadId),
+    );
+  });
+
+  // Non-lectura coverage metrics for Step 2 Summary (contracts-focused)
+  readonly nonLecturaCoverageSummary = computed(() =>
+    calculateNonLecturaCoverage(
+      this.contractTotalEnComunidad(),
+      this.sessionContractAssignments(),
+      this.contratos(),
+    ),
+  );
+
+  // Suggested Base Name
+  readonly sugeridoNombreBase = computed(() => {
+    const periodoSeleccionado = this.selectedPeriod();
     const tipo = this.tipoActividadSeleccionada();
-    const period = this.selectedPeriod();
-    const opId = this.selectedOperarioId();
-    const comId = this.selectedComunidadId();
-    const allCom = this.isAllCommunitySelected();
-    const sectors = this.selectedSectorIds();
-    const contracts = this.selectedContratoIds();
+    const tipoLabel = this.tiposActividad().find((t) => t.codigo === tipo)?.nombre ?? 'Lectura';
+    const fragmentosNombre: string[] = [`Ruta ${tipoLabel}`];
 
-    const hasTipo = tipo !== null;
-    const hasValidPeriod = period !== null && period.periodoId > 0 && period.estado === 'ABIERTO';
-    const hasWorker = opId !== null && opId > 0;
-    const hasComunidad = comId !== null && comId > 0;
+    if (periodoSeleccionado?.nombre) {
+      fragmentosNombre.push(periodoSeleccionado.nombre);
+    }
 
-    const hasCoverage = this.isLecturaActivity(tipo)
-      ? allCom || sectors.length > 0
-      : contracts.length > 0;
+    return fragmentosNombre.join(' - ');
+  });
 
-    return hasTipo && hasValidPeriod && hasWorker && hasComunidad && hasCoverage;
+  readonly nombreBase = computed(() => {
+    const valorPersonalizado = this.customNombreBase();
+    return valorPersonalizado !== null ? valorPersonalizado : this.sugeridoNombreBase();
   });
 
   ngOnInit(): void {
@@ -261,46 +737,59 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
 
   loadCatalogs(): void {
     this.routesService.getActivityTypes().subscribe({
-      next: (res) => this.tiposActividad.set(res),
+      next: (res) => {
+        this.tiposActividad.set(res);
+        // Default to LECTURA if not already set
+        if (!this.tipoActividadSeleccionada()) {
+          const lectura = res.find((t) => t.codigo === 'LECTURA' || t.codigo === 'TOMA_LECTURA');
+          this.tipoActividadSeleccionada.set(lectura?.codigo ?? 'LECTURA');
+        }
+      },
     });
 
     this.comunidadesService.getAllComunidades(1, 100).subscribe({
       next: (res) => this.comunidades.set(res.data),
     });
 
-    this.sectoresService.getAllSectores(1, 200).subscribe({
+    this.sectoresService.getAllSectores(1, 500).subscribe({
       next: (res) => this.sectores.set(res.data),
     });
 
     this.usersService.getUsers(1, 100).subscribe({
       next: (res) => {
-        const filtered = res.data.filter((u) => {
-          const roleName = u.rol?.nombre?.toLowerCase() || '';
-          return roleName.includes('operador') || roleName.includes('operario');
-        });
+        const filtered = filterOperariosByRole(res.data);
         this.operarios.set(filtered);
+        if (filtered.length > 0 && !this.selectedOperarioId()) {
+          this.selectedOperarioId.set(filtered[0].usuarioId);
+        }
+      },
+    });
+
+    this.periodsService.getPeriods().subscribe({
+      next: (periods) => {
+        if (!this.selectedPeriodId() && periods && periods.length > 0) {
+          const openPeriod = periods.find((p) => p.estado === 'ABIERTO') || periods[0];
+          this.onPeriodSelected(openPeriod);
+        }
       },
     });
   }
 
-  loadContractsForComunidad(comunidadId: number): void {
-    this.isLoadingContracts.set(true);
-    this.contractsService
-      .getContracts({
-        limit: 200,
+  loadPeriodRoutes(periodoId: number): void {
+    this.isLoadingRoutes.set(true);
+    this.routesService
+      .getRoutes({
+        periodoId,
+        limit: 1000,
       })
       .subscribe({
         next: (res) => {
-          const filtered = res.data.filter(
-            (c) =>
-              c.comunidad?.comunidadId === comunidadId ||
-              (c as unknown as { comunidadId?: number }).comunidadId === comunidadId,
-          );
-          this.contratos.set(filtered);
-          this.isLoadingContracts.set(false);
+          this.periodExistingRoutes.set(res.data || []);
+          this.isLoadingRoutes.set(false);
         },
         error: () => {
-          this.isLoadingContracts.set(false);
+          this.periodExistingRoutes.set([]);
+          this.isLoadingRoutes.set(false);
         },
       });
   }
@@ -308,155 +797,379 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   onPeriodSelected(period: IAccountingPeriod | null): void {
     this.selectedPeriod.set(period);
     this.selectedPeriodId.set(period ? period.periodoId : null);
+    this.sessionSectorAssignments.set(new Map());
+    this.sessionCommunityAssignments.set(new Map());
+    if (period?.periodoId) {
+      this.loadPeriodRoutes(period.periodoId);
+    } else {
+      this.periodExistingRoutes.set([]);
+    }
+
+    if (period && period.estado !== 'ABIERTO') {
+      this.toastService.show(
+        `El período "${period.nombre ?? ''}" se encuentra ${period.estado}. Solo es posible consultar rutas; la asignación y despacho requieren un período ABIERTO.`,
+        'warning',
+      );
+    }
   }
 
   selectOperario(operarioId: number): void {
     this.selectedOperarioId.set(operarioId);
   }
 
-  onComunidadChange(comunidadId: number | null): void {
-    this.selectedComunidadId.set(comunidadId);
-    this.selectedSectorIds.set([]);
-    this.selectedContratoIds.set([]);
-    this.isAllCommunitySelected.set(false);
-    if (comunidadId) {
-      this.loadContractsForComunidad(comunidadId);
-    } else {
-      this.contratos.set([]);
+  // Toggle sector selection for currently active operator
+  toggleSector(sector: Sectores): void {
+    if (!sector.sectorId) return;
+
+    if (
+      !assertPeriodOpen(this.selectedPeriod(), this.toastService) ||
+      !assertOperatorSelected(this.selectedOperarioId(), this.toastService, {
+        message: 'Por favor, seleccioná un operario en la Tabla 1 para asignarle sectores.',
+      })
+    ) {
+      return;
+    }
+
+    const opId = this.selectedOperarioId()!;
+    const status = this.getSectorStatus(sector.sectorId);
+    const assignmentStatus: AssignmentStatus = {
+      isDbAssigned: status.isDbAssigned,
+    };
+    const outcome = toggleAssignment(
+      this.sessionSectorAssignments(),
+      sector.sectorId,
+      opId,
+      assignmentStatus,
+    );
+
+    switch (outcome.kind) {
+      case 'assigned':
+      case 'deselected':
+        this.sessionSectorAssignments.set(outcome.next);
+        break;
+      case 'blocked-by-db':
+        this.toastService.show(
+          `Este sector ya tiene una ruta creada en el mes para ${status.operarioName}.`,
+          'warning',
+        );
+        break;
+      case 'blocked-by-other-operator':
+        this.toastService.show(
+          `El sector ${sector.nombre ?? sector.sectorId} ya está asignado a ${this.getOperarioName(outcome.existingOperatorId)} en esta sesión.`,
+          'warning',
+        );
+        break;
     }
   }
 
-  toggleAllCommunity(): void {
-    const current = this.isAllCommunitySelected();
-    this.isAllCommunitySelected.set(!current);
-    if (!current) {
-      this.selectedSectorIds.set([]);
+  // Toggle direct community assignment for communities without sectors
+  toggleCommunityAssignment(comunidadId: number): void {
+    if (
+      !assertPeriodOpen(this.selectedPeriod(), this.toastService) ||
+      !assertOperatorSelected(this.selectedOperarioId(), this.toastService)
+    ) {
+      return;
+    }
+
+    const opId = this.selectedOperarioId()!;
+    const status = this.getCommunityStatus(comunidadId);
+    const assignmentStatus: AssignmentStatus = {
+      isDbAssigned: status.isDbAssigned,
+    };
+    const outcome = toggleAssignment(
+      this.sessionCommunityAssignments(),
+      comunidadId,
+      opId,
+      assignmentStatus,
+    );
+
+    switch (outcome.kind) {
+      case 'assigned':
+      case 'deselected':
+        this.sessionCommunityAssignments.set(outcome.next);
+        break;
+      case 'blocked-by-db':
+        this.toastService.show(
+          `Esta comunidad ya tiene una ruta creada en el mes para ${status.operarioName}.`,
+          'warning',
+        );
+        break;
+      case 'blocked-by-other-operator':
+        this.toastService.show(
+          `Esta comunidad ya está asignada a ${this.getOperarioName(outcome.existingOperatorId)} en esta sesión.`,
+          'warning',
+        );
+        break;
     }
   }
 
-  isSectorSelected(sectorId: number): boolean {
-    return this.selectedSectorIds().includes(sectorId);
-  }
-
-  toggleSector(sectorId: number): void {
-    if (this.isAllCommunitySelected()) {
-      this.isAllCommunitySelected.set(false);
-    }
-    const list = [...this.selectedSectorIds()];
-    const index = list.indexOf(sectorId);
-    if (index > -1) {
-      list.splice(index, 1);
-    } else {
-      list.push(sectorId);
-    }
-    this.selectedSectorIds.set(list);
-  }
-
-  isContratoSelected(contratoId: number | string): boolean {
-    return this.selectedContratoIds().includes(Number(contratoId));
-  }
-
-  toggleContrato(contratoId: number | string): void {
-    const idNum = Number(contratoId);
-    const list = [...this.selectedContratoIds()];
-    const index = list.indexOf(idNum);
-    if (index > -1) {
-      list.splice(index, 1);
-    } else {
-      list.push(idNum);
-    }
-    this.selectedContratoIds.set(list);
-  }
-
-  toggleAllFilteredContratos(): void {
-    const filtered = this.filteredContratos();
-    const current = this.selectedContratoIds();
-    const allSelected =
-      filtered.length > 0 && filtered.every((c) => current.includes(Number(c.contratoId)));
-
-    if (allSelected) {
-      const filteredIds = new Set(filtered.map((c) => Number(c.contratoId)));
-      this.selectedContratoIds.set(current.filter((id) => !filteredIds.has(id)));
-    } else {
-      const combined = new Set([...current, ...filtered.map((c) => Number(c.contratoId))]);
-      this.selectedContratoIds.set(Array.from(combined));
-    }
-  }
-
-  getOperarioName(): string {
+  // Assign or toggle all available sectors in a community to current operator
+  toggleAllSectorsInCommunity(comunidadId: number): void {
     const opId = this.selectedOperarioId();
-    if (!opId) return 'Sin seleccionar';
-    const op = this.operarios().find((u) => u.usuarioId === opId);
-    return op ? `${op.nombres} ${op.apellidos}` : `Operario #${opId}`;
+    if (!opId) {
+      this.toastService.show('Por favor, seleccioná un operario en la Tabla 1 primero.', 'warning');
+      return;
+    }
+
+    const communitySectors = this.getSectoresForComunidad(comunidadId);
+    if (communitySectors.length === 0) {
+      this.toggleCommunityAssignment(comunidadId);
+      return;
+    }
+
+    const currentMap = new Map(this.sessionSectorAssignments());
+    const availableSectors = communitySectors.filter((s) => {
+      if (!s.sectorId) return false;
+      const status = this.getSectorStatus(s.sectorId);
+      return !status.isDbAssigned && (!status.operarioId || status.operarioId === opId);
+    });
+
+    const allAssignedToMe =
+      availableSectors.length > 0 &&
+      availableSectors.every((s) => currentMap.get(s.sectorId!) === opId);
+
+    if (allAssignedToMe) {
+      for (const s of availableSectors) {
+        if (s.sectorId) currentMap.delete(s.sectorId);
+      }
+    } else {
+      for (const s of availableSectors) {
+        if (s.sectorId) currentMap.set(s.sectorId, opId);
+      }
+    }
+
+    this.sessionSectorAssignments.set(currentMap);
   }
 
-  getComunidadName(): string {
-    const comId = this.selectedComunidadId();
-    if (!comId) return 'Sin seleccionar';
-    const com = this.comunidades().find((c) => c.id === comId);
-    return com ? com.nombre : `Comunidad #${comId}`;
+  // Assign all available sectors across all communities to currently active operator
+  assignAllAvailable(): void {
+    const opId = this.selectedOperarioId();
+    if (!opId) {
+      this.toastService.show('Por favor, seleccioná un operario en la Tabla 1 primero.', 'warning');
+      return;
+    }
+
+    const currentMap = new Map(this.sessionSectorAssignments());
+    const currentComMap = new Map(this.sessionCommunityAssignments());
+    let assignedCount = 0;
+
+    for (const sec of this.sectores()) {
+      if (!sec.sectorId) continue;
+      const status = this.getSectorStatus(sec.sectorId);
+      if (!status.isDbAssigned && !status.isAssigned) {
+        currentMap.set(sec.sectorId, opId);
+        assignedCount++;
+      }
+    }
+
+    for (const com of this.comunidades()) {
+      if (!com.id) continue;
+      const comSectors = this.getSectoresForComunidad(com.id);
+      if (comSectors.length === 0) {
+        const comStatus = this.getCommunityStatus(com.id);
+        if (!comStatus.isDbAssigned && !comStatus.isAssigned) {
+          currentComMap.set(com.id, opId);
+          assignedCount++;
+        }
+      }
+    }
+
+    if (assignedCount === 0) {
+      this.toastService.show(
+        'No hay sectores ni comunidades libres disponibles para asignar.',
+        'info',
+      );
+      return;
+    }
+
+    this.sessionSectorAssignments.set(currentMap);
+    this.sessionCommunityAssignments.set(currentComMap);
+    this.toastService.show(
+      `Se asignaron ${assignedCount} sector(es)/comunidad(es) libres al operario activo.`,
+      'success',
+    );
   }
 
-  getSelectedSectorsList(): Sectores[] {
-    const ids = this.selectedSectorIds();
-    return this.sectores().filter((s) => s.sectorId != null && ids.includes(s.sectorId));
+  removeOperatorSector(sectorId: number): void {
+    const currentMap = new Map(this.sessionSectorAssignments());
+    currentMap.delete(sectorId);
+    this.sessionSectorAssignments.set(currentMap);
   }
 
-  confirmAndSave(): void {
-    if (!this.isFormValid() || this.isLoading()) return;
+  removeOperatorCommunity(comunidadId: number): void {
+    const currentMap = new Map(this.sessionCommunityAssignments());
+    currentMap.delete(comunidadId);
+    this.sessionCommunityAssignments.set(currentMap);
+  }
 
-    const tipo = this.tipoActividadSeleccionada();
-    const coverageDescription = this.isLecturaActivity(tipo)
-      ? this.isAllCommunitySelected()
-        ? 'toda la comunidad'
-        : `${this.selectedSectorIds().length} sector(es)`
-      : `${this.selectedContratoIds().length} contrato(s)`;
+  removeOperatorContract(contratoId: number): void {
+    const currentMap = new Map(this.sessionContractAssignments());
+    currentMap.delete(contratoId);
+    this.sessionContractAssignments.set(currentMap);
+  }
+
+  clearOperatorSessionAssignments(operarioId: number): void {
+    this.sessionSectorAssignments.set(
+      clearAssignmentsForOperator(this.sessionSectorAssignments(), operarioId),
+    );
+    this.sessionCommunityAssignments.set(
+      clearAssignmentsForOperator(this.sessionCommunityAssignments(), operarioId),
+    );
+  }
+
+  resetSessionAssignments(): void {
+    if (
+      this.sessionSectorAssignments().size === 0 &&
+      this.sessionCommunityAssignments().size === 0 &&
+      this.sessionContractAssignments().size === 0
+    )
+      return;
+    this.sessionSectorAssignments.set(new Map());
+    this.sessionCommunityAssignments.set(new Map());
+    this.sessionContractAssignments.set(new Map());
+    this.toastService.show('Se descartaron todas las asignaciones de la sesión.', 'info');
+  }
+
+  // Navigation between Step 1 (2 Tables) and Step 2 (Full Width Summary)
+  goToSummary(): void {
+    const period = this.selectedPeriod();
+    if (!period || period.estado !== 'ABIERTO') {
+      this.toastService.show(
+        'Solo se pueden planificar y despachar rutas para un período abierto.',
+        'warning',
+      );
+      return;
+    }
+
+    const hasAssignments = this.isLecturaMode()
+      ? this.totalSessionAssignedSectorsCount() > 0
+      : this.totalSessionAssignedContractsCount() > 0;
+
+    if (!hasAssignments) {
+      this.toastService.show(
+        this.isLecturaMode()
+          ? 'No has asignado ningún sector o comunidad en esta sesión todavía.'
+          : 'No has asignado ningún contrato en esta sesión todavía.',
+        'warning',
+      );
+      return;
+    }
+    this.currentStep.set(2);
+  }
+
+  backToAssignment(): void {
+    this.currentStep.set(1);
+  }
+
+  // Execution: Dispatch routes for all assigned operators
+  confirmAndDispatchAll(): void {
+    const period = this.selectedPeriod();
+    if (!period || period.estado !== 'ABIERTO') {
+      this.toastService.show('El período operativo debe estar abierto.', 'error');
+      return;
+    }
+
+    const lecturaMode = this.isLecturaMode();
+    const assignedOperators = lecturaMode
+      ? this.assignedOperatorsInSession()
+      : this.assignedOperatorsInContractSession();
+    if (assignedOperators.length === 0) {
+      this.toastService.show('No hay asignaciones para despachar.', 'warning');
+      return;
+    }
+
+    const message = lecturaMode
+      ? `¿Estás seguro de confirmar y generar las rutas de trabajo para ${assignedOperators.length} operario(s) con un total de ${this.totalSessionAssignedSectorsCount()} sector(es)/comunidad(es) para el período ${period.nombre}?`
+      : `¿Estás seguro de confirmar y generar las rutas con un total de ${this.totalSessionAssignedContractsCount()} contrato(s) distribuidos entre ${assignedOperators.length} operario(s) para el período ${period.nombre}?`;
 
     this.dialogService
       .confirm({
-        title: 'Confirmar Asignación de Rutas',
-        message: `¿Estás seguro de asignar ${coverageDescription} a ${this.getOperarioName()} para el período ${this.selectedPeriod()?.nombre}?`,
-        confirmText: 'Sí, Asignar',
+        title: 'Confirmar y Despachar Rutas',
+        message,
+        confirmText: 'Sí, Despachar Rutas',
         cancelText: 'Revisar',
       })
       .subscribe((confirmed) => {
         if (confirmed) {
-          this.executeAssignment();
+          this.executeBatchAssignments();
         }
       });
   }
 
-  executeAssignment(): void {
+  executeBatchAssignments(): void {
     this.isLoading.set(true);
+    const periodId = this.selectedPeriodId()!;
+    const tipoRuta = (this.tipoActividadSeleccionada() as TipoRuta) || 'LECTURA';
+    const nombreBase = this.nombreBase().trim() || undefined;
 
-    // Si fechaPlanificada viene como 'YYYY-MM', normalizar a 'YYYY-MM-01' para compatibilidad con Date ISO en backend
-    let fechaToSend = this.fechaPlanificada() || undefined;
-    if (fechaToSend && /^\d{4}-\d{2}$/.test(fechaToSend)) {
-      fechaToSend = `${fechaToSend}-01`;
+    const requests: ICreateRouteAssignmentsDto[] = [];
+
+    if (this.isLecturaMode()) {
+      // Lectura flow: group by operator -> community -> sectorIds
+      const grouped = groupSectorAssignmentsByOperatorCommunity(
+        this.sessionSectorAssignments(),
+        this.sectores() as readonly { sectorId: number; comunidadId: number }[],
+      );
+      grouped.forEach((comMap, opId) => {
+        comMap.forEach((sectorIds, comunidadId) => {
+          requests.push({
+            periodoId: periodId,
+            operarioId: opId,
+            comunidadId,
+            tipoRuta,
+            sectorIds,
+            nombreBase,
+          });
+        });
+      });
+
+      // Whole community assignments (without sectors) stay inline because
+      // they bypass the sector grouping helper.
+      this.sessionCommunityAssignments().forEach((opId, comunidadId) => {
+        requests.push({
+          periodoId: periodId,
+          operarioId: opId,
+          comunidadId,
+          tipoRuta,
+          sectorIds: [],
+          nombreBase,
+        });
+      });
+    } else {
+      // Non-lectura flow: group by operator -> community -> contratoIds
+      const grouped = groupContractAssignmentsByOperatorCommunity(
+        this.sessionContractAssignments(),
+        this.contratos(),
+      );
+      grouped.forEach((comMap, opId) => {
+        comMap.forEach((contratoIds, comunidadId) => {
+          requests.push({
+            periodoId: periodId,
+            operarioId: opId,
+            comunidadId,
+            tipoRuta,
+            contratoIds,
+            nombreBase,
+          });
+        });
+      });
     }
 
-    const tipo = this.tipoActividadSeleccionada();
-    const isLectura = this.isLecturaActivity(tipo);
-    const dto: ICreateRouteAssignmentsDto = {
-      periodoId: this.selectedPeriodId()!,
-      operarioId: this.selectedOperarioId()!,
-      comunidadId: this.selectedComunidadId()!,
-      tipoRuta: tipo ?? undefined,
-      sectorIds: isLectura
-        ? this.isAllCommunitySelected()
-          ? undefined
-          : this.selectedSectorIds()
-        : undefined,
-      contratoIds: !isLectura ? this.selectedContratoIds() : undefined,
-      fechaPlanificada: fechaToSend,
-      nombreBase: this.nombreBase().trim() || undefined,
-    };
+    if (requests.length === 0) {
+      this.isLoading.set(false);
+      return;
+    }
 
-    this.routesService.createAssignments(dto).subscribe({
-      next: (routes) => {
+    const observables = requests.map((dto) => this.routesService.createAssignments(dto));
+    forkJoin(observables).subscribe({
+      next: (results) => {
         this.isLoading.set(false);
+        const totalCreated = results.reduce((acc, curr) => acc + curr.length, 0);
+        const tipoLabel =
+          this.tiposActividad().find((t) => t.codigo === this.tipoActividadSeleccionada())
+            ?.nombre ?? 'lectura';
         this.toastService.show(
-          `Se generaron exitosamente ${routes.length} ruta(s) de trabajo.`,
+          `¡Rutas despachadas con éxito! Se generaron ${totalCreated} ruta(s) de ${tipoLabel.toLowerCase()}.`,
           'success',
         );
         this.router.navigate(['/app/Contratos/RutasDeLectura']);
@@ -464,11 +1177,19 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
       error: (err) => {
         this.isLoading.set(false);
         this.toastService.show(
-          err.error?.message || 'Error al procesar la asignación de rutas',
+          err.error?.message || 'Ocurrió un error al despachar las rutas.',
           'error',
         );
       },
     });
+  }
+
+  getOperarioName(operarioId: number | null | undefined): string {
+    return resolveOperarioNombre(this.operarios(), operarioId);
+  }
+
+  getComunidadName(comunidadId: number | null | undefined): string {
+    return resolveComunidadNombre(this.comunidades(), comunidadId);
   }
 
   goBack(): void {

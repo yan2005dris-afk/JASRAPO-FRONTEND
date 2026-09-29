@@ -6,8 +6,6 @@ export type WorkOrderState = 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'CANCE
 export interface OperatorMeterInfo {
   medidorId: string;
   serie: string;
-  latitud?: number;
-  longitud?: number;
 }
 
 export interface OperatorUserInfo {
@@ -20,6 +18,8 @@ export interface OperatorWorkOrderContract {
   numeroContrato: string;
   clienteNombre: string;
   direccion: string;
+  latitud?: number;
+  longitud?: number;
 }
 
 export interface OperatorWorkOrder {
@@ -57,7 +57,9 @@ export interface OperatorRouteResponse {
   estado: RouteState;
   operarioId: number;
   comunidadId: number;
+  comunidadNombre?: string;
   sectorId?: number;
+  sectorNombre?: string;
   fechaPlanificada?: string;
   fechaInicio?: string;
   fechaFin?: string;

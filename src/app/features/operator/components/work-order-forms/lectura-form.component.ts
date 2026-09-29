@@ -5,12 +5,13 @@ import {
   inject,
   input,
   OnInit,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PhotoCaptureComponent } from '../../../../shared/components/photo-capture/photo-capture.component';
-import type { LecturaFormPayload } from '../../models/work-order-form.models';
+import { calculateConsumo, type LecturaFormPayload } from '../../models/work-order-form.models';
 import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
 
 @Component({
@@ -58,6 +59,38 @@ import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
             <span class="field-error">Debe ser mayor o igual a la lectura anterior.</span>
           }
         }
+      </div>
+
+      <!-- Consumo Calculado Display -->
+      <div
+        class="consumption-preview-box"
+        [class.initial-reading]="form.get('lecturaInicial')?.value"
+      >
+        <div class="consumption-preview-header">
+          <span class="consumption-title">
+            <i class="bi bi-speedometer2"></i> Consumo Calculado
+          </span>
+          @if (form.get('lecturaInicial')?.value) {
+            <span class="consumption-tag">Lectura Inicial (0 m³)</span>
+          } @else {
+            <span class="consumption-tag">Diferencia de período</span>
+          }
+        </div>
+        <div class="consumption-preview-main">
+          <span class="consumption-val">{{ consumoCalculado() | number: '1.2-2' }}</span>
+          <span class="consumption-unit">m³</span>
+        </div>
+        <div class="consumption-preview-formula">
+          @if (form.get('lecturaInicial')?.value) {
+            <span>Lectura inicial configurada: no genera consumo facturable en esta toma.</span>
+          } @else {
+            <span
+              >Lectura Actual ({{ form.get('lecturaActual')?.value ?? 0 }}) - Lectura Anterior ({{
+                lecturaAnterior()
+              }})</span
+            >
+          }
+        </div>
       </div>
 
       <div class="form-switch-field">
@@ -117,6 +150,9 @@ export class LecturaFormComponent
   /** Lectura anterior pre-cargada por el padre desde el caché. */
   readonly lecturaAnterior = input(0);
 
+  /** Consumo calculado reactivo a partir de lecturaActual y lecturaAnterior. */
+  readonly consumoCalculado = signal<number>(0);
+
   // Necesario porque ngOnInit debe llamar buildForm + suscribir valueChanges,
   // pero el base también implementa ngOnInit (que llama buildForm). Resolvemos
   // con takeUntilDestroyed y reescritura explícita del ciclo de vida.
@@ -125,6 +161,7 @@ export class LecturaFormComponent
   override ngOnInit(): void {
     super.ngOnInit();
     this.setupValidations();
+    this.validateCrossField();
   }
 
   protected buildForm(): FormGroup {
@@ -134,6 +171,10 @@ export class LecturaFormComponent
       lecturaInicial: [false],
       descripcionAnomalia: [''],
     });
+  }
+
+  protected override isPhotoRequired(): boolean {
+    return false;
   }
 
   protected buildPayload(
@@ -172,6 +213,10 @@ export class LecturaFormComponent
     const actual = this.form.get('lecturaActual')?.value;
     const anterior = this.lecturaAnterior();
     const isInicial = this.form.get('lecturaInicial')?.value;
+
+    const actualNum = Number(actual ?? 0);
+    const consumo = calculateConsumo(anterior, actualNum, !!isInicial);
+    this.consumoCalculado.set(consumo);
 
     const ctrl = this.form.get('lecturaActual');
     if (!ctrl) return;

@@ -17,7 +17,7 @@
           class="btn-close shadow-none"
           aria-label="Cerrar"
           (click)="close()"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         ></button>
       </div>
 
@@ -42,10 +42,10 @@
             id="selectNuevoOperario"
             class="form-select shadow-none"
             [(ngModel)]="nuevoOperarioId"
-            [disabled]="isLoading"
+            [disabled]="isLoading()"
           >
             <option [ngValue]="null" disabled>Seleccione un nuevo operario...</option>
-            @for (op of operarios; track op.usuarioId) {
+            @for (op of operarios(); track op.usuarioId) {
               <option [ngValue]="op.usuarioId" [disabled]="op.usuarioId === route().operarioId">
                 {{ op.nombres }} {{ op.apellidos }}
                 @if (op.usuarioId === route().operarioId) {
@@ -54,7 +54,7 @@
               </option>
             }
           </select>
-          @if (nuevoOperarioId === route().operarioId) {
+          @if (nuevoOperarioId() === route().operarioId) {
             <div class="text-warning small mt-1" style="font-size: 0.75rem">
               El operario seleccionado es el mismo actualmente asignado.
             </div>
@@ -68,7 +68,7 @@
           type="button"
           class="btn btn-outline-secondary fw-medium px-3"
           (click)="close()"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         >
           Cancelar
         </button>
@@ -78,13 +78,13 @@
           (click)="submit()"
           [disabled]="!isValid || isLoading"
         >
-          @if (isLoading) {
+          @if (isLoading()) {
             <span class="spinner-border spinner-border-sm" role="status"></span>
           }
-          @if (!isLoading) {
+          @if (!isLoading()) {
             <i class="bi bi-check-circle"></i>
           }
-          {{ isLoading ? 'Reasignando...' : 'Confirmar Reasignación' }}
+          {{ isLoading() ? 'Reasignando...' : 'Confirmar Reasignación' }}
         </button>
       </div>
     </div>

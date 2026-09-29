@@ -59,7 +59,11 @@ const ROUTE_SNAPSHOT_MUTABLE_FIELDS = [
 
 const ROUTE_HYDRATED_ARRAY_FIELDS = ['paradas', 'ordenesTrabajo', 'rutaPuntos'] as const;
 
-const WORK_ORDER_SNAPSHOT_MUTABLE_FIELDS = ['estado', 'resultadoObservacion', 'completadoEn'] as const;
+const WORK_ORDER_SNAPSHOT_MUTABLE_FIELDS = [
+  'estado',
+  'resultadoObservacion',
+  'completadoEn',
+] as const;
 
 function identityOf(value: unknown): string {
   return value === null || value === undefined ? '' : String(value);
@@ -200,7 +204,7 @@ export function mergeWorkOrdersWithSnapshot(
 })
 export class IndexedDbService {
   private readonly dbName = 'jasrapo-operator-db';
-  private readonly dbVersion = 11;
+  private readonly dbVersion = 12;
   private db: IDBDatabase | null = null;
 
   constructor() {
@@ -293,6 +297,16 @@ export class IndexedDbService {
             autoIncrement: true,
           });
           store.createIndex('bySyncState', 'syncState', { unique: false });
+        }
+
+        // Almacén para catálogo geográfico de comunidades
+        if (!db.objectStoreNames.contains('comunidades_cache')) {
+          db.createObjectStore('comunidades_cache', { keyPath: 'comunidadId' });
+        }
+
+        // Almacén para catálogo geográfico de sectores
+        if (!db.objectStoreNames.contains('sectores_cache')) {
+          db.createObjectStore('sectores_cache', { keyPath: 'sectorId' });
         }
       };
 
@@ -607,7 +621,7 @@ export class IndexedDbService {
     // Si se pasa scope (e.g. 'operator:42'), buscar primero en el snapshot del operador
     if (scope && db.objectStoreNames.contains('assigned_snapshots')) {
       const snapshot = await this.getAssignedSnapshot(scope);
-      if (snapshot?.registeredReadings) {
+      if (snapshot?.registeredReadings && snapshot.registeredReadings.length > 0) {
         return snapshot.registeredReadings;
       }
     }
@@ -975,10 +989,100 @@ export class IndexedDbService {
     });
   }
 
+  // --- COMUNIDADES & SECTORES CACHE ---
+
+  async saveComunidadesCache(
+    items: { comunidadId: number; nombre: string; codigo?: string }[],
+  ): Promise<void> {
+    if (!items?.length) return;
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('comunidades_cache', 'readwrite');
+      const store = transaction.objectStore('comunidades_cache');
+      for (const item of items) {
+        if (item.comunidadId != null) {
+          store.put(item);
+        }
+      }
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  async getComunidadesCache(): Promise<{ comunidadId: number; nombre: string; codigo?: string }[]> {
+    const db = await this.initDb();
+    if (!db.objectStoreNames.contains('comunidades_cache')) return [];
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('comunidades_cache', 'readonly');
+      const store = transaction.objectStore('comunidades_cache');
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async saveSectoresCache(
+    items: { sectorId: number; comunidadId?: number; nombre: string; codigo?: string }[],
+  ): Promise<void> {
+    if (!items?.length) return;
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('sectores_cache', 'readwrite');
+      const store = transaction.objectStore('sectores_cache');
+      for (const item of items) {
+        if (item.sectorId != null) {
+          store.put(item);
+        }
+      }
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  async getSectoresCache(): Promise<
+    { sectorId: number; comunidadId?: number; nombre: string; codigo?: string }[]
+  > {
+    const db = await this.initDb();
+    if (!db.objectStoreNames.contains('sectores_cache')) return [];
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('sectores_cache', 'readonly');
+      const store = transaction.objectStore('sectores_cache');
+      const request = store.getAll();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
   // --- RUTAS CACHE (snapshot offline) ---
 
-  async saveRoutesCache<T>(scope: string, routes: T[]): Promise<void> {
+  async saveRoutesCache<T extends Record<string, any>>(scope: string, routes: T[]): Promise<void> {
     const db = await this.initDb();
+
+    // Auto-persist discovered comunidades & sectores to their dedicated stores
+    const comunidades: { comunidadId: number; nombre: string }[] = [];
+    const sectores: { sectorId: number; comunidadId?: number; nombre: string }[] = [];
+    for (const r of routes) {
+      if (r['comunidadId'] != null && r['comunidadNombre']?.trim()) {
+        comunidades.push({
+          comunidadId: Number(r['comunidadId']),
+          nombre: r['comunidadNombre'].trim(),
+        });
+      }
+      if (r['sectorId'] != null && r['sectorNombre']?.trim()) {
+        sectores.push({
+          sectorId: Number(r['sectorId']),
+          comunidadId: r['comunidadId'] != null ? Number(r['comunidadId']) : undefined,
+          nombre: r['sectorNombre'].trim(),
+        });
+      }
+    }
+    if (comunidades.length > 0) {
+      this.saveComunidadesCache(comunidades).catch(() => undefined);
+    }
+    if (sectores.length > 0) {
+      this.saveSectoresCache(sectores).catch(() => undefined);
+    }
+
     return new Promise((resolve, reject) => {
       const transaction = db.transaction('rutas_cache', 'readwrite');
       const store = transaction.objectStore('rutas_cache');
@@ -1159,6 +1263,31 @@ export class IndexedDbService {
       const transaction = db.transaction('anomalias_pendientes', 'readwrite');
       const store = transaction.objectStore('anomalias_pendientes');
       store.clear();
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  /**
+   * Limpia los almacenes locales de datos asignados y snapshots para permitir una
+   * sincronización limpia/descarga fresca desde el backend sin destruir lecturas pendientes.
+   */
+  async clearAssignedCache(scope?: string): Promise<void> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(
+        ['medidores_cache', 'lecturas_registradas', 'rutas_cache', 'assigned_snapshots'],
+        'readwrite',
+      );
+      transaction.objectStore('medidores_cache').clear();
+      transaction.objectStore('lecturas_registradas').clear();
+      if (scope) {
+        transaction.objectStore('rutas_cache').delete(scope);
+        transaction.objectStore('assigned_snapshots').delete(scope);
+      } else {
+        transaction.objectStore('rutas_cache').clear();
+        transaction.objectStore('assigned_snapshots').clear();
+      }
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
     });

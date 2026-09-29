@@ -1,0 +1,171 @@
+<!-- Header Filters Bar (Community Selector + Search + Badge) -->
+<div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+  <div style="min-width: 240px; max-width: 320px; width: 100%">
+    <select
+      class="form-select form-select-sm rounded-3"
+      [ngModel]="selectedComunidadId()"
+      (change)="onSelectComunidad($event)"
+      [disabled]="isLoading()"
+    >
+      <option [ngValue]="null" disabled selected>Seleccionar comunidad...</option>
+      @for (com of comunidades(); track com.id) {
+        <option [value]="com.id">{{ com.nombre }} ({{ com.codigo }})</option>
+      }
+    </select>
+  </div>
+
+  <div style="max-width: 280px; width: 100%">
+    <app-picker-input
+      inputId="workspacePageContractSearch"
+      placeholder="Buscar contrato, cliente, guía..."
+      icon="bi-search"
+      [query]="searchQuery()"
+      [isLoading]="isLoading()"
+      [disabled]="!selectedComunidadId()"
+      (queryChange)="searchChange.emit($event)"
+      (clear)="searchChange.emit('')"
+    />
+  </div>
+
+  @if (selectedComunidadId()) {
+    <span class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1 fw-semibold small">
+      {{ totalContracts() }} contrato(s) en la comunidad
+    </span>
+  }
+</div>
+
+<!-- State Displays -->
+@if (!selectedComunidadId()) {
+  <div class="text-center py-5 text-muted small">
+    <i class="bi bi-collection fs-2 d-block mb-1 text-secondary"></i>
+    Seleccioná una comunidad para cargar los contratos disponibles.
+  </div>
+} @else if (isLoading()) {
+  <div class="border rounded-3 p-3 bg-white">
+    <app-table-skeleton [rows]="6" [cols]="5" [showHeaders]="true" />
+  </div>
+} @else if (totalContracts() === 0) {
+  <div class="text-center py-5 text-muted small">
+    <i class="bi bi-file-earmark-x fs-2 d-block mb-1 text-secondary"></i>
+    No se encontraron contratos activos para esta comunidad.
+  </div>
+} @else if (paginatedContracts().length === 0) {
+  <div class="text-center py-5 text-muted small">
+    <i class="bi bi-arrow-left-right fs-2 d-block mb-1 text-secondary"></i>
+    Esta página no tiene contratos. Volvé a la página 1.
+    <div class="mt-2">
+      <button
+        type="button"
+        class="btn btn-outline-primary btn-sm rounded-3"
+        (click)="onPageSelect(1)"
+      >
+        <i class="bi bi-arrow-counterclockwise me-1"></i>Ir a página 1
+      </button>
+    </div>
+  </div>
+} @else {
+  <!-- Selection Bar -->
+  <div class="d-flex align-items-center justify-content-between p-2 mb-2 bg-light rounded-3 border">
+    <div class="d-flex align-items-center gap-2">
+      <div class="form-check m-0 ms-2">
+        <input
+          class="form-check-input"
+          type="checkbox"
+          id="checkSelectAllContracts"
+          [checked]="areAllVisibleAssigned()"
+          (change)="onToggleAll()"
+        />
+        <label class="form-check-label small fw-semibold text-dark" for="checkSelectAllContracts">
+          Seleccionar todos los visibles
+        </label>
+      </div>
+    </div>
+    <div class="text-muted small">
+      Mostrando <strong>{{ paginatedContracts().length }}</strong> contratos en esta página
+    </div>
+  </div>
+
+  <!-- Contracts Interactive Table/Cards List -->
+  <div
+    class="contracts-scroll-area d-flex flex-column gap-2 scrollbar-subtle overflow-y-auto pe-1"
+    style="max-height: 380px"
+  >
+    @for (contrato of paginatedContracts(); track contrato.contratoId) {
+      @let cStatus = getContratoStatus(+contrato.contratoId);
+      @let isMyAssigned = cStatus.isAssigned && cStatus.isCurrentOperator;
+      @let isOtherAssigned = cStatus.isAssigned && !cStatus.isCurrentOperator;
+
+      <div
+        class="contract-card d-flex align-items-center justify-content-between"
+        [class.is-session-selected]="isMyAssigned"
+        [class.is-other-assigned]="isOtherAssigned"
+        (click)="onToggle(+contrato.contratoId)"
+        role="button"
+        tabindex="0"
+        (keydown.enter)="onToggle(+contrato.contratoId)"
+      >
+        <div class="d-flex align-items-center gap-2 overflow-hidden">
+          <i
+            class="bi"
+            [ngClass]="{
+              'bi-check-square-fill text-primary': isMyAssigned,
+              'bi-person-badge-fill text-secondary': isOtherAssigned,
+              'bi-square text-muted': !cStatus.isAssigned,
+            }"
+          ></i>
+          <div class="text-truncate">
+            <div class="fw-semibold text-dark small text-truncate" style="font-size: 0.82rem">
+              {{ contrato.numeroGuia }} — {{ formatClient(contrato.cliente) }}
+            </div>
+            <div class="text-muted text-truncate" style="font-size: 0.7rem">
+              {{ contrato.direccionSuministro }}
+              @if (contrato.sector) {
+                · {{ contrato.sector.nombre }}
+              }
+            </div>
+            @if (cStatus.isAssigned) {
+              <div class="text-truncate" style="font-size: 0.68rem">
+                @if (isMyAssigned) {
+                  <span class="text-primary fw-semibold">Asignado a este operario</span>
+                } @else {
+                  <i class="bi bi-person me-1 text-muted"></i>
+                  <span class="text-muted">{{ cStatus.operarioName }}</span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        @if (cStatus.isAssigned && cStatus.color) {
+          <span
+            class="badge rounded-pill ms-2 text-truncate flex-shrink-0"
+            [style.background-color]="cStatus.color.lightBg"
+            [style.color]="cStatus.color.contrastText"
+            style="font-size: 0.7rem; max-width: 130px"
+          >
+            {{ cStatus.operarioName }}
+          </span>
+        }
+      </div>
+    }
+  </div>
+
+  <!-- Pagination using shared app-pagination -->
+  @if (totalContracts() > pageSize()) {
+    <div class="pt-2 border-top mt-2">
+      <app-pagination
+        [totalItems]="totalContracts()"
+        [currentPage]="currentPage()"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="[10, 20, 50]"
+        [showPageSize]="true"
+        [showRange]="true"
+        [showTotal]="true"
+        itemNameSingular="contrato"
+        itemNamePlural="contratos"
+        (pageChange)="onPageSelect($event)"
+        (pageSizeChange)="pageSizeChange.emit($event)"
+      />
+    </div>
+  }
+}

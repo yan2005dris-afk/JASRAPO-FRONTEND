@@ -1,19 +1,21 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   OnInit,
   inject,
   input,
   output,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ReadingRoutesService } from '../../services/reading-routes.service';
+import { ReadingRoutesService } from '../../data/reading-routes.api';
 import { UsersService } from '../../../../users/services/users.service';
 import { User } from '../../../../users/models/user.interface';
-import { IReadingRoute, IReassignRouteDto } from '../../interfaces/ireading-route.interface';
+import { IReadingRoute, IReassignRouteDto } from '../../domain/models/reading-route.model';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { resolveOperarioNombre } from '../../../../../shared/utils/operator-name';
+import { filterOperariosByRole } from '../../../../../shared/utils/users';
 
 @Component({
   selector: 'app-reassign-route-modal',
@@ -30,60 +32,47 @@ export class ReassignRouteModalComponent implements OnInit {
   private readonly routesService = inject(ReadingRoutesService);
   private readonly usersService = inject(UsersService);
   private readonly toastService = inject(ToastService);
-  private readonly cdr = inject(ChangeDetectorRef);
 
   readonly route = input.required<IReadingRoute>();
   readonly reassigned = output<void>();
   readonly closed = output<void>();
 
-  operarios: User[] = [];
-  nuevoOperarioId: number | null = null;
-  isLoading = false;
+  readonly operarios = signal<User[]>([]);
+  readonly nuevoOperarioId = signal<number | null>(null);
+  readonly isLoading = signal(false);
 
   ngOnInit(): void {
     this.usersService.getUsers(1, 100).subscribe({
-      next: (res) => {
-        this.operarios = res.data.filter((u) => {
-          const roleName = u.rol?.nombre?.toLowerCase() || '';
-          return roleName.includes('operador') || roleName.includes('operario');
-        });
-        this.cdr.markForCheck();
-      },
+      next: (res) => this.operarios.set(filterOperariosByRole(res.data)),
     });
   }
 
-  getOperarioNombre(operarioId: number): string {
-    const user = this.operarios.find((u) => u.usuarioId === operarioId);
-    if (user) {
-      return `${user.nombres} ${user.apellidos}`.trim();
-    }
-    return `Operario #${operarioId}`;
+  getOperarioNombre(operarioId: number | null | undefined): string {
+    return resolveOperarioNombre(this.operarios(), operarioId);
   }
 
   get isValid(): boolean {
-    return (
-      !!this.nuevoOperarioId &&
-      this.nuevoOperarioId > 0 &&
-      this.nuevoOperarioId !== this.route().operarioId
-    );
+    const nuevo = this.nuevoOperarioId();
+    return !!nuevo && nuevo > 0 && nuevo !== this.route().operarioId;
   }
 
   submit(): void {
-    if (!this.isValid || this.isLoading || !this.nuevoOperarioId) return;
+    const nuevo = this.nuevoOperarioId();
+    if (!nuevo || !this.isValid || this.isLoading()) return;
 
     const dto: IReassignRouteDto = {
-      operarioId: Number(this.nuevoOperarioId),
+      operarioId: Number(nuevo),
     };
 
-    this.isLoading = true;
+    this.isLoading.set(true);
     this.routesService.reassignRoute(this.route().rutaId, dto).subscribe({
       next: () => {
-        this.isLoading = false;
+        this.isLoading.set(false);
         this.toastService.show('Ruta reasignada exitosamente', 'success');
         this.reassigned.emit();
       },
       error: (err) => {
-        this.isLoading = false;
+        this.isLoading.set(false);
         const msg = err?.error?.message || 'Error al reasignar ruta';
         this.toastService.show(Array.isArray(msg) ? msg.join(', ') : msg, 'error');
       },

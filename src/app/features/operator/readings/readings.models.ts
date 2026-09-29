@@ -26,7 +26,7 @@ export interface MeterGroup {
     icon: string;
     cssClass: string | null;
   };
-  meters: import('../../contracts/meters/interfaces/imeter.interface').IMeterDto[];
+  meters: import('../../contracts/meters/domain/models/meter.model').IMeterDto[];
 }
 
 /** Pasos del flujo de ingreso de lectura en pantalla móvil. */
@@ -37,11 +37,11 @@ export type LecturaState =
   | { kind: 'search' }
   | {
       kind: 'actions';
-      meter: import('../../contracts/meters/interfaces/imeter.interface').IMeterDto;
+      meter: import('../../contracts/meters/domain/models/meter.model').IMeterDto;
     }
   | {
       kind: 'form';
-      meter: import('../../contracts/meters/interfaces/imeter.interface').IMeterDto;
+      meter: import('../../contracts/meters/domain/models/meter.model').IMeterDto;
       tipo: import('../models/operator.models').WorkOrderActivityType;
     };
 

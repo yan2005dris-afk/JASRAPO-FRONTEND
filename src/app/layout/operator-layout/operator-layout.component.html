@@ -64,16 +64,16 @@
         </button>
       }
 
-      <!-- Logout button in Header -->
-      <button
-        (click)="onLogout()"
-        class="header-logout-btn"
-        id="btn-header-logout"
-        title="Cerrar sesión"
-        aria-label="Cerrar sesión"
+      <!-- User Profile link in Header -->
+      <a
+        routerLink="/app/operador/perfil"
+        class="header-profile-btn"
+        id="btn-header-profile"
+        title="Mi Perfil"
+        aria-label="Mi Perfil"
       >
-        <i class="bi bi-box-arrow-right"></i>
-      </button>
+        <i class="bi bi-person-circle"></i>
+      </a>
     </div>
   </header>
 
@@ -87,7 +87,21 @@
   <!-- Bottom Floating Navigation Bar -->
   <nav class="operator-bottom-nav">
     <div class="nav-items-container">
-      <!-- Tab 1: Rutas -->
+      <!-- Tab 1: Inicio -->
+      <a
+        routerLink="/app/operador/inicio"
+        routerLinkActive="active"
+        class="nav-tab"
+        id="tab-inicio"
+        aria-label="Panel del Operador"
+      >
+        <div class="icon-wrapper">
+          <i class="bi bi-house-door-fill"></i>
+        </div>
+        <span class="tab-label">Inicio</span>
+      </a>
+
+      <!-- Tab 2: Rutas -->
       <a
         routerLink="/app/operador/rutas"
         routerLinkActive="active"
@@ -101,7 +115,7 @@
         <span class="tab-label">Rutas</span>
       </a>
 
-      <!-- Tab 2: Órdenes de Trabajo -->
+      <!-- Tab 3: Órdenes de Trabajo -->
       <a
         routerLink="/app/operador/lecturas"
         routerLinkActive="active"
@@ -115,7 +129,7 @@
         <span class="tab-label">Órdenes</span>
       </a>
 
-      <!-- Tab 3: Novedades -->
+      <!-- Tab 4: Novedades -->
       <a
         routerLink="/app/operador/novedades"
         routerLinkActive="active"
@@ -129,7 +143,7 @@
         <span class="tab-label">Novedades</span>
       </a>
 
-      <!-- Tab 4: Sincronización -->
+      <!-- Tab 5: Sincronización -->
       <a
         routerLink="/app/operador/sincronizar"
         routerLinkActive="active"

@@ -24,7 +24,7 @@ import { PaymentDetailModalComponent } from './components/payment-detail-modal/p
 import { AnnulPaymentModalComponent } from './components/annul-payment-modal/annul-payment-modal.component';
 
 import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
-import { IContract } from '../../contracts/service-contracts/interfaces/icontract.interface';
+import { IContract } from '../../contracts/service-contracts/domain/models/service-contract.model';
 
 type DatePreset = 'today' | 'week' | 'month' | 'custom';
 

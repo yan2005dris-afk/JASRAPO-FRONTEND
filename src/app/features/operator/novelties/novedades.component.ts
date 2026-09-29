@@ -9,7 +9,7 @@ import { IndexedDbService, type PendingRecord } from '../../../core/services/ind
 import { AuthService } from '../../../core/services/auth.service';
 import { MeterCardComponent } from '../components/meter-card/meter-card.component';
 import type { AnomaliaItem, ReadingWithAnomaly } from '../models/operator.models';
-import type { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
+import type { IMeterDto } from '../../contracts/meters/domain/models/meter.model';
 
 const STALE_CACHE_MS = 24 * 60 * 60 * 1000;
 

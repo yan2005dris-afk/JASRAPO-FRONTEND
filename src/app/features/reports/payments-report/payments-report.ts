@@ -17,8 +17,8 @@ import { ToastService } from '../../../shared/components/toast/toast.service';
 import { resolveClientDisplayName } from '../../../shared/utils/client-display-name';
 import { IPaymentsReportFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
-import { ClientsService } from '../../contracts/clients/services/clients.service';
-import type { IClient } from '../../contracts/clients/interfaces/iclients.interface';
+import { ClientsApi } from '../../contracts/clients/data/clients.api';
+import type { IClient } from '../../contracts/clients/domain/models/client.model';
 import { ReportEmailDialogComponent } from '../shared/report-email-dialog/report-email-dialog.component';
 import { ReportFormatTabsComponent } from '../shared/report-format-tabs/report-format-tabs.component';
 import {
@@ -101,7 +101,7 @@ export interface PaymentsReportData {
 export class PaymentsReportComponent implements OnDestroy {
   private readonly document = inject(DOCUMENT);
   private readonly reportsService = inject(ReportsService);
-  private readonly clientsService = inject(ClientsService);
+  private readonly clientsService = inject(ClientsApi);
   private readonly toast = inject(ToastService);
 
   // Filtros del reporte de abonos
@@ -113,6 +113,7 @@ export class PaymentsReportComponent implements OnDestroy {
 
   // Vista activa: tabla o PDF
   readonly activeView = signal<ReportView>('table');
+  readonly isExporting = signal(false);
 
   // Resultados
   readonly reportData = signal<PaymentsReportData | null>(null);
@@ -466,12 +467,45 @@ export class PaymentsReportComponent implements OnDestroy {
   descargarPdf(): void {
     const blob = this.pdfBlob();
     if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `reporte-abonos-${this.clienteId() || 'general'}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
+    this.reportsService.downloadBlob(blob, `reporte-abonos-${this.clienteId() || 'general'}.pdf`);
+  }
+
+  descargarExcel(): void {
+    const filters = this.buildFilters();
+    this.isExporting.set(true);
+    this.reportsService.exportPaymentsReport(filters, 'xlsx').subscribe({
+      next: (blob) => {
+        this.isExporting.set(false);
+        this.reportsService.downloadBlob(
+          blob,
+          `reporte-abonos-${this.clienteId() || 'general'}.xlsx`,
+        );
+        this.toast.success('Reporte Excel descargado exitosamente');
+      },
+      error: () => {
+        this.isExporting.set(false);
+        this.toast.error('No se pudo exportar el reporte en formato Excel');
+      },
+    });
+  }
+
+  descargarCsv(): void {
+    const filters = this.buildFilters();
+    this.isExporting.set(true);
+    this.reportsService.exportPaymentsReport(filters, 'csv').subscribe({
+      next: (blob) => {
+        this.isExporting.set(false);
+        this.reportsService.downloadBlob(
+          blob,
+          `reporte-abonos-${this.clienteId() || 'general'}.csv`,
+        );
+        this.toast.success('Reporte CSV descargado exitosamente');
+      },
+      error: () => {
+        this.isExporting.set(false);
+        this.toast.error('No se pudo exportar el reporte en formato CSV');
+      },
+    });
   }
 
   // ---------- Envío por email (modal) ----------

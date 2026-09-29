@@ -24,8 +24,9 @@ import {
   MeterStatusFilter,
   MeterStatusCode,
   IExportMetersParams,
-} from '../../interfaces/imeter.interface';
-import { MeterExportFormat, MetersService } from '../../services/meters.service';
+} from '../../domain/models/meter.model';
+import { MeterExportFormat } from '../../domain/models/meter.model';
+import { MetersApi } from '../../data/meters.api';
 import { finalize } from 'rxjs';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
@@ -58,7 +59,7 @@ import { Router } from '@angular/router';
 })
 export class MetersIndexComponent implements OnInit {
   private readonly router = inject(Router);
-  private readonly metersService = inject(MetersService);
+  private readonly metersService = inject(MetersApi);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);

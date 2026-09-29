@@ -7,7 +7,7 @@ import { ContractPickerComponent } from '../../../shared/components/contract-pic
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { IAccountStatementFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
-import type { IContract } from '../../contracts/service-contracts/interfaces/icontract.interface';
+import type { IContract } from '../../contracts/service-contracts/domain/models/service-contract.model';
 
 type DatePreset = 'currentMonth' | 'lastMonth' | 'last3Months' | 'lastYear';
 type ReportView = 'table' | 'pdf';
@@ -84,6 +84,7 @@ export class ClientStatementComponent {
   // Estados de carga
   readonly isLoadingData = signal(false);
   readonly isLoadingPdf = signal(false);
+  readonly isExporting = signal(false);
 
   // Envío por email
   readonly destinatario = signal('');
@@ -286,12 +287,50 @@ export class ClientStatementComponent {
   descargarPdf(): void {
     const blob = this.pdfBlob();
     if (!blob) return;
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `estado-de-cuenta-${this.selectedContractNumber() || this.contratoId()}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
+    this.reportsService.downloadBlob(
+      blob,
+      `estado-de-cuenta-${this.selectedContractNumber() || this.contratoId()}.pdf`,
+    );
+  }
+
+  descargarExcel(): void {
+    const filters = this.buildFilters();
+    if (!filters) return;
+    this.isExporting.set(true);
+    this.reportsService.exportAccountStatement(filters, 'xlsx').subscribe({
+      next: (blob) => {
+        this.isExporting.set(false);
+        this.reportsService.downloadBlob(
+          blob,
+          `estado-de-cuenta-${this.selectedContractNumber() || this.contratoId()}.xlsx`,
+        );
+        this.toast.success('Reporte Excel descargado exitosamente');
+      },
+      error: () => {
+        this.isExporting.set(false);
+        this.toast.error('No se pudo exportar el reporte en formato Excel');
+      },
+    });
+  }
+
+  descargarCsv(): void {
+    const filters = this.buildFilters();
+    if (!filters) return;
+    this.isExporting.set(true);
+    this.reportsService.exportAccountStatement(filters, 'csv').subscribe({
+      next: (blob) => {
+        this.isExporting.set(false);
+        this.reportsService.downloadBlob(
+          blob,
+          `estado-de-cuenta-${this.selectedContractNumber() || this.contratoId()}.csv`,
+        );
+        this.toast.success('Reporte CSV descargado exitosamente');
+      },
+      error: () => {
+        this.isExporting.set(false);
+        this.toast.error('No se pudo exportar el reporte en formato CSV');
+      },
+    });
   }
 
   // ---------- Envío por email (modal) ----------

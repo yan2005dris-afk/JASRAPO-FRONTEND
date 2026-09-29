@@ -6,7 +6,7 @@ import {
   getContractServiceState,
   type IContract,
   type IHistorialMedidor,
-} from '../../interfaces/icontract.interface';
+} from '../../domain/models/service-contract.model';
 
 export type ContractsTableMode = 'manage' | 'select';
 
