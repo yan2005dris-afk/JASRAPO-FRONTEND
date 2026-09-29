@@ -7,7 +7,7 @@ import { MetersService } from '../../services/meters.service';
 import { PeriodsService } from '../../../../../shared/services/periods.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
-import { IMeter, IReplaceMeterResponse } from '../../interfaces/imeter.interface';
+import { IMeter, IReplaceMeterResponse } from '../../domain/models/meter.model';
 
 describe('ReplaceMeterModalComponent', () => {
   let component: ReplaceMeterModalComponent;

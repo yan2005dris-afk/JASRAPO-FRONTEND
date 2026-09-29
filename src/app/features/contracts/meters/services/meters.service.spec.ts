@@ -7,7 +7,7 @@ import {
   IUpdateMeterStatusBody,
   ISearchMetersParams,
   IPaginatedMetersResponse,
-} from '../interfaces/imeter.interface';
+} from '../domain/models/meter.model';
 import { environment } from '../../../../../environments/environment';
 
 describe('MetersService', () => {

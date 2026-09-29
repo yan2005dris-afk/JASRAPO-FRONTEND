@@ -24,7 +24,7 @@ import {
   MeterStatusFilter,
   MeterStatusCode,
   IExportMetersParams,
-} from '../../interfaces/imeter.interface';
+} from '../../domain/models/meter.model';
 import { MeterExportFormat, MetersService } from '../../services/meters.service';
 import { finalize } from 'rxjs';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';

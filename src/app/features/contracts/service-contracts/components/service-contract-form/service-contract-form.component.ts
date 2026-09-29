@@ -24,7 +24,7 @@ import { MetersIndexComponent } from '../../../meters/components/meters-index/me
 import { ReplaceMeterModalComponent } from '../../../meters/components/replace-meter-modal/replace-meter-modal.component';
 import { ComunidadesComponent } from '../../../../admin/comunidades/comunidades.component';
 import { IClient } from '../../../clients/interfaces/iclients.interface';
-import { IMeter } from '../../../meters/interfaces/imeter.interface';
+import { IMeter } from '../../../meters/domain/models/meter.model';
 import { ITariffCategory } from '../../../tariffs/interfaces/itariff.interface';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';

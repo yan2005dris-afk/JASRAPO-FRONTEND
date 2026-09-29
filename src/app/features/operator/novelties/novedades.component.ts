@@ -7,7 +7,7 @@ import { OperatorService } from '../service/operator.service';
 import { MeterCacheService } from '../../../core/services/meter-cache.service';
 import { MeterCardComponent } from '../components/meter-card/meter-card.component';
 import type { ReadingWithAnomaly } from '../models/operator.models';
-import type { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
+import type { IMeterDto } from '../../contracts/meters/domain/models/meter.model';
 
 interface AnomalyWithMeter extends ReadingWithAnomaly {
   meterDto: IMeterDto | null;

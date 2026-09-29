@@ -26,7 +26,7 @@ import {
   ResponsabilidadDano,
   TratamientoSaliente,
   TratamientoEntrante,
-} from '../../interfaces/imeter.interface';
+} from '../../domain/models/meter.model';
 import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
 import { PeriodsService } from '../../../../../shared/services/periods.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';

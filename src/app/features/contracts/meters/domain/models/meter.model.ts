@@ -4,6 +4,9 @@ export interface IMeterStatus {
   orden: number;
 }
 
+/** Formatos en los que el backend puede emitir el inventario de medidores. */
+export type MeterExportFormat = 'pdf' | 'csv';
+
 export type MeterStatusCode = 'BODEGA' | 'INSTALADO' | 'DANADO' | 'PENDIENTE' | 'BAJA';
 export type MeterStatusFilter = 'todos' | MeterStatusCode;
 

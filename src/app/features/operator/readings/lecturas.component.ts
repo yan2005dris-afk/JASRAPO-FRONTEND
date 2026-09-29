@@ -7,7 +7,7 @@ import { OperatorSyncService } from '../../../core/services/operator-sync.servic
 import { AuthService } from '../../../core/services/auth.service';
 import { MeterCacheService } from '../../../core/services/meter-cache.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
-import { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
+import { IMeterDto } from '../../contracts/meters/domain/models/meter.model';
 import { MeterSearchComponent } from '../components/meter-search/meter-search.component';
 import { SelectedMeterCardComponent } from '../components/selected-meter-card/selected-meter-card.component';
 import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';

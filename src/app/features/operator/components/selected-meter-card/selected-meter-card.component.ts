@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IMeterDto } from '../../../contracts/meters/interfaces/imeter.interface';
+import { IMeterDto } from '../../../contracts/meters/domain/models/meter.model';
 
 @Component({
   selector: 'app-selected-meter-card',

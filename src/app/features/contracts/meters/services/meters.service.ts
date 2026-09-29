@@ -11,11 +11,8 @@ import {
   IExportMetersParams,
   IMeterHistory,
   IReplaceMeterResponse,
-} from '../interfaces/imeter.interface';
+} from '../domain/models/meter.model';
 import { environment } from '../../../../../environments/environment';
-
-/** Formatos en los que el backend puede emitir el inventario de medidores. */
-export type MeterExportFormat = 'pdf' | 'csv';
 
 @Injectable({
   providedIn: 'root',
@@ -98,9 +95,9 @@ export class MetersService {
   }
 
   replaceMeter(
-    payload: import('../interfaces/imeter.interface').IReplaceMeterRequest,
-  ): Observable<import('../interfaces/imeter.interface').IReplaceMeterResponse> {
-    return this.http.post<import('../interfaces/imeter.interface').IReplaceMeterResponse>(
+    payload: import('../domain/models/meter.model').IReplaceMeterRequest,
+  ): Observable<import('../domain/models/meter.model').IReplaceMeterResponse> {
+    return this.http.post<import('../domain/models/meter.model').IReplaceMeterResponse>(
       `${this.endpoint}/replace`,
       payload,
     );

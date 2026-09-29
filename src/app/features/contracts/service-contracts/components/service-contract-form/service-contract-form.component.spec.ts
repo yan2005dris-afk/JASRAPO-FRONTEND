@@ -8,7 +8,7 @@ import { ServiceContractFormComponent } from './service-contract-form.component'
 import { ContractsService } from '../../services/contracts.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { IContract } from '../../interfaces/icontract.interface';
-import { IMeter } from '../../../meters/interfaces/imeter.interface';
+import { IMeter } from '../../../meters/domain/models/meter.model';
 import { IClient } from '../../../clients/interfaces/iclients.interface';
 import { ITariffCategory } from '../../../tariffs/interfaces/itariff.interface';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
