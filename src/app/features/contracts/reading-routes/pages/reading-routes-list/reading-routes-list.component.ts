@@ -1,36 +1,39 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ReadingRoutesService } from './services/reading-routes.service';
+import { ReadingRoutesService } from '../../data/reading-routes.api';
 import {
   IFindAllRoutesParams,
   IReadingRoute,
   TipoRuta,
-} from './interfaces/ireading-route.interface';
-import { ComunidadesService } from '../../admin/comunidades/services/comunidades.service';
-import { UsersService } from '../../users/services/users.service';
-import { Comunidad } from '../../admin/comunidades/models/comunidad.interface';
-import { User } from '../../users/models/user.interface';
-import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
-import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
-import { ToastService } from '../../../shared/components/toast/toast.service';
-import { TableExportService } from '../../../shared/services/table-export.service';
+} from '../../domain/models/reading-route.model';
+import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
+import { UsersService } from '../../../../users/services/users.service';
+import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
+import { User } from '../../../../users/models/user.interface';
+import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
+import { EmptyStateComponent } from '../../../../../shared/components/empty-state/empty-state.component';
+import { TableSkeletonComponent } from '../../../../../shared/components/table-skeleton/table-skeleton.component';
+import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
+import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { TableExportService } from '../../../../../shared/services/table-export.service';
 import {
   DropdownComponent,
   DropdownItem,
-} from '../../../shared/components/dropdown/dropdown.component';
-import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
+} from '../../../../../shared/components/dropdown/dropdown.component';
+import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Router } from '@angular/router';
-import { ReassignRouteModalComponent } from './components/reassign-route-modal/reassign-route-modal.component';
-import { TIPO_RUTA_LABEL } from './constants/route-detail.constants';
-import { resolveComunidadNombre, resolveOperarioNombre } from './services/operator-name.helpers';
-import { filterOperariosByRole } from './services/users.helpers';
-import { ExportColumn } from '../../../shared/services/table-export.service';
+import { ReassignRouteModalComponent } from '../../components/reassign-route-modal/reassign-route-modal.component';
+import { TIPO_RUTA_LABEL } from '../../domain/constants';
+import {
+  resolveComunidadNombre,
+  resolveOperarioNombre,
+} from '../../../../../shared/utils/operator-name';
+import { filterOperariosByRole } from '../../../../../shared/utils/users';
+import { ExportColumn } from '../../../../../shared/services/table-export.service';
 
 @Component({
-  selector: 'app-reading-routes',
+  selector: 'app-reading-routes-list',
   standalone: true,
   imports: [
     CommonModule,
@@ -42,14 +45,14 @@ import { ExportColumn } from '../../../shared/services/table-export.service';
     ReassignRouteModalComponent,
     DropdownComponent,
   ],
-  templateUrl: './reading-routes.html',
-  styleUrl: './reading-routes.scss',
+  templateUrl: './reading-routes-list.component.html',
+  styleUrl: './reading-routes-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class ReadingRoutesComponent implements OnInit {
+export class ReadingRoutesListComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly routesService = inject(ReadingRoutesService);
   private readonly comunidadesService = inject(ComunidadesService);

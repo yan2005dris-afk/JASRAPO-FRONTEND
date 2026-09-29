@@ -2,8 +2,8 @@ import { Injectable, WritableSignal, inject } from '@angular/core';
 
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
-import { OrderWork } from '../interfaces/ireading-route.interface';
-import { ReadingRoutesService } from './reading-routes.service';
+import { OrderWork } from '../domain/models/reading-route.model';
+import { ReadingRoutesService } from '../data/reading-routes.api';
 
 /**
  * Centralises every state-changing action on a work order of a route.

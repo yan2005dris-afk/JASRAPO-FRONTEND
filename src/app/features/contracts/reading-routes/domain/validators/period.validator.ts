@@ -1,5 +1,5 @@
-import { IAccountingPeriod } from '../../../../shared/services/periods.service';
-import { ToastService } from '../../../../shared/components/toast/toast.service';
+import { IAccountingPeriod } from '../../../../../shared/services/periods.service';
+import { ToastService } from '../../../../../shared/components/toast/toast.service';
 
 /**
  * Pure validation helpers for the route-assignment workspace.

@@ -10,13 +10,13 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { ReadingRoutesService } from '../../services/reading-routes.service';
+import { ReadingRoutesService } from '../../data/reading-routes.api';
 import {
   ICreateRouteAssignmentsDto,
   IReadingRoute,
   ITipoActividad,
   TipoRuta,
-} from '../../interfaces/ireading-route.interface';
+} from '../../domain/models/reading-route.model';
 import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
 import { SectoresService } from '../../../../admin/sectores-prueba/services/sectores';
 import { UsersService } from '../../../../users/services/users.service';
@@ -36,32 +36,27 @@ import {
 import { OperatorColor, OPERATOR_PALETTE } from '../../../../../shared/types/operator-color';
 
 import { RouteContractsTableComponent } from '../../components/route-contracts-table/route-contracts-table.component';
-import {
-  assertOperatorSelected,
-  assertPeriodOpen,
-} from '../../services/route-assignment-validators';
+import { assertOperatorSelected, assertPeriodOpen } from '../../domain/validators';
 import {
   AssignmentStatus,
+  calculateGlobalCoverage,
+  calculateNonLecturaCoverage,
   clearAssignmentsForOperator,
   groupContractAssignmentsByOperatorCommunity,
   groupSectorAssignmentsByOperatorCommunity,
   resolveAssignmentStatus,
   ResolvedAssignmentStatus,
   toggleAssignment,
-} from '../../services/session-assignments.helpers';
+} from '../../domain/rules';
 
 /** Shape returned by `getCommunityStatus` / `getSectorStatus` (concrete `color` type). */
 type AssignmentStatusView = ResolvedAssignmentStatus<OperatorColor>;
 import {
   resolveComunidadNombre,
   resolveOperarioNombre,
-} from '../../services/operator-name.helpers';
-import { filterOperariosByRole } from '../../services/users.helpers';
-import {
-  calculateGlobalCoverage,
-  calculateNonLecturaCoverage,
-} from '../../services/coverage-calculator';
-import { resetScrollNextMicrotask } from '../../services/scroll.helpers';
+} from '../../../../../shared/utils/operator-name';
+import { filterOperariosByRole } from '../../../../../shared/utils/users';
+import { resetScrollNextMicrotask } from '../../../../../shared/utils/scroll';
 
 @Component({
   selector: 'app-route-assignment-workspace',

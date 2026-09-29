@@ -6,8 +6,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { IReadingRowItem } from '../../readings/components/readings-table/readings-table.component';
-import { ReadingRoutesService } from './reading-routes.service';
-import { RouteReadingActionsService } from './route-reading-actions.service';
+import { ReadingRoutesService } from '../data/reading-routes.api';
+import { RouteReadingActionsService } from './route-reading.actions';
 
 describe('RouteReadingActionsService', () => {
   let service: RouteReadingActionsService;

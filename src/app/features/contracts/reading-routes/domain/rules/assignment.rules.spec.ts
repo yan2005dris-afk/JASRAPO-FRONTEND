@@ -5,8 +5,8 @@ import {
   groupSectorAssignmentsByOperatorCommunity,
   resolveAssignmentStatus,
   toggleAssignment,
-} from './session-assignments.helpers';
-import { IReadingRoute } from '../interfaces/ireading-route.interface';
+} from './assignment.rules';
+import { IReadingRoute } from '../../domain/models/reading-route.model';
 
 describe('session-assignments.helpers', () => {
   describe('toggleAssignment', () => {

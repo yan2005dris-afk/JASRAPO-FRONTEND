@@ -3,9 +3,9 @@ import {
   buildReadingFallback,
   mapLecturaKpisToRouteKpis,
   mapReadingForRouteToRow,
-} from './route-kpis.mapper';
-import { IReadingRowItem } from '../../readings/components/readings-table/readings-table.component';
-import { IReadingForRoute } from '../interfaces/ireading-route.interface';
+} from './kpi-normalize.rules';
+import { IReadingRowItem } from '../../../readings/components/readings-table/readings-table.component';
+import { IReadingForRoute } from '../../domain/models/reading-route.model';
 
 describe('route-kpis.mapper', () => {
   describe('mapLecturaKpisToRouteKpis', () => {

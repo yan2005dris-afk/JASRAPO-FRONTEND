@@ -6,7 +6,7 @@ import {
   TIPO_ACTIVIDAD_LABEL,
   TIPO_RUTA_LABEL,
 } from './route-detail.constants';
-import { EstadoOrden, TipoActividad, TipoRuta } from '../interfaces/ireading-route.interface';
+import { EstadoOrden, TipoActividad, TipoRuta } from '../../domain/models/reading-route.model';
 
 describe('route-detail.constants', () => {
   it('covers every EstadoOrden value with a badge class', () => {

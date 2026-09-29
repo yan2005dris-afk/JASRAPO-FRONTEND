@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterOperariosByRole } from './users.helpers';
+import { filterOperariosByRole } from './users';
 
 describe('filterOperariosByRole', () => {
   it('keeps users whose role name contains "operador" or "operario" (case-insensitive)', () => {

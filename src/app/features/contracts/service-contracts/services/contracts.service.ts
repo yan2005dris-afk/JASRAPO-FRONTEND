@@ -11,7 +11,7 @@ import {
   ISearchContractsParams,
   IUpdateContractRequest,
 } from '../interfaces/icontract.interface';
-import type { IReadingRoute } from '../../reading-routes/interfaces/ireading-route.interface';
+import type { IReadingRoute } from '../../reading-routes/domain/models/reading-route.model';
 
 export interface IAssignInstallationRoutePayload {
   routeId?: number;

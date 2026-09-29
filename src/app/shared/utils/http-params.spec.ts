@@ -1,6 +1,6 @@
 import { HttpParams } from '@angular/common/http';
 import { describe, expect, it } from 'vitest';
-import { buildHttpParams, ParamSerializer } from './http-params.helpers';
+import { buildHttpParams, ParamSerializer } from './http-params';
 
 describe('buildHttpParams', () => {
   it('returns an empty HttpParams for null / undefined input', () => {
