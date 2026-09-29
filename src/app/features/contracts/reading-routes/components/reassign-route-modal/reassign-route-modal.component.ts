@@ -15,7 +15,7 @@ import { User } from '../../../../users/models/user.interface';
 import { IReadingRoute, IReassignRouteDto } from '../../interfaces/ireading-route.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { resolveOperarioNombre } from '../../../../../shared/utils/operator-name';
-import { filterOperariosByRole } from '../../services/users.helpers';
+import { filterOperariosByRole } from '../../../../../shared/utils/users';
 
 @Component({
   selector: 'app-reassign-route-modal',

@@ -26,7 +26,7 @@ import { Router } from '@angular/router';
 import { ReassignRouteModalComponent } from './components/reassign-route-modal/reassign-route-modal.component';
 import { TIPO_RUTA_LABEL } from './constants/route-detail.constants';
 import { resolveComunidadNombre, resolveOperarioNombre } from '../../../shared/utils/operator-name';
-import { filterOperariosByRole } from './services/users.helpers';
+import { filterOperariosByRole } from '../../../shared/utils/users';
 import { ExportColumn } from '../../../shared/services/table-export.service';
 
 @Component({

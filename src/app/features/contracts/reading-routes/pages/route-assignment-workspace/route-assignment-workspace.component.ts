@@ -56,7 +56,7 @@ import {
   resolveComunidadNombre,
   resolveOperarioNombre,
 } from '../../../../../shared/utils/operator-name';
-import { filterOperariosByRole } from '../../services/users.helpers';
+import { filterOperariosByRole } from '../../../../../shared/utils/users';
 import {
   calculateGlobalCoverage,
   calculateNonLecturaCoverage,
