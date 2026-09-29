@@ -11,7 +11,7 @@ import {
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 
-import { TariffsService } from '../../services/tariffs.service';
+import { TariffsApi } from '../../data/tariffs.api';
 import { ITariffCategory, UpdateTariffRequest } from '../../domain/models/tariff.model';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 
@@ -28,7 +28,7 @@ export class TariffsFormComponent implements OnInit {
   readonly formClosed = output<void>();
   readonly formSubmitted = output<void>();
 
-  private readonly tariffsService = inject(TariffsService);
+  private readonly tariffsService = inject(TariffsApi);
   private readonly fb = inject(FormBuilder);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly toast = inject(ToastService);

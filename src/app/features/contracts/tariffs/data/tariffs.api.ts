@@ -6,31 +6,14 @@ import {
   ITariffCategory,
   CreateTariffRequest,
   UpdateTariffRequest,
+  ITariffResponse,
+  ITariffQueryParams,
 } from '../domain/models/tariff.model';
-
-export interface ITariffResponse {
-  data: ITariffCategory[];
-  meta?: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
-
-export interface ITariffQueryParams {
-  page?: number;
-  limit?: number;
-  /** Filtro puntual por nombre. */
-  nombre?: string;
-  /** Búsqueda de texto libre sobre nombre y descripción. */
-  search?: string;
-}
 
 @Injectable({
   providedIn: 'root',
 })
-export class TariffsService {
+export class TariffsApi {
   private readonly http = inject(HttpClient);
 
   private readonly baseUrl = environment.apiUrl;

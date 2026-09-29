@@ -3,7 +3,7 @@ import { of, throwError } from 'rxjs';
 import { Mock, vi } from 'vitest';
 
 import { TariffsComponent } from './tariffs.component';
-import { TariffsService } from './services/tariffs.service';
+import { TariffsApi } from './data/tariffs.api';
 import { RubrosService } from '../../billing/rubros/services/rubros.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
@@ -38,7 +38,7 @@ describe('TariffsComponent', () => {
     await TestBed.configureTestingModule({
       imports: [TariffsComponent],
       providers: [
-        { provide: TariffsService, useValue: tariffsServiceSpy },
+        { provide: TariffsApi, useValue: tariffsServiceSpy },
         {
           provide: RubrosService,
           useValue: { getRubros: vi.fn().mockReturnValue(of({ data: [] })) },

@@ -13,7 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, map, Observable, of, switchMap } from 'rxjs';
 
-import { TariffsService } from './services/tariffs.service';
+import { TariffsApi } from './data/tariffs.api';
 import { ITariffCategory } from './domain/models/tariff.model';
 import { TariffsFormComponent } from './components/tariffs-form/tariffs-form.component';
 import { RubroFormModalComponent } from '../../billing/rubros/components/rubro-form-modal/rubro-form-modal.component';
@@ -53,7 +53,7 @@ const EXPORT_PAGE_SIZE = 50;
   },
 })
 export class TariffsComponent implements OnInit {
-  private readonly tariffsService = inject(TariffsService);
+  private readonly tariffsService = inject(TariffsApi);
   private readonly rubrosService = inject(RubrosService);
   private readonly toast = inject(ToastService);
   private readonly confirmDialog = inject(ConfirmDialogService);
