@@ -13,26 +13,26 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import { AuthService } from '../../../core/services/auth.service';
-import { ClientsApi } from './data/clients.api';
+import { AuthService } from '../../../../core/services/auth.service';
+import { ClientsApi } from '../../data/clients.api';
 import {
   SearchClientsParams,
   EstadoBusquedaCliente,
   IClient,
   IIdentificacion,
-} from './domain/models/client.model';
-import { ToastService } from '../../../shared/components/toast/toast.service';
-import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
-import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
-import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
-import { TableExportService } from '../../../shared/services/table-export.service';
+} from '../../domain/models/client.model';
+import { ToastService } from '../../../../shared/components/toast/toast.service';
+import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
+import { TableSkeletonComponent } from '../../../../shared/components/table-skeleton/table-skeleton.component';
+import { TableExportService } from '../../../../shared/services/table-export.service';
 import {
   DropdownComponent,
   DropdownItem,
-} from '../../../shared/components/dropdown/dropdown.component';
+} from '../../../../shared/components/dropdown/dropdown.component';
 
 @Component({
-  selector: 'app-clients',
+  selector: 'app-clients-list-page',
   imports: [
     CommonModule,
     FormsModule,
@@ -40,14 +40,14 @@ import {
     TableSkeletonComponent,
     DropdownComponent,
   ],
-  templateUrl: './clients.component.html',
-  styleUrl: './clients.component.scss',
+  templateUrl: './clients-list.component.html',
+  styleUrl: './clients-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class ClientsComponent implements OnInit, OnDestroy {
+export class ClientsListPageComponent implements OnInit, OnDestroy {
   readonly authService = inject(AuthService);
 
   readonly exportItems: DropdownItem[] = [

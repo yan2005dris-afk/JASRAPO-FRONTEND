@@ -7,11 +7,11 @@ import { vi } from 'vitest';
 import { AuthService } from '../../../core/services/auth.service';
 import { ClientsApi } from './data/clients.api';
 import { IClient } from './domain/models/client.model';
-import { ClientsComponent } from './clients.component';
+import { ClientsListPageComponent } from './clients-list.component';
 
-describe('ClientsComponent', () => {
-  let component: ClientsComponent;
-  let fixture: ComponentFixture<ClientsComponent>;
+describe('ClientsListPageComponent', () => {
+  let component: ClientsListPageComponent;
+  let fixture: ComponentFixture<ClientsListPageComponent>;
   let clientsServiceSpy: { searchClients: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
@@ -31,7 +31,7 @@ describe('ClientsComponent', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [ClientsComponent],
+      imports: [ClientsListPageComponent],
       providers: [
         { provide: AuthService, useValue: mockAuthService },
         { provide: ClientsApi, useValue: clientsServiceSpy },
@@ -39,7 +39,7 @@ describe('ClientsComponent', () => {
       ],
     }).compileComponents();
 
-    fixture = TestBed.createComponent(ClientsComponent);
+    fixture = TestBed.createComponent(ClientsListPageComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
