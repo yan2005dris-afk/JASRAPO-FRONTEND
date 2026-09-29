@@ -10,7 +10,7 @@ import {
   ICreateContractRequest,
   ISearchContractsParams,
   IUpdateContractRequest,
-} from '../interfaces/icontract.interface';
+} from '../domain/models/service-contract.model';
 import type { IReadingRoute } from '../../reading-routes/domain/models/reading-route.model';
 
 export interface IAssignInstallationRoutePayload {

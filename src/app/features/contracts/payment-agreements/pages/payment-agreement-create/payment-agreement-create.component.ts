@@ -21,7 +21,7 @@ import { PaginationComponent } from '../../../../../shared/components/pagination
 import { TableSkeletonComponent } from '../../../../../shared/components/table-skeleton/table-skeleton.component';
 import { ContractsTableComponent } from '../../../service-contracts/components/contracts-table/contracts-table.component';
 import { ContractsService } from '../../../service-contracts/services/contracts.service';
-import type { IContract } from '../../../service-contracts/interfaces/icontract.interface';
+import type { IContract } from '../../../service-contracts/domain/models/service-contract.model';
 
 const CONTRACT_SEARCH_DEBOUNCE_MS = 400;
 

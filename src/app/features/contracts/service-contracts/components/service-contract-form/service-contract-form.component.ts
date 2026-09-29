@@ -17,7 +17,7 @@ import {
   ICreateContractRequest,
   IUpdateContractRequest,
   getContractServiceState,
-} from '../../interfaces/icontract.interface';
+} from '../../domain/models/service-contract.model';
 import { ClientsListComponent } from '../../../clients/pages/clients-list/clients-list.component';
 import { TariffsComponent } from '../../../tariffs/tariffs.component';
 import { MetersIndexComponent } from '../../../meters/components/meters-index/meters-index.component';

@@ -17,7 +17,7 @@ import {
   TipoAnomalia,
 } from '../../interfaces/ianomaly.interface';
 import { ContractsService } from '../../../service-contracts/services/contracts.service';
-import type { IContract } from '../../../service-contracts/interfaces/icontract.interface';
+import type { IContract } from '../../../service-contracts/domain/models/service-contract.model';
 import { ReadingsService } from '../../../readings/services/readings.service';
 import type { IReading } from '../../../readings/interfaces/ireading.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';

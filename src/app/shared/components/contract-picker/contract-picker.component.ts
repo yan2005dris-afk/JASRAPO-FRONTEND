@@ -21,7 +21,7 @@ import {
   hasActivePaymentAgreement,
   type IContract,
   type ISearchContractsParams,
-} from '../../../features/contracts/service-contracts/interfaces/icontract.interface';
+} from '../../../features/contracts/service-contracts/domain/models/service-contract.model';
 import { resolveClientDisplayName } from '../../utils/client-display-name';
 
 @Component({

@@ -24,7 +24,7 @@ import { ContractsService } from '../../../service-contracts/services/contracts.
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { Sectores } from '../../../../admin/sectores-prueba/models/sectores.interface';
 import { User } from '../../../../users/models/user.interface';
-import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
+import { IContract } from '../../../service-contracts/domain/models/service-contract.model';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PeriodPickerComponent } from '../../../../../shared/components/period-picker/period-picker.component';

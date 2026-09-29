@@ -26,7 +26,7 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
 import { ContractPickerComponent } from '../../../../../shared/components/contract-picker/contract-picker.component';
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 import { RubroPickerComponent } from '../../../../../shared/components/rubro-picker/rubro-picker.component';
-import type { IContract } from '../../../../contracts/service-contracts/interfaces/icontract.interface';
+import type { IContract } from '../../../../contracts/service-contracts/domain/models/service-contract.model';
 import type {
   ICobroPuntualItem,
   ICreateCobroPuntualDto,

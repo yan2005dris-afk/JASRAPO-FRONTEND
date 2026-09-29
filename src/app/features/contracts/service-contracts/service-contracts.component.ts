@@ -9,7 +9,7 @@ import {
   ISearchContractsParams,
   type EstadoCobranza,
   getContractServiceState,
-} from './interfaces/icontract.interface';
+} from './domain/models/service-contract.model';
 import { ServiceContractFormComponent } from './components/service-contract-form/service-contract-form.component';
 import { ReplaceMeterModalComponent } from '../meters/components/replace-meter-modal/replace-meter-modal.component';
 import { AssignInstallationRouteModalComponent } from './components/assign-installation-route-modal/assign-installation-route-modal.component';

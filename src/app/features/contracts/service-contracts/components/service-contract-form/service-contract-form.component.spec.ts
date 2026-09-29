@@ -7,7 +7,7 @@ import { vi } from 'vitest';
 import { ServiceContractFormComponent } from './service-contract-form.component';
 import { ContractsService } from '../../services/contracts.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
-import { IContract } from '../../interfaces/icontract.interface';
+import { IContract } from '../../domain/models/service-contract.model';
 import { IMeter } from '../../../meters/domain/models/meter.model';
 import { IClient } from '../../../clients/domain/models/client.model';
 import { ITariffCategory } from '../../../tariffs/interfaces/itariff.interface';

@@ -2,7 +2,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { ContractsService } from './contracts.service';
-import type { ISearchContractsParams } from '../interfaces/icontract.interface';
+import type { ISearchContractsParams } from '../domain/models/service-contract.model';
 
 describe('ContractsService', () => {
   let service: ContractsService;

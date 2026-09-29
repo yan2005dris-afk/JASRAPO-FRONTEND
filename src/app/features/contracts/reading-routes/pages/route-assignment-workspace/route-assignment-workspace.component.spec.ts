@@ -6,7 +6,7 @@ import { User } from '../../../../users/models/user.interface';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { Sectores } from '../../../../admin/sectores-prueba/models/sectores.interface';
 import { IReadingRoute } from '../../domain/models/reading-route.model';
-import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
+import { IContract } from '../../../service-contracts/domain/models/service-contract.model';
 import type { IAccountingPeriod } from '../../../../../shared/services/periods.service';
 
 describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {

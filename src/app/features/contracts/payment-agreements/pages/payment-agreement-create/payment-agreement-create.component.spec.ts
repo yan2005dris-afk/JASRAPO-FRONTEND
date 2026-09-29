@@ -7,7 +7,7 @@ import { PaymentAgreementCreateComponent } from './payment-agreement-create.comp
 import { PaymentAgreementsService } from '../../services/payment-agreements.service';
 import { ContractsService } from '../../../service-contracts/services/contracts.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
-import type { IContract } from '../../../service-contracts/interfaces/icontract.interface';
+import type { IContract } from '../../../service-contracts/domain/models/service-contract.model';
 
 describe('PaymentAgreementCreateComponent', () => {
   let component: PaymentAgreementCreateComponent;

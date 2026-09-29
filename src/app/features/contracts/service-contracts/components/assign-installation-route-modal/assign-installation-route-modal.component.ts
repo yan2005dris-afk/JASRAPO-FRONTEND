@@ -13,7 +13,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ContractsService } from '../../services/contracts.service';
 import { ReadingRoutesService } from '../../../reading-routes/data/reading-routes.api';
-import { IContract } from '../../interfaces/icontract.interface';
+import { IContract } from '../../domain/models/service-contract.model';
 import {
   IFindAllRoutesParams,
   IReadingRoute,

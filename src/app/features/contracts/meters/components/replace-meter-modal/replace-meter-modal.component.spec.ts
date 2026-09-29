@@ -6,7 +6,7 @@ import { ReplaceMeterModalComponent } from './replace-meter-modal.component';
 import { MetersApi } from '../../data/meters.api';
 import { PeriodsService } from '../../../../../shared/services/periods.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
-import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
+import { IContract } from '../../../service-contracts/domain/models/service-contract.model';
 import { IMeter, IReplaceMeterResponse } from '../../domain/models/meter.model';
 
 describe('ReplaceMeterModalComponent', () => {
