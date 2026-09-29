@@ -15,7 +15,7 @@ import {
 @Injectable({
   providedIn: 'root',
 })
-export class PaymentAgreementsService {
+export class PaymentAgreementsApi {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl;
   private readonly endpoint = `${this.baseUrl}/agreements`;

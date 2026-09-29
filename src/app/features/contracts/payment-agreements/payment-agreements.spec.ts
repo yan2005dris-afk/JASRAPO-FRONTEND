@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { Mock, vi } from 'vitest';
 
 import { PaymentAgreementsComponent } from './payment-agreements';
-import { PaymentAgreementsService } from './services/payment-agreements.service';
+import { PaymentAgreementsApi } from './data/payment-agreements.api';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { TableExportService } from '../../../shared/services/table-export.service';
 
@@ -35,7 +35,7 @@ describe('PaymentAgreementsComponent', () => {
     await TestBed.configureTestingModule({
       imports: [PaymentAgreementsComponent],
       providers: [
-        { provide: PaymentAgreementsService, useValue: agreementsServiceSpy },
+        { provide: PaymentAgreementsApi, useValue: agreementsServiceSpy },
         { provide: ToastService, useValue: { show: vi.fn() } },
         {
           provide: TableExportService,

@@ -9,7 +9,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { PaymentAgreementsService } from './services/payment-agreements.service';
+import { PaymentAgreementsApi } from './data/payment-agreements.api';
 import { IAgreement, IFindAllAgreementsParams } from './domain/models/payment-agreement.model';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -47,7 +47,7 @@ const SEARCH_DEBOUNCE_MS = 400;
   },
 })
 export class PaymentAgreementsComponent implements OnInit, OnDestroy {
-  private readonly agreementsService = inject(PaymentAgreementsService);
+  private readonly agreementsService = inject(PaymentAgreementsApi);
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
 
