@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ReadingRoutesService } from '../../services/reading-routes.service';
+import { ReadingRoutesService } from '../../data/reading-routes.api';
 import { UsersService } from '../../../../users/services/users.service';
 import { User } from '../../../../users/models/user.interface';
 import { IReadingRoute, IReassignRouteDto } from '../../interfaces/ireading-route.interface';

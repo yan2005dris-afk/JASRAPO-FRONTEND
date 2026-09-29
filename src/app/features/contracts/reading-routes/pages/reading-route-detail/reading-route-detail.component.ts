@@ -10,7 +10,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
-import { ReadingRoutesService } from '../../services/reading-routes.service';
+import { ReadingRoutesService } from '../../data/reading-routes.api';
 import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
 import {
   IReadingRoute,

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ReadingRoutesService } from './services/reading-routes.service';
+import { ReadingRoutesService } from './data/reading-routes.api';
 import {
   IFindAllRoutesParams,
   IReadingRoute,

@@ -6,7 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { OrderWork } from '../interfaces/ireading-route.interface';
-import { ReadingRoutesService } from './reading-routes.service';
+import { ReadingRoutesService } from '../data/reading-routes.api';
 import { RouteOrderActionsService } from './route-order-actions.service';
 
 describe('RouteOrderActionsService', () => {

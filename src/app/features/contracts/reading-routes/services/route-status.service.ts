@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { IReadingRoute, IRouteKpis } from '../interfaces/ireading-route.interface';
-import { ReadingRoutesService } from './reading-routes.service';
+import { ReadingRoutesService } from '../data/reading-routes.api';
 
 export type RouteEstado = 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'PARCIAL' | 'CANCELADA';
 

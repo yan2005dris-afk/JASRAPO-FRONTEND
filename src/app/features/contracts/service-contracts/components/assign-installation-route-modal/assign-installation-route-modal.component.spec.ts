@@ -3,7 +3,7 @@ import { of } from 'rxjs';
 import { AssignInstallationRouteModalComponent } from './assign-installation-route-modal.component';
 import type { IContract } from '../../interfaces/icontract.interface';
 import { ContractsService } from '../../services/contracts.service';
-import { ReadingRoutesService } from '../../../reading-routes/services/reading-routes.service';
+import { ReadingRoutesService } from '../../../reading-routes/data/reading-routes.api';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 
 describe('AssignInstallationRouteModalComponent', () => {

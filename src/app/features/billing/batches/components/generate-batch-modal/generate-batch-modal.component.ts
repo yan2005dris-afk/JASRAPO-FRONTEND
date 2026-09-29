@@ -14,7 +14,7 @@ import { BatchesService } from '../../services/batches.service';
 import { IGenerateBatchDto } from '../../interfaces/ibatch.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
-import { ReadingRoutesService } from '../../../../contracts/reading-routes/services/reading-routes.service';
+import { ReadingRoutesService } from '../../../../contracts/reading-routes/data/reading-routes.api';
 import { IReadingRoute } from '../../../../contracts/reading-routes/interfaces/ireading-route.interface';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';

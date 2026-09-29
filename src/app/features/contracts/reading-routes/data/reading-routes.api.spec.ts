@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { ReadingRoutesService } from './reading-routes.service';
+import { ReadingRoutesService } from './reading-routes.api';
 import { environment } from '../../../../../environments/environment';
 import { ICreateRouteAssignmentsDto } from '../interfaces/ireading-route.interface';
 

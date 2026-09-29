@@ -10,7 +10,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { ReadingRoutesService } from '../../services/reading-routes.service';
+import { ReadingRoutesService } from '../../data/reading-routes.api';
 import {
   ICreateRouteAssignmentsDto,
   IReadingRoute,
