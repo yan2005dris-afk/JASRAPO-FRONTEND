@@ -48,7 +48,7 @@ import {
   resolveAssignmentStatus,
   ResolvedAssignmentStatus,
   toggleAssignment,
-} from '../../services/session-assignments.helpers';
+} from '../../domain/rules/assignment.rules';
 
 /** Shape returned by `getCommunityStatus` / `getSectorStatus` (concrete `color` type). */
 type AssignmentStatusView = ResolvedAssignmentStatus<OperatorColor>;
