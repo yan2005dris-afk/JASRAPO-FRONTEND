@@ -60,7 +60,7 @@ import { filterOperariosByRole } from '../../../../../shared/utils/users';
 import {
   calculateGlobalCoverage,
   calculateNonLecturaCoverage,
-} from '../../services/coverage-calculator';
+} from '../../domain/rules/coverage.rules';
 import { resetScrollNextMicrotask } from '../../../../../shared/utils/scroll';
 
 @Component({
