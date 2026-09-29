@@ -4,8 +4,8 @@ import { Mock, vi } from 'vitest';
 
 import { PaymentAgreementsListComponent } from './payment-agreements-list.component';
 import { PaymentAgreementsApi } from '../../data/payment-agreements.api';
-import { ToastService } from '../../../../shared/components/toast/toast.service';
-import { TableExportService } from '../../../../shared/services/table-export.service';
+import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { TableExportService } from '../../../../../shared/services/table-export.service';
 
 describe('PaymentAgreementsListComponent', () => {
   let component: PaymentAgreementsListComponent;

@@ -11,16 +11,16 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { PaymentAgreementsApi } from '../../data/payment-agreements.api';
 import { IAgreement, IFindAllAgreementsParams } from '../../domain/models/payment-agreement.model';
-import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
-import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
-import { TableSkeletonComponent } from '../../../../shared/components/table-skeleton/table-skeleton.component';
-import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
-import { ToastService } from '../../../../shared/components/toast/toast.service';
-import { TableExportService } from '../../../../shared/services/table-export.service';
+import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
+import { EmptyStateComponent } from '../../../../../shared/components/empty-state/empty-state.component';
+import { TableSkeletonComponent } from '../../../../../shared/components/table-skeleton/table-skeleton.component';
+import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
+import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { TableExportService } from '../../../../../shared/services/table-export.service';
 import {
   DropdownComponent,
   DropdownItem,
-} from '../../../../shared/components/dropdown/dropdown.component';
+} from '../../../../../shared/components/dropdown/dropdown.component';
 import { AgreementDetailModalComponent } from '../../components/agreement-detail-modal/agreement-detail-modal.component';
 
 /** Espera tras la última tecla antes de consultar el backend. */
