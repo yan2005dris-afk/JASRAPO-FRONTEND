@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../../environments/environment';
-import { buildHttpParams } from '../../../../shared/services/http-params.helpers';
+import { buildHttpParams } from '../../../../shared/utils/http-params';
 import { IPaginatedResult } from '../../../billing/payments/interfaces/ipayments.interface';
 import {
   ICreateRouteAssignmentsDto,
