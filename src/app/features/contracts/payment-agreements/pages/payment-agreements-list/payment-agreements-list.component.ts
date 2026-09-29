@@ -9,25 +9,25 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { PaymentAgreementsApi } from './data/payment-agreements.api';
-import { IAgreement, IFindAllAgreementsParams } from './domain/models/payment-agreement.model';
-import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { TableSkeletonComponent } from '../../../shared/components/table-skeleton/table-skeleton.component';
-import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
-import { ToastService } from '../../../shared/components/toast/toast.service';
-import { TableExportService } from '../../../shared/services/table-export.service';
+import { PaymentAgreementsApi } from '../../data/payment-agreements.api';
+import { IAgreement, IFindAllAgreementsParams } from '../../domain/models/payment-agreement.model';
+import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
+import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
+import { TableSkeletonComponent } from '../../../../shared/components/table-skeleton/table-skeleton.component';
+import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
+import { ToastService } from '../../../../shared/components/toast/toast.service';
+import { TableExportService } from '../../../../shared/services/table-export.service';
 import {
   DropdownComponent,
   DropdownItem,
-} from '../../../shared/components/dropdown/dropdown.component';
-import { AgreementDetailModalComponent } from './components/agreement-detail-modal/agreement-detail-modal.component';
+} from '../../../../shared/components/dropdown/dropdown.component';
+import { AgreementDetailModalComponent } from '../../components/agreement-detail-modal/agreement-detail-modal.component';
 
 /** Espera tras la última tecla antes de consultar el backend. */
 const SEARCH_DEBOUNCE_MS = 400;
 
 @Component({
-  selector: 'app-payment-agreements',
+  selector: 'app-payment-agreements-list',
   standalone: true,
   imports: [
     CommonModule,
@@ -39,14 +39,14 @@ const SEARCH_DEBOUNCE_MS = 400;
     AgreementDetailModalComponent,
     DropdownComponent,
   ],
-  templateUrl: './payment-agreements.html',
-  styleUrl: './payment-agreements.scss',
+  templateUrl: './payment-agreements-list.component.html',
+  styleUrl: './payment-agreements-list.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: {
     '(document:click)': 'closeDropdowns()',
   },
 })
-export class PaymentAgreementsComponent implements OnInit, OnDestroy {
+export class PaymentAgreementsListComponent implements OnInit, OnDestroy {
   private readonly agreementsService = inject(PaymentAgreementsApi);
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
