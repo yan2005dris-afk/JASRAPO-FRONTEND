@@ -50,7 +50,7 @@
           (change)="loadRoutes()"
         >
           <option [ngValue]="null">Todos los operarios</option>
-          @for (op of operarios; track op.usuarioId) {
+          @for (op of operarios(); track op.usuarioId) {
             <option [ngValue]="op.usuarioId">{{ op.nombres }} {{ op.apellidos }}</option>
           }
         </select>
@@ -63,7 +63,7 @@
           (change)="loadRoutes()"
         >
           <option [ngValue]="null">Todas las comunidades</option>
-          @for (com of comunidades; track com.id) {
+          @for (com of comunidades(); track com.id) {
             <option [ngValue]="com.id">{{ com.nombre }}</option>
           }
         </select>
@@ -72,12 +72,12 @@
         <button
           class="btn btn-primary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="loadRoutes()"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         >
-          @if (isLoading) {
+          @if (isLoading()) {
             <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
           }
-          @if (!isLoading) {
+          @if (!isLoading()) {
             <i class="bi bi-search"></i>
           }
           Buscar
@@ -87,7 +87,7 @@
         <button
           class="btn btn-outline-secondary d-flex align-items-center gap-2 fw-medium px-3"
           (click)="limpiarFiltros()"
-          [disabled]="isLoading"
+          [disabled]="isLoading()"
         >
           <i class="bi bi-x-circle"></i>
           Limpiar
@@ -98,7 +98,7 @@
           label="Exportar"
           icon="bi bi-download"
           [items]="exportItems"
-          [disabled]="routes.length === 0"
+          [disabled]="routes().length === 0"
           buttonClass="btn btn-outline-secondary d-flex align-items-center gap-1 shadow-sm px-3"
           (actionSelected)="handleExportAction($event)"
         ></app-dropdown>
@@ -107,13 +107,13 @@
 
     <!-- Table -->
     <div class="pt-2">
-      @if (isLoading) {
+      @if (isLoading()) {
         <div class="p-3">
           <app-table-skeleton [rows]="5" [cols]="8" />
         </div>
       }
 
-      @if (!isLoading && routes.length === 0) {
+      @if (!isLoading() && routes().length === 0) {
         <app-empty-state
           icon="bi bi-map"
           title="No hay rutas registradas"
@@ -124,7 +124,7 @@
         />
       }
 
-      @if (!isLoading && routes.length > 0) {
+      @if (!isLoading() && routes().length > 0) {
         <div class="table-responsive">
           <table class="table table-hover align-middle mb-0 custom-table">
             <thead>
@@ -142,7 +142,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (route of routes; track route.rutaId) {
+              @for (route of routes(); track route.rutaId) {
                 <tr>
                   <td class="ps-4">
                     <input class="form-check-input table-checkbox" type="checkbox" />
@@ -198,7 +198,7 @@
                       </button>
                       <ul
                         class="dropdown-menu dropdown-menu-end shadow-sm border-0"
-                        [class.show]="openDropdownId === route.rutaId"
+                        [class.show]="openDropdownId() === route.rutaId"
                         style="min-width: 175px"
                       >
                         <li>
@@ -316,9 +316,9 @@
         <!-- Pagination -->
         <div class="px-4 py-3 border-top bg-white">
           <app-pagination
-            [currentPage]="currentPage"
-            [pageSize]="pageSize"
-            [totalItems]="totalItems"
+            [currentPage]="currentPage()"
+            [pageSize]="pageSize()"
+            [totalItems]="totalItems()"
             (pageChange)="onPageChange($event)"
             (pageSizeChange)="onPageSizeChange($event)"
           />
@@ -328,9 +328,9 @@
   </div>
 
   <!-- MODALS -->
-  @if (selectedRouteForReassign) {
+  @if (selectedRouteForReassign(); as route) {
     <app-reassign-route-modal
-      [route]="selectedRouteForReassign"
+      [route]="route"
       (reassigned)="onRouteReassigned()"
       (closed)="closeReassignModal()"
     />

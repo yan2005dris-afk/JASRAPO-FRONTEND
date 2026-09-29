@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  OnInit,
-  inject,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ReadingRoutesService } from './services/reading-routes.service';
@@ -30,6 +24,10 @@ import {
 import { ConfirmDialogService } from '../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Router } from '@angular/router';
 import { ReassignRouteModalComponent } from './components/reassign-route-modal/reassign-route-modal.component';
+import { TIPO_RUTA_LABEL } from './constants/route-detail.constants';
+import { resolveComunidadNombre, resolveOperarioNombre } from './services/operator-name.helpers';
+import { filterOperariosByRole } from './services/users.helpers';
+import { ExportColumn } from '../../../shared/services/table-export.service';
 
 @Component({
   selector: 'app-reading-routes',
@@ -58,7 +56,7 @@ export class ReadingRoutesComponent implements OnInit {
   private readonly usersService = inject(UsersService);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
-  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly tableExportService = inject(TableExportService);
 
   readonly exportItems: DropdownItem[] = [
     { label: 'Exportar a PDF', action: 'pdf', icon: 'bi bi-file-earmark-pdf-fill text-danger' },
@@ -76,28 +74,59 @@ export class ReadingRoutesComponent implements OnInit {
     else if (action === 'csv') this.exportToCsv();
   }
 
-  // List State
-  routes: IReadingRoute[] = [];
-  totalItems = 0;
-  isLoading = false;
-  hasFetched = false;
-  openDropdownId: string | number | null = null;
+  // List state (signals so OnPush detects mutations automatically)
+  readonly routes = signal<IReadingRoute[]>([]);
+  readonly totalItems = signal(0);
+  readonly isLoading = signal(false);
+  readonly hasFetched = signal(false);
+  readonly openDropdownId = signal<string | number | null>(null);
 
   // Catalogs
-  operarios: User[] = [];
-  comunidades: Comunidad[] = [];
+  readonly operarios = signal<User[]>([]);
+  readonly comunidades = signal<Comunidad[]>([]);
 
   // Pagination
-  currentPage = 1;
-  pageSize = 10;
+  readonly currentPage = signal(1);
+  readonly pageSize = signal(10);
 
   // Filters
-  filterEstado = '';
-  filterOperarioId: number | null = null;
-  filterComunidadId: number | null = null;
+  readonly filterEstado = signal('');
+  readonly filterOperarioId = signal<number | null>(null);
+  readonly filterComunidadId = signal<number | null>(null);
 
   // Modals
-  selectedRouteForReassign: IReadingRoute | null = null;
+  readonly selectedRouteForReassign = signal<IReadingRoute | null>(null);
+
+  /** Columns shared by the PDF / Excel / CSV exports. */
+  private buildExportColumns(): ExportColumn<IReadingRoute>[] {
+    return [
+      { header: 'ID', key: 'rutaId', width: 35, align: 'center' },
+      { header: 'Nombre de Ruta', key: 'nombre', width: 110 },
+      {
+        header: 'Tipo',
+        transform: (r) => r.tipoRuta.replace(/_/g, ' '),
+        width: 70,
+      },
+      {
+        header: 'Comunidad',
+        transform: (r) => this.getComunidadNombre(r.comunidadId),
+        width: 90,
+      },
+      {
+        header: 'Operario',
+        transform: (r) => this.getOperarioNombre(r.operarioId),
+        width: 100,
+      },
+      {
+        header: 'Fecha Planificada',
+        transform: (r) =>
+          r.fechaPlanificada ? new Date(r.fechaPlanificada).toLocaleDateString('es-EC') : '—',
+        width: 65,
+        align: 'center',
+      },
+      { header: 'Estado', key: 'estado', width: 60, align: 'center' },
+    ];
+  }
 
   ngOnInit(): void {
     this.loadCatalogs();
@@ -106,121 +135,90 @@ export class ReadingRoutesComponent implements OnInit {
 
   loadCatalogs(): void {
     this.comunidadesService.getAllComunidades(1, 100).subscribe({
-      next: (res) => {
-        this.comunidades = res.data;
-        this.cdr.markForCheck();
-      },
+      next: (res) => this.comunidades.set(res.data),
     });
 
     this.usersService.getUsers(1, 100).subscribe({
-      next: (res) => {
-        this.operarios = res.data.filter((u) => {
-          const roleName = u.rol?.nombre?.toLowerCase() || '';
-          return roleName.includes('operador') || roleName.includes('operario');
-        });
-        this.cdr.markForCheck();
-      },
+      next: (res) => this.operarios.set(filterOperariosByRole(res.data)),
     });
   }
 
-  getOperarioNombre(operarioId: number): string {
-    const user = this.operarios.find((u) => u.usuarioId === operarioId);
-    if (user) {
-      return `${user.nombres} ${user.apellidos}`.trim();
-    }
-    return `Operario #${operarioId}`;
+  getOperarioNombre(operarioId: number | null | undefined): string {
+    return resolveOperarioNombre(this.operarios(), operarioId);
   }
 
-  getComunidadNombre(comunidadId: number): string {
-    const com = this.comunidades.find((c) => c.id === comunidadId);
-    if (com) {
-      return com.nombre;
-    }
-    return `Comunidad #${comunidadId}`;
+  getComunidadNombre(comunidadId: number | null | undefined): string {
+    return resolveComunidadNombre(this.comunidades(), comunidadId);
   }
 
   loadRoutes(): void {
-    this.isLoading = true;
-    this.openDropdownId = null;
+    this.isLoading.set(true);
+    this.openDropdownId.set(null);
 
     const params: IFindAllRoutesParams = {
-      page: this.currentPage,
-      limit: this.pageSize,
+      page: this.currentPage(),
+      limit: this.pageSize(),
     };
 
-    if (this.filterEstado) {
-      params.estado = this.filterEstado;
+    if (this.filterEstado()) {
+      params.estado = this.filterEstado();
     }
-    if (this.filterOperarioId) {
-      params.operarioId = this.filterOperarioId;
+    if (this.filterOperarioId()) {
+      params.operarioId = this.filterOperarioId()!;
     }
-    if (this.filterComunidadId) {
-      params.comunidadId = this.filterComunidadId;
+    if (this.filterComunidadId()) {
+      params.comunidadId = this.filterComunidadId()!;
     }
 
     this.routesService.getRoutes(params).subscribe({
       next: (res) => {
-        this.routes = res.data;
-        this.totalItems = res.meta?.totalItems ?? res.data.length;
-        this.isLoading = false;
-        this.hasFetched = true;
-        this.cdr.markForCheck();
+        this.routes.set(res.data);
+        this.totalItems.set(res.meta?.totalItems ?? res.data.length);
+        this.isLoading.set(false);
+        this.hasFetched.set(true);
       },
       error: () => {
-        this.routes = [];
-        this.totalItems = 0;
-        this.isLoading = false;
-        this.hasFetched = true;
-        this.cdr.markForCheck();
+        this.routes.set([]);
+        this.totalItems.set(0);
+        this.isLoading.set(false);
+        this.hasFetched.set(true);
       },
     });
   }
 
   limpiarFiltros(): void {
-    this.filterEstado = '';
-    this.filterOperarioId = null;
-    this.filterComunidadId = null;
-    this.currentPage = 1;
+    this.filterEstado.set('');
+    this.filterOperarioId.set(null);
+    this.filterComunidadId.set(null);
+    this.currentPage.set(1);
     this.loadRoutes();
   }
 
   onPageChange(page: number): void {
-    this.currentPage = page;
+    this.currentPage.set(page);
     this.loadRoutes();
   }
 
   onPageSizeChange(size: number): void {
-    this.pageSize = size;
-    this.currentPage = 1;
+    this.pageSize.set(size);
+    this.currentPage.set(1);
     this.loadRoutes();
   }
 
   toggleDropdown(id: string | number, event: MouseEvent): void {
     event.stopPropagation();
-    this.openDropdownId = this.openDropdownId === id ? null : id;
-    this.cdr.markForCheck();
+    this.openDropdownId.set(this.openDropdownId() === id ? null : id);
   }
 
   closeDropdowns(): void {
-    if (this.openDropdownId !== null) {
-      this.openDropdownId = null;
-      this.cdr.markForCheck();
+    if (this.openDropdownId() !== null) {
+      this.openDropdownId.set(null);
     }
   }
 
-  getTipoLabel(tipo: TipoRuta | string): string {
-    switch (tipo) {
-      case 'TOMA_LECTURA':
-        return 'Toma de Lectura';
-      case 'RECONEXION':
-        return 'Reconexión';
-      case 'INSTALACION':
-        return 'Instalación';
-      case 'INSPECCION':
-        return 'Inspección';
-      default:
-        return String(tipo).replace(/_/g, ' ');
-    }
+  getTipoLabel(tipo: TipoRuta | string | undefined): string {
+    if (!tipo) return '—';
+    return TIPO_RUTA_LABEL[tipo as TipoRuta] ?? String(tipo).replace(/_/g, ' ');
   }
 
   goToAssignment(): void {
@@ -228,28 +226,26 @@ export class ReadingRoutesComponent implements OnInit {
   }
 
   openReassignModal(route: IReadingRoute): void {
-    this.openDropdownId = null;
-    this.selectedRouteForReassign = route;
-    this.cdr.markForCheck();
+    this.openDropdownId.set(null);
+    this.selectedRouteForReassign.set(route);
   }
 
   closeReassignModal(): void {
-    this.selectedRouteForReassign = null;
-    this.cdr.markForCheck();
+    this.selectedRouteForReassign.set(null);
   }
 
   onRouteReassigned(): void {
-    this.selectedRouteForReassign = null;
+    this.selectedRouteForReassign.set(null);
     this.loadRoutes();
   }
 
   openDetailModal(route: IReadingRoute): void {
-    this.openDropdownId = null;
+    this.openDropdownId.set(null);
     this.router.navigate(['/app/Contratos/RutasDeLectura', route.rutaId]);
   }
 
   deleteRoute(route: IReadingRoute): void {
-    this.openDropdownId = null;
+    this.openDropdownId.set(null);
     this.dialogService
       .confirm({
         title: '¿Eliminar ruta de trabajo?',
@@ -277,7 +273,7 @@ export class ReadingRoutesComponent implements OnInit {
     route: IReadingRoute,
     nuevoEstado: 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA' | 'PENDIENTE',
   ): void {
-    this.openDropdownId = null;
+    this.openDropdownId.set(null);
 
     if (nuevoEstado === 'EN_PROGRESO' && !route.operarioId) {
       this.toastService.show(
@@ -289,7 +285,9 @@ export class ReadingRoutesComponent implements OnInit {
 
     this.routesService.updateRoute(route.rutaId, { estado: nuevoEstado }).subscribe({
       next: (updated) => {
-        route.estado = updated.estado;
+        this.routes.update((list) =>
+          list.map((r) => (r.rutaId === route.rutaId ? { ...r, ...updated } : r)),
+        );
         const msg =
           nuevoEstado === 'EN_PROGRESO'
             ? 'Ruta iniciada y liberada a campo'
@@ -297,7 +295,6 @@ export class ReadingRoutesComponent implements OnInit {
               ? 'Ruta marcada como completada'
               : 'Estado de la ruta actualizado';
         this.toastService.show(msg, 'success');
-        this.cdr.markForCheck();
       },
       error: (err) => {
         this.toastService.show(
@@ -308,121 +305,52 @@ export class ReadingRoutesComponent implements OnInit {
     });
   }
 
-  // ---------- Exportaciones de Listado de Rutas (PDF, Excel, CSV) ----------
-  private readonly tableExportService = inject(TableExportService);
+  // ---------- Exports (PDF, Excel, CSV) ----------
+  private baseExportOptions(title: string) {
+    return {
+      title,
+      fileName: `Rutas_Trabajo_${new Date().toISOString().slice(0, 10)}`,
+      data: this.routes() as unknown as Record<string, unknown>[],
+      summary: `Total de rutas: ${this.routes().length}`,
+    };
+  }
 
   exportToPdf(): void {
-    if (this.routes.length === 0) return;
-
+    if (this.routes().length === 0) return;
     this.tableExportService.exportToPdf({
-      title: 'LISTADO DE RUTAS DE TRABAJO',
-      fileName: `Rutas_Trabajo_${new Date().toISOString().slice(0, 10)}`,
-      columns: [
-        { header: 'ID', key: 'rutaId', width: 35, align: 'center' },
-        { header: 'Nombre de Ruta', key: 'nombre', width: 110 },
-        {
-          header: 'Tipo',
-          transform: (r) => (r as unknown as IReadingRoute).tipoRuta.replace(/_/g, ' '),
-          width: 70,
-        },
-        {
-          header: 'Comunidad',
-          transform: (r) => this.getComunidadNombre((r as unknown as IReadingRoute).comunidadId),
-          width: 90,
-        },
-        {
-          header: 'Operario',
-          transform: (r) => this.getOperarioNombre((r as unknown as IReadingRoute).operarioId),
-          width: 100,
-        },
-        {
-          header: 'Fecha Planificada',
-          transform: (r) =>
-            (r as unknown as IReadingRoute).fechaPlanificada
-              ? new Date((r as unknown as IReadingRoute).fechaPlanificada!).toLocaleDateString(
-                  'es-EC',
-                )
-              : '—',
-          width: 65,
-          align: 'center',
-        },
-        { header: 'Estado', key: 'estado', width: 60, align: 'center' },
-      ],
-      data: this.routes as unknown as Record<string, unknown>[],
-      summary: `Total de rutas: ${this.routes.length}`,
+      ...this.baseExportOptions('LISTADO DE RUTAS DE TRABAJO'),
+      columns: this.buildExportColumns() as unknown as ExportColumn<Record<string, unknown>>[],
+    });
+  }
+
+  private stripWidthAndAlign(
+    columns: ExportColumn<IReadingRoute>[],
+  ): ExportColumn<Record<string, unknown>>[] {
+    return columns.map((c) => {
+      void c.width;
+      void c.align;
+      const { width, align, ...rest } = c;
+      void width;
+      void align;
+      return { ...rest } as unknown as ExportColumn<Record<string, unknown>>;
     });
   }
 
   exportToExcel(): void {
-    if (this.routes.length === 0) return;
-
+    if (this.routes().length === 0) return;
     this.tableExportService.exportToExcel({
-      title: 'LISTADO DE RUTAS DE TRABAJO',
-      fileName: `Rutas_Trabajo_${new Date().toISOString().slice(0, 10)}`,
-      columns: [
-        { header: 'ID', key: 'rutaId' },
-        { header: 'Nombre de Ruta', key: 'nombre' },
-        {
-          header: 'Tipo',
-          transform: (r) => (r as unknown as IReadingRoute).tipoRuta.replace(/_/g, ' '),
-        },
-        {
-          header: 'Comunidad',
-          transform: (r) => this.getComunidadNombre((r as unknown as IReadingRoute).comunidadId),
-        },
-        {
-          header: 'Operario Asignado',
-          transform: (r) => this.getOperarioNombre((r as unknown as IReadingRoute).operarioId),
-        },
-        {
-          header: 'Fecha Planificada',
-          transform: (r) =>
-            (r as unknown as IReadingRoute).fechaPlanificada
-              ? new Date((r as unknown as IReadingRoute).fechaPlanificada!).toLocaleDateString(
-                  'es-EC',
-                )
-              : '—',
-        },
-        { header: 'Estado', key: 'estado' },
-      ],
-      data: this.routes as unknown as Record<string, unknown>[],
-      summary: `Total de rutas: ${this.routes.length}`,
+      ...this.baseExportOptions('LISTADO DE RUTAS DE TRABAJO'),
+      columns: this.stripWidthAndAlign(this.buildExportColumns()),
     });
   }
 
   exportToCsv(): void {
-    if (this.routes.length === 0) return;
-
+    if (this.routes().length === 0) return;
     this.tableExportService.exportToCsv({
       title: 'LISTADO DE RUTAS DE TRABAJO',
       fileName: `Rutas_Trabajo_${new Date().toISOString().slice(0, 10)}`,
-      columns: [
-        { header: 'ID', key: 'rutaId' },
-        { header: 'Nombre de Ruta', key: 'nombre' },
-        {
-          header: 'Tipo',
-          transform: (r) => (r as unknown as IReadingRoute).tipoRuta.replace(/_/g, ' '),
-        },
-        {
-          header: 'Comunidad',
-          transform: (r) => this.getComunidadNombre((r as unknown as IReadingRoute).comunidadId),
-        },
-        {
-          header: 'Operario Asignado',
-          transform: (r) => this.getOperarioNombre((r as unknown as IReadingRoute).operarioId),
-        },
-        {
-          header: 'Fecha Planificada',
-          transform: (r) =>
-            (r as unknown as IReadingRoute).fechaPlanificada
-              ? new Date((r as unknown as IReadingRoute).fechaPlanificada!).toLocaleDateString(
-                  'es-EC',
-                )
-              : '—',
-        },
-        { header: 'Estado', key: 'estado' },
-      ],
-      data: this.routes as unknown as Record<string, unknown>[],
+      columns: this.stripWidthAndAlign(this.buildExportColumns()),
+      data: this.routes() as unknown as Record<string, unknown>[],
     });
   }
 }

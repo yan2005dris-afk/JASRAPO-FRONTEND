@@ -53,6 +53,11 @@ import {
 /** Shape returned by `getCommunityStatus` / `getSectorStatus` (concrete `color` type). */
 type AssignmentStatusView = ResolvedAssignmentStatus<OperatorColor>;
 import {
+  resolveComunidadNombre,
+  resolveOperarioNombre,
+} from '../../services/operator-name.helpers';
+import { filterOperariosByRole } from '../../services/users.helpers';
+import {
   calculateGlobalCoverage,
   calculateNonLecturaCoverage,
 } from '../../services/coverage-calculator';
@@ -757,10 +762,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
 
     this.usersService.getUsers(1, 100).subscribe({
       next: (res) => {
-        const filtered = res.data.filter((u) => {
-          const roleName = u.rol?.nombre?.toLowerCase() || '';
-          return roleName.includes('operador') || roleName.includes('operario');
-        });
+        const filtered = filterOperariosByRole(res.data);
         this.operarios.set(filtered);
         if (filtered.length > 0 && !this.selectedOperarioId()) {
           this.selectedOperarioId.set(filtered[0].usuarioId);
@@ -1187,14 +1189,12 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     });
   }
 
-  getOperarioName(operarioId: number): string {
-    const op = this.operarios().find((u) => u.usuarioId === operarioId);
-    return op ? `${op.nombres} ${op.apellidos}` : `Operario #${operarioId}`;
+  getOperarioName(operarioId: number | null | undefined): string {
+    return resolveOperarioNombre(this.operarios(), operarioId);
   }
 
-  getComunidadName(comunidadId: number): string {
-    const com = this.comunidades().find((c) => c.id === comunidadId);
-    return com ? com.nombre : `Comunidad #${comunidadId}`;
+  getComunidadName(comunidadId: number | null | undefined): string {
+    return resolveComunidadNombre(this.comunidades(), comunidadId);
   }
 
   goBack(): void {

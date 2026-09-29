@@ -51,6 +51,10 @@ import {
   ESTADO_FILTER_MAP,
 } from '../../constants/route-detail.constants';
 import {
+  resolveComunidadNombre,
+  resolveOperarioNombre,
+} from '../../services/operator-name.helpers';
+import {
   buildReadingFallback,
   mapLecturaKpisToRouteKpis,
   mapReadingForRouteToRow,
@@ -177,15 +181,11 @@ export class ReadingRouteDetailComponent implements OnInit {
   }
 
   getComunidadNombre(comunidadId?: number): string {
-    if (!comunidadId) return '—';
-    const com = this.comunidades.find((c) => c.id === comunidadId);
-    return com ? com.nombre : `Comunidad #${comunidadId}`;
+    return resolveComunidadNombre(this.comunidades, comunidadId);
   }
 
   getOperarioNombre(operarioId?: number): string {
-    if (!operarioId) return 'Sin asignar';
-    const op = this.operarios.find((u) => u.usuarioId === operarioId);
-    return op ? `${op.nombres} ${op.apellidos}`.trim() : `Operario #${operarioId}`;
+    return resolveOperarioNombre(this.operarios, operarioId);
   }
 
   getPeriodoNombre(periodoId?: number | null): string {
