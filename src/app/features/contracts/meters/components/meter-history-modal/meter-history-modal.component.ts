@@ -11,7 +11,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { finalize } from 'rxjs';
 import { IMeter, IMeterHistory, IReplaceMeterResponse } from '../../domain/models/meter.model';
-import { MetersService } from '../../services/meters.service';
+import { MetersApi } from '../../data/meters.api';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { EmptyStateComponent } from '../../../../../shared/components/empty-state/empty-state.component';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
@@ -24,7 +24,7 @@ import { StatusBadgeComponent } from '../../../../../shared/components/status-ba
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MeterHistoryModalComponent implements OnInit {
-  private readonly metersService = inject(MetersService);
+  private readonly metersService = inject(MetersApi);
   private readonly toastService = inject(ToastService);
 
   readonly meter = input<IMeter | null>(null);

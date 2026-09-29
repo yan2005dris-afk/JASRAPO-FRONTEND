@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideHttpClient } from '@angular/common/http';
-import { MetersService } from './meters.service';
+import { MetersApi } from './meters.api';
 import {
   IMeter,
   IUpdateMeterStatusBody,
@@ -10,15 +10,15 @@ import {
 } from '../domain/models/meter.model';
 import { environment } from '../../../../../environments/environment';
 
-describe('MetersService', () => {
-  let service: MetersService;
+describe('MetersApi', () => {
+  let service: MetersApi;
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [MetersService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [MetersApi, provideHttpClient(), provideHttpClientTesting()],
     });
-    service = TestBed.inject(MetersService);
+    service = TestBed.inject(MetersApi);
     httpMock = TestBed.inject(HttpTestingController);
   });
 

@@ -18,7 +18,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subject, Subscription, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
-import { MetersService } from '../../services/meters.service';
+import { MetersApi } from '../../data/meters.api';
 import {
   IMeter,
   IReplaceMeterRequest,
@@ -42,7 +42,7 @@ import { MeterTableComponent } from '../../../../../shared/components/meter-tabl
 })
 export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
-  private readonly metersService = inject(MetersService);
+  private readonly metersService = inject(MetersApi);
   private readonly periodsService = inject(PeriodsService);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);

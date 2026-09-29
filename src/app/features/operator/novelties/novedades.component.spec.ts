@@ -7,7 +7,7 @@ import { NetworkService } from '../../../core/services/network.service';
 import { OperatorService } from '../service/operator.service';
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
-import { MetersService } from '../../contracts/meters/services/meters.service';
+import { MetersApi } from '../../contracts/meters/data/meters.api';
 import { MeterCacheService } from '../../../core/services/meter-cache.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { HttpClient } from '@angular/common/http';
@@ -71,7 +71,7 @@ describe('NovedadesComponent', () => {
         { provide: OperatorSyncService, useValue: operatorSyncMock },
         { provide: IndexedDbService, useValue: dbServiceMock },
         { provide: MeterCacheService, useValue: meterCacheMock },
-        { provide: MetersService, useValue: metersServiceMock },
+        { provide: MetersApi, useValue: metersServiceMock },
         { provide: ToastService, useValue: toastServiceMock },
         { provide: HttpClient, useValue: httpMock },
       ],

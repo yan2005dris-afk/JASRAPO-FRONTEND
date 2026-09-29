@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { MetersService } from '../../services/meters.service';
+import { MetersApi } from '../../data/meters.api';
 import { IMeter, IMeterHistory, IReplaceMeterResponse } from '../../domain/models/meter.model';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../../../shared/components/empty-state/empty-state.component';
@@ -16,7 +16,7 @@ import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
 })
 export class MeterHistoryDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
-  private readonly metersService = inject(MetersService);
+  private readonly metersService = inject(MetersApi);
 
   readonly meterId = signal<number>(0);
   readonly meter = signal<IMeter | null>(null);

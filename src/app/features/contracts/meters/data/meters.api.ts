@@ -17,7 +17,7 @@ import { environment } from '../../../../../environments/environment';
 @Injectable({
   providedIn: 'root',
 })
-export class MetersService {
+export class MetersApi {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl;
   private readonly endpoint = `${this.baseUrl}/meters`;
