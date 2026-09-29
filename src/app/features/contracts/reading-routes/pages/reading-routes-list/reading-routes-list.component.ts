@@ -7,30 +7,30 @@ import {
   IReadingRoute,
   TipoRuta,
 } from '../../domain/models/reading-route.model';
-import { ComunidadesService } from '../../../admin/comunidades/services/comunidades.service';
-import { UsersService } from '../../../users/services/users.service';
-import { Comunidad } from '../../../admin/comunidades/models/comunidad.interface';
-import { User } from '../../../users/models/user.interface';
-import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
-import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
-import { TableSkeletonComponent } from '../../../../shared/components/table-skeleton/table-skeleton.component';
-import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
-import { ToastService } from '../../../../shared/components/toast/toast.service';
-import { TableExportService } from '../../../../shared/services/table-export.service';
+import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
+import { UsersService } from '../../../../users/services/users.service';
+import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
+import { User } from '../../../../users/models/user.interface';
+import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
+import { EmptyStateComponent } from '../../../../../shared/components/empty-state/empty-state.component';
+import { TableSkeletonComponent } from '../../../../../shared/components/table-skeleton/table-skeleton.component';
+import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
+import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { TableExportService } from '../../../../../shared/services/table-export.service';
 import {
   DropdownComponent,
   DropdownItem,
-} from '../../../../shared/components/dropdown/dropdown.component';
-import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
+} from '../../../../../shared/components/dropdown/dropdown.component';
+import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Router } from '@angular/router';
 import { ReassignRouteModalComponent } from '../../components/reassign-route-modal/reassign-route-modal.component';
 import { TIPO_RUTA_LABEL } from '../../domain/constants';
 import {
   resolveComunidadNombre,
   resolveOperarioNombre,
-} from '../../../../shared/utils/operator-name';
-import { filterOperariosByRole } from '../../../../shared/utils/users';
-import { ExportColumn } from '../../../../shared/services/table-export.service';
+} from '../../../../../shared/utils/operator-name';
+import { filterOperariosByRole } from '../../../../../shared/utils/users';
+import { ExportColumn } from '../../../../../shared/services/table-export.service';
 
 @Component({
   selector: 'app-reading-routes-list',
