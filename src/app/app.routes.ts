@@ -396,9 +396,9 @@ export const routes: Routes = [
             path: 'RutasDeLectura',
             data: { breadcrumb: 'Rutas de Trabajo' },
             loadComponent: () =>
-              import('./features/contracts/reading-routes/reading-routes').then(
-                (m) => m.ReadingRoutesComponent,
-              ),
+              import(
+                './features/contracts/reading-routes/pages/reading-routes-list/reading-routes-list.component'
+              ).then((m) => m.ReadingRoutesListComponent),
           },
           {
             path: 'RutasDeLectura/asignar',
