@@ -340,9 +340,9 @@ export const routes: Routes = [
                 path: '',
                 pathMatch: 'full',
                 loadComponent: () =>
-                  import(
-                    './features/contracts/clients/pages/clients-list/clients-list.component'
-                  ).then((m) => m.ClientsListPageComponent),
+                  import('./features/contracts/clients/pages/clients-list/clients-list.component').then(
+                    (m) => m.ClientsListPageComponent,
+                  ),
               },
               {
                 path: 'new',
