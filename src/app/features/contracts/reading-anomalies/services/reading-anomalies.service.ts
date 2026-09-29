@@ -9,7 +9,7 @@ import {
   IReadingAnomalyFilterParams,
   IUpdateReadingAnomalyDto,
   IWorkOrderNoveltyRaw,
-} from '../interfaces/ianomaly.interface';
+} from '../domain/models/reading-anomaly.model';
 
 @Injectable({
   providedIn: 'root',

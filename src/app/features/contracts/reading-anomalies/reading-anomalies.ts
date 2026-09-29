@@ -14,7 +14,7 @@ import {
   IReadingAnomaly,
   IReadingAnomalyFilterParams,
   TipoAnomalia,
-} from './interfaces/ianomaly.interface';
+} from './domain/models/reading-anomaly.model';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';

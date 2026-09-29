@@ -15,7 +15,7 @@ import {
   IReadingAnomaly,
   IUpdateReadingAnomalyDto,
   TipoAnomalia,
-} from '../../interfaces/ianomaly.interface';
+} from '../../domain/models/reading-anomaly.model';
 import { ContractsApi } from '../../../service-contracts/data/contracts.api';
 import type { IContract } from '../../../service-contracts/domain/models/service-contract.model';
 import { ReadingsService } from '../../../readings/services/readings.service';
