@@ -378,9 +378,9 @@ export const routes: Routes = [
                 path: '',
                 pathMatch: 'full',
                 loadComponent: () =>
-                  import(
-                    './features/contracts/payment-agreements/pages/payment-agreements-list/payment-agreements-list.component'
-                  ).then((m) => m.PaymentAgreementsListComponent),
+                  import('./features/contracts/payment-agreements/pages/payment-agreements-list/payment-agreements-list.component').then(
+                    (m) => m.PaymentAgreementsListComponent,
+                  ),
               },
               {
                 path: 'new',
