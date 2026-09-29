@@ -146,6 +146,7 @@ describe('ServiceContractFormComponent', () => {
       estadoServicio: 'SUSPENDIDO',
     });
 
+    component.activeStep.set(2);
     component.save();
 
     expect(mockContractsService.updateContract).toHaveBeenCalledWith('10', {
@@ -259,6 +260,7 @@ describe('ServiceContractFormComponent', () => {
       porcentajeTasaSeguridad: 0,
     } as Comunidad);
 
+    component.activeStep.set(2);
     component.save();
 
     expect(mockContractsService.createContract).toHaveBeenCalledWith({
@@ -286,6 +288,7 @@ describe('ServiceContractFormComponent', () => {
       expect(component.availableStates().map((state) => state.codigo)).toEqual([estadoServicio]);
       mockContractsService.updateContract.mockReturnValue(of(contract));
       component.form.patchValue({ direccionSuministro: 'New address' });
+      component.activeStep.set(2);
       component.save();
       expect(mockContractsService.updateContract).toHaveBeenCalled();
       expect(mockContractsService.updateContract.mock.calls[0][1]).not.toHaveProperty(
@@ -328,6 +331,7 @@ describe('ServiceContractFormComponent', () => {
     } as Comunidad);
     component.onCoordinatesChange({ latitud: -1.8021, longitud: -80.7554 });
 
+    component.activeStep.set(2);
     component.save();
 
     expect(mockContractsService.createContract).toHaveBeenCalledWith(
@@ -347,6 +351,7 @@ describe('ServiceContractFormComponent', () => {
     mockContractsService.updateContract.mockReturnValue(of(mockContract));
 
     component.onCoordinatesChange({ latitud: null, longitud: null });
+    component.activeStep.set(2);
     component.save();
 
     expect(mockContractsService.updateContract).toHaveBeenCalledWith(
@@ -387,10 +392,57 @@ describe('ServiceContractFormComponent', () => {
     } as Comunidad);
     component.form.patchValue({ latitud: -1.8021 });
 
+    component.activeStep.set(2);
     component.save();
 
     expect(mockContractsService.createContract).not.toHaveBeenCalled();
     expect(mockToastService.warning).toHaveBeenCalled();
     expect(component.coordinateError()).toBe('Ingrese latitud y longitud, o deje ambas vacías.');
+  });
+  it('blocks progression until customer and community are selected', () => {
+    fixture.detectChanges();
+    component.nextStep();
+    expect(component.activeStep()).toBe(0);
+    expect(component.stepAttempted()).toBe(true);
+    expect(mockContractsService.createContract).not.toHaveBeenCalled();
+    component.selectedClient.set({ clienteId: '100' } as IClient);
+    component.selectedComunidad.set({ id: 5 } as Comunidad);
+    component.nextStep();
+    expect(component.activeStep()).toBe(1);
+    component.nextStep();
+    expect(component.activeStep()).toBe(1);
+    component.selectedMeter.set({ medidorId: 200 } as IMeter);
+    component.selectedTariff.set({ categoriaTarifaId: 1 } as ITariffCategory);
+    component.nextStep();
+    expect(component.activeStep()).toBe(2);
+    component.previousStep();
+    expect(component.activeStep()).toBe(1);
+    expect(component.selectedClient()?.clienteId).toBe('100');
+  });
+
+  it('shows only the active creation section and exposes its progress', () => {
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[aria-current="step"]').textContent).toContain(
+      'Cliente',
+    );
+    expect(fixture.nativeElement.querySelectorAll('.registration-panel')).toHaveLength(1);
+    component.selectedClient.set({ clienteId: '100' } as IClient);
+    component.selectedComunidad.set({ id: 5 } as Comunidad);
+    component.nextStep();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('[aria-current="step"]').textContent).toContain(
+      'Medidor',
+    );
+    expect(fixture.nativeElement.querySelectorAll('.registration-panel')).toHaveLength(1);
+  });
+  it('moves keyboard focus into the newly active section', async () => {
+    fixture.detectChanges();
+    component.selectedClient.set({ clienteId: '100' } as IClient);
+    component.selectedComunidad.set({ id: 5 } as Comunidad);
+    component.nextStep();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const panel = fixture.nativeElement.querySelector('.registration-panel');
+    expect(panel.contains(document.activeElement)).toBe(true);
   });
 });
