@@ -4,9 +4,9 @@ import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 
-import { AuthService } from '../../../core/services/auth.service';
-import { ClientsApi } from './data/clients.api';
-import { IClient } from './domain/models/client.model';
+import { AuthService } from '../../../../../core/services/auth.service';
+import { ClientsApi } from '../../data/clients.api';
+import { IClient } from '../../domain/models/client.model';
 import { ClientsListPageComponent } from './clients-list.component';
 
 describe('ClientsListPageComponent', () => {

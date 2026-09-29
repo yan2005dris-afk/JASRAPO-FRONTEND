@@ -13,7 +13,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import { AuthService } from '../../../../core/services/auth.service';
+import { AuthService } from '../../../../../core/services/auth.service';
 import { ClientsApi } from '../../data/clients.api';
 import {
   SearchClientsParams,
@@ -21,15 +21,15 @@ import {
   IClient,
   IIdentificacion,
 } from '../../domain/models/client.model';
-import { ToastService } from '../../../../shared/components/toast/toast.service';
-import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
-import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
-import { TableSkeletonComponent } from '../../../../shared/components/table-skeleton/table-skeleton.component';
-import { TableExportService } from '../../../../shared/services/table-export.service';
+import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
+import { TableSkeletonComponent } from '../../../../../shared/components/table-skeleton/table-skeleton.component';
+import { TableExportService } from '../../../../../shared/services/table-export.service';
 import {
   DropdownComponent,
   DropdownItem,
-} from '../../../../shared/components/dropdown/dropdown.component';
+} from '../../../../../shared/components/dropdown/dropdown.component';
 
 @Component({
   selector: 'app-clients-list-page',
