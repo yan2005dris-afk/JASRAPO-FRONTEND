@@ -61,7 +61,7 @@ import {
 } from '../../domain/rules/kpi-normalize.rules';
 import { RouteOrderActionsService } from '../../application/route-order.actions';
 import { RouteReadingActionsService } from '../../application/route-reading.actions';
-import { RouteStatusService, RouteEstado } from '../../services/route-status.service';
+import { RouteStatusService, RouteEstado } from '../../application/route-status.transitions';
 
 type ReadingSource = IReadingRowItem | IReading;
 type FilterOrdenTab = 'TODAS' | 'PENDIENTES' | 'COMPLETADAS' | 'NOVEDAD';
