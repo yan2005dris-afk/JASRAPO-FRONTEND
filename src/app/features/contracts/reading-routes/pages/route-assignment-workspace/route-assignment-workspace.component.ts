@@ -36,10 +36,7 @@ import {
 import { OperatorColor, OPERATOR_PALETTE } from '../../../../../shared/types/operator-color';
 
 import { RouteContractsTableComponent } from '../../components/route-contracts-table/route-contracts-table.component';
-import {
-  assertOperatorSelected,
-  assertPeriodOpen,
-} from '../../services/route-assignment-validators';
+import { assertOperatorSelected, assertPeriodOpen } from '../../domain/validators/period.validator';
 import {
   AssignmentStatus,
   clearAssignmentsForOperator,

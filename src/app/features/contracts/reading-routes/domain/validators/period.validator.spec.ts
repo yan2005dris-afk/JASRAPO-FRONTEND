@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { assertOperatorSelected, assertPeriodOpen } from './route-assignment-validators';
-import { IAccountingPeriod } from '../../../../shared/services/periods.service';
+import { assertOperatorSelected, assertPeriodOpen } from './period.validator';
+import { IAccountingPeriod } from '../../../../../shared/services/periods.service';
 
 describe('route-assignment-validators', () => {
   describe('assertPeriodOpen', () => {
