@@ -40,7 +40,6 @@ export const TIPO_ACTIVIDAD_LABEL: Record<TipoActividad, string> = {
 };
 
 export const TIPO_RUTA_LABEL: Record<TipoRuta, string> = {
-  TOMA_LECTURA: 'Toma de Lectura',
   LECTURA: 'Lectura',
   CORTE: 'Corte',
   RECONEXION: 'Reconexión',

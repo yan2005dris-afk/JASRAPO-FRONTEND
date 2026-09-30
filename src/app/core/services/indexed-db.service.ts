@@ -204,7 +204,7 @@ export function mergeWorkOrdersWithSnapshot(
 })
 export class IndexedDbService {
   private readonly dbName = 'jasrapo-operator-db';
-  private readonly dbVersion = 12;
+  private readonly dbVersion = 13;
   private db: IDBDatabase | null = null;
 
   constructor() {
@@ -227,6 +227,11 @@ export class IndexedDbService {
         // Almacén para snapshot completo unificado por operador (aislamiento total)
         if (!db.objectStoreNames.contains('assigned_snapshots')) {
           db.createObjectStore('assigned_snapshots', { keyPath: 'scope' });
+        }
+
+        // Almacén para caché de activity types
+        if (!db.objectStoreNames.contains('activity_types_cache')) {
+          db.createObjectStore('activity_types_cache', { keyPath: 'scope' });
         }
 
         // Almacén para caché de medidores
@@ -1290,6 +1295,34 @@ export class IndexedDbService {
       }
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  // ── ACTIVITY TYPES CACHE ──────────────────────────────────────────────────
+
+  async saveActivityTypesCache<T>(scope: string, items: T[]): Promise<void> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['activity_types_cache'], 'readwrite');
+      const store = transaction.objectStore('activity_types_cache');
+      const payload: RoutesCacheResult<T> = { items, savedAt: new Date().toISOString() };
+
+      const putRequest = store.put({ scope, ...payload });
+
+      putRequest.onsuccess = () => resolve();
+      putRequest.onerror = () => reject(putRequest.error);
+    });
+  }
+
+  async getActivityTypesCache<T>(scope: string): Promise<RoutesCacheResult<T> | undefined> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['activity_types_cache'], 'readonly');
+      const store = transaction.objectStore('activity_types_cache');
+      const getRequest = store.get(scope);
+
+      getRequest.onsuccess = () => resolve(getRequest.result as RoutesCacheResult<T> | undefined);
+      getRequest.onerror = () => reject(getRequest.error);
     });
   }
 }

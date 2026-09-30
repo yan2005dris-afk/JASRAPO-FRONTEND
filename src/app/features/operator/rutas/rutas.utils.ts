@@ -1,9 +1,9 @@
 import type { OperatorRouteResponse, OperatorWorkOrder } from '../models/operator.models';
 
-const READING_ROUTE_TYPES = new Set(['LECTURA', 'TOMA_LECTURA']);
+const READING_ROUTE_TYPES = new Set(['LECTURA', 'LECTURA']);
 
 /**
- * The backend uses LECTURA, while older cached records may still contain TOMA_LECTURA.
+ * The backend uses LECTURA, while older cached records may still contain LECTURA.
  * Treat both values as the same route type until those local caches are replaced.
  */
 export function isReadingRouteType(value: string | null | undefined): boolean {

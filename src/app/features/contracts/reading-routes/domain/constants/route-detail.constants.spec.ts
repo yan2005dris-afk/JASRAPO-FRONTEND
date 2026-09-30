@@ -33,7 +33,7 @@ describe('route-detail.constants', () => {
 
   it('covers every TipoRuta value with a label', () => {
     const allRutas: TipoRuta[] = [
-      'TOMA_LECTURA',
+      'LECTURA',
       'LECTURA',
       'CORTE',
       'RECONEXION',

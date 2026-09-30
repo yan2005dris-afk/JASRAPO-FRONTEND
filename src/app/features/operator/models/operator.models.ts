@@ -1,7 +1,16 @@
-export type RouteType = 'LECTURA' | 'TOMA_LECTURA' | 'RECONEXION' | 'INSTALACION' | 'INSPECCION';
+export type RouteType = 'LECTURA' | 'RECONEXION' | 'INSTALACION' | 'INSPECCION';
 export type RouteState = 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA';
 export type WorkOrderActivityType = 'LECTURA' | 'INSTALACION' | 'RECONEXION' | 'INSPECCION';
 export type WorkOrderState = 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA' | 'FALLIDA';
+
+export interface OperatorActivityType {
+  tipoActividadId: number;
+  codigo: string;
+  nombre: string;
+  descripcion?: string | null;
+  icono?: string | null;
+  activo: boolean;
+}
 
 export interface OperatorMeterInfo {
   medidorId: string;

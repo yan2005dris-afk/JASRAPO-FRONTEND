@@ -122,7 +122,7 @@ export class ReadingRouteDetailComponent implements OnInit {
   pageSize = signal(10);
   selectedFilter = signal<FilterOrdenTab>('TODAS');
 
-  // Readings Table — solo para tipo TOMA_LECTURA
+  // Readings Table — solo para tipo LECTURA
   readings = signal<IReadingRowItem[]>([]);
   isLoadingReadings = signal(false);
   totalReadings = signal(0);
@@ -143,7 +143,7 @@ export class ReadingRouteDetailComponent implements OnInit {
   // Result observation modal
   selectedOrdenForResult = signal<OrderWork | null>(null);
 
-  readonly isLecturaRoute = computed(() => this.readingRoute()?.tipoRuta === 'TOMA_LECTURA');
+  readonly isLecturaRoute = computed(() => this.readingRoute()?.tipoRuta === 'LECTURA');
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
@@ -265,7 +265,7 @@ export class ReadingRouteDetailComponent implements OnInit {
       });
   }
 
-  /** Carga lecturas para rutas de tipo TOMA_LECTURA */
+  /** Carga lecturas para rutas de tipo LECTURA */
   loadReadings(): void {
     this.isLoadingReadings.set(true);
     this.routesService

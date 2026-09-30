@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import type { OperatorRouteResponse, ReadingWithAnomaly } from '../models/operator.models';
+import type { OperatorRouteResponse, ReadingWithAnomaly, OperatorActivityType } from '../models/operator.models';
 
 /** Respuesta del endpoint GET /operator/readings */
 export interface OperatorReadingResponse {
@@ -24,6 +24,11 @@ export class OperatorService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiUrl;
   private readonly endpoint = `${this.baseUrl}/operator`;
+
+  /** GET /api/v1/operator/activity-types — Listar tipos de actividad disponibles */
+  getActivityTypes(): Observable<OperatorActivityType[]> {
+    return this.http.get<OperatorActivityType[]>(`${this.endpoint}/activity-types`);
+  }
 
   /** GET /api/v1/operator/routes — Listar rutas asignadas al operario */
   getRoutes(tipoRuta?: string): Observable<OperatorRouteResponse[]> {

@@ -17,7 +17,6 @@ export const MARKER_COLORS: Record<string, string> = {
  */
 export const TIPO_ICONS: Record<string, string> = {
   LECTURA: 'bi-droplet-fill',
-  TOMA_LECTURA: 'bi-droplet-fill',
   INSTALACION: 'bi-tools',
   INSPECCION: 'bi-search',
   RECONEXION: 'bi-plug-fill',

@@ -9,7 +9,7 @@ import {
 function route(partial: Partial<OperatorRouteResponse>): OperatorRouteResponse {
   return {
     rutaId: partial.rutaId ?? 'r-1',
-    tipoRuta: 'TOMA_LECTURA',
+    tipoRuta: 'LECTURA',
     nombre: 'Ruta',
     estado: 'PENDIENTE',
     operarioId: 1,
@@ -51,8 +51,8 @@ describe('routeMatchesTypeFilter', () => {
     expect(routeMatchesTypeFilter('LECTURA', 'LECTURA')).toBe(true);
   });
 
-  it('keeps legacy TOMA_LECTURA cache entries visible in the reading filter', () => {
-    expect(routeMatchesTypeFilter('TOMA_LECTURA', 'LECTURA')).toBe(true);
+  it('keeps legacy LECTURA cache entries visible in the reading filter', () => {
+    expect(routeMatchesTypeFilter('LECTURA', 'LECTURA')).toBe(true);
   });
 
   it('does not include a non-reading route in the reading filter', () => {

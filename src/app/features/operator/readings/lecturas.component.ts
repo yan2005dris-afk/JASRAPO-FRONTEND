@@ -213,7 +213,7 @@ export class LecturasComponent implements OnInit {
     // Orden consistente importado desde readings.models.ts
     return READING_STATE_ORDER.filter((key) => groups.has(key)).map((key) => {
       const isSinLectura = key === '__SIN_LECTURA__';
-      const isWorkOrderRoute = this.routeContext() && this.routeContext()?.tipo !== 'TOMA_LECTURA';
+      const isWorkOrderRoute = this.routeContext() && this.routeContext()?.tipo !== 'LECTURA';
       const info = isSinLectura
         ? {
             label: isWorkOrderRoute ? 'Pendiente' : 'Sin Lectura',

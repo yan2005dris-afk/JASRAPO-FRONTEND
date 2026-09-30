@@ -82,7 +82,7 @@ export class GenerateBatchModalComponent implements OnInit {
       this.periodoId() !== null &&
       !!r &&
       r.estado === 'COMPLETADA' &&
-      r.tipoRuta === 'TOMA_LECTURA' &&
+      r.tipoRuta === 'LECTURA' &&
       !this.isLoadingRoutes()
     );
   });
@@ -167,7 +167,7 @@ export class GenerateBatchModalComponent implements OnInit {
       .getRoutes({
         periodoId: pId,
         comunidadId: this.comunidadId() || undefined,
-        tipoRuta: 'TOMA_LECTURA',
+        tipoRuta: 'LECTURA',
         estado: 'COMPLETADA',
         limit: 50,
       })
@@ -195,9 +195,9 @@ export class GenerateBatchModalComponent implements OnInit {
     const ruta = this.selectedRoute();
     if (!pId || !ruta || this.isLoading()) return;
 
-    if (ruta.estado !== 'COMPLETADA' || ruta.tipoRuta !== 'TOMA_LECTURA') {
+    if (ruta.estado !== 'COMPLETADA' || ruta.tipoRuta !== 'LECTURA') {
       this.toastService.show(
-        'Para generar el lote seleccione una ruta de trabajo de TOMA_LECTURA en estado COMPLETADA.',
+        'Para generar el lote seleccione una ruta de trabajo de LECTURA en estado COMPLETADA.',
         'error',
       );
       return;

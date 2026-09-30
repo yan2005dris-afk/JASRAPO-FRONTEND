@@ -103,7 +103,7 @@ export class OperatorHomeComponent implements OnInit {
   readonly totalWorkOrders = computed<number>(() => {
     let count = 0;
     for (const t of this.tasks()) {
-      if (t.tipoRuta !== 'TOMA_LECTURA') {
+      if (t.tipoRuta !== 'LECTURA') {
         count += t.ordenesTrabajo?.length || 1;
       }
     }

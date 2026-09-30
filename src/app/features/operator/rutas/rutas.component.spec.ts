@@ -13,7 +13,7 @@ import type { OperatorRouteResponse } from '../models/operator.models';
 const mockRoutesWithNames: OperatorRouteResponse[] = [
   {
     rutaId: '101',
-    tipoRuta: 'TOMA_LECTURA',
+    tipoRuta: 'LECTURA',
     nombre: 'Ruta Olón Norte',
     descripcion: 'Sector Norte Olón',
     estado: 'PENDIENTE',
@@ -66,6 +66,7 @@ describe('RutasComponent', () => {
   let fixture: ComponentFixture<RutasComponent>;
   let component: RutasComponent;
   let loadAssignedRoutes: ReturnType<typeof vi.fn>;
+  let loadActivityTypes: ReturnType<typeof vi.fn>;
   let getComunidadesCache: ReturnType<typeof vi.fn>;
   let getSectoresCache: ReturnType<typeof vi.fn>;
   let saveComunidadesCache: ReturnType<typeof vi.fn>;
@@ -82,6 +83,10 @@ describe('RutasComponent', () => {
       source: 'network',
       cachedAt: null,
     });
+    loadActivityTypes = vi.fn().mockResolvedValue([
+      { tipoActividadId: 1, codigo: 'LECTURA', nombre: 'Lecturas' },
+      { tipoActividadId: 2, codigo: 'RECONEXION', nombre: 'Reconexión' },
+    ]);
     getComunidadesCache = vi.fn().mockResolvedValue([
       { comunidadId: 1, nombre: 'Olón' },
       { comunidadId: 2, nombre: 'Núñez' },
@@ -102,7 +107,7 @@ describe('RutasComponent', () => {
         provideRouter([]),
         {
           provide: OperatorRouteOfflineService,
-          useValue: { loadAssignedRoutes },
+          useValue: { loadAssignedRoutes, loadActivityTypes },
         },
         {
           provide: IndexedDbService,

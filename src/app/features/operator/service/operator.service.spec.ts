@@ -6,7 +6,7 @@ import type { OperatorRouteResponse, ReadingWithAnomaly } from '../models/operat
 
 const mockTask: OperatorRouteResponse = {
   rutaId: 'r-001',
-  tipoRuta: 'TOMA_LECTURA',
+  tipoRuta: 'LECTURA',
   nombre: 'Ruta Norte',
   estado: 'PENDIENTE',
   operarioId: 1,
@@ -60,11 +60,11 @@ describe('OperatorService', () => {
     it('includes tipoRuta as HttpParams when provided', () => {
       httpGetSpy.mockReturnValue(of([mockTask]));
 
-      service.getTasks('TOMA_LECTURA').subscribe();
+      service.getTasks('LECTURA').subscribe();
 
       const [url, options] = httpGetSpy.mock.calls[0] as [string, { params: HttpParams }];
       expect(url).toBe('/api/v1/operator/routes');
-      expect(options?.params.get('tipoRuta')).toBe('TOMA_LECTURA');
+      expect(options?.params.get('tipoRuta')).toBe('LECTURA');
     });
   });
 

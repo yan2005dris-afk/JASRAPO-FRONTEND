@@ -6,7 +6,7 @@ import { IReadingRowItem } from '../../readings/components/readings-table/readin
 import { ReadingRoutesService } from '../data/reading-routes.api';
 
 /**
- * Centralises the validation actions for a reading on a TOMA_LECTURA route.
+ * Centralises the validation actions for a reading on a LECTURA route.
  *
  * The previous inline implementation in reading-route-detail.component.ts
  * had the same shape repeated for approve / reject (close the dropdown,

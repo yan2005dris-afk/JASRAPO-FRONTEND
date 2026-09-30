@@ -14,13 +14,13 @@ import { Router } from '@angular/router';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { NetworkService } from '../../../core/services/network.service';
 import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
-import type { OperatorRouteResponse, RouteType } from '../models/operator.models';
+import type { OperatorRouteResponse, RouteType, OperatorActivityType } from '../models/operator.models';
 import {
   classifyRouteLoadError,
   type OperatorRouteErrorInfo,
   OperatorRouteOfflineService,
 } from '../service/operator-route-offline.service';
-import { STATE_LABELS, FILTER_OPTIONS, STATE_FILTER_OPTIONS } from './rutas.constants';
+import { STATE_LABELS, STATE_FILTER_OPTIONS } from './rutas.constants';
 import {
   compareRoutesCanonically,
   isReadingRouteType,
@@ -134,7 +134,7 @@ export class RutasComponent implements OnInit, OnDestroy {
   readonly totalWorkOrders = computed<number>(() => {
     let count = 0;
     for (const t of this.tasks()) {
-      if (t.tipoRuta !== 'TOMA_LECTURA') {
+      if (t.tipoRuta !== 'LECTURA') {
         count += t.ordenesTrabajo?.length || 1;
       }
     }
@@ -226,7 +226,8 @@ export class RutasComponent implements OnInit, OnDestroy {
     const statusMap = this.readingStatusBySerie();
 
     const sortedTasks = this.filteredTasks();
-
+    const activityTypes = this.activityTypes();
+    const iconMap = new Map<string, string>(activityTypes.map((t) => [t.codigo, t.icono ?? 'bi-geo-alt-fill']));
     const points: MapPoint[] = [];
 
     for (const task of sortedTasks) {
@@ -245,6 +246,7 @@ export class RutasComponent implements OnInit, OnDestroy {
               lng: p.longitud,
               estado: statusMap.get(p.serie ?? '') ?? p.estado ?? '__SIN_LECTURA__',
               tipoRuta: p.tipoActividad ?? task.tipoRuta,
+              icon: iconMap.get(p.tipoActividad ?? task.tipoRuta),
               popupHtml: `
                 <div class="map-info">
                   <strong>${task.nombre}</strong>
@@ -270,6 +272,7 @@ export class RutasComponent implements OnInit, OnDestroy {
               lng,
               estado: statusMap.get(serie ?? '') ?? ord.estado ?? '__SIN_LECTURA__',
               tipoRuta: ord.tipoActividad,
+              icon: iconMap.get(ord.tipoActividad),
               pointKey: `${task.rutaId}:${ord.ordenTrabajoId}`,
               popupHtml: `
                 <div class="map-info">
@@ -290,6 +293,7 @@ export class RutasComponent implements OnInit, OnDestroy {
             lng: pt.longitud,
             estado: statusMap.get(pt.serie) ?? '__SIN_LECTURA__',
             tipoRuta: task.tipoRuta,
+            icon: iconMap.get(task.tipoRuta),
             popupHtml: `
               <div class="map-info">
                 <strong>${task.nombre}</strong>
@@ -345,7 +349,8 @@ export class RutasComponent implements OnInit, OnDestroy {
   });
 
   // ── Exponer constantes al template ────────────────────────────────────────
-  readonly filterOptions = FILTER_OPTIONS;
+  readonly filterOptions = signal<{ label: string; value: string }[]>([{ label: 'Todas', value: 'ALL' }]);
+  readonly activityTypes = signal<OperatorActivityType[]>([]);
   readonly stateFilterOptions = STATE_FILTER_OPTIONS;
   readonly stateLabelMap = STATE_LABELS;
 
@@ -388,14 +393,23 @@ export class RutasComponent implements OnInit, OnDestroy {
     this.isLoading.set(true);
     this.loadError.set(null);
     try {
-      const [routeResult, comCache, secCache] = await Promise.all([
+      const [routeResult, comCache, secCache, activityTypes] = await Promise.all([
         this.routeOfflineService.loadAssignedRoutes(),
         this.dbService.getComunidadesCache().catch(() => []),
         this.dbService.getSectoresCache().catch(() => []),
+        this.routeOfflineService.loadActivityTypes().catch(() => []),
         this.loadReadingStatuses(),
       ]);
       const comMap = new Map<number, string>(comCache.map((c) => [c.comunidadId, c.nombre]));
       const secMap = new Map<number, string>(secCache.map((s) => [s.sectorId, s.nombre]));
+
+      if (activityTypes.length > 0) {
+        this.activityTypes.set(activityTypes);
+        this.filterOptions.set([
+          { label: 'Todas', value: 'ALL' },
+          ...activityTypes.map((t) => ({ label: t.nombre, value: t.codigo })),
+        ]);
+      }
 
       // Auto-cosechar comunidades y sectores nuevos provenientes de la respuesta del backend
       const newComunidades: { comunidadId: number; nombre: string }[] = [];
@@ -454,9 +468,9 @@ export class RutasComponent implements OnInit, OnDestroy {
           return {
             ...r,
             rutaId: String(r.rutaId || idx + 1),
-            tipoRuta: r.tipoRuta || 'TOMA_LECTURA',
+            tipoRuta: r.tipoRuta || 'LECTURA',
             estado: r.estado || 'PENDIENTE',
-            nombre: r.nombre || `Ruta ${r.tipoRuta || 'TOMA_LECTURA'} #${idx + 1}`,
+            nombre: r.nombre || `Ruta ${r.tipoRuta || 'LECTURA'} #${idx + 1}`,
             comunidadNombre,
             sectorNombre,
             paradas: Array.isArray(r.paradas) ? r.paradas : [],
@@ -618,7 +632,7 @@ export class RutasComponent implements OnInit, OnDestroy {
     if (task?.ordenesTrabajo?.length && task.ordenesTrabajo[0].tipoActividad) {
       return task.ordenesTrabajo[0].tipoActividad as RouteType;
     }
-    return 'TOMA_LECTURA';
+    return 'LECTURA';
   }
 
   /**

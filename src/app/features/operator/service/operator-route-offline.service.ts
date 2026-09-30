@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { NetworkService } from '../../../core/services/network.service';
-import type { OperatorRouteResponse } from '../models/operator.models';
+import type { OperatorRouteResponse, OperatorActivityType } from '../models/operator.models';
 import { OperatorService } from './operator.service';
 
 export type OperatorRouteLoadErrorKind = 'auth' | 'business' | 'network';
@@ -149,5 +149,29 @@ export class OperatorRouteOfflineService {
     }
 
     throw new Error('No hay rutas guardadas para usar sin conexion.');
+  }
+
+  async loadActivityTypes(): Promise<OperatorActivityType[]> {
+    const cacheScope = 'global:activity_types';
+    let networkError: unknown;
+
+    if (this.networkService.isOnline()) {
+      try {
+        const types = await firstValueFrom(this.operatorService.getActivityTypes());
+        await this.dbService
+          .saveActivityTypesCache(cacheScope, types)
+          .catch((e) => console.warn('[activity-types-cache] persist failed', e));
+        return types;
+      } catch (error) {
+        networkError = error;
+      }
+    }
+
+    const snapshot = await this.dbService.getActivityTypesCache<OperatorActivityType>(cacheScope);
+    if (snapshot) {
+      return snapshot.items;
+    }
+
+    throw networkError ?? new Error('No hay tipos de actividad guardados para usar sin conexion.');
   }
 }

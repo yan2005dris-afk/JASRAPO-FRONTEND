@@ -13,7 +13,7 @@ import { OperatorService } from './operator.service';
 
 const route: OperatorRouteResponse = {
   rutaId: 'route-1',
-  tipoRuta: 'TOMA_LECTURA',
+  tipoRuta: 'LECTURA',
   nombre: 'Ruta Centro',
   estado: 'PENDIENTE',
   operarioId: 7,
@@ -28,6 +28,9 @@ describe('OperatorRouteOfflineService', () => {
   let getRoutes: ReturnType<typeof vi.fn>;
   let saveRoutesCache: ReturnType<typeof vi.fn>;
   let getRoutesCache: ReturnType<typeof vi.fn>;
+  let getActivityTypes: ReturnType<typeof vi.fn>;
+  let saveActivityTypesCache: ReturnType<typeof vi.fn>;
+  let getActivityTypesCache: ReturnType<typeof vi.fn>;
   let currentUser: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
@@ -35,14 +38,17 @@ describe('OperatorRouteOfflineService', () => {
     getRoutes = vi.fn();
     saveRoutesCache = vi.fn().mockResolvedValue(undefined);
     getRoutesCache = vi.fn();
+    getActivityTypes = vi.fn().mockReturnValue(of([]));
+    saveActivityTypesCache = vi.fn().mockResolvedValue(undefined);
+    getActivityTypesCache = vi.fn().mockResolvedValue({ items: [] });
     currentUser = vi.fn().mockReturnValue({ id: '7' });
 
     TestBed.configureTestingModule({
       providers: [
         OperatorRouteOfflineService,
         { provide: AuthService, useValue: { currentUser } },
-        { provide: OperatorService, useValue: { getRoutes } },
-        { provide: IndexedDbService, useValue: { saveRoutesCache, getRoutesCache } },
+        { provide: OperatorService, useValue: { getRoutes, getActivityTypes } },
+        { provide: IndexedDbService, useValue: { saveRoutesCache, getRoutesCache, saveActivityTypesCache, getActivityTypesCache } },
         { provide: NetworkService, useValue: { isOnline } },
       ],
     });

@@ -44,7 +44,7 @@ describe('LecturasComponent State Machine', () => {
               queryParamMap: {
                 get: (key: string) => {
                   if (key === 'rutaNombre') return 'Ruta Central';
-                  if (key === 'rutaTipo') return 'TOMA_LECTURA';
+                  if (key === 'rutaTipo') return 'LECTURA';
                   if (key === 'workOrders') {
                     return 'SER-101:LECTURA:wo-reading:PENDIENTE';
                   }

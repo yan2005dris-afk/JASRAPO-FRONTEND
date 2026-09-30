@@ -18,7 +18,7 @@ import { CommonModule } from '@angular/common';
 import * as L from 'leaflet';
 import { NetworkService } from '../../../../core/services/network.service';
 import { formatDistance, type LatLng } from '../../../../shared/utils/geo.utils';
-import { MARKER_COLORS, TIPO_ICONS } from '../../rutas/rutas.constants';
+import { MARKER_COLORS } from '../../rutas/rutas.constants';
 
 export interface MapPoint {
   routeId: string;
@@ -26,6 +26,7 @@ export interface MapPoint {
   lng: number;
   estado: string;
   tipoRuta: string;
+  icon?: string;
   popupHtml: string;
   /** Stable identity of the source point (e.g. `<routeId>:<ordenTrabajoId>`), used to match the next-stop marker. */
   pointKey?: string;
@@ -406,7 +407,7 @@ export class RutasMapComponent implements OnInit, OnDestroy {
 
     pts.forEach((point) => {
       const color = MARKER_COLORS[point.estado] ?? '#9ca3af';
-      const iconClass = TIPO_ICONS[point.tipoRuta] ?? 'bi-geo-alt-fill';
+      const iconClass = point.icon ?? 'bi-geo-alt-fill';
       const icon = L.divIcon({
         html: `<div class="map-type-marker" style="background:${color}"><i class="bi ${iconClass}" aria-hidden="true"></i></div>`,
         className: '',
