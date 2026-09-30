@@ -28,11 +28,10 @@ import { IMeter } from '../../../meters/domain/models/meter.model';
 import { ITariffCategory } from '../../../tariffs/domain/models/tariff.model';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
-import {
-  CoordinateMapPickerComponent,
-  ICoordinates,
-} from '../../../../../shared/components/coordinate-map-picker/coordinate-map-picker.component';
+import { CoordinateMapPickerComponent } from '../../../../../shared/components/coordinate-map-picker/coordinate-map-picker.component';
+import type { ICoordinates, IPolygonGeometry } from '../../domain/models/service-area.model';
 import { coordinatePairValidator } from '../../../../../shared/components/coordinate-map-picker/coordinate-pair.validator';
+import { getCommunityMapCenter } from '../../domain/rules/community-map.rules';
 import { AuthService } from '../../../../../core/services/auth.service';
 
 /**
@@ -107,6 +106,10 @@ export class ServiceContractFormComponent implements OnInit {
   private originalMeterId: string | null = null;
 
   readonly coordinates = signal<ICoordinates>({ latitud: null, longitud: null });
+  readonly serviceArea = signal<IPolygonGeometry | null>(null);
+  readonly communityMapCenter = computed(() =>
+    getCommunityMapCenter(this.selectedComunidad()?.nombre),
+  );
 
   readonly form: FormGroup = this.fb.group(
     {

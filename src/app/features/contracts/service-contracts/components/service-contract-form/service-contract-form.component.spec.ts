@@ -13,6 +13,7 @@ import { IContract } from '../../domain/models/service-contract.model';
 import { IMeter } from '../../../meters/domain/models/meter.model';
 import { IClient } from '../../../clients/domain/models/client.model';
 import { ITariffCategory } from '../../../tariffs/domain/models/tariff.model';
+import { IServiceArea } from '../../domain/models/service-area.model';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { CoordinateMapPickerComponent } from '../../../../../shared/components/coordinate-map-picker/coordinate-map-picker.component';
 
@@ -416,5 +417,48 @@ describe('ServiceContractFormComponent', () => {
     expect(mockContractsApi.createContract).not.toHaveBeenCalled();
     expect(mockToastService.warning).toHaveBeenCalled();
     expect(component.coordinateError()).toBe('Ingrese latitud y longitud, o deje ambas vacías.');
+  });
+
+  it('should load the service area and keep its geometry for the map picker', () => {
+    fixture.detectChanges();
+
+    expect(mockContractsApi.getServiceArea).toHaveBeenCalledTimes(1);
+    expect(component.serviceArea()).toEqual(mockServiceArea.geometria);
+  });
+
+  it('should leave the map picker unrestricted when the service area cannot be loaded', () => {
+    mockContractsApi.getServiceArea.mockReturnValue(throwError(() => new Error('network')));
+
+    fixture.detectChanges();
+
+    expect(component.serviceArea()).toBeNull();
+  });
+
+  it('should pass the selected community center to the map picker as its focus point', () => {
+    fixture.detectChanges();
+    expect(component.communityMapCenter()).toBeNull();
+
+    component.onComunidadSelected({
+      id: 5,
+      nombre: 'Curia',
+      codigo: '005',
+      porcentajeTasaSeguridad: 0,
+    });
+    fixture.detectChanges();
+
+    const picker = fixture.debugElement.query(By.directive(CoordinateMapPickerComponent));
+    const expected = { latitud: -1.7747, longitud: -80.7643 };
+    expect(component.communityMapCenter()).toEqual(expected);
+    expect(picker.componentInstance.focusPoint()).toEqual(expected);
+
+    component.onComunidadSelected({
+      id: 9,
+      nombre: 'Comunidad Central',
+      codigo: '009',
+      porcentajeTasaSeguridad: 0,
+    });
+    fixture.detectChanges();
+
+    expect(picker.componentInstance.focusPoint()).toBeNull();
   });
 });

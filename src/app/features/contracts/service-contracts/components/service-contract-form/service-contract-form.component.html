@@ -414,6 +414,8 @@
           [latitud]="coordinates().latitud"
           [longitud]="coordinates().longitud"
           [errorMessage]="coordinateError()"
+          [serviceArea]="serviceArea()"
+          [focusPoint]="communityMapCenter()"
           (coordinatesChange)="onCoordinatesChange($event)"
         />
       </div>

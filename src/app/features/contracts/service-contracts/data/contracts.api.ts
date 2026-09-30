@@ -12,6 +12,7 @@ import {
   IUpdateContractRequest,
   IAssignInstallationRoutePayload,
 } from '../domain/models/service-contract.model';
+import type { IServiceArea } from '../domain/models/service-area.model';
 import type { IReadingRoute } from '../../reading-routes/domain/models/reading-route.model';
 
 @Injectable({

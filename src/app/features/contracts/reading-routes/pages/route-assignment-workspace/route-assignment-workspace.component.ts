@@ -146,7 +146,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     this.getOperarioName(operarioId);
 
   isLecturaActivity(tipo: TipoRuta | string | null): boolean {
-    return tipo === 'LECTURA' || tipo === 'LECTURA' || !tipo;
+    return tipo === 'LECTURA' || tipo === 'TOMA_LECTURA' || !tipo;
   }
 
   // Reactive mode flag derived from the selected activity type
@@ -741,7 +741,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
         this.tiposActividad.set(res);
         // Default to LECTURA if not already set
         if (!this.tipoActividadSeleccionada()) {
-          const lectura = res.find((t) => t.codigo === 'LECTURA' || t.codigo === 'LECTURA');
+          const lectura = res.find((t) => t.codigo === 'LECTURA' || t.codigo === 'TOMA_LECTURA');
           this.tipoActividadSeleccionada.set(lectura?.codigo ?? 'LECTURA');
         }
       },
