@@ -29,7 +29,7 @@ export default defineConfig({
     {
       name: 'chromium-authed',
       use: { ...devices['Desktop Chrome'], storageState: 'e2e/.auth/user.json' },
-      testMatch: /e2e\/(billing|auth)\/.*\.spec\.ts/,
+      testMatch: /e2e\/(billing|auth|contracts)\/.*\.spec\.ts/,
     },
     {
       name: 'chromium-clean',

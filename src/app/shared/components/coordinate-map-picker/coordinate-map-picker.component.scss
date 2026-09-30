@@ -51,6 +51,14 @@
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.35));
 }
 
+:host ::ng-deep .service-area-boundary {
+  stroke: var(--primary-color);
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  fill: var(--primary-color);
+  fill-opacity: 0.06;
+}
+
 :host ::ng-deep .leaflet-marker-icon:focus,
 :host ::ng-deep .leaflet-marker-icon:focus-visible {
   outline: 3px solid var(--primary-color, #0c9ea1);

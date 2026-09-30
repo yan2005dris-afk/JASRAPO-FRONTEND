@@ -3,7 +3,12 @@ import { signal } from '@angular/core';
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as L from 'leaflet';
 
-import { CoordinateMapPickerComponent, ICoordinates } from './coordinate-map-picker.component';
+import {
+  CoordinateMapPickerComponent,
+  ICoordinates,
+  IPolygonGeometry,
+  OUT_OF_SERVICE_AREA_MESSAGE,
+} from './coordinate-map-picker.component';
 import { NetworkService } from '../../../core/services/network.service';
 
 describe('CoordinateMapPickerComponent', () => {
@@ -292,5 +297,263 @@ describe('CoordinateMapPickerComponent', () => {
     fixture.destroy();
 
     expect(fixture.nativeElement.querySelectorAll('.leaflet-marker-icon').length).toBe(0);
+  });
+
+  describe('with a service area', () => {
+    const serviceArea: IPolygonGeometry = {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-80.78, -1.83],
+          [-80.73, -1.83],
+          [-80.73, -1.77],
+          [-80.78, -1.77],
+          [-80.78, -1.83],
+        ],
+      ],
+    };
+    const INSIDE = { lat: -1.8, lng: -80.75 };
+    const OUTSIDE = { lat: -2.2, lng: -80.9 };
+
+    async function createPicker(latitud: number | null = null, longitud: number | null = null) {
+      const fixture = TestBed.createComponent(CoordinateMapPickerComponent);
+      fixture.componentRef.setInput('serviceArea', serviceArea);
+      fixture.componentRef.setInput('latitud', latitud);
+      fixture.componentRef.setInput('longitud', longitud);
+      fixture.detectChanges();
+      await new Promise((r) => setTimeout(r, 10));
+
+      const emitted: ICoordinates[] = [];
+      fixture.componentInstance.coordinatesChange.subscribe((value) => emitted.push(value));
+      return { fixture, emitted };
+    }
+
+    function privateState(fixture: { componentInstance: CoordinateMapPickerComponent }) {
+      return fixture.componentInstance as unknown as {
+        map: L.Map;
+        marker: L.Marker;
+        serviceAreaLayer?: L.GeoJSON;
+      };
+    }
+
+    it('draws the service area polygon on the map', async () => {
+      const { fixture } = await createPicker();
+
+      const layer = privateState(fixture).serviceAreaLayer;
+      expect(layer).toBeDefined();
+      expect(privateState(fixture).map.hasLayer(layer as L.GeoJSON)).toBe(true);
+      expect(layer?.getBounds().contains([INSIDE.lat, INSIDE.lng])).toBe(true);
+    });
+
+    it('fits the map to the service area when there is no pin, but not when a pin exists', async () => {
+      const fitBoundsSpy = vi.spyOn(L.Map.prototype, 'fitBounds');
+
+      await createPicker();
+      expect(fitBoundsSpy).toHaveBeenCalledTimes(1);
+
+      fitBoundsSpy.mockClear();
+      await createPicker(INSIDE.lat, INSIDE.lng);
+      expect(fitBoundsSpy).not.toHaveBeenCalled();
+
+      fitBoundsSpy.mockRestore();
+    });
+
+    it('draws the polygon when the service area arrives after the map is initialized', async () => {
+      const fixture = TestBed.createComponent(CoordinateMapPickerComponent);
+      fixture.detectChanges();
+      await new Promise((r) => setTimeout(r, 10));
+      expect(privateState(fixture).serviceAreaLayer).toBeUndefined();
+
+      fixture.componentRef.setInput('serviceArea', serviceArea);
+      fixture.detectChanges();
+
+      expect(privateState(fixture).serviceAreaLayer).toBeDefined();
+    });
+
+    it('emits when the map is clicked inside the service area', async () => {
+      const { fixture, emitted } = await createPicker();
+
+      privateState(fixture).map.fire('click', { latlng: L.latLng(INSIDE.lat, INSIDE.lng) });
+
+      expect(emitted).toEqual([{ latitud: INSIDE.lat, longitud: INSIDE.lng }]);
+      expect(fixture.componentInstance.serviceAreaError()).toBeNull();
+    });
+
+    it('does not emit and shows a message when the map is clicked outside the service area', async () => {
+      const { fixture, emitted } = await createPicker();
+
+      privateState(fixture).map.fire('click', { latlng: L.latLng(OUTSIDE.lat, OUTSIDE.lng) });
+      fixture.detectChanges();
+
+      expect(emitted).toEqual([]);
+      expect(fixture.nativeElement.textContent).toContain(OUT_OF_SERVICE_AREA_MESSAGE);
+
+      privateState(fixture).map.fire('click', { latlng: L.latLng(INSIDE.lat, INSIDE.lng) });
+      fixture.detectChanges();
+
+      expect(emitted).toEqual([{ latitud: INSIDE.lat, longitud: INSIDE.lng }]);
+      expect(fixture.nativeElement.textContent).not.toContain(OUT_OF_SERVICE_AREA_MESSAGE);
+    });
+
+    it('snaps the marker back to the last valid position when dragged outside', async () => {
+      const { fixture, emitted } = await createPicker(INSIDE.lat, INSIDE.lng);
+
+      const marker = privateState(fixture).marker;
+      marker.setLatLng([OUTSIDE.lat, OUTSIDE.lng]);
+      marker.fire('dragend');
+
+      expect(emitted).toEqual([]);
+      expect(marker.getLatLng().lat).toBe(INSIDE.lat);
+      expect(marker.getLatLng().lng).toBe(INSIDE.lng);
+      expect(fixture.componentInstance.serviceAreaError()).toBe(OUT_OF_SERVICE_AREA_MESSAGE);
+    });
+
+    it('does not emit a complete manual pair outside the service area and keeps the typed values', async () => {
+      const { fixture, emitted } = await createPicker();
+      const latInput = fixture.nativeElement.querySelector(
+        '#coordenadas-latitud',
+      ) as HTMLInputElement;
+      const lngInput = fixture.nativeElement.querySelector(
+        '#coordenadas-longitud',
+      ) as HTMLInputElement;
+
+      latInput.value = String(OUTSIDE.lat);
+      latInput.dispatchEvent(new Event('change'));
+      expect(emitted).toEqual([{ latitud: OUTSIDE.lat, longitud: null }]);
+
+      lngInput.value = String(OUTSIDE.lng);
+      lngInput.dispatchEvent(new Event('change'));
+      fixture.detectChanges();
+
+      expect(emitted).toHaveLength(1);
+      expect(lngInput.value).toBe(String(OUTSIDE.lng));
+      expect(fixture.nativeElement.textContent).toContain(OUT_OF_SERVICE_AREA_MESSAGE);
+
+      latInput.value = String(INSIDE.lat);
+      lngInput.value = String(INSIDE.lng);
+      lngInput.dispatchEvent(new Event('change'));
+
+      expect(emitted[1]).toEqual({ latitud: INSIDE.lat, longitud: INSIDE.lng });
+      expect(fixture.componentInstance.serviceAreaError()).toBeNull();
+    });
+
+    it('does not emit and shows a message when the geolocated position is outside', async () => {
+      vi.stubGlobal('navigator', {
+        ...navigator,
+        geolocation: {
+          getCurrentPosition: (success: PositionCallback) =>
+            success({
+              coords: { latitude: OUTSIDE.lat, longitude: OUTSIDE.lng },
+              timestamp: Date.now(),
+            } as GeolocationPosition),
+        },
+      });
+      const { fixture, emitted } = await createPicker();
+
+      fixture.componentInstance.useCurrentLocation();
+
+      expect(emitted).toEqual([]);
+      expect(fixture.componentInstance.serviceAreaError()).toBe(OUT_OF_SERVICE_AREA_MESSAGE);
+    });
+
+    it('renders an existing pin outside the service area and warns without emitting', async () => {
+      const { fixture, emitted } = await createPicker(OUTSIDE.lat, OUTSIDE.lng);
+      fixture.detectChanges();
+
+      expect(fixture.nativeElement.querySelectorAll('.leaflet-marker-icon').length).toBe(1);
+      expect(fixture.nativeElement.textContent).toContain(OUT_OF_SERVICE_AREA_MESSAGE);
+      expect(emitted).toEqual([]);
+    });
+
+    describe('focus point', () => {
+      const FOCUS = { latitud: -1.7747, longitud: -80.7643 };
+      const OTHER_FOCUS = { latitud: -1.7982, longitud: -80.7582 };
+
+      async function createFocusedPicker(
+        focusPoint: ICoordinates | null,
+        latitud: number | null = null,
+        longitud: number | null = null,
+      ) {
+        const fixture = TestBed.createComponent(CoordinateMapPickerComponent);
+        fixture.componentRef.setInput('serviceArea', serviceArea);
+        fixture.componentRef.setInput('focusPoint', focusPoint);
+        fixture.componentRef.setInput('latitud', latitud);
+        fixture.componentRef.setInput('longitud', longitud);
+        fixture.detectChanges();
+        await new Promise((r) => setTimeout(r, 10));
+
+        const emitted: ICoordinates[] = [];
+        fixture.componentInstance.coordinatesChange.subscribe((value) => emitted.push(value));
+        return { fixture, emitted };
+      }
+
+      function expectCenter(map: L.Map, point: { latitud: number; longitud: number }) {
+        expect(map.getCenter().lat).toBeCloseTo(point.latitud, 4);
+        expect(map.getCenter().lng).toBeCloseTo(point.longitud, 4);
+      }
+
+      it('centers on the focus point at load instead of fitting the service area when there is no pin', async () => {
+        const fitBoundsSpy = vi.spyOn(L.Map.prototype, 'fitBounds');
+
+        const { fixture } = await createFocusedPicker(FOCUS);
+
+        expect(fitBoundsSpy).not.toHaveBeenCalled();
+        expectCenter(privateState(fixture).map, FOCUS);
+        fitBoundsSpy.mockRestore();
+      });
+
+      it('keeps centering on the existing pin at load even when a focus point is provided', async () => {
+        const { fixture } = await createFocusedPicker(FOCUS, INSIDE.lat, INSIDE.lng);
+
+        expectCenter(privateState(fixture).map, { latitud: INSIDE.lat, longitud: INSIDE.lng });
+      });
+
+      it('recenters on a new focus point without moving the marker or emitting coordinates', async () => {
+        const { fixture, emitted } = await createFocusedPicker(null, INSIDE.lat, INSIDE.lng);
+        const flyToSpy = vi.spyOn(privateState(fixture).map, 'flyTo');
+
+        fixture.componentRef.setInput('focusPoint', FOCUS);
+        fixture.detectChanges();
+
+        expect(flyToSpy).toHaveBeenCalledWith([FOCUS.latitud, FOCUS.longitud], 15);
+        expectCenter(privateState(fixture).map, FOCUS);
+        expect(privateState(fixture).marker.getLatLng()).toEqual(L.latLng(INSIDE.lat, INSIDE.lng));
+        expect(emitted).toEqual([]);
+
+        fixture.componentRef.setInput('focusPoint', OTHER_FOCUS);
+        fixture.detectChanges();
+
+        expectCenter(privateState(fixture).map, OTHER_FOCUS);
+        expect(emitted).toEqual([]);
+      });
+
+      it('fits the map to the service area when the focus point changes to null', async () => {
+        const { fixture, emitted } = await createFocusedPicker(FOCUS);
+        const map = privateState(fixture).map;
+        const fitBoundsSpy = vi.spyOn(map, 'fitBounds');
+
+        fixture.componentRef.setInput('focusPoint', null);
+        fixture.detectChanges();
+
+        expect(fitBoundsSpy).toHaveBeenCalledWith(
+          privateState(fixture).serviceAreaLayer?.getBounds(),
+        );
+        expect(emitted).toEqual([]);
+      });
+    });
+
+    it('keeps the unrestricted behavior when the service area is null', async () => {
+      const fixture = TestBed.createComponent(CoordinateMapPickerComponent);
+      fixture.detectChanges();
+      await new Promise((r) => setTimeout(r, 10));
+      const emitted: ICoordinates[] = [];
+      fixture.componentInstance.coordinatesChange.subscribe((value) => emitted.push(value));
+
+      privateState(fixture).map.fire('click', { latlng: L.latLng(OUTSIDE.lat, OUTSIDE.lng) });
+
+      expect(emitted).toEqual([{ latitud: OUTSIDE.lat, longitud: OUTSIDE.lng }]);
+      expect(fixture.componentInstance.serviceAreaError()).toBeNull();
+      expect(privateState(fixture).serviceAreaLayer).toBeUndefined();
+    });
   });
 });

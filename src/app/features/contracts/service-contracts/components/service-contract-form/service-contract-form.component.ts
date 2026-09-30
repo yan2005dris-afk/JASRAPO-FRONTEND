@@ -28,11 +28,10 @@ import { IMeter } from '../../../meters/domain/models/meter.model';
 import { ITariffCategory } from '../../../tariffs/domain/models/tariff.model';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
-import {
-  CoordinateMapPickerComponent,
-  ICoordinates,
-} from '../../../../../shared/components/coordinate-map-picker/coordinate-map-picker.component';
+import { CoordinateMapPickerComponent } from '../../../../../shared/components/coordinate-map-picker/coordinate-map-picker.component';
+import type { ICoordinates, IPolygonGeometry } from '../../domain/models/service-area.model';
 import { coordinatePairValidator } from '../../../../../shared/components/coordinate-map-picker/coordinate-pair.validator';
+import { getCommunityMapCenter } from '../../domain/rules/community-map.rules';
 
 /**
  * Formulario de contrato cliente–medidor. Sirve para CREAR y para EDITAR:
@@ -103,6 +102,10 @@ export class ServiceContractFormComponent implements OnInit {
   private originalMeterId: string | null = null;
 
   readonly coordinates = signal<ICoordinates>({ latitud: null, longitud: null });
+  readonly serviceArea = signal<IPolygonGeometry | null>(null);
+  readonly communityMapCenter = computed(() =>
+    getCommunityMapCenter(this.selectedComunidad()?.nombre),
+  );
 
   readonly form: FormGroup = this.fb.group(
     {
@@ -121,6 +124,14 @@ export class ServiceContractFormComponent implements OnInit {
     if (contract) {
       this.preloadContract(contract);
     }
+    this.loadServiceArea();
+  }
+
+  private loadServiceArea(): void {
+    this.contractsService.getServiceArea().subscribe({
+      next: (area) => this.serviceArea.set(area.geometria),
+      error: () => this.serviceArea.set(null),
+    });
   }
 
   /** Precarga en el formulario los datos del contrato a editar. */
