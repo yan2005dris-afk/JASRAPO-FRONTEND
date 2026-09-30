@@ -28,11 +28,8 @@ import { IMeter } from '../../../meters/domain/models/meter.model';
 import { ITariffCategory } from '../../../tariffs/domain/models/tariff.model';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
-import {
-  CoordinateMapPickerComponent,
-  ICoordinates,
-  IPolygonGeometry,
-} from '../../../../../shared/components/coordinate-map-picker/coordinate-map-picker.component';
+import { CoordinateMapPickerComponent } from '../../../../../shared/components/coordinate-map-picker/coordinate-map-picker.component';
+import type { ICoordinates, IPolygonGeometry } from '../../domain/models/service-area.model';
 import { coordinatePairValidator } from '../../../../../shared/components/coordinate-map-picker/coordinate-pair.validator';
 import { getCommunityMapCenter } from '../../domain/rules/community-map.rules';
 

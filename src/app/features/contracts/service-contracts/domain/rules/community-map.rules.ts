@@ -1,10 +1,10 @@
-import type { ICoordinates } from '../../../../../shared/components/coordinate-map-picker/coordinate-map-picker.component';
+import type { ICoordinates } from '../models/service-area.model';
 import { COMMUNITY_MAP_CENTERS } from '../constants/community-map.constants';
 
 function normalizeName(name: string): string {
   return ` ${name
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()} `;

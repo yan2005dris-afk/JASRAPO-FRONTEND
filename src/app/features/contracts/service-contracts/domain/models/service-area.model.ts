@@ -1,7 +1,12 @@
-import type {
-  ICoordinates,
-  IPolygonGeometry,
-} from '../../../../../shared/components/coordinate-map-picker/coordinate-map-picker.component';
+export interface ICoordinates {
+  latitud: number | null;
+  longitud: number | null;
+}
+
+export interface IPolygonGeometry {
+  type: 'Polygon';
+  coordinates: number[][][];
+}
 
 export interface IServiceArea {
   nombre: string;

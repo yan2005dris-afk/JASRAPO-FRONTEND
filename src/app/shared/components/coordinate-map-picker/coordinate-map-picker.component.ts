@@ -17,15 +17,12 @@ import * as L from 'leaflet';
 import { booleanPointInPolygon } from '@turf/boolean-point-in-polygon';
 import { NetworkService } from '../../../core/services/network.service';
 
-export interface ICoordinates {
-  latitud: number | null;
-  longitud: number | null;
-}
+import type {
+  ICoordinates,
+  IPolygonGeometry,
+} from '../../../features/contracts/service-contracts/domain/models/service-area.model';
 
-export interface IPolygonGeometry {
-  type: 'Polygon';
-  coordinates: number[][][];
-}
+export type { ICoordinates, IPolygonGeometry };
 
 export const OUT_OF_SERVICE_AREA_MESSAGE =
   'La ubicación seleccionada está fuera del perímetro del área de servicio';
