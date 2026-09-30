@@ -69,6 +69,11 @@ export class ContractsApi {
     return this.http.get<IContractState[]>(`${this.endpoint}/states`);
   }
 
+  /** Perímetro del área de servicio de la Junta. */
+  getServiceArea(): Observable<IServiceArea> {
+    return this.http.get<IServiceArea>(`${this.endpoint}/service-area`);
+  }
+
   /** Registra un nuevo contrato. */
   createContract(payload: ICreateContractRequest): Observable<IContract> {
     return this.http.post<IContract>(this.endpoint, payload);

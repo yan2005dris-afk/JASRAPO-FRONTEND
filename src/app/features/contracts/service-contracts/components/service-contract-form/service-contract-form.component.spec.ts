@@ -1,7 +1,8 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { By } from '@angular/platform-browser';
+import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { ServiceContractFormComponent } from './service-contract-form.component';
@@ -13,6 +14,7 @@ import { IMeter } from '../../../meters/domain/models/meter.model';
 import { IClient } from '../../../clients/domain/models/client.model';
 import { ITariffCategory } from '../../../tariffs/domain/models/tariff.model';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
+import { CoordinateMapPickerComponent } from '../../../../../shared/components/coordinate-map-picker/coordinate-map-picker.component';
 
 describe('ServiceContractFormComponent', () => {
   let component: ServiceContractFormComponent;
@@ -74,6 +76,23 @@ describe('ServiceContractFormComponent', () => {
     createContract: vi.fn(),
     updateContract: vi.fn(),
     getContractById: vi.fn(),
+    getServiceArea: vi.fn(),
+  };
+
+  const mockServiceArea: IServiceArea = {
+    nombre: 'Parroquia Manglaralto',
+    fuente: 'OpenStreetMap (relation 278708), ODbL',
+    geometria: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-80.78, -1.83],
+          [-80.73, -1.83],
+          [-80.73, -1.77],
+          [-80.78, -1.83],
+        ],
+      ],
+    },
   };
 
   const mockToastService = {
@@ -89,6 +108,7 @@ describe('ServiceContractFormComponent', () => {
 
   beforeEach(async () => {
     vi.clearAllMocks();
+    mockContractsApi.getServiceArea.mockReturnValue(of(mockServiceArea));
 
     await TestBed.configureTestingModule({
       imports: [ServiceContractFormComponent],

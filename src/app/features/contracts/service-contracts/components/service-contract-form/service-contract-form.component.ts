@@ -129,6 +129,14 @@ export class ServiceContractFormComponent implements OnInit {
     if (contract) {
       this.preloadContract(contract);
     }
+    this.loadServiceArea();
+  }
+
+  private loadServiceArea(): void {
+    this.contractsService.getServiceArea().subscribe({
+      next: (area) => this.serviceArea.set(area.geometria),
+      error: () => this.serviceArea.set(null),
+    });
   }
 
   /** Precarga en el formulario los datos del contrato a editar. */

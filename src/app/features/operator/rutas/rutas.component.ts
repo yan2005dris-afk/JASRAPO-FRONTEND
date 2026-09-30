@@ -612,6 +612,11 @@ export class RutasComponent implements OnInit, OnDestroy {
     this.setViewMode(newMode);
   }
 
+  toggleView(): void {
+    const newMode = this.viewMode() === 'list' ? 'map' : 'list';
+    this.setViewMode(newMode);
+  }
+
   selectTask(taskId: string | null): void {
     this.selectedTaskId.set(taskId);
   }
