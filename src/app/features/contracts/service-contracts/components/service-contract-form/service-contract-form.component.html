@@ -364,6 +364,10 @@
               <span class="text-muted x-small d-block mt-1">
                 La lectura inicial solo se define en la instalación o al reemplazar el medidor.
               </span>
+            } @else if (!isSuperAdmin()) {
+              <span class="text-muted x-small d-block mt-1">
+                Solo usuarios Super Admin pueden modificar la lectura inicial.
+              </span>
             }
             @if (isFieldInvalid('lecturaInicial')) {
               <span class="text-danger x-small"> Ingrese solo números (máx. 10 dígitos). </span>

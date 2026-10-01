@@ -237,4 +237,58 @@ describe('RutasMapComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelectorAll('.leaflet-marker-icon').length).toBe(1);
   });
+
+  it('emits every GPS fix and reuses the cached user marker icon across fixes', async () => {
+    let successCallback!: PositionCallback;
+    watchPositionSpy.mockImplementation((cb: PositionCallback) => {
+      successCallback = cb;
+      return 999;
+    });
+
+    const fixture = TestBed.createComponent(RutasMapComponent);
+    fixture.componentRef.setInput('points', mockPoints);
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r, 10));
+
+    const positions: { lat: number; lng: number }[] = [];
+    fixture.componentInstance.userPositionChange.subscribe((p) => positions.push(p));
+
+    const coords = {
+      latitude: -0.9675,
+      longitude: -80.7085,
+      accuracy: 5,
+      altitude: null,
+      altitudeAccuracy: null,
+      heading: null,
+      speed: null,
+    } as GeolocationCoordinates;
+
+    successCallback({ coords, timestamp: Date.now() } as GeolocationPosition);
+    await new Promise((r) => setTimeout(r, 0));
+    const comp = fixture.componentInstance as unknown as { userMarker: L.Marker };
+    const iconAfterFirstFix = comp.userMarker?.getIcon();
+
+    successCallback({ coords, timestamp: Date.now() + 1 } as GeolocationPosition);
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(positions).toEqual([
+      { lat: -0.9675, lng: -80.7085 },
+      { lat: -0.9675, lng: -80.7085 },
+    ]);
+    expect(comp.userMarker?.getIcon()).toBe(iconAfterFirstFix);
+  });
+
+  it('exposes the next-stop distance in the locate button tooltip', async () => {
+    const fixture = TestBed.createComponent(RutasMapComponent);
+    fixture.componentRef.setInput('points', mockPoints);
+    fixture.detectChanges();
+    await new Promise((r) => setTimeout(r, 10));
+
+    const btn = fixture.nativeElement.querySelector('.btn-center-user') as HTMLButtonElement;
+    expect(btn.getAttribute('title')).toBe('Mi ubicación');
+
+    fixture.componentRef.setInput('nextStopDistance', 842);
+    fixture.detectChanges();
+    expect(btn.getAttribute('title')).toBe('Próxima parada a 842 m de tu posición');
+  });
 });

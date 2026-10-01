@@ -12,6 +12,9 @@ import { IMeterDto } from '../../contracts/meters/domain/models/meter.model';
 
 describe('LecturasComponent State Machine', () => {
   let component: LecturasComponent;
+  let submitReading: ReturnType<typeof vi.fn>;
+  let submitReadingCoordinates: ReturnType<typeof vi.fn>;
+  let submitWorkOrder: ReturnType<typeof vi.fn>;
   const mockMeter: IMeterDto = {
     medidorId: 101,
     serie: 'SER-101',
@@ -24,6 +27,9 @@ describe('LecturasComponent State Machine', () => {
   };
 
   beforeEach(() => {
+    submitReading = vi.fn().mockResolvedValue({ lecturaId: 'lec-1' });
+    submitReadingCoordinates = vi.fn().mockResolvedValue({ id: 'wo-reading' });
+    submitWorkOrder = vi.fn().mockResolvedValue({ id: 'wo-1' });
     TestBed.configureTestingModule({
       imports: [LecturasComponent],
       providers: [
@@ -38,7 +44,10 @@ describe('LecturasComponent State Machine', () => {
               queryParamMap: {
                 get: (key: string) => {
                   if (key === 'rutaNombre') return 'Ruta Central';
-                  if (key === 'rutaTipo') return 'TOMA_LECTURA';
+                  if (key === 'rutaTipo') return 'LECTURA';
+                  if (key === 'workOrders') {
+                    return 'SER-101:LECTURA:wo-reading:PENDIENTE';
+                  }
                   return null;
                 },
               },
@@ -50,6 +59,9 @@ describe('LecturasComponent State Machine', () => {
           useValue: {
             getRegisteredReadingsCache: vi.fn().mockResolvedValue([]),
             getPendingReadings: vi.fn().mockResolvedValue([]),
+            getSyncedReadings: vi.fn().mockResolvedValue([]),
+            savePendingReading: vi.fn().mockResolvedValue(1),
+            getAssignedWorkOrders: vi.fn().mockResolvedValue([]),
             saveMetersCache: vi.fn().mockResolvedValue(undefined),
             saveRegisteredReadingsCache: vi.fn().mockResolvedValue(undefined),
           },
@@ -64,8 +76,10 @@ describe('LecturasComponent State Machine', () => {
           provide: OperatorSyncService,
           useValue: {
             getReadingEstados: vi.fn().mockResolvedValue([]),
-            submitReading: vi.fn().mockResolvedValue({ lecturaId: 'lec-1' }),
-            submitWorkOrder: vi.fn().mockResolvedValue({ id: 'wo-1' }),
+            submitReading,
+            submitReadingCoordinates,
+            submitWorkOrder,
+            refreshPendingCounts: vi.fn().mockResolvedValue(undefined),
           },
         },
         {
@@ -170,6 +184,57 @@ describe('LecturasComponent State Machine', () => {
     component.clearSelection();
     expect(component.state()).toEqual({ kind: 'search' });
     expect(component.selectedMeter()).toBeNull();
+  });
+
+  it('stores GPS on the linked work order before submitting a reading', async () => {
+    component.ngOnInit();
+    component.registeredReadings.set([
+      { lecturaId: 'lec-1', medidorId: mockMeter.medidorId, estado: 'PENDIENTE' },
+    ]);
+    component.selectMeter(mockMeter);
+
+    await component.onWorkOrderSubmit({
+      tipoActividad: 'LECTURA',
+      lecturaAnterior: 100,
+      lecturaActual: 125,
+      lecturaInicial: false,
+      fotoBlob: new Blob(['photo'], { type: 'image/jpeg' }),
+    });
+
+    expect(submitReadingCoordinates).toHaveBeenCalledWith('wo-reading');
+    expect(submitReading).toHaveBeenCalledWith(
+      expect.objectContaining({ _lecturaId: 'lec-1', lecturaActual: 125 }),
+    );
+    expect(submitReadingCoordinates.mock.invocationCallOrder[0]).toBeLessThan(
+      submitReading.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('does not submit the reading when mandatory GPS acquisition fails', async () => {
+    component.ngOnInit();
+    component.registeredReadings.set([
+      { lecturaId: 'lec-1', medidorId: mockMeter.medidorId, estado: 'PENDIENTE' },
+    ]);
+    component.selectMeter(mockMeter);
+    submitReadingCoordinates.mockRejectedValue(
+      new Error('No se pudo obtener la ubicación. Activa el GPS.'),
+    );
+
+    await component.onWorkOrderSubmit({
+      tipoActividad: 'LECTURA',
+      lecturaAnterior: 100,
+      lecturaActual: 125,
+      lecturaInicial: false,
+      fotoBlob: new Blob(['photo'], { type: 'image/jpeg' }),
+    });
+
+    expect(submitReading).not.toHaveBeenCalled();
+    expect(component.submissionFeedback()).toEqual(
+      expect.objectContaining({
+        kind: 'error',
+        message: expect.stringContaining('Activa el GPS'),
+      }),
+    );
   });
 
   describe('Route synthetic meters and meter-less work orders', () => {

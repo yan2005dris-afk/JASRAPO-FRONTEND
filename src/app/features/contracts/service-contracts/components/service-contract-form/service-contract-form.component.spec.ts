@@ -8,6 +8,7 @@ import { vi } from 'vitest';
 import { ServiceContractFormComponent } from './service-contract-form.component';
 import { ContractsApi } from '../../data/contracts.api';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { AuthService } from '../../../../../core/services/auth.service';
 import { IContract } from '../../domain/models/service-contract.model';
 import { IMeter } from '../../../meters/domain/models/meter.model';
 import { IClient } from '../../../clients/domain/models/client.model';
@@ -102,6 +103,10 @@ describe('ServiceContractFormComponent', () => {
     info: vi.fn(),
   };
 
+  const mockAuthService = {
+    isSuperAdmin: vi.fn().mockReturnValue(true),
+  };
+
   beforeEach(async () => {
     vi.clearAllMocks();
     mockContractsApi.getServiceArea.mockReturnValue(of(mockServiceArea));
@@ -113,6 +118,7 @@ describe('ServiceContractFormComponent', () => {
         provideHttpClientTesting(),
         { provide: ContractsApi, useValue: mockContractsApi },
         { provide: ToastService, useValue: mockToastService },
+        { provide: AuthService, useValue: mockAuthService },
       ],
     }).compileComponents();
 

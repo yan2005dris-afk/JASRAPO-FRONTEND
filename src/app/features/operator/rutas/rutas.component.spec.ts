@@ -13,7 +13,7 @@ import type { OperatorRouteResponse } from '../models/operator.models';
 const mockRoutesWithNames: OperatorRouteResponse[] = [
   {
     rutaId: '101',
-    tipoRuta: 'TOMA_LECTURA',
+    tipoRuta: 'LECTURA',
     nombre: 'Ruta Olón Norte',
     descripcion: 'Sector Norte Olón',
     estado: 'PENDIENTE',
@@ -66,6 +66,7 @@ describe('RutasComponent', () => {
   let fixture: ComponentFixture<RutasComponent>;
   let component: RutasComponent;
   let loadAssignedRoutes: ReturnType<typeof vi.fn>;
+  let loadActivityTypes: ReturnType<typeof vi.fn>;
   let getComunidadesCache: ReturnType<typeof vi.fn>;
   let getSectoresCache: ReturnType<typeof vi.fn>;
   let saveComunidadesCache: ReturnType<typeof vi.fn>;
@@ -82,6 +83,10 @@ describe('RutasComponent', () => {
       source: 'network',
       cachedAt: null,
     });
+    loadActivityTypes = vi.fn().mockResolvedValue([
+      { tipoActividadId: 1, codigo: 'LECTURA', nombre: 'Lecturas' },
+      { tipoActividadId: 2, codigo: 'RECONEXION', nombre: 'Reconexión' },
+    ]);
     getComunidadesCache = vi.fn().mockResolvedValue([
       { comunidadId: 1, nombre: 'Olón' },
       { comunidadId: 2, nombre: 'Núñez' },
@@ -95,6 +100,7 @@ describe('RutasComponent', () => {
     getMetersCache = vi.fn().mockResolvedValue([]);
     getRegisteredReadingsCache = vi.fn().mockResolvedValue([]);
     getPendingReadings = vi.fn().mockResolvedValue([]);
+    const getSyncedReadings = vi.fn().mockResolvedValue([]);
 
     await TestBed.configureTestingModule({
       imports: [RutasComponent],
@@ -102,7 +108,7 @@ describe('RutasComponent', () => {
         provideRouter([]),
         {
           provide: OperatorRouteOfflineService,
-          useValue: { loadAssignedRoutes },
+          useValue: { loadAssignedRoutes, loadActivityTypes },
         },
         {
           provide: IndexedDbService,
@@ -114,6 +120,7 @@ describe('RutasComponent', () => {
             getMetersCache,
             getRegisteredReadingsCache,
             getPendingReadings,
+            getSyncedReadings,
           },
         },
         {
@@ -170,6 +177,33 @@ describe('RutasComponent', () => {
     expect(tasks[0].sectorNombre).toBe('Sector Sur Olón');
   });
 
+  it('muestra los nombres literales de la respuesta y actualiza la caché si difieren', async () => {
+    loadAssignedRoutes.mockResolvedValue({
+      routes: [
+        {
+          ...mockRoutesWithNames[0],
+          comunidadNombre: 'Olon',
+          sectorNombre: 'Norte literal',
+        },
+      ],
+      source: 'network',
+      cachedAt: null,
+    });
+
+    component.ngOnInit();
+    await fixture.whenStable();
+
+    expect(component.tasks()[0].comunidadNombre).toBe('Olon');
+    expect(component.tasks()[0].sectorNombre).toBe('Norte literal');
+    expect(component.availableComunidades()[0].label).toBe('Olon');
+    component.setComunidadFilter('1');
+    expect(component.routeGroups()[0].label).toBe('Norte literal');
+    expect(saveComunidadesCache).toHaveBeenCalledWith([{ comunidadId: 1, nombre: 'Olon' }]);
+    expect(saveSectoresCache).toHaveBeenCalledWith([
+      { sectorId: 1, comunidadId: 1, nombre: 'Norte literal' },
+    ]);
+  });
+
   it('availableComunidades produce opciones con nombres reales y sin etiquetas genéricas', async () => {
     await fixture.whenStable();
     component.ngOnInit();
@@ -182,15 +216,156 @@ describe('RutasComponent', () => {
     expect(comunidades.some((c) => c.label.includes('Comunidad #'))).toBe(false);
   });
 
-  it('availableSectors produce opciones con nombres reales de sectores', async () => {
+  it('Olón muestra solo los sectores con rutas asignadas', async () => {
     await fixture.whenStable();
     component.ngOnInit();
     await fixture.whenStable();
 
-    const sectors = component.availableSectors();
+    component.setComunidadFilter('1');
+    const sectors = component.routeGroups();
     expect(sectors.length).toBe(1);
     expect(sectors[0].label).toBe('Sector Norte Olón');
-    expect(sectors[0].label.includes('Sector #')).toBe(false);
+    expect(sectors[0].label?.includes('Sector #')).toBe(false);
+  });
+
+  it('muestra todas las rutas directamente y permite filtrar por chip de comunidad', async () => {
+    component.ngOnInit();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Todas las comunidades');
+    expect(fixture.nativeElement.querySelectorAll('.task-card').length).toBe(2);
+
+    component.setComunidadFilter('1');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Ruta Olón Norte');
+    expect(component.routeGroups().map((sector) => sector.label)).toEqual(['Sector Norte Olón']);
+    expect(fixture.nativeElement.textContent).not.toContain('Ruta Reconexión Núñez');
+    expect(fixture.nativeElement.querySelectorAll('.route-sector-section').length).toBe(1);
+    expect(fixture.nativeElement.querySelectorAll('.task-card').length).toBe(1);
+
+    component.setComunidadFilter('ALL');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.task-card').length).toBe(2);
+  });
+
+  it('agrupa Olón por sector y presenta las demás comunidades sin sector artificial', async () => {
+    component.ngOnInit();
+    await fixture.whenStable();
+    component.tasks.set([
+      { ...mockRoutesWithNames[0], rutaId: '101', sectorId: 1, sectorNombre: 'Centro' },
+      {
+        ...mockRoutesWithNames[0],
+        rutaId: '104',
+        comunidadId: 1,
+        sectorId: 3,
+        sectorNombre: 'Centro',
+      },
+      {
+        ...mockRoutesWithNames[0],
+        rutaId: '105',
+        comunidadId: 1,
+        sectorId: undefined,
+        sectorNombre: undefined,
+      },
+      {
+        ...mockRoutesWithNames[1],
+        rutaId: '106',
+        comunidadId: 2,
+        sectorId: 1,
+        sectorNombre: 'Centro',
+      },
+    ]);
+
+    component.setComunidadFilter('1');
+    expect(component.routeGroups().map((sector) => sector.id)).toEqual(['1', '3', 'NONE']);
+    expect(component.routeGroups().map((sector) => sector.label)).toEqual([
+      'Centro',
+      'Centro',
+      'Sin Sector',
+    ]);
+    expect(
+      component.routeGroups().map((sector) => sector.routes.map((route) => route.rutaId)),
+    ).toEqual([['101'], ['104'], ['105']]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Sin Sector');
+    expect(fixture.nativeElement.querySelectorAll('.route-sector-section').length).toBe(3);
+    expect(fixture.nativeElement.querySelectorAll('.task-card').length).toBe(3);
+
+    component.setComunidadFilter('2');
+    expect(component.routeGroups().map((group) => group.id)).toEqual(['DIRECT']);
+    expect(component.routeGroups()[0].label).toBeNull();
+    expect(component.filteredTasks().map((route) => route.rutaId)).toEqual(['106']);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelectorAll('.route-sector-heading').length).toBe(0);
+    expect(fixture.nativeElement.querySelectorAll('.task-card').length).toBe(1);
+  });
+
+  it('respeta los nombres literales de la BD y el orden de los IDs del catálogo', async () => {
+    component.ngOnInit();
+    await fixture.whenStable();
+    const olonRoute = mockRoutesWithNames[0];
+    const otherRoute = mockRoutesWithNames[1];
+    component.tasks.set([
+      { ...olonRoute, comunidadNombre: 'Olon', sectorId: 1, rutaId: '101' },
+      {
+        ...olonRoute,
+        comunidadNombre: 'Olon',
+        sectorId: 2,
+        sectorNombre: 'Sector Sur Olón',
+        rutaId: '102',
+      },
+      {
+        ...olonRoute,
+        comunidadNombre: 'Olon',
+        sectorId: 3,
+        sectorNombre: 'Sector Centro Olón',
+        rutaId: '103',
+      },
+      {
+        ...olonRoute,
+        comunidadNombre: 'Olon',
+        sectorId: 4,
+        sectorNombre: 'Sector Playa Olón',
+        rutaId: '104',
+      },
+      { ...otherRoute, comunidadNombre: 'Nuñez', rutaId: '105' },
+      { ...otherRoute, comunidadId: 3, comunidadNombre: 'La Entrada', rutaId: '106' },
+      { ...otherRoute, comunidadId: 4, comunidadNombre: 'San Jose', rutaId: '107' },
+      { ...otherRoute, comunidadId: 5, comunidadNombre: 'Curia', rutaId: '108' },
+    ]);
+
+    expect(component.availableComunidades().map((community) => community.label)).toEqual([
+      'Olon',
+      'Nuñez',
+      'La Entrada',
+      'San Jose',
+      'Curia',
+    ]);
+    component.setComunidadFilter('1');
+    expect(component.routeGroups().map((group) => group.label)).toEqual([
+      'Sector Norte Olón',
+      'Sector Sur Olón',
+      'Sector Centro Olón',
+      'Sector Playa Olón',
+    ]);
+    component.setComunidadFilter('4');
+    expect(component.selectedComunidadLabel()).toBe('San Jose');
+    expect(component.routeGroups().map((group) => group.label)).toEqual([null]);
+  });
+
+  it('aplica filtros globales antes del agrupamiento geográfico', async () => {
+    component.ngOnInit();
+    await fixture.whenStable();
+    component.setFilter('RECONEXION');
+    expect(component.availableComunidades().map((community) => community.label)).toEqual(['Núñez']);
+    component.setComunidadFilter('2');
+    expect(component.routeGroups().map((group) => group.label)).toEqual([null]);
+    component.setStateFilter('PENDIENTE');
+    expect(component.activeComunidadFilter()).toBe('2');
+    expect(component.routeGroups()).toEqual([]);
+    expect(component.selectedComunidadLabel()).toBe('Núñez');
+    expect(component.availableComunidades()).toEqual([]);
   });
 
   it('getTaskComunidadDescription y getTaskSectorDescription retornan descripciones dinámicas', async () => {

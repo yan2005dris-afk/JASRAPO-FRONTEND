@@ -629,7 +629,7 @@ describe('RouteAssignmentWorkspaceComponent (Issue #315)', () => {
         expect(component.isLecturaActivity('LECTURA')).toBe(true);
       });
 
-      it('should classify TOMA_LECTURA as lectura mode', () => {
+      it('should classify legacy TOMA_LECTURA as lectura mode', () => {
         expect(component.isLecturaActivity('TOMA_LECTURA')).toBe(true);
       });
 

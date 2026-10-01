@@ -6,6 +6,7 @@ import { ReplaceMeterModalComponent } from './replace-meter-modal.component';
 import { MetersApi } from '../../data/meters.api';
 import { PeriodsService } from '../../../../../shared/services/periods.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { AuthService } from '../../../../../core/services/auth.service';
 import { IContract } from '../../../service-contracts/domain/models/service-contract.model';
 import { IMeter, IReplaceMeterResponse } from '../../domain/models/meter.model';
 
@@ -108,6 +109,10 @@ describe('ReplaceMeterModalComponent', () => {
     show: vi.fn(),
   };
 
+  const mockAuthService = {
+    isSuperAdmin: vi.fn().mockReturnValue(true),
+  };
+
   beforeEach(async () => {
     vi.clearAllMocks();
 
@@ -118,6 +123,7 @@ describe('ReplaceMeterModalComponent', () => {
         { provide: MetersApi, useValue: mockMetersService },
         { provide: PeriodsService, useValue: mockPeriodsService },
         { provide: ToastService, useValue: mockToastService },
+        { provide: AuthService, useValue: mockAuthService },
       ],
     }).compileComponents();
 

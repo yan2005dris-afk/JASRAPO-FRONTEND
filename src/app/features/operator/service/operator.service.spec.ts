@@ -6,7 +6,7 @@ import type { OperatorRouteResponse, ReadingWithAnomaly } from '../models/operat
 
 const mockTask: OperatorRouteResponse = {
   rutaId: 'r-001',
-  tipoRuta: 'TOMA_LECTURA',
+  tipoRuta: 'LECTURA',
   nombre: 'Ruta Norte',
   estado: 'PENDIENTE',
   operarioId: 1,
@@ -43,12 +43,12 @@ describe('OperatorService', () => {
     service = TestBed.inject(OperatorService);
   });
 
-  describe('getTasks', () => {
-    it('calls GET /api/v1/operator/routes and returns tasks array', () => {
+  describe('getRoutes', () => {
+    it('calls GET /api/v1/operator/routes and returns routes array', () => {
       httpGetSpy.mockReturnValue(of([mockTask]));
 
       let result: OperatorRouteResponse[] = [];
-      service.getTasks().subscribe((tasks) => (result = tasks));
+      service.getRoutes().subscribe((routes) => (result = routes));
 
       expect(httpGetSpy).toHaveBeenCalledOnce();
       const [url] = httpGetSpy.mock.calls[0] as [string, unknown];
@@ -60,20 +60,20 @@ describe('OperatorService', () => {
     it('includes tipoRuta as HttpParams when provided', () => {
       httpGetSpy.mockReturnValue(of([mockTask]));
 
-      service.getTasks('TOMA_LECTURA').subscribe();
+      service.getRoutes('LECTURA').subscribe();
 
       const [url, options] = httpGetSpy.mock.calls[0] as [string, { params: HttpParams }];
       expect(url).toBe('/api/v1/operator/routes');
-      expect(options?.params.get('tipoRuta')).toBe('TOMA_LECTURA');
+      expect(options?.params.get('tipoRuta')).toBe('LECTURA');
     });
   });
 
-  describe('updateTaskState', () => {
+  describe('updateRouteState', () => {
     it('calls PATCH /api/v1/operator/routes/:id/state with the dto payload', () => {
       httpPatchSpy.mockReturnValue(of({ success: true }));
 
       let result: unknown;
-      service.updateTaskState('r-001', { estado: 'COMPLETADA' }).subscribe((r) => (result = r));
+      service.updateRouteState('r-001', { estado: 'COMPLETADA' }).subscribe((r) => (result = r));
 
       expect(httpPatchSpy).toHaveBeenCalledOnce();
       const [url, body] = httpPatchSpy.mock.calls[0] as [string, { estado: string }];
@@ -86,7 +86,7 @@ describe('OperatorService', () => {
       httpPatchSpy.mockReturnValue(of({}));
 
       service
-        .updateTaskState('r-002', { estado: 'CANCELADA', observacion: 'No llegué' })
+        .updateRouteState('r-002', { estado: 'CANCELADA', observacion: 'No llegué' })
         .subscribe();
 
       const [, body] = httpPatchSpy.mock.calls[0] as [

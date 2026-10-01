@@ -6,7 +6,7 @@ import { IReadingRowItem } from '../../readings/components/readings-table/readin
 import { ReadingRoutesService } from '../data/reading-routes.api';
 
 /**
- * Centralises the validation actions for a reading on a TOMA_LECTURA route.
+ * Centralises the validation actions for a reading on a LECTURA route.
  *
  * The previous inline implementation in reading-route-detail.component.ts
  * had the same shape repeated for approve / reject (close the dropdown,
@@ -53,11 +53,10 @@ export class RouteReadingActionsService {
   }
 
   /**
-   * Asks the operator to confirm a re-reading request for the meter on the
-   * given reading. When the backend endpoint lands, only the body of this
-   // method needs to change.
+   * Asks the administrator to confirm a re-reading request for the meter on the
+   * given reading, transitions it to RECHAZADA_VERIFICACION and updates the local signal.
    */
-  requestReReading(reading: IReadingRowItem): void {
+  requestReReading(reading: IReadingRowItem, readings?: WritableSignal<IReadingRowItem[]>): void {
     const meterLabel = reading.medidorSerie ?? reading.lecturaId;
     this.dialogService
       .confirm({
@@ -69,9 +68,23 @@ export class RouteReadingActionsService {
       })
       .subscribe((confirmed) => {
         if (!confirmed) return;
-        // TODO: wire to backend when SC-XXX lands. Today this is an explicit
-        // ack so the operator does not think the action went through.
-        this.toastService.info('Solicitud de relectura aún no conectada al backend');
+        this.routesService
+          .updateReadingStatus(reading.lecturaId, 'RECHAZADA_VERIFICACION')
+          .subscribe({
+            next: () => {
+              if (readings) {
+                readings.update((list) =>
+                  list.map((r) =>
+                    r.lecturaId === reading.lecturaId
+                      ? { ...r, estado: 'RECHAZADA_VERIFICACION' }
+                      : r,
+                  ),
+                );
+              }
+              this.toastService.warning('Relectura solicitada');
+            },
+            error: () => this.toastService.error('Error al solicitar la relectura'),
+          });
       });
   }
 }

@@ -14,15 +14,41 @@ import { Router } from '@angular/router';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { NetworkService } from '../../../core/services/network.service';
 import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
-import type { OperatorRouteResponse, RouteType } from '../models/operator.models';
-import { OperatorRouteOfflineService } from '../service/operator-route-offline.service';
-import { STATE_LABELS, FILTER_OPTIONS, STATE_FILTER_OPTIONS } from './rutas.constants';
+import type {
+  OperatorRouteResponse,
+  RouteType,
+  OperatorActivityType,
+} from '../models/operator.models';
+import {
+  classifyRouteLoadError,
+  type OperatorRouteErrorInfo,
+  OperatorRouteOfflineService,
+} from '../service/operator-route-offline.service';
+import { STATE_LABELS, STATE_FILTER_OPTIONS } from './rutas.constants';
+import {
+  compareRoutesCanonically,
+  isReadingRouteType,
+  nextPendingWorkOrder,
+  routeMatchesTypeFilter,
+} from './rutas.utils';
+import {
+  formatDistance as formatDistanceUtil,
+  haversineMeters,
+  type LatLng,
+} from '../../../shared/utils/geo.utils';
 import { RutasMapComponent, type MapPoint } from '../components/rutas-map/rutas-map.component';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
 
 type ViewMode = 'list' | 'map';
+
+interface RouteGroup {
+  id: string;
+  label: string | null;
+  routeCount: number;
+  routes: OperatorRouteResponse[];
+}
 
 @Component({
   selector: 'app-rutas',
@@ -49,14 +75,18 @@ export class RutasComponent implements OnInit, OnDestroy {
   readonly activeFilter = signal<string>('ALL');
   readonly activeStateFilter = signal<string>('ALL');
   readonly activeComunidadFilter = signal<string>('ALL');
-  readonly activeSectorFilter = signal<string>('ALL');
   readonly viewMode = signal<ViewMode>('list');
   readonly isLoading = signal<boolean>(false);
   readonly selectedTaskId = signal<string | null>(null);
   readonly readingStatusBySerie = signal<Map<string, string>>(new Map());
   readonly routesSource = signal<'network' | 'cache' | null>(null);
   readonly routesCachedAt = signal<string | null>(null);
-  readonly loadError = signal<string | null>(null);
+  readonly loadError = signal<OperatorRouteErrorInfo | null>(null);
+  private readonly userPosition = signal<LatLng | null>(null);
+
+  /** Frecuencia mínima entre actualizaciones del signal userPosition (~1 Hz). */
+  private static readonly USER_POSITION_THROTTLE_MS = 1000;
+  private lastUserPositionAt = 0;
 
   // ── Computed Dashboard & KPIs ───────────────────────────────────────────
   readonly currentUser = computed(() => {
@@ -74,7 +104,7 @@ export class RutasComponent implements OnInit, OnDestroy {
     for (const t of this.tasks()) {
       count += this.getTaskPointCount(t);
     }
-    return count > 0 ? count : 150;
+    return count;
   });
 
   readonly totalReadMeters = computed<number>(() => {
@@ -84,19 +114,29 @@ export class RutasComponent implements OnInit, OnDestroy {
       const paradas = t.paradas || [];
       for (const p of paradas) {
         const st = statusMap.get(p.serie ?? '') ?? p.estado;
-        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+        if (
+          st &&
+          st !== 'PENDIENTE' &&
+          st !== '__SIN_LECTURA__' &&
+          st !== 'RECHAZADA_VERIFICACION'
+        ) {
           readCount++;
         }
       }
       const ordenes = t.ordenesTrabajo || [];
       for (const o of ordenes) {
         const st = statusMap.get(o.medidor?.serie ?? '') ?? o.estado;
-        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+        if (
+          st &&
+          st !== 'PENDIENTE' &&
+          st !== '__SIN_LECTURA__' &&
+          st !== 'RECHAZADA_VERIFICACION'
+        ) {
           readCount++;
         }
       }
     }
-    return readCount > 0 ? readCount : 78;
+    return readCount;
   });
 
   readonly readingProgressPct = computed<number>(() => {
@@ -108,7 +148,7 @@ export class RutasComponent implements OnInit, OnDestroy {
   readonly totalWorkOrders = computed<number>(() => {
     let count = 0;
     for (const t of this.tasks()) {
-      if (t.tipoRuta !== 'TOMA_LECTURA') {
+      if (t.tipoRuta !== 'LECTURA') {
         count += t.ordenesTrabajo?.length || 1;
       }
     }
@@ -120,65 +160,100 @@ export class RutasComponent implements OnInit, OnDestroy {
     return all.find((t) => t.estado !== 'COMPLETADA' && t.estado !== 'CANCELADA') ?? all[0] ?? null;
   });
 
-  // ── Computed ─────────────────────────────────────────────────────────────
-  // ── Comunidades & Sectores Computados Separados ───────────────────────────
-  readonly availableComunidades = computed<{ id: string; label: string }[]>(() => {
-    const map = new Map<string, string>();
-    const comCatalog = this.comunidadesCatalog();
-    for (const t of this.tasks()) {
-      if (t.comunidadId != null) {
-        const id = String(t.comunidadId);
-        const label =
-          t.comunidadNombre?.trim() || comCatalog.get(t.comunidadId) || `Comunidad #${id}`;
-        map.set(id, label);
-      }
-    }
-    return Array.from(map.entries()).map(([id, label]) => ({ id, label }));
-  });
+  // Los filtros de tipo/estado se aplican antes de formar la jerarquía.
+  readonly routesForNavigation = computed(() =>
+    this.tasks()
+      .filter(
+        (task) =>
+          routeMatchesTypeFilter(task.tipoRuta, this.activeFilter()) &&
+          (this.activeStateFilter() === 'ALL' || task.estado === this.activeStateFilter()),
+      )
+      .sort(compareRoutesCanonically),
+  );
 
-  readonly availableSectors = computed<{ id: string; label: string }[]>(() => {
-    const map = new Map<string, string>();
-    const secCatalog = this.sectoresCatalog();
-    for (const t of this.tasks()) {
-      if (t.sectorNombre?.trim()) {
-        map.set(t.sectorNombre.trim(), t.sectorNombre.trim());
-      } else if (t.sectorId != null) {
-        const id = String(t.sectorId);
-        const label = secCatalog.get(t.sectorId) || `Sector #${id}`;
-        map.set(label, label);
-      }
-    }
-    return Array.from(map.entries()).map(([id, label]) => ({ id, label }));
-  });
-
-  readonly filteredTasks = computed<OperatorRouteResponse[]>(() => {
-    const tipo = this.activeFilter();
-    const estado = this.activeStateFilter();
-    const comunidad = this.activeComunidadFilter();
-    const sector = this.activeSectorFilter();
-    const secCatalog = this.sectoresCatalog();
-
-    return this.tasks().filter((t) => {
-      if (tipo !== 'ALL' && t.tipoRuta !== tipo) return false;
-      if (estado !== 'ALL' && t.estado !== estado) return false;
-      if (comunidad !== 'ALL' && String(t.comunidadId) !== comunidad) return false;
-      if (sector !== 'ALL') {
-        const secNombre = t.sectorNombre?.trim();
-        const secDesc = t.descripcion?.trim();
-        const secId = t.sectorId != null ? String(t.sectorId) : null;
-        const cachedSec = t.sectorId != null ? secCatalog.get(t.sectorId) : null;
-        if (
-          secNombre !== sector &&
-          secDesc !== sector &&
-          secId !== sector &&
-          cachedSec !== sector &&
-          `Sector #${t.sectorId}` !== sector
-        ) {
-          return false;
+  readonly availableComunidades = computed<{ id: string; label: string; routeCount: number }[]>(
+    () => {
+      const groups = new Map<string, { id: string; label: string; routeCount: number }>();
+      for (const task of this.routesForNavigation()) {
+        const id = String(task.comunidadId);
+        const group = groups.get(id);
+        if (group) {
+          group.routeCount++;
+        } else {
+          groups.set(id, {
+            id,
+            label: this.getTaskComunidadDescription(task),
+            routeCount: 1,
+          });
         }
       }
-      return true;
-    });
+      return [...groups.values()].sort((a, b) => Number(a.id) - Number(b.id));
+    },
+  );
+
+  readonly selectedComunidadLabel = computed(() => {
+    const task = this.tasks().find(
+      (route) => String(route.comunidadId) === this.activeComunidadFilter(),
+    );
+    return task ? this.getTaskComunidadDescription(task) : undefined;
+  });
+
+  readonly selectedCommunityHasSectors = computed(() => this.activeComunidadFilter() === '1');
+
+  readonly filteredTasks = computed<OperatorRouteResponse[]>(() => {
+    const communityId = this.activeComunidadFilter();
+    return this.routesForNavigation().filter(
+      (task) => communityId === 'ALL' || String(task.comunidadId) === communityId,
+    );
+  });
+
+  readonly routeGroups = computed<RouteGroup[]>(() => {
+    const routes = this.filteredTasks();
+    if (routes.length === 0) return [];
+
+    if (this.activeComunidadFilter() === 'ALL') {
+      const groups = new Map<string, RouteGroup>();
+      for (const task of routes) {
+        const id = task.comunidadId == null ? 'NONE' : String(task.comunidadId);
+        const group = groups.get(id);
+        if (group) {
+          group.routeCount++;
+          group.routes.push(task);
+        } else {
+          groups.set(id, {
+            id,
+            label: id === 'NONE' ? 'Otras comunidades' : this.getTaskComunidadDescription(task),
+            routeCount: 1,
+            routes: [task],
+          });
+        }
+      }
+      return [...groups.values()];
+    }
+
+    if (!this.selectedCommunityHasSectors()) {
+      return [{ id: 'DIRECT', label: null, routeCount: routes.length, routes }];
+    }
+
+    const groups = new Map<string, RouteGroup>();
+    for (const task of routes) {
+      const id = task.sectorId == null ? 'NONE' : String(task.sectorId);
+      const group = groups.get(id);
+      if (group) {
+        group.routeCount++;
+        group.routes.push(task);
+      } else {
+        groups.set(id, {
+          id,
+          label: id === 'NONE' ? 'Sin Sector' : this.getTaskSectorDescription(task),
+          routeCount: 1,
+          routes: [task],
+        });
+      }
+    }
+    return [...groups.values()].sort((a, b) =>
+      a.id === 'NONE' ? 1 : b.id === 'NONE' ? -1 : Number(a.id) - Number(b.id),
+    );
   });
 
   readonly mapPoints = computed<MapPoint[]>(() => {
@@ -186,7 +261,10 @@ export class RutasComponent implements OnInit, OnDestroy {
     const statusMap = this.readingStatusBySerie();
 
     const sortedTasks = this.filteredTasks();
-
+    const activityTypes = this.activityTypes();
+    const iconMap = new Map<string, string>(
+      activityTypes.map((t) => [t.codigo, t.icono ?? 'bi-geo-alt-fill']),
+    );
     const points: MapPoint[] = [];
 
     for (const task of sortedTasks) {
@@ -205,6 +283,7 @@ export class RutasComponent implements OnInit, OnDestroy {
               lng: p.longitud,
               estado: statusMap.get(p.serie ?? '') ?? p.estado ?? '__SIN_LECTURA__',
               tipoRuta: p.tipoActividad ?? task.tipoRuta,
+              icon: iconMap.get(p.tipoActividad ?? task.tipoRuta),
               popupHtml: `
                 <div class="map-info">
                   <strong>${task.nombre}</strong>
@@ -230,6 +309,8 @@ export class RutasComponent implements OnInit, OnDestroy {
               lng,
               estado: statusMap.get(serie ?? '') ?? ord.estado ?? '__SIN_LECTURA__',
               tipoRuta: ord.tipoActividad,
+              icon: iconMap.get(ord.tipoActividad),
+              pointKey: `${task.rutaId}:${ord.ordenTrabajoId}`,
               popupHtml: `
                 <div class="map-info">
                   <strong>${task.nombre}</strong>
@@ -241,7 +322,7 @@ export class RutasComponent implements OnInit, OnDestroy {
             });
           }
         }
-      } else if (task.tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos?.length) {
+      } else if (isReadingRouteType(task.tipoRuta) && task.rutaPuntos?.length) {
         for (const pt of task.rutaPuntos) {
           points.push({
             routeId: task.rutaId,
@@ -249,6 +330,7 @@ export class RutasComponent implements OnInit, OnDestroy {
             lng: pt.longitud,
             estado: statusMap.get(pt.serie) ?? '__SIN_LECTURA__',
             tipoRuta: task.tipoRuta,
+            icon: iconMap.get(task.tipoRuta),
             popupHtml: `
               <div class="map-info">
                 <strong>${task.nombre}</strong>
@@ -264,8 +346,50 @@ export class RutasComponent implements OnInit, OnDestroy {
     return points;
   });
 
+  /**
+   * Distancia (m) desde la posición del operador hasta la próxima parada PENDIENTE
+   * (por ordenVisita) de cada ruta filtrada. Vacío mientras no haya fix GPS.
+   * Regla de negocio: primera orden PENDIENTE por ordenVisita, NO mínima haversiana.
+   */
+  readonly nextStopDistanceByRoute = computed<Map<string, number>>(() => {
+    const position = this.userPosition();
+    const distances = new Map<string, number>();
+    if (!position) return distances;
+    for (const task of this.filteredTasks()) {
+      const next = nextPendingWorkOrder(task);
+      if (!next) continue;
+      const contract = next.contrato;
+      if (contract?.latitud == null || contract?.longitud == null) continue;
+      distances.set(
+        task.rutaId,
+        haversineMeters(position, { lat: contract.latitud, lng: contract.longitud }),
+      );
+    }
+    return distances;
+  });
+
+  /** Distancia a la próxima parada de la ruta seleccionada (para tooltip y popup). */
+  readonly selectedNextStopDistance = computed<number | null>(() => {
+    const selectedId = this.selectedTaskId();
+    if (selectedId === null) return null;
+    return this.nextStopDistanceByRoute().get(selectedId) ?? null;
+  });
+
+  /** Identidad del punto de próxima parada (`<rutaId>:<ordenTrabajoId>`) dentro de `mapPoints`. */
+  readonly selectedNextStopPointKey = computed<string | null>(() => {
+    const selectedId = this.selectedTaskId();
+    if (selectedId === null) return null;
+    const task = this.filteredTasks().find((t) => t.rutaId === selectedId);
+    if (!task) return null;
+    const next = nextPendingWorkOrder(task);
+    return next ? `${task.rutaId}:${next.ordenTrabajoId}` : null;
+  });
+
   // ── Exponer constantes al template ────────────────────────────────────────
-  readonly filterOptions = FILTER_OPTIONS;
+  readonly filterOptions = signal<{ label: string; value: string }[]>([
+    { label: 'Todas', value: 'ALL' },
+  ]);
+  readonly activityTypes = signal<OperatorActivityType[]>([]);
   readonly stateFilterOptions = STATE_FILTER_OPTIONS;
   readonly stateLabelMap = STATE_LABELS;
 
@@ -282,6 +406,25 @@ export class RutasComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
+  // ── Proximidad GPS ─────────────────────────────────────────────────────────
+
+  /**
+   * Recibe cada fix del mapa (el marcador del operador siempre sigue la posición en vivo),
+   * pero el signal userPosition se actualiza como máximo ~1 Hz para no recalcular
+   * distancias y recomponer señales más rápido de lo que el GPS móvil entrega info útil.
+   */
+  onUserPositionChange(position: LatLng): void {
+    const now = Date.now();
+    if (now - this.lastUserPositionAt < RutasComponent.USER_POSITION_THROTTLE_MS) return;
+    this.lastUserPositionAt = now;
+    this.userPosition.set(position);
+  }
+
+  /** Distancia legible ("X m" / "X.X km") para el badge de proximidad. */
+  formatDistance(meters: number): string {
+    return formatDistanceUtil(meters);
+  }
+
   // ── Carga de datos ────────────────────────────────────────────────────────
 
   /** Carga rutas asignadas y estados de lecturas en paralelo. */
@@ -289,14 +432,23 @@ export class RutasComponent implements OnInit, OnDestroy {
     this.isLoading.set(true);
     this.loadError.set(null);
     try {
-      const [routeResult, comCache, secCache] = await Promise.all([
+      const [routeResult, comCache, secCache, activityTypes] = await Promise.all([
         this.routeOfflineService.loadAssignedRoutes(),
         this.dbService.getComunidadesCache().catch(() => []),
         this.dbService.getSectoresCache().catch(() => []),
+        this.routeOfflineService.loadActivityTypes().catch(() => []),
         this.loadReadingStatuses(),
       ]);
       const comMap = new Map<number, string>(comCache.map((c) => [c.comunidadId, c.nombre]));
       const secMap = new Map<number, string>(secCache.map((s) => [s.sectorId, s.nombre]));
+
+      if (activityTypes.length > 0) {
+        this.activityTypes.set(activityTypes);
+        this.filterOptions.set([
+          { label: 'Todas', value: 'ALL' },
+          ...activityTypes.map((t) => ({ label: t.nombre, value: t.codigo })),
+        ]);
+      }
 
       // Auto-cosechar comunidades y sectores nuevos provenientes de la respuesta del backend
       const newComunidades: { comunidadId: number; nombre: string }[] = [];
@@ -306,20 +458,24 @@ export class RutasComponent implements OnInit, OnDestroy {
         if (
           r.comunidadId != null &&
           r.comunidadNombre?.trim() &&
-          !comMap.has(Number(r.comunidadId))
+          comMap.get(Number(r.comunidadId)) !== r.comunidadNombre
         ) {
-          comMap.set(Number(r.comunidadId), r.comunidadNombre.trim());
+          comMap.set(Number(r.comunidadId), r.comunidadNombre);
           newComunidades.push({
             comunidadId: Number(r.comunidadId),
-            nombre: r.comunidadNombre.trim(),
+            nombre: r.comunidadNombre,
           });
         }
-        if (r.sectorId != null && r.sectorNombre?.trim() && !secMap.has(Number(r.sectorId))) {
-          secMap.set(Number(r.sectorId), r.sectorNombre.trim());
+        if (
+          r.sectorId != null &&
+          r.sectorNombre?.trim() &&
+          secMap.get(Number(r.sectorId)) !== r.sectorNombre
+        ) {
+          secMap.set(Number(r.sectorId), r.sectorNombre);
           newSectores.push({
             sectorId: Number(r.sectorId),
             comunidadId: r.comunidadId != null ? Number(r.comunidadId) : undefined,
-            nombre: r.sectorNombre.trim(),
+            nombre: r.sectorNombre,
           });
         }
       }
@@ -338,15 +494,22 @@ export class RutasComponent implements OnInit, OnDestroy {
         (r, idx: number) => {
           const comId = r.comunidadId != null ? Number(r.comunidadId) : undefined;
           const secId = r.sectorId != null ? Number(r.sectorId) : undefined;
-          const comunidadNombre =
-            r.comunidadNombre?.trim() || (comId ? comMap.get(comId) : undefined);
-          const sectorNombre = r.sectorNombre?.trim() || (secId ? secMap.get(secId) : undefined);
+          const comunidadNombre = r.comunidadNombre?.trim()
+            ? r.comunidadNombre
+            : comId != null
+              ? comMap.get(comId)
+              : undefined;
+          const sectorNombre = r.sectorNombre?.trim()
+            ? r.sectorNombre
+            : secId != null
+              ? secMap.get(secId)
+              : undefined;
           return {
             ...r,
             rutaId: String(r.rutaId || idx + 1),
-            tipoRuta: r.tipoRuta || 'TOMA_LECTURA',
+            tipoRuta: r.tipoRuta || 'LECTURA',
             estado: r.estado || 'PENDIENTE',
-            nombre: r.nombre || `Ruta ${r.tipoRuta || 'TOMA_LECTURA'} #${idx + 1}`,
+            nombre: r.nombre || `Ruta ${r.tipoRuta || 'LECTURA'} #${idx + 1}`,
             comunidadNombre,
             sectorNombre,
             paradas: Array.isArray(r.paradas) ? r.paradas : [],
@@ -355,14 +518,25 @@ export class RutasComponent implements OnInit, OnDestroy {
         },
       );
       this.tasks.set(normalizedRoutes);
+      const navigableRoutes = normalizedRoutes.filter(
+        (route) =>
+          routeMatchesTypeFilter(route.tipoRuta, this.activeFilter()) &&
+          (this.activeStateFilter() === 'ALL' || route.estado === this.activeStateFilter()),
+      );
+      if (
+        this.activeComunidadFilter() !== 'ALL' &&
+        !navigableRoutes.some((route) => String(route.comunidadId) === this.activeComunidadFilter())
+      ) {
+        this.setComunidadFilter('ALL');
+      }
       this.routesSource.set(routeResult.source);
       this.routesCachedAt.set(routeResult.cachedAt);
+      this.loadError.set(routeResult.error);
     } catch (err) {
       this.tasks.set([]);
       this.routesSource.set(null);
       this.routesCachedAt.set(null);
-      const raw = err instanceof Error ? err.message : String(err);
-      this.loadError.set(this.translateLoadError(raw));
+      this.loadError.set(this.translateLoadErrorInfo(err));
     } finally {
       this.isLoading.set(false);
     }
@@ -374,27 +548,65 @@ export class RutasComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Mapea el mensaje crudo del servicio a un copy orientado al operador.
-   * Tres causas reales distintas → tres acciones distintas del usuario.
+   * Mapea un error de carga SIN fallback de caché a información estructurada para la UI.
+   * Se conserva el copy específico de los dos casos especiales de este servicio y se delega
+   * en classifyRouteLoadError para el resto (negocio vs red).
    */
-  private translateLoadError(raw: string): string {
-    if (raw.includes('identificar al operador')) {
-      return 'Tu sesión expiró. Volvé a iniciar sesión para cargar tus rutas.';
+  private translateLoadErrorInfo(err: unknown): OperatorRouteErrorInfo {
+    if (err instanceof Error && err.message.includes('identificar al operador')) {
+      return {
+        kind: 'auth',
+        message: 'Tu sesión expiró. Volvé a iniciar sesión para cargar tus rutas.',
+        retryable: false,
+      };
     }
-    if (raw.includes('No hay rutas guardadas')) {
-      return 'No hay rutas guardadas en este dispositivo. Conectate una vez para descargarlas.';
+    if (err instanceof Error && err.message.includes('No hay rutas guardadas')) {
+      return {
+        kind: 'network',
+        message: 'No hay rutas guardadas en este dispositivo. Conectate una vez para descargarlas.',
+        retryable: true,
+      };
     }
-    return 'No pudimos cargar las rutas. Verificá tu conexión y reintentá.';
+    return classifyRouteLoadError(err);
+  }
+
+  /** Título del bloque de error según el tipo de falla (sin caché disponible). */
+  loadErrorTitle(): string {
+    const info = this.loadError();
+    if (!info) return '';
+    if (info.kind === 'business') return 'Error de sincronización';
+    if (info.kind === 'auth') return 'Sesión expirada';
+    return 'Mapa offline no preparado';
   }
 
   /** Construye el mapa medidorSerie → estado desde IndexedDB. */
   private async loadReadingStatuses(): Promise<void> {
     try {
-      const [meters, registered, pending] = await Promise.all([
+      const operatorId = this.authService.currentUser()?.id;
+      const scope = operatorId ? `operator:${operatorId}` : undefined;
+
+      const [meters, initialRegistered, pending, synced] = await Promise.all([
         this.dbService.getMetersCache(),
-        this.dbService.getRegisteredReadingsCache(),
+        this.dbService.getRegisteredReadingsCache(scope),
         this.dbService.getPendingReadings(),
+        this.dbService.getSyncedReadings().catch(() => []),
       ]);
+      let registered = initialRegistered;
+
+      if (this.networkService.isOnline()) {
+        try {
+          const fresh = (await this.syncService.getCurrentPeriodReadings()) as Record<
+            string,
+            unknown
+          >[];
+          if (fresh?.length) {
+            await this.dbService.saveRegisteredReadingsCache(fresh, scope);
+            registered = fresh as unknown as typeof initialRegistered;
+          }
+        } catch {
+          // Fallback a caché
+        }
+      }
 
       const serieToId = new Map<string, string>();
       for (const m of meters) {
@@ -402,22 +614,43 @@ export class RutasComponent implements OnInit, OnDestroy {
       }
 
       const idToEstado = new Map<string, string>();
+      const statusMap = new Map<string, string>();
+
+      // 1. Recibos locales previamente sincronizados (prioridad base)
+      for (const s of synced) {
+        const sId = s['medidorId'];
+        const sEstado = s['estado'] || 'POR_REVISION';
+        if (sId) idToEstado.set(sId.toString(), sEstado);
+        const sSerie = s['medidorSerie'] || s['serie'];
+        if (sSerie) statusMap.set(String(sSerie), sEstado);
+        if (s['ordenTrabajoId']) {
+          statusMap.set(String(s['ordenTrabajoId']), sEstado);
+          statusMap.set(`OT-${s['ordenTrabajoId']}`, sEstado);
+        }
+      }
+      // 2. Registradas autoritativas del servidor (sobrescribe histórico con APROBADA, RECHAZADA_VERIFICACION, etc.)
       for (const r of registered) {
         const mId = r.medidor?.medidorId ?? r.medidorId;
         if (mId) idToEstado.set(mId.toString(), r.estado);
+        const s = r.medidor?.serie ?? r.medidorSerie;
+        if (s) statusMap.set(String(s), r.estado);
       }
+      // 3. Pendientes en cola local offline (máxima prioridad)
       for (const p of pending) {
         const pId = p['medidorId'];
-        const pEstado = p['estado'];
-        if (pId && !idToEstado.has(pId.toString())) {
-          idToEstado.set(pId.toString(), pEstado ?? 'PENDIENTE');
+        const pEstado = p['estado'] || 'POR_REVISION';
+        if (pId) idToEstado.set(pId.toString(), pEstado);
+        const pSerie = p['medidorSerie'] || p['serie'];
+        if (pSerie) statusMap.set(String(pSerie), pEstado);
+        if (p['ordenTrabajoId']) {
+          statusMap.set(String(p['ordenTrabajoId']), pEstado);
+          statusMap.set(`OT-${p['ordenTrabajoId']}`, pEstado);
         }
       }
 
-      const statusMap = new Map<string, string>();
       for (const [serie, id] of serieToId) {
         const estado = idToEstado.get(id);
-        if (estado) statusMap.set(serie, estado);
+        if (estado && !statusMap.has(serie)) statusMap.set(serie, estado);
       }
 
       this.readingStatusBySerie.set(statusMap);
@@ -430,21 +663,19 @@ export class RutasComponent implements OnInit, OnDestroy {
 
   setFilter(tipo: string): void {
     this.activeFilter.set(tipo);
+    this.viewMode.set('list');
     this.selectedTaskId.set(null);
   }
 
   setStateFilter(estado: string): void {
     this.activeStateFilter.set(estado);
+    this.viewMode.set('list');
     this.selectedTaskId.set(null);
   }
 
   setComunidadFilter(comunidad: string): void {
     this.activeComunidadFilter.set(comunidad);
-    this.selectedTaskId.set(null);
-  }
-
-  setSectorFilter(sector: string): void {
-    this.activeSectorFilter.set(sector);
+    this.viewMode.set('list');
     this.selectedTaskId.set(null);
   }
 
@@ -480,7 +711,7 @@ export class RutasComponent implements OnInit, OnDestroy {
     if (task?.ordenesTrabajo?.length && task.ordenesTrabajo[0].tipoActividad) {
       return task.ordenesTrabajo[0].tipoActividad as RouteType;
     }
-    return 'TOMA_LECTURA';
+    return 'LECTURA';
   }
 
   /**
@@ -530,7 +761,7 @@ export class RutasComponent implements OnInit, OnDestroy {
           workOrderEntries.push(`${id}:${actTipo}:${p.ordenTrabajoId}:${p.estado || 'PENDIENTE'}:`);
         }
       }
-    } else if (tipoRuta === 'TOMA_LECTURA' && task.rutaPuntos?.length) {
+    } else if (isReadingRouteType(tipoRuta) && task.rutaPuntos?.length) {
       orderIdentifiers.push(...task.rutaPuntos.map((pt) => pt.serie));
     } else if (task.medidor) {
       orderIdentifiers.push(task.medidor.serie);
@@ -608,23 +839,23 @@ export class RutasComponent implements OnInit, OnDestroy {
   }
 
   getTaskComunidadDescription(task: OperatorRouteResponse): string {
-    if (task.comunidadNombre?.trim()) return task.comunidadNombre.trim();
+    if (task.comunidadNombre?.trim()) return task.comunidadNombre;
     if (task.comunidadId != null) {
       const cached = this.comunidadesCatalog().get(task.comunidadId);
-      if (cached) return cached;
+      if (cached?.trim()) return cached;
       return `Comunidad #${task.comunidadId}`;
     }
     return 'Comunidad Principal';
   }
 
   getTaskSectorDescription(task: OperatorRouteResponse): string {
-    if (task.sectorNombre?.trim()) return task.sectorNombre.trim();
+    if (task.sectorNombre?.trim()) return task.sectorNombre;
     if (task.sectorId != null) {
       const cached = this.sectoresCatalog().get(task.sectorId);
-      if (cached) return cached;
+      if (cached?.trim()) return cached;
       return `Sector #${task.sectorId}`;
     }
-    return 'Toda la comunidad';
+    return 'Sin Sector';
   }
 
   /**
@@ -665,20 +896,40 @@ export class RutasComponent implements OnInit, OnDestroy {
     if (task.paradas?.length) {
       for (const p of task.paradas) {
         const st = statusMap.get(p.serie ?? '') ?? p.estado;
-        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+        if (
+          st &&
+          st !== 'PENDIENTE' &&
+          st !== '__SIN_LECTURA__' &&
+          st !== 'RECHAZADA_VERIFICACION'
+        ) {
           readCount++;
         }
       }
     } else if (task.ordenesTrabajo?.length) {
       for (const o of task.ordenesTrabajo) {
-        const st = statusMap.get(o.medidor?.serie ?? '') ?? o.estado;
-        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+        const serie =
+          o.medidor?.serie ||
+          (o.contrato?.numeroContrato
+            ? String(o.contrato.numeroContrato)
+            : `OT-${o.ordenTrabajoId}`);
+        const st =
+          statusMap.get(serie) ||
+          statusMap.get(o.medidor?.serie ?? '') ||
+          (o.ordenTrabajoId ? statusMap.get(String(o.ordenTrabajoId)) : null) ||
+          (o.medidor?.medidorId ? statusMap.get(String(o.medidor.medidorId)) : null) ||
+          o.estado;
+        if (
+          st &&
+          st !== 'PENDIENTE' &&
+          st !== '__SIN_LECTURA__' &&
+          st !== 'RECHAZADA_VERIFICACION'
+        ) {
           readCount++;
         }
       }
     } else if (task.medidor) {
       const st = statusMap.get(task.medidor.serie);
-      if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+      if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION') {
         readCount = 1;
       }
     }

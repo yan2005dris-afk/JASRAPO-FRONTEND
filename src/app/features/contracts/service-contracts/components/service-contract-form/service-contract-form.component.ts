@@ -32,6 +32,7 @@ import { CoordinateMapPickerComponent } from '../../../../../shared/components/c
 import type { ICoordinates, IPolygonGeometry } from '../../domain/models/service-area.model';
 import { coordinatePairValidator } from '../../../../../shared/components/coordinate-map-picker/coordinate-pair.validator';
 import { getCommunityMapCenter } from '../../domain/rules/community-map.rules';
+import { AuthService } from '../../../../../core/services/auth.service';
 
 /**
  * Formulario de contrato cliente–medidor. Sirve para CREAR y para EDITAR:
@@ -57,10 +58,13 @@ export class ServiceContractFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly contractsService = inject(ContractsApi);
   private readonly toast = inject(ToastService);
+  private readonly authService = inject(AuthService);
 
   // Si viene un contrato, el formulario está en modo edición. Catálogo de estados (para editar).
   readonly contractToEdit = input<IContract | null>(null);
   readonly states = input<IContractState[]>([]);
+
+  readonly isSuperAdmin = computed(() => this.authService.isSuperAdmin());
 
   readonly availableStates = computed(() => {
     const contract = this.contractToEdit();
@@ -120,6 +124,10 @@ export class ServiceContractFormComponent implements OnInit {
   );
 
   ngOnInit(): void {
+    if (!this.isSuperAdmin()) {
+      this.form.get('lecturaInicial')?.disable();
+    }
+
     const contract = this.contractToEdit();
     if (contract) {
       this.preloadContract(contract);
@@ -374,7 +382,8 @@ export class ServiceContractFormComponent implements OnInit {
       return;
     }
 
-    const value = this.form.value;
+    const value = this.form.getRawValue();
+    // Solo Super Admin puede definir lecturaInicial; para otros roles se omite (backend usará default 0)
     const payload: ICreateContractRequest = {
       clienteId: String(clientId),
       categoriaTarifaId: String(tariff.categoriaTarifaId),
@@ -382,7 +391,9 @@ export class ServiceContractFormComponent implements OnInit {
       numeroGuia: value.numeroGuia,
       direccionSuministro: value.direccionSuministro,
       comunidadId: String(comunidad.id),
-      lecturaInicial: Number(value.lecturaInicial),
+      ...(this.isSuperAdmin() && value.lecturaInicial !== undefined && value.lecturaInicial !== ''
+        ? { lecturaInicial: Number(value.lecturaInicial) }
+        : {}),
       ...(value.latitud != null && value.longitud != null
         ? { latitud: value.latitud, longitud: value.longitud }
         : {}),

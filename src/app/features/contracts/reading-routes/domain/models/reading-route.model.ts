@@ -1,5 +1,4 @@
-export type TipoRuta =
-  'TOMA_LECTURA' | 'LECTURA' | 'CORTE' | 'RECONEXION' | 'INSTALACION' | 'INSPECCION';
+export type TipoRuta = 'LECTURA' | 'CORTE' | 'RECONEXION' | 'INSTALACION' | 'INSPECCION';
 
 export interface ITipoActividad {
   tipoActividadId: number;

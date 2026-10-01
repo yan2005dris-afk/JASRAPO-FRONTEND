@@ -47,6 +47,31 @@
     gap: 0.6rem;
   }
 
+  .install-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--border-color);
+    background: var(--primary-color);
+    color: var(--white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 1.15rem;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: #066669;
+      border-color: #066669;
+    }
+
+    &:active {
+      transform: scale(0.92);
+    }
+  }
+
   .header-logout-btn,
   .header-profile-btn {
     width: 38px;

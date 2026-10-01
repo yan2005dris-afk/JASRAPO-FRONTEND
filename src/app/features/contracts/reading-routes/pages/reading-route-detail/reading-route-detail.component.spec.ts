@@ -13,7 +13,7 @@ describe('ReadingRouteDetailComponent', () => {
         rutaId: 12,
         nombre: 'Route 12',
         operarioId: 4,
-        tipoRuta: 'TOMA_LECTURA',
+        tipoRuta: 'LECTURA',
         comunidadId: 1,
         periodoId: 1,
         estado: 'PARCIAL',

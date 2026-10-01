@@ -31,6 +31,7 @@ import { IContract } from '../../../service-contracts/domain/models/service-cont
 import { PeriodsService } from '../../../../../shared/services/periods.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { MeterTableComponent } from '../../../../../shared/components/meter-table/meter-table.component';
+import { AuthService } from '../../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-replace-meter-modal',
@@ -115,6 +116,9 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
     periodoDestinoId: [null as number | null],
     mesDestino: [null as number | null],
   });
+
+  private readonly authService = inject(AuthService);
+  readonly isSuperAdmin = computed(() => this.authService.isSuperAdmin());
 
   @HostListener('document:keydown.escape')
   handleEscape(): void {
@@ -357,6 +361,9 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
   }
 
   ngOnInit(): void {
+    if (!this.isSuperAdmin()) {
+      this.form.controls.lecturaInicialEntrante.disable();
+    }
     this.idempotencyKey = crypto.randomUUID();
     if (typeof document !== 'undefined') {
       this.triggerElement = document.activeElement as HTMLElement;
@@ -638,7 +645,12 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
       contratoId: this.contract().contratoId,
       nuevoMedidorId: String(raw.nuevoMedidorId),
       lecturaFinalSaliente: finalSaliente,
-      lecturaInicialEntrante: Number(raw.lecturaInicialEntrante || 0),
+      // Solo Super Admin puede definir lecturaInicialEntrante; para otros roles se omite (backend usará default 0)
+      ...(this.isSuperAdmin() &&
+      raw.lecturaInicialEntrante !== undefined &&
+      raw.lecturaInicialEntrante !== null
+        ? { lecturaInicialEntrante: Number(raw.lecturaInicialEntrante) }
+        : {}),
       motivo: (raw.motivo || 'DANO') as MotivoReemplazoMedidor,
       responsabilidadDano: (raw.responsabilidadDano || 'NO_APLICA') as ResponsabilidadDano,
       detalleMotivo: raw.detalleMotivo || undefined,

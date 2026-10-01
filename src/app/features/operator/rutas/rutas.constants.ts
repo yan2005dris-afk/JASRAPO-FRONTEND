@@ -16,7 +16,7 @@ export const MARKER_COLORS: Record<string, string> = {
  * Iconos Bootstrap-Icons por tipo de ruta de operador.
  */
 export const TIPO_ICONS: Record<string, string> = {
-  TOMA_LECTURA: 'bi-droplet-fill',
+  LECTURA: 'bi-droplet-fill',
   INSTALACION: 'bi-tools',
   INSPECCION: 'bi-search',
   RECONEXION: 'bi-plug-fill',
@@ -37,7 +37,7 @@ export const STATE_LABELS: Record<string, string> = {
  */
 export const FILTER_OPTIONS: { label: string; value: string }[] = [
   { label: 'Todas', value: 'ALL' },
-  { label: 'Lecturas', value: 'TOMA_LECTURA' },
+  { label: 'Lecturas', value: 'LECTURA' },
   { label: 'Reconexión', value: 'RECONEXION' },
   { label: 'Instalación', value: 'INSTALACION' },
   { label: 'Inspección', value: 'INSPECCION' },

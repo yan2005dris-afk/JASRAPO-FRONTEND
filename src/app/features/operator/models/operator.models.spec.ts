@@ -7,7 +7,7 @@ describe('operator.models — type contracts', () => {
   it('OperatorRouteResponse has required fields with correct shape', () => {
     const task: OperatorRouteResponse = {
       rutaId: 'r-001',
-      tipoRuta: 'TOMA_LECTURA',
+      tipoRuta: 'LECTURA',
       nombre: 'Ruta Norte',
       estado: 'PENDIENTE',
       operarioId: 42,
@@ -17,7 +17,7 @@ describe('operator.models — type contracts', () => {
     };
 
     expect(task.rutaId).toBe('r-001');
-    expect(task.tipoRuta).toBe('TOMA_LECTURA');
+    expect(task.tipoRuta).toBe('LECTURA');
     expect(task.estado).toBe('PENDIENTE');
     expect(task.medidor).toBeNull();
   });
