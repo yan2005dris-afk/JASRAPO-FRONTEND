@@ -86,12 +86,6 @@ export interface RoutePoint {
   clienteNombre: string;
 }
 
-export type TaskRouteType = RouteType;
-export type TaskState = RouteState;
-export type TaskMedidor = OperatorMeterInfo;
-export type TaskOperario = OperatorUserInfo;
-export type TaskRutaPunto = RoutePoint;
-
 export interface AnomaliaItem {
   tipo: string;
   observacion: string;
