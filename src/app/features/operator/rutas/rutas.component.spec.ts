@@ -226,14 +226,13 @@ describe('RutasComponent', () => {
     expect(sectors[0].label?.includes('Sector #')).toBe(false);
   });
 
-  it('muestra rutas agrupadas por sector al entrar a una comunidad y permite volver', async () => {
+  it('muestra todas las rutas directamente y permite filtrar por chip de comunidad', async () => {
     component.ngOnInit();
     await fixture.whenStable();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.textContent).toContain('Comunidades con trabajo asignado');
-    expect(fixture.nativeElement.querySelectorAll('.route-group-card').length).toBe(2);
-    expect(fixture.nativeElement.querySelectorAll('.task-card').length).toBe(0);
+    expect(fixture.nativeElement.textContent).toContain('Todas las comunidades');
+    expect(fixture.nativeElement.querySelectorAll('.task-card').length).toBe(2);
 
     component.setComunidadFilter('1');
     fixture.detectChanges();
@@ -245,7 +244,7 @@ describe('RutasComponent', () => {
 
     component.setComunidadFilter('ALL');
     fixture.detectChanges();
-    expect(fixture.nativeElement.querySelectorAll('.route-group-card').length).toBe(2);
+    expect(fixture.nativeElement.querySelectorAll('.task-card').length).toBe(2);
   });
 
   it('agrupa Olón por sector y presenta las demás comunidades sin sector artificial', async () => {

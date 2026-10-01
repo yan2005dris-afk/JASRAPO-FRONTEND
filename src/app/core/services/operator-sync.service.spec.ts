@@ -1121,6 +1121,37 @@ describe('OperatorSyncService', () => {
       expect(snapshot.cursor).toBe('cursor-existing');
     });
 
+    it('reinicia desde cero tras un 400 por cursor inválido', async () => {
+      isOnline.mockReturnValue(true);
+      const snapshot = {
+        scope: 'operator:42',
+        snapshotVersion: 'v1',
+        manifestProtocolVersion: 2,
+        periodId: 'period-1',
+        cursor: 'cursor-stale',
+        complete: true,
+        routes: [],
+        meters: [],
+        registeredReadings: [],
+        workOrders: [],
+        pendingAnomalies: [],
+      };
+      getAssignedSnapshot.mockResolvedValue(snapshot);
+      httpGet
+        .mockImplementationOnce(() =>
+          throwError(() => makeHttpError(400, 'Cursor de sincronización inválido')),
+        )
+        .mockImplementationOnce((url: string) =>
+          url.includes('/operator/sync/manifest') ? of(manifestPage(true, 'cursor-new')) : of([]),
+        );
+
+      await service.downloadAssignedData();
+
+      const calls = httpGet.mock.calls.filter(([url]) => url.includes('/operator/sync/manifest'));
+      expect(calls[0][1].params.get('cursor')).toBe('cursor-stale');
+      expect(calls[1][1].params.get('cursor')).toBeNull();
+    });
+
     it('no llama al endpoint legacy /operator/sync', async () => {
       isOnline.mockReturnValue(true);
       getAssignedSnapshot.mockResolvedValue({

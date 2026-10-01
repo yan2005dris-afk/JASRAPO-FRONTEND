@@ -3,42 +3,36 @@
   <div class="rutas-section-header">
     <div>
       <h2 class="section-title">
-        {{ activeComunidadFilter() === 'ALL' ? 'Mis comunidades' : selectedComunidadLabel() }}
+        {{ activeComunidadFilter() === 'ALL' ? 'Mis Rutas Asignadas' : selectedComunidadLabel() }}
       </h2>
       <p class="section-subtitle">
-        @if (activeComunidadFilter() === 'ALL') {
-          Elegí una comunidad para ver tus rutas asignadas
-        } @else {
-          {{ filteredTasks().length }}
-          {{ filteredTasks().length === 1 ? 'ruta asignada' : 'rutas asignadas' }}
-          @if (selectedCommunityHasSectors()) {
-            por sector
-          }
+        {{ filteredTasks().length }}
+        {{ filteredTasks().length === 1 ? 'ruta asignada' : 'rutas asignadas' }}
+        @if (activeComunidadFilter() !== 'ALL' && selectedCommunityHasSectors()) {
+          por sector
         }
       </p>
     </div>
-    @if (activeComunidadFilter() !== 'ALL') {
-      <div class="segmented-control" role="group" aria-label="Cambiar modo de vista">
-        <button
-          class="segmented-btn"
-          [class.active]="viewMode() === 'list'"
-          (click)="setViewMode('list')"
-          type="button"
-          aria-label="Ver lista"
-        >
-          <i class="bi bi-list-ul"></i> Lista
-        </button>
-        <button
-          class="segmented-btn"
-          [class.active]="viewMode() === 'map'"
-          (click)="setViewMode('map')"
-          type="button"
-          aria-label="Ver mapa"
-        >
-          <i class="bi bi-map-fill"></i> Mapa
-        </button>
-      </div>
-    }
+    <div class="segmented-control" role="group" aria-label="Cambiar modo de vista">
+      <button
+        class="segmented-btn"
+        [class.active]="viewMode() === 'list'"
+        (click)="setViewMode('list')"
+        type="button"
+        aria-label="Ver lista"
+      >
+        <i class="bi bi-list-ul"></i> Lista
+      </button>
+      <button
+        class="segmented-btn"
+        [class.active]="viewMode() === 'map'"
+        (click)="setViewMode('map')"
+        type="button"
+        aria-label="Ver mapa"
+      >
+        <i class="bi bi-map-fill"></i> Mapa
+      </button>
+    </div>
   </div>
 
   <!-- Los filtros globales se aplican antes de agrupar las rutas asignadas. -->
@@ -72,6 +66,32 @@
         }
       </div>
     </div>
+
+    <!-- 3. Comunidad -->
+    @if (availableComunidades().length > 1) {
+      <div class="filter-secondary-row">
+        <div class="filter-chips compact" role="group" aria-label="Filtrar por comunidad">
+          <button
+            class="filter-chip sub-chip"
+            [class.active]="activeComunidadFilter() === 'ALL'"
+            (click)="setComunidadFilter('ALL')"
+            type="button"
+          >
+            Todas las comunidades
+          </button>
+          @for (com of availableComunidades(); track com.id) {
+            <button
+              class="filter-chip sub-chip"
+              [class.active]="activeComunidadFilter() === com.id"
+              (click)="setComunidadFilter(com.id)"
+              type="button"
+            >
+              <i class="bi bi-geo-alt"></i> {{ com.label }} ({{ com.routeCount }})
+            </button>
+          }
+        </div>
+      </div>
+    }
   </div>
 
   @if (routesSource() === 'cache') {
@@ -224,50 +244,26 @@
     <!-- ── Vista Lista ─────────────────────────────────────────────────────── -->
     @if (viewMode() === 'list') {
       <div class="task-list">
-        @if (activeComunidadFilter() === 'ALL') {
-          <h3 class="route-level-title">Comunidades con trabajo asignado</h3>
-          @for (community of availableComunidades(); track community.id) {
-            <button
-              class="route-group-card"
-              type="button"
-              (click)="setComunidadFilter(community.id)"
-              [attr.aria-label]="
-                'Abrir comunidad ' + community.label + ', ' + community.routeCount + ' rutas'
-              "
-            >
-              <i class="bi bi-geo-alt-fill route-group-icon" aria-hidden="true"></i>
-              <span class="route-group-content">
-                <strong>{{ community.label }}</strong>
-                <small
-                  >{{ community.routeCount }}
-                  {{ community.routeCount === 1 ? 'ruta asignada' : 'rutas asignadas' }}</small
-                >
-              </span>
-              <i class="bi bi-chevron-right" aria-hidden="true"></i>
-            </button>
-          }
-          @if (availableComunidades().length === 0) {
-            <div class="empty-state">No hay comunidades con rutas para el filtro seleccionado.</div>
-          }
-        } @else {
-          @for (group of routeGroups(); track group.id) {
-            <section
-              class="route-sector-section"
-              [class.direct-community-routes]="!group.label"
-              [attr.aria-label]="'Rutas de ' + (group.label || selectedComunidadLabel())"
-            >
-              @if (group.label) {
-                <div class="route-sector-heading">
-                  <div>
-                    <span class="route-sector-kicker">SECTOR</span>
-                    <h3>{{ group.label }}</h3>
-                  </div>
-                  <span class="route-sector-count"
-                    >{{ group.routeCount }} {{ group.routeCount === 1 ? 'ruta' : 'rutas' }}</span
-                  >
+        @for (group of routeGroups(); track group.id) {
+          <section
+            class="route-sector-section"
+            [class.direct-community-routes]="!group.label"
+            [attr.aria-label]="'Rutas de ' + (group.label || selectedComunidadLabel())"
+          >
+            @if (group.label) {
+              <div class="route-sector-heading">
+                <div>
+                  <span class="route-sector-kicker">
+                    {{ activeComunidadFilter() === 'ALL' ? 'COMUNIDAD' : 'SECTOR' }}
+                  </span>
+                  <h3>{{ group.label }}</h3>
                 </div>
-              }
-              <div class="sector-routes">
+                <span class="route-sector-count"
+                  >{{ group.routeCount }} {{ group.routeCount === 1 ? 'ruta' : 'rutas' }}</span
+                >
+              </div>
+            }
+            <div class="sector-routes">
                 @for (task of group.routes; track task.rutaId) {
                   @let totalPts = getTaskPointCount(task);
                   @let readPts = getTaskReadCount(task);
@@ -395,10 +391,9 @@
           @if (routeGroups().length === 0) {
             <div class="empty-state">
               <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-              No hay rutas en esta comunidad para el filtro seleccionado.
+              No hay rutas para el filtro seleccionado.
             </div>
           }
-        }
       </div>
     }
   }

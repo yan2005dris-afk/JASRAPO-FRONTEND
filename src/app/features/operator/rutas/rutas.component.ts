@@ -195,7 +195,28 @@ export class RutasComponent implements OnInit, OnDestroy {
 
   readonly routeGroups = computed<RouteGroup[]>(() => {
     const routes = this.filteredTasks();
-    if (this.activeComunidadFilter() === 'ALL' || routes.length === 0) return [];
+    if (routes.length === 0) return [];
+
+    if (this.activeComunidadFilter() === 'ALL') {
+      const groups = new Map<string, RouteGroup>();
+      for (const task of routes) {
+        const id = task.comunidadId == null ? 'NONE' : String(task.comunidadId);
+        const group = groups.get(id);
+        if (group) {
+          group.routeCount++;
+          group.routes.push(task);
+        } else {
+          groups.set(id, {
+            id,
+            label: id === 'NONE' ? 'Otras comunidades' : this.getTaskComunidadDescription(task),
+            routeCount: 1,
+            routes: [task],
+          });
+        }
+      }
+      return [...groups.values()];
+    }
+
     if (!this.selectedCommunityHasSectors()) {
       return [{ id: 'DIRECT', label: null, routeCount: routes.length, routes }];
     }
@@ -600,7 +621,6 @@ export class RutasComponent implements OnInit, OnDestroy {
   }
 
   setViewMode(mode: ViewMode): void {
-    if (mode === 'map' && this.activeComunidadFilter() === 'ALL') return;
     this.viewMode.set(mode);
     if (mode === 'list') {
       this.selectedTaskId.set(null);

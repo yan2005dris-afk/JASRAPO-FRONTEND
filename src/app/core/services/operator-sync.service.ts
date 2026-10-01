@@ -1022,9 +1022,17 @@ export class OperatorSyncService {
           if (!page.complete && cursor === null)
             throw new Error('Manifest page incomplete without nextCursor');
         } catch (error: unknown) {
-          if (error instanceof HttpErrorResponse && error.status === 409 && !restarted) {
+          const isScopeConflict = error instanceof HttpErrorResponse && error.status === 409;
+          const isInvalidCursor =
+            error instanceof HttpErrorResponse &&
+            error.status === 400 &&
+            typeof error.error?.message === 'string' &&
+            error.error.message.toLowerCase().includes('cursor');
+
+          if ((isScopeConflict || isInvalidCursor) && !restarted) {
             restarted = true;
             cursor = null;
+            await this.dbService.discardPendingManifest(scope);
             continue;
           }
           throw error;
@@ -1065,10 +1073,13 @@ export class OperatorSyncService {
         );
       } else {
         this.assignedDataError.set('network');
-        this.toastService.error(
-          (err as HttpErrorResponse).error?.message || 'Error al descargar datos del servidor.',
-          'Error de Descarga',
-        );
+        const rawMessage = (err as HttpErrorResponse).error?.message;
+        const isCursorError =
+          typeof rawMessage === 'string' && rawMessage.toLowerCase().includes('cursor');
+        const userMsg = isCursorError
+          ? 'Los datos locales están desactualizados. Intentá reiniciar el almacenamiento local y sincronizar nuevamente.'
+          : rawMessage || 'Error al descargar datos del servidor.';
+        this.toastService.error(userMsg, 'Error de Descarga');
       }
       throw err;
     } finally {
