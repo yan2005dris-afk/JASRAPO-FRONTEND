@@ -491,6 +491,7 @@ describe('ServiceContractFormComponent', () => {
     fixture.detectChanges();
     expect(component.communityMapCenter()).toBeNull();
 
+    component.activeStep.set(2);
     component.onComunidadSelected({
       id: 5,
       nombre: 'Curia',
@@ -513,6 +514,5 @@ describe('ServiceContractFormComponent', () => {
     fixture.detectChanges();
 
     expect(picker.componentInstance.focusPoint()).toBeNull();
-  });
   });
 });
