@@ -26,7 +26,7 @@ export const authGuard: CanActivateFn = (_, state) => {
 
   // Operador intentando acceder a rutas del panel admin
   if (isOperator && isAdminRoute) {
-    router.navigate(['/app/operador/rutas']);
+    router.navigate(['/app/operador/inicio']);
     return false;
   }
 

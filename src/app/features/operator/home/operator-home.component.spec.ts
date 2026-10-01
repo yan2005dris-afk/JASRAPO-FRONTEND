@@ -83,6 +83,7 @@ describe('OperatorHomeComponent', () => {
     getMetersCache: vi.fn().mockResolvedValue([]),
     getRegisteredReadingsCache: vi.fn().mockResolvedValue([]),
     getPendingReadings: vi.fn().mockResolvedValue([]),
+    getSyncedReadings: vi.fn().mockResolvedValue([]),
   };
 
   const mockRouteOfflineService = {

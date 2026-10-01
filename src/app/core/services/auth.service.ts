@@ -293,7 +293,7 @@ export class AuthService {
    * Operadores → panel del operador. El resto → dashboard.
    */
   getDefaultRoute(): string {
-    return this.isOperator() ? '/app/operador/rutas' : '/app/dashboard';
+    return this.isOperator() ? '/app/operador/inicio' : '/app/dashboard';
   }
 
   private handleError(error: { error?: { message?: string }; status?: number }): Observable<never> {

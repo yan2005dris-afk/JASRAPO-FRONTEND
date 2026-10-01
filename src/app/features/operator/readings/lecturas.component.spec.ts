@@ -59,6 +59,8 @@ describe('LecturasComponent State Machine', () => {
           useValue: {
             getRegisteredReadingsCache: vi.fn().mockResolvedValue([]),
             getPendingReadings: vi.fn().mockResolvedValue([]),
+            getSyncedReadings: vi.fn().mockResolvedValue([]),
+            savePendingReading: vi.fn().mockResolvedValue(1),
             getAssignedWorkOrders: vi.fn().mockResolvedValue([]),
             saveMetersCache: vi.fn().mockResolvedValue(undefined),
             saveRegisteredReadingsCache: vi.fn().mockResolvedValue(undefined),
@@ -77,6 +79,7 @@ describe('LecturasComponent State Machine', () => {
             submitReading,
             submitReadingCoordinates,
             submitWorkOrder,
+            refreshPendingCounts: vi.fn().mockResolvedValue(undefined),
           },
         },
         {

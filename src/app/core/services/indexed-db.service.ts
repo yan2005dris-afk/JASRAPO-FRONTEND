@@ -372,6 +372,7 @@ export class IndexedDbService {
   async savePendingReading(reading: any): Promise<number> {
     const db = await this.initDb();
     const record: PendingRecord = {
+      estado: reading.estado || 'POR_REVISION',
       ...reading,
       syncState: 'PENDIENTE_SYNC',
       errorMessage: null,
@@ -528,6 +529,7 @@ export class IndexedDbService {
   async savePendingWorkOrder(workOrder: any): Promise<number> {
     const db = await this.initDb();
     const record: PendingRecord = {
+      estado: workOrder.estado || 'COMPLETADA',
       ...workOrder,
       syncState: 'PENDIENTE_SYNC',
       errorMessage: null,

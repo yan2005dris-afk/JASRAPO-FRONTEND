@@ -119,11 +119,13 @@ export class LecturasComponent implements OnInit {
   // Lecturas registradas en el período activo (memoria local/caché)
   readonly registeredReadings = signal<ReadingRecord[]>([]);
   readonly pendingReadings = signal<ReadingRecord[]>([]);
+  readonly syncedReadings = signal<ReadingRecord[]>([]);
 
   // IDs de medidores con lecturas en estado no editable por el operador (POR_REVISION, APROBADA, etc.)
   readonly readMetersIds = computed(() => {
     const registered = this.registeredReadings();
     const pending = this.pendingReadings();
+    const synced = this.syncedReadings();
     const ids = new Set<string>();
     for (const r of registered) {
       const mId = r.medidor?.medidorId ?? r.medidorId;
@@ -132,8 +134,23 @@ export class LecturasComponent implements OnInit {
       }
     }
     for (const p of pending) {
-      if (p.medidorId && p.estado !== 'PENDIENTE' && p.estado !== 'RECHAZADA_VERIFICACION') {
-        ids.add(p.medidorId.toString());
+      const mId = p.medidorId;
+      const estado = p.estado || 'POR_REVISION';
+      if (mId && estado !== 'PENDIENTE' && estado !== 'RECHAZADA_VERIFICACION') {
+        ids.add(mId.toString());
+      }
+      if (p['ordenTrabajoId']) {
+        ids.add(String(p['ordenTrabajoId']));
+      }
+    }
+    for (const s of synced) {
+      const mId = s.medidorId ?? (s['medidor'] as { medidorId?: string | number } | undefined)?.medidorId;
+      const estado = s.estado || 'POR_REVISION';
+      if (mId && estado !== 'PENDIENTE' && estado !== 'RECHAZADA_VERIFICACION') {
+        ids.add(mId.toString());
+      }
+      if (s['ordenTrabajoId']) {
+        ids.add(String(s['ordenTrabajoId']));
       }
     }
     return ids;
@@ -156,7 +173,7 @@ export class LecturasComponent implements OnInit {
   // Filtro de estado activo
   readonly selectedEstadoFilter = signal<string>('todas');
 
-  // Mapa medidorId, serie y contratoId → lectura existente (de registeredReadings + pendingReadings)
+  // Mapa medidorId, serie y contratoId → lectura existente (de registeredReadings + syncedReadings + pendingReadings)
   readonly existingReadingMap = computed<Map<string, ReadingRecord>>(() => {
     const map = new Map<string, ReadingRecord>();
     for (const r of this.registeredReadings()) {
@@ -166,6 +183,27 @@ export class LecturasComponent implements OnInit {
       if (r.medidor?.serie) map.set(r.medidor.serie, r as ReadingRecord);
       if (r.contratoId) map.set(r.contratoId.toString(), r as ReadingRecord);
     }
+    for (const s of this.syncedReadings()) {
+      const mId = s['medidorId'] ?? (s['medidor'] as { medidorId?: string | number } | undefined)?.medidorId;
+      const record = {
+        ...(mId != null ? map.get(mId.toString()) : undefined),
+        ...s,
+        estado: (s['estado'] as string) || 'POR_REVISION',
+      };
+      if (mId != null) {
+        map.set(mId.toString(), record as ReadingRecord);
+      }
+      if (s['medidorSerie'] || s['serie']) {
+        map.set(String(s['medidorSerie'] || s['serie']), record as ReadingRecord);
+      }
+      if (s['contratoId']) {
+        map.set(String(s['contratoId']), record as ReadingRecord);
+      }
+      if (s['ordenTrabajoId']) {
+        map.set(String(s['ordenTrabajoId']), record as ReadingRecord);
+        map.set(`OT-${s['ordenTrabajoId']}`, record as ReadingRecord);
+      }
+    }
     for (const p of this.pendingReadings()) {
       const mId = p['medidorId'];
       const record = {
@@ -174,13 +212,17 @@ export class LecturasComponent implements OnInit {
         estado: (p['estado'] as string) || 'POR_REVISION',
       };
       if (mId != null) {
-        map.set(mId.toString(), record);
+        map.set(mId.toString(), record as ReadingRecord);
       }
-      if (p['medidorSerie']) {
-        map.set(p['medidorSerie'] as string, record);
+      if (p['medidorSerie'] || p['serie']) {
+        map.set(String(p['medidorSerie'] || p['serie']), record as ReadingRecord);
       }
       if (p['contratoId']) {
-        map.set(String(p['contratoId']), record);
+        map.set(String(p['contratoId']), record as ReadingRecord);
+      }
+      if (p['ordenTrabajoId']) {
+        map.set(String(p['ordenTrabajoId']), record as ReadingRecord);
+        map.set(`OT-${p['ordenTrabajoId']}`, record as ReadingRecord);
       }
     }
     return map;
@@ -275,16 +317,62 @@ export class LecturasComponent implements OnInit {
   readonly orderFilter = signal<'TODAS' | 'PENDIENTES' | 'COMPLETADAS'>('TODAS');
   readonly completedWorkOrderIds = signal<Set<string>>(new Set());
 
+  getOrderRecord(meter: IMeterDto): ReadingRecord | undefined {
+    const map = this.existingReadingMap();
+    return (
+      map.get(meter.medidorId.toString()) ||
+      map.get(meter.serie) ||
+      (meter.contratoId ? map.get(meter.contratoId.toString()) : undefined)
+    );
+  }
+
   isOrderCompleted(meter: IMeterDto): boolean {
     if (this.completedWorkOrderIds().has(meter.medidorId.toString())) return true;
+    if (this.completedWorkOrderIds().has(meter.serie)) return true;
     if (this.readMetersIds().has(meter.medidorId.toString())) return true;
-    const existing =
-      this.existingReadingMap().get(meter.medidorId.toString()) ||
-      this.existingReadingMap().get(meter.serie) ||
-      (meter.contratoId ? this.existingReadingMap().get(meter.contratoId.toString()) : null);
+    if (this.readMetersIds().has(meter.serie)) return true;
+    const existing = this.getOrderRecord(meter);
     return (
       !!existing && existing.estado !== 'PENDIENTE' && existing.estado !== 'RECHAZADA_VERIFICACION'
     );
+  }
+
+  getOrderStatusInfo(meter: IMeterDto): { label: string; cssClass: string; icon: string } {
+    const record = this.getOrderRecord(meter);
+    const estado = record?.estado;
+
+    if (!estado || estado === 'PENDIENTE') {
+      const isDone =
+        this.completedWorkOrderIds().has(meter.medidorId.toString()) ||
+        this.completedWorkOrderIds().has(meter.serie) ||
+        this.readMetersIds().has(meter.medidorId.toString()) ||
+        this.readMetersIds().has(meter.serie);
+      if (isDone) {
+        return { label: 'Completada', cssClass: 'badge-completada', icon: 'bi-check-circle-fill' };
+      }
+      return { label: 'Pendiente', cssClass: 'badge-pendiente', icon: 'bi-clock' };
+    }
+
+    switch (estado) {
+      case 'POR_REVISION':
+        return { label: 'Por Revisión', cssClass: 'badge-por-revision', icon: 'bi-clock-history' };
+      case 'APROBADA':
+        return { label: 'Aprobada', cssClass: 'badge-aprobada', icon: 'bi-check2-circle' };
+      case 'COMPLETADA':
+        return { label: 'Completada', cssClass: 'badge-completada', icon: 'bi-check-circle-fill' };
+      case 'RECHAZADA_VERIFICACION':
+        return { label: 'Relectura', cssClass: 'badge-rechazada-verificacion', icon: 'bi-arrow-repeat' };
+      case 'ANOMALIA':
+        return { label: 'Con Novedad', cssClass: 'badge-anomalia', icon: 'bi-exclamation-triangle-fill' };
+      default: {
+        const found = this.estadosCatalog().find((e) => e.codigo === estado);
+        return {
+          label: found?.nombre || estado,
+          cssClass: `badge-${estado.toLowerCase().replace(/_/g, '-')}`,
+          icon: found?.icono || 'bi-info-circle-fill',
+        };
+      }
+    }
   }
 
   readonly orderCounts = computed(() => {
@@ -542,14 +630,18 @@ export class LecturasComponent implements OnInit {
   }
 
   /**
-   * Carga las lecturas pendientes del caché IndexedDB
+   * Carga las lecturas pendientes y sincronizadas del caché IndexedDB
    */
   private async loadPendingReadings(): Promise<void> {
     try {
-      const pending = await this.dbService.getPendingReadings();
+      const [pending, synced] = await Promise.all([
+        this.dbService.getPendingReadings().catch(() => []),
+        this.dbService.getSyncedReadings().catch(() => []),
+      ]);
       this.pendingReadings.set(pending);
+      this.syncedReadings.set(synced);
     } catch (e) {
-      console.error('Error al cargar lecturas pendientes:', e);
+      console.error('Error al cargar lecturas locales:', e);
     }
   }
 
@@ -905,9 +997,14 @@ export class LecturasComponent implements OnInit {
       await this.loadPendingReadings();
       await this.loadCachedMeters();
     } catch (e) {
-      console.error('Error al registrar orden de trabajo:', e);
-      // Fallback a almacenamiento local offline si falló la llamada remota para no perder los datos del operario
-      if (formPayload.tipoActividad === 'LECTURA') {
+      const isFatalError =
+        e instanceof Error &&
+        (e.message.includes('ubicación') ||
+          e.message.includes('GPS') ||
+          e.message.includes('orden de trabajo asociada'));
+
+      // Fallback a almacenamiento local offline si falló la llamada remota por red para no perder los datos del operario
+      if (formPayload.tipoActividad === 'LECTURA' && !isFatalError) {
         try {
           await this.dbService.savePendingReading({
             fecha: new Date().toISOString(),

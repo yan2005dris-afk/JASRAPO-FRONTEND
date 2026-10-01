@@ -100,6 +100,7 @@ describe('RutasComponent', () => {
     getMetersCache = vi.fn().mockResolvedValue([]);
     getRegisteredReadingsCache = vi.fn().mockResolvedValue([]);
     getPendingReadings = vi.fn().mockResolvedValue([]);
+    const getSyncedReadings = vi.fn().mockResolvedValue([]);
 
     await TestBed.configureTestingModule({
       imports: [RutasComponent],
@@ -119,6 +120,7 @@ describe('RutasComponent', () => {
             getMetersCache,
             getRegisteredReadingsCache,
             getPendingReadings,
+            getSyncedReadings,
           },
         },
         {

@@ -354,7 +354,14 @@ export class OperatorSyncService {
         );
 
         const response = await firstValueFrom(request$);
-        await this.dbService.saveSyncedReading({ ...payload, _lecturaId: targetLecturaId });
+        await this.dbService.saveSyncedReading({
+          ...payload,
+          _lecturaId: targetLecturaId,
+          estado:
+            (response && typeof response === 'object' && 'estado' in response && response.estado)
+              ? String(response.estado)
+              : 'POR_REVISION',
+        });
         this.toastService.success('Lectura registrada en el servidor correctamente.', 'Éxito');
         return response;
       } catch (error: unknown) {
@@ -535,6 +542,11 @@ export class OperatorSyncService {
 
         const response = await firstValueFrom(request$);
         if (options.notify) {
+          await this.dbService.saveSyncedReading({
+            ordenTrabajoId,
+            estado: 'COMPLETADA',
+            ...submission,
+          });
           this.toastService.success('Orden de trabajo registrada correctamente.', 'Éxito');
         }
         return response;
@@ -654,6 +666,11 @@ export class OperatorSyncService {
                 },
               ),
             );
+            await this.dbService.saveSyncedReading({
+              ordenTrabajoId,
+              estado: 'COMPLETADA',
+              ...workOrderPayload,
+            });
             await this.dbService.deletePendingReading(id!);
             successWorkOrdersCount++;
           } catch (error) {
@@ -769,7 +786,11 @@ export class OperatorSyncService {
               withCredentials: true,
             }),
           );
-          await this.dbService.saveSyncedReading({ ...payload, _lecturaId: targetLecturaId });
+          await this.dbService.saveSyncedReading({
+            ...payload,
+            _lecturaId: targetLecturaId,
+            estado: 'POR_REVISION',
+          });
           await this.dbService.deletePendingReading(id!);
           successReadingsCount++;
         } catch (error) {
@@ -817,6 +838,11 @@ export class OperatorSyncService {
               },
             ),
           );
+          await this.dbService.saveSyncedReading({
+            ordenTrabajoId,
+            estado: 'COMPLETADA',
+            ...workOrderPayload,
+          });
           await this.dbService.deletePendingWorkOrder(id!);
           successWorkOrdersCount++;
         } catch (error) {

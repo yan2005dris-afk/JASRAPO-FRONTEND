@@ -103,9 +103,7 @@ export class OperatorHomeComponent implements OnInit {
   readonly totalWorkOrders = computed<number>(() => {
     let count = 0;
     for (const t of this.tasks()) {
-      if (t.tipoRuta !== 'LECTURA') {
-        count += t.ordenesTrabajo?.length || 1;
-      }
+      count += t.ordenesTrabajo?.length || t.paradas?.length || t.rutaPuntos?.length || 1;
     }
     return count;
   });
@@ -179,10 +177,11 @@ export class OperatorHomeComponent implements OnInit {
 
   private async loadReadingStatuses(): Promise<void> {
     try {
-      const [meters, registered, pending] = await Promise.all([
+      const [meters, registered, pending, synced] = await Promise.all([
         this.dbService.getMetersCache(),
         this.dbService.getRegisteredReadingsCache(),
         this.dbService.getPendingReadings(),
+        this.dbService.getSyncedReadings().catch(() => []),
       ]);
 
       const serieToId = new Map<string, string>();
@@ -191,22 +190,32 @@ export class OperatorHomeComponent implements OnInit {
       }
 
       const idToEstado = new Map<string, string>();
+      const statusMap = new Map<string, string>();
+
       for (const r of registered) {
         const mId = r.medidor?.medidorId ?? r.medidorId;
         if (mId) idToEstado.set(mId.toString(), r.estado);
+        const s = r.medidor?.serie ?? r.medidorSerie;
+        if (s) statusMap.set(String(s), r.estado);
+      }
+      for (const s of synced) {
+        const sId = s['medidorId'];
+        const sEstado = s['estado'] || 'POR_REVISION';
+        if (sId) idToEstado.set(sId.toString(), sEstado);
+        const sSerie = s['medidorSerie'] || s['serie'];
+        if (sSerie) statusMap.set(String(sSerie), sEstado);
       }
       for (const p of pending) {
         const pId = p['medidorId'];
-        const pEstado = p['estado'];
-        if (pId && !idToEstado.has(pId.toString())) {
-          idToEstado.set(pId.toString(), pEstado ?? 'PENDIENTE');
-        }
+        const pEstado = p['estado'] || 'POR_REVISION';
+        if (pId) idToEstado.set(pId.toString(), pEstado);
+        const pSerie = p['medidorSerie'] || p['serie'];
+        if (pSerie) statusMap.set(String(pSerie), pEstado);
       }
 
-      const statusMap = new Map<string, string>();
       for (const [serie, id] of serieToId) {
         const estado = idToEstado.get(id);
-        if (estado) statusMap.set(serie, estado);
+        if (estado && !statusMap.has(serie)) statusMap.set(serie, estado);
       }
 
       this.readingStatusBySerie.set(statusMap);

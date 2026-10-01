@@ -48,12 +48,21 @@
             </span>
           </div>
 
-          <div class="orders-header-info mb-3">
-            <h2 class="orders-route-title text-dark mb-0">{{ ctx.nombre }}</h2>
-            <small class="text-muted">
-              {{ orderCounts().total }} órdenes en total · {{ orderCounts().completed }} completadas
-              ({{ orderCounts().pct }}%)
-            </small>
+          <div class="orders-kpi-card mb-3">
+            <div class="orders-kpi-header">
+              <div class="orders-kpi-info">
+                <h2 class="orders-route-title text-dark mb-0">{{ ctx.nombre }}</h2>
+                <span class="orders-kpi-subtitle">
+                  {{ orderCounts().completed }} de {{ orderCounts().total }} completadas ({{ orderCounts().pending }} pendientes)
+                </span>
+              </div>
+              <div class="orders-kpi-badge font-mono">
+                {{ orderCounts().pct }}%
+              </div>
+            </div>
+            <div class="orders-kpi-track">
+              <div class="orders-kpi-fill" [style.width.%]="orderCounts().pct"></div>
+            </div>
           </div>
 
           <!-- Segmented Control del Mockup -->
@@ -172,8 +181,9 @@
                         </span>
                       </div>
                       @if (isDone) {
-                        <span class="badge-done-chip font-mono">
-                          <i class="bi bi-check-circle-fill"></i> Lista
+                        @let statusInfo = getOrderStatusInfo(meter);
+                        <span class="badge-done-chip font-mono {{ statusInfo.cssClass }}">
+                          <i class="bi {{ statusInfo.icon }}"></i> {{ statusInfo.label }}
                         </span>
                       } @else {
                         <button

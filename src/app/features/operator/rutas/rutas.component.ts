@@ -564,10 +564,11 @@ export class RutasComponent implements OnInit, OnDestroy {
   /** Construye el mapa medidorSerie → estado desde IndexedDB. */
   private async loadReadingStatuses(): Promise<void> {
     try {
-      const [meters, registered, pending] = await Promise.all([
+      const [meters, registered, pending, synced] = await Promise.all([
         this.dbService.getMetersCache(),
         this.dbService.getRegisteredReadingsCache(),
         this.dbService.getPendingReadings(),
+        this.dbService.getSyncedReadings().catch(() => []),
       ]);
 
       const serieToId = new Map<string, string>();
@@ -576,22 +577,40 @@ export class RutasComponent implements OnInit, OnDestroy {
       }
 
       const idToEstado = new Map<string, string>();
+      const statusMap = new Map<string, string>();
+
       for (const r of registered) {
         const mId = r.medidor?.medidorId ?? r.medidorId;
         if (mId) idToEstado.set(mId.toString(), r.estado);
+        const s = r.medidor?.serie ?? r.medidorSerie;
+        if (s) statusMap.set(String(s), r.estado);
+      }
+      for (const s of synced) {
+        const sId = s['medidorId'];
+        const sEstado = s['estado'] || 'POR_REVISION';
+        if (sId) idToEstado.set(sId.toString(), sEstado);
+        const sSerie = s['medidorSerie'] || s['serie'];
+        if (sSerie) statusMap.set(String(sSerie), sEstado);
+        if (s['ordenTrabajoId']) {
+          statusMap.set(String(s['ordenTrabajoId']), sEstado);
+          statusMap.set(`OT-${s['ordenTrabajoId']}`, sEstado);
+        }
       }
       for (const p of pending) {
         const pId = p['medidorId'];
-        const pEstado = p['estado'];
-        if (pId && !idToEstado.has(pId.toString())) {
-          idToEstado.set(pId.toString(), pEstado ?? 'PENDIENTE');
+        const pEstado = p['estado'] || 'POR_REVISION';
+        if (pId) idToEstado.set(pId.toString(), pEstado);
+        const pSerie = p['medidorSerie'] || p['serie'];
+        if (pSerie) statusMap.set(String(pSerie), pEstado);
+        if (p['ordenTrabajoId']) {
+          statusMap.set(String(p['ordenTrabajoId']), pEstado);
+          statusMap.set(`OT-${p['ordenTrabajoId']}`, pEstado);
         }
       }
 
-      const statusMap = new Map<string, string>();
       for (const [serie, id] of serieToId) {
         const estado = idToEstado.get(id);
-        if (estado) statusMap.set(serie, estado);
+        if (estado && !statusMap.has(serie)) statusMap.set(serie, estado);
       }
 
       this.readingStatusBySerie.set(statusMap);
@@ -843,7 +862,15 @@ export class RutasComponent implements OnInit, OnDestroy {
       }
     } else if (task.ordenesTrabajo?.length) {
       for (const o of task.ordenesTrabajo) {
-        const st = statusMap.get(o.medidor?.serie ?? '') ?? o.estado;
+        const serie =
+          o.medidor?.serie ||
+          (o.contrato?.numeroContrato ? String(o.contrato.numeroContrato) : `OT-${o.ordenTrabajoId}`);
+        const st =
+          statusMap.get(serie) ||
+          statusMap.get(o.medidor?.serie ?? '') ||
+          (o.ordenTrabajoId ? statusMap.get(String(o.ordenTrabajoId)) : null) ||
+          (o.medidor?.medidorId ? statusMap.get(String(o.medidor.medidorId)) : null) ||
+          o.estado;
         if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
           readCount++;
         }
