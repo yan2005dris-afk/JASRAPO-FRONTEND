@@ -77,20 +77,36 @@ describe('RouteReadingActionsService', () => {
     expect(toast.warning).toHaveBeenCalledWith('Lectura rechazada');
   });
 
-  it('requestReReading asks for confirmation and shows an info toast today', () => {
+  it('requestReReading asks for confirmation, calls updateReadingStatus with RECHAZADA_VERIFICACION, updates signal, and warns', () => {
     dialog.confirm.mockReturnValue(of(true));
+    routesService.updateReadingStatus.mockReturnValue(of(undefined));
+    const readings = signal<IReadingRowItem[]>([{ ...sample }]);
 
-    service.requestReReading(sample);
+    service.requestReReading(sample, readings);
 
     expect(dialog.confirm).toHaveBeenCalled();
-    expect(toast.info).toHaveBeenCalledWith(expect.stringContaining('relectura'));
+    expect(routesService.updateReadingStatus).toHaveBeenCalledWith('L-1', 'RECHAZADA_VERIFICACION');
+    expect(readings()[0].estado).toBe('RECHAZADA_VERIFICACION');
+    expect(toast.warning).toHaveBeenCalledWith('Relectura solicitada');
   });
 
-  it('requestReReading does not toast when the operator cancels', () => {
+  it('requestReReading surfaces an error toast when backend rejects', () => {
+    dialog.confirm.mockReturnValue(of(true));
+    routesService.updateReadingStatus.mockReturnValue(throwError(() => new Error('boom')));
+    const readings = signal<IReadingRowItem[]>([{ ...sample }]);
+
+    service.requestReReading(sample, readings);
+
+    expect(toast.error).toHaveBeenCalledWith('Error al solicitar la relectura');
+    expect(readings()[0].estado).toBe('POR_REVISION');
+  });
+
+  it('requestReReading does not call backend when the user cancels', () => {
     dialog.confirm.mockReturnValue(of(false));
 
     service.requestReReading(sample);
 
-    expect(toast.info).not.toHaveBeenCalled();
+    expect(routesService.updateReadingStatus).not.toHaveBeenCalled();
+    expect(toast.warning).not.toHaveBeenCalled();
   });
 });

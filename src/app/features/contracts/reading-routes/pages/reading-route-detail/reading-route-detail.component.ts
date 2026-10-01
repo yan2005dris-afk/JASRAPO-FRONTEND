@@ -488,7 +488,7 @@ export class ReadingRouteDetailComponent implements OnInit {
 
   onRequestReLectura(reading: IReadingRowItem): void {
     this.openDropdownId.set(null);
-    this.readingActions.requestReReading(reading);
+    this.readingActions.requestReReading(reading, this.readings);
   }
 
   // ── Generación de Hoja de Campo Oficial (SC-236 Backend Stream) ───────
