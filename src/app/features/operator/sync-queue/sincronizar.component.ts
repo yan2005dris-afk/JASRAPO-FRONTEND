@@ -112,10 +112,7 @@ export class SincronizarComponent implements OnInit {
   );
 
   readonly syncedPageItems = computed(() =>
-    this.syncedReadings().slice(
-      this.syncedPage() * PAGE_SIZE,
-      (this.syncedPage() + 1) * PAGE_SIZE,
-    ),
+    this.syncedReadings().slice(this.syncedPage() * PAGE_SIZE, (this.syncedPage() + 1) * PAGE_SIZE),
   );
   readonly syncedTotalPages = computed(() =>
     Math.max(1, Math.ceil(this.syncedReadings().length / PAGE_SIZE)),

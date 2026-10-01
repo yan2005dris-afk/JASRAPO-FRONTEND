@@ -11,8 +11,9 @@
       <i class="bi bi-wifi-off"></i>
       @if (cachedAt()) {
         <span class="offline-cache-info">
-          Sin conexión — mostrando datos guardados localmente
-          ({{ cachedAt() | date: 'dd/MM/yyyy HH:mm' }}).
+          Sin conexión — mostrando datos guardados localmente ({{
+            cachedAt() | date: 'dd/MM/yyyy HH:mm'
+          }}).
           @if (isStale()) {
             <span class="stale-warning">Los datos pueden estar desactualizados (más de 24 h).</span>
           }

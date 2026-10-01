@@ -644,8 +644,22 @@ describe('Route/snapshot cache merge (rutas_cache base, manifest delta)', () => 
       nextCursor: null,
       routes: {
         items: [
-          { rutaId: 'r-hydrated-1', nombre: 'Ruta Centro', tipoRuta: 'LECTURA', estado: 'COMPLETADA', orden: 1, comunidadId: 3 },
-          { rutaId: 'r-new-2', nombre: 'Ruta Nueva', tipoRuta: 'INSTALACION', estado: 'PENDIENTE', orden: 1, comunidadId: 5 },
+          {
+            rutaId: 'r-hydrated-1',
+            nombre: 'Ruta Centro',
+            tipoRuta: 'LECTURA',
+            estado: 'COMPLETADA',
+            orden: 1,
+            comunidadId: 3,
+          },
+          {
+            rutaId: 'r-new-2',
+            nombre: 'Ruta Nueva',
+            tipoRuta: 'INSTALACION',
+            estado: 'PENDIENTE',
+            orden: 1,
+            comunidadId: 5,
+          },
         ],
         hasMore: false,
         nextCursor: null,

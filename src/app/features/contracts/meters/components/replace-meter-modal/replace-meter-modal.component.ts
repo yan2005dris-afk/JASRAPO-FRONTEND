@@ -646,7 +646,9 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
       nuevoMedidorId: String(raw.nuevoMedidorId),
       lecturaFinalSaliente: finalSaliente,
       // Solo Super Admin puede definir lecturaInicialEntrante; para otros roles se omite (backend usará default 0)
-      ...(this.isSuperAdmin() && raw.lecturaInicialEntrante !== undefined && raw.lecturaInicialEntrante !== null
+      ...(this.isSuperAdmin() &&
+      raw.lecturaInicialEntrante !== undefined &&
+      raw.lecturaInicialEntrante !== null
         ? { lecturaInicialEntrante: Number(raw.lecturaInicialEntrante) }
         : {}),
       motivo: (raw.motivo || 'DANO') as MotivoReemplazoMedidor,

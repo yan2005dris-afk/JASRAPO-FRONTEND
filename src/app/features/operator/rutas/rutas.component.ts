@@ -14,7 +14,11 @@ import { Router } from '@angular/router';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { NetworkService } from '../../../core/services/network.service';
 import { RouteTypePipe } from '../../../shared/pipes/route-type.pipe';
-import type { OperatorRouteResponse, RouteType, OperatorActivityType } from '../models/operator.models';
+import type {
+  OperatorRouteResponse,
+  RouteType,
+  OperatorActivityType,
+} from '../models/operator.models';
 import {
   classifyRouteLoadError,
   type OperatorRouteErrorInfo,
@@ -110,14 +114,24 @@ export class RutasComponent implements OnInit, OnDestroy {
       const paradas = t.paradas || [];
       for (const p of paradas) {
         const st = statusMap.get(p.serie ?? '') ?? p.estado;
-        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION') {
+        if (
+          st &&
+          st !== 'PENDIENTE' &&
+          st !== '__SIN_LECTURA__' &&
+          st !== 'RECHAZADA_VERIFICACION'
+        ) {
           readCount++;
         }
       }
       const ordenes = t.ordenesTrabajo || [];
       for (const o of ordenes) {
         const st = statusMap.get(o.medidor?.serie ?? '') ?? o.estado;
-        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION') {
+        if (
+          st &&
+          st !== 'PENDIENTE' &&
+          st !== '__SIN_LECTURA__' &&
+          st !== 'RECHAZADA_VERIFICACION'
+        ) {
           readCount++;
         }
       }
@@ -248,7 +262,9 @@ export class RutasComponent implements OnInit, OnDestroy {
 
     const sortedTasks = this.filteredTasks();
     const activityTypes = this.activityTypes();
-    const iconMap = new Map<string, string>(activityTypes.map((t) => [t.codigo, t.icono ?? 'bi-geo-alt-fill']));
+    const iconMap = new Map<string, string>(
+      activityTypes.map((t) => [t.codigo, t.icono ?? 'bi-geo-alt-fill']),
+    );
     const points: MapPoint[] = [];
 
     for (const task of sortedTasks) {
@@ -370,7 +386,9 @@ export class RutasComponent implements OnInit, OnDestroy {
   });
 
   // ── Exponer constantes al template ────────────────────────────────────────
-  readonly filterOptions = signal<{ label: string; value: string }[]>([{ label: 'Todas', value: 'ALL' }]);
+  readonly filterOptions = signal<{ label: string; value: string }[]>([
+    { label: 'Todas', value: 'ALL' },
+  ]);
   readonly activityTypes = signal<OperatorActivityType[]>([]);
   readonly stateFilterOptions = STATE_FILTER_OPTIONS;
   readonly stateLabelMap = STATE_LABELS;
@@ -577,8 +595,10 @@ export class RutasComponent implements OnInit, OnDestroy {
 
       if (this.networkService.isOnline()) {
         try {
-          const fresh =
-            (await this.syncService.getCurrentPeriodReadings()) as Record<string, unknown>[];
+          const fresh = (await this.syncService.getCurrentPeriodReadings()) as Record<
+            string,
+            unknown
+          >[];
           if (fresh?.length) {
             await this.dbService.saveRegisteredReadingsCache(fresh, scope);
             registered = fresh as unknown as typeof initialRegistered;
@@ -876,7 +896,12 @@ export class RutasComponent implements OnInit, OnDestroy {
     if (task.paradas?.length) {
       for (const p of task.paradas) {
         const st = statusMap.get(p.serie ?? '') ?? p.estado;
-        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION') {
+        if (
+          st &&
+          st !== 'PENDIENTE' &&
+          st !== '__SIN_LECTURA__' &&
+          st !== 'RECHAZADA_VERIFICACION'
+        ) {
           readCount++;
         }
       }
@@ -884,14 +909,21 @@ export class RutasComponent implements OnInit, OnDestroy {
       for (const o of task.ordenesTrabajo) {
         const serie =
           o.medidor?.serie ||
-          (o.contrato?.numeroContrato ? String(o.contrato.numeroContrato) : `OT-${o.ordenTrabajoId}`);
+          (o.contrato?.numeroContrato
+            ? String(o.contrato.numeroContrato)
+            : `OT-${o.ordenTrabajoId}`);
         const st =
           statusMap.get(serie) ||
           statusMap.get(o.medidor?.serie ?? '') ||
           (o.ordenTrabajoId ? statusMap.get(String(o.ordenTrabajoId)) : null) ||
           (o.medidor?.medidorId ? statusMap.get(String(o.medidor.medidorId)) : null) ||
           o.estado;
-        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION') {
+        if (
+          st &&
+          st !== 'PENDIENTE' &&
+          st !== '__SIN_LECTURA__' &&
+          st !== 'RECHAZADA_VERIFICACION'
+        ) {
           readCount++;
         }
       }

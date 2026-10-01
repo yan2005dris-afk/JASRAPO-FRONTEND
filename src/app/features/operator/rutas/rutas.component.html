@@ -264,136 +264,134 @@
               </div>
             }
             <div class="sector-routes">
-                @for (task of group.routes; track task.rutaId) {
-                  @let totalPts = getTaskPointCount(task);
-                  @let readPts = getTaskReadCount(task);
-                  @let pct = getTaskProgressPct(task);
-                  @let effectiveTipo = resolveTaskTipoRuta(task);
-                  @let taskName =
-                    task.nombre || 'Ruta ' + (effectiveTipo | routeType) + ' #' + ($index + 1);
-                  <div class="task-card">
-                    <!-- Header de tarjeta -->
-                    <div class="task-card-top">
-                      <span class="task-orden">#{{ $index + 1 }}</span>
-                      <span class="route-badge badge-{{ effectiveTipo.toLowerCase() }}">
-                        <i class="bi" [class]="actionIconFor(task)"></i>
-                        {{ effectiveTipo | routeType }}
-                      </span>
+              @for (task of group.routes; track task.rutaId) {
+                @let totalPts = getTaskPointCount(task);
+                @let readPts = getTaskReadCount(task);
+                @let pct = getTaskProgressPct(task);
+                @let effectiveTipo = resolveTaskTipoRuta(task);
+                @let taskName =
+                  task.nombre || 'Ruta ' + (effectiveTipo | routeType) + ' #' + ($index + 1);
+                <div class="task-card">
+                  <!-- Header de tarjeta -->
+                  <div class="task-card-top">
+                    <span class="task-orden">#{{ $index + 1 }}</span>
+                    <span class="route-badge badge-{{ effectiveTipo.toLowerCase() }}">
+                      <i class="bi" [class]="actionIconFor(task)"></i>
+                      {{ effectiveTipo | routeType }}
+                    </span>
+                    <span
+                      class="state-badge state-{{ (task.estado || 'PENDIENTE').toLowerCase() }}"
+                    >
+                      {{ getStateLabel(task.estado) }}
+                    </span>
+                    @let cardDistance = nextStopDistanceByRoute().get(task.rutaId);
+                    @if (cardDistance !== undefined) {
                       <span
-                        class="state-badge state-{{ (task.estado || 'PENDIENTE').toLowerCase() }}"
+                        class="task-distance"
+                        role="status"
+                        [title]="'A ' + formatDistance(cardDistance) + ' de tu posición'"
                       >
-                        {{ getStateLabel(task.estado) }}
+                        <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
+                        {{ formatDistance(cardDistance) }}
                       </span>
-                      @let cardDistance = nextStopDistanceByRoute().get(task.rutaId);
-                      @if (cardDistance !== undefined) {
-                        <span
-                          class="task-distance"
-                          role="status"
-                          [title]="'A ' + formatDistance(cardDistance) + ' de tu posición'"
-                        >
-                          <i class="bi bi-geo-alt-fill" aria-hidden="true"></i>
-                          {{ formatDistance(cardDistance) }}
-                        </span>
-                      }
+                    }
+                  </div>
+
+                  <!-- Contenido con Radial Progress Ring + Detalles -->
+                  <div class="task-card-main">
+                    <div class="task-radial-wrapper" [title]="pct + '% completado'">
+                      <svg
+                        width="52"
+                        height="52"
+                        viewBox="0 0 50 50"
+                        class="radial-svg"
+                        aria-hidden="true"
+                      >
+                        <circle
+                          cx="25"
+                          cy="25"
+                          r="20"
+                          fill="none"
+                          stroke="#e2e8f0"
+                          stroke-width="4.5"
+                        />
+                        <circle
+                          cx="25"
+                          cy="25"
+                          r="20"
+                          fill="none"
+                          [attr.stroke]="pct > 0 ? '#087a7d' : '#cbd5e1'"
+                          stroke-width="4.5"
+                          stroke-dasharray="125"
+                          [attr.stroke-dashoffset]="125 - (125 * pct) / 100"
+                          stroke-linecap="round"
+                          transform="rotate(-90 25 25)"
+                        />
+                      </svg>
+                      <span class="task-radial-pct">{{ pct }}%</span>
                     </div>
 
-                    <!-- Contenido con Radial Progress Ring + Detalles -->
-                    <div class="task-card-main">
-                      <div class="task-radial-wrapper" [title]="pct + '% completado'">
-                        <svg
-                          width="52"
-                          height="52"
-                          viewBox="0 0 50 50"
-                          class="radial-svg"
-                          aria-hidden="true"
-                        >
-                          <circle
-                            cx="25"
-                            cy="25"
-                            r="20"
-                            fill="none"
-                            stroke="#e2e8f0"
-                            stroke-width="4.5"
-                          />
-                          <circle
-                            cx="25"
-                            cy="25"
-                            r="20"
-                            fill="none"
-                            [attr.stroke]="pct > 0 ? '#087a7d' : '#cbd5e1'"
-                            stroke-width="4.5"
-                            stroke-dasharray="125"
-                            [attr.stroke-dashoffset]="125 - (125 * pct) / 100"
-                            stroke-linecap="round"
-                            transform="rotate(-90 25 25)"
-                          />
-                        </svg>
-                        <span class="task-radial-pct">{{ pct }}%</span>
-                      </div>
+                    <div class="task-info-body">
+                      @if (group.label) {
+                        <h4 class="task-nombre">{{ taskName }}</h4>
+                      } @else {
+                        <h3 class="task-nombre">{{ taskName }}</h3>
+                      }
 
-                      <div class="task-info-body">
-                        @if (group.label) {
-                          <h4 class="task-nombre">{{ taskName }}</h4>
-                        } @else {
-                          <h3 class="task-nombre">{{ taskName }}</h3>
-                        }
-
-                        <div class="task-details-grid">
+                      <div class="task-details-grid">
+                        <div class="task-detail-item">
+                          <i class="bi bi-speedometer2 text-muted"></i>
+                          <span
+                            >{{ totalPts }} {{ totalPts === 1 ? 'parada' : 'paradas' }} ·
+                            <strong>{{ readPts }} listas</strong></span
+                          >
+                        </div>
+                        @if (getTaskFirstClient(task); as client) {
                           <div class="task-detail-item">
-                            <i class="bi bi-speedometer2 text-muted"></i>
+                            <i class="bi bi-person-fill text-muted"></i>
                             <span
-                              >{{ totalPts }} {{ totalPts === 1 ? 'parada' : 'paradas' }} ·
-                              <strong>{{ readPts }} listas</strong></span
+                              >Inicio: <strong>{{ client }}</strong></span
                             >
                           </div>
-                          @if (getTaskFirstClient(task); as client) {
-                            <div class="task-detail-item">
-                              <i class="bi bi-person-fill text-muted"></i>
-                              <span
-                                >Inicio: <strong>{{ client }}</strong></span
-                              >
-                            </div>
-                          }
-                        </div>
+                        }
                       </div>
                     </div>
-
-                    <!-- Botones de Acción con estilo de alto contraste -->
-                    <div class="task-card-actions">
-                      @let actionLabel = actionLabelFor(task);
-                      @let actionIcon = actionIconFor(task);
-                      <button
-                        class="btn-card-lecturas"
-                        (click)="openRoute(task)"
-                        type="button"
-                        [attr.aria-label]="
-                          'Ir a ' + actionLabel.toLowerCase() + ' de ' + task.nombre
-                        "
-                      >
-                        <i class="bi" [class]="actionIcon"></i> {{ actionLabel }}
-                      </button>
-                      @if (taskHasMapPoints(task)) {
-                        <button
-                          class="btn-card-map"
-                          (click)="viewOnMap(task)"
-                          type="button"
-                          [attr.aria-label]="'Ver ' + task.nombre + ' en mapa'"
-                        >
-                          <i class="bi bi-map-fill"></i> Mapa
-                        </button>
-                      }
-                    </div>
                   </div>
-                }
-              </div>
-            </section>
-          }
-          @if (routeGroups().length === 0) {
-            <div class="empty-state">
-              <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-              No hay rutas para el filtro seleccionado.
+
+                  <!-- Botones de Acción con estilo de alto contraste -->
+                  <div class="task-card-actions">
+                    @let actionLabel = actionLabelFor(task);
+                    @let actionIcon = actionIconFor(task);
+                    <button
+                      class="btn-card-lecturas"
+                      (click)="openRoute(task)"
+                      type="button"
+                      [attr.aria-label]="'Ir a ' + actionLabel.toLowerCase() + ' de ' + task.nombre"
+                    >
+                      <i class="bi" [class]="actionIcon"></i> {{ actionLabel }}
+                    </button>
+                    @if (taskHasMapPoints(task)) {
+                      <button
+                        class="btn-card-map"
+                        (click)="viewOnMap(task)"
+                        type="button"
+                        [attr.aria-label]="'Ver ' + task.nombre + ' en mapa'"
+                      >
+                        <i class="bi bi-map-fill"></i> Mapa
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
             </div>
-          }
+          </section>
+        }
+        @if (routeGroups().length === 0) {
+          <div class="empty-state">
+            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+            No hay rutas para el filtro seleccionado.
+          </div>
+        }
       </div>
     }
   }

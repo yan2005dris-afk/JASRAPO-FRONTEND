@@ -129,7 +129,8 @@ export class LecturasComponent implements OnInit {
 
     // 1. Recibos locales previamente sincronizados
     for (const s of this.syncedReadings()) {
-      const mId = s['medidorId'] ?? (s['medidor'] as { medidorId?: string | number } | undefined)?.medidorId;
+      const mId =
+        s['medidorId'] ?? (s['medidor'] as { medidorId?: string | number } | undefined)?.medidorId;
       const record = {
         ...s,
         estado: (s['estado'] as string) || 'POR_REVISION',
@@ -354,9 +355,17 @@ export class LecturasComponent implements OnInit {
       case 'COMPLETADA':
         return { label: 'Completada', cssClass: 'badge-completada', icon: 'bi-check-circle-fill' };
       case 'RECHAZADA_VERIFICACION':
-        return { label: 'Por Verificar', cssClass: 'badge-rechazada-verificacion', icon: 'bi-arrow-repeat' };
+        return {
+          label: 'Por Verificar',
+          cssClass: 'badge-rechazada-verificacion',
+          icon: 'bi-arrow-repeat',
+        };
       case 'ANOMALIA':
-        return { label: 'Con Novedad', cssClass: 'badge-anomalia', icon: 'bi-exclamation-triangle-fill' };
+        return {
+          label: 'Con Novedad',
+          cssClass: 'badge-anomalia',
+          icon: 'bi-exclamation-triangle-fill',
+        };
       default: {
         const found = this.estadosCatalog().find((e) => e.codigo === estado);
         return {

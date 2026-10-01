@@ -2,7 +2,11 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import type { OperatorRouteResponse, ReadingWithAnomaly, OperatorActivityType } from '../models/operator.models';
+import type {
+  OperatorRouteResponse,
+  ReadingWithAnomaly,
+  OperatorActivityType,
+} from '../models/operator.models';
 
 @Injectable({
   providedIn: 'root',

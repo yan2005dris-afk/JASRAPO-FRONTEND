@@ -48,7 +48,15 @@ describe('OperatorRouteOfflineService', () => {
         OperatorRouteOfflineService,
         { provide: AuthService, useValue: { currentUser } },
         { provide: OperatorService, useValue: { getRoutes, getActivityTypes } },
-        { provide: IndexedDbService, useValue: { saveRoutesCache, getRoutesCache, saveActivityTypesCache, getActivityTypesCache } },
+        {
+          provide: IndexedDbService,
+          useValue: {
+            saveRoutesCache,
+            getRoutesCache,
+            saveActivityTypesCache,
+            getActivityTypesCache,
+          },
+        },
         { provide: NetworkService, useValue: { isOnline } },
       ],
     });

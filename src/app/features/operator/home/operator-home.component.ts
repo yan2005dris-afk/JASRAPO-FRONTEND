@@ -79,7 +79,12 @@ export class OperatorHomeComponent implements OnInit {
       if (t.paradas?.length) {
         for (const p of t.paradas) {
           const st = statusMap.get(p.serie ?? '') ?? p.estado;
-          if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION') {
+          if (
+            st &&
+            st !== 'PENDIENTE' &&
+            st !== '__SIN_LECTURA__' &&
+            st !== 'RECHAZADA_VERIFICACION'
+          ) {
             readCount++;
           }
         }
@@ -87,20 +92,32 @@ export class OperatorHomeComponent implements OnInit {
         for (const o of t.ordenesTrabajo) {
           const serie =
             o.medidor?.serie ||
-            (o.contrato?.numeroContrato ? String(o.contrato.numeroContrato) : `OT-${o.ordenTrabajoId}`);
+            (o.contrato?.numeroContrato
+              ? String(o.contrato.numeroContrato)
+              : `OT-${o.ordenTrabajoId}`);
           const st =
             statusMap.get(serie) ||
             statusMap.get(o.medidor?.serie ?? '') ||
             (o.ordenTrabajoId ? statusMap.get(String(o.ordenTrabajoId)) : null) ||
             (o.medidor?.medidorId ? statusMap.get(String(o.medidor.medidorId)) : null) ||
             o.estado;
-          if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION') {
+          if (
+            st &&
+            st !== 'PENDIENTE' &&
+            st !== '__SIN_LECTURA__' &&
+            st !== 'RECHAZADA_VERIFICACION'
+          ) {
             readCount++;
           }
         }
       } else if (t.medidor) {
         const st = statusMap.get(t.medidor.serie);
-        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION') {
+        if (
+          st &&
+          st !== 'PENDIENTE' &&
+          st !== '__SIN_LECTURA__' &&
+          st !== 'RECHAZADA_VERIFICACION'
+        ) {
           readCount++;
         }
       }
@@ -204,8 +221,10 @@ export class OperatorHomeComponent implements OnInit {
 
       if (this.networkService.isOnline()) {
         try {
-          const fresh =
-            (await this.syncService.getCurrentPeriodReadings()) as Record<string, unknown>[];
+          const fresh = (await this.syncService.getCurrentPeriodReadings()) as Record<
+            string,
+            unknown
+          >[];
           if (fresh?.length) {
             await this.dbService.saveRegisteredReadingsCache(fresh, scope);
             registered = fresh as unknown as typeof initialRegistered;
@@ -275,12 +294,14 @@ export class OperatorHomeComponent implements OnInit {
     if (hero.paradas?.length) {
       for (const p of hero.paradas) {
         const st = statusMap.get(p.serie ?? '') ?? p.estado;
-        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION') read++;
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION')
+          read++;
       }
     } else if (hero.ordenesTrabajo?.length) {
       for (const o of hero.ordenesTrabajo) {
         const st = statusMap.get(o.medidor?.serie ?? '') ?? o.estado;
-        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION') read++;
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION')
+          read++;
       }
     }
     return read;

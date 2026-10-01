@@ -358,7 +358,7 @@ export class OperatorSyncService {
           ...payload,
           _lecturaId: targetLecturaId,
           estado:
-            (response && typeof response === 'object' && 'estado' in response && response.estado)
+            response && typeof response === 'object' && 'estado' in response && response.estado
               ? String(response.estado)
               : 'POR_REVISION',
         });

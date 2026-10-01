@@ -56,10 +56,7 @@ export class RouteReadingActionsService {
    * Asks the administrator to confirm a re-reading request for the meter on the
    * given reading, transitions it to RECHAZADA_VERIFICACION and updates the local signal.
    */
-  requestReReading(
-    reading: IReadingRowItem,
-    readings?: WritableSignal<IReadingRowItem[]>,
-  ): void {
+  requestReReading(reading: IReadingRowItem, readings?: WritableSignal<IReadingRowItem[]>): void {
     const meterLabel = reading.medidorSerie ?? reading.lecturaId;
     this.dialogService
       .confirm({
@@ -71,21 +68,23 @@ export class RouteReadingActionsService {
       })
       .subscribe((confirmed) => {
         if (!confirmed) return;
-        this.routesService.updateReadingStatus(reading.lecturaId, 'RECHAZADA_VERIFICACION').subscribe({
-          next: () => {
-            if (readings) {
-              readings.update((list) =>
-                list.map((r) =>
-                  r.lecturaId === reading.lecturaId
-                    ? { ...r, estado: 'RECHAZADA_VERIFICACION' }
-                    : r,
-                ),
-              );
-            }
-            this.toastService.warning('Relectura solicitada');
-          },
-          error: () => this.toastService.error('Error al solicitar la relectura'),
-        });
+        this.routesService
+          .updateReadingStatus(reading.lecturaId, 'RECHAZADA_VERIFICACION')
+          .subscribe({
+            next: () => {
+              if (readings) {
+                readings.update((list) =>
+                  list.map((r) =>
+                    r.lecturaId === reading.lecturaId
+                      ? { ...r, estado: 'RECHAZADA_VERIFICACION' }
+                      : r,
+                  ),
+                );
+              }
+              this.toastService.warning('Relectura solicitada');
+            },
+            error: () => this.toastService.error('Error al solicitar la relectura'),
+          });
       });
   }
 }
