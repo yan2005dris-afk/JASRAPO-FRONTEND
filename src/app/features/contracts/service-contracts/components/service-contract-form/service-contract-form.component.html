@@ -14,414 +14,448 @@
   </div>
 
   <form [formGroup]="form" (ngSubmit)="save()">
-    <!-- Selección de cliente y comunidad -->
-    <div class="card form-section mb-4">
-      <div class="card-body p-4">
-        <div class="section-title mb-3">
-          <span class="section-icon"><i class="bi bi-person-badge"></i></span>
-          <div>
-            <h5 class="fw-bold mb-0">Cliente y Comunidad</h5>
-            <p class="text-muted small mb-0">
-              Seleccione el cliente y la comunidad del suministro.
-            </p>
-          </div>
-        </div>
-
-        <div class="row g-3">
-          <!-- Cliente -->
-          <div class="col-md-6">
-            @if (selectedClient(); as client) {
-              <div class="selected-card">
-                <div class="selected-card-header">
-                  <div class="selected-avatar">
-                    <i class="bi bi-person-fill"></i>
-                  </div>
-                  <div class="selected-card-title">
-                    <h6 class="fw-bold mb-0 text-dark">{{ clientName() }}</h6>
-                    <span class="text-muted small">C.I. {{ client.identificacion }}</span>
-                  </div>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-primary rounded-pill selected-change-btn"
-                    (click)="openClientPicker()"
-                  >
-                    <i class="bi bi-arrow-repeat"></i> Cambiar
-                  </button>
-                </div>
-                <div class="row g-2 mt-2">
-                  <div class="col-sm-6 detail-item">
-                    <i class="bi bi-telephone"></i>
-                    <div>
-                      <small class="text-muted d-block">Teléfono</small>
-                      <span class="text-dark">{{ client.telefono || '—' }}</span>
-                    </div>
-                  </div>
-                  <div class="col-sm-6 detail-item">
-                    <i class="bi bi-envelope"></i>
-                    <div>
-                      <small class="text-muted d-block">Correo</small>
-                      <span class="text-dark">{{ client.email || '—' }}</span>
-                    </div>
-                  </div>
-                  <div class="col-12 detail-item">
-                    <i class="bi bi-geo-alt"></i>
-                    <div>
-                      <small class="text-muted d-block">Dirección</small>
-                      <span class="text-dark">{{ client.direccionDomicilio || '—' }}</span>
-                    </div>
-                  </div>
-                </div>
-                @if (client.aplicaTerceraEdad || client.aplicaDiscapacidad) {
-                  <div class="d-flex gap-1 mt-2">
-                    @if (client.aplicaTerceraEdad) {
-                      <span class="badge text-bg-info">Tercera edad</span>
-                    }
-                    @if (client.aplicaDiscapacidad) {
-                      <span class="badge text-bg-info">Discapacidad</span>
-                    }
-                  </div>
-                }
-              </div>
-            } @else {
-              <button type="button" class="option-box w-100" (click)="openClientPicker()">
-                <i class="bi bi-search"></i>
-                <span class="fw-semibold">Seleccionar Cliente</span>
-                <span class="text-muted x-small">Explorar el listado de clientes activos</span>
-              </button>
-
-              @if (submitted()) {
-                <span class="text-danger x-small d-block mt-1">Seleccione un cliente.</span>
-              }
-            }
-          </div>
-
-          <!-- Comunidad -->
-          <div class="col-md-6">
-            @if (selectedComunidad(); as comunidad) {
-              <div class="selected-card">
-                <div class="selected-card-header">
-                  <div class="selected-avatar">
-                    <i class="bi bi-geo-alt-fill"></i>
-                  </div>
-                  <div class="selected-card-title">
-                    <h6 class="fw-bold mb-0 text-dark">{{ comunidad.nombre }}</h6>
-                    <span class="text-muted small">Código {{ comunidad.codigo }}</span>
-                  </div>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-primary rounded-pill selected-change-btn"
-                    (click)="openComunidadPicker()"
-                  >
-                    <i class="bi bi-arrow-repeat"></i> Cambiar
-                  </button>
-                </div>
-                <div class="row g-2 mt-2">
-                  <div class="col-12 detail-item">
-                    <i class="bi bi-shield-check"></i>
-                    <div>
-                      <small class="text-muted d-block">Tasa de seguridad</small>
-                      <span class="text-dark">{{ comunidad.porcentajeTasaSeguridad }}%</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            } @else {
-              <button type="button" class="option-box w-100" (click)="openComunidadPicker()">
-                <i class="bi bi-geo-alt"></i>
-                <span class="fw-semibold">Seleccionar Comunidad</span>
-                <span class="text-muted x-small">Elegir la comunidad del listado</span>
-              </button>
-
-              @if (submitted()) {
-                <span class="text-danger x-small d-block mt-1">Seleccione una comunidad.</span>
-              }
-            }
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="row g-4 mb-4">
-      <!-- Asignación de medidor -->
-      <div class="col-lg-6">
-        <div class="card form-section h-100">
-          <div class="card-body p-4">
-            <div class="section-title mb-3">
-              <span class="section-icon"><i class="bi bi-speedometer2"></i></span>
-              <div>
-                <h5 class="fw-bold mb-0">Asignación de Medidor</h5>
-                <p class="text-muted small mb-0">Seleccione el dispositivo disponible.</p>
-              </div>
-            </div>
-
-            @if (selectedMeter(); as meter) {
-              <div class="selected-card">
-                <div class="selected-card-header">
-                  <div class="selected-avatar">
-                    <i class="bi bi-speedometer2"></i>
-                  </div>
-                  <div class="selected-card-title">
-                    <h6 class="fw-bold mb-0 text-dark">Serie {{ meter.serie }}</h6>
-                    <span class="text-muted small">{{ meter.marca }} {{ meter.modelo }}</span>
-                  </div>
-                  @if (isEditing()) {
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-outline-warning rounded-pill selected-change-btn"
-                      (click)="openReplaceMeterModal()"
-                    >
-                      <i class="bi bi-arrow-left-right"></i> Reemplazar medidor
-                    </button>
-                  } @else {
-                    <button
-                      type="button"
-                      class="btn btn-sm btn-outline-primary rounded-pill selected-change-btn"
-                      (click)="openMeterPicker()"
-                    >
-                      <i class="bi bi-arrow-repeat"></i> Cambiar
-                    </button>
-                  }
-                </div>
-                <div class="row g-2 mt-2">
-                  <div class="col-sm-6 detail-item">
-                    <i class="bi bi-info-circle"></i>
-                    <div>
-                      <small class="text-muted d-block">Estado</small>
-                      <span class="badge rounded-pill text-bg-success">{{
-                        meterStatusLabel()
-                      }}</span>
-                    </div>
-                  </div>
-                  <div class="col-sm-6 detail-item">
-                    <i class="bi bi-calendar-check"></i>
-                    <div>
-                      <small class="text-muted d-block">Fecha de instalación</small>
-                      <span class="text-dark">{{ meterInstalacionLabel() }}</span>
-                    </div>
-                  </div>
-                </div>
-                @if (isEditing()) {
-                  <div class="mt-2 pt-2 border-top">
-                    <small class="text-muted d-flex align-items-center gap-1">
-                      <i class="bi bi-shield-lock text-secondary"></i>
-                      El cambio de medidor se gestiona exclusivamente a través de la acción
-                      <strong>Reemplazar medidor</strong>.
-                    </small>
-                  </div>
-                }
-              </div>
-            } @else {
-              <button type="button" class="option-box w-100" (click)="openMeterPicker()">
-                <i class="bi bi-search"></i>
-                <span class="fw-semibold">Seleccionar Medidor</span>
-                <span class="text-muted x-small">Explorar el catálogo de medidores activos</span>
-              </button>
-
-              @if (submitted()) {
-                <span class="text-danger x-small d-block mt-1">Seleccione un medidor.</span>
-              }
-            }
-          </div>
-        </div>
-      </div>
-
-      <!-- Plan de tarifa -->
-      <div class="col-lg-6">
-        <div class="card form-section h-100">
-          <div class="card-body p-4">
-            <div class="section-title mb-3">
-              <span class="section-icon"><i class="bi bi-lightning-charge"></i></span>
-              <div>
-                <h5 class="fw-bold mb-0">Plan de Tarifa</h5>
-                <p class="text-muted small mb-0">Defina el esquema comercial.</p>
-              </div>
-            </div>
-
-            @if (selectedTariff(); as tariff) {
-              <div class="selected-card">
-                <div class="selected-card-header">
-                  <div class="selected-avatar">
-                    <i class="bi bi-lightning-charge-fill"></i>
-                  </div>
-                  <div class="selected-card-title">
-                    <h6 class="fw-bold mb-0 text-dark">{{ tariff.nombre }}</h6>
-                    <span class="text-muted small">{{
-                      tariff.descripcion || 'Plan de tarifa'
-                    }}</span>
-                  </div>
-                  <button
-                    type="button"
-                    class="btn btn-sm btn-outline-primary rounded-pill selected-change-btn"
-                    (click)="openTariffPicker()"
-                  >
-                    <i class="bi bi-arrow-repeat"></i> Cambiar
-                  </button>
-                </div>
-                <div class="row g-2 mt-2">
-                  <div class="col-12 detail-item">
-                    <i class="bi bi-info-circle"></i>
-                    <div>
-                      <small class="text-muted d-block">Descripción</small>
-                      <span class="text-dark">{{ tariff.descripcion || 'Sin descripción' }}</span>
-                    </div>
-                  </div>
-                  <div class="col-sm-6 detail-item">
-                    <i class="bi bi-droplet-half"></i>
-                    <div>
-                      <small class="text-muted d-block">Consumo base incluido</small>
-                      <span class="text-dark">{{ tariff.consumoMinimoMensual ?? 10 }} m³</span>
-                    </div>
-                  </div>
-                  <div class="col-sm-6 detail-item">
-                    <i class="bi bi-tags"></i>
-                    <div>
-                      <small class="text-muted d-block">Rubros asociados</small>
-                      <span class="text-dark"
-                        >{{ tariff.rubros?.length ?? 0 }}
-                        {{ (tariff.rubros?.length ?? 0) === 1 ? 'rubro' : 'rubros' }}</span
-                      >
-                    </div>
-                  </div>
-                </div>
-              </div>
-            } @else {
-              <button type="button" class="option-box w-100" (click)="openTariffPicker()">
-                <i class="bi bi-search"></i>
-                <span class="fw-semibold">Seleccionar Tarifa</span>
-                <span class="text-muted x-small">Explorar el plan de tarifas disponible</span>
-              </button>
-
-              @if (submitted()) {
-                <span class="text-danger x-small d-block mt-2">Seleccione una tarifa.</span>
-              }
-            }
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Parámetros de inicio -->
-    <div class="card form-section mb-4">
-      <div class="card-body p-4">
-        <div class="section-title mb-3">
-          <span class="section-icon"><i class="bi bi-calendar-check"></i></span>
-          <div>
-            <h5 class="fw-bold mb-0">Parámetros de Inicio</h5>
-            <p class="text-muted small mb-0">Datos del contrato y ciclo de facturación.</p>
-          </div>
-        </div>
-
-        <div class="row g-3">
-          <div class="col-md-6">
-            <label for="numeroGuia" class="form-label fw-semibold text-dark">N° de guía</label>
-            <input
-              id="numeroGuia"
-              type="text"
-              class="form-control"
-              formControlName="numeroGuia"
-              placeholder="Ej. GUIA-1-0051"
-              maxlength="15"
-              [readonly]="isEditing()"
-              [class.is-invalid]="isFieldInvalid('numeroGuia')"
-            />
-            @if (isFieldInvalid('numeroGuia')) {
-              <span class="text-danger x-small">
-                El N° de guía es obligatorio (máx. 15 caracteres).
-              </span>
-            }
-          </div>
-
-          <!-- Estado: solo en modo edición (en creación lo asigna el backend) -->
-          @if (isEditing()) {
-            <div class="col-md-6">
-              <label for="estadoServicio" class="form-label fw-semibold text-dark"
-                >Estado del servicio</label
-              >
-              <select id="estadoServicio" class="form-select" formControlName="estadoServicio">
-                @for (state of availableStates(); track state.codigo) {
-                  <option [value]="state.codigo">{{ state.nombre }}</option>
-                }
-              </select>
-            </div>
+    @if (!isEditing()) {
+      <nav aria-label="Pasos del registro" class="registration-progress mb-4">
+        <ol>
+          @for (step of steps; track $index) {
+            <li
+              [class.current]="activeStep() === $index"
+              [class.completed]="activeStep() > $index"
+              [attr.aria-current]="activeStep() === $index ? 'step' : null"
+            >
+              <span class="step-number">{{ $index + 1 }}</span> {{ step }}
+            </li>
           }
+        </ol>
+        <p class="small mb-0" aria-live="polite">
+          Paso {{ activeStep() + 1 }} de {{ steps.length }}: {{ steps[activeStep()] }}
+        </p>
+      </nav>
+      @if (stepAttempted()) {
+        <p class="alert alert-warning" role="alert">
+          Complete los datos requeridos de este paso para continuar.
+        </p>
+      }
+    }
+    @if (isEditing() || activeStep() === 0) {
+      <section #stepPanel tabindex="-1" aria-label="Cliente y comunidad" class="registration-panel">
+        <!-- Selección de cliente y comunidad -->
+        <div class="card form-section mb-4">
+          <div class="card-body p-4">
+            <div class="section-title mb-3">
+              <span class="section-icon"><i class="bi bi-person-badge"></i></span>
+              <div>
+                <h5 class="fw-bold mb-0">Cliente y Comunidad</h5>
+                <p class="text-muted small mb-0">
+                  Seleccione el cliente y la comunidad del suministro.
+                </p>
+              </div>
+            </div>
 
-          <div class="col-md-6">
-            <label for="lecturaInicial" class="form-label fw-semibold text-dark">
-              Lectura inicial (m³)
-            </label>
-            <input
-              id="lecturaInicial"
-              type="text"
-              inputmode="numeric"
-              maxlength="10"
-              class="form-control"
-              formControlName="lecturaInicial"
-              (input)="onLecturaInicialInput($event)"
-              [readonly]="isEditing()"
-              [class.is-invalid]="isFieldInvalid('lecturaInicial')"
-            />
-            @if (isEditing()) {
-              <span class="text-muted x-small d-block mt-1">
-                La lectura inicial solo se define en la instalación o al reemplazar el medidor.
-              </span>
-            } @else if (!isSuperAdmin()) {
-              <span class="text-muted x-small d-block mt-1">
-                Solo usuarios Super Admin pueden modificar la lectura inicial.
-              </span>
-            }
-            @if (isFieldInvalid('lecturaInicial')) {
-              <span class="text-danger x-small"> Ingrese solo números (máx. 10 dígitos). </span>
-            }
-          </div>
+            <div class="row g-3">
+              <!-- Cliente -->
+              <div class="col-md-6">
+                @if (selectedClient(); as client) {
+                  <div class="selected-card">
+                    <div class="selected-card-header">
+                      <div class="selected-avatar">
+                        <i class="bi bi-person-fill"></i>
+                      </div>
+                      <div class="selected-card-title">
+                        <h6 class="fw-bold mb-0 text-dark">{{ clientName() }}</h6>
+                        <span class="text-muted small">C.I. {{ client.identificacion }}</span>
+                      </div>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-primary rounded-pill selected-change-btn"
+                        (click)="openClientPicker()"
+                      >
+                        <i class="bi bi-arrow-repeat"></i> Cambiar
+                      </button>
+                    </div>
+                    <div class="row g-2 mt-2">
+                      <div class="col-sm-6 detail-item">
+                        <i class="bi bi-telephone"></i>
+                        <div>
+                          <small class="text-muted d-block">Teléfono</small>
+                          <span class="text-dark">{{ client.telefono || '—' }}</span>
+                        </div>
+                      </div>
+                      <div class="col-sm-6 detail-item">
+                        <i class="bi bi-envelope"></i>
+                        <div>
+                          <small class="text-muted d-block">Correo</small>
+                          <span class="text-dark">{{ client.email || '—' }}</span>
+                        </div>
+                      </div>
+                      <div class="col-12 detail-item">
+                        <i class="bi bi-geo-alt"></i>
+                        <div>
+                          <small class="text-muted d-block">Dirección</small>
+                          <span class="text-dark">{{ client.direccionDomicilio || '—' }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    @if (client.aplicaTerceraEdad || client.aplicaDiscapacidad) {
+                      <div class="d-flex gap-1 mt-2">
+                        @if (client.aplicaTerceraEdad) {
+                          <span class="badge text-bg-info">Tercera edad</span>
+                        }
+                        @if (client.aplicaDiscapacidad) {
+                          <span class="badge text-bg-info">Discapacidad</span>
+                        }
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <button type="button" class="option-box w-100" (click)="openClientPicker()">
+                    <i class="bi bi-search"></i>
+                    <span class="fw-semibold">Seleccionar Cliente</span>
+                    <span class="text-muted x-small">Explorar el listado de clientes activos</span>
+                  </button>
+                  @if (submitted()) {
+                    <span class="text-danger x-small d-block mt-1">Seleccione un cliente.</span>
+                  }
+                }
+              </div>
 
-          <div class="col-md-8">
-            <label for="direccionSuministro" class="form-label fw-semibold text-dark">
-              Dirección de suministro
-            </label>
-            <input
-              id="direccionSuministro"
-              type="text"
-              class="form-control"
-              formControlName="direccionSuministro"
-              placeholder="Ej. Calle Principal #45"
-              maxlength="200"
-              [class.is-invalid]="isFieldInvalid('direccionSuministro')"
-            />
-            @if (isFieldInvalid('direccionSuministro')) {
-              <span class="text-danger x-small">
-                La dirección es obligatoria (máx. 200 caracteres).
-              </span>
-            }
+              <!-- Comunidad -->
+              <div class="col-md-6">
+                @if (selectedComunidad(); as comunidad) {
+                  <div class="selected-card">
+                    <div class="selected-card-header">
+                      <div class="selected-avatar">
+                        <i class="bi bi-geo-alt-fill"></i>
+                      </div>
+                      <div class="selected-card-title">
+                        <h6 class="fw-bold mb-0 text-dark">{{ comunidad.nombre }}</h6>
+                        <span class="text-muted small">Código {{ comunidad.codigo }}</span>
+                      </div>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-primary rounded-pill selected-change-btn"
+                        (click)="openComunidadPicker()"
+                      >
+                        <i class="bi bi-arrow-repeat"></i> Cambiar
+                      </button>
+                    </div>
+                    <div class="row g-2 mt-2">
+                      <div class="col-12 detail-item">
+                        <i class="bi bi-shield-check"></i>
+                        <div>
+                          <small class="text-muted d-block">Tasa de seguridad</small>
+                          <span class="text-dark">{{ comunidad.porcentajeTasaSeguridad }}%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                } @else {
+                  <button type="button" class="option-box w-100" (click)="openComunidadPicker()">
+                    <i class="bi bi-geo-alt"></i>
+                    <span class="fw-semibold">Seleccionar Comunidad</span>
+                    <span class="text-muted x-small">Elegir la comunidad del listado</span>
+                  </button>
+
+                  @if (submitted()) {
+                    <span class="text-danger x-small d-block mt-1">Seleccione una comunidad.</span>
+                  }
+                }
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+      </section>
+    }
+    @if (isEditing() || activeStep() === 1) {
+      <section #stepPanel tabindex="-1" aria-label="Medidor y tarifa" class="registration-panel">
+        <div class="row g-4 mb-4">
+          <!-- Asignación de medidor -->
+          <div class="col-lg-6">
+            <div class="card form-section h-100">
+              <div class="card-body p-4">
+                <div class="section-title mb-3">
+                  <span class="section-icon"><i class="bi bi-speedometer2"></i></span>
+                  <div>
+                    <h5 class="fw-bold mb-0">Asignación de Medidor</h5>
+                    <p class="text-muted small mb-0">Seleccione el dispositivo disponible.</p>
+                  </div>
+                </div>
 
-    <!-- Ubicación del predio -->
-    <div class="card form-section mb-4">
-      <div class="card-body p-4">
-        <div class="section-title mb-3">
-          <span class="section-icon"><i class="bi bi-geo-alt"></i></span>
-          <div>
-            <h5 class="fw-bold mb-0">Ubicación del Predio</h5>
-            <p class="text-muted small mb-0">
-              Opcional. Marque el punto en el mapa o ingrese las coordenadas.
-            </p>
+                @if (selectedMeter(); as meter) {
+                  <div class="selected-card">
+                    <div class="selected-card-header">
+                      <div class="selected-avatar">
+                        <i class="bi bi-speedometer2"></i>
+                      </div>
+                      <div class="selected-card-title">
+                        <h6 class="fw-bold mb-0 text-dark">Serie {{ meter.serie }}</h6>
+                        <span class="text-muted small">{{ meter.marca }} {{ meter.modelo }}</span>
+                      </div>
+                      @if (isEditing()) {
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-warning rounded-pill selected-change-btn"
+                          (click)="openReplaceMeterModal()"
+                        >
+                          <i class="bi bi-arrow-left-right"></i> Reemplazar medidor
+                        </button>
+                      } @else {
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-primary rounded-pill selected-change-btn"
+                          (click)="openMeterPicker()"
+                        >
+                          <i class="bi bi-arrow-repeat"></i> Cambiar
+                        </button>
+                      }
+                    </div>
+                    <div class="row g-2 mt-2">
+                      <div class="col-sm-6 detail-item">
+                        <i class="bi bi-info-circle"></i>
+                        <div>
+                          <small class="text-muted d-block">Estado</small>
+                          <span class="badge rounded-pill text-bg-success">{{
+                            meterStatusLabel()
+                          }}</span>
+                        </div>
+                      </div>
+                      <div class="col-sm-6 detail-item">
+                        <i class="bi bi-calendar-check"></i>
+                        <div>
+                          <small class="text-muted d-block">Fecha de instalación</small>
+                          <span class="text-dark">{{ meterInstalacionLabel() }}</span>
+                        </div>
+                      </div>
+                    </div>
+                    @if (isEditing()) {
+                      <div class="mt-2 pt-2 border-top">
+                        <small class="text-muted d-flex align-items-center gap-1">
+                          <i class="bi bi-shield-lock text-secondary"></i>
+                          El cambio de medidor se gestiona exclusivamente a través de la acción
+                          <strong>Reemplazar medidor</strong>.
+                        </small>
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <button type="button" class="option-box w-100" (click)="openMeterPicker()">
+                    <i class="bi bi-search"></i>
+                    <span class="fw-semibold">Seleccionar Medidor</span>
+                    <span class="text-muted x-small"
+                      >Explorar el catálogo de medidores activos</span
+                    >
+                  </button>
+
+                  @if (submitted()) {
+                    <span class="text-danger x-small d-block mt-1">Seleccione un medidor.</span>
+                  }
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Plan de tarifa -->
+          <div class="col-lg-6">
+            <div class="card form-section h-100">
+              <div class="card-body p-4">
+                <div class="section-title mb-3">
+                  <span class="section-icon"><i class="bi bi-lightning-charge"></i></span>
+                  <div>
+                    <h5 class="fw-bold mb-0">Plan de Tarifa</h5>
+                    <p class="text-muted small mb-0">Defina el esquema comercial.</p>
+                  </div>
+                </div>
+
+                @if (selectedTariff(); as tariff) {
+                  <div class="selected-card">
+                    <div class="selected-card-header">
+                      <div class="selected-avatar">
+                        <i class="bi bi-lightning-charge-fill"></i>
+                      </div>
+                      <div class="selected-card-title">
+                        <h6 class="fw-bold mb-0 text-dark">{{ tariff.nombre }}</h6>
+                        <span class="text-muted small">{{
+                          tariff.descripcion || 'Plan de tarifa'
+                        }}</span>
+                      </div>
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-primary rounded-pill selected-change-btn"
+                        (click)="openTariffPicker()"
+                      >
+                        <i class="bi bi-arrow-repeat"></i> Cambiar
+                      </button>
+                    </div>
+                    <div class="row g-2 mt-2">
+                      <div class="col-12 detail-item">
+                        <i class="bi bi-info-circle"></i>
+                        <div>
+                          <small class="text-muted d-block">Descripción</small>
+                          <span class="text-dark">{{
+                            tariff.descripcion || 'Sin descripción'
+                          }}</span>
+                        </div>
+                      </div>
+                      <div class="col-sm-6 detail-item">
+                        <i class="bi bi-droplet-half"></i>
+                        <div>
+                          <small class="text-muted d-block">Consumo base incluido</small>
+                          <span class="text-dark">{{ tariff.consumoMinimoMensual ?? 10 }} m³</span>
+                        </div>
+                      </div>
+                      <div class="col-sm-6 detail-item">
+                        <i class="bi bi-tags"></i>
+                        <div>
+                          <small class="text-muted d-block">Rubros asociados</small>
+                          <span class="text-dark"
+                            >{{ tariff.rubros?.length ?? 0 }}
+                            {{ (tariff.rubros?.length ?? 0) === 1 ? 'rubro' : 'rubros' }}</span
+                          >
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                } @else {
+                  <button type="button" class="option-box w-100" (click)="openTariffPicker()">
+                    <i class="bi bi-search"></i>
+                    <span class="fw-semibold">Seleccionar Tarifa</span>
+                    <span class="text-muted x-small">Explorar el plan de tarifas disponible</span>
+                  </button>
+
+                  @if (submitted()) {
+                    <span class="text-danger x-small d-block mt-2">Seleccione una tarifa.</span>
+                  }
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    }
+    @if (isEditing() || activeStep() === 2) {
+      <section #stepPanel tabindex="-1" aria-label="Datos del contrato" class="registration-panel">
+        <!-- Parámetros de inicio -->
+        <div class="card form-section mb-4">
+          <div class="card-body p-4">
+            <div class="section-title mb-3">
+              <span class="section-icon"><i class="bi bi-calendar-check"></i></span>
+              <div>
+                <h5 class="fw-bold mb-0">Parámetros de Inicio</h5>
+                <p class="text-muted small mb-0">Datos del contrato y ciclo de facturación.</p>
+              </div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="numeroGuia" class="form-label fw-semibold text-dark">N° de guía</label>
+                <input
+                  id="numeroGuia"
+                  type="text"
+                  class="form-control"
+                  formControlName="numeroGuia"
+                  placeholder="Ej. GUIA-1-0051"
+                  maxlength="15"
+                  [readonly]="isEditing()"
+                  [class.is-invalid]="isFieldInvalid('numeroGuia')"
+                />
+                @if (isFieldInvalid('numeroGuia')) {
+                  <span class="text-danger x-small">
+                    El N° de guía es obligatorio (máx. 15 caracteres).
+                  </span>
+                }
+              </div>
+
+              <!-- Estado: solo en modo edición (en creación lo asigna el backend) -->
+              @if (isEditing()) {
+                <div class="col-md-6">
+                  <label for="estadoServicio" class="form-label fw-semibold text-dark"
+                    >Estado del servicio</label
+                  >
+                  <select id="estadoServicio" class="form-select" formControlName="estadoServicio">
+                    @for (state of availableStates(); track state.codigo) {
+                      <option [value]="state.codigo">{{ state.nombre }}</option>
+                    }
+                  </select>
+                </div>
+              }
+
+              <div class="col-md-6">
+                <label for="lecturaInicial" class="form-label fw-semibold text-dark">
+                  Lectura inicial (m³)
+                </label>
+                <input
+                  id="lecturaInicial"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="10"
+                  class="form-control"
+                  formControlName="lecturaInicial"
+                  (input)="onLecturaInicialInput($event)"
+                  [readonly]="isEditing()"
+                  [class.is-invalid]="isFieldInvalid('lecturaInicial')"
+                />
+                @if (isEditing()) {
+                  <span class="text-muted x-small d-block mt-1">
+                    La lectura inicial solo se define en la instalación o al reemplazar el medidor.
+                  </span>
+                } @else if (!isSuperAdmin()) {
+                  <span class="text-muted x-small d-block mt-1">
+                    Solo usuarios Super Admin pueden modificar la lectura inicial.
+                  </span>
+                }
+                @if (isFieldInvalid('lecturaInicial')) {
+                  <span class="text-danger x-small"> Ingrese solo números (máx. 10 dígitos). </span>
+                }
+              </div>
+
+              <div class="col-md-8">
+                <label for="direccionSuministro" class="form-label fw-semibold text-dark">
+                  Dirección de suministro
+                </label>
+                <input
+                  id="direccionSuministro"
+                  type="text"
+                  class="form-control"
+                  formControlName="direccionSuministro"
+                  placeholder="Ej. Calle Principal #45"
+                  maxlength="200"
+                  [class.is-invalid]="isFieldInvalid('direccionSuministro')"
+                />
+                @if (isFieldInvalid('direccionSuministro')) {
+                  <span class="text-danger x-small">
+                    La dirección es obligatoria (máx. 200 caracteres).
+                  </span>
+                }
+              </div>
+            </div>
           </div>
         </div>
 
-        <app-coordinate-map-picker
-          [latitud]="coordinates().latitud"
-          [longitud]="coordinates().longitud"
-          [errorMessage]="coordinateError()"
-          [serviceArea]="serviceArea()"
-          [focusPoint]="communityMapCenter()"
-          (coordinatesChange)="onCoordinatesChange($event)"
-        />
-      </div>
-    </div>
+        <!-- Ubicación del predio -->
+        <div class="card form-section mb-4">
+          <div class="card-body p-4">
+            <div class="section-title mb-3">
+              <span class="section-icon"><i class="bi bi-geo-alt"></i></span>
+              <div>
+                <h5 class="fw-bold mb-0">Ubicación del Predio</h5>
+                <p class="text-muted small mb-0">
+                  Opcional. Marque el punto en el mapa o ingrese las coordenadas.
+                </p>
+              </div>
+            </div>
 
-    <!--
+            <app-coordinate-map-picker
+              [latitud]="coordinates().latitud"
+              [longitud]="coordinates().longitud"
+              [errorMessage]="coordinateError()"
+              [serviceArea]="serviceArea()"
+              [focusPoint]="communityMapCenter()"
+              (coordinatesChange)="onCoordinatesChange($event)"
+            />
+          </div>
+        </div>
+
+        <!--
       SECCIÓN DE DOCUMENTACIÓN LEGAL (subida de documentos) — PENDIENTE DE IMPLEMENTAR.
       Se deja comentada a propósito (oculta en el frontend por ahora). Esta funcionalidad
       (subir Cédula, Escritura, Contrato) se implementará más adelante, cuando el backend
@@ -471,12 +505,236 @@
       </div>
     </div>
     -->
+      </section>
+    }
+    @if (!isEditing() && activeStep() === 3) {
+      <section
+        #stepPanel
+        tabindex="-1"
+        aria-label="Resumen y confirmación"
+        class="registration-panel"
+      >
+        <div class="card form-section mb-4">
+          <div class="card-body p-4">
+            <div class="section-title mb-3">
+              <span class="section-icon"><i class="bi bi-card-checklist"></i></span>
+              <div>
+                <h5 class="fw-bold mb-0">Resumen y Confirmación</h5>
+                <p class="text-muted small mb-0">
+                  Revise los datos ingresados antes de registrar el contrato en el sistema.
+                </p>
+              </div>
+            </div>
 
+            <div class="summary-cards-grid d-flex flex-column gap-3">
+              <!-- Bloque 1: Cliente y Comunidad -->
+              <div class="summary-card p-3 rounded-3">
+                <div
+                  class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom"
+                >
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-person-badge text-primary fs-5"></i>
+                    <h6 class="fw-bold mb-0 text-dark">Cliente y Comunidad</h6>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary rounded-pill d-flex align-items-center gap-1"
+                    (click)="goToStep(0)"
+                  >
+                    <i class="bi bi-pencil-square"></i> Modificar
+                  </button>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-6 detail-item">
+                    <i class="bi bi-person-fill"></i>
+                    <div>
+                      <small class="text-muted d-block">Cliente</small>
+                      <span class="text-dark fw-semibold">{{ clientName() || '—' }}</span>
+                      @if (selectedClient(); as client) {
+                        <span class="text-muted small d-block"
+                          >C.I. {{ client.identificacion }}</span
+                        >
+                        @if (client.aplicaTerceraEdad || client.aplicaDiscapacidad) {
+                          <div class="d-flex gap-1 mt-1">
+                            @if (client.aplicaTerceraEdad) {
+                              <span class="badge text-bg-info">Tercera edad</span>
+                            }
+                            @if (client.aplicaDiscapacidad) {
+                              <span class="badge text-bg-info">Discapacidad</span>
+                            }
+                          </div>
+                        }
+                      }
+                    </div>
+                  </div>
+                  <div class="col-md-6 detail-item">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    <div>
+                      <small class="text-muted d-block">Comunidad / Sector</small>
+                      <span class="text-dark fw-semibold">{{
+                        selectedComunidad()?.nombre || '—'
+                      }}</span>
+                      @if (selectedComunidad()?.codigo) {
+                        <span class="text-muted small d-block"
+                          >Código: {{ selectedComunidad()?.codigo }}</span
+                        >
+                      }
+                    </div>
+                  </div>
+                  <div class="col-md-6 detail-item">
+                    <i class="bi bi-telephone"></i>
+                    <div>
+                      <small class="text-muted d-block">Teléfono</small>
+                      <span class="text-dark">{{ selectedClient()?.telefono || '—' }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-6 detail-item">
+                    <i class="bi bi-envelope"></i>
+                    <div>
+                      <small class="text-muted d-block">Correo electrónico</small>
+                      <span class="text-dark">{{ selectedClient()?.email || '—' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bloque 2: Medidor y Tarifa -->
+              <div class="summary-card p-3 rounded-3">
+                <div
+                  class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom"
+                >
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-speedometer2 text-primary fs-5"></i>
+                    <h6 class="fw-bold mb-0 text-dark">Medidor y Tarifa</h6>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary rounded-pill d-flex align-items-center gap-1"
+                    (click)="goToStep(1)"
+                  >
+                    <i class="bi bi-pencil-square"></i> Modificar
+                  </button>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-6 detail-item">
+                    <i class="bi bi-cpu"></i>
+                    <div>
+                      <small class="text-muted d-block">Medidor asignado</small>
+                      @if (selectedMeter(); as meter) {
+                        <span class="text-dark fw-semibold">Serie {{ meter.serie }}</span>
+                        <span class="text-muted small d-block"
+                          >{{ meter.marca }} {{ meter.modelo }}</span
+                        >
+                        @if (meterStatusLabel()) {
+                          <span class="badge rounded-pill text-bg-success mt-1">{{
+                            meterStatusLabel()
+                          }}</span>
+                        }
+                      } @else {
+                        <span class="text-dark fw-semibold">—</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="col-md-6 detail-item">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                    <div>
+                      <small class="text-muted d-block">Plan de tarifa</small>
+                      @if (selectedTariff(); as tariff) {
+                        <span class="text-dark fw-semibold">{{ tariff.nombre }}</span>
+                        <span class="text-muted small d-block">
+                          Consumo base: {{ tariff.consumoMinimoMensual ?? 10 }} m³
+                        </span>
+                        @if (tariff.descripcion) {
+                          <span class="text-muted small d-block">{{ tariff.descripcion }}</span>
+                        }
+                      } @else {
+                        <span class="text-dark fw-semibold">—</span>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bloque 3: Datos de Suministro y Contrato -->
+              <div class="summary-card p-3 rounded-3">
+                <div
+                  class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom"
+                >
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-file-earmark-text text-primary fs-5"></i>
+                    <h6 class="fw-bold mb-0 text-dark">Datos de Suministro y Contrato</h6>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary rounded-pill d-flex align-items-center gap-1"
+                    (click)="goToStep(2)"
+                  >
+                    <i class="bi bi-pencil-square"></i> Modificar
+                  </button>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-4 detail-item">
+                    <i class="bi bi-card-heading"></i>
+                    <div>
+                      <small class="text-muted d-block">N° de guía</small>
+                      <span class="text-dark fw-semibold">{{
+                        form.get('numeroGuia')?.value || '—'
+                      }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-4 detail-item">
+                    <i class="bi bi-speedometer"></i>
+                    <div>
+                      <small class="text-muted d-block">Lectura inicial</small>
+                      <span class="text-dark fw-semibold"
+                        >{{ form.get('lecturaInicial')?.value || '0' }} m³</span
+                      >
+                    </div>
+                  </div>
+                  <div class="col-md-4 detail-item">
+                    <i class="bi bi-pin-map"></i>
+                    <div>
+                      <small class="text-muted d-block">Georreferenciación</small>
+                      @if (coordinates().latitud !== null && coordinates().longitud !== null) {
+                        <span class="text-dark fw-semibold">
+                          {{ coordinates().latitud }}, {{ coordinates().longitud }}
+                        </span>
+                      } @else {
+                        <span class="badge text-bg-secondary">Sin georreferenciar</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="col-12 detail-item">
+                    <i class="bi bi-geo-alt"></i>
+                    <div>
+                      <small class="text-muted d-block">Dirección de suministro</small>
+                      <span class="text-dark">{{
+                        form.get('direccionSuministro')?.value || '—'
+                      }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    }
     <!-- Acciones -->
     <div class="d-flex justify-content-end gap-2">
       <button type="button" class="btn btn-light" (click)="cancel()" [disabled]="isSaving()">
         Cancelar
       </button>
+      @if (!isEditing() && activeStep() > 0) {
+        <button
+          type="button"
+          class="btn btn-outline-primary"
+          (click)="previousStep()"
+          [disabled]="isSaving()"
+        >
+          Anterior
+        </button>
+      }
       <button
         type="submit"
         class="btn btn-primary d-flex align-items-center gap-2"
@@ -485,7 +743,15 @@
         @if (isSaving()) {
           <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
         }
-        {{ isSaving() ? 'Guardando...' : isEditing() ? 'Guardar cambios' : 'Registrar contrato' }}
+        {{
+          isSaving()
+            ? 'Guardando...'
+            : isEditing()
+              ? 'Guardar cambios'
+              : activeStep() < steps.length - 1
+                ? 'Siguiente'
+                : 'Registrar contrato'
+        }}
       </button>
     </div>
   </form>

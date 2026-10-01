@@ -1,4 +1,8 @@
 import {
+  afterNextRender,
+  ElementRef,
+  Injector,
+  viewChild,
   ChangeDetectionStrategy,
   Component,
   OnInit,
@@ -82,6 +86,70 @@ export class ServiceContractFormComponent implements OnInit {
 
   readonly saved = output<void>();
   readonly cancelled = output<void>();
+
+  private readonly injector = inject(Injector);
+  private readonly stepPanel = viewChild<ElementRef<HTMLElement>>('stepPanel');
+  readonly activeStep = signal(0);
+  readonly stepAttempted = signal(false);
+  readonly steps = [
+    'Cliente y comunidad',
+    'Medidor y tarifa',
+    'Datos del contrato',
+    'Resumen y confirmación',
+  ];
+
+  nextStep(): void {
+    this.stepAttempted.set(true);
+    if (!this.isStepComplete(this.activeStep())) {
+      this.focusStep();
+      return;
+    }
+    this.activeStep.update((step) => Math.min(step + 1, this.steps.length - 1));
+    this.stepAttempted.set(false);
+    this.focusStep();
+  }
+
+  previousStep(): void {
+    this.activeStep.update((step) => Math.max(0, step - 1));
+    this.stepAttempted.set(false);
+    this.focusStep();
+  }
+
+  goToStep(step: number): void {
+    if (step < 0 || step >= this.steps.length) return;
+    this.activeStep.set(step);
+    this.stepAttempted.set(false);
+    this.focusStep();
+  }
+
+  isStepComplete(step: number): boolean {
+    if (step === 0)
+      return (
+        !!this.selectedClient() &&
+        this.getClientId(this.selectedClient()!) != null &&
+        !!this.selectedComunidad()
+      );
+    if (step === 1) return !!this.selectedMeter() && !!this.selectedTariff();
+    if (step === 2) return this.form.valid && !this.coordinateError();
+    return true;
+  }
+
+  private focusStep(): void {
+    afterNextRender(
+      () => {
+        const panel = this.stepPanel()?.nativeElement;
+        const target =
+          panel?.querySelector<HTMLElement>(
+            'input.ng-invalid, select.ng-invalid, textarea.ng-invalid',
+          ) ??
+          panel?.querySelector<HTMLElement>(
+            'button:not(:disabled), input:not(:disabled), select:not(:disabled)',
+          );
+        (target ?? panel)?.focus();
+      },
+      { injector: this.injector },
+    );
+  }
 
   readonly isEditing = computed(() => !!this.contractToEdit());
 
@@ -346,6 +414,23 @@ export class ServiceContractFormComponent implements OnInit {
 
   // ---------- Envío ----------
   save(): void {
+    if (this.isSaving()) return;
+    if (!this.isEditing() && this.activeStep() < this.steps.length - 1) {
+      this.nextStep();
+      return;
+    }
+    if (!this.isEditing()) {
+      const incomplete = [0, 1, 2].find((step) => !this.isStepComplete(step));
+      if (incomplete !== undefined) {
+        this.submitted.set(true);
+        this.toast.warning('Complete los datos requeridos del registro.', 'Datos incompletos');
+        this.activeStep.set(incomplete);
+        this.stepAttempted.set(true);
+        this.form.markAllAsTouched();
+        this.focusStep();
+        return;
+      }
+    }
     if (this.isEditing()) {
       this.updateContract();
     } else {
