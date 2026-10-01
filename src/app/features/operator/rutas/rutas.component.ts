@@ -567,19 +567,21 @@ export class RutasComponent implements OnInit, OnDestroy {
       const operatorId = this.authService.currentUser()?.id;
       const scope = operatorId ? `operator:${operatorId}` : undefined;
 
-      let [meters, registered, pending, synced] = await Promise.all([
+      const [meters, initialRegistered, pending, synced] = await Promise.all([
         this.dbService.getMetersCache(),
         this.dbService.getRegisteredReadingsCache(scope),
         this.dbService.getPendingReadings(),
         this.dbService.getSyncedReadings().catch(() => []),
       ]);
+      let registered = initialRegistered;
 
       if (this.networkService.isOnline()) {
         try {
-          const fresh = (await this.syncService.getCurrentPeriodReadings()) as any[];
+          const fresh =
+            (await this.syncService.getCurrentPeriodReadings()) as Record<string, unknown>[];
           if (fresh?.length) {
             await this.dbService.saveRegisteredReadingsCache(fresh, scope);
-            registered = fresh;
+            registered = fresh as unknown as typeof initialRegistered;
           }
         } catch {
           // Fallback a caché
