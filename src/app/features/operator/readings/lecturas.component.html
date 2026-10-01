@@ -187,7 +187,7 @@
                         </span>
                       } @else {
                         @let statusInfo = getOrderStatusInfo(meter);
-                        @if (statusInfo.label === 'Relectura') {
+                        @if (statusInfo.label === 'Por Verificar') {
                           <span class="badge-done-chip font-mono {{ statusInfo.cssClass }}">
                             <i class="bi {{ statusInfo.icon }}"></i> {{ statusInfo.label }}
                           </span>
@@ -196,7 +196,7 @@
                             class="btn-atender btn-releer font-mono"
                             (click)="$event.stopPropagation(); selectMeter(meter)"
                           >
-                            Releer
+                            Verificar
                           </button>
                         } @else {
                           <button
@@ -279,6 +279,7 @@
         }
 
         @let existingReading = existingReadingMap().get(meter.medidorId.toString());
+        @let isRejected = existingReading && existingReading.estado === 'RECHAZADA_VERIFICACION';
         @let isPendingOrRejected =
           existingReading &&
           (existingReading.estado === 'PENDIENTE' ||
@@ -340,12 +341,18 @@
               </div>
               <div class="action-text">
                 <span class="action-title">{{
-                  isPendingOrRejected ? 'Actualizar Lectura' : 'Registrar Lectura'
+                  isRejected
+                    ? 'Verificar Lectura'
+                    : isPendingOrRejected
+                      ? 'Actualizar Lectura'
+                      : 'Registrar Lectura'
                 }}</span>
                 <span class="action-desc">{{
-                  isPendingOrRejected
-                    ? 'Completar o corregir el valor medido'
-                    : 'Ingresar consumo del medidor'
+                  isRejected
+                    ? 'Confirmar o corregir la lectura observada'
+                    : isPendingOrRejected
+                      ? 'Completar o corregir el valor medido'
+                      : 'Ingresar consumo del medidor'
                 }}</span>
               </div>
               <i class="bi bi-chevron-right" aria-hidden="true"></i>
@@ -470,6 +477,8 @@
           [meter]="meter"
           [tipoActividad]="activeTipoActividad()"
           [lecturaAnterior]="lecturaAnteriorPreloaded()"
+          [initialLecturaActual]="initialLecturaActualFor(meter)"
+          [initialDescripcionAnomalia]="initialDescripcionAnomaliaFor(meter)"
           [isSaving]="isSaving()"
           (submitted)="onWorkOrderSubmit($event)"
           (canceled)="goBackToActions()"

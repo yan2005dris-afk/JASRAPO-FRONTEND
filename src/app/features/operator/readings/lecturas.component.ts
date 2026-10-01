@@ -354,7 +354,7 @@ export class LecturasComponent implements OnInit {
       case 'COMPLETADA':
         return { label: 'Completada', cssClass: 'badge-completada', icon: 'bi-check-circle-fill' };
       case 'RECHAZADA_VERIFICACION':
-        return { label: 'Relectura', cssClass: 'badge-rechazada-verificacion', icon: 'bi-arrow-repeat' };
+        return { label: 'Por Verificar', cssClass: 'badge-rechazada-verificacion', icon: 'bi-arrow-repeat' };
       case 'ANOMALIA':
         return { label: 'Con Novedad', cssClass: 'badge-anomalia', icon: 'bi-exclamation-triangle-fill' };
       default: {
@@ -796,8 +796,21 @@ export class LecturasComponent implements OnInit {
     const existing = this.getOrderRecord(meter);
     const state = existing?.estado;
     if (!state) return 'Sin lectura';
-    if (state === 'RECHAZADA_VERIFICACION') return 'Relectura requerida';
+    if (state === 'RECHAZADA_VERIFICACION') return 'Verificación requerida';
     return this.estadosCatalog().find((item) => item.codigo === state)?.nombre ?? state;
+  }
+
+  initialLecturaActualFor(meter: IMeterDto): number | null {
+    const record = this.getOrderRecord(meter);
+    if (record?.lecturaActual != null && !isNaN(Number(record.lecturaActual))) {
+      return Number(record.lecturaActual);
+    }
+    return null;
+  }
+
+  initialDescripcionAnomaliaFor(meter: IMeterDto): string | null {
+    const record = this.getOrderRecord(meter);
+    return (record?.['descripcionAnomalia'] as string) || null;
   }
 
   private workOrderIdFor(meter: IMeterDto, tipo: WorkOrderActivityType): string | undefined {

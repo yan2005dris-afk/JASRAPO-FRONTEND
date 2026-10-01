@@ -134,6 +134,9 @@ import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
           @if (isSaving()) {
             <span class="spinner" role="status" aria-hidden="true"></span>
             Guardando...
+          } @else if (initialLecturaActual() !== null) {
+            <i class="bi bi-check2-all"></i>
+            Verificar y Guardar
           } @else {
             <i class="bi bi-check-circle-fill"></i>
             Guardar Lectura
@@ -150,6 +153,12 @@ export class LecturaFormComponent
   /** Lectura anterior pre-cargada por el padre desde el caché. */
   readonly lecturaAnterior = input(0);
 
+  /** Valor previo de lectura actual para verificación o re-edición. */
+  readonly initialLecturaActual = input<number | null>(null);
+
+  /** Descripción de anomalía previa si existe. */
+  readonly initialDescripcionAnomalia = input<string | null>(null);
+
   /** Consumo calculado reactivo a partir de lecturaActual y lecturaAnterior. */
   readonly consumoCalculado = signal<number>(0);
 
@@ -165,11 +174,12 @@ export class LecturaFormComponent
   }
 
   protected buildForm(): FormGroup {
+    const defaultActual = this.initialLecturaActual() ?? 0;
     return this.fb.group({
       lecturaAnterior: [{ value: this.lecturaAnterior(), disabled: true }],
-      lecturaActual: [0, [Validators.required, Validators.min(0)]],
+      lecturaActual: [defaultActual, [Validators.required, Validators.min(0)]],
       lecturaInicial: [false],
-      descripcionAnomalia: [''],
+      descripcionAnomalia: [this.initialDescripcionAnomalia() ?? ''],
     });
   }
 
