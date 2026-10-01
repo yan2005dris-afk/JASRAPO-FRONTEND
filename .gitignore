@@ -70,3 +70,7 @@ e2e/.auth/
 /.github/skills/impeccable
 /.github/agents
 /.github/hooks
+
+# Local OpenCode config (agent model overrides + MCP entries).
+# Per-developer, opt-in. See opencode.example.jsonc for the reference version.
+opencode.json

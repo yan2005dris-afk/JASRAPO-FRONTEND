@@ -146,11 +146,14 @@ importers:
         specifier: ^21.1.0
         version: 21.2.23(@angular/animations@21.2.23(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2)))(@angular/common@21.2.23(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2))
       '@angular/router':
-        specifier: ^21.1.0
-        version: 21.2.23(@angular/common@21.2.23(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2))(@angular/platform-browser@21.2.23(@angular/animations@21.2.23(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2)))(@angular/common@21.2.23(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2)))(rxjs@7.8.2)
+        specifier: ^21.2.24
+        version: 21.2.24(@angular/common@21.2.23(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2))(@angular/platform-browser@21.2.23(@angular/animations@21.2.23(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2)))(@angular/common@21.2.23(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2)))(rxjs@7.8.2)
       '@angular/service-worker':
         specifier: ^21.2.18
         version: 21.2.23(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@turf/boolean-point-in-polygon':
+        specifier: ^7.4.0
+        version: 7.4.0
       bootstrap:
         specifier: ^5.3.8
         version: 5.3.8(@popperjs/core@2.11.8)
@@ -511,13 +514,13 @@ packages:
       '@angular/cli':
         optional: true
 
-  '@angular/router@21.2.23':
-    resolution: {integrity: sha512-cNwTd1XvCXsFZqvn4WFPv7VUci7PJzlK9Ex/git3oEyS9318sJjX7sw2IeTpvwIg01BZtF1xBvWgMTHgcXvzIA==}
+  '@angular/router@21.2.24':
+    resolution: {integrity: sha512-E72AvyTRGv5rDa/SlfSztThJ+9SemjnblzB9jTb8LJOFPo7u4GlfytvRE8DnxwmTfnlZcA6Sr10zlSDnL4pmyw==}
     engines: {node: ^20.19.0 || ^22.12.0 || >=24.0.0}
     peerDependencies:
-      '@angular/common': 21.2.23
-      '@angular/core': 21.2.23
-      '@angular/platform-browser': 21.2.23
+      '@angular/common': 21.2.24
+      '@angular/core': 21.2.24
+      '@angular/platform-browser': 21.2.24
       rxjs: ^6.5.3 || ^7.4.0
 
   '@angular/service-worker@21.2.23':
@@ -2400,6 +2403,15 @@ packages:
   '@tufjs/models@5.0.0':
     resolution: {integrity: sha512-U4mVcdFGOi6pt8n38LdWZp67Svn7ppnU1Pj8SGOVaBi1X4gm+G4ztQlLfkoJbKSHfjA6WeaiJp2A4V83AJF6nQ==}
     engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
+
+  '@turf/boolean-point-in-polygon@7.4.0':
+    resolution: {integrity: sha512-GQrHc6WSDHhf32GB/b9AGyOeC05AQ3nGN7ooWTrlCYefKn7X9/2wG9BNexF47AuyDq5jPdOvITVR26BLFWV+mA==}
+
+  '@turf/helpers@7.4.0':
+    resolution: {integrity: sha512-7PAwLZqOdRzTI5g9bHvUwlloAXPDH/mlajtryk0tw4ZwGMtmXsAyF4QundsAMfy4u48Fyd3AUqMXY0SMxqJGWg==}
+
+  '@turf/invariant@7.4.0':
+    resolution: {integrity: sha512-OAsc3qdNx+tRqzWmMNFMnVlWWACIqnYqIejZKvb2oKkKPYJJrURPXZ6OdrGD58ljJMolLoqwIZGSx3VndaEjxg==}
 
   '@tybys/wasm-util@0.10.3':
     resolution: {integrity: sha512-F3fo1MYrRJYL3zER0OUOmkutjr1Vp23m7OsSgp7nq4SP6OqX6C/56XFIPAl5bt3zaBRjmW7SGz3u/6LwFpYcOg==}
@@ -4314,6 +4326,9 @@ packages:
   png-js@1.1.0:
     resolution: {integrity: sha512-PM/uYGzGdNSzqeOgly68+6wKQDL1SY0a/N+OEa/+br6LnHWOAJB0Npiamnodfq3jd2LS/i2fMeOKSAILjA+m5Q==}
 
+  point-in-polygon-hao@1.2.4:
+    resolution: {integrity: sha512-x2pcvXeqhRHlNRdhLs/tgFapAbSSe86wa/eqmj1G6pWftbEs5aVRJhRGM6FYSUERKu0PjekJzMq0gsI2XyiclQ==}
+
   pony-cause@1.1.1:
     resolution: {integrity: sha512-PxkIc/2ZpLiEzQXu5YRDOUgBlfGYBY8156HY5ZcRAwwonMk5W/MrJP2LLkG/hF7GEQzaHo2aS7ho6ZLCOvf+6g==}
     engines: {node: '>=12.0.0'}
@@ -4450,6 +4465,9 @@ packages:
 
   rfdc@1.4.1:
     resolution: {integrity: sha512-q1b3N5QkRUWUl7iyylaaj3kOpIT0N2i9MqIEQXP73GVsN9cw3fdx8X63cEmWhJGi2PPCF23Ijp7ktmd39rawIA==}
+
+  robust-predicates@3.0.3:
+    resolution: {integrity: sha512-NS3levdsRIUOmiJ8FZWCP7LG3QpJyrs/TE0Zpf1yvZu8cAJJ6QMW92H1c7kWpdIHo8RvmLxN/o2JXTKHp74lUA==}
 
   rolldown@1.0.0-rc.4:
     resolution: {integrity: sha512-V2tPDUrY3WSevrvU2E41ijZlpF+5PbZu4giH+VpNraaadsJGHa4fR6IFwsocVwEXDoAdIv5qgPPxgrvKAOIPtA==}
@@ -5533,7 +5551,7 @@ snapshots:
     transitivePeerDependencies:
       - chokidar
 
-  '@angular/router@21.2.23(@angular/common@21.2.23(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2))(@angular/platform-browser@21.2.23(@angular/animations@21.2.23(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2)))(@angular/common@21.2.23(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2)))(rxjs@7.8.2)':
+  '@angular/router@21.2.24(@angular/common@21.2.23(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2))(@angular/platform-browser@21.2.23(@angular/animations@21.2.23(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2)))(@angular/common@21.2.23(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2)))(rxjs@7.8.2)':
     dependencies:
       '@angular/common': 21.2.23(@angular/core@21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2))(rxjs@7.8.2)
       '@angular/core': 21.2.23(@angular/compiler@21.2.23)(rxjs@7.8.2)
@@ -7194,6 +7212,25 @@ snapshots:
     dependencies:
       '@tufjs/canonical-json': 2.0.0
       minimatch: 10.2.6
+
+  '@turf/boolean-point-in-polygon@7.4.0':
+    dependencies:
+      '@turf/helpers': 7.4.0
+      '@turf/invariant': 7.4.0
+      '@types/geojson': 7946.0.16
+      point-in-polygon-hao: 1.2.4
+      tslib: 2.8.1
+
+  '@turf/helpers@7.4.0':
+    dependencies:
+      '@types/geojson': 7946.0.16
+      tslib: 2.8.1
+
+  '@turf/invariant@7.4.0':
+    dependencies:
+      '@turf/helpers': 7.4.0
+      '@types/geojson': 7946.0.16
+      tslib: 2.8.1
 
   '@tybys/wasm-util@0.10.3':
     dependencies:
@@ -9498,6 +9535,10 @@ snapshots:
     dependencies:
       browserify-zlib: 0.2.0
 
+  point-in-polygon-hao@1.2.4:
+    dependencies:
+      robust-predicates: 3.0.3
+
   pony-cause@1.1.1: {}
 
   possible-typed-array-names@1.1.0: {}
@@ -9607,6 +9648,8 @@ snapshots:
   reusify@1.1.0: {}
 
   rfdc@1.4.1: {}
+
+  robust-predicates@3.0.3: {}
 
   rolldown@1.0.0-rc.4(@emnapi/core@1.11.3)(@emnapi/runtime@1.11.3):
     dependencies:
@@ -10203,12 +10246,12 @@ snapshots:
 
   vite@7.3.6(@types/node@26.5.1)(jiti@2.7.0)(lightningcss@1.32.0)(sass@1.97.3)(tsx@4.23.13)(yaml@2.9.1):
     dependencies:
-      esbuild: 0.28.1
+      esbuild: 0.28.2
       fdir: 6.5.0(picomatch@4.0.7)
       picomatch: 4.0.7
       postcss: 8.5.28
       rollup: 4.63.2
-      tinyglobby: 0.2.15
+      tinyglobby: 0.2.17
     optionalDependencies:
       '@types/node': 26.5.1
       fsevents: 2.3.3

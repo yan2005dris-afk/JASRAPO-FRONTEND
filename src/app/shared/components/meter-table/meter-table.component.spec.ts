@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { MeterTableComponent } from './meter-table.component';
-import { IMeter } from '../../../features/contracts/meters/interfaces/imeter.interface';
+import { IMeter } from '../../../features/contracts/meters/domain/models/meter.model';
 
 describe('MeterTableComponent', () => {
   let component: MeterTableComponent;

@@ -48,12 +48,22 @@
             </span>
           </div>
 
-          <div class="orders-header-info mb-3">
-            <h2 class="orders-route-title text-dark mb-0">{{ ctx.nombre }}</h2>
-            <small class="text-muted">
-              {{ orderCounts().total }} órdenes en total · {{ orderCounts().completed }} completadas
-              ({{ orderCounts().pct }}%)
-            </small>
+          <div class="orders-kpi-card mb-3">
+            <div class="orders-kpi-header">
+              <div class="orders-kpi-info">
+                <h2 class="orders-route-title text-dark mb-0">{{ ctx.nombre }}</h2>
+                <span class="orders-kpi-subtitle">
+                  {{ orderCounts().completed }} de {{ orderCounts().total }} completadas ({{
+                    orderCounts().pending
+                  }}
+                  pendientes)
+                </span>
+              </div>
+              <div class="orders-kpi-badge font-mono">{{ orderCounts().pct }}%</div>
+            </div>
+            <div class="orders-kpi-track">
+              <div class="orders-kpi-fill" [style.width.%]="orderCounts().pct"></div>
+            </div>
           </div>
 
           <!-- Segmented Control del Mockup -->
@@ -172,17 +182,32 @@
                         </span>
                       </div>
                       @if (isDone) {
-                        <span class="badge-done-chip font-mono">
-                          <i class="bi bi-check-circle-fill"></i> Lista
+                        @let statusInfo = getOrderStatusInfo(meter);
+                        <span class="badge-done-chip font-mono {{ statusInfo.cssClass }}">
+                          <i class="bi {{ statusInfo.icon }}"></i> {{ statusInfo.label }}
                         </span>
                       } @else {
-                        <button
-                          type="button"
-                          class="btn-atender font-mono"
-                          (click)="$event.stopPropagation(); selectMeter(meter)"
-                        >
-                          Atender
-                        </button>
+                        @let statusInfo = getOrderStatusInfo(meter);
+                        @if (statusInfo.label === 'Por Verificar') {
+                          <span class="badge-done-chip font-mono {{ statusInfo.cssClass }}">
+                            <i class="bi {{ statusInfo.icon }}"></i> {{ statusInfo.label }}
+                          </span>
+                          <button
+                            type="button"
+                            class="btn-atender btn-releer font-mono"
+                            (click)="$event.stopPropagation(); selectMeter(meter)"
+                          >
+                            Verificar
+                          </button>
+                        } @else {
+                          <button
+                            type="button"
+                            class="btn-atender font-mono"
+                            (click)="$event.stopPropagation(); selectMeter(meter)"
+                          >
+                            Atender
+                          </button>
+                        }
                       }
                     </div>
                   </div>
@@ -255,6 +280,7 @@
         }
 
         @let existingReading = existingReadingMap().get(meter.medidorId.toString());
+        @let isRejected = existingReading && existingReading.estado === 'RECHAZADA_VERIFICACION';
         @let isPendingOrRejected =
           existingReading &&
           (existingReading.estado === 'PENDIENTE' ||
@@ -316,12 +342,18 @@
               </div>
               <div class="action-text">
                 <span class="action-title">{{
-                  isPendingOrRejected ? 'Actualizar Lectura' : 'Registrar Lectura'
+                  isRejected
+                    ? 'Verificar Lectura'
+                    : isPendingOrRejected
+                      ? 'Actualizar Lectura'
+                      : 'Registrar Lectura'
                 }}</span>
                 <span class="action-desc">{{
-                  isPendingOrRejected
-                    ? 'Completar o corregir el valor medido'
-                    : 'Ingresar consumo del medidor'
+                  isRejected
+                    ? 'Confirmar o corregir la lectura observada'
+                    : isPendingOrRejected
+                      ? 'Completar o corregir el valor medido'
+                      : 'Ingresar consumo del medidor'
                 }}</span>
               </div>
               <i class="bi bi-chevron-right" aria-hidden="true"></i>
@@ -446,6 +478,8 @@
           [meter]="meter"
           [tipoActividad]="activeTipoActividad()"
           [lecturaAnterior]="lecturaAnteriorPreloaded()"
+          [initialLecturaActual]="initialLecturaActualFor(meter)"
+          [initialDescripcionAnomalia]="initialDescripcionAnomaliaFor(meter)"
           [isSaving]="isSaving()"
           (submitted)="onWorkOrderSubmit($event)"
           (canceled)="goBackToActions()"

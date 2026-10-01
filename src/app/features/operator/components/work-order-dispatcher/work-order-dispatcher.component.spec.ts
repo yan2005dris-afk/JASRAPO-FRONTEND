@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { WorkOrderDispatcherComponent } from './work-order-dispatcher.component';
-import { IMeterDto } from '../../../contracts/meters/interfaces/imeter.interface';
+import { IMeterDto } from '../../../contracts/meters/domain/models/meter.model';
 
 describe('WorkOrderDispatcherComponent', () => {
   const mockMeter: IMeterDto = {

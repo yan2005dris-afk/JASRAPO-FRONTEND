@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { MeterSearchComponent } from './meter-search.component';
-import { IMeterDto } from '../../../contracts/meters/interfaces/imeter.interface';
+import { IMeterDto } from '../../../contracts/meters/domain/models/meter.model';
 import { EstadoChip, MeterGroup } from '../../readings/readings.models';
 
 describe('MeterSearchComponent', () => {

@@ -230,65 +230,89 @@
         </div>
       }
 
-      <!-- Lecturas Pendientes -->
-      @for (record of pendingReadings(); track record.id) {
-        <div class="queue-card reading-card">
-          <div class="card-type-badge reading">
-            {{ isWorkOrder(record) ? 'Orden de trabajo' : 'Lectura' }}
-          </div>
-          <div class="card-body-content">
-            @if (record['clienteNombre']) {
+      <!-- Lecturas y Anomalías Pendientes (paginadas) -->
+      @for (record of pendingPageItems(); track record.id) {
+        @if (record['tipo'] || record['observacion']) {
+          <!-- Anomalía Pendiente -->
+          <div class="queue-card anomaly-card">
+            <div class="card-type-badge anomaly">Novedad</div>
+            <div class="card-body-content">
               <div class="card-info">
-                <span class="info-label">Cliente:</span>
-                <span class="info-value">{{ record['clienteNombre'] }}</span>
+                <span class="info-label">Medidor:</span>
+                <span class="info-value">{{ record['medidorId'] }}</span>
               </div>
-            }
-            <div class="card-info">
-              <span class="info-label">Medidor:</span>
-              <span class="info-value">{{ record['serie'] ?? record['medidorId'] }}</span>
+              <div class="card-info">
+                <span class="info-label">Tipo:</span>
+                <span class="info-value">{{ record['tipo'] }}</span>
+              </div>
+              <div class="card-info truncate-text">
+                <span class="info-label">Observación:</span>
+                <span class="info-value">{{ record['observacion'] }}</span>
+              </div>
             </div>
-            <div class="card-info">
-              <span class="info-label">Lectura:</span>
-              <span class="info-value"
-                >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
-              >
-            </div>
-            <div class="card-info">
-              <span class="info-label">Consumo:</span>
-              <span class="info-value">{{ record['consumoCalculado'] }} m³</span>
+            <div class="card-status">
+              <span class="status-tag pending-tag">
+                <i class="bi bi-clock" aria-hidden="true"></i> Pendiente
+              </span>
             </div>
           </div>
-          <div class="card-status">
-            <span class="status-tag pending-tag">
-              <i class="bi bi-clock" aria-hidden="true"></i> Pendiente
-            </span>
+        } @else {
+          <!-- Lectura Pendiente -->
+          <div class="queue-card reading-card">
+            <div class="card-type-badge reading">
+              {{ isWorkOrder(record) ? 'Orden de trabajo' : 'Lectura' }}
+            </div>
+            <div class="card-body-content">
+              @if (record['clienteNombre']) {
+                <div class="card-info">
+                  <span class="info-label">Cliente:</span>
+                  <span class="info-value">{{ record['clienteNombre'] }}</span>
+                </div>
+              }
+              <div class="card-info">
+                <span class="info-label">Medidor:</span>
+                <span class="info-value">{{ record['serie'] ?? record['medidorId'] }}</span>
+              </div>
+              <div class="card-info">
+                <span class="info-label">Lectura:</span>
+                <span class="info-value"
+                  >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
+                >
+              </div>
+              <div class="card-info">
+                <span class="info-label">Consumo:</span>
+                <span class="info-value">{{ record['consumoCalculado'] }} m³</span>
+              </div>
+            </div>
+            <div class="card-status">
+              <span class="status-tag pending-tag">
+                <i class="bi bi-clock" aria-hidden="true"></i> Pendiente
+              </span>
+            </div>
           </div>
-        </div>
+        }
       }
 
-      <!-- Anomalías Pendientes -->
-      @for (record of pendingAnomalies(); track record.id) {
-        <div class="queue-card anomaly-card">
-          <div class="card-type-badge anomaly">Novedad</div>
-          <div class="card-body-content">
-            <div class="card-info">
-              <span class="info-label">Medidor:</span>
-              <span class="info-value">{{ record['medidorId'] }}</span>
-            </div>
-            <div class="card-info">
-              <span class="info-label">Tipo:</span>
-              <span class="info-value">{{ record['tipo'] }}</span>
-            </div>
-            <div class="card-info truncate-text">
-              <span class="info-label">Observación:</span>
-              <span class="info-value">{{ record['observacion'] }}</span>
-            </div>
-          </div>
-          <div class="card-status">
-            <span class="status-tag pending-tag">
-              <i class="bi bi-clock" aria-hidden="true"></i> Pendiente
-            </span>
-          </div>
+      <!-- Paginación Pendientes -->
+      @if (allPendingItems().length > 0) {
+        <div class="queue-pagination">
+          <button
+            class="page-btn"
+            [disabled]="pendingPage() === 0"
+            (click)="goToPendingPage(pendingPage() - 1)"
+            aria-label="Página anterior"
+          >
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <span class="page-indicator"> {{ pendingPage() + 1 }} / {{ pendingTotalPages() }} </span>
+          <button
+            class="page-btn"
+            [disabled]="pendingPage() >= pendingTotalPages() - 1"
+            (click)="goToPendingPage(pendingPage() + 1)"
+            aria-label="Página siguiente"
+          >
+            <i class="bi bi-chevron-right"></i>
+          </button>
         </div>
       }
     </div>
@@ -304,89 +328,115 @@
         </div>
       }
 
-      <!-- Lecturas Rechazadas -->
-      @for (record of rejectedReadings(); track record.id) {
-        <div class="queue-card rejected-card">
-          <div class="card-type-badge reading">
-            {{ isWorkOrder(record) ? 'Orden de trabajo' : 'Lectura' }}
-          </div>
-          <div class="card-body-content">
-            <div class="card-info">
-              <span class="info-label">Medidor:</span>
-              <span class="info-value">{{ record['medidorId'] }}</span>
+      <!-- Lecturas y Anomalías Rechazadas (paginadas) -->
+      @for (record of rejectedPageItems(); track record.id) {
+        @if (record['tipo'] || record['observacion']) {
+          <!-- Anomalía Rechazada -->
+          <div class="queue-card rejected-card">
+            <div class="card-type-badge anomaly">Novedad</div>
+            <div class="card-body-content">
+              <div class="card-info">
+                <span class="info-label">Medidor:</span>
+                <span class="info-value">{{ record['medidorId'] }}</span>
+              </div>
+              <div class="card-info">
+                <span class="info-label">Tipo:</span>
+                <span class="info-value">{{ record['tipo'] }}</span>
+              </div>
+              <!-- Error Message -->
+              <div class="error-banner">
+                <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
+                <span>{{ record.errorMessage }}</span>
+              </div>
             </div>
-            <div class="card-info">
-              <span class="info-label">Lectura:</span>
-              <span class="info-value"
-                >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
-              >
-            </div>
-            <!-- Error Message -->
-            <div class="error-banner">
-              <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
-              <span>{{ record.errorMessage }}</span>
+            <div class="card-actions">
+              @if (editingRecord()?.id === record.id && editingType() === 'anomalia') {
+                <app-sync-anomaly-editor
+                  [record]="record"
+                  (saved)="onAnomalyEditorSaved($event)"
+                  (canceled)="cancelEdit()"
+                />
+              } @else {
+                <button type="button" class="btn-retry" (click)="retryAnomaly(record)">
+                  <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Reintentar
+                </button>
+                <button type="button" class="btn-edit" (click)="startEditAnomaly(record)">
+                  <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
+                </button>
+                <button type="button" class="btn-discard" (click)="discardAnomaly(record)">
+                  <i class="bi bi-trash3" aria-hidden="true"></i> Descartar
+                </button>
+              }
             </div>
           </div>
-          <div class="card-actions">
-            @if (editingRecord()?.id === record.id && editingType() === 'lectura') {
-              <app-sync-reading-editor
-                [record]="record"
-                (saved)="onReadingEditorSaved($event)"
-                (canceled)="cancelEdit()"
-              />
-            } @else {
-              <button type="button" class="btn-retry" (click)="retryReading(record)">
-                <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Reintentar
-              </button>
-              <button type="button" class="btn-edit" (click)="startEditReading(record)">
-                <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
-              </button>
-              <button type="button" class="btn-discard" (click)="discardReading(record)">
-                <i class="bi bi-trash3" aria-hidden="true"></i> Descartar
-              </button>
-            }
+        } @else {
+          <!-- Lectura Rechazada -->
+          <div class="queue-card rejected-card">
+            <div class="card-type-badge reading">
+              {{ isWorkOrder(record) ? 'Orden de trabajo' : 'Lectura' }}
+            </div>
+            <div class="card-body-content">
+              <div class="card-info">
+                <span class="info-label">Medidor:</span>
+                <span class="info-value">{{ record['medidorId'] }}</span>
+              </div>
+              <div class="card-info">
+                <span class="info-label">Lectura:</span>
+                <span class="info-value"
+                  >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
+                >
+              </div>
+              <!-- Error Message -->
+              <div class="error-banner">
+                <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
+                <span>{{ record.errorMessage }}</span>
+              </div>
+            </div>
+            <div class="card-actions">
+              @if (editingRecord()?.id === record.id && editingType() === 'lectura') {
+                <app-sync-reading-editor
+                  [record]="record"
+                  (saved)="onReadingEditorSaved($event)"
+                  (canceled)="cancelEdit()"
+                />
+              } @else {
+                <button type="button" class="btn-retry" (click)="retryReading(record)">
+                  <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Reintentar
+                </button>
+                <button type="button" class="btn-edit" (click)="startEditReading(record)">
+                  <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
+                </button>
+                <button type="button" class="btn-discard" (click)="discardReading(record)">
+                  <i class="bi bi-trash3" aria-hidden="true"></i> Descartar
+                </button>
+              }
+            </div>
           </div>
-        </div>
+        }
       }
 
-      <!-- Anomalías Rechazadas -->
-      @for (record of rejectedAnomalies(); track record.id) {
-        <div class="queue-card rejected-card">
-          <div class="card-type-badge anomaly">Novedad</div>
-          <div class="card-body-content">
-            <div class="card-info">
-              <span class="info-label">Medidor:</span>
-              <span class="info-value">{{ record['medidorId'] }}</span>
-            </div>
-            <div class="card-info">
-              <span class="info-label">Tipo:</span>
-              <span class="info-value">{{ record['tipo'] }}</span>
-            </div>
-            <!-- Error Message -->
-            <div class="error-banner">
-              <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
-              <span>{{ record.errorMessage }}</span>
-            </div>
-          </div>
-          <div class="card-actions">
-            @if (editingRecord()?.id === record.id && editingType() === 'anomalia') {
-              <app-sync-anomaly-editor
-                [record]="record"
-                (saved)="onAnomalyEditorSaved($event)"
-                (canceled)="cancelEdit()"
-              />
-            } @else {
-              <button type="button" class="btn-retry" (click)="retryAnomaly(record)">
-                <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Reintentar
-              </button>
-              <button type="button" class="btn-edit" (click)="startEditAnomaly(record)">
-                <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
-              </button>
-              <button type="button" class="btn-discard" (click)="discardAnomaly(record)">
-                <i class="bi bi-trash3" aria-hidden="true"></i> Descartar
-              </button>
-            }
-          </div>
+      <!-- Paginación Rechazados -->
+      @if (allRejectedItems().length > 0) {
+        <div class="queue-pagination">
+          <button
+            class="page-btn"
+            [disabled]="rejectedPage() === 0"
+            (click)="goToRejectedPage(rejectedPage() - 1)"
+            aria-label="Página anterior"
+          >
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <span class="page-indicator">
+            {{ rejectedPage() + 1 }} / {{ rejectedTotalPages() }}
+          </span>
+          <button
+            class="page-btn"
+            [disabled]="rejectedPage() >= rejectedTotalPages() - 1"
+            (click)="goToRejectedPage(rejectedPage() + 1)"
+            aria-label="Página siguiente"
+          >
+            <i class="bi bi-chevron-right"></i>
+          </button>
         </div>
       }
     </div>
@@ -415,7 +465,7 @@
         </div>
       }
 
-      @for (record of syncedReadings(); track record.id) {
+      @for (record of syncedPageItems(); track record.id) {
         <div class="queue-card synced-card">
           <div class="card-type-badge reading">
             {{ isWorkOrder(record) ? 'Orden de trabajo' : 'Lectura' }}
@@ -453,6 +503,29 @@
               <i class="bi bi-cloud-check-fill" aria-hidden="true"></i> Enviado al servidor
             </span>
           </div>
+        </div>
+      }
+
+      <!-- Paginación Enviados -->
+      @if (syncedReadings().length > 0) {
+        <div class="queue-pagination">
+          <button
+            class="page-btn"
+            [disabled]="syncedPage() === 0"
+            (click)="goToSyncedPage(syncedPage() - 1)"
+            aria-label="Página anterior"
+          >
+            <i class="bi bi-chevron-left"></i>
+          </button>
+          <span class="page-indicator"> {{ syncedPage() + 1 }} / {{ syncedTotalPages() }} </span>
+          <button
+            class="page-btn"
+            [disabled]="syncedPage() >= syncedTotalPages() - 1"
+            (click)="goToSyncedPage(syncedPage() + 1)"
+            aria-label="Página siguiente"
+          >
+            <i class="bi bi-chevron-right"></i>
+          </button>
         </div>
       }
     </div>

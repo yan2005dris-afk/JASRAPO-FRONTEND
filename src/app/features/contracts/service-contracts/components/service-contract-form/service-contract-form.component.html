@@ -52,6 +52,7 @@
               </div>
             </div>
 
+<<<<<<< HEAD
             <div class="row g-3">
               <!-- Cliente -->
               <div class="col-md-6">
@@ -113,6 +114,36 @@
                     <span class="fw-semibold">Seleccionar Cliente</span>
                     <span class="text-muted x-small">Explorar el listado de clientes activos</span>
                   </button>
+=======
+          <div class="col-md-6">
+            <label for="lecturaInicial" class="form-label fw-semibold text-dark">
+              Lectura inicial (m³)
+            </label>
+            <input
+              id="lecturaInicial"
+              type="text"
+              inputmode="numeric"
+              maxlength="10"
+              class="form-control"
+              formControlName="lecturaInicial"
+              (input)="onLecturaInicialInput($event)"
+              [readonly]="isEditing()"
+              [class.is-invalid]="isFieldInvalid('lecturaInicial')"
+            />
+            @if (isEditing()) {
+              <span class="text-muted x-small d-block mt-1">
+                La lectura inicial solo se define en la instalación o al reemplazar el medidor.
+              </span>
+            } @else if (!isSuperAdmin()) {
+              <span class="text-muted x-small d-block mt-1">
+                Solo usuarios Super Admin pueden modificar la lectura inicial.
+              </span>
+            }
+            @if (isFieldInvalid('lecturaInicial')) {
+              <span class="text-danger x-small"> Ingrese solo números (máx. 10 dígitos). </span>
+            }
+          </div>
+>>>>>>> origin/develop
 
                   @if (submitted()) {
                     <span class="text-danger x-small d-block mt-1">Seleccione un cliente.</span>
@@ -445,6 +476,8 @@
               [latitud]="coordinates().latitud"
               [longitud]="coordinates().longitud"
               [errorMessage]="coordinateError()"
+              [serviceArea]="serviceArea()"
+              [focusPoint]="communityMapCenter()"
               (coordinatesChange)="onCoordinatesChange($event)"
             />
           </div>
@@ -565,7 +598,7 @@
           ></button>
         </div>
         <div class="modal-body pt-2">
-          <app-clients [selectionMode]="true" (clientSelected)="onClientSelected($event)" />
+          <app-clients-list [selectionMode]="true" (clientSelected)="onClientSelected($event)" />
         </div>
       </div>
     </div>
@@ -669,7 +702,7 @@
           ></button>
         </div>
         <div class="modal-body pt-2">
-          <app-tariffs [selectionMode]="true" (tariffSelected)="onTariffSelected($event)" />
+          <app-tariffs-list [selectionMode]="true" (tariffSelected)="onTariffSelected($event)" />
         </div>
       </div>
     </div>

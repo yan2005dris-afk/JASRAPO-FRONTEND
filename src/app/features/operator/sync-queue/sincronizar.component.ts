@@ -26,6 +26,8 @@ import {
 
 type QueueTab = 'pendientes' | 'rechazados' | 'sincronizados';
 
+const PAGE_SIZE = 5;
+
 @Component({
   selector: 'app-sincronizar',
   standalone: true,
@@ -66,11 +68,54 @@ export class SincronizarComponent implements OnInit {
   readonly editingRecord = signal<PendingRecord | null>(null);
   readonly editingType = signal<'lectura' | 'anomalia' | null>(null);
 
+  // Pagination
+  readonly pendingPage = signal(0);
+  readonly rejectedPage = signal(0);
+  readonly syncedPage = signal(0);
+
   readonly totalPendientes = computed(
     () => this.pendingReadings().length + this.pendingAnomalies().length,
   );
   readonly totalRechazados = computed(
     () => this.rejectedReadings().length + this.rejectedAnomalies().length,
+  );
+
+  // All records combined per tab (for unified pagination)
+  readonly allPendingItems = computed(() => [
+    ...this.pendingReadings(),
+    ...this.pendingAnomalies(),
+  ]);
+  readonly allRejectedItems = computed(() => [
+    ...this.rejectedReadings(),
+    ...this.rejectedAnomalies(),
+  ]);
+
+  // Paginated slices
+  readonly pendingPageItems = computed(() =>
+    this.allPendingItems().slice(
+      this.pendingPage() * PAGE_SIZE,
+      (this.pendingPage() + 1) * PAGE_SIZE,
+    ),
+  );
+  readonly pendingTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.allPendingItems().length / PAGE_SIZE)),
+  );
+
+  readonly rejectedPageItems = computed(() =>
+    this.allRejectedItems().slice(
+      this.rejectedPage() * PAGE_SIZE,
+      (this.rejectedPage() + 1) * PAGE_SIZE,
+    ),
+  );
+  readonly rejectedTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.allRejectedItems().length / PAGE_SIZE)),
+  );
+
+  readonly syncedPageItems = computed(() =>
+    this.syncedReadings().slice(this.syncedPage() * PAGE_SIZE, (this.syncedPage() + 1) * PAGE_SIZE),
+  );
+  readonly syncedTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.syncedReadings().length / PAGE_SIZE)),
   );
 
   ngOnInit(): void {
@@ -160,6 +205,23 @@ export class SincronizarComponent implements OnInit {
   switchTab(tab: QueueTab): void {
     this.activeTab.set(tab);
     this.cancelEdit();
+    // Reset pagination when switching tabs
+    this.pendingPage.set(0);
+    this.rejectedPage.set(0);
+    this.syncedPage.set(0);
+  }
+
+  // Pagination helpers
+  goToPendingPage(page: number): void {
+    this.pendingPage.set(Math.max(0, Math.min(page, this.pendingTotalPages() - 1)));
+  }
+
+  goToRejectedPage(page: number): void {
+    this.rejectedPage.set(Math.max(0, Math.min(page, this.rejectedTotalPages() - 1)));
+  }
+
+  goToSyncedPage(page: number): void {
+    this.syncedPage.set(Math.max(0, Math.min(page, this.syncedTotalPages() - 1)));
   }
 
   // --- Edit flow ---

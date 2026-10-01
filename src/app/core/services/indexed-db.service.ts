@@ -32,12 +32,179 @@ export interface AssignedSnapshot {
   savedAt: string;
 }
 
+export interface RoutesCacheResult<T> {
+  items: T[];
+  savedAt: string;
+}
+
+/**
+ * Merge key for routes: the sync manifest and GET /operator/routes describe the same physical
+ * entity, matched by `rutaId` (work orders by `ordenTrabajoId`). The manifest ARRAY ORDER is
+ * pagination/cursor mechanics (updatedAt asc, id asc) and must never be used as visit order; the
+ * hydrated cache (rutas_cache) keeps the online visit order and is the BASE of every merge.
+ */
+const ROUTE_SNAPSHOT_MUTABLE_FIELDS = [
+  'estado',
+  'orden',
+  'nombre',
+  'tipoRuta',
+  'descripcion',
+  'observacion',
+  'fechaLimite',
+  'fechaPlanificada',
+  'operarioId',
+  'comunidadId',
+  'sectorId',
+] as const;
+
+const ROUTE_HYDRATED_ARRAY_FIELDS = ['paradas', 'ordenesTrabajo', 'rutaPuntos'] as const;
+
+const WORK_ORDER_SNAPSHOT_MUTABLE_FIELDS = [
+  'estado',
+  'resultadoObservacion',
+  'completadoEn',
+] as const;
+
+function identityOf(value: unknown): string {
+  return value === null || value === undefined ? '' : String(value);
+}
+
+function snapshotRouteById(routes: any[] | undefined): Map<string, any> {
+  const byId = new Map<string, any>();
+  for (const route of routes ?? []) {
+    const id = identityOf(route?.rutaId);
+    if (id && !byId.has(id)) byId.set(id, route);
+  }
+  return byId;
+}
+
+function isRouteHydrated(route: any): boolean {
+  return (
+    (Array.isArray(route?.paradas) && route.paradas.length > 0) ||
+    (Array.isArray(route?.ordenesTrabajo) && route.ordenesTrabajo.length > 0) ||
+    (Array.isArray(route?.rutaPuntos) && route.rutaPuntos.length > 0) ||
+    (identityOf(route?.medidor?.latitud) !== '' && identityOf(route?.medidor?.longitud) !== '')
+  );
+}
+
+function refreshRouteFromSnapshot(hydratedRoute: any, snapshotRoute: any): any {
+  const merged = { ...hydratedRoute };
+  for (const field of ROUTE_SNAPSHOT_MUTABLE_FIELDS) {
+    const value = snapshotRoute?.[field];
+    if (value !== undefined) merged[field] = value;
+  }
+  // Hydrated collections (paradas/ordenesTrabajo/rutaPuntos) must never be replaced by the
+  // snapshot equivalents, which the manifest ships stripped ([]).
+  for (const field of ROUTE_HYDRATED_ARRAY_FIELDS) {
+    if (merged[field] != null) continue;
+    const value = snapshotRoute?.[field];
+    if (value !== undefined) merged[field] = value;
+  }
+  return merged;
+}
+
+/**
+ * Re-hydrates a route that has no coordinate-bearing collections by attaching the manifest work
+ * orders of its `rutaId`. Ordering follows `ordenVisita`, preserving visit-order semantics; the
+ * entries come from the manifest collection, never from the route list array order.
+ */
+function clientHydrateRoute(route: any, workOrders: any[] | undefined): any {
+  const hydrated = { ...route };
+  if (!workOrders?.length) return hydrated;
+  const orders = workOrders
+    .filter((order) => identityOf(order?.rutaId) === identityOf(route.rutaId))
+    .slice()
+    .sort((a, b) => (a?.ordenVisita ?? 0) - (b?.ordenVisita ?? 0));
+  const existing = hydrated.ordenesTrabajo;
+  if (orders.length > 0 && (!Array.isArray(existing) || existing.length === 0)) {
+    hydrated.ordenesTrabajo = orders;
+  }
+  return hydrated;
+}
+
+/**
+ * Merges the manifest snapshot routes into the hydrated cache (rutas_cache):
+ * - Existing hydrated routes keep their hydrated arrays and relative visit order; only mutable
+ *   scalar state (estado, fechas, orden, ...) is refreshed from the snapshot.
+ * - Routes present only in the snapshot are appended, hydrated from the manifest work-orders
+ *   collection when possible; otherwise they stay stripped.
+ */
+export function mergeHydratedRoutesWithSnapshot<T>(
+  hydratedRoutes: T[] | undefined,
+  snapshotRoutes: T[] | undefined,
+  snapshotWorkOrders?: any[],
+): T[] {
+  const hydrated = hydratedRoutes ?? [];
+  const snapshot = snapshotRoutes ?? [];
+  if (snapshot.length === 0) return [...hydrated];
+
+  const snapshotById = snapshotRouteById(snapshot);
+  const presentIds = new Set(
+    hydrated.map((route) => identityOf((route as any)?.rutaId)).filter((id) => id !== ''),
+  );
+
+  const merged: any[] = hydrated.map((route) => {
+    const snapshotRoute = snapshotById.get(identityOf((route as any)?.rutaId));
+    return snapshotRoute ? refreshRouteFromSnapshot(route, snapshotRoute) : route;
+  });
+
+  for (const snapshotRoute of snapshot) {
+    const id = identityOf((snapshotRoute as any)?.rutaId);
+    if (!id || presentIds.has(id)) continue;
+    presentIds.add(id);
+    merged.push(clientHydrateRoute(snapshotRoute, snapshotWorkOrders));
+  }
+
+  return merged.map((route) =>
+    isRouteHydrated(route) ? route : clientHydrateRoute(route, snapshotWorkOrders),
+  );
+}
+
+/**
+ * Merges the manifest work-orders collection into the work orders already hydrated inside
+ * rutas_cache. Known orders keep their hydrated position (visit order is never re-sequenced by the
+ * manifest keyset order) and only receive refreshed mutable state; unknown orders are appended.
+ */
+export function mergeWorkOrdersWithSnapshot(
+  hydratedWorkOrders: any[] | undefined,
+  snapshotWorkOrders: any[] | undefined,
+): any[] {
+  const base = hydratedWorkOrders ?? [];
+  const snapshot = snapshotWorkOrders ?? [];
+  if (snapshot.length === 0) return [...base];
+
+  const merged: any[] = [];
+  const seen = new Set<string>();
+  for (const order of base) {
+    const id = identityOf(order?.ordenTrabajoId ?? order?.id);
+    const snapshotOrder = id
+      ? snapshot.find((s) => identityOf(s?.ordenTrabajoId ?? s?.id) === id)
+      : undefined;
+    const mergedOrder = snapshotOrder ? { ...order } : order;
+    if (snapshotOrder) {
+      for (const field of WORK_ORDER_SNAPSHOT_MUTABLE_FIELDS) {
+        const value = snapshotOrder[field];
+        if (value !== undefined) mergedOrder[field] = value;
+      }
+    }
+    merged.push(mergedOrder);
+    if (id) seen.add(id);
+  }
+  for (const order of snapshot) {
+    const id = identityOf(order?.ordenTrabajoId ?? order?.id);
+    if (!id || seen.has(id)) continue;
+    seen.add(id);
+    merged.push(order);
+  }
+  return merged;
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class IndexedDbService {
   private readonly dbName = 'jasrapo-operator-db';
-  private readonly dbVersion = 10;
+  private readonly dbVersion = 13;
   private db: IDBDatabase | null = null;
 
   constructor() {
@@ -60,6 +227,11 @@ export class IndexedDbService {
         // Almacén para snapshot completo unificado por operador (aislamiento total)
         if (!db.objectStoreNames.contains('assigned_snapshots')) {
           db.createObjectStore('assigned_snapshots', { keyPath: 'scope' });
+        }
+
+        // Almacén para caché de activity types
+        if (!db.objectStoreNames.contains('activity_types_cache')) {
+          db.createObjectStore('activity_types_cache', { keyPath: 'scope' });
         }
 
         // Almacén para caché de medidores
@@ -116,6 +288,20 @@ export class IndexedDbService {
         // Snapshot de rutas asignadas para navegación degradada sin conexión
         if (!db.objectStoreNames.contains('rutas_cache')) {
           db.createObjectStore('rutas_cache', { keyPath: 'scope' });
+        }
+
+        // Caché offline de novedades (lecturas con anomalías) por operador
+        if (!db.objectStoreNames.contains('novedades_cache')) {
+          db.createObjectStore('novedades_cache', { keyPath: 'lecturaId' });
+        }
+
+        // Almacén dedicado para órdenes de trabajo pendientes offline (#267)
+        if (!db.objectStoreNames.contains('ordenes_pendientes')) {
+          const store = db.createObjectStore('ordenes_pendientes', {
+            keyPath: 'id',
+            autoIncrement: true,
+          });
+          store.createIndex('bySyncState', 'syncState', { unique: false });
         }
 
         // Almacén para catálogo geográfico de comunidades
@@ -186,6 +372,7 @@ export class IndexedDbService {
   async savePendingReading(reading: any): Promise<number> {
     const db = await this.initDb();
     const record: PendingRecord = {
+      estado: reading.estado || 'POR_REVISION',
       ...reading,
       syncState: 'PENDIENTE_SYNC',
       errorMessage: null,
@@ -337,18 +524,113 @@ export class IndexedDbService {
     });
   }
 
-  // --- LECTURAS REGISTRADAS (CACHÉ PERÍODO ACTUAL) ---
+  // --- ORDENES DE TRABAJO PENDIENTES ---
 
-  async saveRegisteredReadingsCache(readings: any[]): Promise<void> {
+  async savePendingWorkOrder(workOrder: any): Promise<number> {
+    const db = await this.initDb();
+    const record: PendingRecord = {
+      estado: workOrder.estado || 'COMPLETADA',
+      ...workOrder,
+      syncState: 'PENDIENTE_SYNC',
+      errorMessage: null,
+    };
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('ordenes_pendientes', 'readwrite');
+      const store = transaction.objectStore('ordenes_pendientes');
+      const request = store.add(record);
+
+      request.onsuccess = () => resolve(request.result as number);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getPendingWorkOrders(): Promise<PendingRecord[]> {
     const db = await this.initDb();
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction('lecturas_registradas', 'readwrite');
+      const transaction = db.transaction('ordenes_pendientes', 'readonly');
+      const store = transaction.objectStore('ordenes_pendientes');
+      const request = store.getAll();
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async getPendingWorkOrdersByState(state: SyncState): Promise<PendingRecord[]> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('ordenes_pendientes', 'readonly');
+      const store = transaction.objectStore('ordenes_pendientes');
+      const index = store.index('bySyncState');
+      const request = index.getAll(state);
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async updatePendingWorkOrder(id: number, updates: Partial<PendingRecord>): Promise<void> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('ordenes_pendientes', 'readwrite');
+      const store = transaction.objectStore('ordenes_pendientes');
+      const getReq = store.get(id);
+
+      getReq.onsuccess = () => {
+        const existing = getReq.result;
+        if (!existing) {
+          reject(new Error(`Orden de trabajo pendiente con id ${id} no encontrada.`));
+          return;
+        }
+        const updated = { ...existing, ...updates };
+        store.put(updated);
+      };
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  async deletePendingWorkOrder(id: number): Promise<void> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('ordenes_pendientes', 'readwrite');
+      const store = transaction.objectStore('ordenes_pendientes');
+      const request = store.delete(id);
+
+      request.onsuccess = () => resolve();
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  // --- LECTURAS REGISTRADAS (CACHÉ PERÍODO ACTUAL) ---
+
+  async saveRegisteredReadingsCache(readings: any[], scope?: string): Promise<void> {
+    const db = await this.initDb();
+    const stores = ['lecturas_registradas'];
+    if (scope && db.objectStoreNames.contains('assigned_snapshots')) {
+      stores.push('assigned_snapshots');
+    }
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(stores, 'readwrite');
       const store = transaction.objectStore('lecturas_registradas');
 
       store.clear();
 
       for (const reading of readings) {
         store.put(reading);
+      }
+
+      if (scope && db.objectStoreNames.contains('assigned_snapshots')) {
+        const snapshotStore = transaction.objectStore('assigned_snapshots');
+        const req = snapshotStore.get(scope);
+        req.onsuccess = () => {
+          const snapshot = req.result;
+          if (snapshot) {
+            snapshot.registeredReadings = readings;
+            snapshotStore.put(snapshot);
+          }
+        };
       }
 
       transaction.oncomplete = () => resolve();
@@ -837,28 +1119,118 @@ export class IndexedDbService {
     });
   }
 
-  async getRoutesCache<T>(scope: string): Promise<{ items: T[]; savedAt: string } | null> {
+  async getRoutesCache<T>(scope: string): Promise<RoutesCacheResult<T> | null> {
     const db = await this.initDb();
+    const hydratedCache = await this.readRoutesCacheRecord<T>(db, scope);
+    const snapshot = db.objectStoreNames.contains('assigned_snapshots')
+      ? await this.getAssignedSnapshot(scope)
+      : null;
 
-    // Si existe en assigned_snapshots, preferir ese snapshot
-    if (db.objectStoreNames.contains('assigned_snapshots')) {
-      const snapshot = await this.getAssignedSnapshot(scope);
-      if (snapshot?.routes) {
-        return { items: snapshot.routes as T[], savedAt: snapshot.savedAt };
-      }
+    const hydratedItems = hydratedCache?.items ?? [];
+    const snapshotRoutes = (snapshot?.routes as T[] | undefined) ?? [];
+
+    if (hydratedItems.length === 0 && snapshotRoutes.length === 0) {
+      return null;
     }
 
+    // RULE: rutas_cache is the BASE for rendering and visit order. The manifest snapshot only
+    // merges in as a delta/refresh (see mergeHydratedRoutesWithSnapshot); it is never the source.
+    return {
+      items: mergeHydratedRoutesWithSnapshot(hydratedItems, snapshotRoutes, snapshot?.workOrders),
+      savedAt: this.newestSavedAt(hydratedCache?.savedAt, snapshot?.savedAt),
+    };
+  }
+
+  private readRoutesCacheRecord<T>(
+    db: IDBDatabase,
+    scope: string,
+  ): Promise<RoutesCacheResult<T> | null> {
     return new Promise((resolve, reject) => {
       const transaction = db.transaction('rutas_cache', 'readonly');
       const store = transaction.objectStore('rutas_cache');
       const request = store.get(scope);
       request.onsuccess = () => {
-        const snapshot = request.result as { items?: T[]; savedAt?: string } | undefined;
-        if (!snapshot || !snapshot.items || !snapshot.savedAt) {
+        const cache = request.result as { items?: T[]; savedAt?: string } | undefined;
+        if (!cache || !cache.items || !cache.savedAt) {
           resolve(null);
           return;
         }
-        resolve({ items: snapshot.items, savedAt: snapshot.savedAt });
+        resolve({ items: cache.items, savedAt: cache.savedAt });
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  private newestSavedAt(hydratedSavedAt?: string, snapshotSavedAt?: string): string {
+    if (!hydratedSavedAt) return snapshotSavedAt ?? new Date().toISOString();
+    if (!snapshotSavedAt) return hydratedSavedAt;
+    return hydratedSavedAt >= snapshotSavedAt ? hydratedSavedAt : snapshotSavedAt;
+  }
+
+  // --- NOVEDADES CACHE (lecturas con anomalías, offline) ---
+
+  /**
+   * Persiste el caché de novedades por operador. Cada registro se guarda por su `lecturaId`
+   * (keyPath del store) con `scope` y `savedAt` embebidos; una nueva descarga reemplaza solo
+   * los registros del mismo scope para no acumular lecturas obsoletas.
+   */
+  async saveNovedadesCache<T>(scope: string, items: T[]): Promise<void> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('novedades_cache', 'readwrite');
+      const store = transaction.objectStore('novedades_cache');
+      const getAllRequest = store.getAll();
+
+      getAllRequest.onsuccess = () => {
+        const savedAt = new Date().toISOString();
+        for (const record of getAllRequest.result ?? []) {
+          if (identityOf(record?.scope) === scope && record?.lecturaId != null) {
+            store.delete(record.lecturaId);
+          }
+        }
+        for (const item of items) {
+          const record = { ...(item as any), scope, savedAt };
+          // Solamente se persisten novedades con lectura servidora real.
+          if (identityOf(record.lecturaId) === '') continue;
+          store.put(record);
+        }
+      };
+      getAllRequest.onerror = () => reject(getAllRequest.error);
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  /** Lee el caché de novedades del operador en la forma `{ items, savedAt }` o null si no hay. */
+  async getNovedadesCache<T>(scope: string): Promise<RoutesCacheResult<T> | null> {
+    const db = await this.initDb();
+    return new Promise<RoutesCacheResult<T> | null>((resolve, reject) => {
+      const transaction = db.transaction('novedades_cache', 'readonly');
+      const store = transaction.objectStore('novedades_cache');
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const records = request.result ?? [];
+        const scoped = records.filter(
+          (record: any) => identityOf(record?.scope) === scope,
+        ) as any[];
+        if (scoped.length === 0) {
+          resolve(null);
+          return;
+        }
+        let savedAt = '';
+        for (const record of scoped) {
+          const at = identityOf(record?.savedAt);
+          if (at > savedAt) savedAt = at;
+        }
+        const items = scoped.map((record) => {
+          const item = { ...record };
+          delete item['scope'];
+          delete item['savedAt'];
+          return item;
+        }) as T[];
+        resolve({ items, savedAt });
       };
       request.onerror = () => reject(request.error);
     });
@@ -866,46 +1238,46 @@ export class IndexedDbService {
 
   async getAssignedWorkOrders(scope?: string): Promise<any[]> {
     const db = await this.initDb();
-    if (scope && db.objectStoreNames.contains('assigned_snapshots')) {
-      const snapshot = await this.getAssignedSnapshot(scope);
-      if (snapshot?.workOrders && snapshot.workOrders.length > 0) {
-        return snapshot.workOrders;
-      }
-    }
-    // Fallback: extraer órdenes desde rutas_cache si existen
-    if (scope && db.objectStoreNames.contains('rutas_cache')) {
-      const routesData = await this.getRoutesCache<any>(scope);
-      if (routesData?.items) {
-        const extracted: any[] = [];
-        const seenIds = new Set<string>();
-        for (const r of routesData.items) {
-          if (r.ordenesTrabajo && Array.isArray(r.ordenesTrabajo)) {
-            for (const ot of r.ordenesTrabajo) {
-              const id = String(ot.id ?? ot.ordenTrabajoId ?? '');
-              if (id && !seenIds.has(id)) {
-                seenIds.add(id);
-                extracted.push(ot);
-              } else if (!id) {
-                extracted.push(ot);
-              }
-            }
-          } else if (r.paradas && Array.isArray(r.paradas)) {
-            for (const p of r.paradas) {
-              const ot = p.ordenTrabajo ?? p;
-              const id = String(ot.id ?? ot.ordenTrabajoId ?? '');
-              if (id && !seenIds.has(id)) {
-                seenIds.add(id);
-                extracted.push(ot);
-              } else if (!id) {
-                extracted.push(ot);
-              }
-            }
+    const fromRoutes = await this.extractWorkOrdersFromRoutes(scope);
+    const snapshot =
+      scope && db.objectStoreNames.contains('assigned_snapshots')
+        ? await this.getAssignedSnapshot(scope)
+        : null;
+    // Same merge rule as routes: the hydrated cache is the base (visit order), the manifest
+    // work-orders collection merges in as a delta without re-sequencing known orders.
+    return mergeWorkOrdersWithSnapshot(fromRoutes, snapshot?.workOrders);
+  }
+
+  private async extractWorkOrdersFromRoutes(scope?: string): Promise<any[]> {
+    if (!scope) return [];
+    const routesData = await this.getRoutesCache<any>(scope);
+    const extracted: any[] = [];
+    const seenIds = new Set<string>();
+    for (const r of routesData?.items ?? []) {
+      if (r.ordenesTrabajo && Array.isArray(r.ordenesTrabajo)) {
+        for (const ot of r.ordenesTrabajo) {
+          const id = identityOf(ot.ordenTrabajoId ?? ot.id);
+          if (!id) {
+            extracted.push(ot);
+          } else if (!seenIds.has(id)) {
+            seenIds.add(id);
+            extracted.push(ot);
           }
         }
-        if (extracted.length > 0) return extracted;
+      } else if (r.paradas && Array.isArray(r.paradas)) {
+        for (const p of r.paradas) {
+          const ot = p.ordenTrabajo ?? p;
+          const id = identityOf(ot.ordenTrabajoId ?? ot.id);
+          if (!id) {
+            extracted.push(ot);
+          } else if (!seenIds.has(id)) {
+            seenIds.add(id);
+            extracted.push(ot);
+          }
+        }
       }
     }
-    return [];
+    return extracted;
   }
 
   async clearPendingAnomalies(): Promise<void> {
@@ -941,6 +1313,34 @@ export class IndexedDbService {
       }
       transaction.oncomplete = () => resolve();
       transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  // ── ACTIVITY TYPES CACHE ──────────────────────────────────────────────────
+
+  async saveActivityTypesCache<T>(scope: string, items: T[]): Promise<void> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['activity_types_cache'], 'readwrite');
+      const store = transaction.objectStore('activity_types_cache');
+      const payload: RoutesCacheResult<T> = { items, savedAt: new Date().toISOString() };
+
+      const putRequest = store.put({ scope, ...payload });
+
+      putRequest.onsuccess = () => resolve();
+      putRequest.onerror = () => reject(putRequest.error);
+    });
+  }
+
+  async getActivityTypesCache<T>(scope: string): Promise<RoutesCacheResult<T> | undefined> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(['activity_types_cache'], 'readonly');
+      const store = transaction.objectStore('activity_types_cache');
+      const getRequest = store.get(scope);
+
+      getRequest.onsuccess = () => resolve(getRequest.result as RoutesCacheResult<T> | undefined);
+      getRequest.onerror = () => reject(getRequest.error);
     });
   }
 }

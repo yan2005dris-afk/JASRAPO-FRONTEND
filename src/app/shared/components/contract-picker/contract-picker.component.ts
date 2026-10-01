@@ -15,13 +15,13 @@ import { FormsModule } from '@angular/forms';
 import { PaginationComponent } from '../pagination/pagination.component';
 import { TableSkeletonComponent } from '../table-skeleton/table-skeleton.component';
 
-import { ContractsService } from '../../../features/contracts/service-contracts/services/contracts.service';
+import { ContractsApi } from '../../../features/contracts/service-contracts/data/contracts.api';
 import {
   getContractServiceState,
   hasActivePaymentAgreement,
   type IContract,
   type ISearchContractsParams,
-} from '../../../features/contracts/service-contracts/interfaces/icontract.interface';
+} from '../../../features/contracts/service-contracts/domain/models/service-contract.model';
 import { resolveClientDisplayName } from '../../utils/client-display-name';
 
 @Component({
@@ -42,7 +42,7 @@ export class ContractPickerComponent {
   readonly contractSelected = output<IContract>();
   readonly closed = output<void>();
 
-  private readonly contractsService = inject(ContractsService);
+  private readonly contractsService = inject(ContractsApi);
 
   // Buscador de contratos
   readonly searchTerm = signal('');

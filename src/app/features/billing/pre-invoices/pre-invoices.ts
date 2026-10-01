@@ -16,7 +16,7 @@ import {
 } from './interfaces/ipre-invoice.interface';
 import { BatchesService } from '../batches/services/batches.service';
 import { IBatch } from '../batches/interfaces/ibatch.interface';
-import type { IContract } from '../../contracts/service-contracts/interfaces/icontract.interface';
+import type { IContract } from '../../contracts/service-contracts/domain/models/service-contract.model';
 import { StatusBadgeComponent } from '../../../shared/components/status-badge/status-badge.component';
 import { ContractPickerComponent } from '../../../shared/components/contract-picker/contract-picker.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';

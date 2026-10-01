@@ -1,17 +1,21 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
-import { of } from 'rxjs';
+import { By } from '@angular/platform-browser';
+import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 
 import { ServiceContractFormComponent } from './service-contract-form.component';
-import { ContractsService } from '../../services/contracts.service';
+import { ContractsApi } from '../../data/contracts.api';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
-import { IContract } from '../../interfaces/icontract.interface';
-import { IMeter } from '../../../meters/interfaces/imeter.interface';
-import { IClient } from '../../../clients/interfaces/iclients.interface';
-import { ITariffCategory } from '../../../tariffs/interfaces/itariff.interface';
+import { AuthService } from '../../../../../core/services/auth.service';
+import { IContract } from '../../domain/models/service-contract.model';
+import { IMeter } from '../../../meters/domain/models/meter.model';
+import { IClient } from '../../../clients/domain/models/client.model';
+import { ITariffCategory } from '../../../tariffs/domain/models/tariff.model';
+import { IServiceArea } from '../../domain/models/service-area.model';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
+import { CoordinateMapPickerComponent } from '../../../../../shared/components/coordinate-map-picker/coordinate-map-picker.component';
 
 describe('ServiceContractFormComponent', () => {
   let component: ServiceContractFormComponent;
@@ -69,10 +73,27 @@ describe('ServiceContractFormComponent', () => {
     ],
   };
 
-  const mockContractsService = {
+  const mockContractsApi = {
     createContract: vi.fn(),
     updateContract: vi.fn(),
     getContractById: vi.fn(),
+    getServiceArea: vi.fn(),
+  };
+
+  const mockServiceArea: IServiceArea = {
+    nombre: 'Parroquia Manglaralto',
+    fuente: 'OpenStreetMap (relation 278708), ODbL',
+    geometria: {
+      type: 'Polygon',
+      coordinates: [
+        [
+          [-80.78, -1.83],
+          [-80.73, -1.83],
+          [-80.73, -1.77],
+          [-80.78, -1.83],
+        ],
+      ],
+    },
   };
 
   const mockToastService = {
@@ -82,16 +103,22 @@ describe('ServiceContractFormComponent', () => {
     info: vi.fn(),
   };
 
+  const mockAuthService = {
+    isSuperAdmin: vi.fn().mockReturnValue(true),
+  };
+
   beforeEach(async () => {
     vi.clearAllMocks();
+    mockContractsApi.getServiceArea.mockReturnValue(of(mockServiceArea));
 
     await TestBed.configureTestingModule({
       imports: [ServiceContractFormComponent],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: ContractsService, useValue: mockContractsService },
+        { provide: ContractsApi, useValue: mockContractsApi },
         { provide: ToastService, useValue: mockToastService },
+        { provide: AuthService, useValue: mockAuthService },
       ],
     }).compileComponents();
 
@@ -138,7 +165,7 @@ describe('ServiceContractFormComponent', () => {
     fixture.componentRef.setInput('contractToEdit', mockContract);
     fixture.detectChanges();
 
-    mockContractsService.updateContract.mockReturnValue(of(mockContract));
+    mockContractsApi.updateContract.mockReturnValue(of(mockContract));
     const savedEmitSpy = vi.spyOn(component.saved, 'emit');
 
     component.form.patchValue({
@@ -149,7 +176,7 @@ describe('ServiceContractFormComponent', () => {
     component.activeStep.set(2);
     component.save();
 
-    expect(mockContractsService.updateContract).toHaveBeenCalledWith('10', {
+    expect(mockContractsApi.updateContract).toHaveBeenCalledWith('10', {
       estadoServicio: 'SUSPENDIDO',
       direccionSuministro: 'Nueva Direccion 456',
       clienteId: '100',
@@ -159,12 +186,12 @@ describe('ServiceContractFormComponent', () => {
       longitud: null,
     });
     expect(
-      (mockContractsService.updateContract.mock.calls[0][1] as unknown as Record<string, unknown>)[
+      (mockContractsApi.updateContract.mock.calls[0][1] as unknown as Record<string, unknown>)[
         'medidorId'
       ],
     ).toBeUndefined();
     expect(
-      (mockContractsService.updateContract.mock.calls[0][1] as unknown as Record<string, unknown>)[
+      (mockContractsApi.updateContract.mock.calls[0][1] as unknown as Record<string, unknown>)[
         'lecturaInicial'
       ],
     ).toBeUndefined();
@@ -173,7 +200,7 @@ describe('ServiceContractFormComponent', () => {
       'Contrato actualizado correctamente',
       'Éxito',
     );
-    expect(mockContractsService.updateContract.mock.calls[0][1]).not.toHaveProperty('estado');
+    expect(mockContractsApi.updateContract.mock.calls[0][1]).not.toHaveProperty('estado');
   });
 
   it('should open and close replace meter modal in edit mode', () => {
@@ -210,14 +237,14 @@ describe('ServiceContractFormComponent', () => {
       ],
     };
 
-    mockContractsService.getContractById.mockReturnValue(of(updatedContract));
+    mockContractsApi.getContractById.mockReturnValue(of(updatedContract));
     const savedEmitSpy = vi.spyOn(component.saved, 'emit');
 
     component.openReplaceMeterModal();
     component.onMeterReplaced();
 
     expect(component.isReplaceMeterModalOpen()).toBeFalsy();
-    expect(mockContractsService.getContractById).toHaveBeenCalledWith('10');
+    expect(mockContractsApi.getContractById).toHaveBeenCalledWith('10');
     expect(component.selectedMeter()?.serie).toBe('METER-300');
     expect(savedEmitSpy).toHaveBeenCalled();
     expect(mockToastService.success).toHaveBeenCalledWith(
@@ -229,7 +256,7 @@ describe('ServiceContractFormComponent', () => {
   it('should create contract with medidorId and lecturaInicial in create mode', () => {
     fixture.detectChanges();
 
-    mockContractsService.createContract.mockReturnValue(of(mockContract));
+    mockContractsApi.createContract.mockReturnValue(of(mockContract));
     const savedEmitSpy = vi.spyOn(component.saved, 'emit');
 
     component.form.patchValue({
@@ -263,7 +290,7 @@ describe('ServiceContractFormComponent', () => {
     component.activeStep.set(2);
     component.save();
 
-    expect(mockContractsService.createContract).toHaveBeenCalledWith({
+    expect(mockContractsApi.createContract).toHaveBeenCalledWith({
       clienteId: '101',
       categoriaTarifaId: '2',
       medidorId: '500',
@@ -272,7 +299,7 @@ describe('ServiceContractFormComponent', () => {
       comunidadId: '3',
       lecturaInicial: 0,
     });
-    expect(mockContractsService.createContract.mock.calls[0][0]).not.toHaveProperty('estado');
+    expect(mockContractsApi.createContract.mock.calls[0][0]).not.toHaveProperty('estado');
     expect(savedEmitSpy).toHaveBeenCalled();
   });
   it.each(['PENDIENTE_INSPECCION', 'PENDIENTE_PAGO', 'PENDIENTE_INSTALACION', 'RECHAZADO'])(
@@ -286,21 +313,19 @@ describe('ServiceContractFormComponent', () => {
       ]);
       fixture.detectChanges();
       expect(component.availableStates().map((state) => state.codigo)).toEqual([estadoServicio]);
-      mockContractsService.updateContract.mockReturnValue(of(contract));
+      mockContractsApi.updateContract.mockReturnValue(of(contract));
       component.form.patchValue({ direccionSuministro: 'New address' });
       component.activeStep.set(2);
       component.save();
-      expect(mockContractsService.updateContract).toHaveBeenCalled();
-      expect(mockContractsService.updateContract.mock.calls[0][1]).not.toHaveProperty(
-        'estadoServicio',
-      );
+      expect(mockContractsApi.updateContract).toHaveBeenCalled();
+      expect(mockContractsApi.updateContract.mock.calls[0][1]).not.toHaveProperty('estadoServicio');
     },
   );
 
   it('should include picked coordinates in the create payload when both are set', () => {
     fixture.detectChanges();
 
-    mockContractsService.createContract.mockReturnValue(of(mockContract));
+    mockContractsApi.createContract.mockReturnValue(of(mockContract));
 
     component.form.patchValue({
       numeroGuia: 'CTR-NEW-02',
@@ -334,7 +359,7 @@ describe('ServiceContractFormComponent', () => {
     component.activeStep.set(2);
     component.save();
 
-    expect(mockContractsService.createContract).toHaveBeenCalledWith(
+    expect(mockContractsApi.createContract).toHaveBeenCalledWith(
       expect.objectContaining({ latitud: -1.8021, longitud: -80.7554 }),
     );
   });
@@ -348,13 +373,13 @@ describe('ServiceContractFormComponent', () => {
     fixture.componentRef.setInput('contractToEdit', contractWithCoordinates);
     fixture.detectChanges();
 
-    mockContractsService.updateContract.mockReturnValue(of(mockContract));
+    mockContractsApi.updateContract.mockReturnValue(of(mockContract));
 
     component.onCoordinatesChange({ latitud: null, longitud: null });
     component.activeStep.set(2);
     component.save();
 
-    expect(mockContractsService.updateContract).toHaveBeenCalledWith(
+    expect(mockContractsApi.updateContract).toHaveBeenCalledWith(
       '10',
       expect.objectContaining({ latitud: null, longitud: null }),
     );
@@ -395,7 +420,7 @@ describe('ServiceContractFormComponent', () => {
     component.activeStep.set(2);
     component.save();
 
-    expect(mockContractsService.createContract).not.toHaveBeenCalled();
+    expect(mockContractsApi.createContract).not.toHaveBeenCalled();
     expect(mockToastService.warning).toHaveBeenCalled();
     expect(component.coordinateError()).toBe('Ingrese latitud y longitud, o deje ambas vacías.');
   });
@@ -404,7 +429,7 @@ describe('ServiceContractFormComponent', () => {
     component.nextStep();
     expect(component.activeStep()).toBe(0);
     expect(component.stepAttempted()).toBe(true);
-    expect(mockContractsService.createContract).not.toHaveBeenCalled();
+    expect(mockContractsApi.createContract).not.toHaveBeenCalled();
     component.selectedClient.set({ clienteId: '100' } as IClient);
     component.selectedComunidad.set({ id: 5 } as Comunidad);
     component.nextStep();
@@ -435,6 +460,7 @@ describe('ServiceContractFormComponent', () => {
     );
     expect(fixture.nativeElement.querySelectorAll('.registration-panel')).toHaveLength(1);
   });
+
   it('moves keyboard focus into the newly active section', async () => {
     fixture.detectChanges();
     component.selectedClient.set({ clienteId: '100' } as IClient);
@@ -444,5 +470,49 @@ describe('ServiceContractFormComponent', () => {
     await fixture.whenStable();
     const panel = fixture.nativeElement.querySelector('.registration-panel');
     expect(panel.contains(document.activeElement)).toBe(true);
+  });
+
+  it('should load the service area and keep its geometry for the map picker', () => {
+    fixture.detectChanges();
+
+    expect(mockContractsApi.getServiceArea).toHaveBeenCalledTimes(1);
+    expect(component.serviceArea()).toEqual(mockServiceArea.geometria);
+  });
+
+  it('should leave the map picker unrestricted when the service area cannot be loaded', () => {
+    mockContractsApi.getServiceArea.mockReturnValue(throwError(() => new Error('network')));
+
+    fixture.detectChanges();
+
+    expect(component.serviceArea()).toBeNull();
+  });
+
+  it('should pass the selected community center to the map picker as its focus point', () => {
+    fixture.detectChanges();
+    expect(component.communityMapCenter()).toBeNull();
+
+    component.onComunidadSelected({
+      id: 5,
+      nombre: 'Curia',
+      codigo: '005',
+      porcentajeTasaSeguridad: 0,
+    });
+    fixture.detectChanges();
+
+    const picker = fixture.debugElement.query(By.directive(CoordinateMapPickerComponent));
+    const expected = { latitud: -1.7747, longitud: -80.7643 };
+    expect(component.communityMapCenter()).toEqual(expected);
+    expect(picker.componentInstance.focusPoint()).toEqual(expected);
+
+    component.onComunidadSelected({
+      id: 9,
+      nombre: 'Comunidad Central',
+      codigo: '009',
+      porcentajeTasaSeguridad: 0,
+    });
+    fixture.detectChanges();
+
+    expect(picker.componentInstance.focusPoint()).toBeNull();
+  });
   });
 });

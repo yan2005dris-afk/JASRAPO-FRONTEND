@@ -7,7 +7,9 @@ services:
       target: production
     image: jasrapo-frontend:latest
     ports:
-      - '${FRONTEND_PORT:-80}:80'
+      # Port 80 is privileged; rootless Podman needs sysctl tweak to bind it.
+      # We default to 8080 for rootless compatibility.
+      - '${FRONTEND_PORT:-8080}:80'
     restart: unless-stopped
     networks:
       - jasrapo-network
