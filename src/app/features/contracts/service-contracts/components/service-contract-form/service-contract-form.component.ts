@@ -181,7 +181,6 @@ export class ServiceContractFormComponent implements OnInit {
 
   readonly form: FormGroup = this.fb.group(
     {
-      numeroGuia: ['', [Validators.required, Validators.maxLength(15)]],
       direccionSuministro: ['', [Validators.required, Validators.maxLength(200)]],
       lecturaInicial: ['0', [Validators.required, Validators.pattern(/^\d{1,10}$/)]],
       estadoServicio: [''],
@@ -216,7 +215,6 @@ export class ServiceContractFormComponent implements OnInit {
     const longitud = contract.longitud ?? null;
 
     this.form.patchValue({
-      numeroGuia: contract.numeroGuia,
       direccionSuministro: contract.direccionSuministro,
       estadoServicio: getContractServiceState(contract),
       latitud,
@@ -473,7 +471,6 @@ export class ServiceContractFormComponent implements OnInit {
       clienteId: String(clientId),
       categoriaTarifaId: String(tariff.categoriaTarifaId),
       medidorId: String(meter.medidorId),
-      numeroGuia: value.numeroGuia,
       direccionSuministro: value.direccionSuministro,
       comunidadId: String(comunidad.id),
       ...(this.isSuperAdmin() && value.lecturaInicial !== undefined && value.lecturaInicial !== ''
@@ -486,9 +483,12 @@ export class ServiceContractFormComponent implements OnInit {
 
     this.isSaving.set(true);
     this.contractsService.createContract(payload).subscribe({
-      next: () => {
+      next: (createdContract) => {
         this.isSaving.set(false);
-        this.toast.success('Contrato registrado correctamente', 'Éxito');
+        this.toast.success(
+          `Contrato registrado. N° de guía: ${createdContract.numeroGuia}`,
+          'Éxito',
+        );
         this.saved.emit();
       },
       error: (err) => {
