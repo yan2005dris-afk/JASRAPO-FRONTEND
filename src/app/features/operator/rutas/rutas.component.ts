@@ -100,7 +100,7 @@ export class RutasComponent implements OnInit, OnDestroy {
     for (const t of this.tasks()) {
       count += this.getTaskPointCount(t);
     }
-    return count > 0 ? count : 150;
+    return count;
   });
 
   readonly totalReadMeters = computed<number>(() => {
@@ -110,19 +110,19 @@ export class RutasComponent implements OnInit, OnDestroy {
       const paradas = t.paradas || [];
       for (const p of paradas) {
         const st = statusMap.get(p.serie ?? '') ?? p.estado;
-        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION') {
           readCount++;
         }
       }
       const ordenes = t.ordenesTrabajo || [];
       for (const o of ordenes) {
         const st = statusMap.get(o.medidor?.serie ?? '') ?? o.estado;
-        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION') {
           readCount++;
         }
       }
     }
-    return readCount > 0 ? readCount : 78;
+    return readCount;
   });
 
   readonly readingProgressPct = computed<number>(() => {
@@ -564,12 +564,27 @@ export class RutasComponent implements OnInit, OnDestroy {
   /** Construye el mapa medidorSerie → estado desde IndexedDB. */
   private async loadReadingStatuses(): Promise<void> {
     try {
-      const [meters, registered, pending, synced] = await Promise.all([
+      const operatorId = this.authService.currentUser()?.id;
+      const scope = operatorId ? `operator:${operatorId}` : undefined;
+
+      let [meters, registered, pending, synced] = await Promise.all([
         this.dbService.getMetersCache(),
-        this.dbService.getRegisteredReadingsCache(),
+        this.dbService.getRegisteredReadingsCache(scope),
         this.dbService.getPendingReadings(),
         this.dbService.getSyncedReadings().catch(() => []),
       ]);
+
+      if (this.networkService.isOnline()) {
+        try {
+          const fresh = (await this.syncService.getCurrentPeriodReadings()) as any[];
+          if (fresh?.length) {
+            await this.dbService.saveRegisteredReadingsCache(fresh, scope);
+            registered = fresh;
+          }
+        } catch {
+          // Fallback a caché
+        }
+      }
 
       const serieToId = new Map<string, string>();
       for (const m of meters) {
@@ -579,12 +594,7 @@ export class RutasComponent implements OnInit, OnDestroy {
       const idToEstado = new Map<string, string>();
       const statusMap = new Map<string, string>();
 
-      for (const r of registered) {
-        const mId = r.medidor?.medidorId ?? r.medidorId;
-        if (mId) idToEstado.set(mId.toString(), r.estado);
-        const s = r.medidor?.serie ?? r.medidorSerie;
-        if (s) statusMap.set(String(s), r.estado);
-      }
+      // 1. Recibos locales previamente sincronizados (prioridad base)
       for (const s of synced) {
         const sId = s['medidorId'];
         const sEstado = s['estado'] || 'POR_REVISION';
@@ -596,6 +606,14 @@ export class RutasComponent implements OnInit, OnDestroy {
           statusMap.set(`OT-${s['ordenTrabajoId']}`, sEstado);
         }
       }
+      // 2. Registradas autoritativas del servidor (sobrescribe histórico con APROBADA, RECHAZADA_VERIFICACION, etc.)
+      for (const r of registered) {
+        const mId = r.medidor?.medidorId ?? r.medidorId;
+        if (mId) idToEstado.set(mId.toString(), r.estado);
+        const s = r.medidor?.serie ?? r.medidorSerie;
+        if (s) statusMap.set(String(s), r.estado);
+      }
+      // 3. Pendientes en cola local offline (máxima prioridad)
       for (const p of pending) {
         const pId = p['medidorId'];
         const pEstado = p['estado'] || 'POR_REVISION';
@@ -856,7 +874,7 @@ export class RutasComponent implements OnInit, OnDestroy {
     if (task.paradas?.length) {
       for (const p of task.paradas) {
         const st = statusMap.get(p.serie ?? '') ?? p.estado;
-        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION') {
           readCount++;
         }
       }
@@ -871,13 +889,13 @@ export class RutasComponent implements OnInit, OnDestroy {
           (o.ordenTrabajoId ? statusMap.get(String(o.ordenTrabajoId)) : null) ||
           (o.medidor?.medidorId ? statusMap.get(String(o.medidor.medidorId)) : null) ||
           o.estado;
-        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION') {
           readCount++;
         }
       }
     } else if (task.medidor) {
       const st = statusMap.get(task.medidor.serie);
-      if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+      if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION') {
         readCount = 1;
       }
     }

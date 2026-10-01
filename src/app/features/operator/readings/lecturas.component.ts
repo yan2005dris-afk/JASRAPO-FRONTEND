@@ -122,71 +122,15 @@ export class LecturasComponent implements OnInit {
   readonly syncedReadings = signal<ReadingRecord[]>([]);
 
   // IDs de medidores con lecturas en estado no editable por el operador (POR_REVISION, APROBADA, etc.)
-  readonly readMetersIds = computed(() => {
-    const registered = this.registeredReadings();
-    const pending = this.pendingReadings();
-    const synced = this.syncedReadings();
-    const ids = new Set<string>();
-    for (const r of registered) {
-      const mId = r.medidor?.medidorId ?? r.medidorId;
-      if (mId && r.estado !== 'PENDIENTE' && r.estado !== 'RECHAZADA_VERIFICACION') {
-        ids.add(mId.toString());
-      }
-    }
-    for (const p of pending) {
-      const mId = p.medidorId;
-      const estado = p.estado || 'POR_REVISION';
-      if (mId && estado !== 'PENDIENTE' && estado !== 'RECHAZADA_VERIFICACION') {
-        ids.add(mId.toString());
-      }
-      if (p['ordenTrabajoId']) {
-        ids.add(String(p['ordenTrabajoId']));
-      }
-    }
-    for (const s of synced) {
-      const mId = s.medidorId ?? (s['medidor'] as { medidorId?: string | number } | undefined)?.medidorId;
-      const estado = s.estado || 'POR_REVISION';
-      if (mId && estado !== 'PENDIENTE' && estado !== 'RECHAZADA_VERIFICACION') {
-        ids.add(mId.toString());
-      }
-      if (s['ordenTrabajoId']) {
-        ids.add(String(s['ordenTrabajoId']));
-      }
-    }
-    return ids;
-  });
-
-  // ========== ESTADO FILTERS & GROUPING ==========
-
-  // Catálogo de estados cargado desde el backend (fallback hardcoded offline)
-  readonly estadosCatalog = signal<EstadoInfo[]>([]);
-
-  // Chips de filtro por estado
-  readonly estadoFilterChips = computed<EstadoChip[]>(() => {
-    const chips: EstadoChip[] = [{ value: 'todas', label: 'Todas', icon: 'bi-funnel' }];
-    for (const e of this.estadosCatalog()) {
-      chips.push({ value: e.codigo, label: e.nombre, icon: e.icono });
-    }
-    return chips;
-  });
-
-  // Filtro de estado activo
-  readonly selectedEstadoFilter = signal<string>('todas');
-
-  // Mapa medidorId, serie y contratoId → lectura existente (de registeredReadings + syncedReadings + pendingReadings)
+  // Mapa medidorId, serie, contratoId y OT -> lectura existente
+  // Prioridad: 1) syncedReadings (recibo local histórico), 2) registeredReadings (autoritativo servidor), 3) pendingReadings (cola local sin sincronizar)
   readonly existingReadingMap = computed<Map<string, ReadingRecord>>(() => {
     const map = new Map<string, ReadingRecord>();
-    for (const r of this.registeredReadings()) {
-      // Backend response nests medidorId inside medidor object
-      const mId = r.medidor?.medidorId ?? r.medidorId;
-      if (mId != null) map.set(mId.toString(), r as ReadingRecord);
-      if (r.medidor?.serie) map.set(r.medidor.serie, r as ReadingRecord);
-      if (r.contratoId) map.set(r.contratoId.toString(), r as ReadingRecord);
-    }
+
+    // 1. Recibos locales previamente sincronizados
     for (const s of this.syncedReadings()) {
       const mId = s['medidorId'] ?? (s['medidor'] as { medidorId?: string | number } | undefined)?.medidorId;
       const record = {
-        ...(mId != null ? map.get(mId.toString()) : undefined),
         ...s,
         estado: (s['estado'] as string) || 'POR_REVISION',
       };
@@ -204,6 +148,18 @@ export class LecturasComponent implements OnInit {
         map.set(`OT-${s['ordenTrabajoId']}`, record as ReadingRecord);
       }
     }
+
+    // 2. Registradas del servidor (autoridad de estados: APROBADA, RECHAZADA_VERIFICACION, etc.)
+    for (const r of this.registeredReadings()) {
+      const mId = r.medidor?.medidorId ?? r.medidorId;
+      const prev = mId != null ? map.get(mId.toString()) : undefined;
+      const merged = { ...prev, ...r } as ReadingRecord;
+      if (mId != null) map.set(mId.toString(), merged);
+      if (r.medidor?.serie) map.set(r.medidor.serie, merged);
+      if (r.contratoId) map.set(r.contratoId.toString(), merged);
+    }
+
+    // 3. Pendientes locales por sincronizar (cambios recién efectuados offline)
     for (const p of this.pendingReadings()) {
       const mId = p['medidorId'];
       const record = {
@@ -227,6 +183,39 @@ export class LecturasComponent implements OnInit {
     }
     return map;
   });
+
+  // IDs de medidores con lectura efectiva procesada (excluye PENDIENTE y RECHAZADA_VERIFICACION)
+  readonly readMetersIds = computed<Set<string>>(() => {
+    const ids = new Set<string>();
+    const map = this.existingReadingMap();
+    for (const [key, record] of map.entries()) {
+      if (
+        record.estado &&
+        record.estado !== 'PENDIENTE' &&
+        record.estado !== 'RECHAZADA_VERIFICACION'
+      ) {
+        ids.add(key);
+      }
+    }
+    return ids;
+  });
+
+  // ========== ESTADO FILTERS & GROUPING ==========
+
+  // Catálogo de estados cargado desde el backend (fallback hardcoded offline)
+  readonly estadosCatalog = signal<EstadoInfo[]>([]);
+
+  // Chips de filtro por estado
+  readonly estadoFilterChips = computed<EstadoChip[]>(() => {
+    const chips: EstadoChip[] = [{ value: 'todas', label: 'Todas', icon: 'bi-funnel' }];
+    for (const e of this.estadosCatalog()) {
+      chips.push({ value: e.codigo, label: e.nombre, icon: e.icono });
+    }
+    return chips;
+  });
+
+  // Filtro de estado activo
+  readonly selectedEstadoFilter = signal<string>('todas');
 
   // Medidores agrupados por estado de lectura
   readonly metersByEstado = computed<MeterGroup[]>(() => {
@@ -327,14 +316,18 @@ export class LecturasComponent implements OnInit {
   }
 
   isOrderCompleted(meter: IMeterDto): boolean {
+    const existing = this.getOrderRecord(meter);
+    if (existing) {
+      if (existing.estado === 'RECHAZADA_VERIFICACION' || existing.estado === 'PENDIENTE') {
+        return false;
+      }
+      return true;
+    }
     if (this.completedWorkOrderIds().has(meter.medidorId.toString())) return true;
     if (this.completedWorkOrderIds().has(meter.serie)) return true;
     if (this.readMetersIds().has(meter.medidorId.toString())) return true;
     if (this.readMetersIds().has(meter.serie)) return true;
-    const existing = this.getOrderRecord(meter);
-    return (
-      !!existing && existing.estado !== 'PENDIENTE' && existing.estado !== 'RECHAZADA_VERIFICACION'
-    );
+    return false;
   }
 
   getOrderStatusInfo(meter: IMeterDto): { label: string; cssClass: string; icon: string } {
@@ -433,20 +426,20 @@ export class LecturasComponent implements OnInit {
       ]);
       this.mergeAssignedWorkOrders(assignedWorkOrders);
       let cachedReadings = initialCachedReadings;
+      this.registeredReadings.set(cachedReadings ?? []);
 
-      if ((!cachedReadings || cachedReadings.length === 0) && this.networkService.isOnline()) {
+      if (this.networkService.isOnline()) {
         try {
           const readings = (await this.syncService.getCurrentPeriodReadings()) as ReadingRecord[];
           if (readings?.length) {
-            await this.dbService.saveRegisteredReadingsCache(readings);
+            await this.dbService.saveRegisteredReadingsCache(readings, scope);
             cachedReadings = readings;
+            this.registeredReadings.set(readings);
           }
         } catch {
           // Ignorar fallas silenciosas en prefetch de fondo
         }
       }
-
-      this.registeredReadings.set(cachedReadings ?? []);
 
       // Si se pasó una serie específica fuera del flujo de ruta y no estaba seleccionada
       const singleSerie = this.activatedRoute.snapshot.queryParamMap.get('serie');
@@ -770,8 +763,13 @@ export class LecturasComponent implements OnInit {
   }
 
   actionableWorkOrdersFor(meter: IMeterDto): [WorkOrderActivityType, AssignedWorkOrder][] {
+    const existing = this.getOrderRecord(meter);
+    const isRelectura = existing?.estado === 'RECHAZADA_VERIFICACION';
     return [...(this.workOrdersByMeter().get(meter.serie)?.entries() ?? [])].filter(
-      ([, workOrder]) => workOrder.estado === 'PENDIENTE' || workOrder.estado === 'EN_PROGRESO',
+      ([type, workOrder]) =>
+        workOrder.estado === 'PENDIENTE' ||
+        workOrder.estado === 'EN_PROGRESO' ||
+        (isRelectura && type === 'LECTURA'),
     );
   }
 
@@ -795,12 +793,10 @@ export class LecturasComponent implements OnInit {
   }
 
   readingStateLabel(meter: IMeterDto): string {
-    const existing =
-      this.existingReadingMap().get(meter.medidorId.toString()) ||
-      this.existingReadingMap().get(meter.serie) ||
-      (meter.contratoId ? this.existingReadingMap().get(meter.contratoId.toString()) : null);
+    const existing = this.getOrderRecord(meter);
     const state = existing?.estado;
     if (!state) return 'Sin lectura';
+    if (state === 'RECHAZADA_VERIFICACION') return 'Relectura requerida';
     return this.estadosCatalog().find((item) => item.codigo === state)?.nombre ?? state;
   }
 
@@ -1064,8 +1060,9 @@ export class LecturasComponent implements OnInit {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     response: any,
   ): Promise<void> {
-    if (!this.networkService.isOnline() || !response?.lecturaId) return;
-    const currentReadings = await this.dbService.getRegisteredReadingsCache();
+    const operatorId = this.authService.currentUser()?.id;
+    const scope = operatorId ? `operator:${operatorId}` : undefined;
+    const currentReadings = await this.dbService.getRegisteredReadingsCache(scope);
     const exists = currentReadings.some(
       (r: { lecturaId?: string }) => r.lecturaId === response.lecturaId,
     );
@@ -1074,7 +1071,8 @@ export class LecturasComponent implements OnInit {
           r.lecturaId === response.lecturaId ? response : r,
         )
       : [...currentReadings, response];
-    await this.dbService.saveRegisteredReadingsCache(updated);
+    await this.dbService.saveRegisteredReadingsCache(updated, scope);
+    this.registeredReadings.set(updated);
   }
 
   async forceSync(): Promise<void> {

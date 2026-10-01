@@ -186,13 +186,27 @@
                           <i class="bi {{ statusInfo.icon }}"></i> {{ statusInfo.label }}
                         </span>
                       } @else {
-                        <button
-                          type="button"
-                          class="btn-atender font-mono"
-                          (click)="$event.stopPropagation(); selectMeter(meter)"
-                        >
-                          Atender
-                        </button>
+                        @let statusInfo = getOrderStatusInfo(meter);
+                        @if (statusInfo.label === 'Relectura') {
+                          <span class="badge-done-chip font-mono {{ statusInfo.cssClass }}">
+                            <i class="bi {{ statusInfo.icon }}"></i> {{ statusInfo.label }}
+                          </span>
+                          <button
+                            type="button"
+                            class="btn-atender btn-releer font-mono"
+                            (click)="$event.stopPropagation(); selectMeter(meter)"
+                          >
+                            Releer
+                          </button>
+                        } @else {
+                          <button
+                            type="button"
+                            class="btn-atender font-mono"
+                            (click)="$event.stopPropagation(); selectMeter(meter)"
+                          >
+                            Atender
+                          </button>
+                        }
                       }
                     </div>
                   </div>

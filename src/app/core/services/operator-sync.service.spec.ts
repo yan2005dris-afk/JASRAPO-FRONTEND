@@ -657,7 +657,12 @@ describe('OperatorSyncService', () => {
       expect(fields['longitud']).toEqual(['-80.7089']);
       expect(fields['foto']).toHaveLength(1);
       expect(httpPost).not.toHaveBeenCalled();
-      expect(saveSyncedReading).not.toHaveBeenCalled();
+      expect(saveSyncedReading).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ordenTrabajoId: 'wo-42',
+          estado: 'COMPLETADA',
+        }),
+      );
       expect(deletePendingWorkOrder).toHaveBeenCalledWith(7);
       expect(deletePendingReading).not.toHaveBeenCalled();
     });

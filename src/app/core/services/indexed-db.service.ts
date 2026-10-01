@@ -605,16 +605,32 @@ export class IndexedDbService {
 
   // --- LECTURAS REGISTRADAS (CACHÉ PERÍODO ACTUAL) ---
 
-  async saveRegisteredReadingsCache(readings: any[]): Promise<void> {
+  async saveRegisteredReadingsCache(readings: any[], scope?: string): Promise<void> {
     const db = await this.initDb();
+    const stores = ['lecturas_registradas'];
+    if (scope && db.objectStoreNames.contains('assigned_snapshots')) {
+      stores.push('assigned_snapshots');
+    }
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction('lecturas_registradas', 'readwrite');
+      const transaction = db.transaction(stores, 'readwrite');
       const store = transaction.objectStore('lecturas_registradas');
 
       store.clear();
 
       for (const reading of readings) {
         store.put(reading);
+      }
+
+      if (scope && db.objectStoreNames.contains('assigned_snapshots')) {
+        const snapshotStore = transaction.objectStore('assigned_snapshots');
+        const req = snapshotStore.get(scope);
+        req.onsuccess = () => {
+          const snapshot = req.result;
+          if (snapshot) {
+            snapshot.registeredReadings = readings;
+            snapshotStore.put(snapshot);
+          }
+        };
       }
 
       transaction.oncomplete = () => resolve();
