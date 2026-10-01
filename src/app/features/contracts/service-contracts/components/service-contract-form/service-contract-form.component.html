@@ -52,7 +52,6 @@
               </div>
             </div>
 
-<<<<<<< HEAD
             <div class="row g-3">
               <!-- Cliente -->
               <div class="col-md-6">
@@ -114,37 +113,6 @@
                     <span class="fw-semibold">Seleccionar Cliente</span>
                     <span class="text-muted x-small">Explorar el listado de clientes activos</span>
                   </button>
-=======
-          <div class="col-md-6">
-            <label for="lecturaInicial" class="form-label fw-semibold text-dark">
-              Lectura inicial (m³)
-            </label>
-            <input
-              id="lecturaInicial"
-              type="text"
-              inputmode="numeric"
-              maxlength="10"
-              class="form-control"
-              formControlName="lecturaInicial"
-              (input)="onLecturaInicialInput($event)"
-              [readonly]="isEditing()"
-              [class.is-invalid]="isFieldInvalid('lecturaInicial')"
-            />
-            @if (isEditing()) {
-              <span class="text-muted x-small d-block mt-1">
-                La lectura inicial solo se define en la instalación o al reemplazar el medidor.
-              </span>
-            } @else if (!isSuperAdmin()) {
-              <span class="text-muted x-small d-block mt-1">
-                Solo usuarios Super Admin pueden modificar la lectura inicial.
-              </span>
-            }
-            @if (isFieldInvalid('lecturaInicial')) {
-              <span class="text-danger x-small"> Ingrese solo números (máx. 10 dígitos). </span>
-            }
-          </div>
->>>>>>> origin/develop
-
                   @if (submitted()) {
                     <span class="text-danger x-small d-block mt-1">Seleccione un cliente.</span>
                   }
@@ -430,6 +398,10 @@
                   <span class="text-muted x-small d-block mt-1">
                     La lectura inicial solo se define en la instalación o al reemplazar el medidor.
                   </span>
+                } @else if (!isSuperAdmin()) {
+                  <span class="text-muted x-small d-block mt-1">
+                    Solo usuarios Super Admin pueden modificar la lectura inicial.
+                  </span>
                 }
                 @if (isFieldInvalid('lecturaInicial')) {
                   <span class="text-danger x-small"> Ingrese solo números (máx. 10 dígitos). </span>
@@ -533,6 +505,219 @@
       </div>
     </div>
     -->
+      </section>
+    }
+    @if (!isEditing() && activeStep() === 3) {
+      <section
+        #stepPanel
+        tabindex="-1"
+        aria-label="Resumen y confirmación"
+        class="registration-panel"
+      >
+        <div class="card form-section mb-4">
+          <div class="card-body p-4">
+            <div class="section-title mb-3">
+              <span class="section-icon"><i class="bi bi-card-checklist"></i></span>
+              <div>
+                <h5 class="fw-bold mb-0">Resumen y Confirmación</h5>
+                <p class="text-muted small mb-0">
+                  Revise los datos ingresados antes de registrar el contrato en el sistema.
+                </p>
+              </div>
+            </div>
+
+            <div class="summary-cards-grid d-flex flex-column gap-3">
+              <!-- Bloque 1: Cliente y Comunidad -->
+              <div class="summary-card p-3 rounded-3">
+                <div
+                  class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom"
+                >
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-person-badge text-primary fs-5"></i>
+                    <h6 class="fw-bold mb-0 text-dark">Cliente y Comunidad</h6>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary rounded-pill d-flex align-items-center gap-1"
+                    (click)="goToStep(0)"
+                  >
+                    <i class="bi bi-pencil-square"></i> Modificar
+                  </button>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-6 detail-item">
+                    <i class="bi bi-person-fill"></i>
+                    <div>
+                      <small class="text-muted d-block">Cliente</small>
+                      <span class="text-dark fw-semibold">{{ clientName() || '—' }}</span>
+                      @if (selectedClient(); as client) {
+                        <span class="text-muted small d-block"
+                          >C.I. {{ client.identificacion }}</span
+                        >
+                        @if (client.aplicaTerceraEdad || client.aplicaDiscapacidad) {
+                          <div class="d-flex gap-1 mt-1">
+                            @if (client.aplicaTerceraEdad) {
+                              <span class="badge text-bg-info">Tercera edad</span>
+                            }
+                            @if (client.aplicaDiscapacidad) {
+                              <span class="badge text-bg-info">Discapacidad</span>
+                            }
+                          </div>
+                        }
+                      }
+                    </div>
+                  </div>
+                  <div class="col-md-6 detail-item">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    <div>
+                      <small class="text-muted d-block">Comunidad / Sector</small>
+                      <span class="text-dark fw-semibold">{{
+                        selectedComunidad()?.nombre || '—'
+                      }}</span>
+                      @if (selectedComunidad()?.codigo) {
+                        <span class="text-muted small d-block"
+                          >Código: {{ selectedComunidad()?.codigo }}</span
+                        >
+                      }
+                    </div>
+                  </div>
+                  <div class="col-md-6 detail-item">
+                    <i class="bi bi-telephone"></i>
+                    <div>
+                      <small class="text-muted d-block">Teléfono</small>
+                      <span class="text-dark">{{ selectedClient()?.telefono || '—' }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-6 detail-item">
+                    <i class="bi bi-envelope"></i>
+                    <div>
+                      <small class="text-muted d-block">Correo electrónico</small>
+                      <span class="text-dark">{{ selectedClient()?.email || '—' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bloque 2: Medidor y Tarifa -->
+              <div class="summary-card p-3 rounded-3">
+                <div
+                  class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom"
+                >
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-speedometer2 text-primary fs-5"></i>
+                    <h6 class="fw-bold mb-0 text-dark">Medidor y Tarifa</h6>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary rounded-pill d-flex align-items-center gap-1"
+                    (click)="goToStep(1)"
+                  >
+                    <i class="bi bi-pencil-square"></i> Modificar
+                  </button>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-6 detail-item">
+                    <i class="bi bi-cpu"></i>
+                    <div>
+                      <small class="text-muted d-block">Medidor asignado</small>
+                      @if (selectedMeter(); as meter) {
+                        <span class="text-dark fw-semibold">Serie {{ meter.serie }}</span>
+                        <span class="text-muted small d-block"
+                          >{{ meter.marca }} {{ meter.modelo }}</span
+                        >
+                        @if (meterStatusLabel()) {
+                          <span class="badge rounded-pill text-bg-success mt-1">{{
+                            meterStatusLabel()
+                          }}</span>
+                        }
+                      } @else {
+                        <span class="text-dark fw-semibold">—</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="col-md-6 detail-item">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                    <div>
+                      <small class="text-muted d-block">Plan de tarifa</small>
+                      @if (selectedTariff(); as tariff) {
+                        <span class="text-dark fw-semibold">{{ tariff.nombre }}</span>
+                        <span class="text-muted small d-block">
+                          Consumo base: {{ tariff.consumoMinimoMensual ?? 10 }} m³
+                        </span>
+                        @if (tariff.descripcion) {
+                          <span class="text-muted small d-block">{{ tariff.descripcion }}</span>
+                        }
+                      } @else {
+                        <span class="text-dark fw-semibold">—</span>
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bloque 3: Datos de Suministro y Contrato -->
+              <div class="summary-card p-3 rounded-3">
+                <div
+                  class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom"
+                >
+                  <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-file-earmark-text text-primary fs-5"></i>
+                    <h6 class="fw-bold mb-0 text-dark">Datos de Suministro y Contrato</h6>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-outline-secondary rounded-pill d-flex align-items-center gap-1"
+                    (click)="goToStep(2)"
+                  >
+                    <i class="bi bi-pencil-square"></i> Modificar
+                  </button>
+                </div>
+                <div class="row g-3">
+                  <div class="col-md-4 detail-item">
+                    <i class="bi bi-card-heading"></i>
+                    <div>
+                      <small class="text-muted d-block">N° de guía</small>
+                      <span class="text-dark fw-semibold">{{
+                        form.get('numeroGuia')?.value || '—'
+                      }}</span>
+                    </div>
+                  </div>
+                  <div class="col-md-4 detail-item">
+                    <i class="bi bi-speedometer"></i>
+                    <div>
+                      <small class="text-muted d-block">Lectura inicial</small>
+                      <span class="text-dark fw-semibold"
+                        >{{ form.get('lecturaInicial')?.value || '0' }} m³</span
+                      >
+                    </div>
+                  </div>
+                  <div class="col-md-4 detail-item">
+                    <i class="bi bi-pin-map"></i>
+                    <div>
+                      <small class="text-muted d-block">Georreferenciación</small>
+                      @if (coordinates().latitud !== null && coordinates().longitud !== null) {
+                        <span class="text-dark fw-semibold">
+                          {{ coordinates().latitud }}, {{ coordinates().longitud }}
+                        </span>
+                      } @else {
+                        <span class="badge text-bg-secondary">Sin georreferenciar</span>
+                      }
+                    </div>
+                  </div>
+                  <div class="col-12 detail-item">
+                    <i class="bi bi-geo-alt"></i>
+                    <div>
+                      <small class="text-muted d-block">Dirección de suministro</small>
+                      <span class="text-dark">{{
+                        form.get('direccionSuministro')?.value || '—'
+                      }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
     }
     <!-- Acciones -->

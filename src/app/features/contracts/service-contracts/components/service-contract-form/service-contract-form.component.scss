@@ -208,3 +208,15 @@
     animation: none;
   }
 }
+
+/* Tarjetas del panel de resumen */
+.summary-card {
+  background-color: var(--white);
+  border: 1px solid var(--border-color);
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    border-color: rgba(var(--bs-primary-rgb, 13, 110, 253), 0.35);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  }
+}

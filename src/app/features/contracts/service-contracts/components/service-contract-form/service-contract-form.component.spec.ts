@@ -287,7 +287,7 @@ describe('ServiceContractFormComponent', () => {
       porcentajeTasaSeguridad: 0,
     } as Comunidad);
 
-    component.activeStep.set(2);
+    component.activeStep.set(3);
     component.save();
 
     expect(mockContractsApi.createContract).toHaveBeenCalledWith({
@@ -356,7 +356,7 @@ describe('ServiceContractFormComponent', () => {
     } as Comunidad);
     component.onCoordinatesChange({ latitud: -1.8021, longitud: -80.7554 });
 
-    component.activeStep.set(2);
+    component.activeStep.set(3);
     component.save();
 
     expect(mockContractsApi.createContract).toHaveBeenCalledWith(
@@ -417,7 +417,7 @@ describe('ServiceContractFormComponent', () => {
     } as Comunidad);
     component.form.patchValue({ latitud: -1.8021 });
 
-    component.activeStep.set(2);
+    component.activeStep.set(3);
     component.save();
 
     expect(mockContractsApi.createContract).not.toHaveBeenCalled();
@@ -514,5 +514,93 @@ describe('ServiceContractFormComponent', () => {
     fixture.detectChanges();
 
     expect(picker.componentInstance.focusPoint()).toBeNull();
+  });
+
+  it('defines 4 steps including summary and confirmation', () => {
+    expect(component.steps).toEqual([
+      'Cliente y comunidad',
+      'Medidor y tarifa',
+      'Datos del contrato',
+      'Resumen y confirmación',
+    ]);
+  });
+
+  it('displays the summary step with client, meter and contract details', () => {
+    fixture.detectChanges();
+    component.selectedClient.set({
+      clienteId: '100',
+      identificacion: '0999999999',
+      nombres: 'Juan',
+      apellidos: 'Perez',
+      telefono: '0999999999',
+      email: 'juan@example.com',
+    } as IClient);
+    component.selectedComunidad.set({
+      id: 5,
+      codigo: 'COM-01',
+      nombre: 'Comunidad Central',
+      porcentajeTasaSeguridad: 0,
+    });
+    component.selectedMeter.set({
+      medidorId: 200,
+      serie: 'METER-200',
+      marca: 'Actaris',
+      modelo: 'A1',
+    } as IMeter);
+    component.selectedTariff.set({
+      categoriaTarifaId: 1,
+      nombre: 'Residencial',
+      consumoMinimoMensual: 10,
+    } as ITariffCategory);
+    component.form.patchValue({
+      numeroGuia: 'GUIA-100',
+      direccionSuministro: 'Av. Las Palmas',
+      lecturaInicial: '15',
+    });
+
+    component.activeStep.set(3);
+    fixture.detectChanges();
+
+    const summarySection = fixture.nativeElement.querySelector(
+      'section[aria-label="Resumen y confirmación"]',
+    );
+    expect(summarySection).not.toBeNull();
+    expect(summarySection.textContent).toContain('Juan Perez');
+    expect(summarySection.textContent).toContain('Comunidad Central');
+    expect(summarySection.textContent).toContain('METER-200');
+    expect(summarySection.textContent).toContain('Residencial');
+    expect(summarySection.textContent).toContain('GUIA-100');
+    expect(summarySection.textContent).toContain('Av. Las Palmas');
+  });
+
+  it('navigates back to target step with goToStep', () => {
+    component.activeStep.set(3);
+    component.goToStep(0);
+    expect(component.activeStep()).toBe(0);
+
+    component.goToStep(1);
+    expect(component.activeStep()).toBe(1);
+
+    component.goToStep(2);
+    expect(component.activeStep()).toBe(2);
+  });
+
+  it('advances from step 2 to step 3 when save is clicked on step 2', () => {
+    fixture.detectChanges();
+    component.selectedClient.set({ clienteId: '100' } as IClient);
+    component.selectedComunidad.set({ id: 5 } as Comunidad);
+    component.selectedMeter.set({ medidorId: 200 } as IMeter);
+    component.selectedTariff.set({ categoriaTarifaId: 1 } as ITariffCategory);
+    component.form.patchValue({
+      numeroGuia: 'GUIA-001',
+      direccionSuministro: 'Calle Real',
+      lecturaInicial: '0',
+    });
+    component.activeStep.set(2);
+
+    component.save();
+
+    expect(component.activeStep()).toBe(3);
+    expect(mockContractsApi.createContract).not.toHaveBeenCalled();
   });
 });

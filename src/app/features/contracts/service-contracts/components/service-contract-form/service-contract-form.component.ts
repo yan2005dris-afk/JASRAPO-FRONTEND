@@ -91,7 +91,12 @@ export class ServiceContractFormComponent implements OnInit {
   private readonly stepPanel = viewChild<ElementRef<HTMLElement>>('stepPanel');
   readonly activeStep = signal(0);
   readonly stepAttempted = signal(false);
-  readonly steps = ['Cliente y comunidad', 'Medidor y tarifa', 'Datos del contrato'];
+  readonly steps = [
+    'Cliente y comunidad',
+    'Medidor y tarifa',
+    'Datos del contrato',
+    'Resumen y confirmación',
+  ];
 
   nextStep(): void {
     this.stepAttempted.set(true);
@@ -110,7 +115,14 @@ export class ServiceContractFormComponent implements OnInit {
     this.focusStep();
   }
 
-  private isStepComplete(step: number): boolean {
+  goToStep(step: number): void {
+    if (step < 0 || step >= this.steps.length) return;
+    this.activeStep.set(step);
+    this.stepAttempted.set(false);
+    this.focusStep();
+  }
+
+  isStepComplete(step: number): boolean {
     if (step === 0)
       return (
         !!this.selectedClient() &&
@@ -118,7 +130,8 @@ export class ServiceContractFormComponent implements OnInit {
         !!this.selectedComunidad()
       );
     if (step === 1) return !!this.selectedMeter() && !!this.selectedTariff();
-    return this.form.valid;
+    if (step === 2) return this.form.valid && !this.coordinateError();
+    return true;
   }
 
   private focusStep(): void {
