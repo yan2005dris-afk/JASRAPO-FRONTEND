@@ -181,6 +181,44 @@ describe('ClientsFormComponent', () => {
     expect(label).toBeTruthy();
   });
 
+  it('exige el porcentaje del carné solo cuando aplica discapacidad', () => {
+    const porcentaje = component.clienteForm.get('porcentajeDiscapacidad');
+
+    component.clienteForm.patchValue({ aplicaDiscapacidad: true });
+    component.updateDisabilityValidators();
+    expect(porcentaje?.hasError('required')).toBe(true);
+
+    porcentaje?.setValue(150);
+    expect(porcentaje?.hasError('max')).toBe(true);
+
+    porcentaje?.setValue(40);
+    expect(porcentaje?.valid).toBe(true);
+
+    component.clienteForm.patchValue({ aplicaDiscapacidad: false });
+    component.updateDisabilityValidators();
+    expect(porcentaje?.value).toBeNull();
+    expect(porcentaje?.valid).toBe(true);
+  });
+
+  it('envía el porcentaje del carné solo cuando aplica discapacidad', () => {
+    component.clienteForm.patchValue({ aplicaDiscapacidad: true, porcentajeDiscapacidad: 70 });
+    expect(component.prepararClienteParaEnviar().porcentajeDiscapacidad).toBe(70);
+
+    component.clienteForm.patchValue({ aplicaDiscapacidad: false, porcentajeDiscapacidad: null });
+    expect(component.prepararClienteParaEnviar().porcentajeDiscapacidad).toBeUndefined();
+  });
+
+  it('muestra el campo del porcentaje solo cuando se activa discapacidad', () => {
+    const host = fixture.nativeElement as HTMLElement;
+    expect(host.querySelector('#porcentajeDiscapacidad')).toBeNull();
+
+    component.clienteForm.patchValue({ aplicaDiscapacidad: true });
+    fixture.componentRef.changeDetectorRef.markForCheck();
+    fixture.detectChanges();
+
+    expect(host.querySelector('#porcentajeDiscapacidad')).toBeTruthy();
+  });
+
   it('emite el cliente creado para que el selector lo use sin volver a buscarlo', () => {
     const clienteCreado = { clienteId: '77', nombres: 'Luis', apellidos: 'Vera' } as IClient;
     const clientsService = TestBed.inject(ClientsApi);
