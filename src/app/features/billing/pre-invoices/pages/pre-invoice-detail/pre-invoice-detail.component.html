@@ -142,8 +142,13 @@
               </div>
               <div class="text-muted" style="font-size: 0.75rem">
                 IVA: ${{ preInvoice.iva | number: '1.2-2' }}
-                @if (preInvoice.descuentoTotal > 0) {
-                  · Desc: -${{ preInvoice.descuentoTotal | number: '1.2-2' }}
+                @if ((preInvoice.subsidioLey ?? 0) > 0) {
+                  · Subsidio Ley Tercera Edad / Discapacidad: -${{
+                    preInvoice.subsidioLey | number: '1.2-2'
+                  }}
+                }
+                @if (otherDiscounts > 0) {
+                  · Desc: -${{ otherDiscounts | number: '1.2-2' }}
                 }
               </div>
             </div>
