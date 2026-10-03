@@ -197,7 +197,6 @@ describe('LecturasComponent State Machine', () => {
       tipoActividad: 'LECTURA',
       lecturaAnterior: 100,
       lecturaActual: 125,
-      lecturaInicial: false,
       fotoBlob: new Blob(['photo'], { type: 'image/jpeg' }),
     });
 
@@ -224,7 +223,6 @@ describe('LecturasComponent State Machine', () => {
       tipoActividad: 'LECTURA',
       lecturaAnterior: 100,
       lecturaActual: 125,
-      lecturaInicial: false,
       fotoBlob: new Blob(['photo'], { type: 'image/jpeg' }),
     });
 

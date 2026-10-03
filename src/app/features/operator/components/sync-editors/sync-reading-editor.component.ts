@@ -8,7 +8,6 @@ export interface ReadingEditResult {
   recordId: number;
   lecturaActual: number;
   lecturaAnterior: number;
-  lecturaInicial: boolean;
   consumoCalculado: number;
 }
 
@@ -32,7 +31,6 @@ export interface ReadingEditResult {
           type="number"
           class="edit-input"
           [(ngModel)]="lecturaAnterior"
-          [disabled]="lecturaInicial"
           min="0"
           step="1"
           aria-describedby="reading-error-msg"
@@ -50,13 +48,6 @@ export interface ReadingEditResult {
           step="1"
           aria-describedby="reading-error-msg"
         />
-      </div>
-
-      <div class="edit-row checkbox-row">
-        <label class="checkbox-label">
-          <input type="checkbox" [(ngModel)]="lecturaInicial" />
-          <span>Es primera lectura (reemplazo / instalación)</span>
-        </label>
       </div>
 
       @if (validationErrorMessage()) {
@@ -186,14 +177,12 @@ export class SyncReadingEditorComponent implements OnInit {
 
   lecturaActual = 0;
   lecturaAnterior = 0;
-  lecturaInicial = false;
   readonly isSaving = signal(false);
 
   ngOnInit(): void {
     const rec = this.record();
     this.lecturaActual = Number(rec['lecturaActual'] ?? 0);
     this.lecturaAnterior = Number(rec['lecturaAnterior'] ?? 0);
-    this.lecturaInicial = Boolean(rec['lecturaInicial'] ?? false);
   }
 
   isInvalid(): boolean {
@@ -210,18 +199,16 @@ export class SyncReadingEditorComponent implements OnInit {
       return 'La lectura actual debe ser un número mayor o igual a 0.';
     }
 
-    if (!this.lecturaInicial) {
-      if (
-        this.lecturaAnterior === null ||
-        this.lecturaAnterior === undefined ||
-        isNaN(Number(this.lecturaAnterior)) ||
-        Number(this.lecturaAnterior) < 0
-      ) {
-        return 'La lectura anterior debe ser un número mayor o igual a 0.';
-      }
-      if (Number(this.lecturaActual) < Number(this.lecturaAnterior)) {
-        return 'La lectura actual no puede ser menor a la lectura anterior.';
-      }
+    if (
+      this.lecturaAnterior === null ||
+      this.lecturaAnterior === undefined ||
+      isNaN(Number(this.lecturaAnterior)) ||
+      Number(this.lecturaAnterior) < 0
+    ) {
+      return 'La lectura anterior debe ser un número mayor o igual a 0.';
+    }
+    if (Number(this.lecturaActual) < Number(this.lecturaAnterior)) {
+      return 'La lectura actual no puede ser menor a la lectura anterior.';
     }
 
     return null;
@@ -233,14 +220,13 @@ export class SyncReadingEditorComponent implements OnInit {
 
     const actual = Number(this.lecturaActual);
     const anterior = Number(this.lecturaAnterior);
-    const consumo = calculateConsumo(anterior, actual, this.lecturaInicial);
+    const consumo = calculateConsumo(anterior, actual);
 
     this.isSaving.set(true);
     this.saved.emit({
       recordId: rec.id,
       lecturaActual: actual,
       lecturaAnterior: anterior,
-      lecturaInicial: this.lecturaInicial,
       consumoCalculado: consumo,
     });
   }
