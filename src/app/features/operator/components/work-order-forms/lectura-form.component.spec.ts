@@ -20,8 +20,6 @@ describe('LecturaFormComponent', () => {
     expect(comp.form.valid).toBe(false);
   });
 
-
-
   it('should reset submitted state when a photo is captured after a failed submit', () => {
     const comp = createComponent();
 

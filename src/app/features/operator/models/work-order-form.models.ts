@@ -36,10 +36,7 @@ export type WorkOrderFormPayload =
  * Calcula el consumo entre la lectura anterior y la actual.
  * Si el resultado es negativo, retorna 0 (clamp defensivo).
  */
-export function calculateConsumo(
-  lecturaAnterior: number,
-  lecturaActual: number,
-): number {
+export function calculateConsumo(lecturaAnterior: number, lecturaActual: number): number {
   const diff = Number(lecturaActual) - Number(lecturaAnterior);
   return diff < 0 ? 0 : diff;
 }
