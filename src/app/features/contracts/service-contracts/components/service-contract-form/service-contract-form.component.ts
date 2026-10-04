@@ -179,6 +179,33 @@ export class ServiceContractFormComponent implements OnInit {
     getCommunityMapCenter(this.selectedComunidad()?.nombre),
   );
 
+  readonly previewNumeroGuia = computed(() => {
+    if (this.isEditing()) {
+      return this.contractToEdit()?.numeroGuia || 'Se asignará al guardar';
+    }
+    const com = this.selectedComunidad();
+    const meter = this.selectedMeter();
+    const codComunidad = com?.codigo
+      ? com.codigo
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-zA-Z0-9-]/g, '')
+          .toUpperCase()
+      : 'COMUNIDAD';
+    const serie = meter?.serie
+      ? meter.serie
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/[^a-zA-Z0-9-]/g, '')
+          .toUpperCase()
+      : 'MEDIDOR';
+
+    if (!com && !meter) {
+      return '[SERIE_MEDIDOR]-[COMUNIDAD]-XXXXXX (secuencial al guardar)';
+    }
+    return `${serie}-${codComunidad}-XXXXXX (secuencial al guardar)`;
+  });
+
   readonly form: FormGroup = this.fb.group(
     {
       direccionSuministro: ['', [Validators.required, Validators.maxLength(200)]],

@@ -352,7 +352,7 @@
                   id="numeroGuia"
                   type="text"
                   class="form-control"
-                  [value]="isEditing() ? contractToEdit()?.numeroGuia : 'Se asignará al guardar'"
+                  [value]="previewNumeroGuia()"
                   readonly
                 />
                 <span class="text-muted x-small">
@@ -673,7 +673,7 @@
                     <div>
                       <small class="text-muted d-block">N° de guía</small>
                       <span class="text-dark fw-semibold">
-                        {{ isEditing() ? contractToEdit()?.numeroGuia : 'Se asignará al guardar' }}
+                        {{ previewNumeroGuia() }}
                       </span>
                     </div>
                   </div>

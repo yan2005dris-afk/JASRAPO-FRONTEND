@@ -564,7 +564,7 @@ describe('ServiceContractFormComponent', () => {
     expect(summarySection.textContent).toContain('Comunidad Central');
     expect(summarySection.textContent).toContain('METER-200');
     expect(summarySection.textContent).toContain('Residencial');
-    expect(summarySection.textContent).toContain('Se asignará al guardar');
+    expect(summarySection.textContent).toContain('METER-200-COM-01-XXXXXX (secuencial al guardar)');
     expect(summarySection.textContent).toContain('Av. Las Palmas');
   });
 
@@ -596,5 +596,37 @@ describe('ServiceContractFormComponent', () => {
 
     expect(component.activeStep()).toBe(3);
     expect(mockContractsApi.createContract).not.toHaveBeenCalled();
+  });
+
+  describe('previewNumeroGuia', () => {
+    it('returns the existing numeroGuia in edit mode', () => {
+      fixture.componentRef.setInput('contractToEdit', {
+        ...mockContract,
+        numeroGuia: 'METER-100-COM-01-000005',
+      });
+      fixture.detectChanges();
+
+      expect(component.previewNumeroGuia()).toBe('METER-100-COM-01-000005');
+    });
+
+    it('returns predictive pattern with selected meter series and community in create mode', () => {
+      fixture.componentRef.setInput('contractToEdit', null);
+      component.selectedComunidad.set({ id: 1, codigo: 'COM-01' } as Comunidad);
+      component.selectedMeter.set({ medidorId: 10, serie: 'MED-777' } as IMeter);
+      fixture.detectChanges();
+
+      expect(component.previewNumeroGuia()).toBe('MED-777-COM-01-XXXXXX (secuencial al guardar)');
+    });
+
+    it('uses placeholders when community or meter are not selected yet in create mode', () => {
+      fixture.componentRef.setInput('contractToEdit', null);
+      component.selectedComunidad.set(null);
+      component.selectedMeter.set(null);
+      fixture.detectChanges();
+
+      expect(component.previewNumeroGuia()).toBe(
+        '[SERIE_MEDIDOR]-[COMUNIDAD]-XXXXXX (secuencial al guardar)',
+      );
+    });
   });
 });
