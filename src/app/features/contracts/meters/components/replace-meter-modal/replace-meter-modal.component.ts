@@ -72,7 +72,12 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
   readonly cancelled = output<void>();
 
   // Wizard state
-  readonly steps = ['Medidor Saliente', 'Selección de Nuevo', 'Facturación & Cierre', 'Confirmación'];
+  readonly steps = [
+    'Medidor Saliente',
+    'Selección de Nuevo',
+    'Facturación & Cierre',
+    'Confirmación',
+  ];
   readonly currentStep = signal<1 | 2 | 3 | 4>(1);
   // Steps the user has tried to advance past (drives per-field error visibility)
   private readonly attemptedSteps = signal<Set<number>>(new Set());

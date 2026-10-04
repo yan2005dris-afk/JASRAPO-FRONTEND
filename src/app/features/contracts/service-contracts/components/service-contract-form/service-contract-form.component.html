@@ -15,10 +15,7 @@
 
   <form [formGroup]="form" (ngSubmit)="save()">
     @if (!isEditing()) {
-      <app-step-progress
-        [steps]="steps"
-        [activeStep]="activeStep()"
-      />
+      <app-step-progress [steps]="steps" [activeStep]="activeStep()" />
       @if (stepAttempted()) {
         <p class="alert alert-warning" role="alert">
           Complete los datos requeridos de este paso para continuar.
