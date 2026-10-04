@@ -31,12 +31,19 @@ import { IContract } from '../../../service-contracts/domain/models/service-cont
 import { PeriodsService } from '../../../../../shared/services/periods.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { MeterTableComponent } from '../../../../../shared/components/meter-table/meter-table.component';
+import { StepProgressComponent } from '../../../../../shared/components/step-progress/step-progress.component';
 import { AuthService } from '../../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-replace-meter-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, MeterTableComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MeterTableComponent,
+    StepProgressComponent,
+  ],
   templateUrl: './replace-meter-modal.component.html',
   styleUrl: './replace-meter-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,6 +72,12 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
   readonly cancelled = output<void>();
 
   // Wizard state
+  readonly steps = [
+    'Medidor Saliente',
+    'Selección de Nuevo',
+    'Facturación & Cierre',
+    'Confirmación',
+  ];
   readonly currentStep = signal<1 | 2 | 3 | 4>(1);
   // Steps the user has tried to advance past (drives per-field error visibility)
   private readonly attemptedSteps = signal<Set<number>>(new Set());
@@ -600,6 +613,11 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
     setTimeout(() => {
       this.stepHeading()?.nativeElement?.focus();
     }, 50);
+  }
+
+  onStepProgressChange(index: number): void {
+    const step = (index + 1) as 1 | 2 | 3 | 4;
+    this.goToStep(step);
   }
 
   goBack(): void {

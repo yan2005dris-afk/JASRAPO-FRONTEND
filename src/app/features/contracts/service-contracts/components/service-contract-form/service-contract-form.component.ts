@@ -15,6 +15,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { ContractsApi } from '../../data/contracts.api';
 import { IContract, IContractState } from '../../domain/models/service-contract.model';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
+import { StepProgressComponent } from '../../../../../shared/components/step-progress/step-progress.component';
 import { IClient } from '../../../clients/domain/models/client.model';
 import { IMeter } from '../../../meters/domain/models/meter.model';
 import { ITariffCategory } from '../../../tariffs/domain/models/tariff.model';
@@ -44,6 +45,7 @@ import { ServiceContractFormStateService } from './services/service-contract-for
     StepContractSummaryComponent,
     ContractPickerModalsComponent,
     ContractLiveSummaryComponent,
+    StepProgressComponent,
   ],
   providers: [ServiceContractFormStateService],
   templateUrl: './service-contract-form.component.html',

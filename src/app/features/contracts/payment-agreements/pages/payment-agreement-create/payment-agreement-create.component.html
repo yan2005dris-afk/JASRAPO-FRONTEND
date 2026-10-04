@@ -28,38 +28,13 @@
       </div>
 
       <!-- Indicador de Pasos (Stepper) -->
-      <div class="stepper-nav d-flex align-items-center justify-content-between pt-2 border-top">
-        <button
-          type="button"
-          class="step-item btn p-0 border-0 bg-transparent d-flex align-items-center gap-2"
-          [class.active]="currentStep === 1"
-          [class.completed]="currentStep > 1"
-          [disabled]="isLoading"
-          (click)="backToContractSelection()"
-        >
-          <span class="step-badge">
-            @if (currentStep > 1) {
-              <i class="bi bi-check-lg"></i>
-            } @else {
-              1
-            }
-          </span>
-          <span class="step-label small fw-medium">Elegir Contrato</span>
-        </button>
-
-        <div class="step-divider flex-grow-1 mx-3" [class.completed]="currentStep > 1"></div>
-
-        <button
-          type="button"
-          class="step-item btn p-0 border-0 bg-transparent d-flex align-items-center gap-2"
-          [class.active]="currentStep === 2"
-          [disabled]="!step1Valid || isLoading"
-          (click)="goToStep(2)"
-        >
-          <span class="step-badge">2</span>
-          <span class="step-label small fw-medium">Plan de Pago y Amortización</span>
-        </button>
-      </div>
+      <app-step-progress
+        [steps]="steps"
+        [activeStep]="currentStep - 1"
+        [allowDirectNavigation]="step1Valid && !isLoading"
+        [compact]="true"
+        (stepChange)="onStepProgressChange($event)"
+      />
     </div>
 
     <!-- Body -->

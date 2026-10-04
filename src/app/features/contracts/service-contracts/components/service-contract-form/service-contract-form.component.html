@@ -15,30 +15,7 @@
 
   <form [formGroup]="form" (ngSubmit)="save()">
     @if (!isEditing()) {
-      <nav aria-label="Pasos del registro" class="mb-4">
-        <ol class="stepper-progress">
-          @for (step of steps; track $index) {
-            <li
-              class="step-item"
-              [class.current]="activeStep() === $index"
-              [class.completed]="activeStep() > $index"
-              [attr.aria-current]="activeStep() === $index ? 'step' : null"
-            >
-              <div class="step-circle">
-                @if (activeStep() > $index) {
-                  <i class="bi bi-check-lg"></i>
-                } @else {
-                  <span>{{ $index + 1 }}</span>
-                }
-              </div>
-              <div class="step-title">{{ step }}</div>
-            </li>
-          }
-        </ol>
-        <p class="small text-muted mb-0" aria-live="polite">
-          Paso {{ activeStep() + 1 }} de {{ steps.length }}: {{ steps[activeStep()] }}
-        </p>
-      </nav>
+      <app-step-progress [steps]="steps" [activeStep]="activeStep()" />
       @if (stepAttempted()) {
         <p class="alert alert-warning" role="alert">
           Complete los datos requeridos de este paso para continuar.
