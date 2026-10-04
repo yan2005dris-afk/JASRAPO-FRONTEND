@@ -2,6 +2,7 @@ import {
   Component,
   ChangeDetectionStrategy,
   DestroyRef,
+  effect,
   inject,
   input,
   OnInit,
@@ -144,6 +145,39 @@ export class LecturaFormComponent
   // pero el base también implementa ngOnInit (que llama buildForm). Resolvemos
   // con takeUntilDestroyed y reescritura explícita del ciclo de vida.
   private readonly destroyRef = inject(DestroyRef);
+
+  constructor() {
+    super();
+    // Reactividad para precarga asíncrona de señales
+    effect(() => {
+      const anterior = this.lecturaAnterior();
+      const initialActual = this.initialLecturaActual();
+      const anomalia = this.initialDescripcionAnomalia();
+
+      if (this.form) {
+        const anteriorCtrl = this.form.get('lecturaAnterior');
+        if (anteriorCtrl && anteriorCtrl.value !== anterior) {
+          anteriorCtrl.setValue(anterior, { emitEvent: false });
+        }
+
+        const actualCtrl = this.form.get('lecturaActual');
+        if (actualCtrl && !actualCtrl.dirty && initialActual !== null) {
+          if (actualCtrl.value !== initialActual) {
+            actualCtrl.setValue(initialActual, { emitEvent: false });
+          }
+        }
+
+        const anomaliaCtrl = this.form.get('descripcionAnomalia');
+        if (anomaliaCtrl && !anomaliaCtrl.dirty && anomalia) {
+          if (anomaliaCtrl.value !== anomalia) {
+            anomaliaCtrl.setValue(anomalia, { emitEvent: false });
+          }
+        }
+
+        this.validateCrossField();
+      }
+    });
+  }
 
   override ngOnInit(): void {
     super.ngOnInit();

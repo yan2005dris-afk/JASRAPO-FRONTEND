@@ -68,4 +68,21 @@ describe('LecturaFormComponent', () => {
     comp.submit();
     expect(emitted).toHaveLength(0);
   });
+
+  it('should preload initialLecturaActual and initialDescripcionAnomalia reactively', () => {
+    TestBed.configureTestingModule({
+      imports: [LecturaFormComponent],
+    });
+    const fixture = TestBed.createComponent(LecturaFormComponent);
+    fixture.componentRef.setInput('lecturaAnterior', 20);
+    fixture.componentRef.setInput('initialLecturaActual', 28);
+    fixture.componentRef.setInput('initialDescripcionAnomalia', 'Lectura verificada');
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    expect(comp.form.get('lecturaAnterior')?.value).toBe(20);
+    expect(comp.form.get('lecturaActual')?.value).toBe(28);
+    expect(comp.form.get('descripcionAnomalia')?.value).toBe('Lectura verificada');
+    expect(comp.consumoCalculado()).toBe(8);
+  });
 });
