@@ -22,11 +22,6 @@ import {
   IUpdateContractRequest,
   getContractServiceState,
 } from '../../domain/models/service-contract.model';
-import { ClientsListComponent } from '../../../clients/pages/clients-list/clients-list.component';
-import { TariffsListComponent } from '../../../tariffs/pages/tariffs-list/tariffs-list.component';
-import { MetersIndexComponent } from '../../../meters/components/meters-index/meters-index.component';
-import { ReplaceMeterModalComponent } from '../../../meters/components/replace-meter-modal/replace-meter-modal.component';
-import { ComunidadesComponent } from '../../../../admin/comunidades/comunidades.component';
 import { IClient } from '../../../clients/domain/models/client.model';
 import { IMeter } from '../../../meters/domain/models/meter.model';
 import { ITariffCategory } from '../../../tariffs/domain/models/tariff.model';
@@ -41,6 +36,7 @@ import { StepClientCommunityComponent } from './steps/step-client-community/step
 import { StepMeterTariffComponent } from './steps/step-meter-tariff/step-meter-tariff.component';
 import { StepContractDetailsComponent } from './steps/step-contract-details/step-contract-details.component';
 import { StepContractSummaryComponent } from './steps/step-contract-summary/step-contract-summary.component';
+import { ContractPickerModalsComponent } from './modals/contract-picker-modals.component';
 
 /**
  * Formulario de contrato cliente–medidor. Sirve para CREAR y para EDITAR:
@@ -51,15 +47,11 @@ import { StepContractSummaryComponent } from './steps/step-contract-summary/step
   selector: 'app-service-contract-form',
   imports: [
     ReactiveFormsModule,
-    ClientsListComponent,
-    TariffsListComponent,
-    MetersIndexComponent,
-    ReplaceMeterModalComponent,
-    ComunidadesComponent,
     StepClientCommunityComponent,
     StepMeterTariffComponent,
     StepContractDetailsComponent,
     StepContractSummaryComponent,
+    ContractPickerModalsComponent,
   ],
   templateUrl: './service-contract-form.component.html',
   styleUrl: './service-contract-form.component.scss',

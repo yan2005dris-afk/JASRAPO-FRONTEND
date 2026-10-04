@@ -136,148 +136,22 @@
   </form>
 </div>
 
-<!-- Modal selector de cliente (pantalla de clientes en modo selección) -->
-@if (isClientPickerOpen()) {
-  <div
-    class="modal fade show d-block picker-modal"
-    tabindex="-1"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="picker-cliente-title"
-  >
-    <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
-      <div class="modal-content border-0 shadow rounded-4">
-        <div class="modal-header border-bottom-0 pb-2">
-          <div>
-            <h5 id="picker-cliente-title" class="modal-title fw-bold">Seleccionar Cliente</h5>
-            <p class="text-muted mb-0 small">
-              Busque y haga <strong>doble clic</strong> sobre un cliente para seleccionarlo.
-            </p>
-          </div>
-          <button
-            type="button"
-            class="btn-close shadow-none"
-            aria-label="Cerrar"
-            (click)="closeClientPicker()"
-          ></button>
-        </div>
-        <div class="modal-body pt-2">
-          <app-clients-list [selectionMode]="true" (clientSelected)="onClientSelected($event)" />
-        </div>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- Modal selector de comunidad (pantalla de comunidades en modo selección) -->
-@if (isComunidadPickerOpen()) {
-  <div
-    class="modal fade show d-block picker-modal"
-    tabindex="-1"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="picker-comunidad-title"
-  >
-    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-      <div class="modal-content border-0 shadow rounded-4">
-        <div class="modal-header border-bottom-0 pb-2">
-          <div>
-            <h5 id="picker-comunidad-title" class="modal-title fw-bold">Seleccionar Comunidad</h5>
-            <p class="text-muted mb-0 small">
-              Haga <strong>doble clic</strong> sobre una comunidad para seleccionarla.
-            </p>
-          </div>
-          <button
-            type="button"
-            class="btn-close shadow-none"
-            aria-label="Cerrar"
-            (click)="closeComunidadPicker()"
-          ></button>
-        </div>
-        <div class="modal-body pt-2">
-          <app-comunidades
-            [selectionMode]="true"
-            (comunidadSelected)="onComunidadSelected($event)"
-          />
-        </div>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- Modal selector de medidor (pantalla de medidores en modo selección) -->
-@if (isMeterPickerOpen()) {
-  <div
-    class="modal fade show d-block picker-modal"
-    tabindex="-1"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="picker-medidor-title"
-  >
-    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-      <div class="modal-content border-0 shadow rounded-4">
-        <div class="modal-header border-bottom-0 pb-2">
-          <div>
-            <h5 id="picker-medidor-title" class="modal-title fw-bold">
-              Seleccionar Medidor Disponible
-            </h5>
-            <p class="text-muted mb-0 small">
-              Haga <strong>doble clic</strong> sobre un medidor para seleccionarlo.
-            </p>
-          </div>
-          <button
-            type="button"
-            class="btn-close shadow-none"
-            aria-label="Cerrar"
-            (click)="closeMeterPicker()"
-          ></button>
-        </div>
-        <div class="modal-body pt-2">
-          <app-meters [selectionMode]="true" (meterSelected)="onMeterSelected($event)" />
-        </div>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- Modal selector de tarifa (pantalla de tarifas en modo selección) -->
-@if (isTariffPickerOpen()) {
-  <div
-    class="modal fade show d-block picker-modal"
-    tabindex="-1"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="picker-tarifa-title"
-  >
-    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
-      <div class="modal-content border-0 shadow rounded-4">
-        <div class="modal-header border-bottom-0 pb-2">
-          <div>
-            <h5 id="picker-tarifa-title" class="modal-title fw-bold">Seleccionar Tarifa</h5>
-            <p class="text-muted mb-0 small">
-              Haga <strong>doble clic</strong> sobre una tarifa para seleccionarla.
-            </p>
-          </div>
-          <button
-            type="button"
-            class="btn-close shadow-none"
-            aria-label="Cerrar"
-            (click)="closeTariffPicker()"
-          ></button>
-        </div>
-        <div class="modal-body pt-2">
-          <app-tariffs-list [selectionMode]="true" (tariffSelected)="onTariffSelected($event)" />
-        </div>
-      </div>
-    </div>
-  </div>
-}
-
-<!-- Modal de reemplazo de medidor (flujo dedicado) -->
-@if (isReplaceMeterModalOpen() && contractToEdit(); as contract) {
-  <app-replace-meter-modal
-    [contract]="contract"
-    (saved)="onMeterReplaced()"
-    (cancelled)="closeReplaceMeterModal()"
-  />
-}
+<!-- Modales de selección y reemplazo de medidor -->
+<app-contract-picker-modals
+  [isClientPickerOpen]="isClientPickerOpen()"
+  [isComunidadPickerOpen]="isComunidadPickerOpen()"
+  [isMeterPickerOpen]="isMeterPickerOpen()"
+  [isTariffPickerOpen]="isTariffPickerOpen()"
+  [isReplaceMeterModalOpen]="isReplaceMeterModalOpen()"
+  [contractToEdit]="contractToEdit()"
+  (closeClientPicker)="closeClientPicker()"
+  (clientSelected)="onClientSelected($event)"
+  (closeComunidadPicker)="closeComunidadPicker()"
+  (comunidadSelected)="onComunidadSelected($event)"
+  (closeMeterPicker)="closeMeterPicker()"
+  (meterSelected)="onMeterSelected($event)"
+  (closeTariffPicker)="closeTariffPicker()"
+  (tariffSelected)="onTariffSelected($event)"
+  (closeReplaceMeterModal)="closeReplaceMeterModal()"
+  (meterReplaced)="onMeterReplaced()"
+/>
