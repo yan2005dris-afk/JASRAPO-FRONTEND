@@ -1,0 +1,31 @@
+<nav aria-label="Progreso de pasos" class="step-progress-nav mb-4">
+  <ol class="stepper-progress">
+    @for (step of steps(); track $index) {
+      <li
+        class="step-item"
+        [class.current]="activeStep() === $index"
+        [class.completed]="activeStep() > $index"
+        [class.clickable]="isClickable($index)"
+        [attr.aria-current]="activeStep() === $index ? 'step' : null"
+        (click)="onStepClick($index)"
+        (keydown.enter)="onStepClick($index)"
+        (keydown.space)="onStepClick($index)"
+        [tabindex]="isClickable($index) ? 0 : -1"
+        [attr.role]="isClickable($index) ? 'button' : null"
+        [attr.aria-label]="'Paso ' + ($index + 1) + ': ' + step"
+      >
+        <div class="step-circle">
+          @if (activeStep() > $index) {
+            <i class="bi bi-check-lg" aria-hidden="true"></i>
+          } @else {
+            <span>{{ $index + 1 }}</span>
+          }
+        </div>
+        <div class="step-title">{{ step }}</div>
+      </li>
+    }
+  </ol>
+  <p class="small text-muted mb-0 sr-only-or-subtle" aria-live="polite">
+    Paso {{ activeStep() + 1 }} de {{ steps().length }}: {{ steps()[activeStep()] }}
+  </p>
+</nav>
