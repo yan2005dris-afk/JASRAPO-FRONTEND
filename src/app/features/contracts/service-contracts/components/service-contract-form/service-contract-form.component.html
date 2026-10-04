@@ -15,19 +15,27 @@
 
   <form [formGroup]="form" (ngSubmit)="save()">
     @if (!isEditing()) {
-      <nav aria-label="Pasos del registro" class="registration-progress mb-4">
-        <ol>
+      <nav aria-label="Pasos del registro" class="mb-4">
+        <ol class="stepper-progress">
           @for (step of steps; track $index) {
             <li
+              class="step-item"
               [class.current]="activeStep() === $index"
               [class.completed]="activeStep() > $index"
               [attr.aria-current]="activeStep() === $index ? 'step' : null"
             >
-              <span class="step-number">{{ $index + 1 }}</span> {{ step }}
+              <div class="step-circle">
+                @if (activeStep() > $index) {
+                  <i class="bi bi-check-lg"></i>
+                } @else {
+                  <span>{{ $index + 1 }}</span>
+                }
+              </div>
+              <div class="step-title">{{ step }}</div>
             </li>
           }
         </ol>
-        <p class="small mb-0" aria-live="polite">
+        <p class="small text-muted mb-0" aria-live="polite">
           Paso {{ activeStep() + 1 }} de {{ steps.length }}: {{ steps[activeStep()] }}
         </p>
       </nav>
@@ -37,68 +45,104 @@
         </p>
       }
     }
-    @if (isEditing() || activeStep() === 0) {
-      <section #stepPanel tabindex="-1" aria-label="Cliente y comunidad" class="registration-panel">
-        <app-step-client-community
-          [client]="selectedClient()"
-          [comunidad]="selectedComunidad()"
-          [submitted]="submitted()"
-          (pickClient)="openClientPicker()"
-          (pickComunidad)="openComunidadPicker()"
-        />
-      </section>
-    }
-    @if (isEditing() || activeStep() === 1) {
-      <section #stepPanel tabindex="-1" aria-label="Medidor y tarifa" class="registration-panel">
-        <app-step-meter-tariff
-          [meter]="selectedMeter()"
-          [tariff]="selectedTariff()"
-          [isEditing]="isEditing()"
-          [submitted]="submitted()"
-          (pickMeter)="openMeterPicker()"
-          (replaceMeter)="openReplaceMeterModal()"
-          (pickTariff)="openTariffPicker()"
-        />
-      </section>
-    }
-    @if (isEditing() || activeStep() === 2) {
-      <section #stepPanel tabindex="-1" aria-label="Datos del contrato" class="registration-panel">
-        <app-step-contract-details
-          [form]="form"
-          [previewNumeroGuia]="previewNumeroGuia()"
-          [isEditing]="isEditing()"
-          [isSuperAdmin]="isSuperAdmin()"
-          [availableStates]="availableStates()"
-          [coordinates]="coordinates()"
-          [coordinateError]="coordinateError()"
-          [serviceArea]="serviceArea()"
-          [communityMapCenter]="communityMapCenter()"
-          [isFieldInvalid]="isFieldInvalid.bind(this)"
-          (coordinatesChange)="onCoordinatesChange($event)"
-          (lecturaInicialInput)="onLecturaInicialInput($event)"
-        />
-      </section>
-    }
-    @if (!isEditing() && activeStep() === 3) {
-      <section
-        #stepPanel
-        tabindex="-1"
-        aria-label="Resumen y confirmación"
-        class="registration-panel"
-      >
-        <app-step-contract-summary
-          [client]="selectedClient()"
-          [comunidad]="selectedComunidad()"
-          [meter]="selectedMeter()"
-          [tariff]="selectedTariff()"
-          [previewNumeroGuia]="previewNumeroGuia()"
-          [lecturaInicial]="form.get('lecturaInicial')?.value || '0'"
-          [direccionSuministro]="form.get('direccionSuministro')?.value || ''"
-          [coordinates]="coordinates()"
-          (goToStep)="goToStep($event)"
-        />
-      </section>
-    }
+
+    <!-- Layout Master-Detail: Columna formulario + Columna Resumen en Vivo -->
+    <div class="row g-4 align-items-start mb-4">
+      <div [class]="!isEditing() && activeStep() < 3 ? 'col-12 col-xl-8' : 'col-12'">
+        @if (isEditing() || activeStep() === 0) {
+          <section
+            #stepPanel
+            tabindex="-1"
+            aria-label="Cliente y comunidad"
+            class="registration-panel"
+          >
+            <app-step-client-community
+              [client]="selectedClient()"
+              [comunidad]="selectedComunidad()"
+              [submitted]="submitted()"
+              (pickClient)="openClientPicker()"
+              (pickComunidad)="openComunidadPicker()"
+            />
+          </section>
+        }
+        @if (isEditing() || activeStep() === 1) {
+          <section
+            #stepPanel
+            tabindex="-1"
+            aria-label="Medidor y tarifa"
+            class="registration-panel"
+          >
+            <app-step-meter-tariff
+              [meter]="selectedMeter()"
+              [tariff]="selectedTariff()"
+              [isEditing]="isEditing()"
+              [submitted]="submitted()"
+              (pickMeter)="openMeterPicker()"
+              (replaceMeter)="openReplaceMeterModal()"
+              (pickTariff)="openTariffPicker()"
+            />
+          </section>
+        }
+        @if (isEditing() || activeStep() === 2) {
+          <section
+            #stepPanel
+            tabindex="-1"
+            aria-label="Datos del contrato"
+            class="registration-panel"
+          >
+            <app-step-contract-details
+              [form]="form"
+              [previewNumeroGuia]="previewNumeroGuia()"
+              [isEditing]="isEditing()"
+              [isSuperAdmin]="isSuperAdmin()"
+              [availableStates]="availableStates()"
+              [coordinates]="coordinates()"
+              [coordinateError]="coordinateError()"
+              [serviceArea]="serviceArea()"
+              [communityMapCenter]="communityMapCenter()"
+              [isFieldInvalid]="isFieldInvalid.bind(this)"
+              (coordinatesChange)="onCoordinatesChange($event)"
+              (lecturaInicialInput)="onLecturaInicialInput($event)"
+            />
+          </section>
+        }
+        @if (!isEditing() && activeStep() === 3) {
+          <section
+            #stepPanel
+            tabindex="-1"
+            aria-label="Resumen y confirmación"
+            class="registration-panel"
+          >
+            <app-step-contract-summary
+              [client]="selectedClient()"
+              [comunidad]="selectedComunidad()"
+              [meter]="selectedMeter()"
+              [tariff]="selectedTariff()"
+              [previewNumeroGuia]="previewNumeroGuia()"
+              [lecturaInicial]="form.get('lecturaInicial')?.value || '0'"
+              [direccionSuministro]="form.get('direccionSuministro')?.value || ''"
+              [coordinates]="coordinates()"
+              (goToStep)="goToStep($event)"
+            />
+          </section>
+        }
+      </div>
+
+      <!-- Live Summary Sidebar (Visible durante los pasos de llenado en modo creación) -->
+      @if (!isEditing() && activeStep() < 3) {
+        <aside class="col-12 col-xl-4 d-none d-xl-block" aria-label="Resumen en vivo">
+          <app-contract-live-summary
+            [client]="selectedClient()"
+            [comunidad]="selectedComunidad()"
+            [meter]="selectedMeter()"
+            [tariff]="selectedTariff()"
+            [previewNumeroGuia]="previewNumeroGuia()"
+            [coordinates]="coordinates()"
+          />
+        </aside>
+      }
+    </div>
+
     <!-- Acciones -->
     <div class="d-flex justify-content-end gap-2">
       <button type="button" class="btn btn-light" (click)="cancel()" [disabled]="isSaving()">

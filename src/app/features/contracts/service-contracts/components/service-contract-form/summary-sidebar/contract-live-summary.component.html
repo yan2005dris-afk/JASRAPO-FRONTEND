@@ -1,0 +1,96 @@
+<div class="summary-sidebar p-4 h-100">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h6 class="fw-bold mb-0 text-dark d-flex align-items-center gap-2">
+      <i class="bi bi-card-checklist text-primary"></i> Resumen del Contrato
+    </h6>
+    <span class="badge bg-primary-subtle text-primary border border-primary-subtle small"
+      >En vivo</span
+    >
+  </div>
+
+  <!-- N° de Guía Tentativo -->
+  <div class="mb-3">
+    <small class="text-muted d-block mb-1">N° Guía Tentativo</small>
+    <div class="summary-header-badge text-primary fw-bold text-truncate">
+      {{ previewNumeroGuia() }}
+    </div>
+    <small class="text-muted x-small d-block mt-1"> * El secuencial se generará al guardar. </small>
+  </div>
+
+  <hr class="my-3 text-secondary-subtle" />
+
+  <!-- Bloque 1: Cliente -->
+  <div class="summary-row">
+    <div class="summary-icon"><i class="bi bi-person"></i></div>
+    <div class="w-100 min-w-0">
+      <small class="text-muted d-block">Cliente (Paso 1)</small>
+      @if (clientDisplayName(); as name) {
+        <div class="fw-semibold text-truncate text-dark">{{ name }}</div>
+        <div class="text-muted small">C.I. {{ client()?.identificacion }}</div>
+      } @else {
+        <span class="text-muted fst-italic small">Sin seleccionar</span>
+      }
+    </div>
+  </div>
+
+  <!-- Bloque 2: Comunidad -->
+  <div class="summary-row">
+    <div class="summary-icon"><i class="bi bi-geo-alt"></i></div>
+    <div class="w-100 min-w-0">
+      <small class="text-muted d-block">Comunidad (Paso 1)</small>
+      @if (comunidad(); as com) {
+        <div class="fw-semibold text-truncate text-dark">
+          {{ com.nombre }}
+          @if (com.codigo) {
+            <span class="badge text-bg-light border ms-1">{{ com.codigo }}</span>
+          }
+        </div>
+      } @else {
+        <span class="text-muted fst-italic small">Sin seleccionar</span>
+      }
+    </div>
+  </div>
+
+  <!-- Bloque 3: Medidor -->
+  <div class="summary-row">
+    <div class="summary-icon"><i class="bi bi-speedometer2"></i></div>
+    <div class="w-100 min-w-0">
+      <small class="text-muted d-block">Medidor (Paso 2)</small>
+      @if (meter(); as m) {
+        <div class="fw-semibold text-truncate text-dark">{{ m.serie }} ({{ m.marca }})</div>
+        <div class="text-muted small">Mod. {{ m.modelo }}</div>
+      } @else {
+        <span class="text-muted fst-italic small">Sin seleccionar</span>
+      }
+    </div>
+  </div>
+
+  <!-- Bloque 4: Tarifa -->
+  <div class="summary-row">
+    <div class="summary-icon"><i class="bi bi-lightning-charge"></i></div>
+    <div class="w-100 min-w-0">
+      <small class="text-muted d-block">Tarifa (Paso 2)</small>
+      @if (tariff(); as t) {
+        <div class="fw-semibold text-truncate text-dark">{{ t.nombre }}</div>
+        <div class="text-muted small">Base: {{ t.consumoMinimoMensual ?? 10 }} m³</div>
+      } @else {
+        <span class="text-muted fst-italic small">Sin seleccionar</span>
+      }
+    </div>
+  </div>
+
+  <!-- Bloque 5: Georreferenciación -->
+  <div class="summary-row">
+    <div class="summary-icon"><i class="bi bi-pin-map"></i></div>
+    <div class="w-100 min-w-0">
+      <small class="text-muted d-block">Ubicación (Paso 3)</small>
+      @if (coordinates().latitud !== null && coordinates().longitud !== null) {
+        <span class="badge bg-success-subtle text-success border border-success-subtle">
+          Georreferenciado
+        </span>
+      } @else {
+        <span class="text-muted fst-italic small">Sin georreferenciar</span>
+      }
+    </div>
+  </div>
+</div>
