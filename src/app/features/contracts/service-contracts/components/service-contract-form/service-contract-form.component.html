@@ -352,17 +352,12 @@
                   id="numeroGuia"
                   type="text"
                   class="form-control"
-                  formControlName="numeroGuia"
-                  placeholder="Ej. GUIA-1-0051"
-                  maxlength="15"
-                  [readonly]="isEditing()"
-                  [class.is-invalid]="isFieldInvalid('numeroGuia')"
+                  [value]="previewNumeroGuia()"
+                  readonly
                 />
-                @if (isFieldInvalid('numeroGuia')) {
-                  <span class="text-danger x-small">
-                    El N° de guía es obligatorio (máx. 15 caracteres).
-                  </span>
-                }
+                <span class="text-muted x-small">
+                  Se genera automáticamente con la comunidad, el medidor y la secuencia disponible.
+                </span>
               </div>
 
               <!-- Estado: solo en modo edición (en creación lo asigna el backend) -->
@@ -677,9 +672,9 @@
                     <i class="bi bi-card-heading"></i>
                     <div>
                       <small class="text-muted d-block">N° de guía</small>
-                      <span class="text-dark fw-semibold">{{
-                        form.get('numeroGuia')?.value || '—'
-                      }}</span>
+                      <span class="text-dark fw-semibold">
+                        {{ previewNumeroGuia() }}
+                      </span>
                     </div>
                   </div>
                   <div class="col-md-4 detail-item">

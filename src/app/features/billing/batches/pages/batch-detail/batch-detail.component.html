@@ -325,6 +325,8 @@
                         {{ pf.clienteNombre || 'Contrato #' + pf.contratoId }}
                       </div>
                       <div class="text-muted" style="font-size: 0.78rem">
+                        <i class="bi bi-file-earmark-text me-1"></i>
+                        Guía {{ pf.numeroGuia || 'Contrato #' + pf.contratoId }} ·
                         <i class="bi bi-person-vcard me-1"></i>
                         {{ pf.clienteIdentificacion || 'Cédula/RUC no registrada' }}
                         @if (pf.clienteEmail) {
