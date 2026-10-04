@@ -32,11 +32,15 @@ import { IMeter } from '../../../meters/domain/models/meter.model';
 import { ITariffCategory } from '../../../tariffs/domain/models/tariff.model';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
-import { CoordinateMapPickerComponent } from '../../../../../shared/components/coordinate-map-picker/coordinate-map-picker.component';
 import type { ICoordinates, IPolygonGeometry } from '../../domain/models/service-area.model';
 import { coordinatePairValidator } from '../../../../../shared/components/coordinate-map-picker/coordinate-pair.validator';
 import { getCommunityMapCenter } from '../../domain/rules/community-map.rules';
 import { AuthService } from '../../../../../core/services/auth.service';
+
+import { StepClientCommunityComponent } from './steps/step-client-community/step-client-community.component';
+import { StepMeterTariffComponent } from './steps/step-meter-tariff/step-meter-tariff.component';
+import { StepContractDetailsComponent } from './steps/step-contract-details/step-contract-details.component';
+import { StepContractSummaryComponent } from './steps/step-contract-summary/step-contract-summary.component';
 
 /**
  * Formulario de contrato cliente–medidor. Sirve para CREAR y para EDITAR:
@@ -52,7 +56,10 @@ import { AuthService } from '../../../../../core/services/auth.service';
     MetersIndexComponent,
     ReplaceMeterModalComponent,
     ComunidadesComponent,
-    CoordinateMapPickerComponent,
+    StepClientCommunityComponent,
+    StepMeterTariffComponent,
+    StepContractDetailsComponent,
+    StepContractSummaryComponent,
   ],
   templateUrl: './service-contract-form.component.html',
   styleUrl: './service-contract-form.component.scss',
