@@ -137,7 +137,7 @@ describe('ServiceContractFormComponent', () => {
     fixture.detectChanges();
 
     expect(component.isEditing()).toBeTruthy();
-    expect(component.form.get('numeroGuia')?.value).toBe('CTR-001');
+    expect(component.contractToEdit()?.numeroGuia).toBe('CTR-001');
     expect(component.form.get('direccionSuministro')?.value).toBe('Calle Principal 123');
     expect(component.form.get('estadoServicio')?.value).toBe('ACTIVO');
     expect(component.selectedClient()?.identificacion).toBe('0999999999');
@@ -260,7 +260,6 @@ describe('ServiceContractFormComponent', () => {
     const savedEmitSpy = vi.spyOn(component.saved, 'emit');
 
     component.form.patchValue({
-      numeroGuia: 'CTR-NEW-01',
       direccionSuministro: 'Calle Nueva 789',
       lecturaInicial: '0',
     });
@@ -294,7 +293,6 @@ describe('ServiceContractFormComponent', () => {
       clienteId: '101',
       categoriaTarifaId: '2',
       medidorId: '500',
-      numeroGuia: 'CTR-NEW-01',
       direccionSuministro: 'Calle Nueva 789',
       comunidadId: '3',
       lecturaInicial: 0,
@@ -328,7 +326,6 @@ describe('ServiceContractFormComponent', () => {
     mockContractsApi.createContract.mockReturnValue(of(mockContract));
 
     component.form.patchValue({
-      numeroGuia: 'CTR-NEW-02',
       direccionSuministro: 'Calle Nueva 789',
       lecturaInicial: '0',
     });
@@ -389,7 +386,6 @@ describe('ServiceContractFormComponent', () => {
     fixture.detectChanges();
 
     component.form.patchValue({
-      numeroGuia: 'CTR-NEW-03',
       direccionSuministro: 'Calle Nueva 789',
       lecturaInicial: '0',
     });
@@ -553,7 +549,6 @@ describe('ServiceContractFormComponent', () => {
       consumoMinimoMensual: 10,
     } as ITariffCategory);
     component.form.patchValue({
-      numeroGuia: 'GUIA-100',
       direccionSuministro: 'Av. Las Palmas',
       lecturaInicial: '15',
     });
@@ -569,7 +564,7 @@ describe('ServiceContractFormComponent', () => {
     expect(summarySection.textContent).toContain('Comunidad Central');
     expect(summarySection.textContent).toContain('METER-200');
     expect(summarySection.textContent).toContain('Residencial');
-    expect(summarySection.textContent).toContain('GUIA-100');
+    expect(summarySection.textContent).toContain('METER-200-COM-01-XXXXXX (secuencial al guardar)');
     expect(summarySection.textContent).toContain('Av. Las Palmas');
   });
 
@@ -592,7 +587,6 @@ describe('ServiceContractFormComponent', () => {
     component.selectedMeter.set({ medidorId: 200 } as IMeter);
     component.selectedTariff.set({ categoriaTarifaId: 1 } as ITariffCategory);
     component.form.patchValue({
-      numeroGuia: 'GUIA-001',
       direccionSuministro: 'Calle Real',
       lecturaInicial: '0',
     });
@@ -602,5 +596,37 @@ describe('ServiceContractFormComponent', () => {
 
     expect(component.activeStep()).toBe(3);
     expect(mockContractsApi.createContract).not.toHaveBeenCalled();
+  });
+
+  describe('previewNumeroGuia', () => {
+    it('returns the existing numeroGuia in edit mode', () => {
+      fixture.componentRef.setInput('contractToEdit', {
+        ...mockContract,
+        numeroGuia: 'METER-100-COM-01-000005',
+      });
+      fixture.detectChanges();
+
+      expect(component.previewNumeroGuia()).toBe('METER-100-COM-01-000005');
+    });
+
+    it('returns predictive pattern with selected meter series and community in create mode', () => {
+      fixture.componentRef.setInput('contractToEdit', null);
+      component.selectedComunidad.set({ id: 1, codigo: 'COM-01' } as Comunidad);
+      component.selectedMeter.set({ medidorId: 10, serie: 'MED-777' } as IMeter);
+      fixture.detectChanges();
+
+      expect(component.previewNumeroGuia()).toBe('MED-777-COM-01-XXXXXX (secuencial al guardar)');
+    });
+
+    it('uses placeholders when community or meter are not selected yet in create mode', () => {
+      fixture.componentRef.setInput('contractToEdit', null);
+      component.selectedComunidad.set(null);
+      component.selectedMeter.set(null);
+      fixture.detectChanges();
+
+      expect(component.previewNumeroGuia()).toBe(
+        '[SERIE_MEDIDOR]-[COMUNIDAD]-XXXXXX (secuencial al guardar)',
+      );
+    });
   });
 });

@@ -147,13 +147,12 @@ export interface ISearchContractsParams {
 }
 
 // Datos para registrar un contrato (según el POST /contracts actualizado).
-// Obligatorios: clienteId, medidorId, categoriaTarifaId, numeroGuia, direccionSuministro, comunidadId.
-// El contratoId (PK) y la fechaInicio los genera el backend automáticamente.
+// Obligatorios: clienteId, medidorId, categoriaTarifaId, direccionSuministro, comunidadId.
+// El backend asigna el numeroGuia, contratoId y fechaInicio automáticamente.
 export interface ICreateContractRequest {
   clienteId: string;
   categoriaTarifaId: string;
   medidorId: string;
-  numeroGuia: string;
   direccionSuministro: string;
   comunidadId: string;
   sectorId?: string;

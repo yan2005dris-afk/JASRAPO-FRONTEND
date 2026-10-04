@@ -289,9 +289,8 @@
                           {{ item.clienteNombre || 'Cliente Contrato #' + item.contratoId }}
                         </div>
                         <div class="text-muted" style="font-size: 0.75rem">
-                          CI: {{ item.clienteIdentificacion || '—' }} · Contrato #{{
-                            item.contratoId
-                          }}
+                          CI: {{ item.clienteIdentificacion || '—' }} · Guía
+                          {{ item.numeroGuia || 'Contrato #' + item.contratoId }}
                         </div>
                       </div>
                     </div>
