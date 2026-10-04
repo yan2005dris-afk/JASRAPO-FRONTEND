@@ -720,16 +720,9 @@ export class LecturasComponent implements OnInit {
     this.searchQuery.set('');
     this.state.set({ kind: 'actions', meter });
 
-    // Pre-load previous reading value for the Lectura sub-form
-    const existing =
-      this.existingReadingMap().get(meter.medidorId.toString()) ||
-      this.existingReadingMap().get(meter.serie) ||
-      (meter.contratoId ? this.existingReadingMap().get(meter.contratoId.toString()) : null);
-
-    const prevReading =
-      existing?.estado === 'PENDIENTE'
-        ? (existing.lecturaAnterior ?? 0)
-        : (existing?.lecturaActual ?? existing?.lecturaAnterior ?? 0);
+    // Pre-load previous reading value for the Lectura sub-form (always preserve real lecturaAnterior)
+    const existing = this.getOrderRecord(meter);
+    const prevReading = existing?.lecturaAnterior ?? 0;
     this.lecturaAnteriorPreloaded.set(prevReading);
   }
 
