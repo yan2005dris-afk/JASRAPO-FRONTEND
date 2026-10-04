@@ -16,6 +16,7 @@ export class StepProgressComponent {
   readonly steps = input.required<string[]>();
   readonly activeStep = input.required<number>();
   readonly allowDirectNavigation = input<boolean>(false);
+  readonly compact = input<boolean>(false);
 
   readonly stepChange = output<number>();
 

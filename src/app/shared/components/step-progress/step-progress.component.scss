@@ -12,6 +12,29 @@
   position: relative;
 }
 
+.step-progress-nav.compact {
+  .stepper-progress {
+    margin-bottom: 0.25rem;
+  }
+
+  .stepper-progress::before {
+    top: 14px;
+    left: 20px;
+    right: 20px;
+  }
+
+  .step-circle {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .step-title {
+    font-size: 0.78rem;
+  }
+}
+
 .stepper-progress::before {
   content: '';
   position: absolute;

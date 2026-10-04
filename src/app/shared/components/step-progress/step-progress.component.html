@@ -1,4 +1,9 @@
-<nav aria-label="Progreso de pasos" class="step-progress-nav mb-4">
+<nav
+  aria-label="Progreso de pasos"
+  class="step-progress-nav"
+  [class.compact]="compact()"
+  [class.mb-4]="!compact()"
+>
   <ol class="stepper-progress">
     @for (step of steps(); track $index) {
       <li
