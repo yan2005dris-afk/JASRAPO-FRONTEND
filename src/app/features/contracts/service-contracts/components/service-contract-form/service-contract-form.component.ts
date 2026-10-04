@@ -26,6 +26,7 @@ import { StepMeterTariffComponent } from './steps/step-meter-tariff/step-meter-t
 import { StepContractDetailsComponent } from './steps/step-contract-details/step-contract-details.component';
 import { StepContractSummaryComponent } from './steps/step-contract-summary/step-contract-summary.component';
 import { ContractPickerModalsComponent } from './modals/contract-picker-modals.component';
+import { ContractLiveSummaryComponent } from './summary-sidebar/contract-live-summary.component';
 import { ServiceContractFormStateService } from './services/service-contract-form-state.service';
 
 /**
@@ -42,6 +43,7 @@ import { ServiceContractFormStateService } from './services/service-contract-for
     StepContractDetailsComponent,
     StepContractSummaryComponent,
     ContractPickerModalsComponent,
+    ContractLiveSummaryComponent,
   ],
   providers: [ServiceContractFormStateService],
   templateUrl: './service-contract-form.component.html',
