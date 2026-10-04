@@ -1,0 +1,122 @@
+<div class="card form-section mb-4">
+  <div class="card-body p-4">
+    <div class="section-title mb-3">
+      <span class="section-icon"><i class="bi bi-person-badge"></i></span>
+      <div>
+        <h5 class="fw-bold mb-0">Cliente y Comunidad</h5>
+        <p class="text-muted small mb-0">Seleccione el cliente y la comunidad del suministro.</p>
+      </div>
+    </div>
+
+    <div class="row g-3">
+      <!-- Cliente -->
+      <div class="col-md-6">
+        @if (client(); as c) {
+          <div class="selected-card">
+            <div class="selected-card-header">
+              <div class="selected-avatar">
+                <i class="bi bi-person-fill"></i>
+              </div>
+              <div class="selected-card-title">
+                <h6 class="fw-bold mb-0 text-dark">{{ clientName() }}</h6>
+                <span class="text-muted small">C.I. {{ c.identificacion }}</span>
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary rounded-pill selected-change-btn"
+                (click)="pickClient.emit()"
+              >
+                <i class="bi bi-arrow-repeat"></i> Cambiar
+              </button>
+            </div>
+            <div class="row g-2 mt-2">
+              <div class="col-sm-6 detail-item">
+                <i class="bi bi-telephone"></i>
+                <div>
+                  <small class="text-muted d-block">Teléfono</small>
+                  <span class="text-dark">{{ c.telefono || '—' }}</span>
+                </div>
+              </div>
+              <div class="col-sm-6 detail-item">
+                <i class="bi bi-envelope"></i>
+                <div>
+                  <small class="text-muted d-block">Correo</small>
+                  <span class="text-dark">{{ c.email || '—' }}</span>
+                </div>
+              </div>
+              <div class="col-12 detail-item">
+                <i class="bi bi-geo-alt"></i>
+                <div>
+                  <small class="text-muted d-block">Dirección</small>
+                  <span class="text-dark">{{ c.direccionDomicilio || '—' }}</span>
+                </div>
+              </div>
+            </div>
+            @if (c.aplicaTerceraEdad || c.aplicaDiscapacidad) {
+              <div class="d-flex gap-1 mt-2">
+                @if (c.aplicaTerceraEdad) {
+                  <span class="badge text-bg-info">Tercera edad</span>
+                }
+                @if (c.aplicaDiscapacidad) {
+                  <span class="badge text-bg-info">Discapacidad</span>
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <button type="button" class="option-box w-100" (click)="pickClient.emit()">
+            <i class="bi bi-search"></i>
+            <span class="fw-semibold">Seleccionar Cliente</span>
+            <span class="text-muted x-small">Explorar el listado de clientes activos</span>
+          </button>
+          @if (submitted()) {
+            <span class="text-danger x-small d-block mt-1">Seleccione un cliente.</span>
+          }
+        }
+      </div>
+
+      <!-- Comunidad -->
+      <div class="col-md-6">
+        @if (comunidad(); as com) {
+          <div class="selected-card">
+            <div class="selected-card-header">
+              <div class="selected-avatar">
+                <i class="bi bi-geo-alt-fill"></i>
+              </div>
+              <div class="selected-card-title">
+                <h6 class="fw-bold mb-0 text-dark">{{ com.nombre }}</h6>
+                <span class="text-muted small">Código {{ com.codigo }}</span>
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary rounded-pill selected-change-btn"
+                (click)="pickComunidad.emit()"
+              >
+                <i class="bi bi-arrow-repeat"></i> Cambiar
+              </button>
+            </div>
+            <div class="row g-2 mt-2">
+              <div class="col-12 detail-item">
+                <i class="bi bi-shield-check"></i>
+                <div>
+                  <small class="text-muted d-block">Tasa de seguridad</small>
+                  <span class="text-dark">{{ com.porcentajeTasaSeguridad }}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <button type="button" class="option-box w-100" (click)="pickComunidad.emit()">
+            <i class="bi bi-geo-alt"></i>
+            <span class="fw-semibold">Seleccionar Comunidad</span>
+            <span class="text-muted x-small">Elegir la comunidad del listado</span>
+          </button>
+
+          @if (submitted()) {
+            <span class="text-danger x-small d-block mt-1">Seleccione una comunidad.</span>
+          }
+        }
+      </div>
+    </div>
+  </div>
+</div>

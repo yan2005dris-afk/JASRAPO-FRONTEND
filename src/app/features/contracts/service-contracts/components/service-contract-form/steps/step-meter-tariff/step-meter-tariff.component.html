@@ -1,0 +1,154 @@
+<div class="row g-4 mb-4">
+  <!-- Asignación de medidor -->
+  <div class="col-lg-6">
+    <div class="card form-section h-100">
+      <div class="card-body p-4">
+        <div class="section-title mb-3">
+          <span class="section-icon"><i class="bi bi-speedometer2"></i></span>
+          <div>
+            <h5 class="fw-bold mb-0">Asignación de Medidor</h5>
+            <p class="text-muted small mb-0">Seleccione el dispositivo disponible.</p>
+          </div>
+        </div>
+
+        @if (meter(); as m) {
+          <div class="selected-card">
+            <div class="selected-card-header">
+              <div class="selected-avatar">
+                <i class="bi bi-speedometer2"></i>
+              </div>
+              <div class="selected-card-title">
+                <h6 class="fw-bold mb-0 text-dark">Serie {{ m.serie }}</h6>
+                <span class="text-muted small">{{ m.marca }} {{ m.modelo }}</span>
+              </div>
+              @if (isEditing()) {
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-warning rounded-pill selected-change-btn"
+                  (click)="replaceMeter.emit()"
+                >
+                  <i class="bi bi-arrow-left-right"></i> Reemplazar medidor
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary rounded-pill selected-change-btn"
+                  (click)="pickMeter.emit()"
+                >
+                  <i class="bi bi-arrow-repeat"></i> Cambiar
+                </button>
+              }
+            </div>
+            <div class="row g-2 mt-2">
+              <div class="col-sm-6 detail-item">
+                <i class="bi bi-info-circle"></i>
+                <div>
+                  <small class="text-muted d-block">Estado</small>
+                  <span class="badge rounded-pill text-bg-success">{{ meterStatusLabel() }}</span>
+                </div>
+              </div>
+              <div class="col-sm-6 detail-item">
+                <i class="bi bi-calendar-check"></i>
+                <div>
+                  <small class="text-muted d-block">Fecha de instalación</small>
+                  <span class="text-dark">{{ meterInstalacionLabel() }}</span>
+                </div>
+              </div>
+            </div>
+            @if (isEditing()) {
+              <div class="mt-2 pt-2 border-top">
+                <small class="text-muted d-flex align-items-center gap-1">
+                  <i class="bi bi-shield-lock text-secondary"></i>
+                  El cambio de medidor se gestiona exclusivamente a través de la acción
+                  <strong>Reemplazar medidor</strong>.
+                </small>
+              </div>
+            }
+          </div>
+        } @else {
+          <button type="button" class="option-box w-100" (click)="pickMeter.emit()">
+            <i class="bi bi-search"></i>
+            <span class="fw-semibold">Seleccionar Medidor</span>
+            <span class="text-muted x-small">Explorar el catálogo de medidores activos</span>
+          </button>
+
+          @if (submitted()) {
+            <span class="text-danger x-small d-block mt-1">Seleccione un medidor.</span>
+          }
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Plan de tarifa -->
+  <div class="col-lg-6">
+    <div class="card form-section h-100">
+      <div class="card-body p-4">
+        <div class="section-title mb-3">
+          <span class="section-icon"><i class="bi bi-lightning-charge"></i></span>
+          <div>
+            <h5 class="fw-bold mb-0">Plan de Tarifa</h5>
+            <p class="text-muted small mb-0">Defina el esquema comercial.</p>
+          </div>
+        </div>
+
+        @if (tariff(); as t) {
+          <div class="selected-card">
+            <div class="selected-card-header">
+              <div class="selected-avatar">
+                <i class="bi bi-lightning-charge-fill"></i>
+              </div>
+              <div class="selected-card-title">
+                <h6 class="fw-bold mb-0 text-dark">{{ t.nombre }}</h6>
+                <span class="text-muted small">{{ t.descripcion || 'Plan de tarifa' }}</span>
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary rounded-pill selected-change-btn"
+                (click)="pickTariff.emit()"
+              >
+                <i class="bi bi-arrow-repeat"></i> Cambiar
+              </button>
+            </div>
+            <div class="row g-2 mt-2">
+              <div class="col-12 detail-item">
+                <i class="bi bi-info-circle"></i>
+                <div>
+                  <small class="text-muted d-block">Descripción</small>
+                  <span class="text-dark">{{ t.descripcion || 'Sin descripción' }}</span>
+                </div>
+              </div>
+              <div class="col-sm-6 detail-item">
+                <i class="bi bi-droplet-half"></i>
+                <div>
+                  <small class="text-muted d-block">Consumo base incluido</small>
+                  <span class="text-dark">{{ t.consumoMinimoMensual ?? 10 }} m³</span>
+                </div>
+              </div>
+              <div class="col-sm-6 detail-item">
+                <i class="bi bi-tags"></i>
+                <div>
+                  <small class="text-muted d-block">Rubros asociados</small>
+                  <span class="text-dark">
+                    {{ t.rubros?.length ?? 0 }}
+                    {{ (t.rubros?.length ?? 0) === 1 ? 'rubro' : 'rubros' }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <button type="button" class="option-box w-100" (click)="pickTariff.emit()">
+            <i class="bi bi-search"></i>
+            <span class="fw-semibold">Seleccionar Tarifa</span>
+            <span class="text-muted x-small">Explorar el plan de tarifas disponible</span>
+          </button>
+
+          @if (submitted()) {
+            <span class="text-danger x-small d-block mt-2">Seleccione una tarifa.</span>
+          }
+        }
+      </div>
+    </div>
+  </div>
+</div>
