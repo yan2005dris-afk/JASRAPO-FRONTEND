@@ -20,14 +20,6 @@ describe('LecturaFormComponent', () => {
     expect(comp.form.valid).toBe(false);
   });
 
-  it('should be valid when lecturaInicial bypasses the anterior check', () => {
-    const comp = createComponent(100);
-    comp.form.patchValue({ lecturaActual: 5, lecturaInicial: true });
-    comp.form.get('lecturaActual')?.updateValueAndValidity();
-    expect(comp.form.get('lecturaActual')?.hasError('lowerThanAnterior')).toBeFalsy();
-    expect(comp.form.valid).toBe(true);
-  });
-
   it('should reset submitted state when a photo is captured after a failed submit', () => {
     const comp = createComponent();
 

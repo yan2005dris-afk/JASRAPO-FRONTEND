@@ -12,7 +12,6 @@ describe('Sync Editors', () => {
     errorMessage: 'Lectura menor a anterior',
     lecturaActual: 150,
     lecturaAnterior: 100,
-    lecturaInicial: false,
   };
 
   const mockAnomalyRecord: PendingRecord = {
@@ -84,22 +83,19 @@ describe('Sync Editors', () => {
       expect(comp.isInvalid()).toBe(true);
     });
 
-    it('permits readingActual to be lower if lecturaInicial is true (meter replacement)', () => {
+    it('rejects when readingActual is lower than lecturaAnterior', () => {
       const fixture = TestBed.createComponent(SyncReadingEditorComponent);
       const comp = fixture.componentInstance;
       fixture.componentRef.setInput('record', mockReadingRecord);
       fixture.detectChanges();
 
-      comp.lecturaInicial = true;
       comp.lecturaActual = 10;
       comp.lecturaAnterior = 200;
 
-      expect(comp.isInvalid()).toBe(false);
-      const saved: ReadingEditResult[] = [];
-      comp.saved.subscribe((r) => saved.push(r));
-      comp.save();
-
-      expect(saved[0].consumoCalculado).toBe(0);
+      expect(comp.isInvalid()).toBe(true);
+      expect(comp.validationErrorMessage()).toBe(
+        'La lectura actual no puede ser menor a la lectura anterior.',
+      );
     });
   });
 

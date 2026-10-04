@@ -978,13 +978,9 @@ export class LecturasComponent implements OnInit {
           medidorSerie: meter.serie,
           lecturaAnterior: formPayload.lecturaAnterior,
           lecturaActual: formPayload.lecturaActual,
-          lecturaInicial: formPayload.lecturaInicial,
-          // Clamp defensivo: si lecturaActual < lecturaAnterior y no es inicial,
-          // forzamos 0 para no mandar valores negativos al backend.
           consumoCalculado: calculateConsumo(
             formPayload.lecturaAnterior,
             formPayload.lecturaActual,
-            formPayload.lecturaInicial,
           ),
           ...(formPayload.descripcionAnomalia
             ? { descripcionAnomalia: formPayload.descripcionAnomalia }
