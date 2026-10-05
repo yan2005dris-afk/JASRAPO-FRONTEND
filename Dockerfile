@@ -13,10 +13,11 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./
 
 # Hard Rule #3: keep the pnpm store in a BuildKit cache mount — never bake it
-# into a layer. With this, repeated builds reuse the registry tarballs.
+# into a layer. The pnpm:12 base ships pnpm 12.x but no corepack/npm/node, so
+# we install Node 24 via pnpm's own runtime and then pnpm install reads the
+# lockfile as the source of truth.
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    corepack enable \
- && corepack prepare pnpm@12.3.4 --activate \
+    pnpm runtime set node 24 -g \
  && pnpm install --frozen-lockfile --store-dir /pnpm/store
 
 # Copiar el resto del código fuente
@@ -35,8 +36,7 @@ COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./
 
 # Same cache mount as builder so dev rebuilds share the store with CI.
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    corepack enable \
- && corepack prepare pnpm@12.3.4 --activate \
+    pnpm runtime set node 24 -g \
  && pnpm install --frozen-lockfile --store-dir /pnpm/store
 
 # Copiar el resto del código fuente
