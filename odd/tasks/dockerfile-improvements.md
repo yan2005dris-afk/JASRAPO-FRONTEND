@@ -29,6 +29,13 @@ Apply the pnpm-containerization review findings to the JASRAPO-FRONTEND repo:
       from both pnpm install invocations. The `ghcr.io/pnpm/pnpm:12` base ships pnpm 12.x
       but does NOT include corepack, npm, or node. Replaced with `pnpm runtime set node 24 -g`
       which is what actually installs Node 24 in the pnpm runtime.
+- [x] Task 5 (iteration, after re-reading pnpm Docker docs): Move the cache mount from
+      `/pnpm/store` to `/var/cache/pnpm`. The pnpm docs are explicit: mounting a BuildKit
+      cache over `/pnpm/store` hides the managed runtime (the Node binary downloaded by
+      `pnpm runtime set`) for the duration of the RUN. Cache and managed runtime must
+      live on separate paths. The runtime stage is `nginx:alpine` serving static files,
+      so the libc-mismatch concern that hit the backend (sharp on trixie-built/musl-runtime)
+      does not apply here.
 
 ## Evidence (commit SHAs)
 - Task 1: a04e3720732039b440a8703e797626ef8e0ca073
@@ -37,10 +44,13 @@ Apply the pnpm-containerization review findings to the JASRAPO-FRONTEND repo:
   no `set this to true or false` placeholder.
 - Task 4: a881a49 (drop corepack; mirrored from the backend fix after the user
   reported the same `corepack: not found` error)
+- Task 5: 605fa18 (cache mount move to /var/cache/pnpm)
 
 ## Verification
 - `hadolint Dockerfile` → 0 errors.
-- No `node_modules` or `/pnpm/store` baked into the production image layers.
+- No `node_modules` or `/var/cache/pnpm` baked into the production image layers.
+- `podman build --target production` succeeds; image serves nginx with the
+  Angular bundle.
 
 ## Out of scope
 - Updating the git worktree `JASRAPO-FRONTEND-worktrees/pr89-fix` (detached from
