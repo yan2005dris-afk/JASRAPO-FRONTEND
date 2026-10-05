@@ -25,12 +25,18 @@ Apply the pnpm-containerization review findings to the JASRAPO-FRONTEND repo:
       (preemptive — Angular 21's CLI bundler).
 - [x] Task 3: Verify with `hadolint` and `pnpm install --frozen-lockfile` locally
       (read-only sanity; the build itself is the integration check).
+- [x] Task 4 (iteration): Drop `corepack enable && corepack prepare pnpm@12.3.4 --activate`
+      from both pnpm install invocations. The `ghcr.io/pnpm/pnpm:12` base ships pnpm 12.x
+      but does NOT include corepack, npm, or node. Replaced with `pnpm runtime set node 24 -g`
+      which is what actually installs Node 24 in the pnpm runtime.
 
 ## Evidence (commit SHAs)
 - Task 1: a04e3720732039b440a8703e797626ef8e0ca073
 - Task 2: 2028bccd7711570bd2dfa67a558b198ce0db3f3e
 - Task 3: hadolint run on `Dockerfile`; no new errors. allowBuilds has 6 entries,
   no `set this to true or false` placeholder.
+- Task 4: a881a49 (drop corepack; mirrored from the backend fix after the user
+  reported the same `corepack: not found` error)
 
 ## Verification
 - `hadolint Dockerfile` → 0 errors.
