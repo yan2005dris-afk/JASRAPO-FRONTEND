@@ -19,6 +19,7 @@ import { ToastService } from '../../../../../shared/components/toast/toast.servi
 import { DatePickerComponent } from '../../../../../shared/components/date-picker/date-picker.component';
 import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
 import { TableSkeletonComponent } from '../../../../../shared/components/table-skeleton/table-skeleton.component';
+import { StepProgressComponent } from '../../../../../shared/components/step-progress/step-progress.component';
 import { ContractsTableComponent } from '../../../service-contracts/components/contracts-table/contracts-table.component';
 import { ContractsApi } from '../../../service-contracts/data/contracts.api';
 import type { IContract } from '../../../service-contracts/domain/models/service-contract.model';
@@ -37,6 +38,7 @@ type WizardStep = 1 | 2;
     PaginationComponent,
     TableSkeletonComponent,
     ContractsTableComponent,
+    StepProgressComponent,
   ],
   templateUrl: './payment-agreement-create.component.html',
   styleUrl: './payment-agreement-create.component.scss',
@@ -50,6 +52,7 @@ export class PaymentAgreementCreateComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
 
+  readonly steps = ['Elegir Contrato', 'Plan de Pago y Amortización'];
   currentStep: WizardStep = 1;
 
   // Paso 1: selección de contrato
@@ -215,6 +218,16 @@ export class PaymentAgreementCreateComponent implements OnInit, OnDestroy {
     }
 
     this.cdr.markForCheck();
+  }
+
+  onStepProgressChange(index: number): void {
+    if (this.isLoading) return;
+    const step = (index + 1) as WizardStep;
+    if (step === 1) {
+      this.backToContractSelection();
+    } else {
+      this.goToStep(step);
+    }
   }
 
   backToContractSelection(): void {

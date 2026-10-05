@@ -2,6 +2,7 @@ import {
   Component,
   ChangeDetectionStrategy,
   DestroyRef,
+  effect,
   inject,
   input,
   OnInit,
@@ -62,46 +63,24 @@ import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
       </div>
 
       <!-- Consumo Calculado Display -->
-      <div
-        class="consumption-preview-box"
-        [class.initial-reading]="form.get('lecturaInicial')?.value"
-      >
+      <div class="consumption-preview-box">
         <div class="consumption-preview-header">
           <span class="consumption-title">
             <i class="bi bi-speedometer2"></i> Consumo Calculado
           </span>
-          @if (form.get('lecturaInicial')?.value) {
-            <span class="consumption-tag">Lectura Inicial (0 m³)</span>
-          } @else {
-            <span class="consumption-tag">Diferencia de período</span>
-          }
+          <span class="consumption-tag">Diferencia de período</span>
         </div>
         <div class="consumption-preview-main">
           <span class="consumption-val">{{ consumoCalculado() | number: '1.2-2' }}</span>
           <span class="consumption-unit">m³</span>
         </div>
         <div class="consumption-preview-formula">
-          @if (form.get('lecturaInicial')?.value) {
-            <span>Lectura inicial configurada: no genera consumo facturable en esta toma.</span>
-          } @else {
-            <span
-              >Lectura Actual ({{ form.get('lecturaActual')?.value ?? 0 }}) - Lectura Anterior ({{
-                lecturaAnterior()
-              }})</span
-            >
-          }
+          <span
+            >Lectura Actual ({{ form.get('lecturaActual')?.value ?? 0 }}) - Lectura Anterior ({{
+              lecturaAnterior()
+            }})</span
+          >
         </div>
-      </div>
-
-      <div class="form-switch-field">
-        <input
-          type="checkbox"
-          id="lf-inicial"
-          formControlName="lecturaInicial"
-          class="switch-input"
-        />
-        <label for="lf-inicial" class="switch-label">¿Es Lectura Inicial?</label>
-        <span class="field-hint full-width">Ignora la validación con la lectura anterior.</span>
       </div>
 
       <div class="form-field">
@@ -167,6 +146,39 @@ export class LecturaFormComponent
   // con takeUntilDestroyed y reescritura explícita del ciclo de vida.
   private readonly destroyRef = inject(DestroyRef);
 
+  constructor() {
+    super();
+    // Reactividad para precarga asíncrona de señales
+    effect(() => {
+      const anterior = this.lecturaAnterior();
+      const initialActual = this.initialLecturaActual();
+      const anomalia = this.initialDescripcionAnomalia();
+
+      if (this.form) {
+        const anteriorCtrl = this.form.get('lecturaAnterior');
+        if (anteriorCtrl && anteriorCtrl.value !== anterior) {
+          anteriorCtrl.setValue(anterior, { emitEvent: false });
+        }
+
+        const actualCtrl = this.form.get('lecturaActual');
+        if (actualCtrl && !actualCtrl.dirty && initialActual !== null) {
+          if (actualCtrl.value !== initialActual) {
+            actualCtrl.setValue(initialActual, { emitEvent: false });
+          }
+        }
+
+        const anomaliaCtrl = this.form.get('descripcionAnomalia');
+        if (anomaliaCtrl && !anomaliaCtrl.dirty && anomalia) {
+          if (anomaliaCtrl.value !== anomalia) {
+            anomaliaCtrl.setValue(anomalia, { emitEvent: false });
+          }
+        }
+
+        this.validateCrossField();
+      }
+    });
+  }
+
   override ngOnInit(): void {
     super.ngOnInit();
     this.setupValidations();
@@ -178,7 +190,6 @@ export class LecturaFormComponent
     return this.fb.group({
       lecturaAnterior: [{ value: this.lecturaAnterior(), disabled: true }],
       lecturaActual: [defaultActual, [Validators.required, Validators.min(0)]],
-      lecturaInicial: [false],
       descripcionAnomalia: [this.initialDescripcionAnomalia() ?? ''],
     });
   }
@@ -195,7 +206,6 @@ export class LecturaFormComponent
       tipoActividad: 'LECTURA',
       lecturaAnterior: Number(formValue['lecturaAnterior'] ?? 0),
       lecturaActual: Number(formValue['lecturaActual'] ?? 0),
-      lecturaInicial: !!formValue['lecturaInicial'],
       ...(formValue['descripcionAnomalia']
         ? { descripcionAnomalia: String(formValue['descripcionAnomalia']) }
         : {}),
@@ -205,16 +215,11 @@ export class LecturaFormComponent
 
   /**
    * Validación cruzada específica del form Lectura: lecturaActual debe ser
-   * >= lecturaAnterior, salvo que lecturaInicial=true. Otros forms no necesitan
-   * esta lógica — se mantiene acá, no en el base.
+   * >= lecturaAnterior. Otros forms no necesitan esta lógica — se mantiene acá.
    */
   private setupValidations(): void {
     this.form
       .get('lecturaActual')
-      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.validateCrossField());
-    this.form
-      .get('lecturaInicial')
       ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.validateCrossField());
   }
@@ -222,16 +227,15 @@ export class LecturaFormComponent
   private validateCrossField(): void {
     const actual = this.form.get('lecturaActual')?.value;
     const anterior = this.lecturaAnterior();
-    const isInicial = this.form.get('lecturaInicial')?.value;
 
     const actualNum = Number(actual ?? 0);
-    const consumo = calculateConsumo(anterior, actualNum, !!isInicial);
+    const consumo = calculateConsumo(anterior, actualNum);
     this.consumoCalculado.set(consumo);
 
     const ctrl = this.form.get('lecturaActual');
     if (!ctrl) return;
 
-    if (!isInicial && actual < anterior) {
+    if (actual < anterior) {
       ctrl.setErrors({ ...ctrl.errors, lowerThanAnterior: true });
     } else {
       const errs = { ...ctrl.errors };

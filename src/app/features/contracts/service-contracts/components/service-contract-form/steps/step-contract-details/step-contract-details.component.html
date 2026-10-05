@@ -1,0 +1,117 @@
+<div [formGroup]="form()">
+  <!-- Parámetros de inicio -->
+  <div class="card form-section mb-4">
+    <div class="card-body p-4">
+      <div class="section-title mb-3">
+        <span class="section-icon"><i class="bi bi-calendar-check"></i></span>
+        <div>
+          <h5 class="fw-bold mb-0">Parámetros de Inicio</h5>
+          <p class="text-muted small mb-0">Datos del contrato y ciclo de facturación.</p>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="numeroGuia" class="form-label fw-semibold text-dark">N° de guía</label>
+          <input
+            id="numeroGuia"
+            type="text"
+            class="form-control"
+            [value]="previewNumeroGuia()"
+            readonly
+          />
+          <span class="text-muted x-small">
+            Se genera automáticamente con la comunidad, el medidor y la secuencia disponible.
+          </span>
+        </div>
+
+        <!-- Estado: solo en modo edición -->
+        @if (isEditing()) {
+          <div class="col-md-6">
+            <label for="estadoServicio" class="form-label fw-semibold text-dark"
+              >Estado del servicio</label
+            >
+            <select id="estadoServicio" class="form-select" formControlName="estadoServicio">
+              @for (state of availableStates(); track state.codigo) {
+                <option [value]="state.codigo">{{ state.nombre }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        <div class="col-md-6">
+          <label for="lecturaInicial" class="form-label fw-semibold text-dark">
+            Lectura inicial (m³)
+          </label>
+          <input
+            id="lecturaInicial"
+            type="text"
+            inputmode="numeric"
+            maxlength="10"
+            class="form-control"
+            formControlName="lecturaInicial"
+            (input)="onLecturaInput($event)"
+            [readonly]="isEditing()"
+            [class.is-invalid]="isFieldInvalid()('lecturaInicial')"
+          />
+          @if (isEditing()) {
+            <span class="text-muted x-small d-block mt-1">
+              La lectura inicial solo se define en la instalación o al reemplazar el medidor.
+            </span>
+          } @else if (!isSuperAdmin()) {
+            <span class="text-muted x-small d-block mt-1">
+              Solo usuarios Super Admin pueden modificar la lectura inicial.
+            </span>
+          }
+          @if (isFieldInvalid()('lecturaInicial')) {
+            <span class="text-danger x-small"> Ingrese solo números (máx. 10 dígitos). </span>
+          }
+        </div>
+
+        <div class="col-md-8">
+          <label for="direccionSuministro" class="form-label fw-semibold text-dark">
+            Dirección de suministro
+          </label>
+          <input
+            id="direccionSuministro"
+            type="text"
+            class="form-control"
+            formControlName="direccionSuministro"
+            placeholder="Ej. Calle Principal #45"
+            maxlength="200"
+            [class.is-invalid]="isFieldInvalid()('direccionSuministro')"
+          />
+          @if (isFieldInvalid()('direccionSuministro')) {
+            <span class="text-danger x-small">
+              La dirección es obligatoria (máx. 200 caracteres).
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ubicación del predio -->
+  <div class="card form-section mb-4">
+    <div class="card-body p-4">
+      <div class="section-title mb-3">
+        <span class="section-icon"><i class="bi bi-geo-alt"></i></span>
+        <div>
+          <h5 class="fw-bold mb-0">Ubicación del Predio</h5>
+          <p class="text-muted small mb-0">
+            Opcional. Marque el punto en el mapa o ingrese las coordenadas.
+          </p>
+        </div>
+      </div>
+
+      <app-coordinate-map-picker
+        [latitud]="coordinates().latitud"
+        [longitud]="coordinates().longitud"
+        [errorMessage]="coordinateError()"
+        [serviceArea]="serviceArea()"
+        [focusPoint]="communityMapCenter()"
+        (coordinatesChange)="onCoordsChange($event)"
+      />
+    </div>
+  </div>
+</div>

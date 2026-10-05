@@ -26,6 +26,7 @@ export interface IPreInvoice {
   prefacturaId: number;
   uuid: string;
   contratoId: number;
+  numeroGuia?: string | null;
   loteId?: number | null;
   periodoId: number;
   subtotal: number;

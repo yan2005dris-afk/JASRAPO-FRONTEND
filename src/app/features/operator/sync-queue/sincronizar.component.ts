@@ -249,7 +249,6 @@ export class SincronizarComponent implements OnInit {
     await this.dbService.updatePendingReading(result.recordId, {
       lecturaActual: result.lecturaActual,
       lecturaAnterior: result.lecturaAnterior,
-      lecturaInicial: result.lecturaInicial,
       consumoCalculado: result.consumoCalculado,
       syncState: 'PENDIENTE_SYNC',
       errorMessage: null,
