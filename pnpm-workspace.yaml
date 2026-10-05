@@ -32,6 +32,7 @@ minimumReleaseAgeExclude:
 # aquí queda bloqueado.
 allowBuilds:
   esbuild: true
+  '@angular/build': true
   '@parcel/watcher': true
   lmdb: true
   msgpackr-extract: true
