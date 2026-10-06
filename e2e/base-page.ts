@@ -40,9 +40,12 @@ export class LoginPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    this.emailInput = page.getByLabel('Usuario');
-    this.passwordInput = page.getByLabel('contraseña');
-    this.submitButton = page.getByRole('button', { name: 'Iniciar Sesión' });
+    // Use id-based selectors (instead of getByLabel) to avoid strict-mode
+    // collisions with the password-toggle button whose aria-label and title
+    // both contain "contraseña" (resolved to 2 elements).
+    this.emailInput = page.locator('#email');
+    this.passwordInput = page.locator('#password');
+    this.submitButton = page.getByRole('button', { name: 'Ingresar al Sistema' });
   }
 
   async login(email: string, password: string): Promise<void> {
