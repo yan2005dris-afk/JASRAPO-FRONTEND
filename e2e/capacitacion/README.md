@@ -22,7 +22,7 @@ que dice qué pasa en código cuando se ejecuta cada línea.
 **¿Por qué?**
 
 - QA, producto y devs hablamos **el mismo idioma** (`Dado que / Cuando /
-  Entonces`).
+Entonces`).
 - El feature es **documentación ejecutable**: lo que está en el `.feature`
   se valida en CI.
 - Los `.feature` son **estables** cuando el código cambia: si reescribís un
@@ -90,11 +90,11 @@ Running 3 tests using 1 worker
 Durante la capacitación es clave que los muchachos **vean** lo que el test
 está haciendo, no solo lean el log. Tres modos disponibles:
 
-| Script                 | Qué hace                                                                  | Cuándo usarlo                                  |
-| ---------------------- | ------------------------------------------------------------------------- | ---------------------------------------------- |
-| `pnpm e2e:bdd:headed`  | Abre el browser Chromium visible y ejecuta los tests paso a paso.        | Para ver el flujo completo. |
-| `pnpm e2e:bdd:ui`      | Abre el [Playwright UI mode](https://playwright.dev/docs/test-ui) con time-travel entre steps. | Para debuggear un escenario puntual. |
-| `pnpm e2e:bdd:debug`   | Igual a headed pero con el inspector de Node atado (breakpoints).         | Para debug profundo. |
+| Script                | Qué hace                                                                                       | Cuándo usarlo                        |
+| --------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `pnpm e2e:bdd:headed` | Abre el browser Chromium visible y ejecuta los tests paso a paso.                              | Para ver el flujo completo.          |
+| `pnpm e2e:bdd:ui`     | Abre el [Playwright UI mode](https://playwright.dev/docs/test-ui) con time-travel entre steps. | Para debuggear un escenario puntual. |
+| `pnpm e2e:bdd:debug`  | Igual a headed pero con el inspector de Node atado (breakpoints).                              | Para debug profundo.                 |
 
 ```bash
 pnpm e2e:bdd:headed --grep "Login exitoso"   # solo ese escenario, con browser abierto
@@ -104,12 +104,45 @@ pnpm e2e:bdd:ui                              # UI mode: ves cada step con screen
 > ⚠️ `headed`, `ui` y `debug` requieren un display X/Wayland. En CI o en
 > servidores sin display, no funcionan — usá `pnpm e2e:bdd` (headless).
 
-Reportes:
+### 2.5 Dónde se guarda todo (artefactos, reportes, generados)
 
-- HTML de Playwright → `playwright-report-bdd/` (no se commitea).
-- Artefactos de fallos (screenshots, videos, traces) → `test-results/`.
+Cada vez que corrés `pnpm e2e:bdd` o `pnpm e2e:codegen`, se crean varios
+directorios locales. **Ninguno se commitea** (están todos en `.gitignore`),
+así que son tuyos para inspeccionar y borrar.
 
-### 2.4 Filtrar por tags
+Mapa completo de paths que vas a ver:
+
+| Path                     | Quién lo crea                                  | Qué hay adentro                                                                                                     | ¿Cuándo se genera?                                |
+| ------------------------ | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| `.features-gen/`         | `bddgen` (corre solo al hacer `pnpm e2e:bdd`)  | Los `*.spec.js` generados a partir de los `*.feature`. Es el "código puente" entre Gherkin y Playwright.            | En cada `pnpm e2e:bdd` (auto-regenera).           |
+| `test-results/`          | Playwright cuando un test falla                | Por cada test fallido: `test-failed-1.png` (screenshot), `video.webm`, `error-context.md`, `trace.zip`.             | Solo si un test falla. Borrálo cuando quieras.    |
+| `playwright-report/`     | `pnpm e2e` (Playwright nativo)                 | Reporte HTML de los specs nativos. Abrís con `pnpm exec playwright show-report`.                                    | Después de correr `pnpm e2e`.                     |
+| `playwright-report-bdd/` | `pnpm e2e:bdd` (BDD)                           | Reporte HTML de los escenarios BDD. Abrís con `pnpm exec playwright show-report --config=playwright.bdd.config.ts`. | Después de correr `pnpm e2e:bdd`.                 |
+| `e2e/.auth/user.json`    | `e2e/global-setup.ts` (solo Playwright nativo) | Snapshot de la sesión (cookies + localStorage) reutilizado por el proyecto `chromium-authed`.                       | Antes de la suite nativa (con backend levantado). |
+
+**Tips prácticos**:
+
+- **Para ver un fallo**: andá a `test-results/<nombre-del-test>-chromium-bdd/`
+  y abrí `error-context.md` (resumen legible) o el `trace.zip` con
+  `pnpm exec playwright show-trace test-results/.../trace.zip`. El trace
+  viewer te muestra el timeline con screenshots y network logs.
+- **Para resetear todo de un saque**: `rm -rf .features-gen test-results/ playwright-report/ playwright-report-bdd/`. Después
+  `pnpm e2e:bdd` lo regenera.
+- **Si commiteás sin querer algún artefacto**: el `.gitignore` ya lo excluye,
+  pero si te aparece en `git status`, es porque está tracked de antes. Sacalo
+  con `git rm -r --cached <path>`.
+- **`e2e/.auth/user.json` contiene un refresh token real**. Por eso está
+  en `.gitignore` desde el inicio. Si lo commiteás, **roten los tokens** en
+  el backend.
+
+Para ver el reporte HTML en vivo después de un run:
+
+```bash
+pnpm exec playwright show-report --config=playwright.bdd.config.ts
+# → abre el navegador con el dashboard de resultados
+```
+
+### 2.6 Filtrar por tags
 
 Cada escenario tiene `@login` y la feature tiene `@critical`. Podés correr un
 subconjunto:
@@ -150,18 +183,18 @@ Característica: pantalla de login        # keyword OBLIGATORIA en español (con
 
 ### 3.1 Keywords en español (con `language: es`)
 
-| Español          | Inglés          | Uso                |
-| ---------------- | --------------- | ------------------ |
-| `Característica` | `Feature`       | Nombre del feature |
-| `Escenario`      | `Scenario`      | Un caso de prueba  |
-| `Esquema del escenario` | `Scenario Outline` | Caso data-driven |
-| `Ejemplos`       | `Examples`      | Tabla de datos para outline |
-| `Antecedentes`   | `Background`    | Pasos comunes a todos los escenarios |
-| `Dado`           | `Given`         | Precondición       |
-| `Cuando`         | `When`          | Acción             |
-| `Entonces`       | `Then`          | Aserción           |
-| `Y` / `E`       | `And`           | Encadenar pasos    |
-| `Pero`           | `But`           | Encadenar pasos    |
+| Español                 | Inglés             | Uso                                  |
+| ----------------------- | ------------------ | ------------------------------------ |
+| `Característica`        | `Feature`          | Nombre del feature                   |
+| `Escenario`             | `Scenario`         | Un caso de prueba                    |
+| `Esquema del escenario` | `Scenario Outline` | Caso data-driven                     |
+| `Ejemplos`              | `Examples`         | Tabla de datos para outline          |
+| `Antecedentes`          | `Background`       | Pasos comunes a todos los escenarios |
+| `Dado`                  | `Given`            | Precondición                         |
+| `Cuando`                | `When`             | Acción                               |
+| `Entonces`              | `Then`             | Aserción                             |
+| `Y` / `E`               | `And`              | Encadenar pasos                      |
+| `Pero`                  | `But`              | Encadenar pasos                      |
 
 > ⚠️ Si mezclás keywords (ej. `Feature:` en vez de `Característica:`) el
 > parser falla. Mantené consistencia.
@@ -225,7 +258,7 @@ When('navego a {string}', async ({ page }, path: string) => {
 2. **Reusá el POM (`LoginPage`, etc.).** Los selectors viven en un solo
    lugar. Si cambia el DOM, solo tocás `e2e/base-page.ts`.
 3. **Los steps son genéricos cuando se puede.** `debería ver el campo
-   "{string}"` sirve para login, contratos, lo que sea.
+"{string}"` sirve para login, contratos, lo que sea.
 4. **Para producción, hacé steps específicos.** Si dos features distintas
    definen el campo "Usuario" con semántica diferente, renombrá el step a
    `debería ver el campo Usuario del formulario de login`.
@@ -251,12 +284,12 @@ para ver el patrón completo con `route.fulfill()`.
 
 ### 4.3 Patrones avanzados (para referencia)
 
-| Patrón                         | Cuándo usarlo                           |
-| ------------------------------ | --------------------------------------- |
-| `Before` / `After` hooks       | Setup/teardown **por scenario**. Solo en cucumber-style con `worldFixture`. |
-| `BeforeAll` / `AfterAll`       | Setup/teardown **por archivo**. Idem.   |
-| Step decorators (`@Given`/`@When`/`@Then` en clases POM) | Cuando los steps están atados a un POM. |
-| `Scenario Outline`             | Tablas de datos con `Ejemplos`.         |
+| Patrón                                                   | Cuándo usarlo                                                               |
+| -------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `Before` / `After` hooks                                 | Setup/teardown **por scenario**. Solo en cucumber-style con `worldFixture`. |
+| `BeforeAll` / `AfterAll`                                 | Setup/teardown **por archivo**. Idem.                                       |
+| Step decorators (`@Given`/`@When`/`@Then` en clases POM) | Cuando los steps están atados a un POM.                                     |
+| `Scenario Outline`                                       | Tablas de datos con `Ejemplos`.                                             |
 
 Para nuestro caso de uso actual (capacitación), alcanza con
 `Given/When/Then` + `page.route` en `Given`. Las otras opciones las
@@ -320,6 +353,7 @@ Error: Undefined step: "abro el menú del usuario en el header"
 ```
 
 Dos causas:
+
 - **Typo en el step vs el feature.** Revisá que coincidan exactamente (case,
   espacios, tildes).
 - **Step no implementado.** Agregalo a `login.steps.ts`.
@@ -328,14 +362,14 @@ Dos causas:
 
 ## 6. Diferencias con `e2e` (Playwright clásico)
 
-| Concepto              | `pnpm e2e` (Playwright nativo) | `pnpm e2e:bdd` (BDD)               |
-| --------------------- | ------------------------------ | ---------------------------------- |
-| Archivos              | `*.spec.ts`                    | `*.feature` + `*.steps.ts`         |
-| Estructura del test   | `test.describe` + `test()`     | `Característica` + `Escenario`     |
-| Reuso                 | Page Objects (`LoginPage`)     | Page Objects **+** steps genéricos |
-| Auto-storage session  | `globalSetup` con rate-limit   | No (BDD empieza limpio siempre)   |
-| Reporte             | `playwright-report/`           | `playwright-report-bdd/`           |
-| Cuándo usarlo         | Tests de regresión, smoke      | Capacitación + tests data-driven   |
+| Concepto             | `pnpm e2e` (Playwright nativo) | `pnpm e2e:bdd` (BDD)               |
+| -------------------- | ------------------------------ | ---------------------------------- |
+| Archivos             | `*.spec.ts`                    | `*.feature` + `*.steps.ts`         |
+| Estructura del test  | `test.describe` + `test()`     | `Característica` + `Escenario`     |
+| Reuso                | Page Objects (`LoginPage`)     | Page Objects **+** steps genéricos |
+| Auto-storage session | `globalSetup` con rate-limit   | No (BDD empieza limpio siempre)    |
+| Reporte              | `playwright-report/`           | `playwright-report-bdd/`           |
+| Cuándo usarlo        | Tests de regresión, smoke      | Capacitación + tests data-driven   |
 
 **Reglas de convivencia:**
 
