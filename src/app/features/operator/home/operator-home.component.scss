@@ -9,6 +9,13 @@
   box-sizing: border-box;
 }
 
+// En pantallas pequeñas, cada título y su tarjeta conservan el flujo original.
+.home-next-section,
+.home-monitor-section,
+.home-kpi-section {
+  display: contents;
+}
+
 /* 1. Header */
 .operator-profile-bar {
   display: flex;
@@ -618,5 +625,303 @@
   &.sync {
     background: #e0f2fe;
     color: #0284c7;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE — Tablet (>= 768px)
+   ============================================================ */
+@media (min-width: 768px) {
+  .operator-home-screen {
+    max-width: 860px;
+    padding: 1.5rem 2rem;
+  }
+
+  .radial-hero-card {
+    flex-direction: row;
+    align-items: center;
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+
+  .hero-top-row {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .hero-actions-row {
+    flex-shrink: 0;
+    flex-direction: column;
+    width: clamp(180px, 35%, 260px);
+  }
+
+  .kpi-grid {
+    // El panel muestra dos KPI: ambos deben ocupar el ancho disponible.
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .quick-actions-section {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .operator-home-screen {
+    width: 100%;
+    max-width: 1800px;
+    gap: 1rem;
+  }
+
+  .operator-profile-bar {
+    min-height: 88px;
+    padding: 1.1rem 1.5rem;
+  }
+
+  .profile-avatar-btn {
+    width: 54px;
+    height: 54px;
+    font-size: 1.05rem;
+  }
+
+  .operator-name {
+    font-size: 1.25rem;
+  }
+
+  .operator-meta {
+    font-size: 0.9rem;
+  }
+
+  .online-status-chip {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .radial-hero-card {
+    min-height: 220px;
+    padding: 1.5rem;
+  }
+
+  .hero-radial-wrapper,
+  .radial-svg {
+    width: 96px;
+    height: 96px;
+  }
+
+  .radial-pct-number {
+    font-size: 1.1rem;
+  }
+
+  .badge-hero-active {
+    font-size: 0.78rem;
+  }
+
+  .hero-route-title {
+    font-size: 1.25rem;
+  }
+
+  .hero-route-sub {
+    font-size: 0.92rem;
+  }
+
+  .btn-hero-primary,
+  .btn-hero-secondary {
+    min-height: 54px;
+    font-size: 0.98rem;
+  }
+
+  .ios-group-title {
+    font-size: 0.85rem;
+  }
+
+  .home-next-card {
+    display: flex;
+    min-height: 180px;
+
+    .ios-row {
+      flex: 1;
+      padding: 1.5rem;
+    }
+  }
+
+  .radial-badge-circle {
+    width: 54px;
+    height: 54px;
+    font-size: 1rem;
+  }
+
+  .stop-client-name {
+    font-size: 1.05rem;
+  }
+
+  .stop-address {
+    font-size: 0.88rem;
+    margin-top: 0.3rem;
+  }
+
+  .badge-activity {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.65rem;
+  }
+
+  .home-monitor-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 220px;
+
+    .ios-row {
+      flex: 1;
+      padding: 1.25rem 1.5rem;
+    }
+  }
+
+  .monitoring-icon {
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+  }
+
+  .monitoring-label {
+    font-size: 1.02rem;
+  }
+
+  .badge-monitoring {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.65rem;
+  }
+
+  .kpi-grid {
+    min-height: 220px;
+    gap: 1rem;
+  }
+
+  .kpi-card {
+    padding: 1.4rem;
+    justify-content: space-between;
+  }
+
+  .kpi-label,
+  .kpi-subtext {
+    font-size: 0.88rem;
+  }
+
+  .kpi-number {
+    font-size: 1.75rem;
+  }
+
+  .kpi-icon {
+    font-size: 1.45rem;
+  }
+
+  .kpi-progress-track {
+    height: 8px;
+    margin-top: 0.6rem;
+  }
+
+  .quick-actions-section {
+    gap: 1rem;
+  }
+
+  .quick-action-btn {
+    min-height: 120px;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 1.1rem;
+
+    span {
+      font-size: 0.95rem;
+    }
+  }
+
+  .quick-action-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 1.45rem;
+  }
+
+  // Si no hay ruta activa, se conserva la lectura lineal del panel.
+  .operator-home-screen:has(> .radial-hero-card) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: max-content minmax(220px, 1fr) minmax(240px, 1fr) max-content;
+    gap: 1.25rem 1.5rem;
+    align-items: stretch;
+
+    > .home-next-section,
+    > .home-monitor-section,
+    > .home-kpi-section {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      min-width: 0;
+
+      > .ios-group-title {
+        margin: 0 0.2rem;
+      }
+    }
+
+    > .operator-profile-bar {
+      grid-column: 1 / -1;
+      grid-row: 1;
+    }
+
+    > .radial-hero-card {
+      grid-column: 1;
+      grid-row: 2;
+      min-width: 0;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .hero-actions-row {
+      width: 100%;
+      flex-direction: row;
+    }
+
+    > .home-next-section {
+      grid-column: 2;
+      grid-row: 2;
+
+      > .home-next-card {
+        flex: 1;
+      }
+    }
+
+    > .home-monitor-section {
+      grid-column: 1;
+      grid-row: 3;
+
+      > .home-monitor-card {
+        flex: 1;
+      }
+    }
+
+    > .home-kpi-section {
+      grid-column: 2;
+      grid-row: 3;
+
+      > .kpi-grid {
+        flex: 1;
+      }
+    }
+
+    > .quick-actions-section {
+      grid-column: 1 / -1;
+      grid-row: 4;
+      width: 100%;
+    }
+  }
+}
+
+@media (min-width: 1600px) {
+  .operator-home-screen:has(> .radial-hero-card) {
+    > .radial-hero-card {
+      flex-direction: row;
+      align-items: center;
+    }
+
+    .hero-actions-row {
+      width: clamp(180px, 35%, 260px);
+      flex-direction: column;
+    }
   }
 }

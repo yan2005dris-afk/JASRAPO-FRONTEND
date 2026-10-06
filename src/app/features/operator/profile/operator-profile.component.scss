@@ -105,3 +105,62 @@
 .font-mono {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
 }
+
+@media (min-width: 1024px) {
+  .operator-profile-screen {
+    width: 100%;
+    max-width: 1120px;
+    padding: 1.5rem 2rem;
+    display: grid;
+    grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
+    grid-template-rows: repeat(5, auto);
+    column-gap: 1.5rem;
+    row-gap: 0.75rem;
+    align-content: start;
+  }
+
+  .flow-nav-header {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .profile-header-card {
+    grid-column: 1;
+    grid-row: 2 / 6;
+    margin-bottom: 0 !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .profile-personal-title {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .profile-personal-box {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .profile-session-title {
+    grid-column: 2;
+    grid-row: 4;
+  }
+
+  .profile-session-box {
+    grid-column: 2;
+    grid-row: 5;
+  }
+
+  .ios-row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+
+    > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+  }
+}

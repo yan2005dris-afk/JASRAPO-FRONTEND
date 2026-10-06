@@ -60,10 +60,9 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # nginx does not allow `include` inside a `types {}` block.
 RUN sed -i 's|application/javascript\s*js;|application/javascript js mjs;|' /etc/nginx/mime.types
 
-# wget is not in nginx:alpine by default; install it for the HEALTHCHECK.
+# The built-in busybox wget is sufficient for the HEALTHCHECK.
 # A future improvement: add a /health location to nginx.conf and probe that
 # endpoint instead of /, which will fail to detect a wedged SPA route.
-RUN apk add --no-cache wget
 
 # Copiar el build de Angular al directorio de Nginx
 COPY --from=builder /app/dist/frontend/browser /usr/share/nginx/html

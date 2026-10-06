@@ -941,3 +941,63 @@
     background: #004d4f;
   }
 }
+
+/* ============================================================
+   RESPONSIVE — Tablet (>= 768px)
+   ============================================================ */
+@media (min-width: 768px) {
+  .lecturas-screen {
+    max-width: 1100px;
+    padding: 1.5rem 2rem;
+  }
+
+  /* Sólo acciones y formulario se limitan; la lista de órdenes usa todo el ancho. */
+  .step-view:has(> .action-buttons),
+  .step-view:has(> app-work-order-dispatcher) {
+    width: 100%;
+    max-width: 680px;
+    margin-inline: auto;
+  }
+
+  /* Lista de órdenes en step 'search': 2 columnas */
+  .orders-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+  }
+
+  .orders-list > .empty-orders-state {
+    grid-column: 1 / -1;
+  }
+
+  .radial-card {
+    min-width: 0;
+  }
+
+  .radial-card-meta-row {
+    flex-wrap: wrap;
+  }
+}
+
+@media (min-width: 1280px) {
+  .lecturas-screen {
+    width: 100%;
+    max-width: 1600px;
+    box-sizing: border-box;
+  }
+
+  .orders-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .step-view:has(> .action-buttons),
+  .step-view:has(> app-work-order-dispatcher) {
+    max-width: 820px;
+  }
+}
+
+@media (min-width: 1600px) {
+  .orders-list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
