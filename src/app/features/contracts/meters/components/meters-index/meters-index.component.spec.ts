@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { MetersIndexComponent } from './meters-index.component';
-import { MetersService } from '../../services/meters.service';
+import { MetersApi } from '../../data/meters.api';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { of, Subject, throwError } from 'rxjs';
@@ -74,7 +74,7 @@ describe('MetersIndexComponent', () => {
     await TestBed.configureTestingModule({
       imports: [MetersIndexComponent],
       providers: [
-        { provide: MetersService, useValue: metersServiceSpy },
+        { provide: MetersApi, useValue: metersServiceSpy },
         { provide: ToastService, useValue: toastSpy },
         { provide: ConfirmDialogService, useValue: dialogSpy },
         provideHttpClient(),
@@ -111,8 +111,6 @@ describe('MetersIndexComponent', () => {
       serie: '123',
       fechaInstalacion: null,
       contratoId: null,
-      latitud: null,
-      longitud: null,
     };
     component.openEdit(meterMock);
     expect(component.showModal).toBeTruthy();

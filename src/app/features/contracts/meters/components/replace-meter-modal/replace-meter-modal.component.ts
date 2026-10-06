@@ -18,7 +18,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Subject, Subscription, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, switchMap, tap } from 'rxjs/operators';
-import { MetersService } from '../../services/meters.service';
+import { MetersApi } from '../../data/meters.api';
 import {
   IMeter,
   IReplaceMeterRequest,
@@ -26,23 +26,31 @@ import {
   ResponsabilidadDano,
   TratamientoSaliente,
   TratamientoEntrante,
-} from '../../interfaces/imeter.interface';
-import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
+} from '../../domain/models/meter.model';
+import { IContract } from '../../../service-contracts/domain/models/service-contract.model';
 import { PeriodsService } from '../../../../../shared/services/periods.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { MeterTableComponent } from '../../../../../shared/components/meter-table/meter-table.component';
+import { StepProgressComponent } from '../../../../../shared/components/step-progress/step-progress.component';
+import { AuthService } from '../../../../../core/services/auth.service';
 
 @Component({
   selector: 'app-replace-meter-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, MeterTableComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MeterTableComponent,
+    StepProgressComponent,
+  ],
   templateUrl: './replace-meter-modal.component.html',
   styleUrl: './replace-meter-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly fb = inject(FormBuilder);
-  private readonly metersService = inject(MetersService);
+  private readonly metersService = inject(MetersApi);
   private readonly periodsService = inject(PeriodsService);
   private readonly toastService = inject(ToastService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -64,6 +72,12 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
   readonly cancelled = output<void>();
 
   // Wizard state
+  readonly steps = [
+    'Medidor Saliente',
+    'Selección de Nuevo',
+    'Facturación & Cierre',
+    'Confirmación',
+  ];
   readonly currentStep = signal<1 | 2 | 3 | 4>(1);
   // Steps the user has tried to advance past (drives per-field error visibility)
   private readonly attemptedSteps = signal<Set<number>>(new Set());
@@ -115,6 +129,9 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
     periodoDestinoId: [null as number | null],
     mesDestino: [null as number | null],
   });
+
+  private readonly authService = inject(AuthService);
+  readonly isSuperAdmin = computed(() => this.authService.isSuperAdmin());
 
   @HostListener('document:keydown.escape')
   handleEscape(): void {
@@ -357,6 +374,9 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
   }
 
   ngOnInit(): void {
+    if (!this.isSuperAdmin()) {
+      this.form.controls.lecturaInicialEntrante.disable();
+    }
     this.idempotencyKey = crypto.randomUUID();
     if (typeof document !== 'undefined') {
       this.triggerElement = document.activeElement as HTMLElement;
@@ -595,6 +615,11 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
     }, 50);
   }
 
+  onStepProgressChange(index: number): void {
+    const step = (index + 1) as 1 | 2 | 3 | 4;
+    this.goToStep(step);
+  }
+
   goBack(): void {
     const step = this.currentStep();
     if (step === 2) this.currentStep.set(1);
@@ -638,7 +663,12 @@ export class ReplaceMeterModalComponent implements OnInit, AfterViewInit, OnDest
       contratoId: this.contract().contratoId,
       nuevoMedidorId: String(raw.nuevoMedidorId),
       lecturaFinalSaliente: finalSaliente,
-      lecturaInicialEntrante: Number(raw.lecturaInicialEntrante || 0),
+      // Solo Super Admin puede definir lecturaInicialEntrante; para otros roles se omite (backend usará default 0)
+      ...(this.isSuperAdmin() &&
+      raw.lecturaInicialEntrante !== undefined &&
+      raw.lecturaInicialEntrante !== null
+        ? { lecturaInicialEntrante: Number(raw.lecturaInicialEntrante) }
+        : {}),
       motivo: (raw.motivo || 'DANO') as MotivoReemplazoMedidor,
       responsabilidadDano: (raw.responsabilidadDano || 'NO_APLICA') as ResponsabilidadDano,
       detalleMotivo: raw.detalleMotivo || undefined,

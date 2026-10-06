@@ -20,14 +20,6 @@ describe('LecturaFormComponent', () => {
     expect(comp.form.valid).toBe(false);
   });
 
-  it('should be valid when lecturaInicial bypasses the anterior check', () => {
-    const comp = createComponent(100);
-    comp.form.patchValue({ lecturaActual: 5, lecturaInicial: true });
-    comp.form.get('lecturaActual')?.updateValueAndValidity();
-    expect(comp.form.get('lecturaActual')?.hasError('lowerThanAnterior')).toBeFalsy();
-    expect(comp.form.valid).toBe(true);
-  });
-
   it('should reset submitted state when a photo is captured after a failed submit', () => {
     const comp = createComponent();
 
@@ -55,6 +47,19 @@ describe('LecturaFormComponent', () => {
     expect((emitted[0] as { fotoBlob: Blob }).fotoBlob).toBe(photoBlob);
   });
 
+  it('should emit correct LecturaFormPayload on valid submit without photo (photo is optional)', () => {
+    const comp = createComponent(10);
+    comp.form.patchValue({ lecturaActual: 25 });
+    const emitted: unknown[] = [];
+    comp.formSubmit.subscribe((v) => emitted.push(v));
+    comp.submit();
+    expect(emitted).toHaveLength(1);
+    expect((emitted[0] as { tipoActividad: string }).tipoActividad).toBe('LECTURA');
+    expect((emitted[0] as { lecturaActual: number }).lecturaActual).toBe(25);
+    expect((emitted[0] as { lecturaAnterior: number }).lecturaAnterior).toBe(10);
+    expect((emitted[0] as { fotoBlob?: Blob }).fotoBlob).toBeUndefined();
+  });
+
   it('should not emit if form is invalid', () => {
     const comp = createComponent(0);
     comp.form.patchValue({ lecturaActual: -1 });
@@ -62,5 +67,22 @@ describe('LecturaFormComponent', () => {
     comp.formSubmit.subscribe((v) => emitted.push(v));
     comp.submit();
     expect(emitted).toHaveLength(0);
+  });
+
+  it('should preload initialLecturaActual and initialDescripcionAnomalia reactively', () => {
+    TestBed.configureTestingModule({
+      imports: [LecturaFormComponent],
+    });
+    const fixture = TestBed.createComponent(LecturaFormComponent);
+    fixture.componentRef.setInput('lecturaAnterior', 20);
+    fixture.componentRef.setInput('initialLecturaActual', 28);
+    fixture.componentRef.setInput('initialDescripcionAnomalia', 'Lectura verificada');
+    fixture.detectChanges();
+
+    const comp = fixture.componentInstance;
+    expect(comp.form.get('lecturaAnterior')?.value).toBe(20);
+    expect(comp.form.get('lecturaActual')?.value).toBe(28);
+    expect(comp.form.get('descripcionAnomalia')?.value).toBe('Lectura verificada');
+    expect(comp.consumoCalculado()).toBe(8);
   });
 });

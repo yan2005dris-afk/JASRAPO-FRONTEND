@@ -3,11 +3,12 @@ import { FormBuilder } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { vi } from 'vitest';
 import { ReplaceMeterModalComponent } from './replace-meter-modal.component';
-import { MetersService } from '../../services/meters.service';
+import { MetersApi } from '../../data/meters.api';
 import { PeriodsService } from '../../../../../shared/services/periods.service';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
-import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
-import { IMeter, IReplaceMeterResponse } from '../../interfaces/imeter.interface';
+import { AuthService } from '../../../../../core/services/auth.service';
+import { IContract } from '../../../service-contracts/domain/models/service-contract.model';
+import { IMeter, IReplaceMeterResponse } from '../../domain/models/meter.model';
 
 describe('ReplaceMeterModalComponent', () => {
   let component: ReplaceMeterModalComponent;
@@ -22,8 +23,6 @@ describe('ReplaceMeterModalComponent', () => {
       estado: { codigo: 'BODEGA', nombre: 'Bodega', orden: 1 },
       fechaInstalacion: null,
       contratoId: null,
-      latitud: null,
-      longitud: null,
     },
     {
       medidorId: 201,
@@ -33,8 +32,6 @@ describe('ReplaceMeterModalComponent', () => {
       estado: { codigo: 'BODEGA', nombre: 'Bodega', orden: 1 },
       fechaInstalacion: null,
       contratoId: null,
-      latitud: null,
-      longitud: null,
     },
   ];
 
@@ -112,6 +109,10 @@ describe('ReplaceMeterModalComponent', () => {
     show: vi.fn(),
   };
 
+  const mockAuthService = {
+    isSuperAdmin: vi.fn().mockReturnValue(true),
+  };
+
   beforeEach(async () => {
     vi.clearAllMocks();
 
@@ -119,9 +120,10 @@ describe('ReplaceMeterModalComponent', () => {
       imports: [ReplaceMeterModalComponent],
       providers: [
         FormBuilder,
-        { provide: MetersService, useValue: mockMetersService },
+        { provide: MetersApi, useValue: mockMetersService },
         { provide: PeriodsService, useValue: mockPeriodsService },
         { provide: ToastService, useValue: mockToastService },
+        { provide: AuthService, useValue: mockAuthService },
       ],
     }).compileComponents();
 

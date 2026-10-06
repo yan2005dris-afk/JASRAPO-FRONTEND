@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { PaymentAgreementsService } from '../../services/payment-agreements.service';
-import { IAgreement, IInstallment } from '../../interfaces/ipayment-agreement.interface';
+import { PaymentAgreementsApi } from '../../data/payment-agreements.api';
+import { IAgreement, IInstallment } from '../../domain/models/payment-agreement.model';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
@@ -15,7 +15,7 @@ import { ConfirmDialogService } from '../../../../../shared/components/confirm-d
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AgreementDetailModalComponent {
-  private readonly agreementsService = inject(PaymentAgreementsService);
+  private readonly agreementsService = inject(PaymentAgreementsApi);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
 

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { vi } from 'vitest';
 import { MeterTableComponent } from './meter-table.component';
-import { IMeter } from '../../../features/contracts/meters/interfaces/imeter.interface';
+import { IMeter } from '../../../features/contracts/meters/domain/models/meter.model';
 
 describe('MeterTableComponent', () => {
   let component: MeterTableComponent;
@@ -16,8 +16,6 @@ describe('MeterTableComponent', () => {
       estado: { codigo: 'BODEGA', nombre: 'Bodega', orden: 1 },
       fechaInstalacion: null,
       contratoId: null,
-      latitud: null,
-      longitud: null,
     },
     {
       medidorId: 2,
@@ -27,8 +25,6 @@ describe('MeterTableComponent', () => {
       estado: { codigo: 'INSTALADO', nombre: 'Instalado', orden: 2 },
       fechaInstalacion: '2026-01-01',
       contratoId: '10',
-      latitud: null,
-      longitud: null,
     },
   ];
 

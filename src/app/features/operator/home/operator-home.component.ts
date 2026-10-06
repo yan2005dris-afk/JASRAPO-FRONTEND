@@ -7,7 +7,7 @@ import {
   signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
 import { NetworkService } from '../../../core/services/network.service';
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
@@ -19,7 +19,7 @@ import type { OperatorRouteResponse } from '../models/operator.models';
   selector: 'app-operator-home',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './operator-home.component.html',
   styleUrl: './operator-home.component.scss',
 })
@@ -47,6 +47,15 @@ export class OperatorHomeComponent implements OnInit {
     };
   });
 
+  readonly userInitials = computed(() => {
+    const nombre = this.currentUser().nombre;
+    const parts = nombre.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return nombre.slice(0, 2).toUpperCase() || 'OP';
+  });
+
   readonly totalAssignedMeters = computed<number>(() => {
     let count = 0;
     for (const t of this.tasks()) {
@@ -60,29 +69,60 @@ export class OperatorHomeComponent implements OnInit {
         count += 1;
       }
     }
-    return count > 0 ? count : 120;
+    return count;
   });
 
   readonly totalReadMeters = computed<number>(() => {
     let readCount = 0;
     const statusMap = this.readingStatusBySerie();
     for (const t of this.tasks()) {
-      const paradas = t.paradas || [];
-      for (const p of paradas) {
-        const st = statusMap.get(p.serie ?? '') ?? p.estado;
-        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
-          readCount++;
+      if (t.paradas?.length) {
+        for (const p of t.paradas) {
+          const st = statusMap.get(p.serie ?? '') ?? p.estado;
+          if (
+            st &&
+            st !== 'PENDIENTE' &&
+            st !== '__SIN_LECTURA__' &&
+            st !== 'RECHAZADA_VERIFICACION'
+          ) {
+            readCount++;
+          }
         }
-      }
-      const ordenes = t.ordenesTrabajo || [];
-      for (const o of ordenes) {
-        const st = statusMap.get(o.medidor?.serie ?? '') ?? o.estado;
-        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') {
+      } else if (t.ordenesTrabajo?.length) {
+        for (const o of t.ordenesTrabajo) {
+          const serie =
+            o.medidor?.serie ||
+            (o.contrato?.numeroContrato
+              ? String(o.contrato.numeroContrato)
+              : `OT-${o.ordenTrabajoId}`);
+          const st =
+            statusMap.get(serie) ||
+            statusMap.get(o.medidor?.serie ?? '') ||
+            (o.ordenTrabajoId ? statusMap.get(String(o.ordenTrabajoId)) : null) ||
+            (o.medidor?.medidorId ? statusMap.get(String(o.medidor.medidorId)) : null) ||
+            o.estado;
+          if (
+            st &&
+            st !== 'PENDIENTE' &&
+            st !== '__SIN_LECTURA__' &&
+            st !== 'RECHAZADA_VERIFICACION'
+          ) {
+            readCount++;
+          }
+        }
+      } else if (t.medidor) {
+        const st = statusMap.get(t.medidor.serie);
+        if (
+          st &&
+          st !== 'PENDIENTE' &&
+          st !== '__SIN_LECTURA__' &&
+          st !== 'RECHAZADA_VERIFICACION'
+        ) {
           readCount++;
         }
       }
     }
-    return readCount > 0 ? readCount : 78;
+    return readCount;
   });
 
   readonly readingProgressPct = computed<number>(() => {
@@ -94,16 +134,57 @@ export class OperatorHomeComponent implements OnInit {
   readonly totalWorkOrders = computed<number>(() => {
     let count = 0;
     for (const t of this.tasks()) {
-      if (t.tipoRuta !== 'TOMA_LECTURA') {
-        count += t.ordenesTrabajo?.length || 1;
-      }
+      count += t.ordenesTrabajo?.length || t.paradas?.length || t.rutaPuntos?.length || 1;
     }
-    return count > 0 ? count : 4;
+    return count;
   });
 
   readonly heroActiveRoute = computed<OperatorRouteResponse | null>(() => {
     const all = this.tasks();
     return all.find((t) => t.estado !== 'COMPLETADA' && t.estado !== 'CANCELADA') ?? all[0] ?? null;
+  });
+
+  readonly nextPendingStop = computed(() => {
+    const hero = this.heroActiveRoute();
+    if (!hero) return null;
+    const statusMap = this.readingStatusBySerie();
+
+    if (hero.ordenesTrabajo?.length) {
+      const sorted = hero.ordenesTrabajo.slice().sort((a, b) => a.ordenVisita - b.ordenVisita);
+      for (const ord of sorted) {
+        const serie = ord.medidor?.serie ?? '';
+        const st = statusMap.get(serie) ?? ord.estado;
+        if (!st || st === 'PENDIENTE' || st === '__SIN_LECTURA__') {
+          return {
+            ordenVisita: ord.ordenVisita,
+            cliente: ord.contrato?.clienteNombre || 'Cliente sin nombre',
+            direccion: ord.contrato?.direccion || 'Dirección no registrada',
+            serie: ord.medidor?.serie || 'S/N',
+            tipoActividad: ord.tipoActividad,
+            ordenTrabajoId: ord.ordenTrabajoId,
+          };
+        }
+      }
+    }
+
+    if (hero.paradas?.length) {
+      for (let i = 0; i < hero.paradas.length; i++) {
+        const p = hero.paradas[i];
+        const st = statusMap.get(p.serie ?? '') ?? p.estado;
+        if (!st || st === 'PENDIENTE' || st === '__SIN_LECTURA__') {
+          return {
+            ordenVisita: i + 1,
+            cliente: p.clienteNombre || 'Cliente sin nombre',
+            direccion: p.direccionSuministro || 'Dirección no registrada',
+            serie: p.serie || 'S/N',
+            tipoActividad: p.tipoActividad,
+            ordenTrabajoId: p.ordenTrabajoId,
+          };
+        }
+      }
+    }
+
+    return null;
   });
 
   ngOnInit(): void {
@@ -127,11 +208,31 @@ export class OperatorHomeComponent implements OnInit {
 
   private async loadReadingStatuses(): Promise<void> {
     try {
-      const [meters, registered, pending] = await Promise.all([
+      const operatorId = this.authService.currentUser()?.id;
+      const scope = operatorId ? `operator:${operatorId}` : undefined;
+
+      const [meters, initialRegistered, pending, synced] = await Promise.all([
         this.dbService.getMetersCache(),
-        this.dbService.getRegisteredReadingsCache(),
+        this.dbService.getRegisteredReadingsCache(scope),
         this.dbService.getPendingReadings(),
+        this.dbService.getSyncedReadings().catch(() => []),
       ]);
+      let registered = initialRegistered;
+
+      if (this.networkService.isOnline()) {
+        try {
+          const fresh = (await this.syncService.getCurrentPeriodReadings()) as Record<
+            string,
+            unknown
+          >[];
+          if (fresh?.length) {
+            await this.dbService.saveRegisteredReadingsCache(fresh, scope);
+            registered = fresh as unknown as typeof initialRegistered;
+          }
+        } catch {
+          // Fallback a caché
+        }
+      }
 
       const serieToId = new Map<string, string>();
       for (const m of meters) {
@@ -139,22 +240,35 @@ export class OperatorHomeComponent implements OnInit {
       }
 
       const idToEstado = new Map<string, string>();
+      const statusMap = new Map<string, string>();
+
+      // 1. Recibos locales previamente sincronizados (prioridad base)
+      for (const s of synced) {
+        const sId = s['medidorId'];
+        const sEstado = s['estado'] || 'POR_REVISION';
+        if (sId) idToEstado.set(sId.toString(), sEstado);
+        const sSerie = s['medidorSerie'] || s['serie'];
+        if (sSerie) statusMap.set(String(sSerie), sEstado);
+      }
+      // 2. Registradas autoritativas del servidor (sobrescribe histórico con APROBADA, RECHAZADA_VERIFICACION, etc.)
       for (const r of registered) {
         const mId = r.medidor?.medidorId ?? r.medidorId;
         if (mId) idToEstado.set(mId.toString(), r.estado);
+        const s = r.medidor?.serie ?? r.medidorSerie;
+        if (s) statusMap.set(String(s), r.estado);
       }
+      // 3. Pendientes en cola local offline (máxima prioridad)
       for (const p of pending) {
         const pId = p['medidorId'];
-        const pEstado = p['estado'];
-        if (pId && !idToEstado.has(pId.toString())) {
-          idToEstado.set(pId.toString(), pEstado ?? 'PENDIENTE');
-        }
+        const pEstado = p['estado'] || 'POR_REVISION';
+        if (pId) idToEstado.set(pId.toString(), pEstado);
+        const pSerie = p['medidorSerie'] || p['serie'];
+        if (pSerie) statusMap.set(String(pSerie), pEstado);
       }
 
-      const statusMap = new Map<string, string>();
       for (const [serie, id] of serieToId) {
         const estado = idToEstado.get(id);
-        if (estado) statusMap.set(serie, estado);
+        if (estado && !statusMap.has(serie)) statusMap.set(serie, estado);
       }
 
       this.readingStatusBySerie.set(statusMap);
@@ -177,13 +291,18 @@ export class OperatorHomeComponent implements OnInit {
     if (!hero) return 0;
     let read = 0;
     const statusMap = this.readingStatusBySerie();
-    for (const p of hero.paradas || []) {
-      const st = statusMap.get(p.serie ?? '') ?? p.estado;
-      if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') read++;
-    }
-    for (const o of hero.ordenesTrabajo || []) {
-      const st = statusMap.get(o.medidor?.serie ?? '') ?? o.estado;
-      if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__') read++;
+    if (hero.paradas?.length) {
+      for (const p of hero.paradas) {
+        const st = statusMap.get(p.serie ?? '') ?? p.estado;
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION')
+          read++;
+      }
+    } else if (hero.ordenesTrabajo?.length) {
+      for (const o of hero.ordenesTrabajo) {
+        const st = statusMap.get(o.medidor?.serie ?? '') ?? o.estado;
+        if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION')
+          read++;
+      }
     }
     return read;
   }
@@ -222,5 +341,16 @@ export class OperatorHomeComponent implements OnInit {
 
   goToSync(): void {
     this.router.navigate(['/app/operador/sincronizar']);
+  }
+
+  goToPendingStop(stop: { serie?: string; tipoActividad?: string }): void {
+    const hero = this.heroActiveRoute();
+    this.router.navigate(['/app/operador/lecturas'], {
+      queryParams: {
+        rutaNombre: hero?.nombre,
+        rutaTipo: hero?.tipoRuta,
+        serie: stop.serie,
+      },
+    });
   }
 }

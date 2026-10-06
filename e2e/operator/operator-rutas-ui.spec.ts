@@ -74,7 +74,7 @@ const MOCK_USER = {
   ],
 };
 
-test.describe('E2E Operador - Vista de Rutas y Filtros Geográficos', () => {
+test.describe('E2E Operador - Comunidad → rutas por sector', () => {
   test.beforeEach(async ({ page }) => {
     // Interceptar llamadas de autenticación y rutas del operador
     await page.route('**/api/v1/auth/me', async (route) => {
@@ -103,89 +103,115 @@ test.describe('E2E Operador - Vista de Rutas y Filtros Geográficos', () => {
 
     // Simular sesión iniciada
     await page.addInitScript((user) => {
-      localStorage.setItem('jasrapo_token', 'mock-jwt-token');
-      localStorage.setItem('currentUser', JSON.stringify(user));
+      localStorage.setItem('token', 'mock-jwt-token');
+      localStorage.setItem('user', JSON.stringify(user));
     }, MOCK_USER);
   });
 
-  test('Renderiza los nombres reales de Comunidad y Sector en las tarjetas de ruta', async ({ page }) => {
+  test('muestra comunidades y después las rutas agrupadas por sector', async ({ page }) => {
     await page.goto('/app/operador/rutas');
     await expect(page).toHaveURL(/\/app\/operador\/rutas/);
+    await expect(
+      page.getByRole('heading', { name: 'Comunidades con trabajo asignado' }),
+    ).toBeVisible();
+    await expect(page.locator('.route-group-card')).toHaveCount(2);
+    await expect(page.locator('.task-card')).toHaveCount(0);
 
-    // 1. Validar que las tarjetas de rutas estén visibles
-    const taskCards = page.locator('.task-card');
-    await expect(taskCards).toHaveCount(2);
-
-    // 2. Validar que la primera ruta muestre "Comunidad: Olón" y "Sector: Sector Norte Olón"
-    const firstCard = taskCards.first();
-    await expect(firstCard).toContainText('Olón');
-    await expect(firstCard).toContainText('Sector Norte Olón');
-    await expect(firstCard).not.toContainText('Comunidad #1');
-    await expect(firstCard).not.toContainText('Sector #1');
-
-    // 3. Validar que la segunda ruta muestre "Comunidad: Núñez"
-    const secondCard = taskCards.nth(1);
-    await expect(secondCard).toContainText('Núñez');
-    await expect(secondCard).not.toContainText('Comunidad #2');
+    await page.getByRole('button', { name: /Abrir comunidad Olón/ }).click();
+    await expect(page.locator('.route-sector-section')).toHaveCount(1);
+    await expect(page.locator('.route-sector-section')).toContainText('Sector Norte Olón');
+    await expect(page.locator('.task-card')).toHaveCount(1);
+    await expect(page.locator('.task-card')).toContainText('Ruta Olón Norte');
+    await expect(page.locator('.task-card')).not.toContainText('Ruta Reconexión Núñez');
   });
 
-  test('Los dropdowns de filtros muestran los nombres reales de Comunidad y Sector', async ({ page }) => {
+  test('muestra las rutas de Núñez directamente y permite volver a comunidades', async ({
+    page,
+  }) => {
     await page.goto('/app/operador/rutas');
-
-    // 1. Selector de Comunidad
-    const selectComunidad = page.locator('select[aria-label="Filtrar por comunidad"]');
-    await expect(selectComunidad).toBeVisible();
-
-    const comunidadOptions = await selectComunidad.locator('option').allInnerTexts();
-    expect(comunidadOptions).toContain('Todas las comunidades');
-    expect(comunidadOptions).toContain('Olón');
-    expect(comunidadOptions).toContain('Núñez');
-    expect(comunidadOptions.some((opt) => opt.includes('Comunidad #'))).toBe(false);
-
-    // 2. Selector de Sector
-    const selectSector = page.locator('select[aria-label="Filtrar por sector"]');
-    await expect(selectSector).toBeVisible();
-
-    const sectorOptions = await selectSector.locator('option').allInnerTexts();
-    expect(sectorOptions).toContain('Todos los sectores');
-    expect(sectorOptions).toContain('Sector Norte Olón');
-    expect(sectorOptions.some((opt) => opt.includes('Sector #'))).toBe(false);
+    await page.getByRole('button', { name: /Abrir comunidad Núñez/ }).click();
+    await expect(page.locator('.route-sector-heading')).toHaveCount(0);
+    await expect(page.getByText('Sin Sector')).toHaveCount(0);
+    await expect(page.locator('.task-card')).toHaveCount(1);
+    await expect(page.locator('.task-card')).toContainText('Ruta Reconexión Núñez');
+    await page
+      .getByRole('navigation', { name: 'Ubicación en rutas asignadas' })
+      .getByRole('button', { name: 'Comunidades' })
+      .click();
+    await expect(page.locator('.route-group-card')).toHaveCount(2);
   });
 
-  test('El filtrado por Comunidad y Sector actualiza las rutas visibles en la UI', async ({ page }) => {
+  test('respeta el orden y los nombres de las cinco comunidades y los cuatro sectores de Olón', async ({
+    page,
+  }) => {
+    const olon = MOCK_ROUTES[0];
+    const other = MOCK_ROUTES[1];
+    const routes = [
+      { ...olon, comunidadNombre: 'Olon' },
+      {
+        ...olon,
+        rutaId: '201',
+        comunidadNombre: 'Olon',
+        sectorId: 2,
+        sectorNombre: 'Sector Sur Olón',
+      },
+      {
+        ...olon,
+        rutaId: '202',
+        comunidadNombre: 'Olon',
+        sectorId: 3,
+        sectorNombre: 'Sector Centro Olón',
+      },
+      {
+        ...olon,
+        rutaId: '203',
+        comunidadNombre: 'Olon',
+        sectorId: 4,
+        sectorNombre: 'Sector Playa Olón',
+      },
+      { ...other, comunidadNombre: 'Nuñez' },
+      { ...other, rutaId: '204', comunidadId: 3, comunidadNombre: 'La Entrada' },
+      { ...other, rutaId: '205', comunidadId: 4, comunidadNombre: 'San Jose' },
+      { ...other, rutaId: '206', comunidadId: 5, comunidadNombre: 'Curia' },
+    ];
+    await page.route('**/api/v1/operator/routes*', (route) =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(routes) }),
+    );
     await page.goto('/app/operador/rutas');
-
-    const selectComunidad = page.locator('select[aria-label="Filtrar por comunidad"]');
-    const taskCards = page.locator('.task-card');
-
-    // Filtrar por "Olón" (valor "1")
-    await selectComunidad.selectOption('1');
-    await expect(taskCards).toHaveCount(1);
-    await expect(taskCards.first()).toContainText('Ruta Olón Norte');
-
-    // Filtrar por "Núñez" (valor "2")
-    await selectComunidad.selectOption('2');
-    await expect(taskCards).toHaveCount(1);
-    await expect(taskCards.first()).toContainText('Ruta Reconexión Núñez');
-
-    // Restaurar a "Todas las comunidades"
-    await selectComunidad.selectOption('ALL');
-    await expect(taskCards).toHaveCount(2);
+    await expect(page.locator('.route-group-content strong')).toHaveText([
+      'Olon',
+      'Nuñez',
+      'La Entrada',
+      'San Jose',
+      'Curia',
+    ]);
+    await page.getByRole('button', { name: /Abrir comunidad Olon/ }).click();
+    await expect(page.locator('.route-sector-heading h3')).toHaveText([
+      'Sector Norte Olón',
+      'Sector Sur Olón',
+      'Sector Centro Olón',
+      'Sector Playa Olón',
+    ]);
+    await expect(page.locator('.task-card')).toHaveCount(4);
   });
 
-  test('La vista de Mapa conmuta y lista las rutas con información legible', async ({ page }) => {
+  test('filtra comunidades por tipo antes de navegar', async ({ page }) => {
     await page.goto('/app/operador/rutas');
+    await page
+      .getByRole('group', { name: 'Filtrar rutas por tipo' })
+      .getByRole('button', { name: 'Reconexión' })
+      .click();
+    await expect(page.locator('.route-group-card')).toHaveCount(1);
+    await expect(page.getByRole('button', { name: /Abrir comunidad Núñez/ })).toBeVisible();
+  });
 
-    // Conmutar a mapa
-    const btnMap = page.locator('button.btn-map-toggle');
-    await btnMap.click();
-
-    // Validar contenedor de mapa y lista de rutas en mapa
+  test('permite abrir el mapa tras elegir una comunidad', async ({ page }) => {
+    await page.goto('/app/operador/rutas');
+    await page.getByRole('button', { name: /Abrir comunidad Olón/ }).click();
+    await page.getByRole('button', { name: 'Ver mapa' }).click();
     await expect(page.locator('.map-section')).toBeVisible();
     await expect(page.locator('.map-task-list')).toBeVisible();
-
-    const mapRows = page.locator('.map-task-row');
-    await expect(mapRows).toHaveCount(2);
-    await expect(mapRows.first()).toContainText('Ruta Olón Norte');
+    await expect(page.locator('.map-task-row')).toHaveCount(1);
+    await expect(page.locator('.map-task-row')).toContainText('Ruta Olón Norte');
   });
 });

@@ -8,7 +8,6 @@ import {
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { IndexedDbService, PendingRecord } from '../../../core/services/indexed-db.service';
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
 import { NetworkService } from '../../../core/services/network.service';
@@ -27,6 +26,8 @@ import {
 
 type QueueTab = 'pendientes' | 'rechazados' | 'sincronizados';
 
+const PAGE_SIZE = 5;
+
 @Component({
   selector: 'app-sincronizar',
   standalone: true,
@@ -34,7 +35,6 @@ type QueueTab = 'pendientes' | 'rechazados' | 'sincronizados';
     CommonModule,
     FormsModule,
     DatePipe,
-    RouterLink,
     SyncReadingEditorComponent,
     SyncAnomalyEditorComponent,
   ],
@@ -68,11 +68,54 @@ export class SincronizarComponent implements OnInit {
   readonly editingRecord = signal<PendingRecord | null>(null);
   readonly editingType = signal<'lectura' | 'anomalia' | null>(null);
 
+  // Pagination
+  readonly pendingPage = signal(0);
+  readonly rejectedPage = signal(0);
+  readonly syncedPage = signal(0);
+
   readonly totalPendientes = computed(
     () => this.pendingReadings().length + this.pendingAnomalies().length,
   );
   readonly totalRechazados = computed(
     () => this.rejectedReadings().length + this.rejectedAnomalies().length,
+  );
+
+  // All records combined per tab (for unified pagination)
+  readonly allPendingItems = computed(() => [
+    ...this.pendingReadings(),
+    ...this.pendingAnomalies(),
+  ]);
+  readonly allRejectedItems = computed(() => [
+    ...this.rejectedReadings(),
+    ...this.rejectedAnomalies(),
+  ]);
+
+  // Paginated slices
+  readonly pendingPageItems = computed(() =>
+    this.allPendingItems().slice(
+      this.pendingPage() * PAGE_SIZE,
+      (this.pendingPage() + 1) * PAGE_SIZE,
+    ),
+  );
+  readonly pendingTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.allPendingItems().length / PAGE_SIZE)),
+  );
+
+  readonly rejectedPageItems = computed(() =>
+    this.allRejectedItems().slice(
+      this.rejectedPage() * PAGE_SIZE,
+      (this.rejectedPage() + 1) * PAGE_SIZE,
+    ),
+  );
+  readonly rejectedTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.allRejectedItems().length / PAGE_SIZE)),
+  );
+
+  readonly syncedPageItems = computed(() =>
+    this.syncedReadings().slice(this.syncedPage() * PAGE_SIZE, (this.syncedPage() + 1) * PAGE_SIZE),
+  );
+  readonly syncedTotalPages = computed(() =>
+    Math.max(1, Math.ceil(this.syncedReadings().length / PAGE_SIZE)),
   );
 
   ngOnInit(): void {
@@ -162,6 +205,23 @@ export class SincronizarComponent implements OnInit {
   switchTab(tab: QueueTab): void {
     this.activeTab.set(tab);
     this.cancelEdit();
+    // Reset pagination when switching tabs
+    this.pendingPage.set(0);
+    this.rejectedPage.set(0);
+    this.syncedPage.set(0);
+  }
+
+  // Pagination helpers
+  goToPendingPage(page: number): void {
+    this.pendingPage.set(Math.max(0, Math.min(page, this.pendingTotalPages() - 1)));
+  }
+
+  goToRejectedPage(page: number): void {
+    this.rejectedPage.set(Math.max(0, Math.min(page, this.rejectedTotalPages() - 1)));
+  }
+
+  goToSyncedPage(page: number): void {
+    this.syncedPage.set(Math.max(0, Math.min(page, this.syncedTotalPages() - 1)));
   }
 
   // --- Edit flow ---
@@ -189,7 +249,6 @@ export class SincronizarComponent implements OnInit {
     await this.dbService.updatePendingReading(result.recordId, {
       lecturaActual: result.lecturaActual,
       lecturaAnterior: result.lecturaAnterior,
-      lecturaInicial: result.lecturaInicial,
       consumoCalculado: result.consumoCalculado,
       syncState: 'PENDIENTE_SYNC',
       errorMessage: null,
@@ -222,6 +281,36 @@ export class SincronizarComponent implements OnInit {
     this.cancelEdit();
     await this.loadQueue();
     await this.syncService.refreshPendingCounts();
+  }
+
+  async retryReading(record: PendingRecord): Promise<void> {
+    if (!record.id) return;
+    await this.dbService.updatePendingReading(record.id, {
+      syncState: 'PENDIENTE_SYNC',
+      errorMessage: null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    this.toastService.info('Lectura encolada para reintentar sincronización.', 'Reintento');
+    await this.loadQueue();
+    await this.syncService.refreshPendingCounts();
+    if (this.networkService.isOnline()) {
+      await this.forceSync();
+    }
+  }
+
+  async retryAnomaly(record: PendingRecord): Promise<void> {
+    if (!record.id) return;
+    await this.dbService.updatePendingAnomaly(record.id, {
+      syncState: 'PENDIENTE_SYNC',
+      errorMessage: null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any);
+    this.toastService.info('Novedad encolada para reintentar sincronización.', 'Reintento');
+    await this.loadQueue();
+    await this.syncService.refreshPendingCounts();
+    if (this.networkService.isOnline()) {
+      await this.forceSync();
+    }
   }
 
   async discardReading(record: PendingRecord): Promise<void> {
@@ -269,5 +358,38 @@ export class SincronizarComponent implements OnInit {
   async forceSync(): Promise<void> {
     await this.syncService.syncPendingData();
     await this.loadQueue();
+  }
+
+  async clearLocalDatabase(): Promise<void> {
+    const hasPending = this.totalPendientes() > 0;
+    const warningMsg = hasPending
+      ? '¡Atención! Tienes registros pendientes de envío. Se conservarán tus pendientes, pero se reiniciará el catálogo descargado (rutas, medidores). Luego deberás volver a descargar los datos desde el servidor.'
+      : 'Esta acción limpiará el caché local de rutas, medidores y snapshots descargados para permitir una sincronización limpia desde el servidor. ¿Deseas continuar?';
+
+    const confirmed = await firstValueFrom(
+      this.confirmService.confirm({
+        title: 'Reiniciar Base de Datos Local',
+        message: warningMsg,
+        confirmText: 'Reiniciar',
+        cancelText: 'Cancelar',
+        isDanger: true,
+      }),
+    );
+
+    if (!confirmed) return;
+
+    try {
+      const operatorId = this.authService.currentUser()?.id;
+      const scope = operatorId ? `operator:${operatorId}` : undefined;
+      await this.dbService.clearAssignedCache(scope);
+      await this.loadQueue();
+      this.toastService.success(
+        'Almacenamiento local reiniciado con éxito. Podés descargar datos frescos.',
+        'Base de Datos Reiniciada',
+      );
+    } catch (e) {
+      console.error('Error al limpiar base de datos local:', e);
+      this.toastService.error('No se pudo reiniciar la base de datos local.', 'Error');
+    }
   }
 }

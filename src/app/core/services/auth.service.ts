@@ -10,6 +10,8 @@ import {
   timer,
   Subscription,
   shareReplay,
+  map,
+  of,
 } from 'rxjs';
 import { LoginRequest, LoginResponse, RefreshTokenResponse, User } from '../models/auth.model';
 import { environment } from '../../../environments/environment';
@@ -25,13 +27,15 @@ export class AuthService {
 
   private readonly API_URL = `${environment.apiUrl}/auth`;
 
-  private readonly tokenSignal = signal<string | null>(this.getStoredToken());
-  private readonly sidSignal = signal<string | null>(this.getStoredSid());
-  private readonly tokenCreatedAtSignal = signal<string | null>(this.getStoredTokenCreatedAt());
-  private readonly tokenExpiresAtSignal = signal<string | null>(this.getStoredTokenExpiresAt());
-  private readonly userSignal = signal<User | null>(this.getStoredUser());
+  private readonly tokenSignal = signal<string | null>(null);
+  private readonly sidSignal = signal<string | null>(null);
+  private readonly tokenCreatedAtSignal = signal<string | null>(null);
+  private readonly tokenExpiresAtSignal = signal<string | null>(null);
+  private readonly userSignal = signal<User | null>(null);
+  private readonly isInitializedSignal = signal<boolean>(false);
 
   readonly isAuthenticated = computed(() => !!this.tokenSignal());
+  readonly isInitialized = computed(() => this.isInitializedSignal());
   readonly currentUser = computed(() => this.userSignal());
   readonly token = computed(() => this.tokenSignal());
   readonly sid = computed(() => this.sidSignal());
@@ -39,6 +43,30 @@ export class AuthService {
   readonly tokenExpiresAt = computed(() => this.tokenExpiresAtSignal());
 
   private refreshTimerSubscription: Subscription | null = null;
+  private refreshInProgress$: Observable<RefreshTokenResponse> | null = null;
+
+  /**
+   * Inicializa la autenticación silenciosa al arrancar la aplicación o evaluar el primer guard.
+   * Si ya se inicializó o hay un token en memoria, resuelve inmediatamente.
+   * De lo contrario, consulta al backend (/auth/refresh) utilizando la cookie HTTP-only.
+   */
+  initializeAuth(): Observable<boolean> {
+    if (this.isInitializedSignal()) {
+      return of(this.isAuthenticated());
+    }
+
+    return this.refreshToken().pipe(
+      map(() => {
+        this.isInitializedSignal.set(true);
+        return true;
+      }),
+      catchError(() => {
+        this.clearAuthData();
+        this.isInitializedSignal.set(true);
+        return of(false);
+      }),
+    );
+  }
 
   login(credentials: LoginRequest): Observable<LoginResponse> {
     return this.http
@@ -63,8 +91,6 @@ export class AuthService {
     sessionStorage.removeItem('jasrapo_operator_synced');
     this.router.navigate(['/login']);
   }
-
-  private refreshInProgress$: Observable<RefreshTokenResponse> | null = null;
 
   refreshToken(): Observable<RefreshTokenResponse> {
     if (this.refreshInProgress$) {
@@ -157,7 +183,8 @@ export class AuthService {
       avatar,
     };
 
-    this.updateSignalsAndStorage(accessToken, String(sid), createdAt, expiresAt, user);
+    this.updateSignals(accessToken, String(sid), createdAt, expiresAt, user);
+    this.isInitializedSignal.set(true);
     this.startRefreshTimer();
   }
 
@@ -170,14 +197,27 @@ export class AuthService {
     this.tokenCreatedAtSignal.set(createdAt);
     this.tokenExpiresAtSignal.set(expiresAt);
 
-    localStorage.setItem('token', newAccessToken);
-    localStorage.setItem('tokenCreatedAt', createdAt);
-    localStorage.setItem('tokenExpiresAt', expiresAt);
+    if (response.sid) {
+      this.sidSignal.set(String(response.sid));
+    }
 
+    if (response.sub) {
+      const user: User = {
+        id: String(response.sub),
+        email: response.email || '',
+        name: response.nombre || 'Usuario',
+        roleId: response.rolId ?? null,
+        roleName: response.nombreRol || 'Usuario',
+        avatar: (typeof response.avatar === 'object' ? response.avatar : null) as User['avatar'],
+      };
+      this.userSignal.set(user);
+    }
+
+    this.isInitializedSignal.set(true);
     this.startRefreshTimer();
   }
 
-  private updateSignalsAndStorage(
+  private updateSignals(
     token: string,
     sid: string,
     created: string,
@@ -189,12 +229,6 @@ export class AuthService {
     this.tokenCreatedAtSignal.set(created);
     this.tokenExpiresAtSignal.set(expires);
     this.userSignal.set(user);
-
-    localStorage.setItem('token', token);
-    localStorage.setItem('sid', sid);
-    localStorage.setItem('tokenCreatedAt', created);
-    localStorage.setItem('tokenExpiresAt', expires);
-    localStorage.setItem('user', JSON.stringify(user));
   }
 
   private clearAuthData(): void {
@@ -204,62 +238,18 @@ export class AuthService {
     this.tokenExpiresAtSignal.set(null);
     this.userSignal.set(null);
 
-    const keys = ['token', 'sid', 'tokenCreatedAt', 'tokenExpiresAt', 'user'];
-    keys.forEach((key) => this.removeStorageItem(key));
-
+    // Limpieza de compatibilidad por si existían valores antiguos en storage
+    this.removeLegacyStorageKeys();
     this.cancelRefreshTimer();
   }
 
-  private getStorageItem(key: string): string | null {
-    if (typeof localStorage === 'undefined' || !localStorage) return null;
-    try {
-      return localStorage.getItem(key);
-    } catch {
-      return null;
-    }
-  }
-
-  private setStorageItem(key: string, value: string): void {
+  private removeLegacyStorageKeys(): void {
     if (typeof localStorage === 'undefined' || !localStorage) return;
     try {
-      localStorage.setItem(key, value);
-    } catch {
-      // Ignorar fallos de cuota o sandbox
-    }
-  }
-
-  private removeStorageItem(key: string): void {
-    if (typeof localStorage === 'undefined' || !localStorage) return;
-    try {
-      localStorage.removeItem(key);
+      const legacyKeys = ['token', 'sid', 'tokenCreatedAt', 'tokenExpiresAt', 'user'];
+      legacyKeys.forEach((key) => localStorage.removeItem(key));
     } catch {
       // Ignorar fallos de sandbox
-    }
-  }
-
-  private getStoredToken(): string | null {
-    return this.getStorageItem('token');
-  }
-
-  private getStoredSid(): string | null {
-    return this.getStorageItem('sid');
-  }
-
-  private getStoredTokenCreatedAt(): string | null {
-    return this.getStorageItem('tokenCreatedAt');
-  }
-
-  private getStoredTokenExpiresAt(): string | null {
-    return this.getStorageItem('tokenExpiresAt');
-  }
-
-  private getStoredUser(): User | null {
-    const userJson = this.getStorageItem('user');
-    if (!userJson) return null;
-    try {
-      return JSON.parse(userJson);
-    } catch {
-      return null;
     }
   }
 
@@ -268,7 +258,6 @@ export class AuthService {
     if (!current) return;
     const updated: User = { ...current, ...patch };
     this.userSignal.set(updated);
-    this.setStorageItem('user', JSON.stringify(updated));
   }
 
   /**
@@ -280,11 +269,20 @@ export class AuthService {
   }
 
   /**
+   * Verifica si el usuario actual es Super Admin (admin o superadmin).
+   * Solo estos roles pueden modificar la lectura inicial de medidores.
+   */
+  isSuperAdmin(): boolean {
+    const role = this.currentUser()?.roleName?.toLowerCase() ?? '';
+    return role === 'admin' || role === 'superadmin';
+  }
+
+  /**
    * Retorna la ruta por defecto según el rol del usuario.
    * Operadores → panel del operador. El resto → dashboard.
    */
   getDefaultRoute(): string {
-    return this.isOperator() ? '/app/operador/rutas' : '/app/dashboard';
+    return this.isOperator() ? '/app/operador/inicio' : '/app/dashboard';
   }
 
   private handleError(error: { error?: { message?: string }; status?: number }): Observable<never> {

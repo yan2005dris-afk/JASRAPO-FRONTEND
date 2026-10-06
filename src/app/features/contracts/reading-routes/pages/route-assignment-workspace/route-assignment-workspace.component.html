@@ -1,60 +1,70 @@
 <div class="assignment-workspace-page">
-  <!-- Top Navigation & Header -->
+  <!-- Top Navigation & Global Settings -->
   <div class="card border-0 shadow-sm rounded-4 p-4 bg-white d-flex flex-column gap-3">
-    <!-- Fila 1: Título a la izquierda, Botón volver a la derecha -->
+    <!-- Header Row -->
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
       <div class="d-flex align-items-center gap-3">
         <div class="header-icon-tile">
-          <i class="bi bi-grid-3x3-gap-fill"></i>
+          <i class="bi bi-diagram-3-fill"></i>
         </div>
         <div>
-          <h4 class="fw-bold text-dark mb-0 fs-5">Asignación de Rutas de Trabajo por Periodo</h4>
+          <h4 class="fw-bold text-dark mb-0 fs-5">Asignación de Rutas de Trabajo</h4>
           <p class="text-muted small mb-0">
-            Workspace para planificar y asignar rutas de trabajo por sectores o comunidades a los
-            operarios en el periodo operativo.
+            Distribución mensual de sectores por operario con validación de no solapamiento y vista
+            de cobertura.
           </p>
         </div>
       </div>
 
-      <button
-        type="button"
-        class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 rounded-3 px-3 py-2"
-        (click)="goBack()"
-      >
-        <i class="bi bi-arrow-left"></i>
-        Volver a Rutas
-      </button>
-    </div>
-
-    <!-- Fila 2: Tipo de Actividad, Período Operativo y Estado -->
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 pt-3 border-top">
-      <div class="d-flex align-items-center gap-3 flex-wrap">
-        <!-- Selector Tipo de Actividad -->
-        <div style="min-width: 260px">
-          <label
-            for="workspacePageHeaderTipoActividad"
-            class="form-label fw-semibold text-dark small mb-1"
+      <!-- Action Buttons / Stepper Indicator -->
+      <div class="d-flex align-items-center gap-2">
+        <div class="stepper-switch">
+          <button type="button" [class.active]="currentStep() === 1" (click)="backToAssignment()">
+            <i class="bi bi-layout-split"></i> Paso 1 & 2: Asignación
+          </button>
+          <button
+            type="button"
+            [class.active]="currentStep() === 2"
+            [disabled]="
+              isLecturaMode()
+                ? totalSessionAssignedSectorsCount() === 0
+                : totalSessionAssignedContractsCount() === 0
+            "
+            (click)="goToSummary()"
           >
-            Tipo de Actividad <span class="text-danger">*</span>
-          </label>
-          <select
-            id="workspacePageHeaderTipoActividad"
-            class="form-select shadow-none"
-            [ngModel]="tipoActividadSeleccionada()"
-            (ngModelChange)="onTipoActividadChange($event)"
-            [disabled]="isLoading()"
-          >
-            <option [ngValue]="null" disabled selected>Seleccione tipo de actividad...</option>
-            @for (tipo of tiposActividad(); track tipo.codigo) {
-              <option [value]="tipo.codigo">
-                {{ tipo.nombre }}
-              </option>
+            <i class="bi bi-check2-all"></i> Paso 3: Resumen
+            @if (
+              isLecturaMode()
+                ? totalSessionAssignedSectorsCount() > 0
+                : totalSessionAssignedContractsCount() > 0
+            ) {
+              <span class="badge rounded-pill bg-danger ms-1">
+                {{
+                  isLecturaMode()
+                    ? totalSessionAssignedSectorsCount()
+                    : totalSessionAssignedContractsCount()
+                }}
+              </span>
             }
-          </select>
+          </button>
         </div>
 
-        <!-- Período Operativo -->
-        <div style="min-width: 280px">
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 rounded-3 px-3 py-2 ms-2"
+          (click)="goBack()"
+        >
+          <i class="bi bi-arrow-left"></i>
+          Volver a Rutas
+        </button>
+      </div>
+    </div>
+
+    <!-- Period & Configuration Row -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 pt-3 border-top">
+      <div class="d-flex align-items-center gap-3 flex-wrap">
+        <!-- Period Picker -->
+        <div style="min-width: 320px">
           <app-period-picker
             inputId="workspacePagePeriodPicker"
             label="Período Operativo"
@@ -64,8 +74,27 @@
             (periodSelected)="onPeriodSelected($event)"
           />
         </div>
+
+        <!-- Activity Type Selector -->
+        <div style="min-width: 220px">
+          <label for="activityTypeSelect" class="form-label small fw-semibold text-muted mb-1">
+            Tipo de Actividad
+          </label>
+          <select
+            id="activityTypeSelect"
+            class="form-select form-select-sm rounded-3"
+            [ngModel]="tipoActividadSeleccionada()"
+            (ngModelChange)="onTipoActividadChange($event)"
+            [disabled]="isLoading()"
+          >
+            @for (tipo of tiposActividad(); track tipo.tipoActividadId) {
+              <option [value]="tipo.codigo">{{ tipo.nombre }}</option>
+            }
+          </select>
+        </div>
       </div>
 
+      <!-- Period Status Indicator -->
       <div class="d-flex align-items-center gap-2">
         <span class="small text-muted fw-medium">Estado del Período:</span>
         <span
@@ -76,47 +105,130 @@
               : 'bg-secondary-subtle text-secondary'
           "
         >
+          <i
+            class="bi me-1"
+            [ngClass]="selectedPeriod()?.estado === 'ABIERTO' ? 'bi-unlock-fill' : 'bi-lock-fill'"
+          ></i>
           {{ selectedPeriod() ? selectedPeriod()!.estado : 'Seleccione período' }}
         </span>
       </div>
     </div>
+
+    @if (selectedPeriod() && selectedPeriod()!.estado !== 'ABIERTO') {
+      <div
+        class="alert alert-warning d-flex align-items-center gap-2 rounded-3 py-2 px-3 mt-2 mb-0"
+        role="alert"
+      >
+        <i class="bi bi-exclamation-triangle-fill fs-5 text-warning flex-shrink-0"></i>
+        <div class="small">
+          <strong>Período cerrado:</strong> El período seleccionado se encuentra en estado
+          <strong>{{ selectedPeriod()!.estado }}</strong
+          >. Solo se permite consultar rutas preexistentes; la asignación y despacho de nuevas rutas
+          están deshabilitados.
+        </div>
+      </div>
+    }
   </div>
 
-  @if (!tipoActividadSeleccionada()) {
+  @if (!selectedPeriod()) {
     <div class="card border-0 shadow-sm rounded-4 p-5 bg-white text-center">
       <div class="py-4">
         <div
           class="rounded-circle bg-primary-subtle text-primary d-inline-flex align-items-center justify-content-center mb-3"
           style="width: 64px; height: 64px"
         >
-          <i class="bi bi-list-check fs-2"></i>
+          <i class="bi bi-calendar2-range fs-2"></i>
         </div>
-        <h5 class="fw-bold text-dark mb-1">Seleccioná un tipo de actividad para comenzar</h5>
+        <h5 class="fw-bold text-dark mb-1">Seleccioná un período contable para comenzar</h5>
         <p class="text-muted small mx-auto mb-0" style="max-width: 520px">
-          Elegí en el selector superior si vas a planificar una ruta de
-          <strong>Toma de Lectura</strong>, <strong>Corte</strong>, <strong>Reconexión</strong>,
-          <strong>Inspección</strong> o <strong>Instalación</strong> para habilitar la asignación de
-          operarios y sectores.
+          Elegí el período en el selector superior para cargar las rutas ya planificadas en el mes y
+          habilitar la distribución interactiva entre operarios.
         </p>
       </div>
     </div>
-  } @else {
-    <!-- Main 3-Column Grid -->
-    <div class="card border-0 shadow-sm rounded-4 p-4 bg-white">
+  } @else if (currentStep() === 1) {
+    <!-- ========================================================================= -->
+    <!-- PASO 1 Y 2: 2 TABLAS INTERACTIVAS (OPERARIOS + COMUNIDADES/SECTORES)      -->
+    <!-- ========================================================================= -->
+    <div class="d-flex flex-column gap-3">
+      <!-- Guide Banner -->
+      <div
+        class="d-flex align-items-center justify-content-between flex-wrap gap-2 p-3 bg-white rounded-4 border shadow-sm"
+      >
+        <div class="d-flex align-items-center gap-3 flex-wrap small">
+          <span
+            class="fw-bold text-secondary text-uppercase"
+            style="font-size: 0.72rem; letter-spacing: 0.05em"
+          >
+            Guía de Estados:
+          </span>
+
+          <span class="d-inline-flex align-items-center gap-1">
+            <span class="badge rounded-pill fw-bold bg-success text-white px-2 py-1"
+              >Borde Verde</span
+            >
+            <span class="text-muted">Comunidad 100% Cubierta</span>
+          </span>
+
+          <span class="d-inline-flex align-items-center gap-1">
+            <span class="badge rounded-pill fw-bold bg-info text-white px-2 py-1">Borde Azul</span>
+            <span class="text-muted">Asignación Parcial</span>
+          </span>
+
+          <span class="d-inline-flex align-items-center gap-1">
+            <span
+              class="rounded-circle d-inline-block bg-primary"
+              style="width: 10px; height: 10px"
+            ></span>
+            <span class="text-muted">Sector Seleccionado (Operario Activo)</span>
+          </span>
+
+          <span class="d-inline-flex align-items-center gap-1">
+            <span
+              class="rounded-circle d-inline-block bg-secondary"
+              style="width: 10px; height: 10px"
+            ></span>
+            <span class="text-muted">Ruta asignada previamente</span>
+          </span>
+        </div>
+
+        <span class="badge bg-light text-dark border px-3 py-2 fw-semibold">
+          @if (isLecturaMode()) {
+            Sectores asignados en sesión:
+            <strong class="text-primary">{{ totalSessionAssignedSectorsCount() }}</strong>
+          } @else {
+            Contratos asignados en sesión:
+            <strong class="text-primary">{{ totalSessionAssignedContractsCount() }}</strong>
+          }
+        </span>
+      </div>
+
+      <!-- Grid of 2 Interactive Tables -->
       <div class="row g-4">
-        <!-- Columna 1: Trabajadores (Operarios) -->
-        <div class="col-lg-4 col-md-12">
-          <div class="workspace-column">
-            <div class="column-header d-flex flex-column gap-2">
-              <div class="d-flex justify-content-between align-items-center">
-                <span class="fw-bold text-dark small text-uppercase">1. Seleccionar Operario</span>
-                <span class="badge bg-primary-subtle text-primary"
-                  >{{ filteredOperarios().length }} disponibles</span
-                >
+        <!-- ================================================================= -->
+        <!-- TABLA 1: OPERARIOS (Izquierda)                                    -->
+        <!-- ================================================================= -->
+        <div class="col-xl-4 col-lg-5">
+          <div
+            class="card border-0 shadow-sm rounded-4 p-3 bg-white d-flex flex-column"
+            style="min-height: 600px"
+          >
+            <!-- Tabla 1 Header -->
+            <div class="d-flex align-items-center justify-content-between pb-3 border-bottom mb-3">
+              <div>
+                <h6 class="fw-bold text-dark mb-0">1. Operarios de Campo</h6>
+                <span class="text-muted small">Elegí un operario para asignarle sectores</span>
               </div>
+              <span class="badge rounded-pill bg-primary-subtle text-primary fw-semibold px-2 py-1">
+                {{ filteredOperarios().length }} disponibles
+              </span>
+            </div>
+
+            <!-- Operarios Search -->
+            <div class="mb-3">
               <app-picker-input
                 inputId="workspacePageWorkerSearch"
-                placeholder="Buscar por nombre o correo..."
+                placeholder="Buscar operario..."
                 icon="bi-search"
                 [query]="workerSearch()"
                 [disabled]="isLoading()"
@@ -125,7 +237,11 @@
               />
             </div>
 
-            <div class="column-body">
+            <!-- List of Operators -->
+            <div
+              class="d-flex flex-column gap-2 scrollbar-subtle overflow-y-auto pe-1"
+              style="max-height: 480px"
+            >
               @if (filteredOperarios().length === 0) {
                 <div class="text-center py-5 text-muted small">
                   <i class="bi bi-person-x fs-2 d-block mb-1 text-secondary"></i>
@@ -133,442 +249,1266 @@
                 </div>
               }
               @for (op of filteredOperarios(); track op.usuarioId) {
+                @let opColor = getOperatorColor(op.usuarioId);
+                @let sessionCount = getOperatorSessionSectorsCount(op.usuarioId);
+                @let isSelected = selectedOperarioId() === op.usuarioId;
+
                 <div
-                  class="worker-card d-flex align-items-center justify-content-between"
-                  [class.selected]="selectedOperarioId() === op.usuarioId"
+                  class="operator-tile"
+                  [class.is-active]="isSelected"
                   (click)="selectOperario(op.usuarioId)"
                   role="button"
                   tabindex="0"
                   (keydown.enter)="selectOperario(op.usuarioId)"
-                  (keydown.space)="selectOperario(op.usuarioId); $event.preventDefault()"
                 >
-                  <div class="d-flex align-items-center gap-3">
-                    <div
-                      class="rounded-circle bg-light d-flex align-items-center justify-content-center text-primary fw-bold"
-                      style="width: 38px; height: 38px; font-size: 0.85rem"
-                    >
-                      {{ op.nombres.charAt(0) }}{{ op.apellidos.charAt(0) }}
-                    </div>
-                    <div>
-                      <div class="fw-semibold text-dark small">
-                        {{ op.nombres }} {{ op.apellidos }}
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                      <div
+                        class="op-avatar-disc shadow-sm"
+                        [style.backgroundColor]="opColor.lightBg"
+                        [style.color]="opColor.contrastText"
+                        [style.border]="'2px solid ' + opColor.hex"
+                      >
+                        {{ op.nombres.charAt(0) }}{{ op.apellidos.charAt(0) }}
                       </div>
-                      <div class="text-muted" style="font-size: 0.75rem">{{ op.email }}</div>
+                      <div>
+                        <div class="fw-bold text-dark small">
+                          {{ op.nombres }} {{ op.apellidos }}
+                        </div>
+                        <span class="text-muted" style="font-size: 0.72rem">
+                          {{ op.email || 'Operario de Campo' }}
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Session Assigned Badge -->
+                    <div class="text-end">
+                      @let dbCount = getOperatorExistingRoutesCount(op.usuarioId);
+                      @if (sessionCount > 0) {
+                        <span
+                          class="badge rounded-pill px-2 py-1 fw-semibold text-white"
+                          [style.backgroundColor]="opColor.hex"
+                        >
+                          {{ dbCount + sessionCount }} sect. (+{{ sessionCount }})
+                        </span>
+                      } @else if (dbCount > 0) {
+                        <span
+                          class="badge rounded-pill px-2 py-1 fw-semibold text-white"
+                          [style.backgroundColor]="opColor.hex"
+                        >
+                          {{ dbCount }} sect.
+                        </span>
+                      } @else {
+                        <span
+                          class="badge bg-light text-secondary border"
+                          style="font-size: 0.7rem"
+                        >
+                          0 sect.
+                        </span>
+                      }
                     </div>
                   </div>
-                  <div>
-                    <input
-                      type="radio"
-                      class="form-check-input"
-                      name="selectedWorkerRadioPage"
-                      [checked]="selectedOperarioId() === op.usuarioId"
-                      [disabled]="isLoading()"
-                    />
+
+                  <!-- Details panel when operator is selected -->
+                  @if (isSelected) {
+                    <div class="mt-2 pt-2 border-top">
+                      <!-- Active Routes in Database for this month -->
+                      <div class="d-flex align-items-center justify-content-between mb-1">
+                        <span
+                          class="text-muted fw-semibold"
+                          style="font-size: 0.7rem; text-transform: uppercase"
+                        >
+                          Rutas del período:
+                        </span>
+                        <span
+                          class="badge bg-secondary-subtle text-secondary"
+                          style="font-size: 0.68rem"
+                        >
+                          {{ selectedOperatorExistingRoutes().length }} existente(s)
+                        </span>
+                      </div>
+
+                      @if (selectedOperatorExistingRoutes().length > 0) {
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                          @for (r of selectedOperatorExistingRoutes(); track r.rutaId) {
+                            <span
+                              class="badge bg-white text-dark border d-inline-flex align-items-center gap-1"
+                              style="font-size: 0.68rem"
+                              [title]="r.nombre"
+                            >
+                              <i
+                                class="bi bi-check-circle-fill text-success"
+                                style="font-size: 0.65rem"
+                              ></i>
+                              {{ r.nombre.slice(0, 20) }}...
+                            </span>
+                          }
+                        </div>
+                      } @else {
+                        <div class="text-muted fst-italic mb-2" style="font-size: 0.7rem">
+                          Sin rutas previas en este período.
+                        </div>
+                      }
+
+                      <!-- Session Assignments Clear Button -->
+                      @if (sessionCount > 0) {
+                        <div
+                          class="d-flex justify-content-between align-items-center mt-2 pt-1 border-top"
+                        >
+                          <span class="text-primary fw-medium" style="font-size: 0.75rem">
+                            {{ sessionCount }} sector(es) listos
+                          </span>
+                          <button
+                            type="button"
+                            class="btn btn-outline-danger btn-sm py-0 px-2 rounded-2"
+                            style="font-size: 0.7rem"
+                            (click)="
+                              clearOperatorSessionAssignments(op.usuarioId);
+                              $event.stopPropagation()
+                            "
+                          >
+                            <i class="bi bi-trash3 me-1"></i>Limpiar
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="mt-auto pt-3 border-top text-center text-muted small">
+              <i class="bi bi-info-circle me-1"></i> Seleccioná un operario y hacé clic en los
+              sectores libres para asignarlos.
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- TABLA 2: COMUNIDADES Y SECTORES (Derecha)                         -->
+        <!-- ================================================================= -->
+        <div class="col-xl-8 col-lg-7">
+          <div
+            class="card border-0 shadow-sm rounded-4 p-3 bg-white d-flex flex-column"
+            style="min-height: 600px"
+          >
+            <!-- Tabla 2 Header -->
+            <div
+              class="d-flex align-items-center justify-content-between flex-wrap gap-2 pb-3 border-bottom mb-3"
+            >
+              <div>
+                <div class="d-flex align-items-center gap-2">
+                  <h6 class="fw-bold text-dark mb-0">
+                    2. {{ isLecturaMode() ? 'Comunidades y Sectores' : 'Contratos Pendientes' }}
+                  </h6>
+                  @if (selectedOperarioId()) {
+                    @let activeOpColor = getOperatorColor(selectedOperarioId()!);
+                    <span
+                      class="badge rounded-pill px-2 py-1 fw-semibold"
+                      [style.backgroundColor]="activeOpColor.lightBg"
+                      [style.color]="activeOpColor.contrastText"
+                      [style.border]="'1px solid ' + activeOpColor.hex"
+                    >
+                      Asignando a: {{ getOperarioName(selectedOperarioId()!) }}
+                    </span>
+                  }
+                </div>
+                <span class="text-muted small">
+                  {{
+                    isLecturaMode()
+                      ? 'Marcá los sectores para el operario activo'
+                      : 'Seleccioná una comunidad y asigná contratos al operario activo'
+                  }}
+                </span>
+              </div>
+
+              @if (isLecturaMode()) {
+                <button
+                  type="button"
+                  class="btn btn-outline-primary btn-sm rounded-3 fw-medium"
+                  (click)="assignAllAvailable()"
+                >
+                  <i class="bi bi-check2-all me-1"></i> Asignar todos los libres
+                </button>
+              } @else {
+                <button
+                  type="button"
+                  class="btn btn-outline-primary btn-sm rounded-3 fw-medium"
+                  [disabled]="paginatedContratos().length === 0"
+                  (click)="toggleAllFilteredContracts()"
+                >
+                  <i class="bi bi-check2-all me-1"></i> Seleccionar todos los visibles
+                </button>
+              }
+            </div>
+
+            @if (isLecturaMode()) {
+              <!-- Filter Bar (Search + Quick Tabs) -->
+              <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <div style="max-width: 280px; width: 100%">
+                  <app-picker-input
+                    inputId="workspacePageCommunitySearch"
+                    placeholder="Buscar comunidad o sector..."
+                    icon="bi-search"
+                    [query]="communitySearch()"
+                    [disabled]="isLoading()"
+                    (queryChange)="communitySearch.set($event); communityCurrentPage.set(1)"
+                    (clear)="communitySearch.set(''); communityCurrentPage.set(1)"
+                  />
+                </div>
+
+                <div class="btn-group btn-group-sm p-1 bg-light rounded-3" role="group">
+                  <button
+                    type="button"
+                    class="btn btn-sm rounded-2 fw-medium"
+                    [class.bg-white]="communityFilter() === 'all'"
+                    [class.shadow-sm]="communityFilter() === 'all'"
+                    [class.text-dark]="communityFilter() === 'all'"
+                    [class.text-secondary]="communityFilter() !== 'all'"
+                    (click)="setCommunityFilter('all')"
+                  >
+                    Todas
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm rounded-2 fw-medium"
+                    [class.bg-white]="communityFilter() === 'pending'"
+                    [class.shadow-sm]="communityFilter() === 'pending'"
+                    [class.text-dark]="communityFilter() === 'pending'"
+                    [class.text-secondary]="communityFilter() !== 'pending'"
+                    (click)="setCommunityFilter('pending')"
+                  >
+                    Pendientes
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm rounded-2 fw-medium"
+                    [class.bg-white]="communityFilter() === 'completed'"
+                    [class.shadow-sm]="communityFilter() === 'completed'"
+                    [class.text-dark]="communityFilter() === 'completed'"
+                    [class.text-secondary]="communityFilter() !== 'completed'"
+                    (click)="setCommunityFilter('completed')"
+                  >
+                    100% Cubiertas
+                  </button>
+                </div>
+              </div>
+
+              <!-- Communities List Grid -->
+              <div
+                class="d-flex flex-column gap-3 scrollbar-subtle overflow-y-auto pe-1"
+                style="max-height: 480px"
+              >
+                @if (filteredComunidades().length === 0) {
+                  <div class="text-center py-5 text-muted small">
+                    <i class="bi bi-geo-alt-fill fs-2 d-block mb-1 text-secondary"></i>
+                    No se encontraron comunidades coincidentes con el filtro.
+                  </div>
+                }
+
+                @for (com of paginatedComunidades(); track com.id) {
+                  @let isCompleted = isCommunityCompleted(com.id);
+                  @let countData = getCommunityAssignedCount(com.id);
+                  @let sectors = getSectoresForComunidad(com.id);
+
+                  <div
+                    class="community-box"
+                    [class.is-complete]="isCompleted"
+                    [class.is-partial]="!isCompleted && countData.assigned > 0"
+                  >
+                    <!-- Community Card Header -->
+                    <div
+                      class="d-flex align-items-center justify-content-between flex-wrap gap-2 pb-2 border-bottom mb-2"
+                    >
+                      <div class="d-flex align-items-center gap-2">
+                        <div
+                          class="rounded-circle d-flex align-items-center justify-content-center"
+                          [ngClass]="
+                            isCompleted
+                              ? 'bg-success text-white'
+                              : countData.assigned > 0
+                                ? 'bg-info text-white'
+                                : 'bg-light text-secondary'
+                          "
+                          style="width: 28px; height: 28px; font-size: 0.8rem"
+                        >
+                          <i
+                            class="bi"
+                            [ngClass]="
+                              isCompleted
+                                ? 'bi-check-circle-fill'
+                                : countData.assigned > 0
+                                  ? 'bi-pie-chart-fill'
+                                  : 'bi-geo-alt'
+                            "
+                          ></i>
+                        </div>
+                        <div>
+                          <h6 class="fw-bold mb-0 text-dark small d-flex align-items-center gap-2">
+                            {{ com.nombre }}
+                            @if (com.codigo) {
+                              <span
+                                class="badge bg-light text-secondary border font-monospace"
+                                style="font-size: 0.65rem"
+                              >
+                                {{ com.codigo }}
+                              </span>
+                            }
+                            @if (isCompleted) {
+                              <span class="badge badge-green-complete rounded-pill px-2 py-1">
+                                100% CUBIERTA
+                              </span>
+                            } @else if (countData.assigned > 0) {
+                              <span class="badge badge-blue-partial rounded-pill px-2 py-1">
+                                PARCIAL
+                              </span>
+                            }
+                          </h6>
+                        </div>
+                      </div>
+
+                      <div class="d-flex align-items-center gap-2">
+                        <span
+                          class="badge"
+                          [ngClass]="
+                            isCompleted
+                              ? 'bg-success-subtle text-success fw-bold border border-success-subtle'
+                              : countData.assigned > 0
+                                ? 'bg-info-subtle text-primary fw-bold border border-info-subtle'
+                                : 'bg-light text-muted border'
+                          "
+                        >
+                          {{ countData.assigned }} / {{ countData.total }}
+                          {{ sectors.length > 0 ? 'sectores asignados' : 'asignada' }}
+                        </span>
+
+                        @if (!isCompleted && selectedOperarioId()) {
+                          <button
+                            type="button"
+                            class="btn btn-outline-primary btn-sm py-1 px-2 rounded-2"
+                            style="font-size: 0.72rem"
+                            (click)="toggleAllSectorsInCommunity(com.id)"
+                          >
+                            <i class="bi bi-check-all me-1"></i
+                            >{{ sectors.length > 0 ? 'Asignar libres' : 'Asignar comunidad' }}
+                          </button>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Direct Community Assignment (when no sectors exist) -->
+                    @if (sectors.length === 0) {
+                      @let status = getCommunityStatus(com.id);
+                      @let isMyAssigned =
+                        status.isAssigned &&
+                        status.operarioId === selectedOperarioId() &&
+                        !status.isDbAssigned;
+                      @let isOtherAssigned =
+                        status.isAssigned && status.operarioId !== selectedOperarioId();
+
+                      <div
+                        class="sector-card d-flex align-items-center justify-content-between p-3 rounded-2 border"
+                        [class.is-session-selected]="isMyAssigned"
+                        [class.is-db-locked]="status.isDbAssigned"
+                        [class.is-other-assigned]="isOtherAssigned"
+                        (click)="toggleCommunityAssignment(com.id)"
+                        role="button"
+                        tabindex="0"
+                        (keydown.enter)="toggleCommunityAssignment(com.id)"
+                      >
+                        <div class="d-flex align-items-center gap-2 overflow-hidden">
+                          <i
+                            class="bi"
+                            [ngClass]="{
+                              'bi-check-square-fill text-primary': isMyAssigned,
+                              'bi-lock-fill text-secondary': status.isDbAssigned,
+                              'bi-person-badge-fill text-secondary': isOtherAssigned,
+                              'bi-square text-muted': !status.isAssigned,
+                            }"
+                          ></i>
+                          <div class="text-truncate">
+                            <div
+                              class="fw-semibold text-dark small text-truncate"
+                              style="font-size: 0.82rem"
+                            >
+                              Asignar {{ com.nombre }} (Comunidad completa)
+                            </div>
+                            @if (status.isAssigned) {
+                              <div class="text-truncate text-muted" style="font-size: 0.7rem">
+                                @if (status.isDbAssigned) {
+                                  <i class="bi bi-person-check-fill me-1"></i>Ruta asignada a
+                                  {{ status.operarioName }}
+                                } @else if (isMyAssigned) {
+                                  <span class="text-primary fw-semibold"
+                                    >Asignada a este operario en sesión</span
+                                  >
+                                } @else {
+                                  <i class="bi bi-person me-1"></i>Asignada a
+                                  {{ status.operarioName }} en sesión
+                                }
+                              </div>
+                            } @else {
+                              <span class="text-muted" style="font-size: 0.72rem">
+                                Comunidad rural sin subdivisión de sectores &bull; Click para
+                                asignar ruta directa
+                              </span>
+                            }
+                          </div>
+                        </div>
+
+                        @if (status.isAssigned && status.color) {
+                          <span
+                            class="badge rounded-pill ms-2 text-truncate"
+                            [style.background-color]="status.color.lightBg"
+                            [style.color]="status.color.contrastText"
+                            style="font-size: 0.7rem; max-width: 150px"
+                          >
+                            {{ status.operarioName }}
+                          </span>
+                        }
+                      </div>
+                    } @else {
+                      <div class="row g-2">
+                        @for (sec of sectors; track sec.sectorId) {
+                          @let status = getSectorStatus(sec.sectorId);
+                          @let isMyAssigned =
+                            status.isAssigned &&
+                            status.operarioId === selectedOperarioId() &&
+                            !status.isDbAssigned;
+                          @let isOtherAssigned =
+                            status.isAssigned && status.operarioId !== selectedOperarioId();
+
+                          <div class="col-sm-6 col-md-4">
+                            <div
+                              class="sector-card d-flex align-items-center justify-content-between"
+                              [class.is-session-selected]="isMyAssigned"
+                              [class.is-db-locked]="status.isDbAssigned"
+                              [class.is-other-assigned]="isOtherAssigned"
+                              (click)="toggleSector(sec)"
+                              role="button"
+                              tabindex="0"
+                              (keydown.enter)="toggleSector(sec)"
+                            >
+                              <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                <i
+                                  class="bi"
+                                  [ngClass]="{
+                                    'bi-check-square-fill text-primary': isMyAssigned,
+                                    'bi-lock-fill text-secondary': status.isDbAssigned,
+                                    'bi-person-badge-fill text-secondary': isOtherAssigned,
+                                    'bi-square text-muted': !status.isAssigned,
+                                  }"
+                                ></i>
+                                <div class="text-truncate">
+                                  <div
+                                    class="fw-semibold text-dark small text-truncate"
+                                    style="font-size: 0.8rem"
+                                  >
+                                    {{ sec.nombre }}
+                                  </div>
+                                  @if (status.isAssigned) {
+                                    <div
+                                      class="text-truncate text-muted"
+                                      style="font-size: 0.68rem"
+                                    >
+                                      @if (status.isDbAssigned) {
+                                        <i class="bi bi-person-check-fill me-1"></i>Ruta asignada a
+                                        {{ status.operarioName }}
+                                      } @else if (isMyAssigned) {
+                                        <span class="text-primary fw-semibold">Asignado</span>
+                                      } @else {
+                                        <i class="bi bi-person me-1"></i>{{ status.operarioName }}
+                                      }
+                                    </div>
+                                  } @else {
+                                    <span class="text-muted" style="font-size: 0.68rem"
+                                      >Disponible</span
+                                    >
+                                  }
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              <!-- Community Cards Pagination Controls -->
+              @if (communityTotalPages() > 1) {
+                <div class="d-flex align-items-center justify-content-between pt-3 border-top mt-2">
+                  <span class="text-muted small" style="font-size: 0.75rem">
+                    Página {{ communityCurrentPage() }} de {{ communityTotalPages() }} ({{
+                      filteredComunidades().length
+                    }}
+                    comunidades)
+                  </span>
+                  <div class="btn-group btn-group-sm">
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary btn-sm"
+                      [disabled]="communityCurrentPage() <= 1"
+                      (click)="prevCommunityPage()"
+                    >
+                      <i class="bi bi-chevron-left me-1"></i>Anterior
+                    </button>
+                    @for (p of communityPagesArray(); track p) {
+                      <button
+                        type="button"
+                        class="btn btn-sm"
+                        [ngClass]="
+                          p === communityCurrentPage() ? 'btn-primary' : 'btn-outline-secondary'
+                        "
+                        (click)="setCommunityCurrentPage(p)"
+                      >
+                        {{ p }}
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      class="btn btn-outline-secondary btn-sm"
+                      [disabled]="communityCurrentPage() >= communityTotalPages()"
+                      (click)="nextCommunityPage()"
+                    >
+                      Siguiente<i class="bi bi-chevron-right ms-1"></i>
+                    </button>
                   </div>
                 </div>
+              }
+            } @else {
+              <!-- NON-LECTURA: Contracts Selection Panel -->
+              <app-route-contracts-table
+                [comunidades]="comunidades()"
+                [selectedComunidadId]="selectedComunidadId()"
+                [contracts]="contratos()"
+                [totalContracts]="contractTotalEnComunidad()"
+                [searchQuery]="contractSearch()"
+                [currentPage]="contractCurrentPage()"
+                [pageSize]="contractPageSize()"
+                [totalPages]="contractTotalPages()"
+                [isLoading]="isLoadingContracts()"
+                [selectedOperarioId]="selectedOperarioId()"
+                [assignments]="sessionContractAssignments()"
+                [operatorColorResolver]="getOperatorColorForChild"
+                [operatorNameResolver]="getOperarioNameForChild"
+                (comunidadChange)="loadContractsForCommunity($event)"
+                (searchChange)="onContractSearchChange($event)"
+                (pageChange)="setContractCurrentPage($event)"
+                (pageSizeChange)="setContractPageSize($event)"
+                (contractToggled)="toggleContrato($event)"
+                (toggleAllVisibleRequested)="toggleAllFilteredContracts()"
+              />
+            }
+            <!-- end @else non-lectura -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Sticky Bottom Action Bar -->
+      <div
+        class="card border-0 rounded-4 p-3 bg-white border position-sticky bottom-0 z-3 workspace-action-bar"
+        style="border-color: var(--border-color, #cbdedf) !important"
+      >
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+          <div class="d-flex align-items-center gap-3">
+            <div
+              class="rounded-circle bg-primary-subtle text-primary d-flex align-items-center justify-content-center"
+              style="width: 42px; height: 42px"
+            >
+              <i class="bi bi-layers-fill fs-5"></i>
+            </div>
+            <div>
+              <div class="fw-bold text-dark small">Resumen de la sesión</div>
+              <div class="text-muted small">
+                @if (isLecturaMode()) {
+                  {{ totalSessionAssignedSectorsCount() }} sector(es) asignados a
+                  {{ assignedOperatorsInSession().length }} operario(s)
+                } @else {
+                  {{ totalSessionAssignedContractsCount() }} contrato(s) asignados a
+                  {{ assignedOperatorsInContractSession().length }} operario(s)
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex align-items-center gap-2">
+            <button
+              type="button"
+              class="btn btn-outline-danger btn-sm rounded-3 px-3 py-2 fw-medium"
+              [disabled]="
+                isLecturaMode()
+                  ? totalSessionAssignedSectorsCount() === 0
+                  : totalSessionAssignedContractsCount() === 0
+              "
+              (click)="resetSessionAssignments()"
+            >
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Descartar Cambios
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary btn-sm rounded-3 px-4 py-2 fw-semibold shadow-sm"
+              [disabled]="
+                (isLecturaMode()
+                  ? totalSessionAssignedSectorsCount() === 0
+                  : totalSessionAssignedContractsCount() === 0) ||
+                selectedPeriod()?.estado !== 'ABIERTO'
+              "
+              (click)="goToSummary()"
+            >
+              Continuar al Resumen <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  } @else if (currentStep() === 2) {
+    <!-- ========================================================================= -->
+    <!-- PASO 3: RESUMEN Y DESPACHO FULL-WIDTH (PANTALLA COMPLETA)                 -->
+    <!-- ========================================================================= -->
+    <div class="d-flex flex-column gap-4">
+      <!-- Step 3 Header -->
+      <div
+        class="d-flex align-items-center justify-content-between flex-wrap gap-3 pb-3 border-bottom"
+      >
+        <div>
+          <h4 class="fw-bold text-dark mb-1 fs-5">Resumen de Distribución y Despacho</h4>
+          <p class="text-muted small mb-0">
+            @if (isLecturaMode()) {
+              Revisá la carga de trabajo asignada antes de generar los lotes en base de datos.
+            } @else {
+              Revisá los contratos asignados a cada operario antes de generar las rutas de
+              {{
+                tiposActividad().find((t) => t.codigo === tipoActividadSeleccionada())?.nombre ||
+                  'la actividad seleccionada' | lowercase
+              }}
+              en base de datos.
+            }
+          </p>
+        </div>
+
+        <button
+          type="button"
+          class="btn btn-outline-secondary btn-sm rounded-3 px-3 py-2 fw-medium"
+          (click)="backToAssignment()"
+          [disabled]="isLoading()"
+        >
+          <i class="bi bi-arrow-left me-1"></i> Volver a la Asignación
+        </button>
+      </div>
+
+      <!-- 4 KPI Cards (Matching app-kpi-card design system tokens) -->
+      @let coverage = globalCoverageSummary();
+      @let nonLecturaCoverage = nonLecturaCoverageSummary();
+      <div class="row g-3">
+        @if (isLecturaMode()) {
+          <!-- KPI 1: Comunidades Cubiertas (Tone Warning / Gold) -->
+          <div class="col-md-3 col-sm-6">
+            <div class="kpi-card-root tone-warning">
+              <div class="kpi-card-body">
+                <div class="kpi-content">
+                  <span class="kpi-label">Comunidades Cubiertas</span>
+                  <div class="kpi-value-wrapper">
+                    <span class="kpi-value"
+                      >{{ coverage.fullyCompletedCommunities }} /
+                      {{ coverage.totalCommunities }}</span
+                    >
+                  </div>
+                  <span class="kpi-subtext">
+                    <span class="kpi-indicator-dot"></span> {{ coverage.completedPct }}% del
+                    catastro regional
+                  </span>
+                </div>
+                <div class="kpi-icon-container">
+                  <i class="bi bi-shield-check"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI 2: Sectores Planificados (Tone Primary / Teal) -->
+          <div class="col-md-3 col-sm-6">
+            <div class="kpi-card-root tone-primary">
+              <div class="kpi-card-body">
+                <div class="kpi-content">
+                  <span class="kpi-label">Sectores Planificados</span>
+                  <div class="kpi-value-wrapper">
+                    <span class="kpi-value">{{ totalSessionAssignedSectorsCount() }}</span>
+                  </div>
+                  <span class="kpi-subtext">
+                    <span class="kpi-indicator-dot"></span> En sesión actual
+                  </span>
+                </div>
+                <div class="kpi-icon-container">
+                  <i class="bi bi-geo-alt-fill"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI 3: Sectores Pendientes (Tone Info / Aqua) -->
+          <div class="col-md-3 col-sm-6">
+            <div class="kpi-card-root tone-info">
+              <div class="kpi-card-body">
+                <div class="kpi-content">
+                  <span class="kpi-label">Sectores Pendientes</span>
+                  <div class="kpi-value-wrapper">
+                    <span class="kpi-value">{{ coverage.pendingSectors }}</span>
+                  </div>
+                  <span class="kpi-subtext">
+                    <span class="kpi-indicator-dot"></span> Sin asignar en el mes
+                  </span>
+                </div>
+                <div class="kpi-icon-container">
+                  <i class="bi bi-layers-half"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI 4: Operarios con Carga (Tone Success / Green) -->
+          <div class="col-md-3 col-sm-6">
+            <div class="kpi-card-root tone-success">
+              <div class="kpi-card-body">
+                <div class="kpi-content">
+                  <span class="kpi-label">Operarios con Carga</span>
+                  <div class="kpi-value-wrapper">
+                    <span class="kpi-value">{{ assignedOperatorsInSession().length }}</span>
+                  </div>
+                  <span class="kpi-subtext">
+                    <span class="kpi-indicator-dot"></span> Equipos asignados
+                  </span>
+                </div>
+                <div class="kpi-icon-container">
+                  <i class="bi bi-people-fill"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <!-- KPI 1 (no-lectura): Comunidades con Contratos (Tone Warning / Gold) -->
+          <div class="col-md-3 col-sm-6">
+            <div class="kpi-card-root tone-warning">
+              <div class="kpi-card-body">
+                <div class="kpi-content">
+                  <span class="kpi-label">Comunidades con Contratos</span>
+                  <div class="kpi-value-wrapper">
+                    <span class="kpi-value">{{ nonLecturaCoverage.comunidadesConContratos }}</span>
+                  </div>
+                  <span class="kpi-subtext">
+                    <span class="kpi-indicator-dot"></span> Asignados en sesión
+                  </span>
+                </div>
+                <div class="kpi-icon-container">
+                  <i class="bi bi-geo-alt-fill"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI 2 (no-lectura): Contratos Planificados (Tone Primary / Teal) -->
+          <div class="col-md-3 col-sm-6">
+            <div class="kpi-card-root tone-primary">
+              <div class="kpi-card-body">
+                <div class="kpi-content">
+                  <span class="kpi-label">Contratos Planificados</span>
+                  <div class="kpi-value-wrapper">
+                    <span class="kpi-value">{{ totalSessionAssignedContractsCount() }}</span>
+                  </div>
+                  <span class="kpi-subtext">
+                    <span class="kpi-indicator-dot"></span> En sesión actual
+                  </span>
+                </div>
+                <div class="kpi-icon-container">
+                  <i class="bi bi-file-earmark-check-fill"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI 3 (no-lectura): Contratos Sin Asignar (Tone Info / Aqua) -->
+          <div class="col-md-3 col-sm-6">
+            <div class="kpi-card-root tone-info">
+              <div class="kpi-card-body">
+                <div class="kpi-content">
+                  <span class="kpi-label">Contratos Sin Asignar</span>
+                  <div class="kpi-value-wrapper">
+                    <span class="kpi-value">{{ nonLecturaCoverage.pendingContratos }}</span>
+                  </div>
+                  <span class="kpi-subtext">
+                    <span class="kpi-indicator-dot"></span> En la comunidad seleccionada
+                  </span>
+                </div>
+                <div class="kpi-icon-container">
+                  <i class="bi bi-file-earmark-x"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- KPI 4 (no-lectura): Operarios con Carga (Tone Success / Green) -->
+          <div class="col-md-3 col-sm-6">
+            <div class="kpi-card-root tone-success">
+              <div class="kpi-card-body">
+                <div class="kpi-content">
+                  <span class="kpi-label">Operarios con Carga</span>
+                  <div class="kpi-value-wrapper">
+                    <span class="kpi-value">{{ assignedOperatorsInContractSession().length }}</span>
+                  </div>
+                  <span class="kpi-subtext">
+                    <span class="kpi-indicator-dot"></span> Equipos asignados
+                  </span>
+                </div>
+                <div class="kpi-icon-container">
+                  <i class="bi bi-people-fill"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Breakdown Grid (2 Columns: Operators & Coverage Matrix) -->
+      <div class="row g-4">
+        <!-- Column 1: Desglose por Operador Asignado -->
+        <div class="col-lg-7">
+          <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
+            <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+              <i class="bi bi-person-badge-fill text-primary"></i>
+              Desglose por Operario Asignado
+            </h6>
+
+            <div class="d-flex flex-column gap-3">
+              @if (isLecturaMode()) {
+                @for (op of assignedOperatorsInSession(); track op.usuarioId) {
+                  @let opColor = getOperatorColor(op.usuarioId);
+                  @let assignedSectors = getOperatorSessionSectors(op.usuarioId);
+
+                  <div class="card border rounded-3 p-3 bg-light">
+                    <!-- Operator Header -->
+                    <div
+                      class="d-flex align-items-center justify-content-between pb-2 border-bottom mb-2"
+                    >
+                      <div class="d-flex align-items-center gap-2">
+                        <div
+                          class="op-avatar-disc shadow-sm"
+                          [style.backgroundColor]="opColor.lightBg"
+                          [style.color]="opColor.contrastText"
+                          [style.border]="'2px solid ' + opColor.hex"
+                        >
+                          {{ op.nombres.charAt(0) }}{{ op.apellidos.charAt(0) }}
+                        </div>
+                        <div>
+                          <div class="fw-bold text-dark small">
+                            {{ op.nombres }} {{ op.apellidos }}
+                          </div>
+                          <span class="text-muted" style="font-size: 0.72rem">{{
+                            op.email || 'Operario de Campo'
+                          }}</span>
+                        </div>
+                      </div>
+
+                      <span
+                        class="badge rounded-pill px-3 py-1 fw-semibold text-white"
+                        [style.backgroundColor]="opColor.hex"
+                      >
+                        {{ assignedSectors.length }} ruta(s)
+                      </span>
+                    </div>
+
+                    <!-- Sectors and Communities List -->
+                    <div
+                      class="d-flex flex-column gap-1"
+                      style="max-height: 200px; overflow-y: auto"
+                    >
+                      @for (
+                        item of assignedSectors;
+                        track item.sector?.sectorId || 'com-' + item.comunidad?.id
+                      ) {
+                        <div
+                          class="d-flex align-items-center justify-content-between p-2 rounded-2 bg-white border"
+                        >
+                          <div class="d-flex align-items-center gap-2">
+                            <i
+                              class="bi text-primary"
+                              [ngClass]="
+                                item.isFullCommunity ? 'bi-shield-check' : 'bi-geo-alt-fill'
+                              "
+                            ></i>
+                            <div>
+                              <div class="fw-semibold text-dark small">
+                                {{
+                                  item.isFullCommunity
+                                    ? item.comunidad?.nombre + ' (Comunidad completa)'
+                                    : item.sector?.nombre
+                                }}
+                              </div>
+                              <span class="text-muted" style="font-size: 0.72rem">
+                                {{
+                                  item.isFullCommunity
+                                    ? 'Ruta directa a nivel de comunidad'
+                                    : 'Comunidad: ' +
+                                      (item.comunidad?.nombre ||
+                                        'Comunidad #' + item.sector?.comunidadId)
+                                }}
+                              </span>
+                            </div>
+                          </div>
+
+                          @if (item.isFullCommunity) {
+                            <button
+                              type="button"
+                              class="btn btn-outline-danger btn-sm py-0 px-2 rounded-2"
+                              (click)="removeOperatorCommunity(item.comunidad!.id)"
+                              title="Quitar comunidad"
+                            >
+                              <i class="bi bi-x-lg"></i>
+                            </button>
+                          } @else {
+                            <button
+                              type="button"
+                              class="btn btn-outline-danger btn-sm py-0 px-2 rounded-2"
+                              (click)="removeOperatorSector(item.sector!.sectorId!)"
+                              title="Quitar sector"
+                            >
+                              <i class="bi bi-x-lg"></i>
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+              } @else {
+                @for (op of assignedOperatorsInContractSession(); track op.usuarioId) {
+                  @let opColor = getOperatorColor(op.usuarioId);
+                  @let assignedContracts = getOperatorSessionContracts(op.usuarioId);
+
+                  <div class="card border rounded-3 p-3 bg-light">
+                    <!-- Operator Header -->
+                    <div
+                      class="d-flex align-items-center justify-content-between pb-2 border-bottom mb-2"
+                    >
+                      <div class="d-flex align-items-center gap-2">
+                        <div
+                          class="op-avatar-disc shadow-sm"
+                          [style.backgroundColor]="opColor.lightBg"
+                          [style.color]="opColor.contrastText"
+                          [style.border]="'2px solid ' + opColor.hex"
+                        >
+                          {{ op.nombres.charAt(0) }}{{ op.apellidos.charAt(0) }}
+                        </div>
+                        <div>
+                          <div class="fw-bold text-dark small">
+                            {{ op.nombres }} {{ op.apellidos }}
+                          </div>
+                          <span class="text-muted" style="font-size: 0.72rem">{{
+                            op.email || 'Operario de Campo'
+                          }}</span>
+                        </div>
+                      </div>
+
+                      <div class="d-flex align-items-center gap-2">
+                        <button
+                          type="button"
+                          class="btn btn-outline-danger btn-sm py-0 px-2 rounded-2"
+                          style="font-size: 0.7rem"
+                          (click)="clearOperatorContractAssignments(op.usuarioId)"
+                          title="Quitar todos los contratos del operario"
+                        >
+                          <i class="bi bi-trash3 me-1"></i>Limpiar
+                        </button>
+                        <span
+                          class="badge rounded-pill px-3 py-1 fw-semibold text-white"
+                          [style.backgroundColor]="opColor.hex"
+                        >
+                          {{ assignedContracts.length }} contrato(s)
+                        </span>
+                      </div>
+                    </div>
+
+                    <!-- Contracts List -->
+                    <div
+                      class="d-flex flex-column gap-1"
+                      style="max-height: 240px; overflow-y: auto"
+                    >
+                      @for (contrato of assignedContracts; track contrato.contratoId) {
+                        <div
+                          class="d-flex align-items-center justify-content-between p-2 rounded-2 bg-white border"
+                        >
+                          <div class="d-flex align-items-center gap-2 overflow-hidden">
+                            <i class="bi bi-file-earmark-text-fill text-primary"></i>
+                            <div class="overflow-hidden">
+                              <div
+                                class="fw-semibold text-dark small text-truncate"
+                                style="font-size: 0.78rem"
+                              >
+                                {{ contrato.numeroGuia }} — {{ contrato.cliente.nombres }}
+                                {{ contrato.cliente.apellidos }}
+                              </div>
+                              <span
+                                class="text-muted text-truncate d-block"
+                                style="font-size: 0.7rem"
+                              >
+                                {{ contrato.direccionSuministro }}
+                              </span>
+                            </div>
+                          </div>
+
+                          <button
+                            type="button"
+                            class="btn btn-outline-danger btn-sm py-0 px-2 rounded-2 flex-shrink-0 ms-2"
+                            (click)="removeOperatorContract(+contrato.contratoId)"
+                            title="Quitar contrato"
+                          >
+                            <i class="bi bi-x-lg"></i>
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
               }
             </div>
           </div>
         </div>
 
-        <!-- Columna 2: Dinámica según Tipo de Actividad (Sectores para Lecturas vs Contratos para Otras) -->
-        <div class="col-lg-4 col-md-12">
-          <div class="workspace-column">
-            <!-- Modo A: Toma de Lectura (Sectores) -->
-            @if (isLecturaActivity(tipoActividadSeleccionada())) {
-              <div class="column-header d-flex flex-column gap-2">
-                <div class="d-flex justify-content-between align-items-center">
-                  <span class="fw-bold text-dark small text-uppercase"
-                    >2. Comunidad & Sectores</span
-                  >
-                  <span class="badge bg-info-subtle text-info"
-                    >{{ selectedSectorIds().length }} selec.</span
-                  >
-                </div>
-                <select
-                  class="form-select form-select-sm shadow-none"
-                  [ngModel]="selectedComunidadId()"
-                  (ngModelChange)="onComunidadChange($event)"
-                  [disabled]="isLoading()"
-                >
-                  <option [ngValue]="null">Seleccione una comunidad...</option>
-                  @for (com of comunidades(); track com.id) {
-                    <option [ngValue]="com.id">{{ com.nombre }}</option>
-                  }
-                </select>
-              </div>
+        <!-- Column 2: Cobertura por Comunidad -->
+        <div class="col-lg-5">
+          <div class="card border-0 shadow-sm rounded-4 bg-white p-4 h-100">
+            @if (isLecturaMode()) {
+              <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                <i class="bi bi-pie-chart-fill text-warning"></i>
+                Cobertura por Comunidad
+              </h6>
 
-              <div class="column-body">
-                @if (!selectedComunidadId()) {
-                  <div class="text-center py-5 text-muted small">
-                    <i class="bi bi-geo-alt fs-2 d-block mb-1 text-secondary"></i>
-                    Seleccione una comunidad para ver sus sectores.
-                  </div>
-                } @else {
-                  <!-- Opción: Toda la Comunidad -->
+              <div
+                class="d-flex flex-column gap-3 scrollbar-subtle overflow-y-auto"
+                style="max-height: 480px"
+              >
+                @for (com of comunidades(); track com.id) {
+                  @let isCompleted = isCommunityCompleted(com.id);
+                  @let countData = getCommunityAssignedCount(com.id);
+                  @let pct =
+                    countData.total > 0
+                      ? (countData.assigned / countData.total) * 100
+                      : isCompleted
+                        ? 100
+                        : 0;
+
                   <div
-                    class="sector-card mb-3 p-3"
-                    [class.selected]="isAllCommunitySelected()"
-                    (click)="toggleAllCommunity()"
-                    role="button"
-                    tabindex="0"
-                    (keydown.enter)="toggleAllCommunity()"
-                    (keydown.space)="toggleAllCommunity(); $event.preventDefault()"
+                    class="p-3 rounded-3 border"
+                    [ngClass]="
+                      isCompleted ? 'border-success' : countData.assigned > 0 ? 'border-info' : ''
+                    "
+                    [style.backgroundColor]="
+                      isCompleted ? '#f0fdf4' : countData.assigned > 0 ? '#f0f9ff' : '#ffffff'
+                    "
                   >
-                    <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
                       <div class="d-flex align-items-center gap-2">
-                        <div class="sector-icon-tile" [class.active]="isAllCommunitySelected()">
-                          <i class="bi bi-globe"></i>
-                        </div>
-                        <div>
-                          <div class="fw-bold text-dark small">Toda la comunidad</div>
-                          <div class="text-muted" style="font-size: 0.72rem">
-                            Asigna la totalidad de los contratos de la comunidad.
-                          </div>
-                        </div>
-                      </div>
-                      <div class="selection-indicator" [class.active]="isAllCommunitySelected()">
                         <i
                           class="bi"
                           [ngClass]="
-                            isAllCommunitySelected()
-                              ? 'bi-check-circle-fill text-primary'
-                              : 'bi-circle text-muted'
+                            isCompleted
+                              ? 'bi-check-circle-fill text-success'
+                              : countData.assigned > 0
+                                ? 'bi-pie-chart-fill text-info'
+                                : 'bi-geo-alt text-muted'
                           "
                         ></i>
+                        <span class="fw-bold text-dark small">{{ com.nombre }}</span>
                       </div>
+
+                      @if (isCompleted) {
+                        <span class="badge badge-green-complete rounded-pill px-2 py-1">
+                          100% CUBIERTA
+                        </span>
+                      } @else if (countData.assigned > 0) {
+                        <span class="badge badge-blue-partial rounded-pill px-2 py-1">
+                          PARCIAL ({{ countData.assigned }}/{{ countData.total }})
+                        </span>
+                      } @else {
+                        <span class="badge bg-light text-muted border px-2 py-1"> PENDIENTE </span>
+                      }
+                    </div>
+
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="progress flex-grow-1" style="height: 6px">
+                        <div
+                          class="progress-bar"
+                          [ngClass]="isCompleted ? 'bg-success' : 'bg-info'"
+                          role="progressbar"
+                          [style.width.%]="pct"
+                        ></div>
+                      </div>
+                      <span class="small fw-semibold text-muted">{{ pct | number: '1.0-0' }}%</span>
                     </div>
                   </div>
-
-                  @if (!isAllCommunitySelected()) {
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                      <span class="fw-semibold text-muted small">Sectores disponibles:</span>
-                      <span class="text-muted" style="font-size: 0.75rem"
-                        >Click en una card para seleccionar</span
-                      >
-                    </div>
-                    @if (filteredSectores().length === 0) {
-                      <div class="text-center py-4 text-muted small bg-light rounded-3 border">
-                        <i class="bi bi-info-circle fs-4 d-block mb-1 text-secondary"></i>
-                        Esta comunidad no tiene sectores registrados.
-                      </div>
-                    }
-                    @for (sec of filteredSectores(); track sec.sectorId ?? sec.codigo) {
-                      <div
-                        class="sector-card d-flex align-items-center justify-content-between p-3"
-                        [class.selected]="sec.sectorId ? isSectorSelected(sec.sectorId) : false"
-                        (click)="sec.sectorId ? toggleSector(sec.sectorId) : null"
-                        role="button"
-                        tabindex="0"
-                        (keydown.enter)="sec.sectorId ? toggleSector(sec.sectorId) : null"
-                        (keydown.space)="
-                          sec.sectorId ? toggleSector(sec.sectorId) : null; $event.preventDefault()
-                        "
-                      >
-                        <div class="d-flex align-items-center gap-3">
-                          <div
-                            class="sector-icon-tile"
-                            [class.active]="sec.sectorId ? isSectorSelected(sec.sectorId) : false"
-                          >
-                            <i class="bi bi-geo-alt-fill"></i>
-                          </div>
-                          <div>
-                            <div class="d-flex align-items-center gap-2">
-                              <span class="badge bg-light text-secondary border small">{{
-                                sec.codigo
-                              }}</span>
-                              <span class="fw-semibold text-dark small">{{ sec.nombre }}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div class="selection-indicator">
-                          <i
-                            class="bi fs-5"
-                            [ngClass]="
-                              sec.sectorId && isSectorSelected(sec.sectorId)
-                                ? 'bi-check-circle-fill text-success'
-                                : 'bi-circle text-muted'
-                            "
-                          ></i>
-                        </div>
-                      </div>
-                    }
-                  }
                 }
               </div>
             } @else {
-              <!-- Modo B: Cortes, Reconexiones, Inspecciones, Instalaciones (Contratos) -->
-              <div class="column-header d-flex flex-column gap-2">
-                <div class="d-flex justify-content-between align-items-center">
-                  <span class="fw-bold text-dark small text-uppercase"
-                    >2. Comunidad & Contratos</span
-                  >
-                  <span class="badge bg-success-subtle text-success"
-                    >{{ selectedContratoIds().length }} selec.</span
-                  >
-                </div>
-                <select
-                  class="form-select form-select-sm shadow-none"
-                  [ngModel]="selectedComunidadId()"
-                  (ngModelChange)="onComunidadChange($event)"
-                  [disabled]="isLoading()"
+              <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+                <i class="bi bi-pie-chart-fill text-warning"></i>
+                Distribución de Contratos
+              </h6>
+
+              <div
+                class="d-flex flex-column gap-3 scrollbar-subtle overflow-y-auto"
+                style="max-height: 480px"
+              >
+                @let comSel = selectedComunidadId();
+                @let totalC = nonLecturaCoverage.totalContratosEnComunidad;
+                @let assignedC = nonLecturaCoverage.assignedContratosCount;
+                @let pendingC = nonLecturaCoverage.pendingContratos;
+                @let pct = totalC > 0 ? (assignedC / totalC) * 100 : 0;
+
+                <div
+                  class="p-3 rounded-3 border"
+                  [ngClass]="
+                    assignedC === totalC && totalC > 0
+                      ? 'border-success'
+                      : assignedC > 0
+                        ? 'border-info'
+                        : ''
+                  "
+                  [style.backgroundColor]="
+                    assignedC === totalC && totalC > 0
+                      ? '#f0fdf4'
+                      : assignedC > 0
+                        ? '#f0f9ff'
+                        : '#ffffff'
+                  "
                 >
-                  <option [ngValue]="null">Seleccione una comunidad...</option>
-                  @for (com of comunidades(); track com.id) {
-                    <option [ngValue]="com.id">{{ com.nombre }}</option>
-                  }
-                </select>
-
-                @if (selectedComunidadId()) {
-                  <app-picker-input
-                    inputId="workspacePageContractSearch"
-                    placeholder="Buscar contrato, cliente, CI o guía..."
-                    icon="bi-search"
-                    [query]="contractSearch()"
-                    [disabled]="isLoading() || isLoadingContracts()"
-                    (queryChange)="contractSearch.set($event)"
-                    (clear)="contractSearch.set('')"
-                  />
-                }
-              </div>
-
-              <div class="column-body">
-                @if (!selectedComunidadId()) {
-                  <div class="text-center py-5 text-muted small">
-                    <i class="bi bi-geo-alt fs-2 d-block mb-1 text-secondary"></i>
-                    Seleccione una comunidad para listar sus contratos.
-                  </div>
-                } @else if (isLoadingContracts()) {
-                  <div class="text-center py-5 text-muted small">
-                    <span
-                      class="spinner-border spinner-border-sm text-primary d-block mx-auto mb-2"
-                      role="status"
-                    ></span>
-                    Cargando contratos de la comunidad...
-                  </div>
-                } @else if (filteredContratos().length === 0) {
-                  <div class="text-center py-5 text-muted small bg-light rounded-3 border">
-                    <i class="bi bi-file-earmark-x fs-2 d-block mb-1 text-secondary"></i>
-                    No se encontraron contratos para esta búsqueda.
-                  </div>
-                } @else {
-                  <div class="d-flex justify-content-between align-items-center mb-2 px-1">
-                    <span class="fw-semibold text-muted small"
-                      >Contratos ({{ filteredContratos().length }}):</span
-                    >
-                    <button
-                      type="button"
-                      class="btn btn-link btn-sm p-0 text-decoration-none small fw-medium"
-                      (click)="toggleAllFilteredContratos()"
-                    >
-                      {{
-                        areAllFilteredContratosSelected() ? 'Desmarcar todos' : 'Seleccionar todos'
-                      }}
-                    </button>
-                  </div>
-
-                  @for (c of filteredContratos(); track c.contratoId) {
-                    <div
-                      class="sector-card d-flex align-items-center justify-content-between p-3 mb-2"
-                      [class.selected]="isContratoSelected(c.contratoId)"
-                      (click)="toggleContrato(c.contratoId)"
-                      role="button"
-                      tabindex="0"
-                      (keydown.enter)="toggleContrato(c.contratoId)"
-                      (keydown.space)="toggleContrato(c.contratoId); $event.preventDefault()"
-                    >
-                      <div class="d-flex align-items-center gap-3">
-                        <div
-                          class="sector-icon-tile"
-                          [class.active]="isContratoSelected(c.contratoId)"
-                        >
-                          <i class="bi bi-file-earmark-person"></i>
-                        </div>
-                        <div>
-                          <div class="fw-bold text-dark small">
-                            {{ c.cliente.nombres }} {{ c.cliente.apellidos }}
-                          </div>
-                          <div class="text-muted" style="font-size: 0.72rem">
-                            CI: {{ c.cliente.identificacion }} · Contrato #{{ c.contratoId }}
-                          </div>
-                          <div class="d-flex align-items-center gap-1 mt-1">
-                            @if (getMedidorSerie(c)) {
-                              <span
-                                class="badge bg-light text-secondary border"
-                                style="font-size: 0.68rem"
-                              >
-                                Medidor: {{ getMedidorSerie(c) }}
-                              </span>
-                            }
-                            @if (c.estadoCobranza) {
-                              <span
-                                class="badge"
-                                [ngClass]="
-                                  c.estadoCobranza === 'EN_MORA'
-                                    ? 'bg-danger-subtle text-danger'
-                                    : 'bg-success-subtle text-success'
-                                "
-                                style="font-size: 0.68rem"
-                              >
-                                {{ c.estadoCobranza }}
-                              </span>
-                            }
-                          </div>
-                        </div>
-                      </div>
-
-                      <div class="selection-indicator">
-                        <i
-                          class="bi fs-5"
-                          [ngClass]="
-                            isContratoSelected(c.contratoId)
-                              ? 'bi-check-circle-fill text-success'
-                              : 'bi-circle text-muted'
-                          "
-                        ></i>
-                      </div>
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                      <i
+                        class="bi"
+                        [ngClass]="
+                          assignedC === totalC && totalC > 0
+                            ? 'bi-check-circle-fill text-success'
+                            : assignedC > 0
+                              ? 'bi-pie-chart-fill text-info'
+                              : 'bi-file-earmark text-muted'
+                        "
+                      ></i>
+                      <span class="fw-bold text-dark small">
+                        {{ getComunidadName(comSel!) }}
+                      </span>
                     </div>
-                  }
+
+                    @if (assignedC === totalC && totalC > 0) {
+                      <span class="badge badge-green-complete rounded-pill px-2 py-1">
+                        100% ASIGNADOS
+                      </span>
+                    } @else if (assignedC > 0) {
+                      <span class="badge badge-blue-partial rounded-pill px-2 py-1">
+                        PARCIAL ({{ assignedC }}/{{ totalC }})
+                      </span>
+                    } @else {
+                      <span class="badge bg-light text-muted border px-2 py-1"> SIN ASIGNAR </span>
+                    }
+                  </div>
+
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    <div class="progress flex-grow-1" style="height: 6px">
+                      <div
+                        class="progress-bar"
+                        [ngClass]="assignedC === totalC && totalC > 0 ? 'bg-success' : 'bg-info'"
+                        role="progressbar"
+                        [style.width.%]="pct"
+                      ></div>
+                    </div>
+                    <span class="small fw-semibold text-muted">{{ pct | number: '1.0-0' }}%</span>
+                  </div>
+
+                  <div class="d-flex justify-content-between small text-muted">
+                    <span
+                      ><i class="bi bi-check2 me-1 text-success"></i>Asignados:
+                      <strong>{{ assignedC }}</strong></span
+                    >
+                    <span
+                      ><i class="bi bi-clock me-1 text-warning"></i>Pendientes:
+                      <strong>{{ pendingC }}</strong></span
+                    >
+                  </div>
+                </div>
+
+                @if (comSel) {
+                  <div class="text-muted small fst-italic px-1">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Seleccioná otra comunidad en el Paso 1 para despachar contratos de otra zona en
+                    la misma sesión.
+                  </div>
                 }
               </div>
             }
           </div>
         </div>
+      </div>
 
-        <!-- Columna 3: Resumen & Confirmación -->
-        <div class="col-lg-4 col-md-12">
-          <div class="workspace-column">
-            <div class="column-header">
-              <span class="fw-bold text-dark small text-uppercase">3. Resumen de Asignación</span>
-            </div>
+      <!-- Confirmation Callout Card -->
+      <div
+        class="card border-0 shadow-sm rounded-4 p-4 bg-white text-center d-flex flex-column align-items-center"
+      >
+        <div
+          class="rounded-circle d-flex align-items-center justify-content-center mb-3"
+          style="width: 52px; height: 52px; background: #dcfce7; color: #15803d"
+        >
+          <i class="bi bi-send-check-fill fs-3"></i>
+        </div>
+        <h5 class="fw-bold text-dark mb-1">Confirmar Asignación Mensual</h5>
+        <p class="text-muted small mb-4" style="max-width: 540px">
+          @if (isLecturaMode()) {
+            Al confirmar, el sistema registrará los lotes de rutas en la base de datos para el
+            período
+            <strong>{{ selectedPeriod()?.nombre || 'seleccionado' }}</strong> y quedarán disponibles
+            para sincronización en la app móvil de los operarios.
+          } @else {
+            Al confirmar, el sistema registrará las rutas de
+            <strong>{{
+              tiposActividad().find((t) => t.codigo === tipoActividadSeleccionada())?.nombre ||
+                'la actividad seleccionada' | lowercase
+            }}</strong>
+            con los contratos asignados a cada operario para el período
+            <strong>{{ selectedPeriod()?.nombre || 'seleccionado' }}</strong
+            >.
+          }
+        </p>
 
-            <div class="column-body d-flex flex-column justify-content-between">
-              <div class="summary-card mb-3">
-                <div class="summary-item">
-                  <span class="label">Período:</span>
-                  <span class="value">{{
-                    selectedPeriod()
-                      ? selectedPeriod()!.nombre || 'Período #' + selectedPeriod()!.periodoId
-                      : 'Sin seleccionar'
-                  }}</span>
-                </div>
-
-                <div class="summary-item">
-                  <span class="label">Operario:</span>
-                  <span class="value text-primary">{{ getOperarioName() }}</span>
-                </div>
-
-                <div class="summary-item">
-                  <span class="label">Comunidad:</span>
-                  <span class="value">{{ getComunidadName() }}</span>
-                </div>
-
-                <div class="summary-item">
-                  <span class="label">Alcance:</span>
-                  <span class="value">
-                    @if (isLecturaActivity(tipoActividadSeleccionada())) {
-                      @if (isAllCommunitySelected()) {
-                        <span class="badge bg-primary text-white">Toda la Comunidad</span>
-                      } @else if (selectedSectorIds().length > 0) {
-                        <span class="badge bg-success-subtle text-success"
-                          >{{ selectedSectorIds().length }} sectores seleccionados</span
-                        >
-                      } @else {
-                        <span class="text-muted">Ninguno</span>
-                      }
-                    } @else {
-                      @if (selectedContratoIds().length > 0) {
-                        <span class="badge bg-success-subtle text-success"
-                          >{{ selectedContratoIds().length }} contratos seleccionados</span
-                        >
-                      } @else {
-                        <span class="text-muted">Ninguno</span>
-                      }
-                    }
-                  </span>
-                </div>
-
-                @if (!isAllCommunitySelected() && selectedSectorIds().length > 0) {
-                  <div class="mt-2 pt-2 border-top">
-                    <div class="label small mb-1">Sectores incluidos:</div>
-                    <div class="d-flex flex-wrap gap-1">
-                      @for (s of getSelectedSectorsList(); track s.sectorId) {
-                        <span class="badge bg-light text-dark border small">{{ s.nombre }}</span>
-                      }
-                    </div>
-                  </div>
-                }
-              </div>
-
-              <!-- Configuración adicional -->
-              <div class="bg-light p-3 rounded-3 border mb-3">
-                <div class="mb-3">
-                  <app-picker-input
-                    inputId="inputWorkspacePageNombreBase"
-                    label="Nombre base de la ruta:"
-                    placeholder="Ej. Ruta Lectura - 2026 - Septiembre"
-                    icon="bi-card-text"
-                    [query]="nombreBase()"
-                    [disabled]="isLoading()"
-                    (queryChange)="onNombreBaseInput($event)"
-                    (clear)="onNombreBaseClear()"
-                  />
-                  <div class="text-muted mt-1" style="font-size: 0.72rem">
-                    Se autogenera como: "Ruta [Tipo] - [Período] - [Mes]". Podés personalizarlo si
-                    lo deseás.
-                  </div>
-                </div>
-
-                <div>
-                  <label
-                    for="workspacePageFechaPlanificada"
-                    class="form-label fw-semibold text-dark small mb-1"
-                    >Mes Planificado:</label
-                  >
-                  <app-date-picker
-                    inputId="workspacePageFechaPlanificada"
-                    placeholder="Seleccione el mes"
-                    selectionMode="month"
-                    [value]="fechaPlanificada()"
-                    [disabled]="isLoading()"
-                    (valueChange)="fechaPlanificada.set($event)"
-                  />
-                </div>
-              </div>
-
-              <!-- Botones de Acción -->
-              <div class="d-flex flex-column gap-2 pt-2 border-top">
-                <button
-                  type="button"
-                  class="btn btn-primary w-100 py-2 fw-semibold d-flex align-items-center justify-content-center gap-2 shadow-sm"
-                  [disabled]="!isFormValid() || isLoading()"
-                  (click)="confirmAndSave()"
-                >
-                  @if (isLoading()) {
-                    <span
-                      class="spinner-border spinner-border-sm"
-                      role="status"
-                      aria-hidden="true"
-                    ></span>
-                    <span>Generando asignaciones...</span>
-                  } @else {
-                    <i class="bi bi-check2-circle fs-5"></i>
-                    <span>Confirmar Asignación</span>
-                  }
-                </button>
-
-                <button
-                  type="button"
-                  class="btn btn-outline-secondary w-100 py-2 fw-medium"
-                  (click)="goBack()"
-                  [disabled]="isLoading()"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          </div>
+        <div class="d-flex align-items-center gap-3">
+          <button
+            type="button"
+            class="btn btn-outline-secondary px-4 py-2 rounded-3 fw-medium"
+            (click)="backToAssignment()"
+            [disabled]="isLoading()"
+          >
+            Modificar Rutas
+          </button>
+          <button
+            type="button"
+            class="btn btn-primary px-5 py-2 rounded-3 fw-semibold shadow-sm"
+            [disabled]="
+              isLoading() ||
+              (isLecturaMode()
+                ? totalSessionAssignedSectorsCount() === 0
+                : totalSessionAssignedContractsCount() === 0)
+            "
+            (click)="confirmAndDispatchAll()"
+          >
+            @if (isLoading()) {
+              <span
+                class="spinner-border spinner-border-sm me-2"
+                role="status"
+                aria-hidden="true"
+              ></span>
+              <span>Despachando Rutas...</span>
+            } @else {
+              <i class="bi bi-check-lg me-1"></i>
+              <span>Confirmar y Despachar Rutas</span>
+            }
+          </button>
         </div>
       </div>
     </div>

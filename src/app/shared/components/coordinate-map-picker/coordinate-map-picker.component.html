@@ -1,0 +1,77 @@
+<div class="coordinate-picker">
+  <div class="coordinate-picker-map-wrapper">
+    @if (isDegradedMap()) {
+      <div class="offline-map-banner" role="status" aria-live="polite">
+        <i class="bi bi-cloud-slash" aria-hidden="true"></i>
+        <span>Mapa no disponible · Ingrese las coordenadas manualmente</span>
+      </div>
+    }
+    <div
+      #mapContainer
+      class="coordinate-picker-canvas"
+      role="region"
+      aria-label="Mapa de ubicación del predio"
+    ></div>
+  </div>
+
+  <div class="row g-2 mt-3">
+    <div class="col-sm-6">
+      <label [for]="inputIdPrefix() + '-latitud'" class="form-label fw-semibold text-dark">
+        Latitud
+      </label>
+      <input
+        #latitudInput
+        [id]="inputIdPrefix() + '-latitud'"
+        type="number"
+        step="any"
+        class="form-control"
+        [value]="latitud() ?? ''"
+        (change)="onCoordinateInputChange()"
+        (keydown.enter)="onCoordinateInputEnter($event)"
+      />
+    </div>
+    <div class="col-sm-6">
+      <label [for]="inputIdPrefix() + '-longitud'" class="form-label fw-semibold text-dark">
+        Longitud
+      </label>
+      <input
+        #longitudInput
+        [id]="inputIdPrefix() + '-longitud'"
+        type="number"
+        step="any"
+        class="form-control"
+        [value]="longitud() ?? ''"
+        (change)="onCoordinateInputChange()"
+        (keydown.enter)="onCoordinateInputEnter($event)"
+      />
+    </div>
+  </div>
+
+  @if (errorMessage()) {
+    <span class="text-danger x-small d-block mt-1">{{ errorMessage() }}</span>
+  }
+
+  @if (serviceAreaError()) {
+    <span class="text-danger x-small d-block mt-1" role="alert">{{ serviceAreaError() }}</span>
+  }
+
+  @if (canGeolocate) {
+    <button
+      type="button"
+      class="btn btn-outline-primary btn-sm mt-2"
+      [disabled]="isLocating()"
+      (click)="useCurrentLocation()"
+    >
+      <i class="bi bi-crosshair" aria-hidden="true"></i>
+      {{ isLocating() ? 'Obteniendo ubicación...' : 'Usar mi ubicación' }}
+    </button>
+
+    @if (geolocationError()) {
+      <span class="text-danger x-small d-block mt-1">{{ geolocationError() }}</span>
+    }
+  }
+
+  <p class="text-muted x-small mt-2 mb-0">
+    Haga clic en el mapa o arrastre el marcador para ubicar el predio.
+  </p>
+</div>

@@ -6,7 +6,7 @@ import { Pipe, PipeTransform } from '@angular/core';
 })
 export class RouteTypePipe implements PipeTransform {
   private readonly labels: Record<string, string> = {
-    TOMA_LECTURA: 'Lectura',
+    LECTURA: 'Lectura',
     RECONEXION: 'Reconexión',
     INSTALACION: 'Instalación',
     INSPECCION: 'Inspección',

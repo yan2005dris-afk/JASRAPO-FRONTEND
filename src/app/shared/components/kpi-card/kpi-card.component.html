@@ -1,0 +1,28 @@
+<div class="kpi-card-root tone-{{ tone() }}" [class.is-loading]="loading()">
+  <div class="kpi-card-body">
+    <div class="kpi-content">
+      <span class="kpi-label">{{ label() }}</span>
+      <div class="kpi-value-wrapper">
+        @if (loading()) {
+          <div class="kpi-skeleton-value placeholder-glow">
+            <span class="placeholder col-6 rounded-2"></span>
+          </div>
+        } @else {
+          <span class="kpi-value">{{ value() }}</span>
+        }
+      </div>
+      @if (subtext()) {
+        <span class="kpi-subtext">
+          <span class="kpi-indicator-dot"></span>
+          {{ subtext() }}
+        </span>
+      }
+    </div>
+
+    @if (icon()) {
+      <div class="kpi-icon-container">
+        <i [class]="'bi ' + icon()"></i>
+      </div>
+    }
+  </div>
+</div>

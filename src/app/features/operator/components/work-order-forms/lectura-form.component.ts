@@ -2,15 +2,17 @@ import {
   Component,
   ChangeDetectionStrategy,
   DestroyRef,
+  effect,
   inject,
   input,
   OnInit,
+  signal,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PhotoCaptureComponent } from '../../../../shared/components/photo-capture/photo-capture.component';
-import type { LecturaFormPayload } from '../../models/work-order-form.models';
+import { calculateConsumo, type LecturaFormPayload } from '../../models/work-order-form.models';
 import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
 
 @Component({
@@ -60,15 +62,25 @@ import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
         }
       </div>
 
-      <div class="form-switch-field">
-        <input
-          type="checkbox"
-          id="lf-inicial"
-          formControlName="lecturaInicial"
-          class="switch-input"
-        />
-        <label for="lf-inicial" class="switch-label">¿Es Lectura Inicial?</label>
-        <span class="field-hint full-width">Ignora la validación con la lectura anterior.</span>
+      <!-- Consumo Calculado Display -->
+      <div class="consumption-preview-box">
+        <div class="consumption-preview-header">
+          <span class="consumption-title">
+            <i class="bi bi-speedometer2"></i> Consumo Calculado
+          </span>
+          <span class="consumption-tag">Diferencia de período</span>
+        </div>
+        <div class="consumption-preview-main">
+          <span class="consumption-val">{{ consumoCalculado() | number: '1.2-2' }}</span>
+          <span class="consumption-unit">m³</span>
+        </div>
+        <div class="consumption-preview-formula">
+          <span
+            >Lectura Actual ({{ form.get('lecturaActual')?.value ?? 0 }}) - Lectura Anterior ({{
+              lecturaAnterior()
+            }})</span
+          >
+        </div>
       </div>
 
       <div class="form-field">
@@ -101,6 +113,9 @@ import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
           @if (isSaving()) {
             <span class="spinner" role="status" aria-hidden="true"></span>
             Guardando...
+          } @else if (initialLecturaActual() !== null) {
+            <i class="bi bi-check2-all"></i>
+            Verificar y Guardar
           } @else {
             <i class="bi bi-check-circle-fill"></i>
             Guardar Lectura
@@ -117,23 +132,70 @@ export class LecturaFormComponent
   /** Lectura anterior pre-cargada por el padre desde el caché. */
   readonly lecturaAnterior = input(0);
 
+  /** Valor previo de lectura actual para verificación o re-edición. */
+  readonly initialLecturaActual = input<number | null>(null);
+
+  /** Descripción de anomalía previa si existe. */
+  readonly initialDescripcionAnomalia = input<string | null>(null);
+
+  /** Consumo calculado reactivo a partir de lecturaActual y lecturaAnterior. */
+  readonly consumoCalculado = signal<number>(0);
+
   // Necesario porque ngOnInit debe llamar buildForm + suscribir valueChanges,
   // pero el base también implementa ngOnInit (que llama buildForm). Resolvemos
   // con takeUntilDestroyed y reescritura explícita del ciclo de vida.
   private readonly destroyRef = inject(DestroyRef);
 
+  constructor() {
+    super();
+    // Reactividad para precarga asíncrona de señales
+    effect(() => {
+      const anterior = this.lecturaAnterior();
+      const initialActual = this.initialLecturaActual();
+      const anomalia = this.initialDescripcionAnomalia();
+
+      if (this.form) {
+        const anteriorCtrl = this.form.get('lecturaAnterior');
+        if (anteriorCtrl && anteriorCtrl.value !== anterior) {
+          anteriorCtrl.setValue(anterior, { emitEvent: false });
+        }
+
+        const actualCtrl = this.form.get('lecturaActual');
+        if (actualCtrl && !actualCtrl.dirty && initialActual !== null) {
+          if (actualCtrl.value !== initialActual) {
+            actualCtrl.setValue(initialActual, { emitEvent: false });
+          }
+        }
+
+        const anomaliaCtrl = this.form.get('descripcionAnomalia');
+        if (anomaliaCtrl && !anomaliaCtrl.dirty && anomalia) {
+          if (anomaliaCtrl.value !== anomalia) {
+            anomaliaCtrl.setValue(anomalia, { emitEvent: false });
+          }
+        }
+
+        this.validateCrossField();
+      }
+    });
+  }
+
   override ngOnInit(): void {
     super.ngOnInit();
     this.setupValidations();
+    this.validateCrossField();
   }
 
   protected buildForm(): FormGroup {
+    const defaultActual = this.initialLecturaActual() ?? 0;
     return this.fb.group({
       lecturaAnterior: [{ value: this.lecturaAnterior(), disabled: true }],
-      lecturaActual: [0, [Validators.required, Validators.min(0)]],
-      lecturaInicial: [false],
-      descripcionAnomalia: [''],
+      lecturaActual: [defaultActual, [Validators.required, Validators.min(0)]],
+      descripcionAnomalia: [this.initialDescripcionAnomalia() ?? ''],
     });
+  }
+
+  protected override isPhotoRequired(): boolean {
+    return false;
   }
 
   protected buildPayload(
@@ -144,7 +206,6 @@ export class LecturaFormComponent
       tipoActividad: 'LECTURA',
       lecturaAnterior: Number(formValue['lecturaAnterior'] ?? 0),
       lecturaActual: Number(formValue['lecturaActual'] ?? 0),
-      lecturaInicial: !!formValue['lecturaInicial'],
       ...(formValue['descripcionAnomalia']
         ? { descripcionAnomalia: String(formValue['descripcionAnomalia']) }
         : {}),
@@ -154,16 +215,11 @@ export class LecturaFormComponent
 
   /**
    * Validación cruzada específica del form Lectura: lecturaActual debe ser
-   * >= lecturaAnterior, salvo que lecturaInicial=true. Otros forms no necesitan
-   * esta lógica — se mantiene acá, no en el base.
+   * >= lecturaAnterior. Otros forms no necesitan esta lógica — se mantiene acá.
    */
   private setupValidations(): void {
     this.form
       .get('lecturaActual')
-      ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.validateCrossField());
-    this.form
-      .get('lecturaInicial')
       ?.valueChanges.pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.validateCrossField());
   }
@@ -171,12 +227,15 @@ export class LecturaFormComponent
   private validateCrossField(): void {
     const actual = this.form.get('lecturaActual')?.value;
     const anterior = this.lecturaAnterior();
-    const isInicial = this.form.get('lecturaInicial')?.value;
+
+    const actualNum = Number(actual ?? 0);
+    const consumo = calculateConsumo(anterior, actualNum);
+    this.consumoCalculado.set(consumo);
 
     const ctrl = this.form.get('lecturaActual');
     if (!ctrl) return;
 
-    if (!isInicial && actual < anterior) {
+    if (actual < anterior) {
       ctrl.setErrors({ ...ctrl.errors, lowerThanAnterior: true });
     } else {
       const errs = { ...ctrl.errors };

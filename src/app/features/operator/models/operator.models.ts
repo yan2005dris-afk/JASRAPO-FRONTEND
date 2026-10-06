@@ -1,13 +1,20 @@
-export type RouteType = 'TOMA_LECTURA' | 'RECONEXION' | 'INSTALACION' | 'INSPECCION';
+export type RouteType = 'LECTURA' | 'RECONEXION' | 'INSTALACION' | 'INSPECCION';
 export type RouteState = 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA';
 export type WorkOrderActivityType = 'LECTURA' | 'INSTALACION' | 'RECONEXION' | 'INSPECCION';
 export type WorkOrderState = 'PENDIENTE' | 'EN_PROGRESO' | 'COMPLETADA' | 'CANCELADA' | 'FALLIDA';
 
+export interface OperatorActivityType {
+  tipoActividadId: number;
+  codigo: string;
+  nombre: string;
+  descripcion?: string | null;
+  icono?: string | null;
+  activo: boolean;
+}
+
 export interface OperatorMeterInfo {
   medidorId: string;
   serie: string;
-  latitud?: number;
-  longitud?: number;
 }
 
 export interface OperatorUserInfo {
@@ -20,6 +27,8 @@ export interface OperatorWorkOrderContract {
   numeroContrato: string;
   clienteNombre: string;
   direccion: string;
+  latitud?: number;
+  longitud?: number;
 }
 
 export interface OperatorWorkOrder {
@@ -77,12 +86,6 @@ export interface RoutePoint {
   clienteNombre: string;
 }
 
-export type TaskRouteType = RouteType;
-export type TaskState = RouteState;
-export type TaskMedidor = OperatorMeterInfo;
-export type TaskOperario = OperatorUserInfo;
-export type TaskRutaPunto = RoutePoint;
-
 export interface AnomaliaItem {
   tipo: string;
   observacion: string;
@@ -90,7 +93,7 @@ export interface AnomaliaItem {
 }
 
 export interface ReadingWithAnomaly {
-  lecturaId: string;
+  lecturaId: string | null;
   medidorId: string | null;
   medidorSerie: string;
   fecha: string;

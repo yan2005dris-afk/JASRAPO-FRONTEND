@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { IndexedDbService } from './indexed-db.service';
 import { AuthService } from './auth.service';
-import { IMeterDto } from '../../features/contracts/meters/interfaces/imeter.interface';
+import { IMeterDto } from '../../features/contracts/meters/domain/models/meter.model';
 
 @Injectable({ providedIn: 'root' })
 export class MeterCacheService {

@@ -7,7 +7,7 @@ describe('operator.models — type contracts', () => {
   it('OperatorRouteResponse has required fields with correct shape', () => {
     const task: OperatorRouteResponse = {
       rutaId: 'r-001',
-      tipoRuta: 'TOMA_LECTURA',
+      tipoRuta: 'LECTURA',
       nombre: 'Ruta Norte',
       estado: 'PENDIENTE',
       operarioId: 42,
@@ -17,12 +17,12 @@ describe('operator.models — type contracts', () => {
     };
 
     expect(task.rutaId).toBe('r-001');
-    expect(task.tipoRuta).toBe('TOMA_LECTURA');
+    expect(task.tipoRuta).toBe('LECTURA');
     expect(task.estado).toBe('PENDIENTE');
     expect(task.medidor).toBeNull();
   });
 
-  it('OperatorRouteResponse medidor field carries serie and optional coordinates', () => {
+  it('OperatorRouteResponse medidor carries serie and work order contract carries optional coordinates', () => {
     const task: OperatorRouteResponse = {
       rutaId: 'r-002',
       tipoRuta: 'INSTALACION',
@@ -30,12 +30,30 @@ describe('operator.models — type contracts', () => {
       estado: 'EN_PROGRESO',
       operarioId: 1,
       comunidadId: 2,
-      medidor: { medidorId: 'M-01', serie: 'SER-123', latitud: -0.5, longitud: -78.5 },
+      medidor: { medidorId: 'M-01', serie: 'SER-123' },
       operario: { usuarioId: 1, nombres: 'Pedro', apellidos: 'García' },
+      ordenesTrabajo: [
+        {
+          ordenTrabajoId: 'ot-001',
+          rutaId: 'r-002',
+          tipoActividad: 'INSTALACION',
+          estado: 'PENDIENTE',
+          ordenVisita: 1,
+          contratoId: 'c-001',
+          contrato: {
+            numeroContrato: 'CNT-001',
+            clienteNombre: 'Pedro García',
+            direccion: 'Calle Principal 123',
+            latitud: -0.5,
+            longitud: -78.5,
+          },
+        },
+      ],
     };
 
     expect(task.medidor?.serie).toBe('SER-123');
-    expect(task.medidor?.latitud).toBe(-0.5);
+    expect(task.ordenesTrabajo?.[0]?.contrato?.latitud).toBe(-0.5);
+    expect(task.ordenesTrabajo?.[0]?.contrato?.longitud).toBe(-78.5);
   });
 
   it('ReadingWithAnomaly has required fields with correct shape', () => {

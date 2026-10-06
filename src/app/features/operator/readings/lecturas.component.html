@@ -21,7 +21,7 @@
   <!-- Route context banner -->
   @if (routeContext(); as ctx) {
     <div class="route-context-banner">
-      <span class="route-ctx-badge badge-{{ ctx.tipo.toLowerCase() }}">
+      <span class="route-ctx-badge badge-{{ (ctx.tipo || 'LECTURA').toLowerCase() }}">
         {{ ctx.tipo | routeType }}
       </span>
       <span class="route-ctx-name">{{ ctx.nombre }}</span>
@@ -31,33 +31,221 @@
   <!-- ============ STEP 1: SEARCH / LIST ============ -->
   @if (currentStep() === 'search') {
     <div class="step-view">
-      <div class="screen-header">
-        <h1 class="screen-title">Medidores</h1>
-        @if (networkService.isOnline()) {
-          <button
-            class="btn-icon"
-            (click)="fetchAndCacheMeters()"
-            [disabled]="isLoadingMeters()"
-            id="btn-refresh-meters"
-            title="Sincronizar"
-          >
-            <i
-              class="bi bi-arrow-clockwise"
-              [class.animate-spin]="isLoadingMeters()"
-              aria-hidden="true"
-            ></i>
-          </button>
-        }
-      </div>
+      @if (routeContext(); as ctx) {
+        <!-- Mockup: Flujo de Órdenes de Trabajo de la Ruta -->
+        <div class="orders-flow-container">
+          <div class="flow-nav-header">
+            <button
+              type="button"
+              class="flow-back-btn"
+              (click)="goBackToRoutes()"
+              id="btn-back-rutas"
+            >
+              <i class="bi bi-chevron-left"></i> Volver a Rutas
+            </button>
+            <span class="route-header-badge badge-{{ (ctx.tipo || 'LECTURA').toLowerCase() }}">
+              {{ ctx.tipo | routeType }}
+            </span>
+          </div>
 
-      <app-meter-search
-        [groups]="metersByEstado()"
-        [filterChips]="estadoFilterChips()"
-        [isLoading]="isLoadingMeters()"
-        (meterSelected)="selectMeter($event)"
-        (searchQueryChange)="searchQuery.set($event)"
-        (filterChange)="selectedEstadoFilter.set($event)"
-      />
+          <div class="orders-kpi-card mb-3">
+            <div class="orders-kpi-header">
+              <div class="orders-kpi-info">
+                <h2 class="orders-route-title text-dark mb-0">{{ ctx.nombre }}</h2>
+                <span class="orders-kpi-subtitle">
+                  {{ orderCounts().completed }} de {{ orderCounts().total }} completadas ({{
+                    orderCounts().pending
+                  }}
+                  pendientes)
+                </span>
+              </div>
+              <div class="orders-kpi-badge font-mono">{{ orderCounts().pct }}%</div>
+            </div>
+            <div class="orders-kpi-track">
+              <div class="orders-kpi-fill" [style.width.%]="orderCounts().pct"></div>
+            </div>
+          </div>
+
+          <!-- Segmented Control del Mockup -->
+          <div class="segmented-control" role="tablist" aria-label="Filtro de órdenes">
+            <button
+              type="button"
+              class="segmented-btn"
+              [class.active]="orderFilter() === 'TODAS'"
+              (click)="orderFilter.set('TODAS')"
+              id="tab-orders-todas"
+            >
+              <span>Todas</span>
+              <span class="segmented-counter">{{ orderCounts().total }}</span>
+            </button>
+            <button
+              type="button"
+              class="segmented-btn"
+              [class.active]="orderFilter() === 'PENDIENTES'"
+              (click)="orderFilter.set('PENDIENTES')"
+              id="tab-orders-pendientes"
+            >
+              <span>Pendientes</span>
+              <span class="segmented-counter">{{ orderCounts().pending }}</span>
+            </button>
+            <button
+              type="button"
+              class="segmented-btn"
+              [class.active]="orderFilter() === 'COMPLETADAS'"
+              (click)="orderFilter.set('COMPLETADAS')"
+              id="tab-orders-completadas"
+            >
+              <span>Listas</span>
+              <span class="segmented-counter">{{ orderCounts().completed }}</span>
+            </button>
+          </div>
+
+          <!-- Buscador rápido dentro de la ruta -->
+          <div class="search-input-wrapper mb-3">
+            <i class="bi bi-search search-input-icon" aria-hidden="true"></i>
+            <input
+              type="search"
+              class="search-input-box"
+              placeholder="Buscar por cliente, medidor o contrato..."
+              [value]="searchQuery()"
+              (input)="searchQuery.set($any($event.target).value)"
+            />
+            @if (searchQuery()) {
+              <button
+                type="button"
+                class="clear-search-btn"
+                (click)="searchQuery.set('')"
+                aria-label="Limpiar búsqueda"
+              >
+                <i class="bi bi-x-circle-fill"></i>
+              </button>
+            }
+          </div>
+
+          <!-- Lista de Tarjetas Radiales de Órdenes del Mockup -->
+          <div class="orders-list">
+            @if (segmentedOrders().length === 0) {
+              <div class="empty-orders-state text-center p-4">
+                <i class="bi bi-inbox fs-1 text-muted"></i>
+                <p class="text-muted mt-2 mb-0">No hay órdenes en esta categoría.</p>
+              </div>
+            }
+
+            @for (meter of segmentedOrders(); track meter.serie; let idx = $index) {
+              @let isDone = isOrderCompleted(meter);
+              @let primaryOrder = primaryWorkOrderFor(meter);
+              @let actTipo =
+                primaryOrder && primaryOrder[0] ? primaryOrder[0] : ctx.tipo || 'LECTURA';
+              <div
+                class="radial-card clickable"
+                [class.completed]="isDone"
+                role="button"
+                tabindex="0"
+                (click)="selectMeter(meter)"
+                (keydown.enter)="selectMeter(meter)"
+                [attr.id]="'order-card-' + idx"
+              >
+                <div class="radial-card-content">
+                  <div
+                    class="radial-badge-circle"
+                    [class.radial-badge-done]="isDone"
+                    [class.radial-badge-pending]="!isDone"
+                  >
+                    {{ isDone ? '✓' : '#' + (idx + 1) }}
+                  </div>
+                  <div class="radial-card-body">
+                    <div class="radial-card-title-row">
+                      <strong class="radial-client-name text-dark">
+                        {{ meter.clienteNombre || 'Suministro sin nombre' }}
+                      </strong>
+                    </div>
+                    <small class="radial-address text-muted">
+                      {{ meter.modelo || 'Dirección de suministro' }}
+                    </small>
+                    <div class="radial-card-meta-row">
+                      <div class="meta-tags">
+                        <span
+                          class="activity-badge badge-act-{{
+                            (actTipo || 'LECTURA').toLowerCase()
+                          }}"
+                        >
+                          {{ actTipo || 'LECTURA' | routeType }}
+                        </span>
+                        <span class="meter-code font-mono">
+                          {{
+                            meter.serie.startsWith('OT-')
+                              ? meter.serie
+                              : meter.contratoId
+                                ? '#' + meter.contratoId
+                                : 'Med: ' + meter.serie
+                          }}
+                        </span>
+                      </div>
+                      @if (isDone) {
+                        @let statusInfo = getOrderStatusInfo(meter);
+                        <span class="badge-done-chip font-mono {{ statusInfo.cssClass }}">
+                          <i class="bi {{ statusInfo.icon }}"></i> {{ statusInfo.label }}
+                        </span>
+                      } @else {
+                        @let statusInfo = getOrderStatusInfo(meter);
+                        @if (statusInfo.label === 'Por Verificar') {
+                          <span class="badge-done-chip font-mono {{ statusInfo.cssClass }}">
+                            <i class="bi {{ statusInfo.icon }}"></i> {{ statusInfo.label }}
+                          </span>
+                          <button
+                            type="button"
+                            class="btn-atender btn-releer font-mono"
+                            (click)="$event.stopPropagation(); selectMeter(meter)"
+                          >
+                            Verificar
+                          </button>
+                        } @else {
+                          <button
+                            type="button"
+                            class="btn-atender font-mono"
+                            (click)="$event.stopPropagation(); selectMeter(meter)"
+                          >
+                            Atender
+                          </button>
+                        }
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <!-- Catálogo general de medidores (cuando no viene de una ruta específica) -->
+        <div class="screen-header">
+          <h1 class="screen-title">Medidores</h1>
+          @if (networkService.isOnline()) {
+            <button
+              class="btn-icon"
+              (click)="fetchAndCacheMeters()"
+              [disabled]="isLoadingMeters()"
+              id="btn-refresh-meters"
+              title="Sincronizar"
+            >
+              <i
+                class="bi bi-arrow-clockwise"
+                [class.animate-spin]="isLoadingMeters()"
+                aria-hidden="true"
+              ></i>
+            </button>
+          }
+        </div>
+
+        <app-meter-search
+          [groups]="metersByEstado()"
+          [filterChips]="estadoFilterChips()"
+          [isLoading]="isLoadingMeters()"
+          (meterSelected)="selectMeter($event)"
+          (searchQueryChange)="searchQuery.set($event)"
+          (filterChange)="selectedEstadoFilter.set($event)"
+        />
+      }
     </div>
   }
 
@@ -92,6 +280,7 @@
         }
 
         @let existingReading = existingReadingMap().get(meter.medidorId.toString());
+        @let isRejected = existingReading && existingReading.estado === 'RECHAZADA_VERIFICACION';
         @let isPendingOrRejected =
           existingReading &&
           (existingReading.estado === 'PENDIENTE' ||
@@ -153,12 +342,18 @@
               </div>
               <div class="action-text">
                 <span class="action-title">{{
-                  isPendingOrRejected ? 'Actualizar Lectura' : 'Registrar Lectura'
+                  isRejected
+                    ? 'Verificar Lectura'
+                    : isPendingOrRejected
+                      ? 'Actualizar Lectura'
+                      : 'Registrar Lectura'
                 }}</span>
                 <span class="action-desc">{{
-                  isPendingOrRejected
-                    ? 'Completar o corregir el valor medido'
-                    : 'Ingresar consumo del medidor'
+                  isRejected
+                    ? 'Confirmar o corregir la lectura observada'
+                    : isPendingOrRejected
+                      ? 'Completar o corregir el valor medido'
+                      : 'Ingresar consumo del medidor'
                 }}</span>
               </div>
               <i class="bi bi-chevron-right" aria-hidden="true"></i>
@@ -243,8 +438,8 @@
         <button
           type="button"
           class="back-btn"
-          aria-label="Volver a las acciones del medidor"
-          (click)="goBackToActions()"
+          aria-label="Volver a la lista de órdenes o acciones"
+          (click)="routeContext() ? goBackToSearch() : goBackToActions()"
           id="btn-back-actions"
         >
           <i class="bi bi-arrow-left" aria-hidden="true"></i>
@@ -283,6 +478,8 @@
           [meter]="meter"
           [tipoActividad]="activeTipoActividad()"
           [lecturaAnterior]="lecturaAnteriorPreloaded()"
+          [initialLecturaActual]="initialLecturaActualFor(meter)"
+          [initialDescripcionAnomalia]="initialDescripcionAnomaliaFor(meter)"
           [isSaving]="isSaving()"
           (submitted)="onWorkOrderSubmit($event)"
           (canceled)="goBackToActions()"

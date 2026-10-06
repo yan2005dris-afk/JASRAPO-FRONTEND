@@ -8,10 +8,13 @@ import { AuthService } from '../../../core/services/auth.service';
 import { MeterCacheService } from '../../../core/services/meter-cache.service';
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { signal } from '@angular/core';
-import { IMeterDto } from '../../contracts/meters/interfaces/imeter.interface';
+import { IMeterDto } from '../../contracts/meters/domain/models/meter.model';
 
 describe('LecturasComponent State Machine', () => {
   let component: LecturasComponent;
+  let submitReading: ReturnType<typeof vi.fn>;
+  let submitReadingCoordinates: ReturnType<typeof vi.fn>;
+  let submitWorkOrder: ReturnType<typeof vi.fn>;
   const mockMeter: IMeterDto = {
     medidorId: 101,
     serie: 'SER-101',
@@ -21,11 +24,12 @@ describe('LecturasComponent State Machine', () => {
     contratoId: 'CONT-1',
     clienteNombre: 'Carlos Gomez',
     fechaInstalacion: '2026-01-01',
-    latitud: null,
-    longitud: null,
   };
 
   beforeEach(() => {
+    submitReading = vi.fn().mockResolvedValue({ lecturaId: 'lec-1' });
+    submitReadingCoordinates = vi.fn().mockResolvedValue({ id: 'wo-reading' });
+    submitWorkOrder = vi.fn().mockResolvedValue({ id: 'wo-1' });
     TestBed.configureTestingModule({
       imports: [LecturasComponent],
       providers: [
@@ -40,7 +44,10 @@ describe('LecturasComponent State Machine', () => {
               queryParamMap: {
                 get: (key: string) => {
                   if (key === 'rutaNombre') return 'Ruta Central';
-                  if (key === 'rutaTipo') return 'TOMA_LECTURA';
+                  if (key === 'rutaTipo') return 'LECTURA';
+                  if (key === 'workOrders') {
+                    return 'SER-101:LECTURA:wo-reading:PENDIENTE';
+                  }
                   return null;
                 },
               },
@@ -52,6 +59,9 @@ describe('LecturasComponent State Machine', () => {
           useValue: {
             getRegisteredReadingsCache: vi.fn().mockResolvedValue([]),
             getPendingReadings: vi.fn().mockResolvedValue([]),
+            getSyncedReadings: vi.fn().mockResolvedValue([]),
+            savePendingReading: vi.fn().mockResolvedValue(1),
+            getAssignedWorkOrders: vi.fn().mockResolvedValue([]),
             saveMetersCache: vi.fn().mockResolvedValue(undefined),
             saveRegisteredReadingsCache: vi.fn().mockResolvedValue(undefined),
           },
@@ -66,8 +76,10 @@ describe('LecturasComponent State Machine', () => {
           provide: OperatorSyncService,
           useValue: {
             getReadingEstados: vi.fn().mockResolvedValue([]),
-            submitReading: vi.fn().mockResolvedValue({ lecturaId: 'lec-1' }),
-            submitWorkOrder: vi.fn().mockResolvedValue({ id: 'wo-1' }),
+            submitReading,
+            submitReadingCoordinates,
+            submitWorkOrder,
+            refreshPendingCounts: vi.fn().mockResolvedValue(undefined),
           },
         },
         {
@@ -172,5 +184,120 @@ describe('LecturasComponent State Machine', () => {
     component.clearSelection();
     expect(component.state()).toEqual({ kind: 'search' });
     expect(component.selectedMeter()).toBeNull();
+  });
+
+  it('stores GPS on the linked work order before submitting a reading', async () => {
+    component.ngOnInit();
+    component.registeredReadings.set([
+      { lecturaId: 'lec-1', medidorId: mockMeter.medidorId, estado: 'PENDIENTE' },
+    ]);
+    component.selectMeter(mockMeter);
+
+    await component.onWorkOrderSubmit({
+      tipoActividad: 'LECTURA',
+      lecturaAnterior: 100,
+      lecturaActual: 125,
+      fotoBlob: new Blob(['photo'], { type: 'image/jpeg' }),
+    });
+
+    expect(submitReadingCoordinates).toHaveBeenCalledWith('wo-reading');
+    expect(submitReading).toHaveBeenCalledWith(
+      expect.objectContaining({ _lecturaId: 'lec-1', lecturaActual: 125 }),
+    );
+    expect(submitReadingCoordinates.mock.invocationCallOrder[0]).toBeLessThan(
+      submitReading.mock.invocationCallOrder[0],
+    );
+  });
+
+  it('does not submit the reading when mandatory GPS acquisition fails', async () => {
+    component.ngOnInit();
+    component.registeredReadings.set([
+      { lecturaId: 'lec-1', medidorId: mockMeter.medidorId, estado: 'PENDIENTE' },
+    ]);
+    component.selectMeter(mockMeter);
+    submitReadingCoordinates.mockRejectedValue(
+      new Error('No se pudo obtener la ubicación. Activa el GPS.'),
+    );
+
+    await component.onWorkOrderSubmit({
+      tipoActividad: 'LECTURA',
+      lecturaAnterior: 100,
+      lecturaActual: 125,
+      fotoBlob: new Blob(['photo'], { type: 'image/jpeg' }),
+    });
+
+    expect(submitReading).not.toHaveBeenCalled();
+    expect(component.submissionFeedback()).toEqual(
+      expect.objectContaining({
+        kind: 'error',
+        message: expect.stringContaining('Activa el GPS'),
+      }),
+    );
+  });
+
+  describe('Route synthetic meters and meter-less work orders', () => {
+    it('synthesizes meters from activeOperatorRoute in sessionStorage and auto-selects single order', () => {
+      const routeData = {
+        rutaId: 'r-insp-1',
+        nombre: 'Inspección GUIA-2005-05',
+        tipoRuta: 'INSPECCION',
+        ordenesTrabajo: [
+          {
+            ordenTrabajoId: '45',
+            rutaId: 'r-insp-1',
+            tipoActividad: 'INSPECCION',
+            estado: 'PENDIENTE',
+            contratoId: 'c-1',
+            contrato: {
+              numeroContrato: 'GUIA-2005-05',
+              clienteNombre: 'MARLON BRANDO ZAMBRANO SAAVEDRA',
+              direccion: 'Curia',
+            },
+          },
+        ],
+      };
+
+      sessionStorage.setItem('activeOperatorRoute', JSON.stringify(routeData));
+
+      // Trigger autoSelectFromQueryParam
+      component['autoSelectFromQueryParam']();
+
+      expect(component.routeSyntheticMeters().length).toBe(1);
+      const synthetic = component.routeSyntheticMeters()[0];
+      expect(synthetic.serie).toBe('GUIA-2005-05');
+      expect(synthetic.clienteNombre).toBe('MARLON BRANDO ZAMBRANO SAAVEDRA');
+      expect(synthetic.marca).toBe('INSPECCION');
+
+      // Lands on search step (Órdenes de Trabajo view) to list orders
+      expect(component.currentStep()).toBe('search');
+
+      // Selecting the order transitions to the actions step
+      component.selectMeter(synthetic);
+      expect(component.currentStep()).toBe('actions');
+      expect(component.selectedMeter()?.serie).toBe('GUIA-2005-05');
+
+      // From actions step, completing the activity transitions to form
+      component.goToWorkOrderForm('INSPECCION');
+      expect(component.currentStep()).toBe('form');
+      expect(component.activeTipoActividad()).toBe('INSPECCION');
+
+      // Cleanup
+      sessionStorage.removeItem('activeOperatorRoute');
+    });
+
+    it('resolves workOrderIdFor synthetic meter from medidorId fallback', () => {
+      const syntheticMeter = {
+        medidorId: -45,
+        serie: 'GUIA-2005-05',
+        marca: 'INSPECCION',
+        modelo: 'Curia',
+        clienteNombre: 'MARLON BRANDO ZAMBRANO SAAVEDRA',
+        contratoId: 'GUIA-2005-05',
+        fechaInstalacion: null,
+      };
+
+      const orderId = component['workOrderIdFor'](syntheticMeter, 'INSPECCION');
+      expect(orderId).toBe('45');
+    });
   });
 });

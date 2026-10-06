@@ -16,6 +16,7 @@
     }
 
     <input
+      #nativeInput
       [id]="inputId()"
       type="text"
       class="form-control shadow-none"
@@ -24,24 +25,25 @@
       [disabled]="disabled()"
       (input)="onInputChange($any($event.target).value)"
       (click)="onInputClick($event)"
+      (focus)="onInputFocus()"
+      (blur)="onInputBlur()"
+      (keydown.enter)="$event.preventDefault()"
       autocomplete="off"
     />
 
-    @if (isLoading()) {
-      <span class="input-group-text bg-white text-muted">
-        <span class="spinner-border spinner-border-sm" role="status"></span>
-      </span>
-    } @else if ((hasValue() || query()) && !disabled()) {
-      <button
-        type="button"
-        class="btn btn-outline-secondary border-start-0"
-        title="Limpiar selección"
-        aria-label="Limpiar selección"
-        (click)="onClearClick($event)"
-      >
-        <i class="bi bi-x"></i>
-      </button>
-    }
+    <span class="input-group-text bg-white text-muted" [hidden]="!isLoading()">
+      <span class="spinner-border spinner-border-sm" role="status"></span>
+    </span>
+    <button
+      type="button"
+      class="btn btn-outline-secondary border-start-0"
+      title="Limpiar selección"
+      aria-label="Limpiar selección"
+      (click)="onClearClick($event)"
+      [hidden]="isLoading() || !((hasValue() || query()) && !disabled())"
+    >
+      <i class="bi bi-x"></i>
+    </button>
   </div>
 
   <!-- Dropdown Container -->
