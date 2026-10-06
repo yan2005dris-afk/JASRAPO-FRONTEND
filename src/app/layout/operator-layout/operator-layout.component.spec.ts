@@ -1,9 +1,11 @@
 import { TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { OperatorLayoutComponent } from './operator-layout.component';
 import { AuthService } from '../../core/services/auth.service';
 import { NetworkService } from '../../core/services/network.service';
 import { OperatorSyncService } from '../../core/services/operator-sync.service';
+import { BrandLogoComponent } from '../../shared/components/brand-logo/brand-logo.component';
 import { signal } from '@angular/core';
 import { vi } from 'vitest';
 
@@ -18,6 +20,7 @@ interface NetworkServiceMock {
 
 interface SyncServiceMock {
   totalPending: ReturnType<typeof signal<number>>;
+  totalQueued: ReturnType<typeof signal<number>>;
   isSyncing: ReturnType<typeof signal<boolean>>;
   syncPendingData: ReturnType<typeof vi.fn>;
 }
@@ -39,6 +42,7 @@ describe('OperatorLayoutComponent', () => {
 
     syncServiceMock = {
       totalPending: signal(0),
+      totalQueued: signal(0),
       isSyncing: signal(false),
       syncPendingData: vi.fn().mockResolvedValue(undefined),
     };
@@ -58,6 +62,15 @@ describe('OperatorLayoutComponent', () => {
     const fixture = TestBed.createComponent(OperatorLayoutComponent);
     const component = fixture.componentInstance;
     expect(component).toBeTruthy();
+  });
+
+  it('renders the brand text in light mode for the corporate topbar', () => {
+    const fixture = TestBed.createComponent(OperatorLayoutComponent);
+    fixture.detectChanges();
+
+    const logo = fixture.debugElement.query(By.directive(BrandLogoComponent))
+      .componentInstance as BrandLogoComponent;
+    expect(logo.textColor()).toBe('light');
   });
 
   it('should call authService.logout on onLogout', () => {

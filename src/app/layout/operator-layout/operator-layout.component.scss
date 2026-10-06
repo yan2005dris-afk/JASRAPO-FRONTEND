@@ -18,8 +18,11 @@
   padding: 0.75rem 1.25rem;
   /* Notch/Dynamic Island de iPhone */
   padding-top: max(0.75rem, env(safe-area-inset-top));
-  background: var(--op-bg-surface, #ffffff);
-  border-bottom: 1px solid var(--op-border-subtle, #d1e7e8);
+  min-height: 64px;
+  box-sizing: border-box;
+  background: var(--topbar-bg);
+  color: var(--topbar-color);
+  border-bottom: 1px solid var(--topbar-border);
   z-index: 100;
   box-shadow: 0 2px 8px rgba(13, 40, 42, 0.06);
 
@@ -29,7 +32,7 @@
     gap: 0.5rem;
 
     .brand-icon {
-      color: var(--op-brand-primary, #0a9396);
+      color: var(--topbar-color);
       font-size: 1.25rem;
     }
 
@@ -37,7 +40,7 @@
       font-weight: 700;
       font-size: 1.05rem;
       letter-spacing: 0.5px;
-      color: var(--op-brand-primary-dark, #005f73);
+      color: var(--topbar-color);
     }
   }
 
@@ -51,9 +54,9 @@
     width: 34px;
     height: 34px;
     border-radius: 50%;
-    border: 1px solid var(--border-color);
-    background: var(--primary-color);
-    color: var(--white);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--topbar-color);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -63,8 +66,8 @@
     transition: all 0.2s ease;
 
     &:hover {
-      background: #066669;
-      border-color: #066669;
+      background: rgba(255, 255, 255, 0.22);
+      border-color: rgba(255, 255, 255, 0.65);
     }
 
     &:active {
@@ -77,9 +80,9 @@
     width: 38px;
     height: 38px;
     border-radius: 50%;
-    border: 1px solid var(--op-border-subtle, #d1e7e8);
-    background: var(--op-bg-surface, #ffffff);
-    color: var(--op-brand-primary, #087a7d);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--topbar-color);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -89,9 +92,9 @@
     transition: all 0.2s ease;
 
     &:hover {
-      background: var(--op-brand-primary-light, #e6f4f4);
-      color: var(--op-brand-primary-dark, #005f73);
-      border-color: #087a7d;
+      background: rgba(255, 255, 255, 0.22);
+      color: var(--topbar-color);
+      border-color: rgba(255, 255, 255, 0.65);
     }
 
     &:active {
@@ -106,6 +109,10 @@
       background: var(--op-status-danger-bg, #fce8e6);
       border-color: #fca5a5;
     }
+  }
+
+  :is(button, a):focus-visible {
+    outline-color: var(--topbar-color);
   }
 
   .header-status {
@@ -216,7 +223,7 @@
   }
 }
 
-/* BOTTOM NAVIGATION BAR (Permanent Light Bottom Bar) */
+/* BOTTOM NAVIGATION BAR (paleta del sidebar corporativo) */
 .operator-bottom-nav {
   position: absolute;
   bottom: 14px;
@@ -224,9 +231,9 @@
   transform: translateX(-50%);
   width: calc(100% - 28px);
   max-width: 520px;
-  background: rgba(255, 255, 255, 0.96);
+  background: var(--sidebar-bg);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(8, 122, 125, 0.18);
+  border: 1px solid var(--sidebar-border);
   border-radius: 24px;
   padding: 0.35rem 0.5rem;
   box-shadow: 0 10px 30px rgba(8, 122, 125, 0.12);
@@ -238,6 +245,7 @@
     display: flex;
     justify-content: space-around;
     align-items: center;
+    width: 100%;
   }
 
   .nav-tab {
@@ -246,13 +254,14 @@
     align-items: center;
     justify-content: center;
     gap: 0.15rem;
-    color: #64748b;
+    color: var(--sidebar-text);
     text-decoration: none;
-    font-size: 0.68rem;
+    font-size: clamp(0.6rem, 2.8vw, 0.68rem);
     font-weight: 600;
-    padding: 0.35rem 0.6rem;
+    padding: 0.35rem 0.2rem;
     border-radius: 16px;
-    min-width: 60px;
+    flex: 1;
+    min-width: 0;
     height: 52px;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     outline: none;
@@ -269,13 +278,16 @@
       transition: color 0.2s ease;
     }
 
-    &:hover {
-      color: #087a7d;
+    &:hover:not(.active) {
+      color: var(--sidebar-text-hover);
+      background: var(--sidebar-hover-bg);
+      text-decoration: none;
     }
 
     &.active {
-      color: #087a7d;
-      background: rgba(8, 122, 125, 0.1);
+      color: var(--sidebar-active-color);
+      background: var(--sidebar-active-bg);
+      box-shadow: var(--sidebar-active-shadow);
 
       .icon-wrapper {
         transform: translateY(-2px);
@@ -283,7 +295,7 @@
 
       .tab-label {
         font-weight: 700;
-        color: #087a7d;
+        color: inherit;
       }
     }
 
@@ -338,5 +350,139 @@
   50% {
     opacity: 0.4;
     transform: scale(1.15);
+  }
+}
+
+/* ============================================================
+   RESPONSIVE — Tablet (>= 768px)
+   Bottom nav se convierte en sidebar izquierda vertical.
+   El header superior permanece, el contenido ocupa el resto.
+   ============================================================ */
+@media (min-width: 768px) {
+  .mobile-layout {
+    // El header, viewport y nav son hermanos: grid mantiene el header sobre el contenido.
+    display: grid;
+    grid-template-columns: 72px minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .operator-header {
+    grid-column: 1 / -1; /* Header ocupa todo el ancho superior */
+    grid-row: 1;
+  }
+
+  /* La barra inferior flota → sidebar izquierda estática */
+  .operator-bottom-nav {
+    position: static;
+    transform: none;
+    bottom: unset;
+    left: unset;
+    width: 100%; /* La columna del grid fija 72px/220px sin sumar padding. */
+    box-sizing: border-box;
+    max-width: unset;
+    height: auto;
+    border-radius: 0;
+    border: none;
+    border-right: 1px solid var(--sidebar-border);
+    background: var(--sidebar-bg);
+    backdrop-filter: none;
+    box-shadow: 2px 0 8px rgba(13, 40, 42, 0.06);
+    padding: 1.25rem 0.5rem;
+    margin-bottom: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    overflow: hidden;
+    flex-shrink: 0;
+    transition: width 0.25s ease;
+    grid-column: 1;
+    grid-row: 2; /* Comienza debajo del header */
+
+    .nav-items-container {
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 0.25rem;
+      width: 100%;
+    }
+
+    .nav-tab {
+      flex-direction: column;
+      flex: 0 0 auto;
+      width: 100%;
+      min-width: unset;
+      height: 52px;
+      padding: 0.5rem 0.25rem;
+      border-radius: 12px;
+      font-size: 0.65rem;
+      gap: 0.15rem;
+
+      .icon-wrapper {
+        font-size: 1.3rem;
+      }
+
+      &.active {
+        .icon-wrapper {
+          transform: none; /* quitar el translateY que era para mobile */
+        }
+      }
+
+      &:active {
+        transform: none;
+      }
+    }
+
+    .tab-label {
+      display: none; /* ocultar labels en tablet — solo iconos */
+    }
+  }
+
+  /* El viewport ocupa el espacio restante */
+  .operator-viewport {
+    grid-column: 2;
+    grid-row: 2;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+
+    .content-scroll {
+      padding: 1.5rem 2rem 2rem; /* sin el padding-bottom del bottom-nav */
+    }
+  }
+}
+
+/* ============================================================
+   RESPONSIVE — Desktop (>= 1024px)
+   Sidebar se expande para mostrar iconos + etiquetas.
+   ============================================================ */
+@media (min-width: 1024px) {
+  .mobile-layout {
+    grid-template-columns: 220px minmax(0, 1fr);
+  }
+
+  .operator-bottom-nav {
+    .nav-tab {
+      flex-direction: row;
+      justify-content: flex-start;
+      height: auto;
+      min-height: 44px;
+      padding: 0.65rem 0.85rem;
+      font-size: 0.875rem;
+      gap: 0.65rem;
+
+      .icon-wrapper {
+        font-size: 1.15rem;
+        flex-shrink: 0;
+      }
+    }
+
+    .tab-label {
+      display: block; /* mostrar labels en desktop */
+    }
+  }
+
+  .operator-viewport .content-scroll {
+    padding: 2rem 2.5rem 2rem;
   }
 }
