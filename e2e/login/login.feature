@@ -10,35 +10,37 @@
 #   @critical  → marca escenarios prioritarios para el release train.
 
 @critical
-Feature: pantalla de login
+Característica: pantalla de login
   Como persona usuaria del sistema
-  Quiero autenticame en /login
+  Quiero autenticarme en /login
   Para acceder al dashboard y a las funcionalidades autenticadas
 
   @login
   # LOGIN-E2E-001
-  Scenario: Mostrar la pantalla de login y sus campos
-    When navego a "/login"
-    Then debería ver el campo "Usuario"
-    And debería ver el campo "contraseña"
-    And debería ver el botón "Iniciar Sesión"
+  Escenario: Mostrar la pantalla de login y sus campos
+    Cuando navego a "/login"
+    Entonces debería ver el campo "Usuario"
+    Y debería ver el campo "contraseña"
+    Y debería ver el botón "Ingresar al Sistema"
 
   @login
   # LOGIN-E2E-002
-  Scenario: Login exitoso con admin redirige al dashboard
-    When navego a "/login"
-    And ingreso "admin@jasrapo.com" en el campo "Usuario"
-    And ingreso "Admin123#" en el campo "contraseña"
-    And hago clic en "Iniciar Sesión"
-    Then debería estar autenticado
-    And la URL debería ser "/app/dashboard"
+  Escenario: Login exitoso con admin redirige al dashboard
+    Dado que el backend mockea el endpoint de autenticación
+    Cuando navego a "/login"
+    E ingreso "admin@jasrapo.com" en el campo "Usuario"
+    E ingreso "Admin123#" en el campo "contraseña"
+    Y hago clic en "Ingresar al Sistema"
+    Entonces debería estar autenticado
+    Y la URL debería ser "/app/dashboard"
 
   @login
   # LOGIN-E2E-003
-  Scenario: Login con credenciales inválidas muestra error y no redirige
-    When navego a "/login"
-    And ingreso "admin@jasrapo.com" en el campo "Usuario"
-    And ingreso "ContraseñaIncorrecta123" en el campo "contraseña"
-    And hago clic en "Iniciar Sesión"
-    Then debería ver un mensaje de error de autenticación
-    And la URL debería contener "/login"
+  Escenario: Login con credenciales inválidas muestra error y no redirige
+    Dado que el backend mockea el endpoint de autenticación
+    Cuando navego a "/login"
+    E ingreso "admin@jasrapo.com" en el campo "Usuario"
+    E ingreso "ContraseñaIncorrecta123" en el campo "contraseña"
+    Y hago clic en "Ingresar al Sistema"
+    Entonces debería ver un mensaje de error de autenticación
+    Y la URL debería contener "/login"

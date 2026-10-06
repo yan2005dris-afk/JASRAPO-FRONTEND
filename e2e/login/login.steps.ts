@@ -19,7 +19,52 @@ import { LoginPage } from '../base-page';
  *     `debería ver el campo "{string}" del formulario de login`.
  */
 
-const { When, Then } = createBdd();
+const { Given, When, Then } = createBdd();
+
+// ---- Mock del backend -----------------------------------------------------
+//
+// Pedagogía: este `Given` muestra a los muchachos cómo desacoplar los tests
+// E2E del backend cuando todavía no hay uno estable, sin perder el flujo
+// Given / When / Then del feature. Las respuestas hardcoded replican el
+// payload real del endpoint `auth.login` del seed.
+//
+// Si el equipo prefiere usar el backend real, basta con:
+//   1) Quitar este `Given` de los escenarios que lo usan.
+//   2) Levantar `docker compose up backend postgres redis`.
+//   3) `pnpm e2e:bdd` correrá contra el backend real.
+Given('que el backend mockea el endpoint de autenticación', async ({ page }) => {
+  // El frontend dev usa `/api` proxyeado al backend. Matcheamos también
+  // `/auth/login` por si la config cambia, y registramos primero el handler
+  // específico (admin válido) y luego el catch-all para 401.
+  await page.route('**/api/v1/auth/login', async (route) => {
+    const body = route.request().postDataJSON() as { email?: string; password?: string };
+    if (body?.email === 'admin@jasrapo.com' && body?.password === 'Admin123#') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          accessToken: 'mock.access.token',
+          sid: 'mock-sid',
+          sub: 'mock-user-id',
+          email: body.email,
+          nombre: 'Admin Mock',
+          rolId: 1,
+          nombreRol: 'Administrador',
+          accessTokenInfo: {
+            iatDate: new Date().toISOString(),
+            expDate: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+          },
+        }),
+      });
+      return;
+    }
+    await route.fulfill({
+      status: 401,
+      contentType: 'application/json',
+      body: JSON.stringify({ message: 'Credenciales inválidas' }),
+    });
+  });
+});
 
 // ---- Navegación -----------------------------------------------------------
 
@@ -49,7 +94,7 @@ When('ingreso {string} en el campo {string}', async ({ page }, value: string, la
 
 When('hago clic en {string}', async ({ page }, name: string) => {
   const loginPage = new LoginPage(page);
-  if (name === 'Iniciar Sesión') {
+  if (name === 'Ingresar al Sistema') {
     await loginPage.submitButton.click();
     return;
   }
@@ -59,6 +104,17 @@ When('hago clic en {string}', async ({ page }, name: string) => {
 // ---- Aserciones de UI -----------------------------------------------------
 
 Then('debería ver el campo {string}', async ({ page }, label: string) => {
+  // Para labels conocidos del login usamos los locators del POM, evitando el
+  // strict mode del toggle "Ver contraseña". Otros labels van por getByLabel.
+  const loginPage = new LoginPage(page);
+  if (label === 'Usuario') {
+    await expect(loginPage.emailInput).toBeVisible();
+    return;
+  }
+  if (label === 'contraseña') {
+    await expect(loginPage.passwordInput).toBeVisible();
+    return;
+  }
   await expect(page.getByLabel(label)).toBeVisible();
 });
 
