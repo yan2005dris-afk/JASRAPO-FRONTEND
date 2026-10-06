@@ -59,6 +59,7 @@ graft/
 # playwright artifacts (local only)
 test-results/
 playwright-report/
+playwright-report-standalone/
 e2e/.auth/
 
 # local tool caches and generated artifacts (regenerable)

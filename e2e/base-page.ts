@@ -4,9 +4,17 @@ import { Page, Locator, expect } from '@playwright/test';
 export class BasePage {
   constructor(protected page: Page) {}
 
-  async goto(path: string): Promise<void> {
+  /**
+   * Navega a un path arbitrario dentro de la app. Usa el `baseURL` configurado.
+   */
+  async gotoPath(path: string): Promise<void> {
     await this.page.goto(path, { waitUntil: 'domcontentloaded' });
     await this.page.waitForLoadState('networkidle').catch(() => undefined);
+  }
+
+  /** Navega a `path` o, si no se pasa, a `/login`. Atajo para los POMs. */
+  async goto(path: string = '/login'): Promise<void> {
+    await this.gotoPath(path);
   }
 
   /** Expect the page header H3/H4 to contain the given title. */
@@ -40,9 +48,12 @@ export class LoginPage extends BasePage {
 
   constructor(page: Page) {
     super(page);
-    this.emailInput = page.getByLabel('Usuario');
-    this.passwordInput = page.getByLabel('contraseña');
-    this.submitButton = page.getByRole('button', { name: 'Iniciar Sesión' });
+    // Use id-based selectors (instead of getByLabel) to avoid strict-mode
+    // collisions with the password-toggle button whose aria-label and title
+    // both contain "contraseña" (resolves to 2 elements).
+    this.emailInput = page.locator('#email');
+    this.passwordInput = page.locator('#password');
+    this.submitButton = page.getByRole('button', { name: 'Ingresar al Sistema' });
   }
 
   async login(email: string, password: string): Promise<void> {
@@ -138,4 +149,93 @@ export class PreInvoicesPage extends BasePage {
   get nextPageButton() {
     return this.page.getByRole('button', { name: /Siguiente|next/i });
   }
+}
+
+/** Page object for the clientes list (listado de clientes). */
+export class ClientesListPage extends BasePage {
+  readonly addButton: Locator;
+
+  constructor(page: Page) {
+    super(page);
+    // El test crudo usa 'Agregar'; usamos regex para tolerar variantes
+    // ("Agregar", "Agregar cliente", "Agregar Cliente") sin tocar el POM.
+    this.addButton = page.getByRole('button', { name: /^Agregar( cliente)?$/i });
+  }
+
+  /** Navega al listado de clientes. La ruta real es `/app/Contratos/Cliente`. */
+  async goto(): Promise<void> {
+    await this.gotoPath('/app/Contratos/Cliente');
+  }
+
+  /** Abre el formulario de alta de cliente. Espera a que el form esté listo. */
+  async openNewClientForm(): Promise<void> {
+    await this.addButton.click();
+    await expect(this.page.getByLabel('Tipo de identificación *')).toBeVisible();
+  }
+}
+
+/** Page object for the cliente form (alta / edición). */
+export class ClienteFormPage extends BasePage {
+  readonly tipoIdentificacion: Locator;
+  readonly numeroIdentificacion: Locator;
+  readonly nombres: Locator;
+  readonly apellidos: Locator;
+  readonly fechaNacimiento: Locator;
+  readonly direccion: Locator;
+  readonly correo: Locator;
+  readonly telefonoPrincipal: Locator;
+  readonly submitButton: Locator;
+
+  constructor(page: Page) {
+    super(page);
+    this.tipoIdentificacion = page.getByLabel('Tipo de identificación *');
+    this.numeroIdentificacion = page.getByLabel('Número de identificación *');
+    this.nombres = page.getByLabel('Nombres *');
+    this.apellidos = page.getByLabel('Apellidos *');
+    this.fechaNacimiento = page.getByLabel('Fecha de nacimiento');
+    this.direccion = page.getByLabel('Dirección domiciliaria *');
+    this.correo = page.getByLabel('Correo electrónico *');
+    this.telefonoPrincipal = page.getByLabel('Teléfono principal *');
+    // El botón dice "Registrar Cliente" (con espacio) en el template actual.
+    // Aceptamos también variantes tolerantes a futuro.
+    this.submitButton = page.getByRole('button', { name: /Registrar Cliente/i });
+  }
+
+  /** Completa los campos visibles del formulario y hace submit. */
+  async fillAndSubmit(data: ClienteFormData): Promise<void> {
+    await this.tipoIdentificacion.selectOption('2'); // 2 = CÉDULA
+    await this.numeroIdentificacion.fill(data.identificacion);
+    await this.nombres.fill(data.nombres);
+    await this.apellidos.fill(data.apellidos);
+    await this.direccion.fill(data.direccion);
+    await this.correo.fill(data.correo);
+    await this.telefonoPrincipal.fill(data.telefono);
+    await this.submitButton.click();
+  }
+
+  /**
+   * Selecciona una fecha en el datepicker Material.
+   * Asume clicks del flujo crudo: abre picker → mes → año → 2x "años
+   * anteriores" → mes → día.
+   */
+  async selectFechaNacimiento(opts: { year: number; month: string; day: string }): Promise<void> {
+    await this.fechaNacimiento.click();
+    await this.page.getByRole('button', { name: opts.month }).click();
+    await this.page.getByRole('button', { name: String(opts.year) }).click();
+    // Doble click en "Años anteriores" para retroceder 2 décadas.
+    await this.page.getByTitle('Años anteriores').click();
+    await this.page.getByTitle('Años anteriores').click();
+    await this.page.getByRole('button', { name: opts.month }).click();
+    await this.page.getByRole('button', { name: opts.day, exact: true }).click();
+  }
+}
+
+export interface ClienteFormData {
+  identificacion: string;
+  nombres: string;
+  apellidos: string;
+  fechaNacimiento?: { year: number; month: string; day: string };
+  direccion: string;
+  correo: string;
+  telefono: string;
 }

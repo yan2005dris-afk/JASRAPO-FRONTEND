@@ -34,7 +34,7 @@ export default defineConfig({
     {
       name: 'chromium-clean',
       use: { ...devices['Desktop Chrome'] },
-      testMatch: /e2e\/(login|public|operator)\/.*\.spec\.ts/,
+      testMatch: /e2e\/(login|public|operator|clientes)\/.*\.spec\.ts/,
     },
   ],
 });

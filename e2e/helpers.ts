@@ -22,6 +22,9 @@ export const ROUTES = {
   prefacturas: '/app/Facturacion/GeneracionPlanilla',
   billInquiry: '/consulta-planilla',
   profile: '/app/profile',
+  clientesList: '/app/Contratos/Cliente',
+  clienteNew: '/app/Contratos/Cliente/new',
+  clienteEdit: (id: string | number) => `/app/Contratos/Cliente/${id}/edit`,
 };
 
 /** Fill the login form and submit. Assumes we are on /login. */
@@ -50,4 +53,15 @@ export async function expectToast(page: Page, text: string, timeout = 10000) {
   await expect(page.locator('.toast, [role="status"], .toast-container')).toContainText(text, {
     timeout,
   });
+}
+
+/**
+ * Genera una cédula ecuatoriana única (10 dígitos, empieza con 09).
+ * Sirve para que un test de "alta de cliente" no choque duplique los datos
+ * cuando se corre múltiples veces contra la misma DB o mock.
+ *
+ * Ejemplo: `09` + últimos 8 dígitos del timestamp → 10 dígitos únicos por ms.
+ */
+export function randomCedulaEcuatoriana(): string {
+  return `09${Date.now().toString().slice(-8)}`;
 }
