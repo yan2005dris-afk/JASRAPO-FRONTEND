@@ -126,6 +126,48 @@ Ejemplo del flujo "hasta acá llega el test":
 4. El inspector queda con el código acumulado — lo seleccionás y copiás.
 5. Pegás en tu editor, refactorás, commit.
 
+### 3.4 Dónde queda el código generado (la pregunta del millón)
+
+Esta es la duda que todo el mundo tiene la primera vez: **"¿en qué archivo
+se guardó lo que grabé?"**. La respuesta corta: **en ninguno, por default**.
+
+Tres lugares posibles según cómo corras Codegen:
+
+| Modo                                                 | Dónde queda el código                                         | ¿Persiste si cerrás?                  |
+| ---------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------- |
+| **CLI clásico** (`pnpm e2e:codegen`)                 | Solo en el inspector visual, en vivo. No hay archivo.         | ❌ NO, se pierde al cerrar.           |
+| **CLI UI mode** (`pnpm e2e:codegen --ui`)            | Igual: inspector visual. Tiene botón "Copy" para clipboard.   | ❌ NO.                                |
+| **VS Code extension** (Playwright Test para VS Code) | En `test-1.spec.ts` (o el nombre que elijas) en tu workspace. | ✅ SÍ, cada click escribe el archivo. |
+
+**Para nuestro caso de uso (capacitación con CLI)**:
+
+1. El inspector muestra el código acumulado.
+2. Click en **"Copy"** (botón arriba del código) o `Ctrl+A` + `Ctrl+C`.
+3. Pegá en tu editor (`Ctrl+V`) en `login.steps.ts`.
+4. Refactorizá a Page Object / step definition.
+5. Commit.
+
+**Lo que NO hay que confundir**:
+
+- `--save-storage <path>` guarda la **session** (cookies + localStorage),
+  no el código. Sirve para reutilizar un login ya hecho en sesiones futuras.
+- `--output <file>` **no existe** en la versión actual. No lo busques.
+- El directorio `.features-gen/` NO es de Codegen. Es de `bddgen` (otro
+  paso del workflow BDD).
+
+**Checklist para no perder el trabajo**:
+
+```
+[ ] Habilité 'Record' en el UI mode
+[ ] Interactué con el browser
+[ ] Paré la grabación (Stop / cerrar browser)
+[ ] Copié del inspector (botón Copy o Ctrl+A Ctrl+C)
+[ ] Pegué en mi editor
+[ ] Refactorizé y commiteé
+```
+
+Si te falta cualquiera de esos pasos, perdiste el código.
+
 ---
 
 ## 4. Convertir la grabación en un step definition BDD
