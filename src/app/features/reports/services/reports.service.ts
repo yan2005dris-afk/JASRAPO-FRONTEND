@@ -246,9 +246,7 @@ export class ReportsService {
   // ---------- Consumo por Zonas (PDF-11) ----------
 
   /** Obtiene el reporte de consumo por zonas en formato JSON. */
-  getZoneConsumption(
-    filters: IZoneConsumptionFilters = {},
-  ): Observable<IReportResponse> {
+  getZoneConsumption(filters: IZoneConsumptionFilters = {}): Observable<IReportResponse> {
     const params = this.buildParams(filters);
     return this.http.get<IReportResponse>(`${this.endpoint}/zone-consumption`, {
       params,
@@ -256,9 +254,7 @@ export class ReportsService {
   }
 
   /** Obtiene el reporte de consumo por zonas en PDF. */
-  getZoneConsumptionPdf(
-    filters: IZoneConsumptionFilters = {},
-  ): Observable<Blob> {
+  getZoneConsumptionPdf(filters: IZoneConsumptionFilters = {}): Observable<Blob> {
     const params = this.buildParams(filters);
     return this.http.get(`${this.endpoint}/zone-consumption`, {
       params,

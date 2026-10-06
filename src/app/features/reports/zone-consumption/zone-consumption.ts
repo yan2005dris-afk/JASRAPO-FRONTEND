@@ -12,19 +12,13 @@ import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
 import { ToastService } from '../../../shared/components/toast/toast.service';
-import {
-  IZoneConsumptionFilters,
-  ISendReportEmailBody,
-} from '../interfaces/ireport.interface';
+import { IZoneConsumptionFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
 import { SectoresService } from '../../admin/sectores-prueba/services/sectores';
 import type { Sectores } from '../../admin/sectores-prueba/models/sectores.interface';
 import { ComunidadesService } from '../../admin/comunidades/services/comunidades.service';
 import type { Comunidad } from '../../admin/comunidades/models/comunidad.interface';
-import {
-  PeriodsService,
-  IAccountingPeriod,
-} from '../../../shared/services/periods.service';
+import { PeriodsService, IAccountingPeriod } from '../../../shared/services/periods.service';
 import { ReportEmailDialogComponent } from '../shared/report-email-dialog/report-email-dialog.component';
 import {
   IReportContextItem,
@@ -135,18 +129,14 @@ export class ZoneConsumptionComponent implements OnInit, OnDestroy {
     ];
 
     if (this.comunidadId()) {
-      const com = this.comunidades().find(
-        (c) => String(c.id) === this.comunidadId(),
-      );
+      const com = this.comunidades().find((c) => String(c.id) === this.comunidadId());
       if (com) {
         items.push({ label: 'Comunidad', value: com.nombre });
       }
     }
 
     if (this.sectorId()) {
-      const sec = this.sectores().find(
-        (s) => String(s.sectorId) === this.sectorId(),
-      );
+      const sec = this.sectores().find((s) => String(s.sectorId) === this.sectorId());
       if (sec) {
         items.push({ label: 'Sector', value: sec.nombre });
       }
@@ -202,23 +192,15 @@ export class ZoneConsumptionComponent implements OnInit, OnDestroy {
     () => this.reportData()?.kpis?.consumoTotalSistema ?? '0.00',
   );
 
-  readonly totalZonas = computed(
-    () => this.reportData()?.kpis?.totalZonas ?? this.zonas().length,
-  );
+  readonly totalZonas = computed(() => this.reportData()?.kpis?.totalZonas ?? this.zonas().length);
 
-  readonly zonaMayorConsumo = computed(
-    () => this.reportData()?.kpis?.zonaMayorConsumo ?? '—',
-  );
+  readonly zonaMayorConsumo = computed(() => this.reportData()?.kpis?.zonaMayorConsumo ?? '—');
 
-  readonly medidoresSinLectura = computed(
-    () => this.reportData()?.kpis?.medidoresSinLectura ?? 0,
-  );
+  readonly medidoresSinLectura = computed(() => this.reportData()?.kpis?.medidoresSinLectura ?? 0);
 
   // ---------- Filas de la tabla ----------
 
-  private readonly zonas = computed<ZoneConsumptionRow[]>(
-    () => this.reportData()?.data ?? [],
-  );
+  private readonly zonas = computed<ZoneConsumptionRow[]>(() => this.reportData()?.data ?? []);
 
   readonly filteredZonas = computed(() => {
     const list = this.zonas();
@@ -226,11 +208,7 @@ export class ZoneConsumptionComponent implements OnInit, OnDestroy {
     if (!term) return list;
 
     const normalize = (str: string) =>
-      str
-        .normalize('NFD')
-        .replace(/[̀-ͯ]/g, '')
-        .trim()
-        .toLowerCase();
+      str.normalize('NFD').replace(/[̀-ͯ]/g, '').trim().toLowerCase();
     const terms = term.split(/\s+/).filter(Boolean);
 
     return list.filter((z) => {
@@ -324,21 +302,15 @@ export class ZoneConsumptionComponent implements OnInit, OnDestroy {
     this.isLoadingData.set(true);
     this.dataRequest = this.reportsService.getZoneConsumption(filters).subscribe({
       next: (data) => {
-        if (requestId !== this.dataRequestId || contextKey !== this.filterContextKey())
-          return;
+        if (requestId !== this.dataRequestId || contextKey !== this.filterContextKey()) return;
         this.reportData.set(data as unknown as ZoneConsumptionData);
         this.isLoadingData.set(false);
         this.clearWorkspaceError();
       },
       error: (err) => {
-        if (requestId !== this.dataRequestId || contextKey !== this.filterContextKey())
-          return;
+        if (requestId !== this.dataRequestId || contextKey !== this.filterContextKey()) return;
         this.isLoadingData.set(false);
-        this.setWorkspaceError(
-          err,
-          'No se pudo cargar el reporte de consumo por zonas',
-          'data',
-        );
+        this.setWorkspaceError(err, 'No se pudo cargar el reporte de consumo por zonas', 'data');
       },
     });
   }
@@ -371,30 +343,22 @@ export class ZoneConsumptionComponent implements OnInit, OnDestroy {
     const contextKey = this.filterContextKey();
     const requestId = ++this.generalPdfRequestId;
     this.isLoadingGeneralPdf.set(true);
-    this.generalPdfRequest = this.reportsService
-      .getZoneConsumptionPdf(filters)
-      .subscribe({
-        next: (blob) => {
-          if (
-            requestId !== this.generalPdfRequestId ||
-            contextKey !== this.filterContextKey()
-          )
-            return;
-          this.generalPdfBlob.set(blob);
-          this.isLoadingGeneralPdf.set(false);
-        },
-        error: (err) => {
-          if (
-            requestId !== this.generalPdfRequestId ||
-            contextKey !== this.filterContextKey()
-          )
-            return;
-          this.isLoadingGeneralPdf.set(false);
-          this.generalPdfError.set(
-            this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'),
-          );
-        },
-      });
+    this.generalPdfRequest = this.reportsService.getZoneConsumptionPdf(filters).subscribe({
+      next: (blob) => {
+        if (requestId !== this.generalPdfRequestId || contextKey !== this.filterContextKey())
+          return;
+        this.generalPdfBlob.set(blob);
+        this.isLoadingGeneralPdf.set(false);
+      },
+      error: (err) => {
+        if (requestId !== this.generalPdfRequestId || contextKey !== this.filterContextKey())
+          return;
+        this.isLoadingGeneralPdf.set(false);
+        this.generalPdfError.set(
+          this.getErrorMessage(err, 'No se pudo generar el PDF del reporte'),
+        );
+      },
+    });
   }
 
   cerrarGeneralPdf(): void {
@@ -505,11 +469,7 @@ export class ZoneConsumptionComponent implements OnInit, OnDestroy {
 
   // ---------- Helpers privados ----------
 
-  private setWorkspaceError(
-    err: unknown,
-    fallback: string,
-    action: FailedReportAction,
-  ): void {
+  private setWorkspaceError(err: unknown, fallback: string, action: FailedReportAction): void {
     this.workspaceError.set(this.getErrorMessage(err, fallback));
     this.lastFailedAction.set(action);
   }
