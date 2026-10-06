@@ -22,11 +22,11 @@ En este tutorial:
 Lo que hace:
 
 1. Abre un browser controlado (Chromium por default).
-3. Vos interactuás con la app como un usuario real: hacés click, llenás
+2. Vos interactuás con la app como un usuario real: hacés click, llenás
    formularios, navegás.
-4. Codegen registra cada acción y la traduce a un snippet TypeScript con
+3. Codegen registra cada acción y la traduce a un snippet TypeScript con
    el locator más estable que encuentre (`getByRole`, `getByLabel`, etc.).
-5. Pegás ese snippet en tu `.steps.ts` (o `.spec.ts` si no usás BDD).
+4. Pegás ese snippet en tu `.steps.ts` (o `.spec.ts` si no usás BDD).
 
 **Cuándo usarlo:**
 
@@ -101,11 +101,11 @@ Tenés la grabación completa. Ahora viene lo importante.
 
 Tres formas, de más intuitiva a más de emergencia:
 
-| Método                              | Qué pasa                                                       | Cuándo usarlo                                  |
-| ----------------------------------- | -------------------------------------------------------------- | --------------------------------------------- |
-| **Cerrá la ventana del browser**    | Codegen detecta el cierre y termina limpio. El inspector queda abierto con el código. | Cuando querés terminar el flujo normal y llevarte el código. |
-| **Botón "Cancel" / "Stop" en el inspector** | El inspector UI mode tiene un botón explícito en la barra superior. | En el modo `--ui` (`pnpm e2e:codegen --ui`). |
-| **`Ctrl+C` en la terminal**         | Mata el proceso. El código generado se pierde (no se guarda automáticamente). | Cuando algo se rompe o querés abortar y descartar. |
+| Método                                      | Qué pasa                                                                              | Cuándo usarlo                                                |
+| ------------------------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| **Cerrá la ventana del browser**            | Codegen detecta el cierre y termina limpio. El inspector queda abierto con el código. | Cuando querés terminar el flujo normal y llevarte el código. |
+| **Botón "Cancel" / "Stop" en el inspector** | El inspector UI mode tiene un botón explícito en la barra superior.                   | En el modo `--ui` (`pnpm e2e:codegen --ui`).                 |
+| **`Ctrl+C` en la terminal**                 | Mata el proceso. El código generado se pierde (no se guarda automáticamente).         | Cuando algo se rompe o querés abortar y descartar.           |
 
 **Lo que casi nadie te dice**:
 
@@ -172,11 +172,11 @@ Escenario: Login generado con codegen
 // login.steps.ts — fragmentos
 
 When('ingreso {string} en el campo {string}', async ({ page }, value: string, label: string) => {
-  await page.getByLabel(label).fill(value);  // ← línea exacta del codegen
+  await page.getByLabel(label).fill(value); // ← línea exacta del codegen
 });
 
 When('hago clic en {string}', async ({ page }, name: string) => {
-  await page.getByRole('button', { name }).click();  // ← línea exacta del codegen
+  await page.getByRole('button', { name }).click(); // ← línea exacta del codegen
 });
 
 Then('la URL debería ser {string}', async ({ page }, url: string) => {
