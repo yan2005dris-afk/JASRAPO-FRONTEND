@@ -10,8 +10,8 @@
   padding: 1rem 1.15rem;
   background: var(--white);
   border: 1px solid var(--primary-color);
-  border-radius: 14px;
-  box-shadow: 0 2px 10px rgba(12, 158, 161, 0.08);
+  border-radius: var(--op-card-radius);
+  box-shadow: var(--op-card-shadow);
   position: relative;
 
   &.read {

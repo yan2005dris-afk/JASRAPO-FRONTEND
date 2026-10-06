@@ -11,7 +11,8 @@
   padding: 0.85rem 1rem;
   background: var(--white);
   border: 1px solid var(--border-color);
-  border-radius: 12px;
+  border-radius: var(--op-card-radius);
+  box-shadow: var(--op-card-shadow);
   text-align: left;
   cursor: pointer;
   transition: all 0.2s ease;
