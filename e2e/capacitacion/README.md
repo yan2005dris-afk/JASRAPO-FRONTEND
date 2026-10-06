@@ -85,6 +85,25 @@ Running 3 tests using 1 worker
   3 passed (6s)
 ```
 
+### 2.4 Ver el browser mientras corre (capacitación)
+
+Durante la capacitación es clave que los muchachos **vean** lo que el test
+está haciendo, no solo lean el log. Tres modos disponibles:
+
+| Script                 | Qué hace                                                                  | Cuándo usarlo                                  |
+| ---------------------- | ------------------------------------------------------------------------- | ---------------------------------------------- |
+| `pnpm e2e:bdd:headed`  | Abre el browser Chromium visible y ejecuta los tests paso a paso.        | Para ver el flujo completo. |
+| `pnpm e2e:bdd:ui`      | Abre el [Playwright UI mode](https://playwright.dev/docs/test-ui) con time-travel entre steps. | Para debuggear un escenario puntual. |
+| `pnpm e2e:bdd:debug`   | Igual a headed pero con el inspector de Node atado (breakpoints).         | Para debug profundo. |
+
+```bash
+pnpm e2e:bdd:headed --grep "Login exitoso"   # solo ese escenario, con browser abierto
+pnpm e2e:bdd:ui                              # UI mode: ves cada step con screenshots intermedios
+```
+
+> ⚠️ `headed`, `ui` y `debug` requieren un display X/Wayland. En CI o en
+> servidores sin display, no funcionan — usá `pnpm e2e:bdd` (headless).
+
 Reportes:
 
 - HTML de Playwright → `playwright-report-bdd/` (no se commitea).
