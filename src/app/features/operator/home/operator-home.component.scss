@@ -24,8 +24,8 @@
   padding: 0.85rem 1rem;
   background: var(--op-bg-surface, #ffffff);
   border: 1px solid var(--op-border-subtle, #e2e8f0);
-  border-radius: 18px;
-  box-shadow: 0 2px 10px rgba(8, 122, 125, 0.04);
+  border-radius: var(--op-card-radius);
+  box-shadow: var(--op-card-shadow);
 }
 
 .profile-avatar-btn {
@@ -143,9 +143,9 @@
 .radial-hero-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  border-radius: 20px;
+  border-radius: var(--op-card-radius);
   padding: 1.1rem;
-  box-shadow: 0 4px 16px rgba(8, 122, 125, 0.08);
+  box-shadow: var(--op-card-shadow);
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
@@ -236,7 +236,7 @@
   justify-content: center;
   gap: 0.45rem;
   padding: 0.7rem 1.1rem;
-  border-radius: 12px;
+  border-radius: var(--op-control-radius);
   border: none;
   background: #087a7d;
   color: #ffffff;
@@ -262,7 +262,7 @@
   justify-content: center;
   gap: 0.35rem;
   padding: 0.7rem 1rem;
-  border-radius: 12px;
+  border-radius: var(--op-control-radius);
   border: 1px solid #cbd5e1;
   background: #ffffff;
   color: #334155;
@@ -284,20 +284,20 @@
 
 /* 3. iOS Group Box Styles */
 .ios-group-title {
-  font-size: 0.72rem;
+  font-size: var(--op-section-label-size);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #64748b;
+  color: var(--op-text-secondary);
   margin: 0.4rem 0.2rem 0.2rem;
 }
 
 .ios-group-box {
   background: #ffffff;
-  border-radius: 18px;
-  border: 1px solid #e2e8f0;
+  border-radius: var(--op-card-radius);
+  border: 1px solid var(--op-border-subtle);
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--op-card-shadow);
 }
 
 .ios-row {
@@ -473,12 +473,12 @@
 
 .kpi-card {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
+  border: 1px solid var(--op-border-subtle);
+  border-radius: var(--op-card-radius);
   padding: 0.85rem;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--op-card-shadow);
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease;
@@ -577,8 +577,8 @@
 
 .quick-action-btn {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
+  border: 1px solid var(--op-border-subtle);
+  border-radius: var(--op-card-radius);
   padding: 0.75rem 0.4rem;
   display: flex;
   flex-direction: column;
@@ -586,7 +586,7 @@
   gap: 0.35rem;
   cursor: pointer;
   min-height: 72px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--op-card-shadow);
   transition:
     transform 0.15s ease,
     box-shadow 0.15s ease;

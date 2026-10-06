@@ -139,4 +139,9 @@
   --op-text-secondary: var(--muted-text, #597b7d);
   --op-text-disabled: #94a3b8;
   --op-border-subtle: var(--border-color, #cbdedf);
+  --op-card-radius: 1rem;
+  --op-card-shadow: var(--water-card-shadow);
+  --op-control-radius: 0.75rem;
+  --op-page-title-size: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
+  --op-section-label-size: 0.8rem;
 }

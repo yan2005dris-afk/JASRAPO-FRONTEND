@@ -208,3 +208,9 @@
   border: 1px solid rgba(12, 158, 161, 0.2);
   font-weight: 600;
 }
+
+/* Navegación por teclado coherente en la PWA de campo, sin afectar otros módulos. */
+.mobile-layout :is(button, a, input, select, textarea, [role='button']):focus-visible {
+  outline: 3px solid var(--primary-color);
+  outline-offset: 2px;
+}

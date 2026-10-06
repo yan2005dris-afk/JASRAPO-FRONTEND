@@ -14,7 +14,7 @@
   padding: 0 0.25rem 0.75rem;
 
   .queue-title {
-    font-size: 1.25rem;
+    font-size: var(--op-page-title-size);
     font-weight: 700;
     color: var(--op-text-primary, #0a191b);
     margin: 0;
@@ -36,7 +36,7 @@
     background: var(--op-brand-primary, #0a9396);
     color: #fff;
     border: none;
-    border-radius: 10px;
+    border-radius: var(--op-control-radius);
     font-size: 0.85rem;
     font-weight: 700;
     min-height: 48px;
@@ -59,10 +59,10 @@
 .download-hub-card {
   background: var(--op-bg-surface, #ffffff);
   border: 1px solid var(--op-border-subtle, #d1e7e8);
-  border-radius: 16px;
+  border-radius: var(--op-card-radius);
   padding: 1.25rem;
   margin-bottom: 1.25rem;
-  box-shadow: 0 2px 8px rgba(13, 40, 42, 0.06);
+  box-shadow: var(--op-card-shadow);
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -259,7 +259,8 @@
 .queue-card {
   background: var(--white);
   border: 1px solid var(--border-color);
-  border-radius: 14px;
+  border-radius: var(--op-card-radius);
+  box-shadow: var(--op-card-shadow);
   padding: 0.85rem 1rem;
   position: relative;
   transition: all 0.2s ease;
@@ -586,9 +587,9 @@
 }
 
 .ios-group-title {
-  font-size: 0.72rem;
+  font-size: var(--op-section-label-size);
   font-weight: 700;
-  color: #64748b;
+  color: var(--op-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   padding-left: 12px;
@@ -596,12 +597,12 @@
 }
 
 .ios-group-box {
-  background: #ffffff;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
+  background: var(--op-bg-surface);
+  border-radius: var(--op-card-radius);
+  border: 1px solid var(--op-border-subtle);
   overflow: hidden;
   margin-bottom: 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--op-card-shadow);
 }
 
 .ios-row {
@@ -621,7 +622,7 @@
   color: #ffffff;
   font-weight: 700;
   border: none;
-  border-radius: 12px;
+  border-radius: var(--op-control-radius);
   padding: 10px 14px;
   box-shadow: 0 4px 12px rgba(8, 122, 125, 0.25);
   transition: all 0.2s ease;
