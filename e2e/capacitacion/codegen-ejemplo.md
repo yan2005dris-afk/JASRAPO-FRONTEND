@@ -97,6 +97,35 @@ Se abren **dos ventanas**:
 
 Tenés la grabación completa. Ahora viene lo importante.
 
+### 3.3 Cómo parar la grabación ("hasta acá llega el test")
+
+Tres formas, de más intuitiva a más de emergencia:
+
+| Método                              | Qué pasa                                                       | Cuándo usarlo                                  |
+| ----------------------------------- | -------------------------------------------------------------- | --------------------------------------------- |
+| **Cerrá la ventana del browser**    | Codegen detecta el cierre y termina limpio. El inspector queda abierto con el código. | Cuando querés terminar el flujo normal y llevarte el código. |
+| **Botón "Cancel" / "Stop" en el inspector** | El inspector UI mode tiene un botón explícito en la barra superior. | En el modo `--ui` (`pnpm e2e:codegen --ui`). |
+| **`Ctrl+C` en la terminal**         | Mata el proceso. El código generado se pierde (no se guarda automáticamente). | Cuando algo se rompe o querés abortar y descartar. |
+
+**Lo que casi nadie te dice**:
+
+- **El código NO se persiste automáticamente**. Cuando cerrás el browser
+  o matás el proceso, lo último que ves en el inspector es lo que tenés.
+  Si no lo copiaste, lo perdiste.
+- **Truco pro**: mientras el inspector está abierto, podés **seleccionar
+  todo** (`Ctrl+A` o `Cmd+A`) y copiar. El botón "Copy" en la UI mode es
+  un atajo a lo mismo.
+- **Para evitar perder el código**: pegalo en un buffer antes de cerrar
+  (`Ctrl+C` en el inspector → pegá en tu editor). Después refinás.
+
+Ejemplo del flujo "hasta acá llega el test":
+
+1. Grabás navegar a `/login`, llenar email, llenar contraseña, hacer click.
+2. Llega al dashboard.
+3. **Cerrás el browser controlado** (la ventana grande).
+4. El inspector queda con el código acumulado — lo seleccionás y copiás.
+5. Pegás en tu editor, refactorás, commit.
+
 ---
 
 ## 4. Convertir la grabación en un step definition BDD
