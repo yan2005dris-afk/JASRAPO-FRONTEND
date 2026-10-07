@@ -129,137 +129,259 @@
           </p>
         </div>
       </div>
-      <fieldset class="mb-3">
-        <legend class="form-label fw-semibold text-dark fs-6">¿Quién realiza el trámite? *</legend>
-        <div class="form-check">
-          <input
-            id="procedure-owner-yes"
-            type="radio"
-            class="form-check-input"
-            [value]="true"
-            formControlName="tramitadorEsTitular"
-          />
-          <label for="procedure-owner-yes" class="form-check-label">El titular del servicio</label>
-        </div>
-        <div class="form-check">
-          <input
-            id="procedure-owner-no"
-            type="radio"
-            class="form-check-input"
-            [value]="false"
-            formControlName="tramitadorEsTitular"
-          />
-          <label for="procedure-owner-no" class="form-check-label">Otra persona</label>
+      <!-- Quién realiza el trámite -->
+      <fieldset class="mb-4">
+        <legend class="form-label fw-semibold text-dark fs-6 mb-2">
+          ¿Quién realiza el trámite? *
+        </legend>
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label
+              for="procedure-owner-yes"
+              class="selection-card h-100"
+              [class.is-selected]="form().get('procedure.tramitadorEsTitular')?.value === true"
+            >
+              <input
+                id="procedure-owner-yes"
+                type="radio"
+                class="visually-hidden"
+                [value]="true"
+                formControlName="tramitadorEsTitular"
+              />
+              <span class="selection-icon">
+                <i class="bi bi-person-check-fill"></i>
+              </span>
+              <div class="selection-content">
+                <div class="selection-title">Titular del servicio</div>
+                <p class="selection-desc">El trámite lo realiza el cliente registrado.</p>
+              </div>
+              <i
+                class="bi selection-check"
+                [class.bi-check-circle-fill]="
+                  form().get('procedure.tramitadorEsTitular')?.value === true
+                "
+                [class.bi-circle]="form().get('procedure.tramitadorEsTitular')?.value !== true"
+              ></i>
+            </label>
+          </div>
+
+          <div class="col-md-6">
+            <label
+              for="procedure-owner-no"
+              class="selection-card h-100"
+              [class.is-selected]="form().get('procedure.tramitadorEsTitular')?.value === false"
+            >
+              <input
+                id="procedure-owner-no"
+                type="radio"
+                class="visually-hidden"
+                [value]="false"
+                formControlName="tramitadorEsTitular"
+              />
+              <span class="selection-icon">
+                <i class="bi bi-person-badge"></i>
+              </span>
+              <div class="selection-content">
+                <div class="selection-title">Representante o tercero</div>
+                <p class="selection-desc">El trámite lo gestiona otra persona autorizada.</p>
+              </div>
+              <i
+                class="bi selection-check"
+                [class.bi-check-circle-fill]="
+                  form().get('procedure.tramitadorEsTitular')?.value === false
+                "
+                [class.bi-circle]="form().get('procedure.tramitadorEsTitular')?.value !== false"
+              ></i>
+            </label>
+          </div>
         </div>
       </fieldset>
+
+      <!-- Subpanel datos de tramitador -->
       @if (form().get('procedure.tramitadorEsTitular')?.value === false) {
-        <div class="row g-3 mb-3">
-          <div class="col-md-4">
-            <label for="procedure-name" class="form-label">Nombre del tramitador *</label>
-            <input
-              id="procedure-name"
-              type="text"
-              class="form-control"
-              formControlName="tramitadorNombre"
-              maxlength="200"
-              required
-              [class.is-invalid]="isProcedureControlInvalid('tramitadorNombre')"
-            />
-            @if (isProcedureControlInvalid('tramitadorNombre')) {
-              <span class="text-danger x-small">El nombre del tramitador es obligatorio.</span>
-            }
-          </div>
-          <div class="col-md-4">
-            <label for="procedure-id" class="form-label">Identificación *</label>
-            <input
-              id="procedure-id"
-              type="text"
-              class="form-control"
-              formControlName="tramitadorIdentificacion"
-              maxlength="30"
-              required
-              [class.is-invalid]="isProcedureControlInvalid('tramitadorIdentificacion')"
-            />
-            @if (isProcedureControlInvalid('tramitadorIdentificacion')) {
-              <span class="text-danger x-small">La identificación es obligatoria.</span>
-            }
-          </div>
-          <div class="col-md-4">
-            <label for="procedure-relation" class="form-label">Relación con el titular *</label>
-            <input
-              id="procedure-relation"
-              type="text"
-              class="form-control"
-              formControlName="relacionTramitador"
-              maxlength="100"
-              required
-              [class.is-invalid]="isProcedureControlInvalid('relacionTramitador')"
-            />
-            @if (isProcedureControlInvalid('relacionTramitador')) {
-              <span class="text-danger x-small">La relación con el titular es obligatoria.</span>
-            }
+        <div class="subpanel-card mb-4">
+          <h6 class="fw-bold text-dark mb-3 d-flex align-items-center gap-2">
+            <i class="bi bi-info-circle text-primary"></i>
+            Datos del tramitador
+          </h6>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label for="procedure-name" class="form-label fw-semibold text-dark">
+                Nombre del tramitador *
+              </label>
+              <input
+                id="procedure-name"
+                type="text"
+                class="form-control"
+                formControlName="tramitadorNombre"
+                placeholder="Nombre y apellido"
+                maxlength="200"
+                required
+                [class.is-invalid]="isProcedureControlInvalid('tramitadorNombre')"
+              />
+              @if (isProcedureControlInvalid('tramitadorNombre')) {
+                <span class="text-danger x-small">El nombre del tramitador es obligatorio.</span>
+              }
+            </div>
+            <div class="col-md-4">
+              <label for="procedure-id" class="form-label fw-semibold text-dark">
+                Identificación *
+              </label>
+              <input
+                id="procedure-id"
+                type="text"
+                class="form-control"
+                formControlName="tramitadorIdentificacion"
+                placeholder="Cédula / RUC / Pasaporte"
+                maxlength="30"
+                required
+                [class.is-invalid]="isProcedureControlInvalid('tramitadorIdentificacion')"
+              />
+              @if (isProcedureControlInvalid('tramitadorIdentificacion')) {
+                <span class="text-danger x-small">La identificación es obligatoria.</span>
+              }
+            </div>
+            <div class="col-md-4">
+              <label for="procedure-relation" class="form-label fw-semibold text-dark">
+                Relación con el titular *
+              </label>
+              <input
+                id="procedure-relation"
+                type="text"
+                class="form-control"
+                formControlName="relacionTramitador"
+                placeholder="Ej. Familiar, Arrendatario"
+                maxlength="100"
+                required
+                [class.is-invalid]="isProcedureControlInvalid('relacionTramitador')"
+              />
+              @if (isProcedureControlInvalid('relacionTramitador')) {
+                <span class="text-danger x-small">La relación con el titular es obligatoria.</span>
+              }
+            </div>
           </div>
         </div>
       }
-      <div class="form-check mb-2">
-        <input
-          id="procedure-obs"
-          type="checkbox"
-          class="form-check-input"
-          formControlName="hasObservations"
-        />
-        <label for="procedure-obs" class="form-check-label">Observaciones</label>
-      </div>
-      @if (form().get('procedure.hasObservations')?.value) {
-        <label for="procedure-notes" class="form-label">Detalle de observaciones *</label>
-        <textarea
-          id="procedure-notes"
-          class="form-control mb-1"
-          formControlName="observacionesTramite"
-          maxlength="2000"
-          rows="3"
-          required
-          [class.is-invalid]="isProcedureControlInvalid('observacionesTramite')"
-        ></textarea>
-        @if (isProcedureControlInvalid('observacionesTramite')) {
-          <span class="text-danger x-small d-block mb-3">
-            El detalle de observaciones es obligatorio.
-          </span>
+
+      <!-- Novedades y observaciones -->
+      <div class="mb-3">
+        <div class="form-label fw-semibold text-dark fs-6 mb-2">
+          Novedades y observaciones en la entrega
+        </div>
+        <div class="row g-3 mb-3">
+          <div class="col-md-6">
+            <label
+              for="procedure-obs"
+              class="selection-card h-100"
+              [class.is-selected]="form().get('procedure.hasObservations')?.value"
+            >
+              <input
+                id="procedure-obs"
+                type="checkbox"
+                class="visually-hidden"
+                formControlName="hasObservations"
+              />
+              <span class="selection-icon">
+                <i class="bi bi-chat-left-text"></i>
+              </span>
+              <div class="selection-content">
+                <div class="selection-title">Observaciones</div>
+                <p class="selection-desc">Anotaciones operativas o del suministro.</p>
+              </div>
+              <i
+                class="bi selection-check"
+                [class.bi-check-square-fill]="form().get('procedure.hasObservations')?.value"
+                [class.bi-square]="!form().get('procedure.hasObservations')?.value"
+              ></i>
+            </label>
+          </div>
+
+          <div class="col-md-6">
+            <label
+              for="procedure-other"
+              class="selection-card h-100"
+              [class.is-selected]="form().get('procedure.hasOtherIssues')?.value"
+            >
+              <input
+                id="procedure-other"
+                type="checkbox"
+                class="visually-hidden"
+                formControlName="hasOtherIssues"
+              />
+              <span class="selection-icon">
+                <i class="bi bi-exclamation-triangle"></i>
+              </span>
+              <div class="selection-content">
+                <div class="selection-title">Otras novedades</div>
+                <p class="selection-desc">Casos fortuitos, accesorios o excepciones.</p>
+              </div>
+              <i
+                class="bi selection-check"
+                [class.bi-check-square-fill]="form().get('procedure.hasOtherIssues')?.value"
+                [class.bi-square]="!form().get('procedure.hasOtherIssues')?.value"
+              ></i>
+            </label>
+          </div>
+        </div>
+
+        @if (form().get('procedure.hasObservations')?.value) {
+          <div class="subpanel-card mb-3">
+            <label for="procedure-notes" class="form-label fw-semibold text-dark mb-1">
+              Detalle de observaciones *
+            </label>
+            <textarea
+              id="procedure-notes"
+              class="form-control"
+              formControlName="observacionesTramite"
+              placeholder="Describa las observaciones detectadas..."
+              maxlength="2000"
+              rows="3"
+              required
+              [class.is-invalid]="isProcedureControlInvalid('observacionesTramite')"
+            ></textarea>
+            @if (isProcedureControlInvalid('observacionesTramite')) {
+              <span class="text-danger x-small d-block mt-1">
+                El detalle de observaciones es obligatorio.
+              </span>
+            }
+          </div>
         }
-      }
-      <div class="form-check mb-2">
-        <input
-          id="procedure-other"
-          type="checkbox"
-          class="form-check-input"
-          formControlName="hasOtherIssues"
-        />
-        <label for="procedure-other" class="form-check-label">Otros</label>
-      </div>
-      @if (form().get('procedure.hasOtherIssues')?.value) {
-        <label for="procedure-other-notes" class="form-label">Detalle de otras novedades *</label>
-        <textarea
-          id="procedure-other-notes"
-          class="form-control mb-1"
-          formControlName="otrasNovedades"
-          maxlength="2000"
-          rows="3"
-          required
-          [class.is-invalid]="isProcedureControlInvalid('otrasNovedades')"
-        ></textarea>
-        @if (isProcedureControlInvalid('otrasNovedades')) {
-          <span class="text-danger x-small d-block mb-3">
-            El detalle de otras novedades es obligatorio.
-          </span>
+
+        @if (form().get('procedure.hasOtherIssues')?.value) {
+          <div class="subpanel-card mb-3">
+            <label for="procedure-other-notes" class="form-label fw-semibold text-dark mb-1">
+              Detalle de otras novedades *
+            </label>
+            <textarea
+              id="procedure-other-notes"
+              class="form-control"
+              formControlName="otrasNovedades"
+              placeholder="Describa las novedades adicionales observadas..."
+              maxlength="2000"
+              rows="3"
+              required
+              [class.is-invalid]="isProcedureControlInvalid('otrasNovedades')"
+            ></textarea>
+            @if (isProcedureControlInvalid('otrasNovedades')) {
+              <span class="text-danger x-small d-block mt-1">
+                El detalle de otras novedades es obligatorio.
+              </span>
+            }
+          </div>
         }
-      }
+      </div>
+
       @if ((submitted() || stepAttempted()) && form().get('procedure')?.invalid) {
-        <p class="text-danger mt-2" role="alert">
-          Complete los datos de quien tramita y los detalles de las opciones marcadas.
-        </p>
+        <div
+          class="alert alert-warning py-2 px-3 small d-flex align-items-center gap-2"
+          role="alert"
+        >
+          <i class="bi bi-exclamation-circle-fill"></i>
+          <span>Complete los datos de quien tramita y los detalles de las opciones marcadas.</span>
+        </div>
       }
       @if (contractToEdit()?.registradoPorId; as registrant) {
-        <p class="text-muted small mb-0">Registrado por el usuario {{ registrant }}.</p>
+        <p class="text-muted small mb-0 mt-2">Registrado por el usuario {{ registrant }}.</p>
       }
     </div>
   </section>
