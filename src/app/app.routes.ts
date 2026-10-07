@@ -93,6 +93,14 @@ export const routes: Routes = [
                 (m) => m.NovedadesFormComponent,
               ),
           },
+          {
+            path: ':id/edit',
+            data: { breadcrumb: 'Editar Novedad' },
+            loadComponent: () =>
+              import('./features/operator/novelties/novedades-form/novedades-form.component').then(
+                (m) => m.NovedadesFormComponent,
+              ),
+          },
         ],
       },
       {

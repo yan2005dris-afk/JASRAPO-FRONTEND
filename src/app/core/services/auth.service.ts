@@ -16,6 +16,9 @@ import {
 import { LoginRequest, LoginResponse, RefreshTokenResponse, User } from '../models/auth.model';
 import { environment } from '../../../environments/environment';
 import { MenuService } from './menu.service';
+import { NetworkService } from './network.service';
+
+const OFFLINE_OPERATOR_SESSION_KEY = 'jasrapo_offline_operator_session';
 
 @Injectable({
   providedIn: 'root',
@@ -24,6 +27,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly menuService = inject(MenuService);
+  private readonly networkService = inject(NetworkService);
 
   private readonly API_URL = `${environment.apiUrl}/auth`;
 
@@ -33,8 +37,9 @@ export class AuthService {
   private readonly tokenExpiresAtSignal = signal<string | null>(null);
   private readonly userSignal = signal<User | null>(null);
   private readonly isInitializedSignal = signal<boolean>(false);
+  private readonly offlineOperatorSignal = signal<boolean>(false);
 
-  readonly isAuthenticated = computed(() => !!this.tokenSignal());
+  readonly isAuthenticated = computed(() => !!this.tokenSignal() || this.offlineOperatorSignal());
   readonly isInitialized = computed(() => this.isInitializedSignal());
   readonly currentUser = computed(() => this.userSignal());
   readonly token = computed(() => this.tokenSignal());
@@ -51,8 +56,13 @@ export class AuthService {
    * De lo contrario, consulta al backend (/auth/refresh) utilizando la cookie HTTP-only.
    */
   initializeAuth(): Observable<boolean> {
-    if (this.isInitializedSignal()) {
+    if (this.isInitializedSignal() && !this.offlineOperatorSignal()) {
       return of(this.isAuthenticated());
+    }
+
+    if (!this.networkService.isOnline()) {
+      if (this.restoreOfflineOperator()) return of(true);
+      return of(false);
     }
 
     return this.refreshToken().pipe(
@@ -60,7 +70,10 @@ export class AuthService {
         this.isInitializedSignal.set(true);
         return true;
       }),
-      catchError(() => {
+      catchError((error: { status?: number }) => {
+        if (error.status === 0 && this.restoreOfflineOperator()) {
+          return of(true);
+        }
         this.clearAuthData();
         this.isInitializedSignal.set(true);
         return of(false);
@@ -79,6 +92,10 @@ export class AuthService {
 
   logout(): void {
     this.cancelRefreshTimer();
+    if (!this.networkService.isOnline()) {
+      this.executeLocalLogout();
+      return;
+    }
     this.http.post(`${this.API_URL}/logout`, {}, { withCredentials: true }).subscribe({
       next: () => this.executeLocalLogout(),
       error: () => this.executeLocalLogout(),
@@ -140,6 +157,12 @@ export class AuthService {
     if (this.isAuthenticated()) {
       this.startRefreshTimer();
     }
+
+    this.networkService.connected$.subscribe(() => {
+      if (!this.tokenSignal()) {
+        this.initializeAuth().subscribe();
+      }
+    });
   }
 
   private startRefreshTimer(): void {
@@ -184,6 +207,8 @@ export class AuthService {
     };
 
     this.updateSignals(accessToken, String(sid), createdAt, expiresAt, user);
+    this.offlineOperatorSignal.set(false);
+    this.persistOfflineOperator(user);
     this.isInitializedSignal.set(true);
     this.startRefreshTimer();
   }
@@ -211,8 +236,10 @@ export class AuthService {
         avatar: (typeof response.avatar === 'object' ? response.avatar : null) as User['avatar'],
       };
       this.userSignal.set(user);
+      this.persistOfflineOperator(user);
     }
 
+    this.offlineOperatorSignal.set(false);
     this.isInitializedSignal.set(true);
     this.startRefreshTimer();
   }
@@ -237,10 +264,63 @@ export class AuthService {
     this.tokenCreatedAtSignal.set(null);
     this.tokenExpiresAtSignal.set(null);
     this.userSignal.set(null);
+    this.offlineOperatorSignal.set(false);
+    this.removeOfflineOperator();
 
     // Limpieza de compatibilidad por si existían valores antiguos en storage
     this.removeLegacyStorageKeys();
     this.cancelRefreshTimer();
+  }
+
+  private persistOfflineOperator(user: User): void {
+    try {
+      if (this.isOperatorRole(user.roleName)) {
+        sessionStorage.setItem(OFFLINE_OPERATOR_SESSION_KEY, JSON.stringify(user));
+      } else {
+        this.removeOfflineOperator();
+      }
+    } catch {
+      // El almacenamiento puede estar deshabilitado; la sesión online sigue funcionando.
+    }
+  }
+
+  private restoreOfflineOperator(): boolean {
+    try {
+      const stored = sessionStorage.getItem(OFFLINE_OPERATOR_SESSION_KEY);
+      if (!stored) return false;
+      const candidate: unknown = JSON.parse(stored);
+      if (!candidate || typeof candidate !== 'object') return false;
+      const user = candidate as Partial<User>;
+      if (typeof user.id !== 'string' || !user.id || !this.isOperatorRole(user.roleName)) {
+        return false;
+      }
+      this.userSignal.set({
+        id: user.id,
+        email: typeof user.email === 'string' ? user.email : '',
+        name: typeof user.name === 'string' ? user.name : 'Operador',
+        roleId: typeof user.roleId === 'number' ? user.roleId : null,
+        roleName: user.roleName,
+        avatar: null,
+      });
+      this.offlineOperatorSignal.set(true);
+      this.isInitializedSignal.set(true);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  private removeOfflineOperator(): void {
+    try {
+      sessionStorage.removeItem(OFFLINE_OPERATOR_SESSION_KEY);
+    } catch {
+      // Ignorar fallos de almacenamiento al cerrar sesión.
+    }
+  }
+
+  private isOperatorRole(roleName: string | null | undefined): boolean {
+    const role = roleName?.toLowerCase() ?? '';
+    return role === 'operador' || role === 'operadores';
   }
 
   private removeLegacyStorageKeys(): void {
@@ -264,8 +344,7 @@ export class AuthService {
    * Verifica si el usuario actual tiene rol de operador.
    */
   isOperator(): boolean {
-    const role = this.currentUser()?.roleName?.toLowerCase() ?? '';
-    return role === 'operador' || role === 'operadores';
+    return this.isOperatorRole(this.currentUser()?.roleName);
   }
 
   /**
