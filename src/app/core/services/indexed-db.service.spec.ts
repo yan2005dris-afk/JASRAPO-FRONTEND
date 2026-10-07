@@ -24,6 +24,7 @@ describe('IndexedDbService - Multi-operator Snapshot Isolation', () => {
       'lecturas_sincronizadas',
       'estados_cache',
       'novedades_cache',
+      'operator_novelties_cache',
       'comunidades_cache',
       'sectores_cache',
       'activity_types_cache',
@@ -505,6 +506,19 @@ describe('IndexedDbService - Multi-operator Snapshot Isolation', () => {
 
     expect(await service.getNovedadesCache<any>('operator:missing')).toBeNull();
   });
+
+  it('caches work-order novelties with null reading IDs isolated by operator', async () => {
+    const item = { novedadId: '12', lecturaId: null, ordenTrabajoId: '45' };
+    await service.saveOperatorNoveltiesCache('operator:1', [item]);
+    await service.saveOperatorNoveltiesCache('operator:2', []);
+    expect((await service.getOperatorNoveltiesCache<typeof item>('operator:1'))?.items).toEqual([
+      item,
+    ]);
+    expect((await service.getOperatorNoveltiesCache<typeof item>('operator:2'))?.items).toEqual(
+      [],
+    );
+    expect(await service.getOperatorNoveltiesCache('operator:3')).toBeNull();
+  });
 });
 
 describe('Route/snapshot cache merge (rutas_cache base, manifest delta)', () => {
@@ -523,6 +537,7 @@ describe('Route/snapshot cache merge (rutas_cache base, manifest delta)', () => 
       'lecturas_sincronizadas',
       'estados_cache',
       'novedades_cache',
+      'operator_novelties_cache',
     ];
     for (const name of storeNames) tables.set(name, new Map());
 
