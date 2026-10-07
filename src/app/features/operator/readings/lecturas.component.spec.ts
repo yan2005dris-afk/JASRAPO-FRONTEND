@@ -124,6 +124,7 @@ describe('LecturasComponent State Machine', () => {
       clienteNombre: `Cliente ${index + 1}`,
     }));
     component.metersList.set(meters);
+    fixture.detectChanges();
     component.routeSyntheticMeters.set([]);
     fixture.detectChanges();
 
@@ -154,8 +155,9 @@ describe('LecturasComponent State Machine', () => {
         clienteNombre: `Cliente ${index + 1}`,
       })),
     );
-    component.routeSyntheticMeters.set([]);
     component.completedWorkOrderIds.set(new Set(['1', '2', '3']));
+    fixture.detectChanges();
+    component.routeSyntheticMeters.set([]);
     fixture.detectChanges();
 
     component.goToOrderPage(3);
@@ -181,6 +183,7 @@ describe('LecturasComponent State Machine', () => {
         serie: `SER-${index + 1}`,
       })),
     );
+    fixture.detectChanges();
     component.routeSyntheticMeters.set([]);
     fixture.detectChanges();
     component.goToOrderPage(3);
