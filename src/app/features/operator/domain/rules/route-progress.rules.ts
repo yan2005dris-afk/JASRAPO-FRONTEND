@@ -1,4 +1,4 @@
-import type { OperatorRouteResponse, RouteType } from '../domain/models/operator.models';
+import type { OperatorRouteResponse, RouteType } from '../models/operator.models';
 
 /**
  * Resolves the primary route type from an OperatorRouteResponse.
