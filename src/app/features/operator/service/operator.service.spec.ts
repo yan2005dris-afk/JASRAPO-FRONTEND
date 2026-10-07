@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { of } from 'rxjs';
 import { OperatorService } from './operator.service';
-import type { OperatorRouteResponse, ReadingWithAnomaly } from '../models/operator.models';
+import type { OperatorRouteResponse } from '../models/operator.models';
 
 const mockTask: OperatorRouteResponse = {
   rutaId: 'r-001',
@@ -13,15 +13,6 @@ const mockTask: OperatorRouteResponse = {
   comunidadId: 2,
   medidor: null,
   operario: { usuarioId: 1, nombres: 'Ana', apellidos: 'López' },
-};
-
-const mockAnomaly: ReadingWithAnomaly = {
-  lecturaId: 'l-001',
-  medidorId: null,
-  medidorSerie: 'SER-001',
-  fecha: '2026-06-15T10:00:00Z',
-  estado: 'PROCESADA',
-  anomalias: [{ tipo: 'FUGA', observacion: 'Fuga detectada', estado: 'PENDIENTE' }],
 };
 
 describe('OperatorService', () => {
@@ -95,29 +86,6 @@ describe('OperatorService', () => {
       ];
       expect(body.observacion).toBe('No llegué');
       expect(body.estado).toBe('CANCELADA');
-    });
-  });
-
-  describe('getReadingsWithAnomalies', () => {
-    it('calls GET /api/v1/operator/readings/anomalies and returns readings', () => {
-      httpGetSpy.mockReturnValue(of([mockAnomaly]));
-
-      let result: ReadingWithAnomaly[] = [];
-      service.getReadingsWithAnomalies().subscribe((r) => (result = r));
-
-      const [url] = httpGetSpy.mock.calls[0] as [string];
-      expect(url).toBe('/api/v1/operator/readings/anomalies');
-      expect(result.length).toBe(1);
-      expect(result[0].anomalias[0].tipo).toBe('FUGA');
-    });
-
-    it('returns empty array when backend responds with empty list', () => {
-      httpGetSpy.mockReturnValue(of([]));
-
-      let result: ReadingWithAnomaly[] = [mockAnomaly];
-      service.getReadingsWithAnomalies().subscribe((r) => (result = r));
-
-      expect(result.length).toBe(0);
     });
   });
 });

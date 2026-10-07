@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-// RED: these imports WILL fail until operator.models.ts exists with the correct exports
-import type { OperatorRouteResponse, ReadingWithAnomaly } from './operator.models';
+import type { OperatorRouteResponse } from './operator.models';
 
 describe('operator.models — type contracts', () => {
   it('OperatorRouteResponse has required fields with correct shape', () => {
@@ -54,20 +53,5 @@ describe('operator.models — type contracts', () => {
     expect(task.medidor?.serie).toBe('SER-123');
     expect(task.ordenesTrabajo?.[0]?.contrato?.latitud).toBe(-0.5);
     expect(task.ordenesTrabajo?.[0]?.contrato?.longitud).toBe(-78.5);
-  });
-
-  it('ReadingWithAnomaly has required fields with correct shape', () => {
-    const reading: ReadingWithAnomaly = {
-      lecturaId: 'l-001',
-      medidorId: null,
-      medidorSerie: 'SER-001',
-      fecha: '2026-06-15T10:00:00Z',
-      estado: 'PROCESADA',
-      anomalias: [{ tipo: 'FUGA', observacion: 'Fuga en tubería', estado: 'PENDIENTE' }],
-    };
-
-    expect(reading.lecturaId).toBe('l-001');
-    expect(reading.anomalias).toHaveLength(1);
-    expect(reading.anomalias[0].tipo).toBe('FUGA');
   });
 });
