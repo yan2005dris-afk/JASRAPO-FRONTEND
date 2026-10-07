@@ -10,8 +10,10 @@ test.describe('Login', () => {
       const loginPage = new LoginPage(page);
       await loginPage.goto(ROUTES.login);
 
-      await expect(page.getByLabel('Usuario')).toBeVisible();
-      await expect(page.getByLabel('contraseña')).toBeVisible();
+      // Usa los locators del LoginPage (id-based) para evitar el strict mode
+      // con el botón "Ver contraseña" cuyo aria-label contiene "contraseña".
+      await expect(loginPage.emailInput).toBeVisible();
+      await expect(loginPage.passwordInput).toBeVisible();
       await expect(loginPage.submitButton).toBeVisible();
     },
   );
