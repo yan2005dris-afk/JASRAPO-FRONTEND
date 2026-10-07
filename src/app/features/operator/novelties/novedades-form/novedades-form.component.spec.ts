@@ -10,7 +10,7 @@ import { ToastService } from '../../../../shared/components/toast/toast.service'
 import { NetworkService } from '../../../../core/services/network.service';
 import { IMeterDto } from '../../../contracts/meters/domain/models/meter.model';
 import { OperatorService } from '../../service/operator.service';
-import type { OperatorNovelty } from '../../models/operator.models';
+import type { OperatorNovelty } from '../../domain/models/operator.models';
 import { of } from 'rxjs';
 
 describe('NovedadesFormComponent', () => {

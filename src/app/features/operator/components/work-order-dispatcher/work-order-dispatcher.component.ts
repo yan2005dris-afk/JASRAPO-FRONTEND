@@ -1,8 +1,8 @@
 import { Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IMeterDto } from '../../../contracts/meters/domain/models/meter.model';
-import type { WorkOrderActivityType } from '../../models/operator.models';
-import type { WorkOrderFormPayload } from '../../models/work-order-form.models';
+import type { WorkOrderActivityType } from '../../domain/models/operator.models';
+import type { WorkOrderFormPayload } from '../../domain/models/work-order-form.models';
 import { LecturaFormComponent } from '../work-order-forms/lectura-form.component';
 import { InstalacionFormComponent } from '../work-order-forms/instalacion-form.component';
 import { InspeccionFormComponent } from '../work-order-forms/inspeccion-form.component';

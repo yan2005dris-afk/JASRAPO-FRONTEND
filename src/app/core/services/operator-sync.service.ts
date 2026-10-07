@@ -15,7 +15,7 @@ import {
 import {
   MANIFEST_PROTOCOL_VERSION,
   type OperatorManifestPage,
-} from '../../features/operator/models/operator.models';
+} from '../../features/operator/domain/models/operator.models';
 
 type PayloadValue = string | number | boolean | Blob | null | undefined;
 type WorkOrderDtoField =

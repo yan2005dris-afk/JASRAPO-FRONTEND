@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { PhotoCaptureComponent } from '../../../../shared/components/photo-capture/photo-capture.component';
-import type { InstalacionFormPayload } from '../../models/work-order-form.models';
+import type { InstalacionFormPayload } from '../../domain/models/work-order-form.models';
 import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
 
 @Component({

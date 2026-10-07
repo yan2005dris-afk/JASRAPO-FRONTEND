@@ -8,7 +8,7 @@ import { OperatorService } from '../service/operator.service';
 import { MeterCacheService } from '../../../core/services/meter-cache.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { AuthService } from '../../../core/services/auth.service';
-import type { OperatorNovelty } from '../models/operator.models';
+import type { OperatorNovelty } from '../domain/models/operator.models';
 
 const novelty: OperatorNovelty = {
   novedadId: '12',

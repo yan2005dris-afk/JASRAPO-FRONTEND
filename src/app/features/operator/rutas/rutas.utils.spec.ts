@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { OperatorRouteResponse, OperatorWorkOrder } from '../models/operator.models';
+import type { OperatorRouteResponse, OperatorWorkOrder } from '../domain/models/operator.models';
 import {
   compareRoutesCanonically,
   nextPendingWorkOrder,
   routeMatchesTypeFilter,
-} from './rutas.utils';
+} from '../domain/rules/reading-order.rules';
 
 function route(partial: Partial<OperatorRouteResponse>): OperatorRouteResponse {
   return {

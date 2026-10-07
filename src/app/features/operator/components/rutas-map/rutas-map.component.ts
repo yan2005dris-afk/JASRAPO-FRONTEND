@@ -18,7 +18,7 @@ import { CommonModule } from '@angular/common';
 import * as L from 'leaflet';
 import { NetworkService } from '../../../../core/services/network.service';
 import { formatDistance, type LatLng } from '../../../../shared/utils/geo.utils';
-import { MARKER_COLORS } from '../../rutas/rutas.constants';
+import { MARKER_COLORS } from '../../domain/constants/operator.constants';
 
 export interface MapPoint {
   routeId: string;

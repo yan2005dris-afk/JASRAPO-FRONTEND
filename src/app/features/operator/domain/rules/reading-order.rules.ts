@@ -3,10 +3,27 @@ import type {
   OperatorWorkOrder,
   WorkOrderActivityType,
   WorkOrderState,
-  IMeterDto,
-  AssignedWorkOrder,
-  ReadingRecord,
-} from '../models';
+} from '../models/operator.models';
+import type { IMeterDto } from '../../../contracts/meters/domain/models/meter.model';
+
+export interface AssignedWorkOrder {
+  id: string;
+  estado: WorkOrderState;
+  lecturaId?: string;
+}
+
+export interface ReadingRecord {
+  lecturaId?: string;
+  _lecturaId?: string;
+  medidorId?: string | number;
+  medidor?: { medidorId?: string | number; serie?: string };
+  lecturaActual?: number;
+  lecturaAnterior?: number;
+  estado?: string;
+  syncState?: string;
+  contratoId?: string | number;
+  [key: string]: unknown;
+}
 
 const READING_ROUTE_TYPES = new Set(['LECTURA']);
 
@@ -44,13 +61,13 @@ export function compareRoutesCanonically(
  * Next pending work order for navigation.
  */
 export function nextPendingWorkOrder(task: OperatorRouteResponse): OperatorWorkOrder | null {
-  const pendingWithCoords = (task.ordenesTrabajo ?? []).filter(
-    (order) =>
+  const pendingWithCoords: OperatorWorkOrder[] = (task.ordenesTrabajo ?? []).filter(
+    (order: OperatorWorkOrder) =>
       order.estado === 'PENDIENTE' &&
       order.contrato?.latitud != null &&
       order.contrato?.longitud != null,
   );
-  return pendingWithCoords.sort((a, b) => a.ordenVisita - b.ordenVisita)[0] ?? null;
+  return pendingWithCoords.sort((a: OperatorWorkOrder, b: OperatorWorkOrder) => a.ordenVisita - b.ordenVisita)[0] ?? null;
 }
 
 /**

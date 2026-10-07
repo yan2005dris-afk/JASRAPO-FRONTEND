@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ReconexionFormComponent } from './reconexion-form.component';
-import type { ReconexionFormPayload } from '../../models/work-order-form.models';
+import type { ReconexionFormPayload } from '../../domain/models/work-order-form.models';
 
 function createComponent(): ReconexionFormComponent {
   TestBed.configureTestingModule({

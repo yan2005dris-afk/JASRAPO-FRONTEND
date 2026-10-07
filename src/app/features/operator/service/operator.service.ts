@@ -6,7 +6,7 @@ import type {
   OperatorRouteResponse,
   OperatorActivityType,
   OperatorNovelty,
-} from '../models/operator.models';
+} from '../domain/models/operator.models';
 
 @Injectable({
   providedIn: 'root',

@@ -13,8 +13,8 @@ import { PhotoCaptureComponent } from '../../../../shared/components/photo-captu
 import { MeterSearchBoxComponent } from '../../components/meter-search-box/meter-search-box.component';
 import { MeterCardComponent } from '../../components/meter-card/meter-card.component';
 import { SelectedMeterCardComponent } from '../../components/selected-meter-card/selected-meter-card.component';
-import { OperatorWorkOrder, OperatorRouteResponse } from '../../models/operator.models';
-import type { OperatorNovelty } from '../../models/operator.models';
+import { OperatorWorkOrder, OperatorRouteResponse } from '../../domain/models/operator.models';
+import type { OperatorNovelty } from '../../domain/models/operator.models';
 import { OperatorService } from '../../service/operator.service';
 import { firstValueFrom } from 'rxjs';
 

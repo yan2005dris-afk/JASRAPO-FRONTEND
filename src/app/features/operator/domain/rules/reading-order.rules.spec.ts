@@ -5,8 +5,11 @@ import {
   resolveOrderRecord,
   isOrderCompletedRule,
   getActionableWorkOrders,
+  type AssignedWorkOrder,
+  type ReadingRecord,
 } from './reading-order.rules';
-import type { IMeterDto, ReadingRecord, AssignedWorkOrder, WorkOrderActivityType } from '../models';
+import type { WorkOrderActivityType } from '../models/operator.models';
+import type { IMeterDto } from '../../../contracts/meters/domain/models/meter.model';
 
 describe('reading-order.rules', () => {
   describe('isReadingRouteType & routeMatchesTypeFilter', () => {

@@ -2,7 +2,7 @@ import { Component, OnInit, signal, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { PendingRecord } from '../../../../core/services/indexed-db.service';
-import { calculateConsumo } from '../../models/work-order-form.models';
+import { calculateConsumo } from '../../domain/models/work-order-form.models';
 
 export interface ReadingEditResult {
   recordId: number;

@@ -8,7 +8,7 @@ import { MeterCacheService } from '../../../core/services/meter-cache.service';
 import { IndexedDbService, type PendingRecord } from '../../../core/services/indexed-db.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MeterCardComponent } from '../components/meter-card/meter-card.component';
-import type { OperatorNovelty } from '../models/operator.models';
+import type { OperatorNovelty } from '../domain/models/operator.models';
 import type { IMeterDto } from '../../contracts/meters/domain/models/meter.model';
 
 const STALE_CACHE_MS = 24 * 60 * 60 * 1000;

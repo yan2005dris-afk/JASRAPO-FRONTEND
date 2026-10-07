@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { IMeterDto } from '../../../contracts/meters/domain/models/meter.model';
 import { MeterCardComponent } from '../meter-card/meter-card.component';
 import { MeterSearchBoxComponent } from '../meter-search-box/meter-search-box.component';
-import { EstadoChip, MeterGroup } from '../../readings/readings.models';
+import { EstadoChip, MeterGroup } from '../../domain/models/readings.models';
 
 export interface VirtualMeterItem {
   meter: IMeterDto;

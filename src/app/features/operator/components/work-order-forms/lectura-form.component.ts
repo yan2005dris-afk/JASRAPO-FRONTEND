@@ -12,7 +12,7 @@ import { CommonModule } from '@angular/common';
 import { FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { PhotoCaptureComponent } from '../../../../shared/components/photo-capture/photo-capture.component';
-import { calculateConsumo, type LecturaFormPayload } from '../../models/work-order-form.models';
+import { calculateConsumo, type LecturaFormPayload } from '../../domain/models/work-order-form.models';
 import { BaseWorkOrderFormComponent } from './base-work-order-form.component';
 
 @Component({

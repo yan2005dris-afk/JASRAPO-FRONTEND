@@ -1,6 +1,6 @@
 import { Directive, OnInit, inject, input, output, signal } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import type { WorkOrderFormPayload } from '../../models/work-order-form.models';
+import type { WorkOrderFormPayload } from '../../domain/models/work-order-form.models';
 
 /**
  * Clase base abstracta para los 4 sub-forms dinámicos de operator-pwa

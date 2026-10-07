@@ -18,19 +18,22 @@ import type {
   OperatorRouteResponse,
   RouteType,
   OperatorActivityType,
-} from '../models/operator.models';
+  OperatorWorkOrder,
+  OperatorParada,
+  RoutePoint,
+} from '../domain/models/operator.models';
 import {
   classifyRouteLoadError,
   type OperatorRouteErrorInfo,
   OperatorRouteOfflineService,
 } from '../service/operator-route-offline.service';
-import { STATE_LABELS, STATE_FILTER_OPTIONS } from './rutas.constants';
+import { STATE_LABELS, STATE_FILTER_OPTIONS } from '../domain/constants/operator.constants';
 import {
   compareRoutesCanonically,
   isReadingRouteType,
   nextPendingWorkOrder,
   routeMatchesTypeFilter,
-} from './rutas.utils';
+} from '../domain/rules/reading-order.rules';
 import {
   formatDistance as formatDistanceUtil,
   haversineMeters,
@@ -298,7 +301,7 @@ export class RutasComponent implements OnInit, OnDestroy {
       } else if (ordenes && ordenes.length > 0) {
         // Backend puede no garantizar orden estable entre requests; ordenamos acá
         // por ordenVisita para que la secuencia de visita sea consistente en UI.
-        for (const ord of ordenes.slice().sort((a, b) => a.ordenVisita - b.ordenVisita)) {
+        for (const ord of ordenes.slice().sort((a: OperatorWorkOrder, b: OperatorWorkOrder) => a.ordenVisita - b.ordenVisita)) {
           const lat = ord.contrato?.latitud;
           const lng = ord.contrato?.longitud;
           const serie = ord.medidor?.serie;
@@ -775,7 +778,7 @@ export class RutasComponent implements OnInit, OnDestroy {
         }
       }
     } else if (isReadingRouteType(tipoRuta) && task.rutaPuntos?.length) {
-      orderIdentifiers.push(...task.rutaPuntos.map((pt) => pt.serie));
+      orderIdentifiers.push(...task.rutaPuntos.map((pt: RoutePoint) => pt.serie));
     } else if (task.medidor) {
       orderIdentifiers.push(task.medidor.serie);
     }
@@ -837,15 +840,15 @@ export class RutasComponent implements OnInit, OnDestroy {
 
   getTaskFirstClient(task: OperatorRouteResponse): string | null {
     if (task.paradas?.length) {
-      const first = task.paradas.find((p) => p.clienteNombre?.trim());
+      const first = task.paradas.find((p: OperatorParada) => p.clienteNombre?.trim());
       if (first?.clienteNombre) return first.clienteNombre;
     }
     if (task.ordenesTrabajo?.length) {
-      const first = task.ordenesTrabajo.find((o) => o.contrato?.clienteNombre?.trim());
+      const first = task.ordenesTrabajo.find((o: OperatorWorkOrder) => o.contrato?.clienteNombre?.trim());
       if (first?.contrato?.clienteNombre) return first.contrato.clienteNombre;
     }
     if (task.rutaPuntos?.length) {
-      const first = task.rutaPuntos.find((pt) => pt.clienteNombre?.trim());
+      const first = task.rutaPuntos.find((pt: RoutePoint) => pt.clienteNombre?.trim());
       if (first?.clienteNombre) return first.clienteNombre;
     }
     return null;

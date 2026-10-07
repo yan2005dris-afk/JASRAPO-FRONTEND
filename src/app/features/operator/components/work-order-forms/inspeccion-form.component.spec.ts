@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { InspeccionFormComponent } from './inspeccion-form.component';
-import type { InspeccionFormPayload } from '../../models/work-order-form.models';
+import type { InspeccionFormPayload } from '../../domain/models/work-order-form.models';
 
 function createComponent(): InspeccionFormComponent {
   TestBed.configureTestingModule({

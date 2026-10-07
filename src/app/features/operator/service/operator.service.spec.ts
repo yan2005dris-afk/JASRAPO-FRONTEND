@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { of } from 'rxjs';
 import { OperatorService } from './operator.service';
-import type { OperatorRouteResponse } from '../models/operator.models';
+import type { OperatorRouteResponse } from '../domain/models/operator.models';
 
 const mockTask: OperatorRouteResponse = {
   rutaId: 'r-001',

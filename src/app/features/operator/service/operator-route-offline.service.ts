@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { NetworkService } from '../../../core/services/network.service';
-import type { OperatorRouteResponse, OperatorActivityType } from '../models/operator.models';
+import type { OperatorRouteResponse, OperatorActivityType } from '../domain/models/operator.models';
 import { OperatorService } from './operator.service';
 
 export type OperatorRouteLoadErrorKind = 'auth' | 'business' | 'network';

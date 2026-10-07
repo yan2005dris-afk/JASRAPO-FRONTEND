@@ -19,14 +19,14 @@ import {
   LecturaState,
   READING_STATE_ORDER,
   ESTADOS_FALLBACK,
-} from './readings.models';
+} from '../domain/models/readings.models';
 import { WorkOrderDispatcherComponent } from '../components/work-order-dispatcher/work-order-dispatcher.component';
-import { calculateConsumo, type WorkOrderFormPayload } from '../models/work-order-form.models';
+import { calculateConsumo, type WorkOrderFormPayload } from '../domain/models/work-order-form.models';
 import type {
   WorkOrderActivityType,
   WorkOrderState,
   OperatorRouteResponse,
-} from '../models/operator.models';
+} from '../domain/models/operator.models';
 
 interface AssignedWorkOrder {
   id: string;

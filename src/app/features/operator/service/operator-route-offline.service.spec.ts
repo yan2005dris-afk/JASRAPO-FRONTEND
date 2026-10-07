@@ -4,7 +4,7 @@ import { of, throwError } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { NetworkService } from '../../../core/services/network.service';
-import type { OperatorRouteResponse } from '../models/operator.models';
+import type { OperatorRouteResponse } from '../domain/models/operator.models';
 import {
   classifyRouteLoadError,
   OperatorRouteOfflineService,
