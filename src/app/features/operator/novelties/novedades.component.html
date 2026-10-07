@@ -19,7 +19,7 @@
           }
         </span>
       } @else {
-        <span>Sin conexión — las novedades se listan solo online.</span>
+        <span>Sin conexión — se muestran las novedades pendientes guardadas en este dispositivo.</span>
       }
       <button class="retry-link" type="button" (click)="retry()">Reintentar</button>
     </div>
@@ -37,8 +37,22 @@
       <p>Sin novedades registradas.</p>
     </div>
   } @else {
-    <div class="anomaly-list">
-      @for (item of anomalies(); track item.lecturaId) {
+    <div class="anomaly-groups">
+      @for (item of anomalies(); track item.novedadId || 'local-' + item.localId; let i = $index) {
+        @let prevOrderId = i > 0 ? anomalies()[i - 1].ordenTrabajoId : null;
+        @if (item.ordenTrabajoId !== prevOrderId) {
+          <div class="order-group-header">
+            <div class="order-group-label">
+              <span class="order-group-icon">
+                <i class="bi bi-clipboard2-check-fill"></i>
+              </span>
+              <span class="order-group-title">Orden de Trabajo</span>
+              <span class="order-group-id">#{{ item.ordenTrabajoId }}</span>
+            </div>
+            <div class="order-group-line"></div>
+          </div>
+        }
+
         <div class="anomaly-card">
           @if (item.meterDto) {
             <app-meter-card [meter]="item.meterDto" [showArrow]="false" />
@@ -52,7 +66,7 @@
           <div class="anomaly-footer">
             <span class="anomaly-fecha">
               <i class="bi bi-calendar3"></i>
-              {{ item.fecha | date: 'dd/MM/yyyy HH:mm' }}
+              {{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}
             </span>
             <span class="anomaly-estado estado-{{ item.estado.toLowerCase() }}">
               {{ item.estado }}
@@ -65,19 +79,18 @@
             }
           </div>
 
-          @if (item.anomalias.length) {
-            <div class="anomaly-chips">
-              @for (a of item.anomalias; track a.tipo) {
-                <span class="anomaly-chip">
-                  <i class="bi bi-exclamation-triangle-fill"></i>
-                  {{ a.tipo }}
-                </span>
-              }
-            </div>
+          <div class="anomaly-chips">
+            <span class="anomaly-chip">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+              {{ item.tipo }}
+            </span>
+          </div>
+          @if (item.observacion) {
+            <p class="anomaly-observation">{{ item.observacion }}</p>
           }
 
           <div class="anomaly-actions">
-            @if (item.lecturaId) {
+            @if (item.novedadId && !isOffline()) {
               <button class="btn-edit" type="button" (click)="editNovedad(item)">
                 <i class="bi bi-pencil-fill"></i> Editar
               </button>

@@ -1,345 +1,161 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { signal } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { Router } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { NovedadesComponent } from './novedades.component';
 import { NetworkService } from '../../../core/services/network.service';
 import { OperatorService } from '../service/operator.service';
-import { OperatorSyncService } from '../../../core/services/operator-sync.service';
+import { MeterCacheService } from '../../../core/services/meter-cache.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { MetersApi } from '../../contracts/meters/data/meters.api';
-import { MeterCacheService } from '../../../core/services/meter-cache.service';
-import { ToastService } from '../../../shared/components/toast/toast.service';
-import { HttpClient } from '@angular/common/http';
-import type { ReadingWithAnomaly } from '../models/operator.models';
+import type { OperatorNovelty } from '../models/operator.models';
 
-const mockAnomaly: ReadingWithAnomaly = {
-  lecturaId: 'l-001',
-  medidorId: 'M-001',
-  medidorSerie: 'SER-001',
-  fecha: '2026-06-15T10:00:00Z',
-  estado: 'PROCESADA',
-  anomalias: [{ tipo: 'FUGA', observacion: 'Fuga detectada', estado: 'PENDIENTE' }],
+const novelty: OperatorNovelty = {
+  novedadId: '12',
+  ordenTrabajoId: '45',
+  lecturaId: null,
+  medidorId: '6',
+  medidorSerie: 'SER-6',
+  contratoId: '7',
+  numeroGuia: 'GUIA-7',
+  clienteNombre: 'CLIENTE EJEMPLO',
+  direccionSuministro: 'DIRECCION',
+  tipo: 'FUGA',
+  observacion: 'Fuga visible',
+  estado: 'OPEN',
+  fotoUrl: null,
+  createdAt: '2026-06-15T10:00:00Z',
+  updatedAt: '2026-06-15T10:00:00Z',
 };
 
-function makeNetworkMock(isOnline: boolean) {
-  return { isOnline: vi.fn().mockReturnValue(isOnline) };
-}
-
 describe('NovedadesComponent', () => {
-  let component: NovedadesComponent;
-  let fixture: ComponentFixture<NovedadesComponent>;
-  let operatorServiceMock: { getReadingsWithAnomalies: ReturnType<typeof vi.fn> };
-  let networkMock: { isOnline: ReturnType<typeof vi.fn> };
-  let dbServiceMock: {
-    getMetersCache: ReturnType<typeof vi.fn>;
-    getPendingAnomalies: ReturnType<typeof vi.fn>;
-    getNovedadesCache: ReturnType<typeof vi.fn>;
-    saveNovedadesCache: ReturnType<typeof vi.fn>;
-  };
-  let meterCacheMock: {
-    load: ReturnType<typeof vi.fn>;
-    metersList: ReturnType<typeof signal>;
-  };
-
-  const operatorSyncMock = {
-    totalPending: vi.fn().mockReturnValue(0),
-    totalRejected: vi.fn().mockReturnValue(0),
-    totalQueued: vi.fn().mockReturnValue(0),
-    isSyncing: vi.fn().mockReturnValue(false),
-    submitAnomaly: vi.fn().mockResolvedValue(undefined),
-    syncPendingData: vi.fn().mockResolvedValue(undefined),
-    refreshPendingCounts: vi.fn(),
-    needsInitialSync: vi.fn().mockReturnValue(false),
-    syncCatalogAndReadings: vi.fn(),
-  };
-
-  const authServiceMock = {
-    currentUser: () => ({ id: 42 }),
-  };
-
-  const httpMock = { get: vi.fn(), post: vi.fn() };
-  const metersServiceMock = { getMeters: vi.fn().mockReturnValue(of([])) };
-  const toastServiceMock = { error: vi.fn(), success: vi.fn() };
-
-  beforeEach(async () => {
-    operatorServiceMock = {
-      getReadingsWithAnomalies: vi.fn().mockReturnValue(of([])),
+  async function setup(options: {
+    online?: boolean;
+    results?: OperatorNovelty[];
+    cached?: OperatorNovelty[] | null;
+    savedAt?: string;
+    pending?: object[];
+    failOnline?: boolean;
+  } = {}) {
+    const operator = {
+      getNovelties: vi.fn().mockReturnValue(
+        options.failOnline
+          ? throwError(() => new Error('network'))
+          : of({ data: options.results ?? [], total: (options.results ?? []).length }),
+      ),
     };
-    networkMock = makeNetworkMock(true);
-    dbServiceMock = {
-      getMetersCache: vi.fn().mockResolvedValue([]),
-      getPendingAnomalies: vi.fn().mockResolvedValue([]),
-      getNovedadesCache: vi.fn().mockResolvedValue(null),
-      saveNovedadesCache: vi.fn().mockResolvedValue(undefined),
+    const db = {
+      getOperatorNoveltiesCache: vi.fn().mockResolvedValue(
+        options.cached == null
+          ? null
+          : { items: options.cached, savedAt: options.savedAt ?? new Date().toISOString() },
+      ),
+      saveOperatorNoveltiesCache: vi.fn().mockResolvedValue(undefined),
+      getPendingAnomalies: vi.fn().mockResolvedValue(options.pending ?? []),
     };
-    meterCacheMock = {
-      load: vi.fn().mockResolvedValue(undefined),
-      metersList: signal([]),
-    };
-
+    const router = { navigate: vi.fn().mockResolvedValue(true) };
     await TestBed.configureTestingModule({
       imports: [NovedadesComponent],
       providers: [
-        provideRouter([]),
-        { provide: NetworkService, useValue: networkMock },
-        { provide: OperatorService, useValue: operatorServiceMock },
-        { provide: OperatorSyncService, useValue: operatorSyncMock },
-        { provide: IndexedDbService, useValue: dbServiceMock },
-        { provide: AuthService, useValue: authServiceMock },
-        { provide: MeterCacheService, useValue: meterCacheMock },
-        { provide: MetersApi, useValue: metersServiceMock },
-        { provide: ToastService, useValue: toastServiceMock },
-        { provide: HttpClient, useValue: httpMock },
+        { provide: Router, useValue: router },
+        { provide: NetworkService, useValue: { isOnline: signal(options.online ?? true) } },
+        { provide: OperatorService, useValue: operator },
+        {
+          provide: MeterCacheService,
+          useValue: { load: vi.fn().mockResolvedValue(undefined), metersList: signal([]) },
+        },
+        { provide: IndexedDbService, useValue: db },
+        { provide: AuthService, useValue: { currentUser: signal({ id: 1 }) } },
       ],
     }).compileComponents();
+    const fixture = TestBed.createComponent(NovedadesComponent);
+    fixture.detectChanges();
+    await vi.waitFor(() => {
+      if (options.online === false || options.failOnline) {
+        expect(db.getOperatorNoveltiesCache).toHaveBeenCalled();
+      } else {
+        expect(operator.getNovelties).toHaveBeenCalled();
+      }
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    return { component: fixture.componentInstance, fixture, operator, db, router };
+  }
 
-    fixture = TestBed.createComponent(NovedadesComponent);
-    component = fixture.componentInstance;
+  afterEach(() => TestBed.resetTestingModule());
+
+  it('lists work-order novelties even when lecturaId is null', async () => {
+    const { component, fixture, db } = await setup({ results: [novelty] });
+    await vi.waitFor(() => expect(component.anomalies()).toHaveLength(1));
+    fixture.detectChanges();
+    expect(component.anomalies()[0].lecturaId).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Fuga visible');
+    expect(fixture.nativeElement.querySelector('.btn-edit')).not.toBeNull();
+    expect(db.saveOperatorNoveltiesCache).toHaveBeenCalledWith('operator:1', [novelty]);
   });
 
-  describe('anomaly loading (online)', () => {
-    it('calls getReadingsWithAnomalies on init when online', async () => {
-      networkMock.isOnline.mockReturnValue(true);
-      operatorServiceMock.getReadingsWithAnomalies.mockReturnValue(of([mockAnomaly]));
-
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(operatorServiceMock.getReadingsWithAnomalies).toHaveBeenCalled();
-      expect(component.anomalies().length).toBe(1);
-      expect(component.anomalies()[0].medidorSerie).toBe('SER-001');
-      expect(component.isOffline()).toBe(false);
-    });
-
-    it('populates anomalies signal with results from backend', async () => {
-      const anomalies: ReadingWithAnomaly[] = [
-        mockAnomaly,
-        { ...mockAnomaly, lecturaId: 'l-002', medidorId: 'M-002', medidorSerie: 'SER-002' },
-      ];
-      operatorServiceMock.getReadingsWithAnomalies.mockReturnValue(of(anomalies));
-      networkMock.isOnline.mockReturnValue(true);
-
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(component.anomalies().length).toBe(2);
-    });
-
-    it('persists the novedades cache scoped to the operator when online', async () => {
-      networkMock.isOnline.mockReturnValue(true);
-      operatorServiceMock.getReadingsWithAnomalies.mockReturnValue(of([mockAnomaly]));
-
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(dbServiceMock.saveNovedadesCache).toHaveBeenCalledWith(
-        'operator:42',
-        expect.arrayContaining([expect.objectContaining({ lecturaId: 'l-001' })]),
-      );
-    });
-
-    it('falls back to the offline cache when the online fetch fails', async () => {
-      networkMock.isOnline.mockReturnValue(true);
-      operatorServiceMock.getReadingsWithAnomalies.mockReturnValue(
-        throwError(() => new Error('network down')),
-      );
-      dbServiceMock.getNovedadesCache.mockResolvedValue({
-        items: [mockAnomaly],
-        savedAt: new Date().toISOString(),
-      });
-
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(component.isOffline()).toBe(true);
-      expect(component.anomalies()).toHaveLength(1);
-      expect(component.anomalies()[0].medidorSerie).toBe('SER-001');
-    });
+  it('opens a real edit route for the original novelty ID', async () => {
+    const { component, router } = await setup({ results: [novelty] });
+    await vi.waitFor(() => expect(component.anomalies()).toHaveLength(1));
+    component.editNovedad(component.anomalies()[0]);
+    expect(router.navigate).toHaveBeenCalledWith(['/app/operador/novedades', '12', 'edit']);
   });
 
-  describe('anomaly loading (offline)', () => {
-    it('does NOT call getReadingsWithAnomalies when offline', async () => {
-      networkMock.isOnline.mockReturnValue(false);
-
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(operatorServiceMock.getReadingsWithAnomalies).not.toHaveBeenCalled();
-    });
-
-    it('sets isOffline signal to true when offline', async () => {
-      networkMock.isOnline.mockReturnValue(false);
-
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(component.isOffline()).toBe(true);
-    });
-
-    it('isOffline is false by default when online', async () => {
-      networkMock.isOnline.mockReturnValue(true);
-
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(component.isOffline()).toBe(false);
-    });
-
-    it('renders cached items and exposes the cached-at timestamp', async () => {
-      networkMock.isOnline.mockReturnValue(false);
-      const savedAt = new Date().toISOString();
-      dbServiceMock.getNovedadesCache.mockResolvedValue({
-        items: [mockAnomaly],
-        savedAt,
-      });
-
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(component.anomalies()).toHaveLength(1);
-      expect(component.cachedAt()).toBe(savedAt);
-      expect(component.isStale()).toBe(false);
-      expect(fixture.nativeElement.textContent).toContain('guardados localmente');
-    });
-
-    it('marks the cache as stale when cachedAt is older than 24h', async () => {
-      networkMock.isOnline.mockReturnValue(false);
-      dbServiceMock.getNovedadesCache.mockResolvedValue({
-        items: [mockAnomaly],
-        savedAt: '2026-06-01T10:00:00Z',
-      });
-
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(component.isStale()).toBe(true);
-      expect(fixture.nativeElement.textContent).toContain('desactualizados');
-    });
-
-    it('does not mark a recent cache as stale', async () => {
-      networkMock.isOnline.mockReturnValue(false);
-      dbServiceMock.getNovedadesCache.mockResolvedValue({
-        items: [mockAnomaly],
-        savedAt: new Date().toISOString(),
-      });
-
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(component.isStale()).toBe(false);
-    });
-
-    it('merges locally queued pending anomalies and renders the "Pendiente de sync" chip', async () => {
-      networkMock.isOnline.mockReturnValue(false);
-      dbServiceMock.getNovedadesCache.mockResolvedValue(null);
-      dbServiceMock.getPendingAnomalies.mockResolvedValue([
-        {
-          id: 1,
-          syncState: 'PENDIENTE_SYNC',
-          errorMessage: null,
-          medidorId: 'M-999',
-          tipo: 'FUGA',
-          observacion: 'Fuga detectada en tubería',
-          estado: 'PENDIENTE',
-        },
-      ]);
-
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(component.anomalies()).toHaveLength(1);
-      expect(component.anomalies()[0].isPending).toBe(true);
-      expect(component.anomalies()[0].lecturaId).toBeNull();
-      expect(component.anomalies()[0].estado).toBe('PENDIENTE');
-      expect(component.anomalies()[0].anomalias[0].tipo).toBe('FUGA');
-      expect(component.isOffline()).toBe(true);
-      expect(fixture.nativeElement.textContent).toContain('Pendiente de sync');
-    });
-
-    it('prepends pending anomalies before the cached list', async () => {
-      networkMock.isOnline.mockReturnValue(false);
-      dbServiceMock.getNovedadesCache.mockResolvedValue({
-        items: [mockAnomaly],
-        savedAt: new Date().toISOString(),
-      });
-      dbServiceMock.getPendingAnomalies.mockResolvedValue([
-        {
-          id: 1,
-          syncState: 'PENDIENTE_SYNC',
-          errorMessage: null,
-          medidorId: 'M-999',
-          tipo: 'MEDIDOR_DANADO',
-          observacion: 'Medidor roto',
-          estado: 'PENDIENTE',
-        },
-      ]);
-
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(component.anomalies()).toHaveLength(2);
-      expect(component.anomalies()[0].isPending).toBe(true);
-      expect(component.anomalies()[0].medidorId).toBe('M-999');
-      expect(component.anomalies()[1].isPending).toBe(false);
-      expect(component.anomalies()[1].lecturaId).toBe('l-001');
-    });
-
-    it('does not duplicate a pending anomaly already represented in the cache (match by medidorId)', async () => {
-      networkMock.isOnline.mockReturnValue(false);
-      dbServiceMock.getNovedadesCache.mockResolvedValue({
-        items: [mockAnomaly],
-        savedAt: new Date().toISOString(),
-      });
-      dbServiceMock.getPendingAnomalies.mockResolvedValue([
-        {
-          id: 1,
-          syncState: 'PENDIENTE_SYNC',
-          errorMessage: null,
-          medidorId: 'M-001',
-          tipo: 'FUGA',
-          observacion: 'duplicado',
-          estado: 'PENDIENTE',
-        },
-      ]);
-
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(component.anomalies()).toHaveLength(1);
-      expect(component.anomalies()[0].isPending).toBe(false);
-    });
-
-    it('does not render an Edit button for pending items without a server lecturaId', async () => {
-      networkMock.isOnline.mockReturnValue(false);
-      dbServiceMock.getNovedadesCache.mockResolvedValue(null);
-      dbServiceMock.getPendingAnomalies.mockResolvedValue([
-        {
-          id: 1,
-          syncState: 'PENDIENTE_SYNC',
-          errorMessage: null,
-          medidorId: 'M-999',
-          tipo: 'FUGA',
-          observacion: 'Fuga',
-          estado: 'PENDIENTE',
-        },
-      ]);
-
-      await fixture.whenStable();
-      fixture.detectChanges();
-
-      expect(fixture.nativeElement.querySelector('.btn-edit')).toBeNull();
-    });
+  it('reads operator-scoped cache offline and hides server edit', async () => {
+    const { component, fixture, operator } = await setup({ online: false, cached: [novelty] });
+    await vi.waitFor(() => expect(component.anomalies()).toHaveLength(1));
+    fixture.detectChanges();
+    expect(operator.getNovelties).not.toHaveBeenCalled();
+    expect(fixture.nativeElement.querySelector('.btn-edit')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('guardados localmente');
   });
 
-  describe('initial state', () => {
-    it('anomalies signal starts empty', () => {
-      expect(component.anomalies()).toEqual([]);
+  it('shows separate queued novelties even when the same meter already has one', async () => {
+    const { component } = await setup({
+      results: [novelty],
+      pending: [
+        { id: 1, ordenTrabajoId: '45', medidorId: '6', serie: 'SER-6', tipo: 'OTRO', observacion: 'Primera', syncState: 'PENDIENTE_SYNC' },
+        { id: 2, ordenTrabajoId: '45', medidorId: '6', serie: 'SER-6', tipo: 'FUGA', observacion: 'Segunda', syncState: 'PENDIENTE_SYNC' },
+      ],
     });
+    await vi.waitFor(() => expect(component.anomalies()).toHaveLength(3));
+    expect(component.anomalies().filter((item) => item.isPending)).toHaveLength(2);
+  });
 
-    it('isLoading starts false', () => {
-      expect(component.isLoading()).toBe(false);
+  it('falls back to cached work-order novelties when online request fails', async () => {
+    const { component } = await setup({ failOnline: true, cached: [novelty] });
+    await vi.waitFor(() => expect(component.anomalies()).toHaveLength(1));
+    expect(component.isOffline()).toBe(true);
+  });
+
+  it('shows a stale warning for offline data older than one day', async () => {
+    const savedAt = new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString();
+    const { component, fixture } = await setup({ online: false, cached: [novelty], savedAt });
+    expect(component.isStale()).toBe(true);
+    expect(component.cachedAt()).toBe(savedAt);
+    expect(fixture.nativeElement.textContent).toContain('desactualizados');
+  });
+
+  it('keeps recent offline data without a stale warning', async () => {
+    const { component, fixture } = await setup({ online: false, cached: [novelty] });
+    expect(component.isStale()).toBe(false);
+    expect(fixture.nativeElement.querySelector('.stale-warning')).toBeNull();
+  });
+
+  it('shows queued novelties without a server reading and never offers Edit for them', async () => {
+    const { component, fixture } = await setup({
+      online: false,
+      pending: [{ id: 3, ordenTrabajoId: '45', medidorId: '6', tipo: 'FUGA', observacion: 'Pendiente' }],
     });
+    expect(component.anomalies()).toHaveLength(1);
+    expect(component.anomalies()[0].lecturaId).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Pendiente de sync');
+    expect(fixture.nativeElement.querySelector('.btn-edit')).toBeNull();
+  });
+
+  it('keeps an empty state when neither the server nor local queue has reports', async () => {
+    const { component, fixture } = await setup();
+    expect(component.anomalies()).toEqual([]);
+    expect(fixture.nativeElement.textContent).toContain('Sin novedades registradas');
   });
 });
