@@ -456,5 +456,20 @@ describe('LecturasComponent State Machine', () => {
       const orderId = component['workOrderIdFor'](syntheticMeter, 'INSPECCION');
       expect(orderId).toBe('45');
     });
+
+    it('marks LECTURA order completed and not actionable when reading is in POR_REVISION', () => {
+      component.registeredReadings.set([
+        {
+          lecturaId: 'lec-99',
+          medidorId: 101,
+          medidorSerie: 'SER-101',
+          estado: 'POR_REVISION',
+          lecturaActual: 45,
+        } as any,
+      ]);
+
+      expect(component.isOrderCompleted(mockMeter)).toBe(true);
+      expect(component.actionableWorkOrdersFor(mockMeter)).toEqual([]);
+    });
   });
 });

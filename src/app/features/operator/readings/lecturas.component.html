@@ -334,22 +334,24 @@
         </div>
         <div class="action-buttons">
           @if (primaryOrder; as order) {
-            <button
-              class="action-btn action-primary"
-              (click)="goToWorkOrderForm(order[0])"
-              id="btn-action-primary"
-            >
-              <div class="action-icon">
-                <i class="bi bi-clipboard-check" aria-hidden="true"></i>
-              </div>
-              <div class="action-text">
-                <span class="action-title">Completar {{ order[0] | routeType }}</span
-                ><span class="action-desc"
-                  >Orden asignada · {{ workOrderStateLabel(order[1].estado) }}</span
-                >
-              </div>
-              <i class="bi bi-chevron-right" aria-hidden="true"></i>
-            </button>
+            @if (actionableWorkOrdersFor(meter).length > 0 && actionableWorkOrdersFor(meter)[0][0] === order[0]) {
+              <button
+                class="action-btn action-primary"
+                (click)="goToWorkOrderForm(order[0])"
+                id="btn-action-primary"
+              >
+                <div class="action-icon">
+                  <i class="bi bi-clipboard-check" aria-hidden="true"></i>
+                </div>
+                <div class="action-text">
+                  <span class="action-title">Completar {{ order[0] | routeType }}</span
+                  ><span class="action-desc"
+                    >Orden asignada · {{ workOrderStateLabel(order[1].estado) }}</span
+                  >
+                </div>
+                <i class="bi bi-chevron-right" aria-hidden="true"></i>
+              </button>
+            }
           }
           <span class="secondary-label">Otras acciones</span>
           <!--

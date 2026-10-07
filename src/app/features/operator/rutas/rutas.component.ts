@@ -634,6 +634,11 @@ export class RutasComponent implements OnInit, OnDestroy {
         if (mId) idToEstado.set(mId.toString(), r.estado);
         const s = r.medidor?.serie ?? r.medidorSerie;
         if (s) statusMap.set(String(s), r.estado);
+        const otId = (r as unknown as Record<string, unknown>)['ordenTrabajoId'];
+        if (otId != null && otId !== '') {
+          statusMap.set(String(otId), r.estado);
+          statusMap.set(`OT-${otId}`, r.estado);
+        }
       }
       // 3. Pendientes en cola local offline (máxima prioridad)
       for (const p of pending) {

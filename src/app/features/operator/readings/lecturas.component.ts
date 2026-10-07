@@ -174,6 +174,11 @@ export class LecturasComponent implements OnInit {
       if (mId != null) map.set(mId.toString(), merged);
       if (r.medidor?.serie) map.set(r.medidor.serie, merged);
       if (r.contratoId) map.set(r.contratoId.toString(), merged);
+      const otId = (r as Record<string, unknown>)['ordenTrabajoId'];
+      if (otId != null && otId !== '') {
+        map.set(String(otId), merged);
+        map.set(`OT-${otId}`, merged);
+      }
     }
 
     // 3. Pendientes locales por sincronizar (cambios recién efectuados offline)
@@ -338,11 +343,20 @@ export class LecturasComponent implements OnInit {
 
   getOrderRecord(meter: IMeterDto): ReadingRecord | undefined {
     const map = this.existingReadingMap();
-    return (
-      map.get(meter.medidorId.toString()) ||
-      map.get(meter.serie) ||
-      (meter.contratoId ? map.get(meter.contratoId.toString()) : undefined)
-    );
+    if (map.get(meter.medidorId.toString())) return map.get(meter.medidorId.toString());
+    if (map.get(meter.serie)) return map.get(meter.serie);
+    if (meter.contratoId && map.get(meter.contratoId.toString())) {
+      return map.get(meter.contratoId.toString());
+    }
+    const assignments = this.workOrdersByMeter().get(meter.serie);
+    if (assignments) {
+      for (const wo of assignments.values()) {
+        if (wo.id && map.get(wo.id)) return map.get(wo.id);
+        if (wo.id && map.get(`OT-${wo.id}`)) return map.get(`OT-${wo.id}`);
+        if (wo.lecturaId && map.get(wo.lecturaId)) return map.get(wo.lecturaId);
+      }
+    }
+    return undefined;
   }
 
   isOrderCompleted(meter: IMeterDto): boolean {
@@ -357,6 +371,14 @@ export class LecturasComponent implements OnInit {
     if (this.completedWorkOrderIds().has(meter.serie)) return true;
     if (this.readMetersIds().has(meter.medidorId.toString())) return true;
     if (this.readMetersIds().has(meter.serie)) return true;
+
+    // Si todas las órdenes de trabajo asignadas a este medidor están en COMPLETADA
+    const assignments = this.workOrdersByMeter().get(meter.serie);
+    if (assignments && assignments.size > 0) {
+      const allCompleted = [...assignments.values()].every((wo) => wo.estado === 'COMPLETADA');
+      if (allCompleted) return true;
+    }
+
     return false;
   }
 
@@ -819,11 +841,23 @@ export class LecturasComponent implements OnInit {
   actionableWorkOrdersFor(meter: IMeterDto): [WorkOrderActivityType, AssignedWorkOrder][] {
     const existing = this.getOrderRecord(meter);
     const isRelectura = existing?.estado === 'RECHAZADA_VERIFICACION';
+    const isLecturaTaken =
+      existing?.estado &&
+      existing.estado !== 'PENDIENTE' &&
+      existing.estado !== 'RECHAZADA_VERIFICACION';
+
     return [...(this.workOrdersByMeter().get(meter.serie)?.entries() ?? [])].filter(
-      ([type, workOrder]) =>
-        workOrder.estado === 'PENDIENTE' ||
-        workOrder.estado === 'EN_PROGRESO' ||
-        (isRelectura && type === 'LECTURA'),
+      ([type, workOrder]) => {
+        if (type === 'LECTURA') {
+          if (isLecturaTaken) return false;
+          return (
+            workOrder.estado === 'PENDIENTE' ||
+            workOrder.estado === 'EN_PROGRESO' ||
+            isRelectura
+          );
+        }
+        return workOrder.estado === 'PENDIENTE' || workOrder.estado === 'EN_PROGRESO';
+      },
     );
   }
 
