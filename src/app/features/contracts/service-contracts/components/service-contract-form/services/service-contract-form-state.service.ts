@@ -234,6 +234,7 @@ export class ServiceContractFormStateService {
   nextStep(): boolean {
     this.stepAttempted.set(true);
     if (!this.isStepComplete(this.activeStep())) {
+      this.form.markAllAsTouched();
       return false;
     }
     this.activeStep.update((step) => Math.min(step + 1, this.steps.length - 1));
@@ -343,6 +344,7 @@ export class ServiceContractFormStateService {
       latControl?.touched ||
       lngControl?.dirty ||
       lngControl?.touched ||
+      this.stepAttempted() ||
       this.submitted();
 
     if (!isRelevant) {
@@ -362,7 +364,11 @@ export class ServiceContractFormStateService {
 
   isFieldInvalid(field: string): boolean {
     const control = this.form.get(field);
-    return !!control && control.invalid && (control.dirty || control.touched || this.submitted());
+    return (
+      !!control &&
+      control.invalid &&
+      (control.dirty || control.touched || this.stepAttempted() || this.submitted())
+    );
   }
 
   onLecturaInicialInput(event: Event): void {

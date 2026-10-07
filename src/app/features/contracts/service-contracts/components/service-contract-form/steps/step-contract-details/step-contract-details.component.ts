@@ -18,6 +18,7 @@ export class StepContractDetailsComponent {
   readonly isSuperAdmin = input<boolean>(false);
   readonly contractToEdit = input<IContract | null>(null);
   readonly submitted = input<boolean>(false);
+  readonly stepAttempted = input<boolean>(false);
   readonly availableStates = input<IContractState[]>([]);
   readonly coordinates = input<ICoordinates>({ latitud: null, longitud: null });
   readonly coordinateError = input<string | null>(null);
@@ -34,5 +35,14 @@ export class StepContractDetailsComponent {
 
   onCoordsChange(coords: ICoordinates): void {
     this.coordinatesChange.emit(coords);
+  }
+
+  isProcedureControlInvalid(controlName: string): boolean {
+    const control = this.form().get(`procedure.${controlName}`);
+    return (
+      !!control &&
+      control.invalid &&
+      (control.dirty || control.touched || this.stepAttempted() || this.submitted())
+    );
   }
 }

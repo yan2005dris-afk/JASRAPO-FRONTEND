@@ -163,7 +163,11 @@
               formControlName="tramitadorNombre"
               maxlength="200"
               required
+              [class.is-invalid]="isProcedureControlInvalid('tramitadorNombre')"
             />
+            @if (isProcedureControlInvalid('tramitadorNombre')) {
+              <span class="text-danger x-small">El nombre del tramitador es obligatorio.</span>
+            }
           </div>
           <div class="col-md-4">
             <label for="procedure-id" class="form-label">Identificación *</label>
@@ -174,7 +178,11 @@
               formControlName="tramitadorIdentificacion"
               maxlength="30"
               required
+              [class.is-invalid]="isProcedureControlInvalid('tramitadorIdentificacion')"
             />
+            @if (isProcedureControlInvalid('tramitadorIdentificacion')) {
+              <span class="text-danger x-small">La identificación es obligatoria.</span>
+            }
           </div>
           <div class="col-md-4">
             <label for="procedure-relation" class="form-label">Relación con el titular *</label>
@@ -185,7 +193,11 @@
               formControlName="relacionTramitador"
               maxlength="100"
               required
+              [class.is-invalid]="isProcedureControlInvalid('relacionTramitador')"
             />
+            @if (isProcedureControlInvalid('relacionTramitador')) {
+              <span class="text-danger x-small">La relación con el titular es obligatoria.</span>
+            }
           </div>
         </div>
       }
@@ -202,12 +214,18 @@
         <label for="procedure-notes" class="form-label">Detalle de observaciones *</label>
         <textarea
           id="procedure-notes"
-          class="form-control mb-3"
+          class="form-control mb-1"
           formControlName="observacionesTramite"
           maxlength="2000"
           rows="3"
           required
+          [class.is-invalid]="isProcedureControlInvalid('observacionesTramite')"
         ></textarea>
+        @if (isProcedureControlInvalid('observacionesTramite')) {
+          <span class="text-danger x-small d-block mb-3">
+            El detalle de observaciones es obligatorio.
+          </span>
+        }
       }
       <div class="form-check mb-2">
         <input
@@ -222,15 +240,21 @@
         <label for="procedure-other-notes" class="form-label">Detalle de otras novedades *</label>
         <textarea
           id="procedure-other-notes"
-          class="form-control mb-3"
+          class="form-control mb-1"
           formControlName="otrasNovedades"
           maxlength="2000"
           rows="3"
           required
+          [class.is-invalid]="isProcedureControlInvalid('otrasNovedades')"
         ></textarea>
+        @if (isProcedureControlInvalid('otrasNovedades')) {
+          <span class="text-danger x-small d-block mb-3">
+            El detalle de otras novedades es obligatorio.
+          </span>
+        }
       }
-      @if (submitted() && form().get('procedure')?.invalid) {
-        <p class="text-danger" role="alert">
+      @if ((submitted() || stepAttempted()) && form().get('procedure')?.invalid) {
+        <p class="text-danger mt-2" role="alert">
           Complete los datos de quien tramita y los detalles de las opciones marcadas.
         </p>
       }
