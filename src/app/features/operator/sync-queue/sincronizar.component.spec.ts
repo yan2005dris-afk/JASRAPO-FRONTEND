@@ -95,6 +95,11 @@ describe('SincronizarComponent', () => {
     expect(component).toBeTruthy();
   });
 
+  it('no repite el estado de conexión del encabezado global', () => {
+    expect(fixture.nativeElement.querySelector('.online-status-chip')).toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Datos asignados y cambios pendientes');
+  });
+
   it('separa los datos asignados de los cambios locales por subir', () => {
     const text = fixture.nativeElement.textContent;
     expect(text).toContain('Datos asignados offline');

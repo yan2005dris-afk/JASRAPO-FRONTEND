@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { LecturasComponent } from './lecturas.component';
 import { Router, ActivatedRoute } from '@angular/router';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
@@ -12,6 +12,7 @@ import { IMeterDto } from '../../contracts/meters/domain/models/meter.model';
 
 describe('LecturasComponent State Machine', () => {
   let component: LecturasComponent;
+  let fixture: ComponentFixture<LecturasComponent>;
   let submitReading: ReturnType<typeof vi.fn>;
   let submitReadingCoordinates: ReturnType<typeof vi.fn>;
   let submitWorkOrder: ReturnType<typeof vi.fn>;
@@ -105,7 +106,7 @@ describe('LecturasComponent State Machine', () => {
       ],
     });
 
-    const fixture = TestBed.createComponent(LecturasComponent);
+    fixture = TestBed.createComponent(LecturasComponent);
     component = fixture.componentInstance;
   });
 
@@ -113,6 +114,85 @@ describe('LecturasComponent State Machine', () => {
     expect(component.state()).toEqual({ kind: 'search' });
     expect(component.currentStep()).toBe('search');
     expect(component.selectedMeter()).toBeNull();
+  });
+
+  it('paginates route orders ten at a time while keeping the total count', () => {
+    const meters = Array.from({ length: 25 }, (_, index) => ({
+      ...mockMeter,
+      medidorId: index + 1,
+      serie: `SER-${index + 1}`,
+      clienteNombre: `Cliente ${index + 1}`,
+    }));
+    component.metersList.set(meters);
+    fixture.detectChanges();
+    component.routeSyntheticMeters.set([]);
+    fixture.detectChanges();
+
+    expect(component.orderCounts().total).toBe(25);
+    expect(component.orderPageCount()).toBe(3);
+    expect(component.pagedOrders()).toHaveLength(10);
+    expect(fixture.nativeElement.querySelectorAll('.radial-card')).toHaveLength(10);
+
+    component.goToOrderPage(2);
+    fixture.detectChanges();
+    expect(component.pagedOrders()[0].serie).toBe('SER-11');
+    expect(fixture.nativeElement.querySelector('#order-card-10')).not.toBeNull();
+    expect(fixture.nativeElement.textContent).toContain('Mostrando 11–20 de 25 órdenes');
+
+    component.goToOrderPage(3);
+    fixture.detectChanges();
+    expect(component.pagedOrders()).toHaveLength(5);
+    expect(fixture.nativeElement.querySelectorAll('.radial-card')).toHaveLength(5);
+    expect(fixture.nativeElement.textContent).toContain('Mostrando 21–25 de 25 órdenes');
+  });
+
+  it('resets to page one when filtering or searching route orders', () => {
+    component.metersList.set(
+      Array.from({ length: 25 }, (_, index) => ({
+        ...mockMeter,
+        medidorId: index + 1,
+        serie: `SER-${index + 1}`,
+        clienteNombre: `Cliente ${index + 1}`,
+      })),
+    );
+    component.completedWorkOrderIds.set(new Set(['1', '2', '3']));
+    fixture.detectChanges();
+    component.routeSyntheticMeters.set([]);
+    fixture.detectChanges();
+
+    component.goToOrderPage(3);
+    component.setOrderFilter('COMPLETADAS');
+    expect(component.currentOrderPage()).toBe(1);
+    expect(component.pagedOrders()).toHaveLength(3);
+
+    component.setOrderFilter('TODAS');
+    component.goToOrderPage(3);
+    const search = fixture.nativeElement.querySelector('.search-input-box') as HTMLInputElement;
+    search.value = 'Cliente 25';
+    search.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(component.currentOrderPage()).toBe(1);
+    expect(component.pagedOrders().map((meter) => meter.serie)).toEqual(['SER-25']);
+  });
+
+  it('clamps the visible page if synchronized orders shrink', () => {
+    component.metersList.set(
+      Array.from({ length: 21 }, (_, index) => ({
+        ...mockMeter,
+        medidorId: index + 1,
+        serie: `SER-${index + 1}`,
+      })),
+    );
+    fixture.detectChanges();
+    component.routeSyntheticMeters.set([]);
+    fixture.detectChanges();
+    component.goToOrderPage(3);
+    expect(component.currentOrderPage()).toBe(3);
+
+    component.metersList.set(component.metersList().slice(0, 12));
+    fixture.detectChanges();
+    expect(component.currentOrderPage()).toBe(2);
+    expect(component.pagedOrders()).toHaveLength(2);
   });
 
   it('transitions from search to actions on selectMeter', () => {
@@ -133,6 +213,23 @@ describe('LecturasComponent State Machine', () => {
     expect(component.currentStep()).toBe('form');
     expect(component.activeTipoActividad()).toBe('LECTURA');
     expect(component.selectedMeter()).toEqual(mockMeter);
+  });
+
+  it('sends the selected meter series and assigned order to the novelty form', () => {
+    component.ngOnInit();
+    component.selectMeter(mockMeter);
+    component.goToNoveltyForm();
+
+    expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(
+      ['/app/operador/novedades/new'],
+      expect.objectContaining({
+        queryParams: expect.objectContaining({
+          medidorId: 101,
+          serie: 'SER-101',
+          ordenTrabajoId: 'wo-reading',
+        }),
+      }),
+    );
   });
 
   it('transitions from actions to form for INSTALACION, INSPECCION, RECONEXION', () => {
@@ -236,6 +333,63 @@ describe('LecturasComponent State Machine', () => {
   });
 
   describe('Route synthetic meters and meter-less work orders', () => {
+    it('shows the contract address and guide instead of the cached model and internal ID', () => {
+      const cachedMeter: IMeterDto = {
+        medidorId: 6,
+        serie: 'SER-6',
+        marca: 'Sensus',
+        modelo: 'iPerl',
+        clienteNombre: 'MARCOS JOEL ALTAMIRANO ESCOBAR',
+        contratoId: '6',
+        fechaInstalacion: null,
+      };
+      component.metersList.set([cachedMeter]);
+      sessionStorage.setItem(
+        'activeOperatorRoute',
+        JSON.stringify({
+          rutaId: 'r-6',
+          nombre: 'Ruta Lectura',
+          tipoRuta: 'LECTURA',
+          ordenesTrabajo: [
+            {
+              ordenTrabajoId: '45',
+              rutaId: 'r-6',
+              tipoActividad: 'LECTURA',
+              estado: 'PENDIENTE',
+              contratoId: '6',
+              medidor: { medidorId: '6', serie: 'SER-6' },
+              contrato: {
+                numeroContrato: 'GUIA-5-0006',
+                clienteNombre: 'MARCOS JOEL ALTAMIRANO ESCOBAR',
+                direccion: 'Direccion contrato 6',
+              },
+            },
+          ],
+        }),
+      );
+      try {
+        component['autoSelectFromQueryParam']();
+        component.allowedSeries.set(new Set(['SER-6']));
+        const meter = component.combinedMetersList()[0];
+        expect(meter.medidorId).toBe(6);
+        expect(meter.contratoId).toBe('6');
+        expect(meter.modelo).toBe('iPerl');
+        expect(meter.direccionSuministro).toBe('Direccion contrato 6');
+        expect(meter.numeroGuia).toBe('GUIA-5-0006');
+
+        component.searchQuery.set('GUIA-5-0006');
+        expect(component.filteredMeters()).toHaveLength(1);
+        fixture.detectChanges();
+        const card = fixture.nativeElement.querySelector('.radial-card') as HTMLElement;
+        expect(card.textContent).toContain('Direccion contrato 6');
+        expect(card.textContent).toContain('#GUIA-5-0006');
+        expect(card.textContent).not.toContain('iPerl');
+        expect(card.textContent).not.toContain('#6');
+      } finally {
+        sessionStorage.removeItem('activeOperatorRoute');
+      }
+    });
+
     it('synthesizes meters from activeOperatorRoute in sessionStorage and auto-selects single order', () => {
       const routeData = {
         rutaId: 'r-insp-1',
@@ -267,6 +421,9 @@ describe('LecturasComponent State Machine', () => {
       expect(synthetic.serie).toBe('GUIA-2005-05');
       expect(synthetic.clienteNombre).toBe('MARLON BRANDO ZAMBRANO SAAVEDRA');
       expect(synthetic.marca).toBe('INSPECCION');
+      expect(synthetic.direccionSuministro).toBe('Curia');
+      expect(synthetic.numeroGuia).toBe('GUIA-2005-05');
+      expect(synthetic.contratoId).toBe('c-1');
 
       // Lands on search step (Órdenes de Trabajo view) to list orders
       expect(component.currentStep()).toBe('search');

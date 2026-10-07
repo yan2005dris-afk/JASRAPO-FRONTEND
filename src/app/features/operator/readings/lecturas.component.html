@@ -72,7 +72,7 @@
               type="button"
               class="segmented-btn"
               [class.active]="orderFilter() === 'TODAS'"
-              (click)="orderFilter.set('TODAS')"
+              (click)="setOrderFilter('TODAS')"
               id="tab-orders-todas"
             >
               <span>Todas</span>
@@ -82,7 +82,7 @@
               type="button"
               class="segmented-btn"
               [class.active]="orderFilter() === 'PENDIENTES'"
-              (click)="orderFilter.set('PENDIENTES')"
+              (click)="setOrderFilter('PENDIENTES')"
               id="tab-orders-pendientes"
             >
               <span>Pendientes</span>
@@ -92,7 +92,7 @@
               type="button"
               class="segmented-btn"
               [class.active]="orderFilter() === 'COMPLETADAS'"
-              (click)="orderFilter.set('COMPLETADAS')"
+              (click)="setOrderFilter('COMPLETADAS')"
               id="tab-orders-completadas"
             >
               <span>Listas</span>
@@ -108,13 +108,13 @@
               class="search-input-box"
               placeholder="Buscar por cliente, medidor o contrato..."
               [value]="searchQuery()"
-              (input)="searchQuery.set($any($event.target).value)"
+              (input)="setOrderSearch($any($event.target).value)"
             />
             @if (searchQuery()) {
               <button
                 type="button"
                 class="clear-search-btn"
-                (click)="searchQuery.set('')"
+                (click)="setOrderSearch('')"
                 aria-label="Limpiar búsqueda"
               >
                 <i class="bi bi-x-circle-fill"></i>
@@ -131,7 +131,7 @@
               </div>
             }
 
-            @for (meter of segmentedOrders(); track meter.serie; let idx = $index) {
+            @for (meter of pagedOrders(); track meter.serie; let idx = $index) {
               @let isDone = isOrderCompleted(meter);
               @let primaryOrder = primaryWorkOrderFor(meter);
               @let actTipo =
@@ -143,7 +143,7 @@
                 tabindex="0"
                 (click)="selectMeter(meter)"
                 (keydown.enter)="selectMeter(meter)"
-                [attr.id]="'order-card-' + idx"
+                [attr.id]="'order-card-' + ((currentOrderPage() - 1) * orderPageSize + idx)"
               >
                 <div class="radial-card-content">
                   <div
@@ -151,7 +151,7 @@
                     [class.radial-badge-done]="isDone"
                     [class.radial-badge-pending]="!isDone"
                   >
-                    {{ isDone ? '✓' : '#' + (idx + 1) }}
+                    {{ isDone ? '✓' : '#' + ((currentOrderPage() - 1) * orderPageSize + idx + 1) }}
                   </div>
                   <div class="radial-card-body">
                     <div class="radial-card-title-row">
@@ -160,7 +160,7 @@
                       </strong>
                     </div>
                     <small class="radial-address text-muted">
-                      {{ meter.modelo || 'Dirección de suministro' }}
+                      {{ meter.direccionSuministro || 'Dirección de suministro' }}
                     </small>
                     <div class="radial-card-meta-row">
                       <div class="meta-tags">
@@ -173,10 +173,10 @@
                         </span>
                         <span class="meter-code font-mono">
                           {{
-                            meter.serie.startsWith('OT-')
-                              ? meter.serie
-                              : meter.contratoId
-                                ? '#' + meter.contratoId
+                            meter.numeroGuia
+                              ? '#' + meter.numeroGuia
+                              : meter.serie.startsWith('OT-')
+                                ? meter.serie
                                 : 'Med: ' + meter.serie
                           }}
                         </span>
@@ -215,6 +215,39 @@
               </div>
             }
           </div>
+          @if (segmentedOrders().length > 0) {
+            <nav class="orders-pagination" aria-label="Páginas de órdenes">
+              <span class="orders-pagination-range">
+                Mostrando {{ orderRangeStart() }}–{{ orderRangeEnd() }} de
+                {{ segmentedOrders().length }} órdenes
+              </span>
+              @if (orderPageCount() > 1) {
+                <div class="orders-pagination-actions">
+                  <button
+                    type="button"
+                    class="orders-page-btn"
+                    (click)="goToOrderPage(currentOrderPage() - 1)"
+                    [disabled]="currentOrderPage() === 1"
+                    aria-label="Página anterior de órdenes"
+                  >
+                    <i class="bi bi-chevron-left" aria-hidden="true"></i> Anterior
+                  </button>
+                  <span class="orders-page-indicator" aria-live="polite">
+                    Página {{ currentOrderPage() }} de {{ orderPageCount() }}
+                  </span>
+                  <button
+                    type="button"
+                    class="orders-page-btn"
+                    (click)="goToOrderPage(currentOrderPage() + 1)"
+                    [disabled]="currentOrderPage() === orderPageCount()"
+                    aria-label="Página siguiente de órdenes"
+                  >
+                    Siguiente <i class="bi bi-chevron-right" aria-hidden="true"></i>
+                  </button>
+                </div>
+              }
+            </nav>
+          }
         </div>
       } @else {
         <!-- Catálogo general de medidores (cuando no viene de una ruta específica) -->

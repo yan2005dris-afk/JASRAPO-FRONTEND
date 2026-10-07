@@ -469,6 +469,31 @@ export class OperatorSyncService {
     }
   }
 
+  /** Edita una novedad ya registrada; nunca la convierte en un POST nuevo. */
+  async updateAnomaly(
+    novedadId: string,
+    changes: { tipo: string; observacion: string; fotoBlob?: Blob | null },
+  ): Promise<unknown> {
+    if (!this.networkService.isOnline()) {
+      throw new Error('La edición de novedades registradas requiere conexión.');
+    }
+    const formData = new FormData();
+    formData.append('tipo', changes.tipo);
+    formData.append('observacion', changes.observacion);
+    this.appendPhoto(
+      formData,
+      changes.fotoBlob instanceof Blob
+        ? await prepareOperatorEvidencePhoto(changes.fotoBlob, NOVELTY_PHOTO_MAX_BYTES)
+        : null,
+      'file',
+    );
+    return firstValueFrom(
+      this.http.patch(`${this.OPERATOR_API}/novelties/${novedadId}`, formData, {
+        withCredentials: true,
+      }),
+    );
+  }
+
   async submitNovelty(novelty: Record<string, unknown>): Promise<unknown> {
     return this.submitAnomaly(novelty);
   }

@@ -1,5 +1,5 @@
 <div class="operator-home-screen">
-  <!-- 1. Cabecera con Avatar, Nombre y Chip de Estado Online/Offline -->
+  <!-- 1. Cabecera con Avatar y Nombre. La conexión se indica en la barra superior. -->
   <header class="operator-profile-bar">
     <a
       routerLink="/app/operador/perfil"
@@ -24,12 +24,6 @@
         <span class="meta-dot">·</span>
         <span>Turno: {{ currentUser().turno }}</span>
       </p>
-    </div>
-
-    <!-- Online/Offline Chip -->
-    <div class="online-status-chip" [class.offline]="!networkService.isOnline()">
-      <span class="online-dot-pulse" [class.offline]="!networkService.isOnline()"></span>
-      <span>{{ networkService.isOnline() ? 'Online' : 'Offline' }}</span>
     </div>
   </header>
 

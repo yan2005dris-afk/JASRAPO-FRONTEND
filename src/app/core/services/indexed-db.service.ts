@@ -204,7 +204,7 @@ export function mergeWorkOrdersWithSnapshot(
 })
 export class IndexedDbService {
   private readonly dbName = 'jasrapo-operator-db';
-  private readonly dbVersion = 13;
+  private readonly dbVersion = 14;
   private db: IDBDatabase | null = null;
 
   constructor() {
@@ -293,6 +293,11 @@ export class IndexedDbService {
         // Caché offline de novedades (lecturas con anomalías) por operador
         if (!db.objectStoreNames.contains('novedades_cache')) {
           db.createObjectStore('novedades_cache', { keyPath: 'lecturaId' });
+        }
+
+        // Novedades de órdenes: su lecturaId puede ser null, se cachean por operador.
+        if (!db.objectStoreNames.contains('operator_novelties_cache')) {
+          db.createObjectStore('operator_novelties_cache', { keyPath: 'scope' });
         }
 
         // Almacén dedicado para órdenes de trabajo pendientes offline (#267)
@@ -1231,6 +1236,33 @@ export class IndexedDbService {
           return item;
         }) as T[];
         resolve({ items, savedAt });
+      };
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  async saveOperatorNoveltiesCache<T>(scope: string, items: T[]): Promise<void> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('operator_novelties_cache', 'readwrite');
+      transaction.objectStore('operator_novelties_cache').put({
+        scope,
+        items,
+        savedAt: new Date().toISOString(),
+      });
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
+  }
+
+  async getOperatorNoveltiesCache<T>(scope: string): Promise<RoutesCacheResult<T> | null> {
+    const db = await this.initDb();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('operator_novelties_cache', 'readonly');
+      const request = transaction.objectStore('operator_novelties_cache').get(scope);
+      request.onsuccess = () => {
+        const result = request.result as RoutesCacheResult<T> | undefined;
+        resolve(result ? { items: result.items, savedAt: result.savedAt } : null);
       };
       request.onerror = () => reject(request.error);
     });

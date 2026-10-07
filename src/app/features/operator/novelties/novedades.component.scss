@@ -127,12 +127,100 @@
   }
 }
 
-// ── Cards ──────────────────────────────────────────────────────────────────────
+// ── Zone / Sector layout ──────────────────────────────────────────────────────
+
+.zone-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.zone-section {
+  margin-bottom: 2rem;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.zone-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--op-brand-primary, #0a9396);
+  margin-bottom: 1rem;
+}
+
+.zone-heading-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.zone-kicker {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--op-brand-primary, #0a9396);
+}
+
+.zone-name {
+  font-size: 1.125rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--op-text-primary, #0a191b);
+}
+
+.zone-count {
+  font-size: 0.8125rem;
+  color: var(--muted-text);
+  white-space: nowrap;
+}
+
+.sector-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  background: rgba(10, 147, 150, 0.06);
+  border-left: 3px solid var(--op-brand-primary, #0a9396);
+  border-radius: 0 8px 8px 0;
+}
+
+.sector-kicker {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--muted-text);
+  text-transform: uppercase;
+}
+
+.sector-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+  color: var(--op-text-primary, #0a191b);
+}
+
+.sector-count {
+  font-size: 0.75rem;
+  color: var(--muted-text);
+  white-space: nowrap;
+}
+
+// ── Cards grid ────────────────────────────────────────────────────────────────
 
 .anomaly-list {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .anomaly-card {
@@ -225,6 +313,19 @@
   padding: 0 1rem 0.5rem;
 }
 
+.anomaly-order {
+  color: var(--muted-text);
+  font-size: 0.78rem;
+  align-self: center;
+}
+
+.anomaly-observation {
+  padding: 0 1rem 0.75rem;
+  margin: 0;
+  color: var(--dark-text);
+  font-size: 0.875rem;
+}
+
 .anomaly-chip {
   display: inline-flex;
   align-items: center;
@@ -293,6 +394,7 @@
 
   .anomaly-card {
     min-width: 0;
+    margin-bottom: 0;
   }
 
   .anomaly-footer {

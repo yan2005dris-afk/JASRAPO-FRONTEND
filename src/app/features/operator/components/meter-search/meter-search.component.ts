@@ -1,6 +1,5 @@
 import { Component, ChangeDetectionStrategy, computed, input, output, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ScrollingModule } from '@angular/cdk/scrolling';
 import { IMeterDto } from '../../../contracts/meters/domain/models/meter.model';
 import { MeterCardComponent } from '../meter-card/meter-card.component';
 import { MeterSearchBoxComponent } from '../meter-search-box/meter-search-box.component';
@@ -15,7 +14,7 @@ export interface VirtualMeterItem {
   selector: 'app-meter-search',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, ScrollingModule, MeterSearchBoxComponent, MeterCardComponent],
+  imports: [CommonModule, MeterSearchBoxComponent, MeterCardComponent],
   template: `
     <div class="meter-search-component">
       <app-meter-search-box
@@ -60,22 +59,43 @@ export interface VirtualMeterItem {
         }
 
         @if (filteredItems().length > 0) {
-          <cdk-virtual-scroll-viewport
-            itemSize="86"
-            class="meters-virtual-viewport"
-            minBufferPx="430"
-            maxBufferPx="860"
-          >
-            <div *cdkVirtualFor="let item of filteredItems()" class="virtual-meter-row">
+          @for (item of pagedItems(); track item.meter.medidorId) {
+            <div class="virtual-meter-row">
               <app-meter-card
                 [meter]="item.meter"
                 [status]="item.status"
                 (meterSelect)="onMeterSelect($event)"
               />
             </div>
-          </cdk-virtual-scroll-viewport>
+          }
         }
       </div>
+      @if (filteredItems().length > 0) {
+        <nav class="meter-pagination" aria-label="Páginas de medidores">
+          <span>Mostrando {{ rangeStart() }}–{{ rangeEnd() }} de {{ filteredItems().length }}</span>
+          @if (pageCount() > 1) {
+            <div class="meter-pagination-actions">
+              <button
+                type="button"
+                (click)="goToPage(currentPage() - 1)"
+                [disabled]="currentPage() === 1"
+                aria-label="Página anterior de medidores"
+              >
+                Anterior
+              </button>
+              <span aria-live="polite">Página {{ currentPage() }} de {{ pageCount() }}</span>
+              <button
+                type="button"
+                (click)="goToPage(currentPage() + 1)"
+                [disabled]="currentPage() === pageCount()"
+                aria-label="Página siguiente de medidores"
+              >
+                Siguiente
+              </button>
+            </div>
+          }
+        </nav>
+      }
     </div>
   `,
   styles: [
@@ -113,15 +133,33 @@ export interface VirtualMeterItem {
         color: #fff;
         border-color: var(--primary-color, #0c9ea1);
       }
-      .meters-virtual-viewport {
-        height: calc(100vh - 270px);
-        min-height: 300px;
-        width: 100%;
-      }
       .virtual-meter-row {
-        height: 86px;
         padding-bottom: 8px;
         box-sizing: border-box;
+      }
+      .meter-pagination,
+      .meter-pagination-actions {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.7rem;
+      }
+      .meter-pagination {
+        justify-content: space-between;
+        color: var(--op-text-secondary, #4b6366);
+        font-size: 0.85rem;
+      }
+      .meter-pagination button {
+        min-height: 40px;
+        padding: 0.45rem 0.75rem;
+        border: 1px solid var(--op-border-subtle, #d1e7e8);
+        border-radius: 10px;
+        background: var(--op-bg-surface, #fff);
+        color: var(--op-brand-primary-dark, #005f73);
+        font-weight: 700;
+      }
+      .meter-pagination button:disabled {
+        opacity: 0.45;
       }
       .loading-state,
       .empty-state {
@@ -148,6 +186,8 @@ export class MeterSearchComponent {
 
   readonly searchQuery = signal<string>('');
   readonly selectedEstadoFilter = signal<string>('todas');
+  readonly pageSize = 10;
+  readonly requestedPage = signal(1);
 
   readonly filteredItems = computed<VirtualMeterItem[]>(() => {
     const query = this.searchQuery().trim().toLowerCase();
@@ -171,17 +211,38 @@ export class MeterSearchComponent {
     return items;
   });
 
+  readonly pageCount = computed(() =>
+    Math.max(1, Math.ceil(this.filteredItems().length / this.pageSize)),
+  );
+  readonly currentPage = computed(() => Math.min(this.requestedPage(), this.pageCount()));
+  readonly pagedItems = computed(() => {
+    const start = (this.currentPage() - 1) * this.pageSize;
+    return this.filteredItems().slice(start, start + this.pageSize);
+  });
+  readonly rangeStart = computed(() =>
+    this.filteredItems().length ? (this.currentPage() - 1) * this.pageSize + 1 : 0,
+  );
+  readonly rangeEnd = computed(() =>
+    Math.min(this.currentPage() * this.pageSize, this.filteredItems().length),
+  );
+
+  goToPage(page: number): void {
+    this.requestedPage.set(Math.max(1, Math.min(page, this.pageCount())));
+  }
+
   onMeterSelect(meter: IMeterDto): void {
     this.meterSelected.emit(meter);
   }
 
   onSearchChange(value: string): void {
     this.searchQuery.set(value);
+    this.requestedPage.set(1);
     this.searchQueryChange.emit(value);
   }
 
   onFilterChange(value: string): void {
     this.selectedEstadoFilter.set(value);
+    this.requestedPage.set(1);
     this.filterChange.emit(value);
   }
 }

@@ -7,6 +7,7 @@ import { IndexedDbService } from './indexed-db.service';
 import { ToastService } from '../../shared/components/toast/toast.service';
 import { AuthService } from './auth.service';
 import { OperatorLocationService } from './operator-location.service';
+import { MANIFEST_PROTOCOL_VERSION } from '../../features/operator/models/operator.models';
 
 const VALID_DATA_URI = new Blob(['photo'], { type: 'image/png' });
 const INVALID_DATA_URI = null;
@@ -531,6 +532,37 @@ describe('OperatorSyncService', () => {
     });
   });
 
+  describe('updateAnomaly', () => {
+    it('actualiza la novedad existente por PATCH sin crear otra', async () => {
+      isOnline.mockReturnValue(true);
+      httpPatch.mockReturnValue(of({ id: '17' }));
+
+      await service.updateAnomaly('17', {
+        tipo: 'FUGA',
+        observacion: 'Fuga confirmada',
+      });
+
+      expect(httpPatch).toHaveBeenCalledOnce();
+      const [url, formData] = httpPatch.mock.calls[0];
+      expect(url).toContain('/operator/novelties/17');
+      expect(formDataToObject(formData as FormData)).toEqual({
+        tipo: ['FUGA'],
+        observacion: ['Fuga confirmada'],
+      });
+      expect(httpPost).not.toHaveBeenCalled();
+    });
+
+    it('sin conexión impide una edición que pudiera convertirse en creación', async () => {
+      isOnline.mockReturnValue(false);
+
+      await expect(
+        service.updateAnomaly('17', { tipo: 'FUGA', observacion: 'Sin red' }),
+      ).rejects.toThrow('requiere conexión');
+      expect(httpPatch).not.toHaveBeenCalled();
+      expect(httpPost).not.toHaveBeenCalled();
+    });
+  });
+
   // ── syncPendingData ──────────────────────────────────────────────────────
 
   describe('syncPendingData', () => {
@@ -971,12 +1003,13 @@ describe('OperatorSyncService', () => {
       expect(applyManifestPage).not.toHaveBeenCalled();
     });
 
-    it('migra snapshots antiguos iniciando una descarga fresca sin tocar la cola', async () => {
+    it('renueva snapshots v2 para actualizar nombres de medidores sin tocar la cola', async () => {
       isOnline.mockReturnValue(true);
       getAssignedSnapshot
         .mockResolvedValueOnce({
           scope: 'operator:42',
           snapshotVersion: 'v1',
+          manifestProtocolVersion: 2,
           cursor: 'old-cursor',
           complete: true,
           routes: [{ rutaId: 'old' }],
@@ -1005,6 +1038,9 @@ describe('OperatorSyncService', () => {
       );
       expect(manifestCall).toBeTruthy();
       expect(manifestCall![1].params.get('cursor')).toBeNull();
+      expect(deletePendingReading).not.toHaveBeenCalled();
+      expect(deletePendingWorkOrder).not.toHaveBeenCalled();
+      expect(deletePendingAnomaly).not.toHaveBeenCalled();
     });
 
     it('normaliza colecciones paginadas antes de aplicarlas al snapshot', async () => {
@@ -1012,7 +1048,7 @@ describe('OperatorSyncService', () => {
       const snapshot = {
         scope: 'operator:42',
         snapshotVersion: 'v1',
-        manifestProtocolVersion: 2,
+        manifestProtocolVersion: MANIFEST_PROTOCOL_VERSION,
         periodId: 'period-1',
         cursor: 'cursor-1',
         complete: true,
@@ -1050,7 +1086,7 @@ describe('OperatorSyncService', () => {
       const snapshot = {
         scope: 'operator:42',
         snapshotVersion: 'v1',
-        manifestProtocolVersion: 2,
+        manifestProtocolVersion: MANIFEST_PROTOCOL_VERSION,
         periodId: 'period-1',
         cursor: 'cursor-1',
         complete: true,
@@ -1101,7 +1137,7 @@ describe('OperatorSyncService', () => {
       const snapshot = {
         scope: 'operator:42',
         snapshotVersion: 'v1',
-        manifestProtocolVersion: 2,
+        manifestProtocolVersion: MANIFEST_PROTOCOL_VERSION,
         periodId: 'period-1',
         cursor: 'cursor-existing',
         complete: true,
@@ -1131,7 +1167,7 @@ describe('OperatorSyncService', () => {
       const snapshot = {
         scope: 'operator:42',
         snapshotVersion: 'v1',
-        manifestProtocolVersion: 2,
+        manifestProtocolVersion: MANIFEST_PROTOCOL_VERSION,
         periodId: 'period-1',
         cursor: 'cursor-stale',
         complete: true,
@@ -1162,7 +1198,7 @@ describe('OperatorSyncService', () => {
       getAssignedSnapshot.mockResolvedValue({
         scope: 'operator:42',
         snapshotVersion: 'v1',
-        manifestProtocolVersion: 2,
+        manifestProtocolVersion: MANIFEST_PROTOCOL_VERSION,
         periodId: 'period-1',
         cursor: null,
         complete: true,
@@ -1187,7 +1223,7 @@ describe('OperatorSyncService', () => {
       isOnline.mockReturnValue(true);
       const snapshot = {
         scope: 'operator:42',
-        manifestProtocolVersion: 2,
+        manifestProtocolVersion: MANIFEST_PROTOCOL_VERSION,
         cursor: null,
         routes: [],
         meters: [],
@@ -1225,7 +1261,7 @@ describe('OperatorSyncService', () => {
       isOnline.mockReturnValue(true);
       getAssignedSnapshot.mockResolvedValue({
         scope: 'operator:42',
-        manifestProtocolVersion: 2,
+        manifestProtocolVersion: MANIFEST_PROTOCOL_VERSION,
         cursor: null,
         routes: [],
         meters: [],

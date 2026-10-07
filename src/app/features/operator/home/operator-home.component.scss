@@ -89,56 +89,6 @@
   opacity: 0.5;
 }
 
-/* Online Status Chip */
-.online-status-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: #ecfdf5;
-  color: #047857;
-  border: 1px solid #a7f3d0;
-  padding: 3px 9px;
-  border-radius: 20px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.2px;
-  flex-shrink: 0;
-
-  &.offline {
-    background: #f1f5f9;
-    color: #64748b;
-    border-color: #cbd5e1;
-  }
-}
-
-.online-dot-pulse {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #10b981;
-  display: inline-block;
-  box-shadow: 0 0 0 rgba(16, 185, 129, 0.4);
-  animation: pulse-green 2s infinite;
-
-  &.offline {
-    background: #94a3b8;
-    animation: none;
-    box-shadow: none;
-  }
-}
-
-@keyframes pulse-green {
-  0% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
-  }
-  70% {
-    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-  }
-}
-
 /* 2. Hero Radial Card */
 .radial-hero-card {
   background: #ffffff;
@@ -689,11 +639,6 @@
 
   .operator-meta {
     font-size: 0.9rem;
-  }
-
-  .online-status-chip {
-    padding: 0.4rem 0.75rem;
-    font-size: 0.8rem;
   }
 
   .radial-hero-card {

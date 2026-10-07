@@ -1,43 +1,34 @@
-<div class="sync-queue-view">
-  <!-- Header del Mockup -->
-  <div class="d-flex justify-content-between align-items-center mb-3">
-    <div>
-      <h1 class="app-title text-dark mb-0 fs-4">Sincronización</h1>
-      <small class="text-muted">Sincronización Offline y Estado de Red</small>
+<div class="sync-screen">
+  <!-- ── Header ──────────────────────────────────────────────────────────── -->
+  <div class="sync-header">
+    <div class="sync-header-text">
+      <h1 class="sync-title">Sincronización</h1>
+      <p class="sync-subtitle">Datos asignados y cambios pendientes</p>
     </div>
-    <div class="d-flex align-items-center gap-2">
-      @if (networkService.isOnline()) {
-        <span class="online-status-chip"> <span class="online-dot-pulse"></span> ONLINE </span>
-      } @else {
-        <span class="badge bg-secondary font-mono">
-          <i class="bi bi-wifi-off me-1"></i> OFFLINE
-        </span>
-      }
-      <button
-        class="btn-auto-sync"
-        [class.active]="syncService.autoSyncEnabled()"
-        (click)="syncService.toggleAutoSync()"
-        id="btn-toggle-auto-sync"
-        [title]="
-          syncService.autoSyncEnabled()
-            ? 'Auto-sync activado — click para desactivar'
-            : 'Auto-sync desactivado — click para activar'
-        "
-      >
-        <i
-          class="bi"
-          [class.bi-wifi]="syncService.autoSyncEnabled()"
-          [class.bi-wifi-off]="!syncService.autoSyncEnabled()"
-        ></i>
-        Auto
-      </button>
-    </div>
+    <button
+      class="btn-auto-sync"
+      [class.active]="syncService.autoSyncEnabled()"
+      (click)="syncService.toggleAutoSync()"
+      id="btn-toggle-auto-sync"
+      [title]="
+        syncService.autoSyncEnabled()
+          ? 'Auto-sync activado — click para desactivar'
+          : 'Auto-sync desactivado — click para activar'
+      "
+    >
+      <i
+        class="bi"
+        [class.bi-wifi]="syncService.autoSyncEnabled()"
+        [class.bi-wifi-off]="!syncService.autoSyncEnabled()"
+      ></i>
+      Auto
+    </button>
   </div>
 
-  <!-- Hero Status Box con Anillo Radial del Mockup -->
-  <div class="ios-group-box sync-hero-card p-3 text-center mb-3">
-    <div class="position-relative d-inline-block mb-2">
-      <svg width="86" height="86" viewBox="0 0 100 100">
+  <!-- ── Hero Status Card ─────────────────────────────────────────────────── -->
+  <div class="sync-hero-card" [class.hero-ok]="totalPendientes() === 0">
+    <div class="hero-ring-wrap">
+      <svg width="88" height="88" viewBox="0 0 100 100" aria-hidden="true">
         <circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" stroke-width="8" />
         @if (totalPendientes() === 0) {
           <circle
@@ -66,60 +57,93 @@
           />
         }
       </svg>
-      <div class="position-absolute top-50 start-50 translate-middle text-center">
+      <div class="hero-ring-icon">
         @if (totalPendientes() === 0) {
-          <i class="bi bi-cloud-check-fill text-success fs-3"></i>
+          <i class="bi bi-cloud-check-fill hero-icon-ok"></i>
         } @else {
-          <i class="bi bi-cloud-arrow-up-fill text-warning fs-3"></i>
+          <i class="bi bi-cloud-arrow-up-fill hero-icon-warn"></i>
         }
       </div>
     </div>
-    @if (totalPendientes() === 0) {
-      <h6 class="fw-bold text-dark mb-0">Base de Datos al Día</h6>
-      <small class="text-muted">Todos los registros locales están sincronizados con JASRAPO</small>
-    } @else {
-      <h6 class="fw-bold text-dark mb-0">{{ totalPendientes() }} Registros por Sincronizar</h6>
-      <small class="text-muted">Hay cambios locales pendientes de subir a JASRAPO</small>
-    }
-  </div>
-
-  <!-- Inset Group: Datos asignados offline -->
-  <div class="ios-group-title sync-data-title">Datos asignados offline</div>
-  <div class="ios-group-box sync-data-box">
-    <div class="ios-row">
-      <span class="text-muted small">Registros en Cola Local</span>
+    <div class="hero-text">
       @if (totalPendientes() === 0) {
-        <span class="badge bg-success-subtle text-success font-mono">0 pendientes</span>
+        <h2 class="hero-title">Base de Datos al Día</h2>
+        <p class="hero-sub">Todos los registros están sincronizados con JASRAPO</p>
       } @else {
-        <span class="badge bg-warning-subtle text-warning font-mono">
-          {{ totalPendientes() }} pendientes
-        </span>
+        <h2 class="hero-title">{{ totalPendientes() }} registros por sincronizar</h2>
+        <p class="hero-sub">Hay cambios locales pendientes de subir a JASRAPO</p>
       }
     </div>
-    <div class="ios-row">
-      <span class="text-muted small">Rutas y Medidores en Caché</span>
-      <span class="font-mono text-dark small">
-        {{ cachedRoutesCount() }} rutas · {{ cachedMetersCount() }} medidores
-      </span>
-    </div>
-    <div class="ios-row">
-      <span class="text-muted small">Lecturas Registradas Locales</span>
-      <span class="font-mono text-dark small">{{ cachedReadingsCount() }} registradas</span>
-    </div>
-    <div class="ios-row">
-      <span class="text-muted small">Última Descarga Asignada</span>
-      <span class="font-mono text-dark small">
-        @if (syncService.lastDownloadTimestamp()) {
-          {{ syncService.lastDownloadTimestamp() | date: 'dd/MM/yyyy HH:mm' }}
-        } @else {
-          Sin descarga previa
-        }
-      </span>
+  </div>
+
+  <!-- ── Stats Grid ───────────────────────────────────────────────────────── -->
+  <div class="stats-section">
+    <p class="stats-label">Datos asignados offline</p>
+    <div class="stats-grid">
+      <div class="stat-item">
+        <i class="bi bi-stack stat-icon"></i>
+        <div class="stat-body">
+          <span class="stat-value">
+            @if (totalPendientes() === 0) {
+              0
+            } @else {
+              {{ totalPendientes() }}
+            }
+          </span>
+          <span class="stat-name">Pendientes</span>
+        </div>
+        <span
+          class="stat-badge"
+          [class.badge-ok]="totalPendientes() === 0"
+          [class.badge-warn]="totalPendientes() > 0"
+        >
+          {{ totalPendientes() === 0 ? 'Al día' : 'Por subir' }}
+        </span>
+      </div>
+
+      <div class="stat-item">
+        <i class="bi bi-map stat-icon"></i>
+        <div class="stat-body">
+          <span class="stat-value">{{ cachedRoutesCount() }}</span>
+          <span class="stat-name">Rutas en caché</span>
+        </div>
+      </div>
+
+      <div class="stat-item">
+        <i class="bi bi-speedometer2 stat-icon"></i>
+        <div class="stat-body">
+          <span class="stat-value">{{ cachedMetersCount() }}</span>
+          <span class="stat-name">Medidores en caché</span>
+        </div>
+      </div>
+
+      <div class="stat-item">
+        <i class="bi bi-droplet-fill stat-icon"></i>
+        <div class="stat-body">
+          <span class="stat-value">{{ cachedReadingsCount() }}</span>
+          <span class="stat-name">Lecturas locales</span>
+        </div>
+      </div>
+
+      <div class="stat-item stat-item--wide">
+        <i class="bi bi-clock-history stat-icon"></i>
+        <div class="stat-body">
+          <span class="stat-value stat-value--sm">
+            @if (syncService.lastDownloadTimestamp()) {
+              {{ syncService.lastDownloadTimestamp() | date: 'dd/MM/yyyy HH:mm' }}
+            } @else {
+              Sin descarga previa
+            }
+          </span>
+          <span class="stat-name">Última descarga</span>
+        </div>
+      </div>
     </div>
   </div>
 
+  <!-- ── Authorization Warning ────────────────────────────────────────────── -->
   @if (authorizationWarning()) {
-    <div class="authorization-warning mb-3" role="alert">
+    <div class="auth-warning" role="alert">
       <i class="bi bi-shield-exclamation"></i>
       <span
         >No tenés autorización para actualizar datos asignados. Los datos guardados siguen
@@ -128,406 +152,406 @@
     </div>
   }
 
-  <!-- Botones de Acción de Sincronización y Mantenimiento -->
-  <div class="sync-actions-group mb-3">
+  <!-- ── Action Toolbar ───────────────────────────────────────────────────── -->
+  <div class="action-toolbar">
     @if (totalPendientes() > 0 && networkService.isOnline()) {
       <button
-        class="btn btn-brand-primary w-100 py-2 fw-bold rounded-3 mb-2"
+        class="btn-sync-now"
         (click)="forceSync()"
         [disabled]="syncService.isSyncing()"
         id="btn-sync-now"
       >
         @if (syncService.isSyncing()) {
-          <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-          <span>Sincronizando registros...</span>
+          <span class="spinner" role="status"></span>
+          <span>Sincronizando...</span>
         } @else {
-          <i class="bi bi-arrow-repeat me-1" aria-hidden="true"></i>
-          <span>Sincronizar y Subir Pendientes ({{ totalPendientes() }})</span>
+          <i class="bi bi-arrow-repeat" aria-hidden="true"></i>
+          <span>Sincronizar pendientes ({{ totalPendientes() }})</span>
         }
       </button>
     }
 
-    <div class="d-flex gap-2">
+    <div class="action-secondary">
       <button
-        class="btn btn-outline-secondary flex-grow-1 py-2 small fw-semibold font-mono"
+        class="btn-secondary"
         (click)="downloadData()"
         [disabled]="syncService.isDownloading() || !networkService.isOnline()"
         id="btn-download-data"
       >
         @if (syncService.isDownloading()) {
-          <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+          <span class="spinner" role="status"></span>
           <span>Descargando...</span>
         } @else {
-          <i class="bi bi-cloud-arrow-down me-1" aria-hidden="true"></i>
-          <span>Descargar / Actualizar Datos</span>
+          <i class="bi bi-cloud-arrow-down" aria-hidden="true"></i>
+          <span>Descargar / Actualizar</span>
         }
       </button>
 
       <button
         type="button"
-        class="btn btn-outline-danger py-2 px-3 small fw-semibold font-mono"
+        class="btn-danger"
         (click)="clearLocalDatabase()"
         title="Reiniciar base de datos local y caché"
         id="btn-clear-db"
       >
-        <i class="bi bi-trash3 me-1"></i> Reiniciar BD
+        <i class="bi bi-trash3"></i>
+        <span>Reiniciar BD</span>
       </button>
     </div>
   </div>
 
-  <!-- Local upload queue -->
-  <div class="local-changes-heading">
-    <h2 id="local-changes-title" class="fs-6 fw-bold text-dark mb-1">Cambios locales por subir</h2>
-    <p class="text-muted small mb-2">
-      Lecturas, novedades y órdenes de trabajo guardadas en este dispositivo.
-    </p>
-  </div>
-
-  <!-- Tab Switcher -->
-  <div class="tab-switcher">
-    <button
-      class="tab-btn"
-      [class.active]="activeTab() === 'pendientes'"
-      (click)="switchTab('pendientes')"
-      id="tab-pendientes"
-    >
-      Pendientes
-      @if (totalPendientes() > 0) {
-        <span class="tab-count pending">{{ totalPendientes() }}</span>
-      }
-    </button>
-    <button
-      class="tab-btn"
-      [class.active]="activeTab() === 'rechazados'"
-      (click)="switchTab('rechazados')"
-      id="tab-rechazados"
-    >
-      Rechazados
-      @if (totalRechazados() > 0) {
-        <span class="tab-count rejected">{{ totalRechazados() }}</span>
-      }
-    </button>
-    <button
-      class="tab-btn"
-      [class.active]="activeTab() === 'sincronizados'"
-      (click)="switchTab('sincronizados')"
-      id="tab-sincronizados"
-    >
-      Enviados
-      @if (syncedReadings().length > 0) {
-        <span class="tab-count synced">{{ syncedReadings().length }}</span>
-      }
-    </button>
-  </div>
-
-  <!-- TAB: Pendientes -->
-  @if (activeTab() === 'pendientes') {
-    <div class="queue-section">
-      @if (totalPendientes() === 0) {
-        <div class="empty-state">
-          <i class="bi bi-check-circle" aria-hidden="true"></i>
-          <p>No hay registros pendientes de envío.</p>
-        </div>
-      }
-
-      <!-- Lecturas y Anomalías Pendientes (paginadas) -->
-      @for (record of pendingPageItems(); track record.id) {
-        @if (record['tipo'] || record['observacion']) {
-          <!-- Anomalía Pendiente -->
-          <div class="queue-card anomaly-card">
-            <div class="card-type-badge anomaly">Novedad</div>
-            <div class="card-body-content">
-              <div class="card-info">
-                <span class="info-label">Medidor:</span>
-                <span class="info-value">{{ record['medidorId'] }}</span>
-              </div>
-              <div class="card-info">
-                <span class="info-label">Tipo:</span>
-                <span class="info-value">{{ record['tipo'] }}</span>
-              </div>
-              <div class="card-info truncate-text">
-                <span class="info-label">Observación:</span>
-                <span class="info-value">{{ record['observacion'] }}</span>
-              </div>
-            </div>
-            <div class="card-status">
-              <span class="status-tag pending-tag">
-                <i class="bi bi-clock" aria-hidden="true"></i> Pendiente
-              </span>
-            </div>
-          </div>
-        } @else {
-          <!-- Lectura Pendiente -->
-          <div class="queue-card reading-card">
-            <div class="card-type-badge reading">
-              {{ isWorkOrder(record) ? 'Orden de trabajo' : 'Lectura' }}
-            </div>
-            <div class="card-body-content">
-              @if (record['clienteNombre']) {
-                <div class="card-info">
-                  <span class="info-label">Cliente:</span>
-                  <span class="info-value">{{ record['clienteNombre'] }}</span>
-                </div>
-              }
-              <div class="card-info">
-                <span class="info-label">Medidor:</span>
-                <span class="info-value">{{ record['serie'] ?? record['medidorId'] }}</span>
-              </div>
-              <div class="card-info">
-                <span class="info-label">Lectura:</span>
-                <span class="info-value"
-                  >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
-                >
-              </div>
-              <div class="card-info">
-                <span class="info-label">Consumo:</span>
-                <span class="info-value">{{ record['consumoCalculado'] }} m³</span>
-              </div>
-            </div>
-            <div class="card-status">
-              <span class="status-tag pending-tag">
-                <i class="bi bi-clock" aria-hidden="true"></i> Pendiente
-              </span>
-            </div>
-          </div>
-        }
-      }
-
-      <!-- Paginación Pendientes -->
-      @if (allPendingItems().length > 0) {
-        <div class="queue-pagination">
-          <button
-            class="page-btn"
-            [disabled]="pendingPage() === 0"
-            (click)="goToPendingPage(pendingPage() - 1)"
-            aria-label="Página anterior"
-          >
-            <i class="bi bi-chevron-left"></i>
-          </button>
-          <span class="page-indicator"> {{ pendingPage() + 1 }} / {{ pendingTotalPages() }} </span>
-          <button
-            class="page-btn"
-            [disabled]="pendingPage() >= pendingTotalPages() - 1"
-            (click)="goToPendingPage(pendingPage() + 1)"
-            aria-label="Página siguiente"
-          >
-            <i class="bi bi-chevron-right"></i>
-          </button>
-        </div>
-      }
+  <!-- ── Queue Section ────────────────────────────────────────────────────── -->
+  <div class="queue-wrapper">
+    <div class="queue-heading">
+      <h2 class="queue-heading-title">Cambios locales por subir</h2>
+      <p class="queue-heading-sub">
+        Lecturas, novedades y órdenes de trabajo guardadas en este dispositivo.
+      </p>
     </div>
-  }
 
-  <!-- TAB: Rechazados -->
-  @if (activeTab() === 'rechazados') {
-    <div class="queue-section">
-      @if (totalRechazados() === 0) {
-        <div class="empty-state">
-          <i class="bi bi-hand-thumbs-up" aria-hidden="true"></i>
-          <p>No hay registros rechazados. ¡Todo bien!</p>
-        </div>
-      }
-
-      <!-- Lecturas y Anomalías Rechazadas (paginadas) -->
-      @for (record of rejectedPageItems(); track record.id) {
-        @if (record['tipo'] || record['observacion']) {
-          <!-- Anomalía Rechazada -->
-          <div class="queue-card rejected-card">
-            <div class="card-type-badge anomaly">Novedad</div>
-            <div class="card-body-content">
-              <div class="card-info">
-                <span class="info-label">Medidor:</span>
-                <span class="info-value">{{ record['medidorId'] }}</span>
-              </div>
-              <div class="card-info">
-                <span class="info-label">Tipo:</span>
-                <span class="info-value">{{ record['tipo'] }}</span>
-              </div>
-              <!-- Error Message -->
-              <div class="error-banner">
-                <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
-                <span>{{ record.errorMessage }}</span>
-              </div>
-            </div>
-            <div class="card-actions">
-              @if (editingRecord()?.id === record.id && editingType() === 'anomalia') {
-                <app-sync-anomaly-editor
-                  [record]="record"
-                  (saved)="onAnomalyEditorSaved($event)"
-                  (canceled)="cancelEdit()"
-                />
-              } @else {
-                <button type="button" class="btn-retry" (click)="retryAnomaly(record)">
-                  <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Reintentar
-                </button>
-                <button type="button" class="btn-edit" (click)="startEditAnomaly(record)">
-                  <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
-                </button>
-                <button type="button" class="btn-discard" (click)="discardAnomaly(record)">
-                  <i class="bi bi-trash3" aria-hidden="true"></i> Descartar
-                </button>
-              }
-            </div>
-          </div>
-        } @else {
-          <!-- Lectura Rechazada -->
-          <div class="queue-card rejected-card">
-            <div class="card-type-badge reading">
-              {{ isWorkOrder(record) ? 'Orden de trabajo' : 'Lectura' }}
-            </div>
-            <div class="card-body-content">
-              <div class="card-info">
-                <span class="info-label">Medidor:</span>
-                <span class="info-value">{{ record['medidorId'] }}</span>
-              </div>
-              <div class="card-info">
-                <span class="info-label">Lectura:</span>
-                <span class="info-value"
-                  >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
-                >
-              </div>
-              <!-- Error Message -->
-              <div class="error-banner">
-                <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
-                <span>{{ record.errorMessage }}</span>
-              </div>
-            </div>
-            <div class="card-actions">
-              @if (editingRecord()?.id === record.id && editingType() === 'lectura') {
-                <app-sync-reading-editor
-                  [record]="record"
-                  (saved)="onReadingEditorSaved($event)"
-                  (canceled)="cancelEdit()"
-                />
-              } @else {
-                <button type="button" class="btn-retry" (click)="retryReading(record)">
-                  <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Reintentar
-                </button>
-                <button type="button" class="btn-edit" (click)="startEditReading(record)">
-                  <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
-                </button>
-                <button type="button" class="btn-discard" (click)="discardReading(record)">
-                  <i class="bi bi-trash3" aria-hidden="true"></i> Descartar
-                </button>
-              }
-            </div>
-          </div>
+    <!-- Tab Switcher -->
+    <div class="tab-switcher" role="tablist">
+      <button
+        class="tab-btn"
+        role="tab"
+        [class.active]="activeTab() === 'pendientes'"
+        [attr.aria-selected]="activeTab() === 'pendientes'"
+        (click)="switchTab('pendientes')"
+        id="tab-pendientes"
+      >
+        Pendientes
+        @if (totalPendientes() > 0) {
+          <span class="tab-count tab-count--warn">{{ totalPendientes() }}</span>
         }
-      }
-
-      <!-- Paginación Rechazados -->
-      @if (allRejectedItems().length > 0) {
-        <div class="queue-pagination">
-          <button
-            class="page-btn"
-            [disabled]="rejectedPage() === 0"
-            (click)="goToRejectedPage(rejectedPage() - 1)"
-            aria-label="Página anterior"
-          >
-            <i class="bi bi-chevron-left"></i>
-          </button>
-          <span class="page-indicator">
-            {{ rejectedPage() + 1 }} / {{ rejectedTotalPages() }}
-          </span>
-          <button
-            class="page-btn"
-            [disabled]="rejectedPage() >= rejectedTotalPages() - 1"
-            (click)="goToRejectedPage(rejectedPage() + 1)"
-            aria-label="Página siguiente"
-          >
-            <i class="bi bi-chevron-right"></i>
-          </button>
-        </div>
-      }
-    </div>
-  }
-
-  <!-- TAB: Enviados -->
-  @if (activeTab() === 'sincronizados') {
-    <div class="queue-section">
-      <div class="section-toolbar">
+      </button>
+      <button
+        class="tab-btn"
+        role="tab"
+        [class.active]="activeTab() === 'rechazados'"
+        [attr.aria-selected]="activeTab() === 'rechazados'"
+        (click)="switchTab('rechazados')"
+        id="tab-rechazados"
+      >
+        Rechazados
+        @if (totalRechazados() > 0) {
+          <span class="tab-count tab-count--danger">{{ totalRechazados() }}</span>
+        }
+      </button>
+      <button
+        class="tab-btn"
+        role="tab"
+        [class.active]="activeTab() === 'sincronizados'"
+        [attr.aria-selected]="activeTab() === 'sincronizados'"
+        (click)="switchTab('sincronizados')"
+        id="tab-sincronizados"
+      >
+        Enviados
         @if (syncedReadings().length > 0) {
-          <button
-            type="button"
-            class="btn-clear-history"
-            (click)="clearHistory()"
-            id="btn-clear-history"
-          >
-            <i class="bi bi-trash3" aria-hidden="true"></i> Limpiar historial
-          </button>
+          <span class="tab-count tab-count--ok">{{ syncedReadings().length }}</span>
+        }
+      </button>
+    </div>
+
+    <!-- TAB: Pendientes -->
+    @if (activeTab() === 'pendientes') {
+      <div class="queue-section" role="tabpanel" aria-labelledby="tab-pendientes">
+        @if (totalPendientes() === 0) {
+          <div class="empty-state">
+            <i class="bi bi-check-circle" aria-hidden="true"></i>
+            <p>No hay registros pendientes de envío.</p>
+          </div>
+        }
+
+        @for (record of pendingPageItems(); track record.id) {
+          @if (record['tipo'] || record['observacion']) {
+            <div class="queue-card queue-card--anomaly">
+              <span class="card-badge card-badge--anomaly">Novedad</span>
+              <div class="card-fields">
+                <div class="card-field">
+                  <span class="field-label">Medidor</span>
+                  <span class="field-value">{{ record['medidorId'] }}</span>
+                </div>
+                <div class="card-field">
+                  <span class="field-label">Tipo</span>
+                  <span class="field-value">{{ record['tipo'] }}</span>
+                </div>
+                <div class="card-field card-field--truncate">
+                  <span class="field-label">Observación</span>
+                  <span class="field-value">{{ record['observacion'] }}</span>
+                </div>
+              </div>
+              <div class="card-footer-row">
+                <span class="status-pill status-pill--warn">
+                  <i class="bi bi-clock" aria-hidden="true"></i> Pendiente
+                </span>
+              </div>
+            </div>
+          } @else {
+            <div class="queue-card queue-card--reading">
+              <span class="card-badge card-badge--reading">
+                {{ isWorkOrder(record) ? 'Orden de trabajo' : 'Lectura' }}
+              </span>
+              <div class="card-fields">
+                @if (record['clienteNombre']) {
+                  <div class="card-field">
+                    <span class="field-label">Cliente</span>
+                    <span class="field-value">{{ record['clienteNombre'] }}</span>
+                  </div>
+                }
+                <div class="card-field">
+                  <span class="field-label">Medidor</span>
+                  <span class="field-value">{{ record['serie'] ?? record['medidorId'] }}</span>
+                </div>
+                <div class="card-field">
+                  <span class="field-label">Lectura</span>
+                  <span class="field-value"
+                    >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
+                  >
+                </div>
+                <div class="card-field">
+                  <span class="field-label">Consumo</span>
+                  <span class="field-value">{{ record['consumoCalculado'] }} m³</span>
+                </div>
+              </div>
+              <div class="card-footer-row">
+                <span class="status-pill status-pill--warn">
+                  <i class="bi bi-clock" aria-hidden="true"></i> Pendiente
+                </span>
+              </div>
+            </div>
+          }
+        }
+
+        @if (allPendingItems().length > 0) {
+          <div class="pagination">
+            <button
+              class="page-btn"
+              [disabled]="pendingPage() === 0"
+              (click)="goToPendingPage(pendingPage() - 1)"
+              aria-label="Página anterior"
+            >
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <span class="page-indicator">{{ pendingPage() + 1 }} / {{ pendingTotalPages() }}</span>
+            <button
+              class="page-btn"
+              [disabled]="pendingPage() >= pendingTotalPages() - 1"
+              (click)="goToPendingPage(pendingPage() + 1)"
+              aria-label="Página siguiente"
+            >
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
         }
       </div>
+    }
 
-      @if (syncedReadings().length === 0) {
-        <div class="empty-state">
-          <i class="bi bi-cloud-check" aria-hidden="true"></i>
-          <p>No hay registros enviados al servidor aún.</p>
+    <!-- TAB: Rechazados -->
+    @if (activeTab() === 'rechazados') {
+      <div class="queue-section" role="tabpanel" aria-labelledby="tab-rechazados">
+        @if (totalRechazados() === 0) {
+          <div class="empty-state">
+            <i class="bi bi-hand-thumbs-up" aria-hidden="true"></i>
+            <p>No hay registros rechazados. ¡Todo bien!</p>
+          </div>
+        }
+
+        @for (record of rejectedPageItems(); track record.id) {
+          @if (record['tipo'] || record['observacion']) {
+            <div class="queue-card queue-card--rejected">
+              <span class="card-badge card-badge--anomaly">Novedad</span>
+              <div class="card-fields">
+                <div class="card-field">
+                  <span class="field-label">Medidor</span>
+                  <span class="field-value">{{ record['medidorId'] }}</span>
+                </div>
+                <div class="card-field">
+                  <span class="field-label">Tipo</span>
+                  <span class="field-value">{{ record['tipo'] }}</span>
+                </div>
+                <div class="error-banner">
+                  <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
+                  <span>{{ record.errorMessage }}</span>
+                </div>
+              </div>
+              <div class="card-actions">
+                @if (editingRecord()?.id === record.id && editingType() === 'anomalia') {
+                  <app-sync-anomaly-editor
+                    [record]="record"
+                    (saved)="onAnomalyEditorSaved($event)"
+                    (canceled)="cancelEdit()"
+                  />
+                } @else {
+                  <button type="button" class="btn-retry" (click)="retryAnomaly(record)">
+                    <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Reintentar
+                  </button>
+                  <button type="button" class="btn-edit" (click)="startEditAnomaly(record)">
+                    <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
+                  </button>
+                  <button type="button" class="btn-discard" (click)="discardAnomaly(record)">
+                    <i class="bi bi-trash3" aria-hidden="true"></i> Descartar
+                  </button>
+                }
+              </div>
+            </div>
+          } @else {
+            <div class="queue-card queue-card--rejected">
+              <span class="card-badge card-badge--reading">
+                {{ isWorkOrder(record) ? 'Orden de trabajo' : 'Lectura' }}
+              </span>
+              <div class="card-fields">
+                <div class="card-field">
+                  <span class="field-label">Medidor</span>
+                  <span class="field-value">{{ record['medidorId'] }}</span>
+                </div>
+                <div class="card-field">
+                  <span class="field-label">Lectura</span>
+                  <span class="field-value"
+                    >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
+                  >
+                </div>
+                <div class="error-banner">
+                  <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
+                  <span>{{ record.errorMessage }}</span>
+                </div>
+              </div>
+              <div class="card-actions">
+                @if (editingRecord()?.id === record.id && editingType() === 'lectura') {
+                  <app-sync-reading-editor
+                    [record]="record"
+                    (saved)="onReadingEditorSaved($event)"
+                    (canceled)="cancelEdit()"
+                  />
+                } @else {
+                  <button type="button" class="btn-retry" (click)="retryReading(record)">
+                    <i class="bi bi-arrow-repeat" aria-hidden="true"></i> Reintentar
+                  </button>
+                  <button type="button" class="btn-edit" (click)="startEditReading(record)">
+                    <i class="bi bi-pencil-square" aria-hidden="true"></i> Editar
+                  </button>
+                  <button type="button" class="btn-discard" (click)="discardReading(record)">
+                    <i class="bi bi-trash3" aria-hidden="true"></i> Descartar
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        }
+
+        @if (allRejectedItems().length > 0) {
+          <div class="pagination">
+            <button
+              class="page-btn"
+              [disabled]="rejectedPage() === 0"
+              (click)="goToRejectedPage(rejectedPage() - 1)"
+              aria-label="Página anterior"
+            >
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <span class="page-indicator"
+              >{{ rejectedPage() + 1 }} / {{ rejectedTotalPages() }}</span
+            >
+            <button
+              class="page-btn"
+              [disabled]="rejectedPage() >= rejectedTotalPages() - 1"
+              (click)="goToRejectedPage(rejectedPage() + 1)"
+              aria-label="Página siguiente"
+            >
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- TAB: Enviados -->
+    @if (activeTab() === 'sincronizados') {
+      <div class="queue-section" role="tabpanel" aria-labelledby="tab-sincronizados">
+        <div class="section-toolbar">
+          @if (syncedReadings().length > 0) {
+            <button
+              type="button"
+              class="btn-clear-history"
+              (click)="clearHistory()"
+              id="btn-clear-history"
+            >
+              <i class="bi bi-trash3" aria-hidden="true"></i> Limpiar historial
+            </button>
+          }
         </div>
-      }
 
-      @for (record of syncedPageItems(); track record.id) {
-        <div class="queue-card synced-card">
-          <div class="card-type-badge reading">
-            {{ isWorkOrder(record) ? 'Orden de trabajo' : 'Lectura' }}
+        @if (syncedReadings().length === 0) {
+          <div class="empty-state">
+            <i class="bi bi-cloud-check" aria-hidden="true"></i>
+            <p>No hay registros enviados al servidor aún.</p>
           </div>
-          <div class="card-body-content">
-            @if (record['clienteNombre']) {
-              <div class="card-info">
-                <span class="info-label">Cliente:</span>
-                <span class="info-value">{{ record['clienteNombre'] }}</span>
-              </div>
-            }
-            <div class="card-info">
-              <span class="info-label">Medidor:</span>
-              <span class="info-value">{{ record['serie'] ?? record['medidorId'] }}</span>
-            </div>
-            <div class="card-info">
-              <span class="info-label">Lectura:</span>
-              <span class="info-value"
-                >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
-              >
-            </div>
-            <div class="card-info">
-              <span class="info-label">Consumo:</span>
-              <span class="info-value">{{ record['consumoCalculado'] }} m³</span>
-            </div>
-            @if (record['syncedAt']) {
-              <div class="card-info">
-                <span class="info-label">Enviado:</span>
-                <span class="info-value">{{ record['syncedAt'] | date: 'dd/MM/yyyy HH:mm' }}</span>
-              </div>
-            }
-          </div>
-          <div class="card-status">
-            <span class="status-tag synced-tag">
-              <i class="bi bi-cloud-check-fill" aria-hidden="true"></i> Enviado al servidor
+        }
+
+        @for (record of syncedPageItems(); track record.id) {
+          <div class="queue-card queue-card--synced">
+            <span class="card-badge card-badge--reading">
+              {{ isWorkOrder(record) ? 'Orden de trabajo' : 'Lectura' }}
             </span>
+            <div class="card-fields">
+              @if (record['clienteNombre']) {
+                <div class="card-field">
+                  <span class="field-label">Cliente</span>
+                  <span class="field-value">{{ record['clienteNombre'] }}</span>
+                </div>
+              }
+              <div class="card-field">
+                <span class="field-label">Medidor</span>
+                <span class="field-value">{{ record['serie'] ?? record['medidorId'] }}</span>
+              </div>
+              <div class="card-field">
+                <span class="field-label">Lectura</span>
+                <span class="field-value"
+                  >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
+                >
+              </div>
+              <div class="card-field">
+                <span class="field-label">Consumo</span>
+                <span class="field-value">{{ record['consumoCalculado'] }} m³</span>
+              </div>
+              @if (record['syncedAt']) {
+                <div class="card-field">
+                  <span class="field-label">Enviado</span>
+                  <span class="field-value">{{
+                    record['syncedAt'] | date: 'dd/MM/yyyy HH:mm'
+                  }}</span>
+                </div>
+              }
+            </div>
+            <div class="card-footer-row">
+              <span class="status-pill status-pill--ok">
+                <i class="bi bi-cloud-check-fill" aria-hidden="true"></i> Enviado al servidor
+              </span>
+            </div>
           </div>
-        </div>
-      }
+        }
 
-      <!-- Paginación Enviados -->
-      @if (syncedReadings().length > 0) {
-        <div class="queue-pagination">
-          <button
-            class="page-btn"
-            [disabled]="syncedPage() === 0"
-            (click)="goToSyncedPage(syncedPage() - 1)"
-            aria-label="Página anterior"
-          >
-            <i class="bi bi-chevron-left"></i>
-          </button>
-          <span class="page-indicator"> {{ syncedPage() + 1 }} / {{ syncedTotalPages() }} </span>
-          <button
-            class="page-btn"
-            [disabled]="syncedPage() >= syncedTotalPages() - 1"
-            (click)="goToSyncedPage(syncedPage() + 1)"
-            aria-label="Página siguiente"
-          >
-            <i class="bi bi-chevron-right"></i>
-          </button>
-        </div>
-      }
-    </div>
-  }
+        @if (syncedReadings().length > 0) {
+          <div class="pagination">
+            <button
+              class="page-btn"
+              [disabled]="syncedPage() === 0"
+              (click)="goToSyncedPage(syncedPage() - 1)"
+              aria-label="Página anterior"
+            >
+              <i class="bi bi-chevron-left"></i>
+            </button>
+            <span class="page-indicator">{{ syncedPage() + 1 }} / {{ syncedTotalPages() }}</span>
+            <button
+              class="page-btn"
+              [disabled]="syncedPage() >= syncedTotalPages() - 1"
+              (click)="goToSyncedPage(syncedPage() + 1)"
+              aria-label="Página siguiente"
+            >
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </div>
 </div>

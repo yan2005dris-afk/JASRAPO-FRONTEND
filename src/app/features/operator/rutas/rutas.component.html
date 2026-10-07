@@ -35,61 +35,56 @@
     </div>
   </div>
 
-  <!-- Los filtros globales se aplican antes de agrupar las rutas asignadas. -->
-  <div class="filters-container">
-    <!-- 1. Tipo de ruta -->
-    <div class="filter-chips" role="group" aria-label="Filtrar rutas por tipo">
-      @for (option of filterOptions(); track option.value) {
-        <button
-          class="filter-chip"
-          [class.active]="activeFilter() === option.value"
-          (click)="setFilter(option.value)"
-          type="button"
-        >
-          {{ option.label }}
-        </button>
-      }
-    </div>
-
-    <!-- 2. Estado -->
-    <div class="filter-secondary-row">
-      <div class="filter-chips compact" role="group" aria-label="Filtrar por estado">
-        @for (opt of stateFilterOptions; track opt.value) {
-          <button
-            class="filter-chip sub-chip"
-            [class.active]="activeStateFilter() === opt.value"
-            (click)="setStateFilter(opt.value)"
-            type="button"
-          >
-            {{ opt.label }}
-          </button>
+  <!-- Filter toolbar with native selects -->
+  <div class="filter-toolbar" role="group" aria-label="Filtros de rutas">
+    <!-- Tipo de ruta -->
+    <div class="filter-select-wrap">
+      <i class="bi bi-funnel-fill filter-select-icon"></i>
+      <select
+        id="filter-tipo"
+        class="filter-select"
+        [value]="activeFilter()"
+        (change)="setFilter($any($event.target).value)"
+        aria-label="Filtrar por tipo de ruta"
+      >
+        @for (option of filterOptions(); track option.value) {
+          <option [value]="option.value">{{ option.label }}</option>
         }
-      </div>
+      </select>
     </div>
 
-    <!-- 3. Comunidad -->
+    <!-- Estado -->
+    <div class="filter-select-wrap">
+      <i class="bi bi-circle-half filter-select-icon"></i>
+      <select
+        id="filter-estado"
+        class="filter-select"
+        [value]="activeStateFilter()"
+        (change)="setStateFilter($any($event.target).value)"
+        aria-label="Filtrar por estado"
+      >
+        @for (opt of stateFilterOptions; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Comunidad (solo si hay más de una) -->
     @if (availableComunidades().length > 1) {
-      <div class="filter-secondary-row">
-        <div class="filter-chips compact" role="group" aria-label="Filtrar por comunidad">
-          <button
-            class="filter-chip sub-chip"
-            [class.active]="activeComunidadFilter() === 'ALL'"
-            (click)="setComunidadFilter('ALL')"
-            type="button"
-          >
-            Todas las comunidades
-          </button>
+      <div class="filter-select-wrap">
+        <i class="bi bi-geo-alt-fill filter-select-icon"></i>
+        <select
+          id="filter-comunidad"
+          class="filter-select"
+          [value]="activeComunidadFilter()"
+          (change)="setComunidadFilter($any($event.target).value)"
+          aria-label="Filtrar por comunidad"
+        >
+          <option value="ALL">Todas las comunidades</option>
           @for (com of availableComunidades(); track com.id) {
-            <button
-              class="filter-chip sub-chip"
-              [class.active]="activeComunidadFilter() === com.id"
-              (click)="setComunidadFilter(com.id)"
-              type="button"
-            >
-              <i class="bi bi-geo-alt"></i> {{ com.label }} ({{ com.routeCount }})
-            </button>
+            <option [value]="com.id">{{ com.label }} ({{ com.routeCount }})</option>
           }
-        </div>
+        </select>
       </div>
     }
   </div>
