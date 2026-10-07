@@ -7,7 +7,7 @@ import { ContractPickerComponent } from '../../../shared/components/contract-pic
 import { ToastService } from '../../../shared/components/toast/toast.service';
 import { IConnectionHistoryFilters, ISendReportEmailBody } from '../interfaces/ireport.interface';
 import { ReportsService } from '../services/reports.service';
-import type { IContract } from '../../contracts/service-contracts/interfaces/icontract.interface';
+import type { IContract } from '../../contracts/service-contracts/domain/models/service-contract.model';
 
 type DatePreset = 'currentMonth' | 'lastMonth' | 'last3Months' | 'lastYear';
 type ReportView = 'table' | 'pdf';

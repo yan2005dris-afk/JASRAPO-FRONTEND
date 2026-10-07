@@ -6,7 +6,7 @@
         size="xs"
         [showText]="true"
         [showSubtitle]="false"
-        textColor="dark"
+        textColor="light"
       ></app-brand-logo>
     </div>
 
@@ -51,6 +51,18 @@
           </span>
         }
       </div>
+
+      @if (pwaInstallService.canInstall()) {
+        <button
+          (click)="installApp()"
+          class="install-btn"
+          id="btn-install-app"
+          title="Instalar la aplicación"
+          aria-label="Instalar la aplicación"
+        >
+          <i class="bi bi-download"></i>
+        </button>
+      }
 
       <!-- User Profile link in Header -->
       <a

@@ -10,21 +10,21 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { ReadingRoutesService } from '../../services/reading-routes.service';
+import { ReadingRoutesService } from '../../data/reading-routes.api';
 import {
   ICreateRouteAssignmentsDto,
   IReadingRoute,
   ITipoActividad,
   TipoRuta,
-} from '../../interfaces/ireading-route.interface';
+} from '../../domain/models/reading-route.model';
 import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
 import { SectoresService } from '../../../../admin/sectores-prueba/services/sectores';
 import { UsersService } from '../../../../users/services/users.service';
-import { ContractsService } from '../../../service-contracts/services/contracts.service';
+import { ContractsApi } from '../../../service-contracts/data/contracts.api';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { Sectores } from '../../../../admin/sectores-prueba/models/sectores.interface';
 import { User } from '../../../../users/models/user.interface';
-import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
+import { IContract } from '../../../service-contracts/domain/models/service-contract.model';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { PeriodPickerComponent } from '../../../../../shared/components/period-picker/period-picker.component';
@@ -36,27 +36,27 @@ import {
 import { OperatorColor, OPERATOR_PALETTE } from '../../../../../shared/types/operator-color';
 
 import { RouteContractsTableComponent } from '../../components/route-contracts-table/route-contracts-table.component';
-import {
-  assertOperatorSelected,
-  assertPeriodOpen,
-} from '../../services/route-assignment-validators';
+import { assertOperatorSelected, assertPeriodOpen } from '../../domain/validators';
 import {
   AssignmentStatus,
+  calculateGlobalCoverage,
+  calculateNonLecturaCoverage,
   clearAssignmentsForOperator,
   groupContractAssignmentsByOperatorCommunity,
   groupSectorAssignmentsByOperatorCommunity,
   resolveAssignmentStatus,
   ResolvedAssignmentStatus,
   toggleAssignment,
-} from '../../services/session-assignments.helpers';
+} from '../../domain/rules';
 
 /** Shape returned by `getCommunityStatus` / `getSectorStatus` (concrete `color` type). */
 type AssignmentStatusView = ResolvedAssignmentStatus<OperatorColor>;
 import {
-  calculateGlobalCoverage,
-  calculateNonLecturaCoverage,
-} from '../../services/coverage-calculator';
-import { resetScrollNextMicrotask } from '../../services/scroll.helpers';
+  resolveComunidadNombre,
+  resolveOperarioNombre,
+} from '../../../../../shared/utils/operator-name';
+import { filterOperariosByRole } from '../../../../../shared/utils/users';
+import { resetScrollNextMicrotask } from '../../../../../shared/utils/scroll';
 
 @Component({
   selector: 'app-route-assignment-workspace',
@@ -78,7 +78,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
   private readonly comunidadesService = inject(ComunidadesService);
   private readonly sectoresService = inject(SectoresService);
   private readonly usersService = inject(UsersService);
-  private readonly contractsService = inject(ContractsService);
+  private readonly contractsService = inject(ContractsApi);
   private readonly toastService = inject(ToastService);
   private readonly dialogService = inject(ConfirmDialogService);
   private readonly periodsService = inject(PeriodsService);
@@ -757,10 +757,7 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
 
     this.usersService.getUsers(1, 100).subscribe({
       next: (res) => {
-        const filtered = res.data.filter((u) => {
-          const roleName = u.rol?.nombre?.toLowerCase() || '';
-          return roleName.includes('operador') || roleName.includes('operario');
-        });
+        const filtered = filterOperariosByRole(res.data);
         this.operarios.set(filtered);
         if (filtered.length > 0 && !this.selectedOperarioId()) {
           this.selectedOperarioId.set(filtered[0].usuarioId);
@@ -1187,14 +1184,12 @@ export class RouteAssignmentWorkspaceComponent implements OnInit {
     });
   }
 
-  getOperarioName(operarioId: number): string {
-    const op = this.operarios().find((u) => u.usuarioId === operarioId);
-    return op ? `${op.nombres} ${op.apellidos}` : `Operario #${operarioId}`;
+  getOperarioName(operarioId: number | null | undefined): string {
+    return resolveOperarioNombre(this.operarios(), operarioId);
   }
 
-  getComunidadName(comunidadId: number): string {
-    const com = this.comunidades().find((c) => c.id === comunidadId);
-    return com ? com.nombre : `Comunidad #${comunidadId}`;
+  getComunidadName(comunidadId: number | null | undefined): string {
+    return resolveComunidadNombre(this.comunidades(), comunidadId);
   }
 
   goBack(): void {

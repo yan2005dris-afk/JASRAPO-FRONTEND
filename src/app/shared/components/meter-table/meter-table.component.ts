@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { IMeter } from '../../../features/contracts/meters/interfaces/imeter.interface';
+import { IMeter } from '../../../features/contracts/meters/domain/models/meter.model';
 import { PaginationComponent } from '../pagination/pagination.component';
 import { TableSkeletonComponent } from '../table-skeleton/table-skeleton.component';
 

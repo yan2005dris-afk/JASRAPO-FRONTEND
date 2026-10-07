@@ -1,0 +1,215 @@
+<div class="card form-section mb-4 border-0 shadow-sm rounded-4">
+  <div class="card-body p-4">
+    <div class="section-title mb-4 pb-2 border-bottom">
+      <span class="section-icon"><i class="bi bi-person-badge"></i></span>
+      <div>
+        <h5 class="fw-bold mb-0">Cliente y Comunidad</h5>
+        <p class="text-muted small mb-0">
+          Seleccione el cliente titular y la comunidad del suministro de agua.
+        </p>
+      </div>
+    </div>
+
+    <div class="d-flex flex-column gap-4">
+      <!-- Sección 1: Cliente Titular -->
+      <div class="selection-section">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="fw-bold text-dark fs-6"
+            >1. Cliente Titular <span class="text-danger">*</span></span
+          >
+          @if (client()) {
+            <span class="badge bg-success-subtle text-success border border-success-subtle">
+              <i class="bi bi-check-circle me-1"></i>Seleccionado
+            </span>
+          }
+        </div>
+
+        @if (client(); as c) {
+          <!-- Ficha detallada horizontal (Banner de Datos) -->
+          <div class="entity-panel p-3 rounded-3 border">
+            <div
+              class="d-flex flex-wrap justify-content-between align-items-center gap-3 pb-3 border-bottom mb-3"
+            >
+              <div class="d-flex align-items-center gap-3">
+                <div class="entity-avatar">
+                  <i class="bi bi-person-fill"></i>
+                </div>
+                <div>
+                  <h6 class="fw-bold mb-0 text-dark fs-6">{{ clientName() }}</h6>
+                  <span class="text-muted small"
+                    >Cédula / Identificación: <strong>{{ c.identificacion }}</strong></span
+                  >
+                </div>
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                (click)="pickClient.emit()"
+              >
+                <i class="bi bi-arrow-repeat me-1"></i> Cambiar Cliente
+              </button>
+            </div>
+
+            <!-- Grilla horizontal de datos del cliente -->
+            <div class="row g-3">
+              <div class="col-12 col-md-4">
+                <div class="info-block">
+                  <span class="text-muted small d-block"
+                    ><i class="bi bi-telephone text-primary me-1"></i>Teléfono</span
+                  >
+                  <span class="fw-medium text-dark">{{ c.telefono || '—' }}</span>
+                </div>
+              </div>
+              <div class="col-12 col-md-4">
+                <div class="info-block">
+                  <span class="text-muted small d-block"
+                    ><i class="bi bi-envelope text-primary me-1"></i>Correo Electrónico</span
+                  >
+                  <span class="fw-medium text-dark text-truncate d-block">{{
+                    c.email || '—'
+                  }}</span>
+                </div>
+              </div>
+              <div class="col-12 col-md-4">
+                <div class="info-block">
+                  <span class="text-muted small d-block"
+                    ><i class="bi bi-geo-alt text-primary me-1"></i>Dirección Domiciliaria</span
+                  >
+                  <span class="fw-medium text-dark text-truncate d-block">{{
+                    c.direccionDomicilio || '—'
+                  }}</span>
+                </div>
+              </div>
+            </div>
+
+            @if (c.aplicaTerceraEdad || c.aplicaDiscapacidad) {
+              <div class="d-flex gap-2 mt-3 pt-2 border-top">
+                @if (c.aplicaTerceraEdad) {
+                  <span
+                    class="badge text-bg-info-subtle text-info-emphasis border border-info-subtle"
+                    >Tercera edad</span
+                  >
+                }
+                @if (c.aplicaDiscapacidad) {
+                  <span
+                    class="badge text-bg-info-subtle text-info-emphasis border border-info-subtle"
+                    >Discapacidad</span
+                  >
+                }
+              </div>
+            }
+          </div>
+        } @else {
+          <!-- Botón de selección ancho -->
+          <button type="button" class="empty-picker-bar w-100" (click)="pickClient.emit()">
+            <div class="d-flex align-items-center gap-3">
+              <div class="picker-icon-circle">
+                <i class="bi bi-person-plus"></i>
+              </div>
+              <div class="text-start">
+                <div class="fw-bold text-dark">Buscar y Seleccionar Cliente</div>
+                <small class="text-muted"
+                  >Haga clic para buscar por cédula, nombres o apellidos en el catálogo</small
+                >
+              </div>
+            </div>
+            <i class="bi bi-chevron-right text-muted"></i>
+          </button>
+          @if (submitted()) {
+            <span class="text-danger small d-block mt-1">
+              <i class="bi bi-exclamation-circle me-1"></i>Debe seleccionar un cliente para
+              continuar.
+            </span>
+          }
+        }
+      </div>
+
+      <!-- Sección 2: Comunidad / Sector -->
+      <div class="selection-section">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="fw-bold text-dark fs-6"
+            >2. Comunidad / Sector <span class="text-danger">*</span></span
+          >
+          @if (comunidad()) {
+            <span class="badge bg-success-subtle text-success border border-success-subtle">
+              <i class="bi bi-check-circle me-1"></i>Seleccionada
+            </span>
+          }
+        </div>
+
+        @if (comunidad(); as com) {
+          <!-- Ficha detallada horizontal (Banner de Datos) -->
+          <div class="entity-panel p-3 rounded-3 border">
+            <div
+              class="d-flex flex-wrap justify-content-between align-items-center gap-3 pb-3 border-bottom mb-3"
+            >
+              <div class="d-flex align-items-center gap-3">
+                <div class="entity-avatar community-avatar">
+                  <i class="bi bi-geo-alt-fill"></i>
+                </div>
+                <div>
+                  <h6 class="fw-bold mb-0 text-dark fs-6">{{ com.nombre }}</h6>
+                  <span class="text-muted small"
+                    >Código Comunal: <strong>{{ com.codigo }}</strong></span
+                  >
+                </div>
+              </div>
+              <button
+                type="button"
+                class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                (click)="pickComunidad.emit()"
+              >
+                <i class="bi bi-arrow-repeat me-1"></i> Cambiar Comunidad
+              </button>
+            </div>
+
+            <!-- Grilla horizontal de datos de la comunidad -->
+            <div class="row g-3">
+              <div class="col-12 col-md-6">
+                <div class="info-block">
+                  <span class="text-muted small d-block"
+                    ><i class="bi bi-shield-check text-primary me-1"></i>Tasa de Seguridad
+                    Comunal</span
+                  >
+                  <span class="fw-medium text-dark">{{ com.porcentajeTasaSeguridad }}%</span>
+                </div>
+              </div>
+              <div class="col-12 col-md-6">
+                <div class="info-block">
+                  <span class="text-muted small d-block"
+                    ><i class="bi bi-check2-circle text-success me-1"></i>Estado Operativo</span
+                  >
+                  <span class="badge bg-success-subtle text-success border border-success-subtle"
+                    >Activa para suministro de agua</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <!-- Botón de selección ancho -->
+          <button type="button" class="empty-picker-bar w-100" (click)="pickComunidad.emit()">
+            <div class="d-flex align-items-center gap-3">
+              <div class="picker-icon-circle community-icon">
+                <i class="bi bi-geo-alt"></i>
+              </div>
+              <div class="text-start">
+                <div class="fw-bold text-dark">Buscar y Seleccionar Comunidad</div>
+                <small class="text-muted"
+                  >Haga clic para elegir la comunidad geográfica del predio</small
+                >
+              </div>
+            </div>
+            <i class="bi bi-chevron-right text-muted"></i>
+          </button>
+          @if (submitted()) {
+            <span class="text-danger small d-block mt-1">
+              <i class="bi bi-exclamation-circle me-1"></i>Debe seleccionar una comunidad para
+              continuar.
+            </span>
+          }
+        }
+      </div>
+    </div>
+  </div>
+</div>

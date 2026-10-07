@@ -1,0 +1,109 @@
+.form-section {
+  border: 1px solid var(--border-color, #e9ecef);
+  background-color: var(--white, #ffffff);
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background-color: var(--soft-blue-bg, #f0f7ff);
+  color: var(--primary-color, #0d6efd);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+
+  &.tariff-icon {
+    background-color: #fff9db;
+    color: #f59f00;
+  }
+}
+
+/* Barra Ancha de Selección / Estado Vacío */
+.empty-picker-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border: 2px dashed var(--border-color, #dee2e6);
+  border-radius: 12px;
+  background-color: var(--subtle-bg, #f8f9fa);
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+
+  &:hover {
+    border-color: var(--primary-color, #0d6efd);
+    background-color: var(--soft-blue-bg, #f0f7ff);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.08);
+
+    .picker-icon-circle {
+      background-color: var(--primary-color, #0d6efd);
+      color: #fff;
+    }
+
+    .bi-chevron-right {
+      color: var(--primary-color, #0d6efd) !important;
+      transform: translateX(3px);
+    }
+  }
+}
+
+.picker-icon-circle {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background-color: var(--white, #ffffff);
+  border: 1px solid var(--border-color, #dee2e6);
+  color: var(--primary-color, #0d6efd);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+  transition: all 0.2s ease-in-out;
+
+  &.tariff-icon-wrapper {
+    color: #f59f00;
+  }
+}
+
+/* Panel de Datos / Ficha Detallada */
+.entity-panel {
+  background-color: var(--white, #ffffff);
+  border-color: var(--border-color, #e9ecef) !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.entity-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background-color: var(--soft-blue-bg, #f0f7ff);
+  color: var(--primary-color, #0d6efd);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+
+  &.tariff-avatar {
+    background-color: #fff9db;
+    color: #f59f00;
+  }
+}
+
+.info-block {
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background-color: var(--subtle-bg, #f8f9fa);
+  border: 1px solid rgba(0, 0, 0, 0.03);
+}

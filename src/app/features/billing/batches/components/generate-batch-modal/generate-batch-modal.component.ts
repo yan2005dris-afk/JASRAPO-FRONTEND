@@ -14,8 +14,8 @@ import { BatchesService } from '../../services/batches.service';
 import { IGenerateBatchDto } from '../../interfaces/ibatch.interface';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
-import { ReadingRoutesService } from '../../../../contracts/reading-routes/services/reading-routes.service';
-import { IReadingRoute } from '../../../../contracts/reading-routes/interfaces/ireading-route.interface';
+import { ReadingRoutesService } from '../../../../contracts/reading-routes/data/reading-routes.api';
+import { IReadingRoute } from '../../../../contracts/reading-routes/domain/models/reading-route.model';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 import { PeriodPickerComponent } from '../../../../../shared/components/period-picker/period-picker.component';
@@ -82,7 +82,7 @@ export class GenerateBatchModalComponent implements OnInit {
       this.periodoId() !== null &&
       !!r &&
       r.estado === 'COMPLETADA' &&
-      r.tipoRuta === 'TOMA_LECTURA' &&
+      r.tipoRuta === 'LECTURA' &&
       !this.isLoadingRoutes()
     );
   });
@@ -167,7 +167,7 @@ export class GenerateBatchModalComponent implements OnInit {
       .getRoutes({
         periodoId: pId,
         comunidadId: this.comunidadId() || undefined,
-        tipoRuta: 'TOMA_LECTURA',
+        tipoRuta: 'LECTURA',
         estado: 'COMPLETADA',
         limit: 50,
       })
@@ -195,9 +195,9 @@ export class GenerateBatchModalComponent implements OnInit {
     const ruta = this.selectedRoute();
     if (!pId || !ruta || this.isLoading()) return;
 
-    if (ruta.estado !== 'COMPLETADA' || ruta.tipoRuta !== 'TOMA_LECTURA') {
+    if (ruta.estado !== 'COMPLETADA' || ruta.tipoRuta !== 'LECTURA') {
       this.toastService.show(
-        'Para generar el lote seleccione una ruta de trabajo de TOMA_LECTURA en estado COMPLETADA.',
+        'Para generar el lote seleccione una ruta de trabajo de LECTURA en estado COMPLETADA.',
         'error',
       );
       return;

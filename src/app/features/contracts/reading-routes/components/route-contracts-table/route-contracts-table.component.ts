@@ -5,7 +5,7 @@ import { PickerInputComponent } from '../../../../../shared/components/picker-in
 import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
 import { TableSkeletonComponent } from '../../../../../shared/components/table-skeleton/table-skeleton.component';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
-import { IContract } from '../../../service-contracts/interfaces/icontract.interface';
+import { IContract } from '../../../service-contracts/domain/models/service-contract.model';
 import { resolveClientDisplayName } from '../../../../../shared/utils/client-display-name';
 import { OperatorColor } from '../../../../../shared/types/operator-color';
 

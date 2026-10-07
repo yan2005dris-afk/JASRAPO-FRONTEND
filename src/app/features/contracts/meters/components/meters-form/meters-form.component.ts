@@ -7,7 +7,7 @@ import {
   IMeter,
   IMeterStatus,
   MeterStatusCode,
-} from '../../interfaces/imeter.interface';
+} from '../../domain/models/meter.model';
 
 /**
  * Componente de Formulario para Medidores (Registro y Edición)

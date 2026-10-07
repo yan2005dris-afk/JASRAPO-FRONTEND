@@ -32,6 +32,13 @@ export interface LoginResponse {
 
 export interface RefreshTokenResponse {
   accessToken: string;
+  sid?: string;
+  sub?: number;
+  email?: string;
+  nombre?: string | null;
+  rolId?: number | null;
+  nombreRol?: string | null;
+  avatar?: Avatar | string | null;
   createdAt?: string;
   expiresAt?: string;
 }

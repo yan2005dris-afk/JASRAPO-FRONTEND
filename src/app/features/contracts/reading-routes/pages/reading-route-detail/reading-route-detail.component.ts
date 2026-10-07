@@ -10,7 +10,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
-import { ReadingRoutesService } from '../../services/reading-routes.service';
+import { ReadingRoutesService } from '../../data/reading-routes.api';
 import { LocalDatePipe } from '../../../../../shared/pipes/local-date.pipe';
 import {
   IReadingRoute,
@@ -19,7 +19,7 @@ import {
   EstadoOrden,
   TipoActividad,
   TipoRuta,
-} from '../../interfaces/ireading-route.interface';
+} from '../../domain/models/reading-route.model';
 import { ComunidadesService } from '../../../../admin/comunidades/services/comunidades.service';
 import { UsersService } from '../../../../users/services/users.service';
 import { Comunidad } from '../../../../admin/comunidades/models/comunidad.interface';
@@ -40,7 +40,7 @@ import { ReadingFormModalComponent } from '../../../readings/components/reading-
 import { ReadingsService } from '../../../readings/services/readings.service';
 import { IReading } from '../../../readings/interfaces/ireading.interface';
 import { PeriodsService } from '../../../../../shared/services/periods.service';
-import { BlobDownloadService } from '../../../../../shared/services/blob-download.service';
+import { BlobDownloadService } from '../../../../../shared/infrastructure/blob-download.service';
 import {
   ESTADO_ORDEN_BADGE,
   ESTADO_ORDEN_FALLBACK_BADGE,
@@ -49,15 +49,19 @@ import {
   TIPO_ACTIVIDAD_LABEL,
   TIPO_RUTA_LABEL,
   ESTADO_FILTER_MAP,
-} from '../../constants/route-detail.constants';
+} from '../../domain/constants';
+import {
+  resolveComunidadNombre,
+  resolveOperarioNombre,
+} from '../../../../../shared/utils/operator-name';
 import {
   buildReadingFallback,
   mapLecturaKpisToRouteKpis,
   mapReadingForRouteToRow,
-} from '../../services/route-kpis.mapper';
-import { RouteOrderActionsService } from '../../services/route-order-actions.service';
-import { RouteReadingActionsService } from '../../services/route-reading-actions.service';
-import { RouteStatusService, RouteEstado } from '../../services/route-status.service';
+} from '../../domain/rules';
+import { RouteOrderActionsService } from '../../application/route-order.actions';
+import { RouteReadingActionsService } from '../../application/route-reading.actions';
+import { RouteStatusService, RouteEstado } from '../../application/route-status.transitions';
 
 type ReadingSource = IReadingRowItem | IReading;
 type FilterOrdenTab = 'TODAS' | 'PENDIENTES' | 'COMPLETADAS' | 'NOVEDAD';
@@ -118,7 +122,7 @@ export class ReadingRouteDetailComponent implements OnInit {
   pageSize = signal(10);
   selectedFilter = signal<FilterOrdenTab>('TODAS');
 
-  // Readings Table — solo para tipo TOMA_LECTURA
+  // Readings Table — solo para tipo LECTURA
   readings = signal<IReadingRowItem[]>([]);
   isLoadingReadings = signal(false);
   totalReadings = signal(0);
@@ -139,7 +143,7 @@ export class ReadingRouteDetailComponent implements OnInit {
   // Result observation modal
   selectedOrdenForResult = signal<OrderWork | null>(null);
 
-  readonly isLecturaRoute = computed(() => this.readingRoute()?.tipoRuta === 'TOMA_LECTURA');
+  readonly isLecturaRoute = computed(() => this.readingRoute()?.tipoRuta === 'LECTURA');
 
   ngOnInit(): void {
     const idParam = this.route.snapshot.paramMap.get('id');
@@ -177,15 +181,11 @@ export class ReadingRouteDetailComponent implements OnInit {
   }
 
   getComunidadNombre(comunidadId?: number): string {
-    if (!comunidadId) return '—';
-    const com = this.comunidades.find((c) => c.id === comunidadId);
-    return com ? com.nombre : `Comunidad #${comunidadId}`;
+    return resolveComunidadNombre(this.comunidades, comunidadId);
   }
 
   getOperarioNombre(operarioId?: number): string {
-    if (!operarioId) return 'Sin asignar';
-    const op = this.operarios.find((u) => u.usuarioId === operarioId);
-    return op ? `${op.nombres} ${op.apellidos}`.trim() : `Operario #${operarioId}`;
+    return resolveOperarioNombre(this.operarios, operarioId);
   }
 
   getPeriodoNombre(periodoId?: number | null): string {
@@ -265,7 +265,7 @@ export class ReadingRouteDetailComponent implements OnInit {
       });
   }
 
-  /** Carga lecturas para rutas de tipo TOMA_LECTURA */
+  /** Carga lecturas para rutas de tipo LECTURA */
   loadReadings(): void {
     this.isLoadingReadings.set(true);
     this.routesService
@@ -488,7 +488,7 @@ export class ReadingRouteDetailComponent implements OnInit {
 
   onRequestReLectura(reading: IReadingRowItem): void {
     this.openDropdownId.set(null);
-    this.readingActions.requestReReading(reading);
+    this.readingActions.requestReReading(reading, this.readings);
   }
 
   // ── Generación de Hoja de Campo Oficial (SC-236 Backend Stream) ───────

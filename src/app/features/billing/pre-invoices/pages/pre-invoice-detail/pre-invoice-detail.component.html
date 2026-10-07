@@ -106,7 +106,8 @@
                 <app-status-badge [status]="preInvoice.estado" />
               </div>
               <p class="text-muted small mb-0">
-                Contrato #{{ preInvoice.contratoId }} · Período #{{ preInvoice.periodoId }}
+                Guía {{ preInvoice.numeroGuia || 'Contrato #' + preInvoice.contratoId }} · Período
+                #{{ preInvoice.periodoId }}
                 @if (preInvoice.loteId) {
                   · Lote #{{ preInvoice.loteId }}
                 }

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // Optional. Copy this file to `opencode.json` and pick what applies to you.
+  //
+  // The global OpenCode config (~/.config/opencode/opencode.jsonc) is managed by
+  // `gentle-ai` and assigns free-tier models to the SDD agents. This project file
+  // is the only layer gentle-ai does not touch, so it is the only place these
+  // overrides survive a `gentle-ai install` / `sync`.
+  //
+  // Everything below is opt-in. Remove any block you do not want — the
+  // gentle-ai defaults apply to whatever you delete.
+  "agent": {
+    "sdd-propose": {
+      "model": "gemini-3.1-pro-high"
+    },
+    "sdd-spec": {
+      "model": "gemini-3.1-pro-high"
+    },
+    "sdd-design": {
+      "model": "gemini-3.1-pro-high"
+    },
+    "sdd-tasks": {
+      "model": "gemini-3.1-pro-high"
+    },
+    "sdd-apply": {
+      "model": "gemini-3.1-pro-high"
+    },
+    "sdd-verify": {
+      "model": "gemini-3.1-pro-high"
+    },
+    "sdd-archive": {
+      "model": "gemini-3.1-pro-high"
+    }
+  },
+
+  // Optional. Shortcut MCP (hosted, OAuth — no API token needed).
+  //
+  // After copying, restart OpenCode and run `/mcp` to authorize with your
+  // Shortcut account. OAuth authorizes whichever workspace the browser session
+  // belongs to, so sign into the right Shortcut account first — this cannot be
+  // pinned to a single workspace from the config.
+  //
+  // Note: the Shortcut MCP has no Space support, and `stories-search` exposes no
+  // space filter. Stories, epics, iterations, objectives, teams, projects,
+  // workflows, users, labels, custom fields and docs are available.
+  "mcp": {
+    "shortcut": {
+      "type": "remote",
+      "url": "https://mcp.shortcut.com/mcp",
+      "enabled": true
+    }
+  }
+}

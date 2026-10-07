@@ -1,0 +1,242 @@
+<div [formGroup]="form()">
+  <!-- Parámetros de inicio -->
+  <div class="card form-section mb-4">
+    <div class="card-body p-4">
+      <div class="section-title mb-3">
+        <span class="section-icon"><i class="bi bi-calendar-check"></i></span>
+        <div>
+          <h5 class="fw-bold mb-0">Parámetros de Inicio</h5>
+          <p class="text-muted small mb-0">Datos del contrato y ciclo de facturación.</p>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="numeroGuia" class="form-label fw-semibold text-dark">N° de guía</label>
+          <input
+            id="numeroGuia"
+            type="text"
+            class="form-control"
+            [value]="previewNumeroGuia()"
+            readonly
+          />
+          <span class="text-muted x-small">
+            Se genera automáticamente con la comunidad, el medidor y la secuencia disponible.
+          </span>
+        </div>
+
+        <!-- Estado: solo en modo edición -->
+        @if (isEditing()) {
+          <div class="col-md-6">
+            <label for="estadoServicio" class="form-label fw-semibold text-dark"
+              >Estado del servicio</label
+            >
+            <select id="estadoServicio" class="form-select" formControlName="estadoServicio">
+              @for (state of availableStates(); track state.codigo) {
+                <option [value]="state.codigo">{{ state.nombre }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        <div class="col-md-6">
+          <label for="lecturaInicial" class="form-label fw-semibold text-dark">
+            Lectura inicial (m³)
+          </label>
+          <input
+            id="lecturaInicial"
+            type="text"
+            inputmode="numeric"
+            maxlength="10"
+            class="form-control"
+            formControlName="lecturaInicial"
+            (input)="onLecturaInput($event)"
+            [readonly]="isEditing()"
+            [class.is-invalid]="isFieldInvalid()('lecturaInicial')"
+          />
+          @if (isEditing()) {
+            <span class="text-muted x-small d-block mt-1">
+              La lectura inicial solo se define en la instalación o al reemplazar el medidor.
+            </span>
+          } @else if (!isSuperAdmin()) {
+            <span class="text-muted x-small d-block mt-1">
+              Solo usuarios Super Admin pueden modificar la lectura inicial.
+            </span>
+          }
+          @if (isFieldInvalid()('lecturaInicial')) {
+            <span class="text-danger x-small"> Ingrese solo números (máx. 10 dígitos). </span>
+          }
+        </div>
+
+        <div class="col-md-8">
+          <label for="direccionSuministro" class="form-label fw-semibold text-dark">
+            Dirección de suministro
+          </label>
+          <input
+            id="direccionSuministro"
+            type="text"
+            class="form-control"
+            formControlName="direccionSuministro"
+            placeholder="Ej. Calle Principal #45"
+            maxlength="200"
+            [class.is-invalid]="isFieldInvalid()('direccionSuministro')"
+          />
+          @if (isFieldInvalid()('direccionSuministro')) {
+            <span class="text-danger x-small">
+              La dirección es obligatoria (máx. 200 caracteres).
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ubicación del predio -->
+  <div class="card form-section mb-4">
+    <div class="card-body p-4">
+      <div class="section-title mb-3">
+        <span class="section-icon"><i class="bi bi-geo-alt"></i></span>
+        <div>
+          <h5 class="fw-bold mb-0">Ubicación del Predio</h5>
+          <p class="text-muted small mb-0">
+            Opcional. Marque el punto en el mapa o ingrese las coordenadas.
+          </p>
+        </div>
+      </div>
+
+      <app-coordinate-map-picker
+        [latitud]="coordinates().latitud"
+        [longitud]="coordinates().longitud"
+        [errorMessage]="coordinateError()"
+        [serviceArea]="serviceArea()"
+        [focusPoint]="communityMapCenter()"
+        (coordinatesChange)="onCoordsChange($event)"
+      />
+    </div>
+  </div>
+
+  <!-- Checklist de entrega y responsable -->
+  <section class="card form-section mb-4" aria-labelledby="procedure-section-title">
+    <div class="card-body p-4" formGroupName="procedure">
+      <div class="section-title mb-3">
+        <span class="section-icon"><i class="bi bi-person-check"></i></span>
+        <div>
+          <h5 id="procedure-section-title" class="fw-bold mb-0">Checklist de Entrega y Responsable</h5>
+          <p class="text-muted small mb-0">
+            Identifique al tramitador y registre las novedades observadas.
+          </p>
+        </div>
+      </div>
+      <fieldset class="mb-3">
+        <legend class="form-label fw-semibold text-dark fs-6">¿Quién realiza el trámite? *</legend>
+        <div class="form-check">
+          <input
+            id="procedure-owner-yes"
+            type="radio"
+            class="form-check-input"
+            [value]="true"
+            formControlName="tramitadorEsTitular"
+          />
+          <label for="procedure-owner-yes" class="form-check-label">El titular del servicio</label>
+        </div>
+        <div class="form-check">
+          <input
+            id="procedure-owner-no"
+            type="radio"
+            class="form-check-input"
+            [value]="false"
+            formControlName="tramitadorEsTitular"
+          />
+          <label for="procedure-owner-no" class="form-check-label">Otra persona</label>
+        </div>
+      </fieldset>
+      @if (form().get('procedure.tramitadorEsTitular')?.value === false) {
+        <div class="row g-3 mb-3">
+          <div class="col-md-4">
+            <label for="procedure-name" class="form-label">Nombre del tramitador *</label>
+            <input
+              id="procedure-name"
+              type="text"
+              class="form-control"
+              formControlName="tramitadorNombre"
+              maxlength="200"
+              required
+            />
+          </div>
+          <div class="col-md-4">
+            <label for="procedure-id" class="form-label">Identificación *</label>
+            <input
+              id="procedure-id"
+              type="text"
+              class="form-control"
+              formControlName="tramitadorIdentificacion"
+              maxlength="30"
+              required
+            />
+          </div>
+          <div class="col-md-4">
+            <label for="procedure-relation" class="form-label">Relación con el titular *</label>
+            <input
+              id="procedure-relation"
+              type="text"
+              class="form-control"
+              formControlName="relacionTramitador"
+              maxlength="100"
+              required
+            />
+          </div>
+        </div>
+      }
+      <div class="form-check mb-2">
+        <input
+          id="procedure-obs"
+          type="checkbox"
+          class="form-check-input"
+          formControlName="hasObservations"
+        />
+        <label for="procedure-obs" class="form-check-label">Observaciones</label>
+      </div>
+      @if (form().get('procedure.hasObservations')?.value) {
+        <label for="procedure-notes" class="form-label">Detalle de observaciones *</label>
+        <textarea
+          id="procedure-notes"
+          class="form-control mb-3"
+          formControlName="observacionesTramite"
+          maxlength="2000"
+          rows="3"
+          required
+        ></textarea>
+      }
+      <div class="form-check mb-2">
+        <input
+          id="procedure-other"
+          type="checkbox"
+          class="form-check-input"
+          formControlName="hasOtherIssues"
+        />
+        <label for="procedure-other" class="form-check-label">Otros</label>
+      </div>
+      @if (form().get('procedure.hasOtherIssues')?.value) {
+        <label for="procedure-other-notes" class="form-label"
+          >Detalle de otras novedades *</label
+        >
+        <textarea
+          id="procedure-other-notes"
+          class="form-control mb-3"
+          formControlName="otrasNovedades"
+          maxlength="2000"
+          rows="3"
+          required
+        ></textarea>
+      }
+      @if (submitted() && form().get('procedure')?.invalid) {
+        <p class="text-danger" role="alert">
+          Complete los datos de quien tramita y los detalles de las opciones marcadas.
+        </p>
+      }
+      @if (contractToEdit()?.registradoPorId; as registrant) {
+        <p class="text-muted small mb-0">Registrado por el usuario {{ registrant }}.</p>
+      }
+    </div>
+  </section>
+</div>

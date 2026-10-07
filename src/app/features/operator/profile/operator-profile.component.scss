@@ -38,9 +38,9 @@
 .profile-header-card {
   background: var(--op-bg-surface, #ffffff);
   border: 1px solid var(--op-border-subtle, #e2e8f0);
-  border-radius: 18px;
+  border-radius: var(--op-card-radius);
   padding: 1.25rem 1rem;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--op-card-shadow);
 }
 
 .profile-avatar-btn {
@@ -59,20 +59,20 @@
 }
 
 .ios-group-title {
-  font-size: 0.72rem;
+  font-size: var(--op-section-label-size);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: #64748b;
+  color: var(--op-text-secondary);
   margin: 0.4rem 0.2rem 0.2rem;
 }
 
 .ios-group-box {
-  background: #ffffff;
-  border-radius: 18px;
-  border: 1px solid #e2e8f0;
+  background: var(--op-bg-surface);
+  border-radius: var(--op-card-radius);
+  border: 1px solid var(--op-border-subtle);
   overflow: hidden;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+  box-shadow: var(--op-card-shadow);
 }
 
 .ios-row {
@@ -104,4 +104,63 @@
 
 .font-mono {
   font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+@media (min-width: 1024px) {
+  .operator-profile-screen {
+    width: 100%;
+    max-width: 1120px;
+    padding: 1.5rem 2rem;
+    display: grid;
+    grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
+    grid-template-rows: repeat(5, auto);
+    column-gap: 1.5rem;
+    row-gap: 0.75rem;
+    align-content: start;
+  }
+
+  .flow-nav-header {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .profile-header-card {
+    grid-column: 1;
+    grid-row: 2 / 6;
+    margin-bottom: 0 !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .profile-personal-title {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .profile-personal-box {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .profile-session-title {
+    grid-column: 2;
+    grid-row: 4;
+  }
+
+  .profile-session-box {
+    grid-column: 2;
+    grid-row: 5;
+  }
+
+  .ios-row {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+
+    > span {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+  }
 }

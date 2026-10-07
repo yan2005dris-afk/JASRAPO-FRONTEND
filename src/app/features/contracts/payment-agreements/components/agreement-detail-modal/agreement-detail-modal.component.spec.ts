@@ -2,10 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { vi } from 'vitest';
 
-import { PaymentAgreementsService } from '../../services/payment-agreements.service';
+import { PaymentAgreementsApi } from '../../data/payment-agreements.api';
 import { ToastService } from '../../../../../shared/components/toast/toast.service';
 import { ConfirmDialogService } from '../../../../../shared/components/confirm-dialog/confirm-dialog.service';
-import { IAgreement } from '../../interfaces/ipayment-agreement.interface';
+import { IAgreement } from '../../domain/models/payment-agreement.model';
 import { AgreementDetailModalComponent } from './agreement-detail-modal.component';
 
 function buildAgreement(codigo: string, abonoInicial = 0): IAgreement {
@@ -46,7 +46,7 @@ describe('AgreementDetailModalComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AgreementDetailModalComponent],
       providers: [
-        { provide: PaymentAgreementsService, useValue: serviceSpy },
+        { provide: PaymentAgreementsApi, useValue: serviceSpy },
         { provide: ConfirmDialogService, useValue: dialogSpy },
         { provide: ToastService, useValue: toastSpy },
       ],

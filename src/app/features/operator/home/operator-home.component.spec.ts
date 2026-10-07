@@ -13,7 +13,7 @@ import type { OperatorRouteResponse } from '../models/operator.models';
 const mockAssignedRoutes: OperatorRouteResponse[] = [
   {
     rutaId: 'r-101',
-    tipoRuta: 'TOMA_LECTURA',
+    tipoRuta: 'LECTURA',
     nombre: 'Casco Central Olón',
     comunidadId: 1,
     comunidadNombre: 'Comuna Olón',
@@ -83,6 +83,7 @@ describe('OperatorHomeComponent', () => {
     getMetersCache: vi.fn().mockResolvedValue([]),
     getRegisteredReadingsCache: vi.fn().mockResolvedValue([]),
     getPendingReadings: vi.fn().mockResolvedValue([]),
+    getSyncedReadings: vi.fn().mockResolvedValue([]),
   };
 
   const mockRouteOfflineService = {
@@ -139,7 +140,7 @@ describe('OperatorHomeComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/app/operador/lecturas'], {
       queryParams: {
         rutaNombre: 'Casco Central Olón',
-        rutaTipo: 'TOMA_LECTURA',
+        rutaTipo: 'LECTURA',
       },
     });
   });
@@ -155,7 +156,7 @@ describe('OperatorHomeComponent', () => {
     expect(router.navigate).toHaveBeenCalledWith(['/app/operador/lecturas'], {
       queryParams: {
         rutaNombre: 'Casco Central Olón',
-        rutaTipo: 'TOMA_LECTURA',
+        rutaTipo: 'LECTURA',
         serie: 'SR-1002',
       },
     });

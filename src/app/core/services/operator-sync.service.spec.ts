@@ -6,6 +6,7 @@ import { NetworkService } from './network.service';
 import { IndexedDbService } from './indexed-db.service';
 import { ToastService } from '../../shared/components/toast/toast.service';
 import { AuthService } from './auth.service';
+import { OperatorLocationService } from './operator-location.service';
 
 const VALID_DATA_URI = new Blob(['photo'], { type: 'image/png' });
 const INVALID_DATA_URI = null;
@@ -21,22 +22,29 @@ describe('OperatorSyncService', () => {
   let httpGet: ReturnType<typeof vi.fn>;
   let savePendingReading: ReturnType<typeof vi.fn>;
   let savePendingAnomaly: ReturnType<typeof vi.fn>;
+  let savePendingWorkOrder: ReturnType<typeof vi.fn>;
   let saveSyncedReading: ReturnType<typeof vi.fn>;
   let getPendingReadings: ReturnType<typeof vi.fn>;
   let getPendingAnomalies: ReturnType<typeof vi.fn>;
+  let getPendingWorkOrders: ReturnType<typeof vi.fn>;
   let getPendingReadingsByState: ReturnType<typeof vi.fn>;
   let getPendingAnomaliesByState: ReturnType<typeof vi.fn>;
+  let getPendingWorkOrdersByState: ReturnType<typeof vi.fn>;
   let updatePendingReading: ReturnType<typeof vi.fn>;
   let deletePendingReading: ReturnType<typeof vi.fn>;
+  let updatePendingWorkOrder: ReturnType<typeof vi.fn>;
+  let deletePendingWorkOrder: ReturnType<typeof vi.fn>;
   let updatePendingAnomaly: ReturnType<typeof vi.fn>;
   let deletePendingAnomaly: ReturnType<typeof vi.fn>;
   let saveEstadosCache: ReturnType<typeof vi.fn>;
   let getEstadosCache: ReturnType<typeof vi.fn>;
+  let saveNovedadesCache: ReturnType<typeof vi.fn>;
   let saveCompleteAssignedSnapshot: ReturnType<typeof vi.fn>;
   let getAssignedSnapshot: ReturnType<typeof vi.fn>;
   let discardPendingManifest: ReturnType<typeof vi.fn>;
   let applyManifestPage: ReturnType<typeof vi.fn>;
   let currentUserSignal: { id?: string; name?: string } | null;
+  let getCurrentCoordinates: ReturnType<typeof vi.fn>;
   let toast: {
     success: ReturnType<typeof vi.fn>;
     error: ReturnType<typeof vi.fn>;
@@ -77,17 +85,23 @@ describe('OperatorSyncService', () => {
           useValue: {
             savePendingReading,
             savePendingAnomaly,
+            savePendingWorkOrder,
             saveSyncedReading,
             getPendingReadings,
             getPendingAnomalies,
+            getPendingWorkOrders,
             getPendingReadingsByState,
             getPendingAnomaliesByState,
+            getPendingWorkOrdersByState,
             updatePendingReading,
             deletePendingReading,
+            updatePendingWorkOrder,
+            deletePendingWorkOrder,
             updatePendingAnomaly,
             deletePendingAnomaly,
             saveEstadosCache,
             getEstadosCache,
+            saveNovedadesCache,
             saveCompleteAssignedSnapshot,
             getAssignedSnapshot,
             discardPendingManifest,
@@ -100,6 +114,10 @@ describe('OperatorSyncService', () => {
             currentUser: () => currentUserSignal,
           },
         },
+        {
+          provide: OperatorLocationService,
+          useValue: { getCurrentCoordinates },
+        },
         { provide: ToastService, useValue: toast },
         { provide: HttpClient, useValue: { post: httpPost, patch: httpPatch, get: httpGet } },
       ],
@@ -107,6 +125,16 @@ describe('OperatorSyncService', () => {
   };
 
   beforeEach(() => {
+    vi.stubGlobal(
+      'createImageBitmap',
+      vi.fn().mockResolvedValue({ width: 4000, height: 3000, close: vi.fn() }),
+    );
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue({
+      drawImage: vi.fn(),
+    } as unknown as CanvasRenderingContext2D);
+    vi.spyOn(HTMLCanvasElement.prototype, 'toBlob').mockImplementation((callback) => {
+      callback(new Blob(['jpeg'], { type: 'image/jpeg' }));
+    });
     isOnline = vi.fn();
     connectedSubject = new Subject<void>();
 
@@ -116,22 +144,32 @@ describe('OperatorSyncService', () => {
 
     savePendingReading = vi.fn().mockResolvedValue(1);
     savePendingAnomaly = vi.fn().mockResolvedValue(1);
+    savePendingWorkOrder = vi.fn().mockResolvedValue(1);
     saveSyncedReading = vi.fn().mockResolvedValue(undefined);
     getPendingReadings = vi.fn().mockResolvedValue([]);
     getPendingAnomalies = vi.fn().mockResolvedValue([]);
+    getPendingWorkOrders = vi.fn().mockResolvedValue([]);
     getPendingReadingsByState = vi.fn().mockResolvedValue([]);
     getPendingAnomaliesByState = vi.fn().mockResolvedValue([]);
+    getPendingWorkOrdersByState = vi.fn().mockResolvedValue([]);
     updatePendingReading = vi.fn().mockResolvedValue(undefined);
     deletePendingReading = vi.fn().mockResolvedValue(undefined);
+    updatePendingWorkOrder = vi.fn().mockResolvedValue(undefined);
+    deletePendingWorkOrder = vi.fn().mockResolvedValue(undefined);
     updatePendingAnomaly = vi.fn().mockResolvedValue(undefined);
     deletePendingAnomaly = vi.fn().mockResolvedValue(undefined);
     saveEstadosCache = vi.fn().mockResolvedValue(undefined);
     getEstadosCache = vi.fn().mockResolvedValue(null);
+    saveNovedadesCache = vi.fn().mockResolvedValue(undefined);
     saveCompleteAssignedSnapshot = vi.fn().mockResolvedValue(undefined);
     getAssignedSnapshot = vi.fn().mockResolvedValue(null);
     discardPendingManifest = vi.fn().mockResolvedValue(undefined);
     applyManifestPage = vi.fn().mockResolvedValue(undefined);
     currentUserSignal = { id: '42', name: 'Operador Test' };
+    getCurrentCoordinates = vi.fn().mockResolvedValue({
+      latitud: -0.9677,
+      longitud: -80.7089,
+    });
 
     toast = {
       success: vi.fn(),
@@ -142,6 +180,11 @@ describe('OperatorSyncService', () => {
 
     buildTestBed();
     service = TestBed.inject(OperatorSyncService);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   // Helper: extrae los campos del FormData para asserts.
@@ -239,6 +282,7 @@ describe('OperatorSyncService', () => {
     const fields = formDataToObject(httpPatch.mock.calls[0][1] as FormData);
     expect(fields['foto'][0]).toBeInstanceOf(Blob);
     expect((fields['foto'][0] as Blob).type).toBe('image/jpeg');
+    expect((fields['foto'][0] as File).name).toBe('evidencia.jpg');
   });
 
   // ── submitReading (offline) ───────────────────────────────────────────────
@@ -259,6 +303,17 @@ describe('OperatorSyncService', () => {
       expect(savePendingReading).toHaveBeenCalledWith(reading);
       expect(httpPost).not.toHaveBeenCalled();
       expect(httpPatch).not.toHaveBeenCalled();
+    });
+
+    it('guarda JPEG normalizado, no el HEIC original, para el replay', async () => {
+      isOnline.mockReturnValue(false);
+      const heic = new Blob(['heic'], { type: 'image/heic' });
+
+      await service.submitReading({ _lecturaId: 1, fotoBlob: heic });
+
+      const queued = savePendingReading.mock.calls[0][0];
+      expect(queued.fotoBlob.type).toBe('image/jpeg');
+      expect(queued.fotoBlob).not.toBe(heic);
     });
   });
 
@@ -284,7 +339,15 @@ describe('OperatorSyncService', () => {
         const [url, formData] = httpPatch.mock.calls[0];
         expect(url).toContain('/operator/work-orders/wo-42');
         const fields = formDataToObject(formData as FormData);
-        expect(Object.keys(fields).sort()).toEqual(['estado', 'foto', 'resultadoObservacion']);
+        expect(Object.keys(fields).sort()).toEqual([
+          'estado',
+          'foto',
+          'latitud',
+          'longitud',
+          'resultadoObservacion',
+        ]);
+        expect(fields['latitud']).toEqual(['-0.9677']);
+        expect(fields['longitud']).toEqual(['-80.7089']);
         expect(fields['resultadoObservacion']).toEqual(['sin novedades']);
         expect(fields['foto']).toHaveLength(1);
         expect(fields['foto'][0]).toBeInstanceOf(Blob);
@@ -306,7 +369,7 @@ describe('OperatorSyncService', () => {
       expect(fields['observaciones']).toBeUndefined();
     });
 
-    it('encola offline con discriminante y conserva el ID real', async () => {
+    it('encola offline en el store dedicado y conserva el ID real y las coordenadas', async () => {
       isOnline.mockReturnValue(false);
       const workOrder = {
         ordenTrabajoId: 'wo-42',
@@ -317,7 +380,12 @@ describe('OperatorSyncService', () => {
 
       await expect(service.submitWorkOrder(workOrder)).resolves.toEqual({ offline: true });
 
-      expect(savePendingReading).toHaveBeenCalledWith({ ...workOrder, recordType: 'WORK_ORDER' });
+      expect(savePendingWorkOrder).toHaveBeenCalledWith({
+        ...workOrder,
+        latitud: -0.9677,
+        longitud: -80.7089,
+      });
+      expect(savePendingReading).not.toHaveBeenCalled();
       expect(httpPatch).not.toHaveBeenCalled();
       expect(httpPost).not.toHaveBeenCalled();
     });
@@ -331,6 +399,64 @@ describe('OperatorSyncService', () => {
 
       expect(httpPatch).not.toHaveBeenCalled();
       expect(httpPost).not.toHaveBeenCalled();
+      expect(getCurrentCoordinates).not.toHaveBeenCalled();
+    });
+
+    it('ignora coordenadas entregadas por el caller y usa la posición medida', async () => {
+      isOnline.mockReturnValue(true);
+      httpPatch.mockReturnValue(of({ id: 'wo-42' }));
+
+      await service.submitWorkOrder({
+        ordenTrabajoId: 'wo-42',
+        latitud: 0,
+        longitud: 0,
+      });
+
+      const fields = formDataToObject(httpPatch.mock.calls[0][1] as FormData);
+      expect(fields['latitud']).toEqual(['-0.9677']);
+      expect(fields['longitud']).toEqual(['-80.7089']);
+    });
+
+    it('no bloquea la orden cuando el navegador no puede obtener ubicación', async () => {
+      isOnline.mockReturnValue(false);
+      getCurrentCoordinates.mockResolvedValue(null);
+
+      await expect(
+        service.submitWorkOrder({ ordenTrabajoId: 'wo-42', tipoActividad: 'INSPECCION' }),
+      ).resolves.toEqual({ offline: true });
+
+      expect(savePendingWorkOrder).toHaveBeenCalledWith({
+        ordenTrabajoId: 'wo-42',
+        tipoActividad: 'INSPECCION',
+      });
+      expect(savePendingReading).not.toHaveBeenCalled();
+    });
+
+    it('exige coordenadas al registrar la ubicación de una orden de lectura', async () => {
+      isOnline.mockReturnValue(false);
+      getCurrentCoordinates.mockResolvedValue(null);
+
+      await expect(service.submitReadingCoordinates('wo-reading')).rejects.toThrow(
+        /No se pudo obtener la ubicación/,
+      );
+
+      expect(savePendingWorkOrder).not.toHaveBeenCalled();
+      expect(httpPatch).not.toHaveBeenCalled();
+    });
+
+    it('encola silenciosamente las coordenadas de la orden asociada a una lectura offline', async () => {
+      isOnline.mockReturnValue(false);
+
+      await expect(service.submitReadingCoordinates('wo-reading')).resolves.toEqual({
+        offline: true,
+      });
+
+      expect(savePendingWorkOrder).toHaveBeenCalledWith({
+        ordenTrabajoId: 'wo-reading',
+        latitud: -0.9677,
+        longitud: -80.7089,
+      });
+      expect(toast.warning).not.toHaveBeenCalled();
     });
   });
 
@@ -429,6 +555,40 @@ describe('OperatorSyncService', () => {
       expect(httpPatch).toHaveBeenCalledOnce();
     });
 
+    it('si falla la red en lecturas no continúa con órdenes ni novedades', async () => {
+      isOnline.mockReturnValue(true);
+      getPendingReadingsByState.mockResolvedValue([
+        { id: 1, syncState: 'PENDIENTE_SYNC', _lecturaId: 99 },
+      ]);
+      getPendingWorkOrdersByState.mockResolvedValue([
+        { id: 2, syncState: 'PENDIENTE_SYNC', ordenTrabajoId: 'wo-2' },
+      ]);
+      getPendingAnomaliesByState.mockResolvedValue([
+        { id: 3, syncState: 'PENDIENTE_SYNC', ordenTrabajoId: 'wo-3', tipo: 'FUGA' },
+      ]);
+      httpPatch.mockReturnValue(throwError(() => makeHttpError(0, 'network down')));
+
+      await service.syncPendingData();
+
+      expect(httpPatch).toHaveBeenCalledOnce();
+      expect(httpPost).not.toHaveBeenCalled();
+      expect(deletePendingWorkOrder).not.toHaveBeenCalled();
+      expect(deletePendingAnomaly).not.toHaveBeenCalled();
+    });
+
+    it('libera el estado de sincronización si IndexedDB falla al actualizar la cola', async () => {
+      isOnline.mockReturnValue(true);
+      getPendingReadingsByState.mockResolvedValue([
+        { id: 1, syncState: 'PENDIENTE_SYNC', _lecturaId: 99 },
+      ]);
+      httpPatch.mockReturnValue(throwError(() => makeHttpError(400, 'invalid')));
+      updatePendingReading.mockRejectedValue(new Error('IndexedDB unavailable'));
+
+      await expect(service.syncPendingData()).rejects.toThrow('IndexedDB unavailable');
+
+      expect(service.isSyncing()).toBe(false);
+    });
+
     it('error de validación (400): marca como RECHAZADA y continúa con el resto', async () => {
       isOnline.mockReturnValue(true);
       getPendingReadingsByState.mockResolvedValue([
@@ -463,19 +623,20 @@ describe('OperatorSyncService', () => {
       expect(deletePendingReading).toHaveBeenCalledWith(2);
     });
 
-    it('reproduce una orden offline por PATCH y conserva payload y foto', async () => {
+    it('reproduce una orden offline por PATCH desde el store dedicado y conserva payload y foto', async () => {
       isOnline.mockReturnValue(true);
-      getPendingReadingsByState.mockResolvedValue([
+      getPendingWorkOrdersByState.mockResolvedValue([
         {
           id: 7,
           syncState: 'PENDIENTE_SYNC',
           errorMessage: null,
-          recordType: 'WORK_ORDER',
           ordenTrabajoId: 'wo-42',
           tipoActividad: 'INSPECCION',
           medidorId: 'meter-1',
           fecha: '2026-01-01',
           observaciones: 'revisión completada',
+          latitud: -0.9677,
+          longitud: -80.7089,
           fotoBlob: VALID_DATA_URI,
         },
       ]);
@@ -492,26 +653,62 @@ describe('OperatorSyncService', () => {
       expect(fields['fecha']).toBeUndefined();
       expect(fields['observaciones']).toBeUndefined();
       expect(fields['resultadoObservacion']).toEqual(['revisión completada']);
+      expect(fields['latitud']).toEqual(['-0.9677']);
+      expect(fields['longitud']).toEqual(['-80.7089']);
       expect(fields['foto']).toHaveLength(1);
       expect(httpPost).not.toHaveBeenCalled();
-      expect(saveSyncedReading).not.toHaveBeenCalled();
-      expect(deletePendingReading).toHaveBeenCalledWith(7);
+      expect(saveSyncedReading).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ordenTrabajoId: 'wo-42',
+          estado: 'COMPLETADA',
+        }),
+      );
+      expect(deletePendingWorkOrder).toHaveBeenCalledWith(7);
+      expect(deletePendingReading).not.toHaveBeenCalled();
     });
 
-    it('marca una orden como RECHAZADA ante 400 y continúa con la siguiente', async () => {
+    it('drena órdenes legacy que aún viven en lecturas_pendientes', async () => {
       isOnline.mockReturnValue(true);
       getPendingReadingsByState.mockResolvedValue([
         {
           id: 7,
           syncState: 'PENDIENTE_SYNC',
+          errorMessage: null,
           recordType: 'WORK_ORDER',
+          ordenTrabajoId: 'wo-legacy',
+          tipoActividad: 'INSPECCION',
+          observaciones: 'legacy',
+          latitud: -0.9677,
+          longitud: -80.7089,
+          fotoBlob: VALID_DATA_URI,
+        },
+      ]);
+      getPendingWorkOrdersByState.mockResolvedValue([]);
+      getPendingAnomaliesByState.mockResolvedValue([]);
+      httpPatch.mockReturnValue(of({ id: 'wo-legacy' }));
+
+      await service.syncPendingData();
+
+      const [url, formData] = httpPatch.mock.calls[0];
+      const fields = formDataToObject(formData as FormData);
+      expect(url).toContain('/operator/work-orders/wo-legacy');
+      expect(fields['resultadoObservacion']).toEqual(['legacy']);
+      expect(deletePendingReading).toHaveBeenCalledWith(7);
+      expect(deletePendingWorkOrder).not.toHaveBeenCalled();
+    });
+
+    it('marca una orden como RECHAZADA ante 400 y continúa con la siguiente', async () => {
+      isOnline.mockReturnValue(true);
+      getPendingWorkOrdersByState.mockResolvedValue([
+        {
+          id: 7,
+          syncState: 'PENDIENTE_SYNC',
           ordenTrabajoId: 'wo-invalid',
           tipoActividad: 'INSPECCION',
         },
         {
           id: 8,
           syncState: 'PENDIENTE_SYNC',
-          recordType: 'WORK_ORDER',
           ordenTrabajoId: 'wo-valid',
           tipoActividad: 'INSPECCION',
         },
@@ -523,28 +720,26 @@ describe('OperatorSyncService', () => {
 
       await service.syncPendingData();
 
-      expect(updatePendingReading).toHaveBeenCalledWith(7, {
+      expect(updatePendingWorkOrder).toHaveBeenCalledWith(7, {
         syncState: 'RECHAZADA',
         errorMessage: 'orden no asignada',
       });
-      expect(deletePendingReading).toHaveBeenCalledWith(8);
+      expect(deletePendingWorkOrder).toHaveBeenCalledWith(8);
       expect(httpPatch).toHaveBeenCalledTimes(2);
     });
 
     it('conserva una orden pendiente ante error de red y detiene la cola', async () => {
       isOnline.mockReturnValue(true);
-      getPendingReadingsByState.mockResolvedValue([
+      getPendingWorkOrdersByState.mockResolvedValue([
         {
           id: 7,
           syncState: 'PENDIENTE_SYNC',
-          recordType: 'WORK_ORDER',
           ordenTrabajoId: 'wo-42',
           tipoActividad: 'INSPECCION',
         },
         {
           id: 8,
           syncState: 'PENDIENTE_SYNC',
-          recordType: 'WORK_ORDER',
           ordenTrabajoId: 'wo-43',
           tipoActividad: 'INSPECCION',
         },
@@ -554,7 +749,8 @@ describe('OperatorSyncService', () => {
 
       await service.syncPendingData();
 
-      expect(updatePendingReading).not.toHaveBeenCalled();
+      expect(updatePendingWorkOrder).not.toHaveBeenCalled();
+      expect(deletePendingWorkOrder).not.toHaveBeenCalled();
       expect(deletePendingReading).not.toHaveBeenCalled();
       expect(httpPatch).toHaveBeenCalledOnce();
     });
@@ -631,6 +827,27 @@ describe('OperatorSyncService', () => {
       expect(deletePendingAnomaly).toHaveBeenCalledWith(42);
     });
 
+    it('convierte una foto HEIC legacy de la cola antes de enviarla como file', async () => {
+      isOnline.mockReturnValue(true);
+      getPendingAnomaliesByState.mockResolvedValue([
+        {
+          id: 45,
+          syncState: 'PENDIENTE_SYNC',
+          ordenTrabajoId: 'wo-45',
+          tipo: 'FUGA',
+          fotoBlob: new Blob(['heic'], { type: 'image/heic' }),
+        },
+      ]);
+      httpPost.mockReturnValue(of({ id: 45 }));
+
+      await service.syncPendingData();
+
+      const fields = formDataToObject(httpPost.mock.calls[0][1] as FormData);
+      expect((fields['file'][0] as Blob).type).toBe('image/jpeg');
+      expect((fields['file'][0] as File).name).toBe('evidencia.jpg');
+      expect(deletePendingAnomaly).toHaveBeenCalledWith(45);
+    });
+
     it('rechaza novedad pendiente sin ordenTrabajoId sin llamar al backend', async () => {
       isOnline.mockReturnValue(true);
       getPendingReadingsByState.mockResolvedValue([]);
@@ -651,6 +868,50 @@ describe('OperatorSyncService', () => {
           'Novedad rechazada: no tiene orden de trabajo asociada para registrar en el servidor.',
       });
       expect(httpPost).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── refreshPendingCounts ─────────────────────────────────────────────────
+
+  describe('refreshPendingCounts', () => {
+    it('cuenta órdenes de trabajo pendientes y rechazadas en el badge', async () => {
+      getPendingReadings.mockResolvedValue([
+        { syncState: 'PENDIENTE_SYNC', _lecturaId: 1 },
+        { syncState: 'RECHAZADA', _lecturaId: 2 },
+      ]);
+      getPendingAnomalies.mockResolvedValue([{ syncState: 'PENDIENTE_SYNC', tipo: 'FUGA' }]);
+      getPendingWorkOrders.mockResolvedValue([
+        { syncState: 'PENDIENTE_SYNC', ordenTrabajoId: 'wo-1' },
+        { syncState: 'RECHAZADA', ordenTrabajoId: 'wo-2' },
+      ]);
+
+      await service.refreshPendingCounts();
+
+      expect(service.pendingReadingsCount()).toBe(1);
+      expect(service.rejectedReadingsCount()).toBe(1);
+      expect(service.pendingAnomaliesCount()).toBe(1);
+      expect(service.pendingWorkOrdersCount()).toBe(1);
+      expect(service.rejectedWorkOrdersCount()).toBe(1);
+      expect(service.totalPending()).toBe(3);
+      expect(service.totalRejected()).toBe(2);
+    });
+
+    it('excluye las órdenes legacy de lecturas_pendientes del contador de lecturas', async () => {
+      getPendingReadings.mockResolvedValue([
+        { syncState: 'PENDIENTE_SYNC', recordType: 'WORK_ORDER', ordenTrabajoId: 'wo-legacy' },
+        { syncState: 'RECHAZADA', recordType: 'WORK_ORDER', ordenTrabajoId: 'wo-legacy-2' },
+        { syncState: 'PENDIENTE_SYNC', _lecturaId: 1 },
+      ]);
+      getPendingAnomalies.mockResolvedValue([]);
+      getPendingWorkOrders.mockResolvedValue([]);
+
+      await service.refreshPendingCounts();
+
+      expect(service.pendingReadingsCount()).toBe(1);
+      expect(service.rejectedReadingsCount()).toBe(0);
+      expect(service.pendingWorkOrdersCount()).toBe(1);
+      expect(service.rejectedWorkOrdersCount()).toBe(1);
+      expect(service.totalPending()).toBe(2);
     });
   });
 
@@ -865,6 +1126,37 @@ describe('OperatorSyncService', () => {
       expect(snapshot.cursor).toBe('cursor-existing');
     });
 
+    it('reinicia desde cero tras un 400 por cursor inválido', async () => {
+      isOnline.mockReturnValue(true);
+      const snapshot = {
+        scope: 'operator:42',
+        snapshotVersion: 'v1',
+        manifestProtocolVersion: 2,
+        periodId: 'period-1',
+        cursor: 'cursor-stale',
+        complete: true,
+        routes: [],
+        meters: [],
+        registeredReadings: [],
+        workOrders: [],
+        pendingAnomalies: [],
+      };
+      getAssignedSnapshot.mockResolvedValue(snapshot);
+      httpGet
+        .mockImplementationOnce(() =>
+          throwError(() => makeHttpError(400, 'Cursor de sincronización inválido')),
+        )
+        .mockImplementationOnce((url: string) =>
+          url.includes('/operator/sync/manifest') ? of(manifestPage(true, 'cursor-new')) : of([]),
+        );
+
+      await service.downloadAssignedData();
+
+      const calls = httpGet.mock.calls.filter(([url]) => url.includes('/operator/sync/manifest'));
+      expect(calls[0][1].params.get('cursor')).toBe('cursor-stale');
+      expect(calls[1][1].params.get('cursor')).toBeNull();
+    });
+
     it('no llama al endpoint legacy /operator/sync', async () => {
       isOnline.mockReturnValue(true);
       getAssignedSnapshot.mockResolvedValue({
@@ -889,6 +1181,66 @@ describe('OperatorSyncService', () => {
       expect(httpGet.mock.calls.map(([url]) => url)).not.toContain(
         expect.stringMatching(/\/operator\/sync$/),
       );
+    });
+
+    it('persiste el caché offline de novedades al descargar datos', async () => {
+      isOnline.mockReturnValue(true);
+      const snapshot = {
+        scope: 'operator:42',
+        manifestProtocolVersion: 2,
+        cursor: null,
+        routes: [],
+        meters: [],
+        registeredReadings: [],
+        workOrders: [],
+        pendingAnomalies: [],
+      };
+      getAssignedSnapshot.mockResolvedValue(snapshot);
+      httpGet.mockImplementation((url: string) => {
+        if (url.includes('/operator/sync/manifest')) return of(manifestPage(true, null));
+        if (url.includes('/operator/readings/anomalies')) {
+          return of([
+            {
+              lecturaId: 'l-1',
+              medidorId: 'M-1',
+              medidorSerie: 'S-1',
+              fecha: '2026-06-15T10:00:00Z',
+              estado: 'PROCESADA',
+              anomalias: [],
+            },
+          ]);
+        }
+        return of([]);
+      });
+
+      await service.downloadAssignedData();
+
+      expect(saveNovedadesCache).toHaveBeenCalledWith(
+        'operator:42',
+        expect.arrayContaining([expect.objectContaining({ lecturaId: 'l-1', medidorId: 'M-1' })]),
+      );
+    });
+
+    it('no bloquea la descarga si falla el caché de novedades', async () => {
+      isOnline.mockReturnValue(true);
+      getAssignedSnapshot.mockResolvedValue({
+        scope: 'operator:42',
+        manifestProtocolVersion: 2,
+        cursor: null,
+        routes: [],
+        meters: [],
+        registeredReadings: [],
+        workOrders: [],
+        pendingAnomalies: [],
+      });
+      saveNovedadesCache.mockRejectedValue(new Error('db full'));
+      httpGet.mockImplementation((url: string) =>
+        url.includes('/operator/sync/manifest') ? of(manifestPage(true, null)) : of([]),
+      );
+
+      await expect(service.downloadAssignedData()).resolves.toBeDefined();
+      expect(saveNovedadesCache).toHaveBeenCalledWith('operator:42', []);
+      expect(toast.success).toHaveBeenCalled();
     });
     it('lanza error y toast de advertencia si no hay conexión a internet (offline)', async () => {
       isOnline.mockReturnValue(false);

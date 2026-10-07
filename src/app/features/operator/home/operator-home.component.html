@@ -87,97 +87,103 @@
   }
 
   <!-- 3. SIGUIENTE PARADA EN RUTA -->
-  <div class="ios-group-title">Siguiente Parada en Ruta</div>
-  <div class="ios-group-box">
-    @if (nextPendingStop(); as nextStop) {
-      <div
-        class="ios-row next-stop-row"
-        (click)="goToPendingStop(nextStop)"
-        role="button"
-        tabindex="0"
-      >
-        <div class="stop-avatar-col">
-          <div class="radial-badge-circle radial-badge-active">#{{ nextStop.ordenVisita }}</div>
+  <div class="home-next-section">
+    <div class="ios-group-title home-next-title">Siguiente Parada en Ruta</div>
+    <div class="ios-group-box home-next-card">
+      @if (nextPendingStop(); as nextStop) {
+        <div
+          class="ios-row next-stop-row"
+          (click)="goToPendingStop(nextStop)"
+          role="button"
+          tabindex="0"
+        >
+          <div class="stop-avatar-col">
+            <div class="radial-badge-circle radial-badge-active">#{{ nextStop.ordenVisita }}</div>
+          </div>
+          <div class="stop-details-col">
+            <strong class="stop-client-name">{{ nextStop.cliente }}</strong>
+            <small class="stop-address"
+              >{{ nextStop.direccion }} · Medidor: {{ nextStop.serie }}</small
+            >
+          </div>
+          <div class="stop-action-col">
+            <span class="badge-activity">{{ nextStop.tipoActividad }}</span>
+            <i class="bi bi-chevron-right chevron-icon"></i>
+          </div>
         </div>
-        <div class="stop-details-col">
-          <strong class="stop-client-name">{{ nextStop.cliente }}</strong>
-          <small class="stop-address"
-            >{{ nextStop.direccion }} · Medidor: {{ nextStop.serie }}</small
-          >
-        </div>
-        <div class="stop-action-col">
-          <span class="badge-activity">{{ nextStop.tipoActividad }}</span>
-          <i class="bi bi-chevron-right chevron-icon"></i>
-        </div>
-      </div>
-    } @else {
-      <div class="ios-row all-done-row">
-        <div class="all-done-content">
-          <i class="bi bi-check-circle-fill text-success"></i>
-          <span>Todas las paradas de la ruta activa están completadas</span>
-        </div>
-      </div>
-    }
-  </div>
-
-  <!-- 4. MONITOREO Y DIAGNÓSTICO -->
-  <div class="ios-group-title">Monitoreo y Diagnóstico</div>
-  <div class="ios-group-box">
-    <div class="ios-row" (click)="goToNewNovelty()" role="button" tabindex="0">
-      <div class="monitoring-row-content">
-        <div class="monitoring-icon warning">
-          <i class="bi bi-exclamation-triangle-fill"></i>
-        </div>
-        <span class="monitoring-label">Reportar Novedad en Terreno</span>
-      </div>
-      <span class="badge-monitoring warning">Fugas / Daños</span>
-    </div>
-    <div class="ios-row" (click)="goToSync()" role="button" tabindex="0">
-      <div class="monitoring-row-content">
-        <div class="monitoring-icon success">
-          <i class="bi bi-cloud-arrow-up-fill"></i>
-        </div>
-        <span class="monitoring-label">Sincronización Offline</span>
-      </div>
-      @if (syncService.totalPending() > 0) {
-        <span class="badge-monitoring pending">{{ syncService.totalPending() }} pendientes</span>
       } @else {
-        <span class="badge-monitoring success">Al Día</span>
+        <div class="ios-row all-done-row">
+          <div class="all-done-content">
+            <i class="bi bi-check-circle-fill text-success"></i>
+            <span>Todas las paradas de la ruta activa están completadas</span>
+          </div>
+        </div>
       }
     </div>
   </div>
 
-  <!-- 5. RESUMEN DE JORNADA (KPIS) -->
-  <div class="ios-group-title">Resumen de la Jornada</div>
-  <section class="kpi-grid">
-    <!-- Lecturas Hoy -->
-    <div class="kpi-card">
-      <div class="kpi-top">
-        <span class="kpi-label">Lecturas Hoy</span>
-        <span class="kpi-badge-pct">{{ readingProgressPct() }}%</span>
+  <!-- 4. MONITOREO Y DIAGNÓSTICO -->
+  <div class="home-monitor-section">
+    <div class="ios-group-title home-monitor-title">Monitoreo y Diagnóstico</div>
+    <div class="ios-group-box home-monitor-card">
+      <div class="ios-row" (click)="goToNewNovelty()" role="button" tabindex="0">
+        <div class="monitoring-row-content">
+          <div class="monitoring-icon warning">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+          </div>
+          <span class="monitoring-label">Reportar Novedad en Terreno</span>
+        </div>
+        <span class="badge-monitoring warning">Fugas / Daños</span>
       </div>
-      <div class="kpi-value-row">
-        <h3 class="kpi-number">{{ totalReadMeters() }}/{{ totalAssignedMeters() }}</h3>
-        <i class="bi bi-droplet-fill kpi-icon"></i>
-      </div>
-      <div class="kpi-progress-track">
-        <div class="kpi-progress-bar" [style.width.%]="readingProgressPct()"></div>
+      <div class="ios-row" (click)="goToSync()" role="button" tabindex="0">
+        <div class="monitoring-row-content">
+          <div class="monitoring-icon success">
+            <i class="bi bi-cloud-arrow-up-fill"></i>
+          </div>
+          <span class="monitoring-label">Sincronización Offline</span>
+        </div>
+        @if (syncService.totalPending() > 0) {
+          <span class="badge-monitoring pending">{{ syncService.totalPending() }} pendientes</span>
+        } @else {
+          <span class="badge-monitoring success">Al Día</span>
+        }
       </div>
     </div>
+  </div>
 
-    <!-- Órdenes Asignadas -->
-    <div class="kpi-card" (click)="goToRoutesMap()" role="button" tabindex="0">
-      <div class="kpi-top">
-        <span class="kpi-label">Órdenes Asignadas</span>
-        <span class="kpi-badge-pill urgent">{{ totalWorkOrders() }} activas</span>
+  <!-- 5. RESUMEN DE JORNADA (KPIS) -->
+  <div class="home-kpi-section">
+    <div class="ios-group-title home-kpi-title">Resumen de la Jornada</div>
+    <section class="kpi-grid">
+      <!-- Lecturas Hoy -->
+      <div class="kpi-card">
+        <div class="kpi-top">
+          <span class="kpi-label">Lecturas Hoy</span>
+          <span class="kpi-badge-pct">{{ readingProgressPct() }}%</span>
+        </div>
+        <div class="kpi-value-row">
+          <h3 class="kpi-number">{{ totalReadMeters() }}/{{ totalAssignedMeters() }}</h3>
+          <i class="bi bi-droplet-fill kpi-icon"></i>
+        </div>
+        <div class="kpi-progress-track">
+          <div class="kpi-progress-bar" [style.width.%]="readingProgressPct()"></div>
+        </div>
       </div>
-      <div class="kpi-value-row">
-        <h3 class="kpi-number">{{ totalWorkOrders() }}</h3>
-        <i class="bi bi-card-checklist kpi-icon"></i>
+
+      <!-- Órdenes Asignadas -->
+      <div class="kpi-card" (click)="goToRoutesMap()" role="button" tabindex="0">
+        <div class="kpi-top">
+          <span class="kpi-label">Órdenes Asignadas</span>
+          <span class="kpi-badge-pill urgent">{{ totalWorkOrders() }} activas</span>
+        </div>
+        <div class="kpi-value-row">
+          <h3 class="kpi-number">{{ totalWorkOrders() }}</h3>
+          <i class="bi bi-card-checklist kpi-icon"></i>
+        </div>
+        <span class="kpi-subtext">Actividades en terreno</span>
       </div>
-      <span class="kpi-subtext">Cortes & Reconexiones</span>
-    </div>
-  </section>
+    </section>
+  </div>
 
   <!-- 6. ACCIONES RÁPIDAS -->
   <section class="quick-actions-section">
