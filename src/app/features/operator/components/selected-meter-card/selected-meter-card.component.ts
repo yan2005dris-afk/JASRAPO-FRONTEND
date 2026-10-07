@@ -13,6 +13,7 @@ import { IMeterDto } from '../../../contracts/meters/domain/models/meter.model';
 export class SelectedMeterCardComponent {
   readonly meter = input.required<IMeterDto>();
   readonly isRead = input(false);
+  readonly allowClear = input(true);
 
   readonly clear = output<void>();
 

@@ -6,6 +6,7 @@ import type {
   OperatorRouteResponse,
   ReadingWithAnomaly,
   OperatorActivityType,
+  OperatorNovelty,
 } from '../models/operator.models';
 
 @Injectable({
@@ -41,5 +42,18 @@ export class OperatorService {
   /** GET /api/v1/operator/readings/anomalies — Lecturas con anomalías pendientes */
   getReadingsWithAnomalies(): Observable<ReadingWithAnomaly[]> {
     return this.http.get<ReadingWithAnomaly[]>(`${this.endpoint}/readings/anomalies`);
+  }
+
+  getNovelties(page = 1, limit = 100): Observable<{ data: OperatorNovelty[]; total: number }> {
+    return this.http.get<{ data: OperatorNovelty[]; total: number }>(`${this.endpoint}/novelties`, {
+      params: new HttpParams().set('page', page).set('limit', limit),
+      withCredentials: true,
+    });
+  }
+
+  getNovelty(id: string): Observable<OperatorNovelty> {
+    return this.http.get<OperatorNovelty>(`${this.endpoint}/novelties/${id}`, {
+      withCredentials: true,
+    });
   }
 }

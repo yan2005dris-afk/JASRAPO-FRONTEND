@@ -101,6 +101,24 @@ export interface ReadingWithAnomaly {
   anomalias: AnomaliaItem[];
 }
 
+export interface OperatorNovelty {
+  novedadId: string;
+  ordenTrabajoId: string;
+  lecturaId: string | null;
+  medidorId: string | null;
+  medidorSerie: string;
+  contratoId: string;
+  numeroGuia: string;
+  clienteNombre: string;
+  direccionSuministro: string;
+  tipo: string;
+  observacion: string | null;
+  estado: string;
+  fotoUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const MANIFEST_CHANGE_OPERATION = {
   CREATE: 'CREATE',
   UPDATE: 'UPDATE',
@@ -145,7 +163,8 @@ export interface OperatorManifestCollectionPage {
 }
 
 export type OperatorManifestMode = 'snapshot' | 'incremental';
-export const MANIFEST_PROTOCOL_VERSION = 2;
+// v3 fuerza una descarga completa para renovar nombres de clientes de medidores ya cacheados.
+export const MANIFEST_PROTOCOL_VERSION = 3;
 
 export interface OperatorManifestPage {
   mode: OperatorManifestMode;

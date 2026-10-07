@@ -16,7 +16,9 @@
       <span class="selected-contract">Contrato #{{ meter().contratoId }}</span>
     }
   </div>
-  <button type="button" class="btn-clear-selection" (click)="onClear()" title="Cambiar medidor">
-    <i class="bi bi-x fs-5"></i>
-  </button>
+  @if (allowClear()) {
+    <button type="button" class="btn-clear-selection" (click)="onClear()" title="Cambiar medidor">
+      <i class="bi bi-x fs-5"></i>
+    </button>
+  }
 </div>
