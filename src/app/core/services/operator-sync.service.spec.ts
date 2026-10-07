@@ -1234,17 +1234,19 @@ describe('OperatorSyncService', () => {
       getAssignedSnapshot.mockResolvedValue(snapshot);
       httpGet.mockImplementation((url: string) => {
         if (url.includes('/operator/sync/manifest')) return of(manifestPage(true, null));
-        if (url.includes('/operator/readings/anomalies')) {
-          return of([
-            {
-              lecturaId: 'l-1',
-              medidorId: 'M-1',
-              medidorSerie: 'S-1',
-              fecha: '2026-06-15T10:00:00Z',
-              estado: 'PROCESADA',
-              anomalias: [],
-            },
-          ]);
+        if (url.includes('/operator/novelties')) {
+          return of({
+            data: [
+              {
+                lecturaId: 'l-1',
+                medidorId: 'M-1',
+                medidorSerie: 'S-1',
+                fecha: '2026-06-15T10:00:00Z',
+                estado: 'PROCESADA',
+                anomalias: [],
+              },
+            ],
+          });
         }
         return of([]);
       });

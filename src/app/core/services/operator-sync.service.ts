@@ -1152,11 +1152,12 @@ export class OperatorSyncService {
    */
   private async cacheNovedadesForOffline(scope: string): Promise<void> {
     try {
-      const anomalies = await firstValueFrom(
-        this.http.get<ReadingWithAnomaly[]>(`${this.OPERATOR_API}/readings/anomalies`, {
+      const response = await firstValueFrom(
+        this.http.get<{ data: any[] } | any[]>(`${this.OPERATOR_API}/novelties`, {
           withCredentials: true,
         }),
       );
+      const anomalies = Array.isArray(response) ? response : (response?.data ?? []);
       await this.dbService.saveNovedadesCache(scope, anomalies);
     } catch (error) {
       console.warn('No se pudo guardar el caché offline de novedades:', error);
