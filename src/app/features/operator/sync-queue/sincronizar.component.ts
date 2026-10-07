@@ -26,7 +26,7 @@ import {
 
 type QueueTab = 'pendientes' | 'rechazados' | 'sincronizados';
 
-const PAGE_SIZE = 5;
+const PAGE_SIZE = 50;
 
 @Component({
   selector: 'app-sincronizar',
