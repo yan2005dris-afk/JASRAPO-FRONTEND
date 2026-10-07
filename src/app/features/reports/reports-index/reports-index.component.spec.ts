@@ -15,7 +15,7 @@ describe('ReportsIndexComponent', () => {
     const configuredRoutes = REPORT_NAVIGATION_GROUPS.flatMap((group) =>
       group.reports.map((report) => report.route),
     );
-    expect(configuredRoutes).not.toContain('/app/reportes/consumo-zonas');
+    expect(configuredRoutes).toContain('/app/reportes/consumo-zonas');
     expect(configuredRoutes).not.toContain('/app/reportes/dashboard');
     expect(configuredRoutes).toContain('/app/reportes/recaudacion-morosidad');
 

@@ -26,6 +26,12 @@ export const REPORT_NAVIGATION_GROUPS: readonly IReportNavigationGroup[] = [
         route: '/app/reportes/historial-conexion',
         icon: 'bi bi-clock-history',
       },
+      {
+        title: 'Consumo por Zonas',
+        description: 'Consumo de agua agregado por sector y comunidad en un periodo.',
+        route: '/app/reportes/consumo-zonas',
+        icon: 'bi bi-droplet-half',
+      },
     ],
   },
   {

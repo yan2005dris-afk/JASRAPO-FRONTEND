@@ -1,0 +1,133 @@
+.custom-table thead th {
+  padding: 0.75rem 1rem;
+  color: var(--muted-text);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  background: var(--report-info-bg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.custom-table tbody td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.filter-toggle-btn {
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.15s ease-in-out;
+
+  &:hover {
+    color: var(--primary, #0d6efd) !important;
+  }
+}
+
+.advanced-filters-panel {
+  animation: fadeInDown 0.2s ease-out;
+  background-color: var(--report-info-bg, #f8f9fa);
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.summary-grid > div {
+  display: grid;
+  min-width: 0;
+  gap: 0.2rem;
+  padding: 1rem 1.2rem;
+  border-inline-end: 1px solid var(--border-color);
+}
+
+.summary-grid > div:last-child {
+  border-inline-end: 0;
+}
+
+.summary-grid span {
+  color: var(--muted-text);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.summary-grid strong {
+  overflow: hidden;
+  color: var(--dark-text);
+  font-size: 0.9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summary-grid__total {
+  background: var(--report-info-bg);
+  text-align: center;
+}
+
+.summary-grid__total strong {
+  color: var(--primary, #0d6efd);
+  font-size: 1.2rem;
+}
+
+[reportActions] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+[reportActions] .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.results-empty {
+  margin: 0;
+  padding: 2.5rem 1rem;
+  color: var(--muted-text);
+  text-align: center;
+}
+
+@media (max-width: 991.98px) {
+  .summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .summary-grid > div:nth-child(2) {
+    border-inline-end: 0;
+  }
+
+  .summary-grid > div:nth-child(-n + 2) {
+    border-bottom: 1px solid var(--border-color);
+  }
+}
+
+@media (max-width: 575.98px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-grid > div {
+    border-inline-end: 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .summary-grid > div:last-child {
+    border-bottom: 0;
+  }
+}

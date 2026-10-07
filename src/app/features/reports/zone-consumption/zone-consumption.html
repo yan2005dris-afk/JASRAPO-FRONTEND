@@ -1,1 +1,284 @@
-<p>consumo-zonas works!</p>
+<app-report-workspace
+  title="Consumo por Zonas"
+  description="Analice el consumo de agua agregado por zona (sector, agrupado por comunidad) para un periodo de facturación y genere el documento oficial."
+  [contextItems]="contextItems()"
+  [status]="workspaceStatus()"
+  [statusMessage]="workspaceStatusMessage()"
+  [showSummary]="!!reportData()"
+  [showToolbar]="!!reportData()"
+  [showResults]="!!reportData()"
+  (retry)="retryLastAction()"
+>
+  <div reportFilters>
+    <div class="row g-3 align-items-end">
+      <div class="col-lg-6 col-md-12">
+        <label class="form-label small fw-semibold" for="filtroBusqueda">Buscar zona</label>
+        <div class="input-group">
+          <span class="input-group-text bg-white">
+            <i class="bi bi-search text-muted" aria-hidden="true"></i>
+          </span>
+          <input
+            id="filtroBusqueda"
+            type="search"
+            class="form-control"
+            placeholder="Sector o comunidad…"
+            [ngModel]="searchTermTable()"
+            (ngModelChange)="onTableSearchInput($event)"
+          />
+          @if (searchTermTable()) {
+            <button
+              type="button"
+              class="btn btn-outline-secondary"
+              aria-label="Limpiar búsqueda"
+              (click)="onTableSearchInput('')"
+            >
+              <i class="bi bi-x" aria-hidden="true"></i>
+            </button>
+          }
+        </div>
+        <div class="mt-1 d-flex align-items-center gap-2">
+          <button
+            type="button"
+            class="btn btn-link btn-sm p-0 text-decoration-none text-muted d-inline-flex align-items-center gap-1 filter-toggle-btn"
+            (click)="isFiltersExpanded.set(!isFiltersExpanded())"
+            aria-expanded="{{ isFiltersExpanded() }}"
+          >
+            <span>{{ isFiltersExpanded() ? 'Ver menos' : 'Ver más' }}</span>
+            <i
+              class="bi"
+              [class.bi-chevron-down]="!isFiltersExpanded()"
+              [class.bi-chevron-up]="isFiltersExpanded()"
+              aria-hidden="true"
+            ></i>
+          </button>
+          @if (activeAdvancedFiltersCount() > 0) {
+            <span class="badge text-bg-primary rounded-pill">{{
+              activeAdvancedFiltersCount()
+            }}</span>
+          }
+        </div>
+      </div>
+
+      <div
+        class="col-lg-6 col-md-12 d-flex flex-wrap align-items-center justify-content-lg-end gap-2"
+      >
+        <button
+          type="button"
+          class="btn btn-primary d-inline-flex align-items-center gap-2"
+          [disabled]="isLoadingData()"
+          (click)="consultar()"
+        >
+          <i class="bi bi-arrow-clockwise" aria-hidden="true"></i>
+          Actualizar
+        </button>
+
+        <button
+          type="button"
+          class="btn btn-outline-secondary d-inline-flex align-items-center gap-2"
+          [disabled]="isLoadingData()"
+          (click)="limpiar()"
+        >
+          <i class="bi bi-x-circle" aria-hidden="true"></i>
+          Limpiar
+        </button>
+      </div>
+    </div>
+
+    @if (isFiltersExpanded()) {
+      <div class="advanced-filters-panel p-3 mt-3 rounded-3 border bg-light">
+        <div class="row g-3 align-items-end">
+          <div class="col-lg-4 col-md-6">
+            <label class="form-label small fw-semibold" for="filtroPeriodo">Periodo</label>
+            <select
+              id="filtroPeriodo"
+              class="form-select"
+              [ngModel]="periodoId()"
+              (ngModelChange)="actualizarPeriodo($event)"
+            >
+              <option value="">Automático (último cerrado)</option>
+              @for (p of periodos(); track p.periodoId) {
+                <option [value]="p.periodoId">
+                  {{ p.nombre || 'Periodo ' + p.periodoId }} · {{ p.estado }}
+                </option>
+              }
+            </select>
+          </div>
+
+          <div class="col-lg-4 col-md-6">
+            <label class="form-label small fw-semibold" for="filtroComunidad">Comunidad</label>
+            <select
+              id="filtroComunidad"
+              class="form-select"
+              [ngModel]="comunidadId()"
+              (ngModelChange)="actualizarComunidad($event)"
+            >
+              <option value="">Todas las comunidades</option>
+              @for (c of comunidades(); track c.id) {
+                <option [value]="c.id">{{ c.nombre }}</option>
+              }
+            </select>
+          </div>
+
+          @if (sectoresDisponibles().length > 0) {
+            <div class="col-lg-4 col-md-6">
+              <label class="form-label small fw-semibold" for="filtroSector">Sector</label>
+              <select
+                id="filtroSector"
+                class="form-select"
+                [ngModel]="sectorId()"
+                (ngModelChange)="actualizarSector($event)"
+              >
+                <option value="">Todos los sectores</option>
+                @for (s of sectoresDisponibles(); track s.sectorId) {
+                  <option [value]="s.sectorId">{{ s.nombre }}</option>
+                }
+              </select>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <div reportSummary class="summary-grid">
+    <div>
+      <span>Zonas</span>
+      <strong>{{ totalZonas() }}</strong>
+    </div>
+    <div>
+      <span>Medidores sin lectura</span>
+      <strong>{{ medidoresSinLectura() }}</strong>
+    </div>
+    <div>
+      <span>Zona de mayor consumo</span>
+      <strong>{{ zonaMayorConsumo() }}</strong>
+    </div>
+    <div class="summary-grid__total">
+      <span>Consumo total del sistema</span>
+      <strong>{{ consumoTotalSistema() }} m³</strong>
+    </div>
+  </div>
+
+  <div reportActions>
+    <button
+      type="button"
+      class="btn btn-sm btn-primary"
+      [disabled]="isLoadingGeneralPdf()"
+      (click)="generarPdfGeneral()"
+    >
+      <i class="bi bi-file-earmark-pdf" aria-hidden="true"></i>
+      Generar PDF
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1"
+      [disabled]="isExporting()"
+      (click)="descargarExcel()"
+    >
+      <i class="bi bi-file-earmark-excel" aria-hidden="true"></i>
+      Exportar Excel
+    </button>
+    <button
+      type="button"
+      class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1"
+      [disabled]="isExporting()"
+      (click)="descargarCsv()"
+    >
+      <i class="bi bi-file-earmark-spreadsheet" aria-hidden="true"></i>
+      Exportar CSV
+    </button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="abrirModalEmail()">
+      <i class="bi bi-envelope" aria-hidden="true"></i>
+      Enviar por correo
+    </button>
+  </div>
+
+  <div reportResults>
+    @if (filteredZonas().length > 0) {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 custom-table">
+          <thead>
+            <tr>
+              <th scope="col">Zona (Sector)</th>
+              <th scope="col">Comunidad</th>
+              <th scope="col" class="text-end">Consumo (m³)</th>
+              <th scope="col" class="text-center">Medidores</th>
+              <th scope="col" class="text-end">Promedio (m³)</th>
+              <th scope="col" class="text-center">Estimadas</th>
+              <th scope="col" class="text-center">Sin lectura</th>
+              <th scope="col" class="text-end">% Sistema</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (zona of filteredZonas(); track zona.sectorId) {
+              <tr>
+                <td class="fw-semibold text-dark">{{ zona.sectorNombre }}</td>
+                <td class="text-muted">{{ zona.comunidadNombre }}</td>
+                <td class="text-end font-monospace fw-bold text-primary">
+                  {{ zona.consumoTotal }}
+                </td>
+                <td class="text-center">{{ zona.medidoresConLectura }}</td>
+                <td class="text-end font-monospace">{{ zona.consumoPromedio }}</td>
+                <td class="text-center">
+                  @if (zona.estimadasCount > 0) {
+                    <span class="badge rounded-pill text-bg-info">
+                      {{ zona.estimadasCount }} · {{ zona.estimadasVolumen }} m³
+                    </span>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <td class="text-center">
+                  @if (zona.medidoresSinLectura > 0) {
+                    <span class="badge rounded-pill text-bg-warning">{{
+                      zona.medidoresSinLectura
+                    }}</span>
+                  } @else {
+                    <span class="text-muted">0</span>
+                  }
+                </td>
+                <td class="text-end font-monospace text-muted">{{ zona.porcentajeSistema }}%</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else if (searchTermTable().trim()) {
+      <p class="results-empty" role="status">
+        No hay coincidencias para «{{ searchTermTable() }}» en las zonas.
+      </p>
+    } @else {
+      <p class="results-empty" role="status">
+        No se registró consumo por zona para el periodo seleccionado.
+      </p>
+    }
+  </div>
+
+  @if (isEmailModalOpen()) {
+    <app-report-email-dialog
+      reportDialog
+      title="Enviar reporte de consumo por zonas por correo"
+      [initialRecipient]="destinatario()"
+      [initialSubject]="subject()"
+      [contextItems]="contextItems()"
+      [isSubmitting]="isSendingEmail()"
+      (closed)="cerrarModalEmail()"
+      (submitted)="enviarEmail($event)"
+    />
+  }
+
+  @if (isGeneralPdfOpen()) {
+    <app-report-pdf-modal
+      reportDialog
+      title="Reporte de consumo por zonas"
+      description="Documento oficial con el mismo universo filtrado que la tabla."
+      [contextItems]="contextItems()"
+      [pdfBlob]="generalPdfBlob()"
+      [isLoading]="isLoadingGeneralPdf()"
+      [errorMessage]="generalPdfError()"
+      [fileName]="generalPdfFileName"
+      (retry)="generarPdfGeneral()"
+      (closed)="cerrarGeneralPdf()"
+    />
+  }
+</app-report-workspace>

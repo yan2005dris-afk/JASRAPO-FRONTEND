@@ -606,6 +606,14 @@ export const routes: Routes = [
                 (m) => m.OverdueAccountsComponent,
               ),
           },
+          {
+            path: 'consumo-zonas',
+            data: { breadcrumb: 'Consumo por Zonas' },
+            loadComponent: () =>
+              import('./features/reports/zone-consumption/zone-consumption').then(
+                (m) => m.ZoneConsumptionComponent,
+              ),
+          },
         ],
       },
 
