@@ -244,6 +244,30 @@ describe('OperatorSyncService', () => {
       expect(fields['file']).toBeUndefined();
     });
 
+    it('PATCH con ordenTrabajoId: envía la lectura al endpoint unificado de orden de trabajo', async () => {
+      httpPatch.mockReturnValue(of({ ordenTrabajoId: 'wo-10', estado: 'COMPLETADA' }));
+      const reading = {
+        ordenTrabajoId: 'wo-10',
+        _lecturaId: 1,
+        medidorId: 1,
+        lecturaActual: '150',
+        lecturaAnterior: '120',
+        descripcionAnomalia: 'Sin anomalías',
+        fotoBlob: VALID_DATA_URI,
+      };
+
+      await service.submitReading(reading);
+
+      expect(httpPatch).toHaveBeenCalledOnce();
+      const [url, formData] = httpPatch.mock.calls[0];
+      expect(url).toContain('/operator/work-orders/wo-10');
+      const fields = formDataToObject(formData as FormData);
+      expect(fields['lecturaActual']).toEqual(['150']);
+      expect(fields['lecturaAnterior']).toEqual(['120']);
+      expect(fields['descripcionAnomalia']).toEqual(['Sin anomalías']);
+      expect(fields['foto']).toHaveLength(1);
+    });
+
     it('PATCH sin foto: no agrega archivo al FormData', async () => {
       httpPatch.mockReturnValue(of({ id: 1 }));
       await service.submitReading({ _lecturaId: 1, lecturaActual: '150' });

@@ -1018,6 +1018,7 @@ export class LecturasComponent implements OnInit {
         // para no dejar una lectura aceptada sin su ubicación si la operación GPS falla.
         await this.syncService.submitReadingCoordinates(ordenTrabajoId);
         const lecturaPayload = {
+          ordenTrabajoId,
           fecha: new Date().toISOString(),
           medidorId: meter.medidorId.toString(),
           medidorSerie: meter.serie,
