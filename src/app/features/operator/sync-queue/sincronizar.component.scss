@@ -366,7 +366,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 // ── Queue Wrapper ──────────────────────────────────────────────────────────
@@ -665,21 +667,27 @@
   background: #e0f2fe;
   color: #0369a1;
 
-  &:hover { background: #bae6fd; }
+  &:hover {
+    background: #bae6fd;
+  }
 }
 
 .btn-edit {
   background: rgba(12, 158, 161, 0.1);
   color: var(--op-brand-primary, #087a7d);
 
-  &:hover { background: rgba(12, 158, 161, 0.18); }
+  &:hover {
+    background: rgba(12, 158, 161, 0.18);
+  }
 }
 
 .btn-discard {
   background: rgba(239, 68, 68, 0.08);
   color: #dc2626;
 
-  &:hover { background: rgba(239, 68, 68, 0.15); }
+  &:hover {
+    background: rgba(239, 68, 68, 0.15);
+  }
 }
 
 // ── Pagination ─────────────────────────────────────────────────────────────

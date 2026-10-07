@@ -1,5 +1,4 @@
 <div class="sync-screen">
-
   <!-- ── Header ──────────────────────────────────────────────────────────── -->
   <div class="sync-header">
     <div class="sync-header-text">
@@ -33,17 +32,28 @@
         <circle cx="50" cy="50" r="40" fill="none" stroke="#e2e8f0" stroke-width="8" />
         @if (totalPendientes() === 0) {
           <circle
-            cx="50" cy="50" r="40" fill="none"
-            stroke="#16a34a" stroke-width="8"
-            stroke-dasharray="251" stroke-dashoffset="0"
+            cx="50"
+            cy="50"
+            r="40"
+            fill="none"
+            stroke="#16a34a"
+            stroke-width="8"
+            stroke-dasharray="251"
+            stroke-dashoffset="0"
             stroke-linecap="round"
           />
         } @else {
           <circle
-            cx="50" cy="50" r="40" fill="none"
-            stroke="#f59e0b" stroke-width="8"
-            stroke-dasharray="251" stroke-dashoffset="60"
-            stroke-linecap="round" transform="rotate(-90 50 50)"
+            cx="50"
+            cy="50"
+            r="40"
+            fill="none"
+            stroke="#f59e0b"
+            stroke-width="8"
+            stroke-dasharray="251"
+            stroke-dashoffset="60"
+            stroke-linecap="round"
+            transform="rotate(-90 50 50)"
           />
         }
       </svg>
@@ -74,11 +84,19 @@
         <i class="bi bi-stack stat-icon"></i>
         <div class="stat-body">
           <span class="stat-value">
-            @if (totalPendientes() === 0) { 0 } @else { {{ totalPendientes() }} }
+            @if (totalPendientes() === 0) {
+              0
+            } @else {
+              {{ totalPendientes() }}
+            }
           </span>
           <span class="stat-name">Pendientes</span>
         </div>
-        <span class="stat-badge" [class.badge-ok]="totalPendientes() === 0" [class.badge-warn]="totalPendientes() > 0">
+        <span
+          class="stat-badge"
+          [class.badge-ok]="totalPendientes() === 0"
+          [class.badge-warn]="totalPendientes() > 0"
+        >
           {{ totalPendientes() === 0 ? 'Al día' : 'Por subir' }}
         </span>
       </div>
@@ -127,7 +145,10 @@
   @if (authorizationWarning()) {
     <div class="auth-warning" role="alert">
       <i class="bi bi-shield-exclamation"></i>
-      <span>No tenés autorización para actualizar datos asignados. Los datos guardados siguen visibles.</span>
+      <span
+        >No tenés autorización para actualizar datos asignados. Los datos guardados siguen
+        visibles.</span
+      >
     </div>
   }
 
@@ -183,13 +204,16 @@
   <div class="queue-wrapper">
     <div class="queue-heading">
       <h2 class="queue-heading-title">Cambios locales por subir</h2>
-      <p class="queue-heading-sub">Lecturas, novedades y órdenes de trabajo guardadas en este dispositivo.</p>
+      <p class="queue-heading-sub">
+        Lecturas, novedades y órdenes de trabajo guardadas en este dispositivo.
+      </p>
     </div>
 
     <!-- Tab Switcher -->
     <div class="tab-switcher" role="tablist">
       <button
-        class="tab-btn" role="tab"
+        class="tab-btn"
+        role="tab"
         [class.active]="activeTab() === 'pendientes'"
         [attr.aria-selected]="activeTab() === 'pendientes'"
         (click)="switchTab('pendientes')"
@@ -201,7 +225,8 @@
         }
       </button>
       <button
-        class="tab-btn" role="tab"
+        class="tab-btn"
+        role="tab"
         [class.active]="activeTab() === 'rechazados'"
         [attr.aria-selected]="activeTab() === 'rechazados'"
         (click)="switchTab('rechazados')"
@@ -213,7 +238,8 @@
         }
       </button>
       <button
-        class="tab-btn" role="tab"
+        class="tab-btn"
+        role="tab"
         [class.active]="activeTab() === 'sincronizados'"
         [attr.aria-selected]="activeTab() === 'sincronizados'"
         (click)="switchTab('sincronizados')"
@@ -278,7 +304,9 @@
                 </div>
                 <div class="card-field">
                   <span class="field-label">Lectura</span>
-                  <span class="field-value">{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span>
+                  <span class="field-value"
+                    >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
+                  >
                 </div>
                 <div class="card-field">
                   <span class="field-label">Consumo</span>
@@ -296,13 +324,21 @@
 
         @if (allPendingItems().length > 0) {
           <div class="pagination">
-            <button class="page-btn" [disabled]="pendingPage() === 0"
-              (click)="goToPendingPage(pendingPage() - 1)" aria-label="Página anterior">
+            <button
+              class="page-btn"
+              [disabled]="pendingPage() === 0"
+              (click)="goToPendingPage(pendingPage() - 1)"
+              aria-label="Página anterior"
+            >
               <i class="bi bi-chevron-left"></i>
             </button>
             <span class="page-indicator">{{ pendingPage() + 1 }} / {{ pendingTotalPages() }}</span>
-            <button class="page-btn" [disabled]="pendingPage() >= pendingTotalPages() - 1"
-              (click)="goToPendingPage(pendingPage() + 1)" aria-label="Página siguiente">
+            <button
+              class="page-btn"
+              [disabled]="pendingPage() >= pendingTotalPages() - 1"
+              (click)="goToPendingPage(pendingPage() + 1)"
+              aria-label="Página siguiente"
+            >
               <i class="bi bi-chevron-right"></i>
             </button>
           </div>
@@ -370,7 +406,9 @@
                 </div>
                 <div class="card-field">
                   <span class="field-label">Lectura</span>
-                  <span class="field-value">{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span>
+                  <span class="field-value"
+                    >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
+                  >
                 </div>
                 <div class="error-banner">
                   <i class="bi bi-exclamation-octagon-fill" aria-hidden="true"></i>
@@ -402,13 +440,23 @@
 
         @if (allRejectedItems().length > 0) {
           <div class="pagination">
-            <button class="page-btn" [disabled]="rejectedPage() === 0"
-              (click)="goToRejectedPage(rejectedPage() - 1)" aria-label="Página anterior">
+            <button
+              class="page-btn"
+              [disabled]="rejectedPage() === 0"
+              (click)="goToRejectedPage(rejectedPage() - 1)"
+              aria-label="Página anterior"
+            >
               <i class="bi bi-chevron-left"></i>
             </button>
-            <span class="page-indicator">{{ rejectedPage() + 1 }} / {{ rejectedTotalPages() }}</span>
-            <button class="page-btn" [disabled]="rejectedPage() >= rejectedTotalPages() - 1"
-              (click)="goToRejectedPage(rejectedPage() + 1)" aria-label="Página siguiente">
+            <span class="page-indicator"
+              >{{ rejectedPage() + 1 }} / {{ rejectedTotalPages() }}</span
+            >
+            <button
+              class="page-btn"
+              [disabled]="rejectedPage() >= rejectedTotalPages() - 1"
+              (click)="goToRejectedPage(rejectedPage() + 1)"
+              aria-label="Página siguiente"
+            >
               <i class="bi bi-chevron-right"></i>
             </button>
           </div>
@@ -421,7 +469,12 @@
       <div class="queue-section" role="tabpanel" aria-labelledby="tab-sincronizados">
         <div class="section-toolbar">
           @if (syncedReadings().length > 0) {
-            <button type="button" class="btn-clear-history" (click)="clearHistory()" id="btn-clear-history">
+            <button
+              type="button"
+              class="btn-clear-history"
+              (click)="clearHistory()"
+              id="btn-clear-history"
+            >
               <i class="bi bi-trash3" aria-hidden="true"></i> Limpiar historial
             </button>
           }
@@ -452,7 +505,9 @@
               </div>
               <div class="card-field">
                 <span class="field-label">Lectura</span>
-                <span class="field-value">{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span>
+                <span class="field-value"
+                  >{{ record['lecturaAnterior'] }} → {{ record['lecturaActual'] }}</span
+                >
               </div>
               <div class="card-field">
                 <span class="field-label">Consumo</span>
@@ -461,7 +516,9 @@
               @if (record['syncedAt']) {
                 <div class="card-field">
                   <span class="field-label">Enviado</span>
-                  <span class="field-value">{{ record['syncedAt'] | date: 'dd/MM/yyyy HH:mm' }}</span>
+                  <span class="field-value">{{
+                    record['syncedAt'] | date: 'dd/MM/yyyy HH:mm'
+                  }}</span>
                 </div>
               }
             </div>
@@ -475,13 +532,21 @@
 
         @if (syncedReadings().length > 0) {
           <div class="pagination">
-            <button class="page-btn" [disabled]="syncedPage() === 0"
-              (click)="goToSyncedPage(syncedPage() - 1)" aria-label="Página anterior">
+            <button
+              class="page-btn"
+              [disabled]="syncedPage() === 0"
+              (click)="goToSyncedPage(syncedPage() - 1)"
+              aria-label="Página anterior"
+            >
               <i class="bi bi-chevron-left"></i>
             </button>
             <span class="page-indicator">{{ syncedPage() + 1 }} / {{ syncedTotalPages() }}</span>
-            <button class="page-btn" [disabled]="syncedPage() >= syncedTotalPages() - 1"
-              (click)="goToSyncedPage(syncedPage() + 1)" aria-label="Página siguiente">
+            <button
+              class="page-btn"
+              [disabled]="syncedPage() >= syncedTotalPages() - 1"
+              (click)="goToSyncedPage(syncedPage() + 1)"
+              aria-label="Página siguiente"
+            >
               <i class="bi bi-chevron-right"></i>
             </button>
           </div>

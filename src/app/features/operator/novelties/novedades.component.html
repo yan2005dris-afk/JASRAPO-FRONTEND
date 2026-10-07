@@ -19,7 +19,9 @@
           }
         </span>
       } @else {
-        <span>Sin conexión — se muestran las novedades pendientes guardadas en este dispositivo.</span>
+        <span
+          >Sin conexión — se muestran las novedades pendientes guardadas en este dispositivo.</span
+        >
       }
       <button class="retry-link" type="button" (click)="retry()">Reintentar</button>
     </div>
@@ -47,7 +49,9 @@
               <h2 class="zone-name">{{ comGroup.label }}</h2>
             </div>
             <span class="zone-count">
-              {{ comGroup.sectorGroups.length > 1 ? comGroup.sectorGroups.length + ' sectores' : '' }}
+              {{
+                comGroup.sectorGroups.length > 1 ? comGroup.sectorGroups.length + ' sectores' : ''
+              }}
             </span>
           </div>
 
@@ -58,7 +62,8 @@
                 <span class="sector-kicker">SECTOR</span>
                 <h3 class="sector-name">{{ secGroup.label }}</h3>
                 <span class="sector-count">
-                  {{ secGroup.items.length }} {{ secGroup.items.length === 1 ? 'novedad' : 'novedades' }}
+                  {{ secGroup.items.length }}
+                  {{ secGroup.items.length === 1 ? 'novedad' : 'novedades' }}
                 </span>
               </div>
             }
