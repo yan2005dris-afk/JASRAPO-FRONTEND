@@ -15,7 +15,6 @@ import {
 import {
   MANIFEST_PROTOCOL_VERSION,
   type OperatorManifestPage,
-  type ReadingWithAnomaly,
 } from '../../features/operator/models/operator.models';
 
 type PayloadValue = string | number | boolean | Blob | null | undefined;
@@ -1153,9 +1152,12 @@ export class OperatorSyncService {
   private async cacheNovedadesForOffline(scope: string): Promise<void> {
     try {
       const response = await firstValueFrom(
-        this.http.get<{ data: any[] } | any[]>(`${this.OPERATOR_API}/novelties`, {
-          withCredentials: true,
-        }),
+        this.http.get<{ data: Record<string, unknown>[] } | Record<string, unknown>[]>(
+          `${this.OPERATOR_API}/novelties`,
+          {
+            withCredentials: true,
+          },
+        ),
       );
       const anomalies = Array.isArray(response) ? response : (response?.data ?? []);
       await this.dbService.saveNovedadesCache(scope, anomalies);
