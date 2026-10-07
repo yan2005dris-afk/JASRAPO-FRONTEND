@@ -26,9 +26,18 @@ export interface IContractState {
   orden: number; // orden de visualización
 }
 
+export interface IContractProcedureData {
+  tramitadorEsTitular?: boolean | null;
+  tramitadorNombre?: string | null;
+  tramitadorIdentificacion?: string | null;
+  relacionTramitador?: string | null;
+  observacionesTramite?: string | null;
+  otrasNovedades?: string | null;
+}
+
 // Datos para actualizar un contrato (PATCH /contracts/{id}). Todos opcionales.
 // Los medidores se gestionan exclusivamente mediante el flujo de reemplazo (POST /meters/replace).
-export interface IUpdateContractRequest {
+export interface IUpdateContractRequest extends IContractProcedureData {
   estadoServicio?: EstadoServicio;
   estadoCobranza?: EstadoCobranza;
   direccionSuministro?: string;
@@ -104,7 +113,8 @@ export interface IHistorialMedidor {
 }
 
 // Contrato completo (lo que devuelve GET /contracts)
-export interface IContract {
+export interface IContract extends IContractProcedureData {
+  registradoPorId?: number | null;
   contratoId: string;
   clienteId: string;
   sectorId: number | null;
@@ -149,10 +159,11 @@ export interface ISearchContractsParams {
 // Datos para registrar un contrato (según el POST /contracts actualizado).
 // Obligatorios: clienteId, medidorId, categoriaTarifaId, direccionSuministro, comunidadId.
 // El backend asigna el numeroGuia, contratoId y fechaInicio automáticamente.
-export interface ICreateContractRequest {
+export interface ICreateContractRequest extends IContractProcedureData {
   clienteId: string;
   categoriaTarifaId: string;
   medidorId: string;
+  numeroGuia?: string;
   direccionSuministro: string;
   comunidadId: string;
   sectorId?: string;

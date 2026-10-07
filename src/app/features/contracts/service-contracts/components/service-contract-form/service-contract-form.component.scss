@@ -29,3 +29,54 @@
     animation: none;
   }
 }
+
+.registration-progress ol {
+  display: flex;
+  gap: 1rem;
+  padding: 0;
+  list-style: none;
+  flex-wrap: wrap;
+}
+.registration-progress li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--text-muted, #6c757d);
+}
+.registration-progress .current {
+  color: var(--primary-color);
+  font-weight: 700;
+}
+.registration-progress .completed {
+  color: var(--text-main, #212529);
+}
+.step-number {
+  display: inline-grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+.registration-panel {
+  animation: reveal-step 0.18s ease-out;
+}
+.registration-panel:focus-visible {
+  outline: 2px solid var(--primary-color);
+  outline-offset: 4px;
+}
+@keyframes reveal-step {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .registration-panel {
+    animation: none;
+  }
+}
