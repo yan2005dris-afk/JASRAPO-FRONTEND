@@ -724,6 +724,49 @@
   gap: 0.65rem;
 }
 
+.orders-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+  color: var(--op-text-secondary, #4b6366);
+  font-size: 0.85rem;
+}
+
+.orders-pagination-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.orders-page-btn {
+  min-height: 40px;
+  padding: 0.45rem 0.75rem;
+  border: 1px solid var(--op-border-subtle, #d1e7e8);
+  border-radius: 10px;
+  background: var(--op-bg-surface, #ffffff);
+  color: var(--op-brand-primary-dark, #005f73);
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover:not(:disabled),
+  &:focus-visible {
+    border-color: var(--op-brand-primary, #0a9396);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+.orders-page-indicator {
+  white-space: nowrap;
+  font-weight: 600;
+}
+
 .empty-orders-state {
   background: #ffffff;
   border-radius: 16px;

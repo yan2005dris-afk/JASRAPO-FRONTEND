@@ -53,6 +53,11 @@ interface ReadingRecord {
   [key: string]: unknown;
 }
 
+interface RouteMeterDto extends IMeterDto {
+  direccionSuministro?: string | null;
+  numeroGuia?: string | null;
+}
+
 import { ScrollingModule } from '@angular/cdk/scrolling';
 
 @Component({
@@ -99,15 +104,26 @@ export class LecturasComponent implements OnInit {
 
   // Catálogo de medidores cargado (memoria local)
   readonly metersList = this.meterCache.metersList;
-  readonly routeSyntheticMeters = signal<IMeterDto[]>([]);
+  readonly routeSyntheticMeters = signal<RouteMeterDto[]>([]);
 
-  readonly combinedMetersList = computed<IMeterDto[]>(() => {
+  readonly combinedMetersList = computed<RouteMeterDto[]>(() => {
     const cached = this.metersList();
     const synthetics = this.routeSyntheticMeters();
     if (!synthetics.length) return cached;
+    const routeBySeries = new Map(synthetics.map((meter) => [meter.serie, meter]));
+    const mergedCached = cached.map((meter) => {
+      const routeMeter = routeBySeries.get(meter.serie);
+      if (!routeMeter) return meter;
+      return {
+        ...meter,
+        clienteNombre: routeMeter.clienteNombre || meter.clienteNombre,
+        direccionSuministro: routeMeter.direccionSuministro || meter.direccionSuministro,
+        numeroGuia: routeMeter.numeroGuia,
+      };
+    });
     const cachedSeries = new Set(cached.map((m) => m.serie));
     const toAdd = synthetics.filter((s) => !cachedSeries.has(s.serie));
-    return [...cached, ...toAdd];
+    return [...mergedCached, ...toAdd];
   });
 
   readonly searchQuery = signal<string>('');
@@ -298,6 +314,7 @@ export class LecturasComponent implements OnInit {
       (m) =>
         m.serie.toLowerCase().includes(query) ||
         (m.contratoId && m.contratoId.toString().toLowerCase().includes(query)) ||
+        (m.numeroGuia && m.numeroGuia.toLowerCase().includes(query)) ||
         (m.clienteNombre && m.clienteNombre.toLowerCase().includes(query)) ||
         (m.marca && m.marca.toLowerCase().includes(query)),
     );
@@ -305,7 +322,19 @@ export class LecturasComponent implements OnInit {
 
   // Segmented control de órdenes para el flujo de ruta
   readonly orderFilter = signal<'TODAS' | 'PENDIENTES' | 'COMPLETADAS'>('TODAS');
+  readonly orderPageSize = 10;
+  readonly requestedOrderPage = signal(1);
   readonly completedWorkOrderIds = signal<Set<string>>(new Set());
+
+  setOrderFilter(filter: 'TODAS' | 'PENDIENTES' | 'COMPLETADAS'): void {
+    this.orderFilter.set(filter);
+    this.requestedOrderPage.set(1);
+  }
+
+  setOrderSearch(query: string): void {
+    this.searchQuery.set(query);
+    this.requestedOrderPage.set(1);
+  }
 
   getOrderRecord(meter: IMeterDto): ReadingRecord | undefined {
     const map = this.existingReadingMap();
@@ -402,14 +431,33 @@ export class LecturasComponent implements OnInit {
     });
   });
 
+  readonly orderPageCount = computed(() =>
+    Math.max(1, Math.ceil(this.segmentedOrders().length / this.orderPageSize)),
+  );
+  readonly currentOrderPage = computed(() =>
+    Math.min(this.requestedOrderPage(), this.orderPageCount()),
+  );
+  readonly pagedOrders = computed(() => {
+    const start = (this.currentOrderPage() - 1) * this.orderPageSize;
+    return this.segmentedOrders().slice(start, start + this.orderPageSize);
+  });
+  readonly orderRangeStart = computed(() =>
+    this.segmentedOrders().length ? (this.currentOrderPage() - 1) * this.orderPageSize + 1 : 0,
+  );
+  readonly orderRangeEnd = computed(() =>
+    Math.min(this.currentOrderPage() * this.orderPageSize, this.segmentedOrders().length),
+  );
+
+  goToOrderPage(page: number): void {
+    this.requestedOrderPage.set(Math.max(1, Math.min(page, this.orderPageCount())));
+  }
+
   openOrderExecution(meter: IMeterDto): void {
     this.selectMeter(meter);
     const primary = this.primaryWorkOrderFor(meter);
     const tipo = primary
       ? primary[0]
-      : (meter.marca as WorkOrderActivityType) ||
-        (this.routeContext()?.tipo as WorkOrderActivityType) ||
-        'LECTURA';
+      : (this.routeContext()?.tipo as WorkOrderActivityType) || 'LECTURA';
     this.goToWorkOrderForm(tipo);
   }
 
@@ -515,7 +563,7 @@ export class LecturasComponent implements OnInit {
       }
     }
 
-    const synthetics: IMeterDto[] = [];
+    const synthetics: RouteMeterDto[] = [];
     if (
       activeRoute &&
       (!rutaId ||
@@ -535,22 +583,25 @@ export class LecturasComponent implements OnInit {
             medidorId: realMedidorId,
             serie: id,
             marca: wo.tipoActividad,
-            modelo: wo.contrato?.direccion || '',
+            modelo: '',
             clienteNombre: wo.contrato?.clienteNombre || 'Cliente sin nombre',
-            contratoId: wo.contrato?.numeroContrato || wo.contratoId || null,
+            contratoId: wo.contratoId || null,
+            direccionSuministro: wo.contrato?.direccion || null,
+            numeroGuia: wo.contrato?.numeroContrato || null,
             fechaInstalacion: null,
           });
         }
       } else if (activeRoute.paradas?.length) {
         for (const p of activeRoute.paradas) {
-          const id = p.serie || p.clienteNombre || `OT-${p.ordenTrabajoId}`;
+          const id = p.serie || `OT-${p.ordenTrabajoId}`;
           synthetics.push({
             medidorId: Number(p.ordenTrabajoId) ? -Math.abs(Number(p.ordenTrabajoId)) : -1,
             serie: id,
             marca: p.tipoActividad,
-            modelo: p.direccionSuministro || '',
+            modelo: '',
             clienteNombre: p.clienteNombre || 'Cliente sin nombre',
             contratoId: null,
+            direccionSuministro: p.direccionSuministro || null,
             fechaInstalacion: null,
           });
         }
@@ -748,7 +799,8 @@ export class LecturasComponent implements OnInit {
       const ordenTrabajoId = primaryOrder ? primaryOrder[1].id : null;
       this.router.navigate(['/app/operador/novedades/new'], {
         queryParams: {
-          medidorId: meter.medidorId,
+          ...(meter.medidorId > 0 ? { medidorId: meter.medidorId } : {}),
+          serie: meter.serie,
           ...(lecturaId ? { lecturaId } : {}),
           ...(ordenTrabajoId ? { ordenTrabajoId } : {}),
         },

@@ -73,6 +73,20 @@ describe('OperatorLayoutComponent', () => {
     expect(logo.textColor()).toBe('light');
   });
 
+  it('keeps the online/offline indicator in the top bar', () => {
+    const fixture = TestBed.createComponent(OperatorLayoutComponent);
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector('.operator-header .status-badge.online'),
+    ).not.toBeNull();
+
+    networkServiceMock.isOnline.set(false);
+    fixture.detectChanges();
+    expect(
+      fixture.nativeElement.querySelector('.operator-header .status-badge.offline'),
+    ).not.toBeNull();
+  });
+
   it('should call authService.logout on onLogout', () => {
     const fixture = TestBed.createComponent(OperatorLayoutComponent);
     const component = fixture.componentInstance;

@@ -3,16 +3,9 @@
   <div class="d-flex justify-content-between align-items-center mb-3">
     <div>
       <h1 class="app-title text-dark mb-0 fs-4">Sincronización</h1>
-      <small class="text-muted">Sincronización Offline y Estado de Red</small>
+      <small class="text-muted">Datos asignados y cambios pendientes</small>
     </div>
     <div class="d-flex align-items-center gap-2">
-      @if (networkService.isOnline()) {
-        <span class="online-status-chip"> <span class="online-dot-pulse"></span> ONLINE </span>
-      } @else {
-        <span class="badge bg-secondary font-mono">
-          <i class="bi bi-wifi-off me-1"></i> OFFLINE
-        </span>
-      }
       <button
         class="btn-auto-sync"
         [class.active]="syncService.autoSyncEnabled()"

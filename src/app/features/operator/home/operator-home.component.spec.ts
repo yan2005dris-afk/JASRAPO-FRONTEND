@@ -117,6 +117,12 @@ describe('OperatorHomeComponent', () => {
     expect(component.currentUser().nombre).toBe('Carlos Mendoza');
   });
 
+  it('does not repeat the connection indicator shown in the top bar', () => {
+    expect(
+      fixture.nativeElement.querySelector('.operator-profile-bar .online-status-chip'),
+    ).toBeNull();
+  });
+
   it('should identify the active hero route and compute radial progress', () => {
     const hero = component.heroActiveRoute();
     expect(hero).toBeTruthy();
