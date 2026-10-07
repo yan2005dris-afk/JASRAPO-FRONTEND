@@ -5,6 +5,7 @@ import { Observable, of, tap } from 'rxjs';
 import { ContractsApi } from '../../../data/contracts.api';
 import {
   IContract,
+  IContractProcedureData,
   IContractState,
   ICreateContractRequest,
   IUpdateContractRequest,
@@ -111,6 +112,38 @@ export class ServiceContractFormStateService {
 
   readonly form: FormGroup = this.fb.group(
     {
+      procedure: this.fb.group(
+        {
+          tramitadorEsTitular: [true as boolean | null],
+          tramitadorNombre: ['', Validators.maxLength(200)],
+          tramitadorIdentificacion: ['', Validators.maxLength(30)],
+          relacionTramitador: ['', Validators.maxLength(100)],
+          hasObservations: [false],
+          observacionesTramite: ['', Validators.maxLength(2000)],
+          hasOtherIssues: [false],
+          otrasNovedades: ['', Validators.maxLength(2000)],
+        },
+        {
+          validators: (group) => {
+            const value = group.value;
+            if (
+              value.tramitadorEsTitular === false &&
+              [
+                value.tramitadorNombre,
+                value.tramitadorIdentificacion,
+                value.relacionTramitador,
+              ].some((text) => !text?.trim())
+            )
+              return { representativeRequired: true };
+            if (
+              (value.hasObservations && !value.observacionesTramite?.trim()) ||
+              (value.hasOtherIssues && !value.otrasNovedades?.trim())
+            )
+              return { observationRequired: true };
+            return null;
+          },
+        },
+      ),
       direccionSuministro: ['', [Validators.required, Validators.maxLength(200)]],
       lecturaInicial: ['0', [Validators.required, Validators.pattern(/^\d{1,10}$/)]],
       estadoServicio: [''],
@@ -173,6 +206,17 @@ export class ServiceContractFormStateService {
         });
       }
     }
+
+    this.form.get('procedure')?.patchValue({
+      tramitadorEsTitular: contract.tramitadorEsTitular ?? null,
+      tramitadorNombre: contract.tramitadorNombre ?? '',
+      tramitadorIdentificacion: contract.tramitadorIdentificacion ?? '',
+      relacionTramitador: contract.relacionTramitador ?? '',
+      hasObservations: !!contract.observacionesTramite,
+      observacionesTramite: contract.observacionesTramite ?? '',
+      hasOtherIssues: !!contract.otrasNovedades,
+      otrasNovedades: contract.otrasNovedades ?? '',
+    });
   }
 
   isStepComplete(step: number): boolean {
@@ -190,6 +234,7 @@ export class ServiceContractFormStateService {
   nextStep(): boolean {
     this.stepAttempted.set(true);
     if (!this.isStepComplete(this.activeStep())) {
+      this.form.markAllAsTouched();
       return false;
     }
     this.activeStep.update((step) => Math.min(step + 1, this.steps.length - 1));
@@ -299,6 +344,7 @@ export class ServiceContractFormStateService {
       latControl?.touched ||
       lngControl?.dirty ||
       lngControl?.touched ||
+      this.stepAttempted() ||
       this.submitted();
 
     if (!isRelevant) {
@@ -318,7 +364,11 @@ export class ServiceContractFormStateService {
 
   isFieldInvalid(field: string): boolean {
     const control = this.form.get(field);
-    return !!control && control.invalid && (control.dirty || control.touched || this.submitted());
+    return (
+      !!control &&
+      control.invalid &&
+      (control.dirty || control.touched || this.stepAttempted() || this.submitted())
+    );
   }
 
   onLecturaInicialInput(event: Event): void {
@@ -332,6 +382,45 @@ export class ServiceContractFormStateService {
 
   getClientId(client: IClient): string | number | undefined {
     return client.clienteId ?? client.id ?? client.clientId ?? client._id;
+  }
+
+  procedurePayload(): IContractProcedureData {
+    const group = this.form.get('procedure');
+    if (!group) return {};
+    const value = group.value;
+    const original = this.contractToEdit();
+    if (
+      original &&
+      !group.dirty &&
+      original.tramitadorEsTitular == null &&
+      !original.observacionesTramite &&
+      !original.otrasNovedades
+    )
+      return {};
+    return {
+      ...(value.tramitadorEsTitular != null
+        ? { tramitadorEsTitular: value.tramitadorEsTitular }
+        : {}),
+      ...(value.tramitadorEsTitular === false
+        ? {
+            tramitadorNombre: value.tramitadorNombre?.trim() ?? '',
+            tramitadorIdentificacion: value.tramitadorIdentificacion?.trim() ?? '',
+            relacionTramitador: value.relacionTramitador?.trim() ?? '',
+          }
+        : {}),
+      ...(original || value.hasObservations
+        ? {
+            observacionesTramite: value.hasObservations
+              ? (value.observacionesTramite?.trim() ?? '')
+              : null,
+          }
+        : {}),
+      ...(original || value.hasOtherIssues
+        ? {
+            otrasNovedades: value.hasOtherIssues ? (value.otrasNovedades?.trim() ?? '') : null,
+          }
+        : {}),
+    };
   }
 
   buildCreatePayload(): ICreateContractRequest | null {
@@ -362,6 +451,7 @@ export class ServiceContractFormStateService {
 
     const value = this.form.getRawValue();
     return {
+      ...this.procedurePayload(),
       clienteId: String(clientId),
       categoriaTarifaId: String(tariff.categoriaTarifaId),
       medidorId: String(meter.medidorId),
@@ -404,6 +494,7 @@ export class ServiceContractFormStateService {
 
     const value = this.form.value;
     return {
+      ...this.procedurePayload(),
       ...(value.estadoServicio && value.estadoServicio !== getContractServiceState(contract)
         ? { estadoServicio: value.estadoServicio }
         : {}),

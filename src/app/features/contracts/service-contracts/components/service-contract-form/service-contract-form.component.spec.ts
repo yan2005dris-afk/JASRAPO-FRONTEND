@@ -296,6 +296,7 @@ describe('ServiceContractFormComponent', () => {
       direccionSuministro: 'Calle Nueva 789',
       comunidadId: '3',
       lecturaInicial: 0,
+      tramitadorEsTitular: true,
     });
     expect(mockContractsApi.createContract.mock.calls[0][0]).not.toHaveProperty('estado');
     expect(savedEmitSpy).toHaveBeenCalled();
@@ -626,6 +627,93 @@ describe('ServiceContractFormComponent', () => {
 
       expect(component.previewNumeroGuia()).toBe(
         '[SERIE_MEDIDOR]-[COMUNIDAD]-XXXXXX (secuencial al guardar)',
+      );
+    });
+  });
+
+  describe('procedure checklist and representative (SC-310)', () => {
+    it('requires representative details and hides them again when the owner performs the procedure', () => {
+      component.activeStep.set(2);
+      fixture.detectChanges();
+      component.form.get('procedure.tramitadorEsTitular')?.setValue(false);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('#procedure-name')).toBeTruthy();
+      expect(component.form.get('procedure')?.hasError('representativeRequired')).toBe(true);
+      component.form.get('procedure')?.patchValue({
+        tramitadorNombre: 'Ana',
+        tramitadorIdentificacion: 'ABC',
+        relacionTramitador: 'Familiar',
+      });
+      expect(component.form.get('procedure')?.valid).toBe(true);
+      component.form.get('procedure.tramitadorEsTitular')?.setValue(true);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('#procedure-name')).toBeNull();
+      expect(component.form.get('procedure')?.valid).toBe(true);
+    });
+
+    it('clears representative fields when switching back to titular via selection cards', () => {
+      component.activeStep.set(2);
+      fixture.detectChanges();
+
+      const ownerNoInput = fixture.nativeElement.querySelector(
+        '#procedure-owner-no',
+      ) as HTMLInputElement;
+      const ownerYesInput = fixture.nativeElement.querySelector(
+        '#procedure-owner-yes',
+      ) as HTMLInputElement;
+
+      ownerNoInput.checked = true;
+      ownerNoInput.dispatchEvent(new Event('change', { bubbles: true }));
+      fixture.detectChanges();
+
+      component.form.get('procedure')?.patchValue({
+        tramitadorNombre: 'Carlos Gomez',
+        tramitadorIdentificacion: '0987654321',
+        relacionTramitador: 'Hermano',
+      });
+      expect(component.form.get('procedure.tramitadorNombre')?.value).toBe('Carlos Gomez');
+
+      ownerYesInput.checked = true;
+      ownerYesInput.dispatchEvent(new Event('change', { bubbles: true }));
+      fixture.detectChanges();
+
+      expect(component.form.get('procedure.tramitadorEsTitular')?.value).toBe(true);
+      expect(component.form.get('procedure.tramitadorNombre')?.value).toBe('');
+      expect(component.form.get('procedure.tramitadorIdentificacion')?.value).toBe('');
+      expect(component.form.get('procedure.relacionTramitador')?.value).toBe('');
+      expect(component.form.get('procedure')?.valid).toBe(true);
+    });
+
+    it('requires Other details only when selected and clears stored notes when unchecked', () => {
+      fixture.componentRef.setInput('contractToEdit', {
+        ...mockContract,
+        tramitadorEsTitular: false,
+        tramitadorNombre: 'Ana',
+        tramitadorIdentificacion: 'ABC',
+        relacionTramitador: 'Familiar',
+        otrasNovedades: 'Original',
+        registradoPorId: 7,
+      });
+      component.activeStep.set(2);
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('#procedure-other-notes')).toBeTruthy();
+      component.form.get('procedure.otrasNovedades')?.setValue('  ');
+      expect(component.form.get('procedure')?.hasError('observationRequired')).toBe(true);
+      const otherCheckbox = fixture.nativeElement.querySelector(
+        '#procedure-other',
+      ) as HTMLInputElement;
+      otherCheckbox.checked = false;
+      otherCheckbox.dispatchEvent(new Event('change', { bubbles: true }));
+      fixture.detectChanges();
+      expect(fixture.nativeElement.querySelector('#procedure-other-notes')).toBeNull();
+      mockContractsApi.updateContract.mockReturnValue(of(mockContract));
+      component.save();
+      expect(mockContractsApi.updateContract).toHaveBeenCalledWith(
+        '10',
+        expect.objectContaining({ tramitadorNombre: 'Ana', otrasNovedades: null }),
+      );
+      expect(mockContractsApi.updateContract.mock.calls[0][1]).not.toHaveProperty(
+        'registradoPorId',
       );
     });
   });
