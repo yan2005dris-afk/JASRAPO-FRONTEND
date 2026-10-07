@@ -4,7 +4,6 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import type {
   OperatorRouteResponse,
-  ReadingWithAnomaly,
   OperatorActivityType,
   OperatorNovelty,
 } from '../models/operator.models';
@@ -37,11 +36,6 @@ export class OperatorService {
     dto: { estado: string; observacion?: string },
   ): Observable<unknown> {
     return this.http.patch<unknown>(`${this.endpoint}/routes/${rutaId}/state`, dto);
-  }
-
-  /** GET /api/v1/operator/readings/anomalies — Lecturas con anomalías pendientes */
-  getReadingsWithAnomalies(): Observable<ReadingWithAnomaly[]> {
-    return this.http.get<ReadingWithAnomaly[]>(`${this.endpoint}/readings/anomalies`);
   }
 
   getNovelties(page = 1, limit = 100): Observable<{ data: OperatorNovelty[]; total: number }> {

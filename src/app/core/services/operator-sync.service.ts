@@ -15,7 +15,6 @@ import {
 import {
   MANIFEST_PROTOCOL_VERSION,
   type OperatorManifestPage,
-  type ReadingWithAnomaly,
 } from '../../features/operator/models/operator.models';
 
 type PayloadValue = string | number | boolean | Blob | null | undefined;
@@ -1152,11 +1151,15 @@ export class OperatorSyncService {
    */
   private async cacheNovedadesForOffline(scope: string): Promise<void> {
     try {
-      const anomalies = await firstValueFrom(
-        this.http.get<ReadingWithAnomaly[]>(`${this.OPERATOR_API}/readings/anomalies`, {
-          withCredentials: true,
-        }),
+      const response = await firstValueFrom(
+        this.http.get<{ data: Record<string, unknown>[] } | Record<string, unknown>[]>(
+          `${this.OPERATOR_API}/novelties`,
+          {
+            withCredentials: true,
+          },
+        ),
       );
+      const anomalies = Array.isArray(response) ? response : (response?.data ?? []);
       await this.dbService.saveNovedadesCache(scope, anomalies);
     } catch (error) {
       console.warn('No se pudo guardar el caché offline de novedades:', error);

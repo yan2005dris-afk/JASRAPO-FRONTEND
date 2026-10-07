@@ -86,21 +86,6 @@ export interface RoutePoint {
   clienteNombre: string;
 }
 
-export interface AnomaliaItem {
-  tipo: string;
-  observacion: string;
-  estado: string;
-}
-
-export interface ReadingWithAnomaly {
-  lecturaId: string | null;
-  medidorId: string | null;
-  medidorSerie: string;
-  fecha: string;
-  estado: string;
-  anomalias: AnomaliaItem[];
-}
-
 export interface OperatorNovelty {
   novedadId: string;
   ordenTrabajoId: string;
