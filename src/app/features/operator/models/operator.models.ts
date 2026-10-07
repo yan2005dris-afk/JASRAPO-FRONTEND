@@ -111,6 +111,10 @@ export interface OperatorNovelty {
   numeroGuia: string;
   clienteNombre: string;
   direccionSuministro: string;
+  comunidadId: number | null;
+  comunidadNombre: string | null;
+  sectorId: number | null;
+  sectorNombre: string | null;
   tipo: string;
   observacion: string | null;
   estado: string;

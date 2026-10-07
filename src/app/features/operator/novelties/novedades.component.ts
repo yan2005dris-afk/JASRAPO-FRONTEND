@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -17,6 +17,17 @@ interface AnomalyWithMeter extends OperatorNovelty {
   meterDto: IMeterDto | null;
   isPending: boolean;
   localId?: number;
+}
+
+interface NoveltyZoneGroup {
+  /** comunidadId as string, or 'NONE' for unknowns */
+  id: string;
+  label: string;
+  sectorGroups: {
+    id: string;
+    label: string | null;
+    items: AnomalyWithMeter[];
+  }[];
 }
 
 @Component({
@@ -39,6 +50,36 @@ export class NovedadesComponent implements OnInit {
   readonly isOffline = signal<boolean>(false);
   readonly cachedAt = signal<string | null>(null);
   readonly isStale = signal<boolean>(false);
+
+  /** Groups anomalies by comunidad → sector, matching the rutas grouping pattern. */
+  readonly noveltyZoneGroups = computed<NoveltyZoneGroup[]>(() => {
+    const items = this.anomalies();
+    if (items.length === 0) return [];
+
+    const comMap = new Map<string, NoveltyZoneGroup>();
+
+    for (const item of items) {
+      const comId = item.comunidadId != null ? String(item.comunidadId) : 'NONE';
+      const comLabel = item.comunidadNombre ?? 'Sin comunidad';
+
+      if (!comMap.has(comId)) {
+        comMap.set(comId, { id: comId, label: comLabel, sectorGroups: [] });
+      }
+      const comGroup = comMap.get(comId)!;
+
+      const secId = item.sectorId != null ? String(item.sectorId) : 'NONE';
+      const secLabel = item.sectorNombre ?? null;
+
+      let secGroup = comGroup.sectorGroups.find((s) => s.id === secId);
+      if (!secGroup) {
+        secGroup = { id: secId, label: secLabel, items: [] };
+        comGroup.sectorGroups.push(secGroup);
+      }
+      secGroup.items.push(item);
+    }
+
+    return [...comMap.values()];
+  });
 
   ngOnInit(): void {
     if (this.networkService.isOnline()) {
@@ -91,6 +132,10 @@ export class NovedadesComponent implements OnInit {
       numeroGuia: '',
       clienteNombre: meterDto?.clienteNombre ?? '',
       direccionSuministro: meterDto?.direccionSuministro ?? '',
+      comunidadId: null,
+      comunidadNombre: null,
+      sectorId: null,
+      sectorNombre: null,
       tipo: String(pending['tipo'] ?? 'OTRO'),
       observacion: String(pending['observacion'] ?? ''),
       estado: String(pending.syncState ?? 'PENDIENTE_SYNC'),

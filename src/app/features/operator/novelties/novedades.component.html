@@ -37,66 +37,84 @@
       <p>Sin novedades registradas.</p>
     </div>
   } @else {
-    <div class="anomaly-groups">
-      @for (item of anomalies(); track item.novedadId || 'local-' + item.localId; let i = $index) {
-        @let prevOrderId = i > 0 ? anomalies()[i - 1].ordenTrabajoId : null;
-        @if (item.ordenTrabajoId !== prevOrderId) {
-          <div class="order-group-header">
-            <div class="order-group-label">
-              <span class="order-group-icon">
-                <i class="bi bi-clipboard2-check-fill"></i>
-              </span>
-              <span class="order-group-title">Orden de Trabajo</span>
-              <span class="order-group-id">#{{ item.ordenTrabajoId }}</span>
+    <div class="zone-list">
+      @for (comGroup of noveltyZoneGroups(); track comGroup.id) {
+        <section class="zone-section" [attr.aria-label]="'Novedades de ' + comGroup.label">
+          <!-- Comunidad heading -->
+          <div class="zone-heading">
+            <div class="zone-heading-left">
+              <span class="zone-kicker">COMUNIDAD</span>
+              <h2 class="zone-name">{{ comGroup.label }}</h2>
             </div>
-            <div class="order-group-line"></div>
+            <span class="zone-count">
+              {{ comGroup.sectorGroups.length > 1 ? comGroup.sectorGroups.length + ' sectores' : '' }}
+            </span>
           </div>
-        }
 
-        <div class="anomaly-card">
-          @if (item.meterDto) {
-            <app-meter-card [meter]="item.meterDto" [showArrow]="false" />
-          } @else {
-            <div class="meter-fallback">
-              <i class="bi bi-speedometer2"></i>
-              <span>Serie: {{ item.medidorSerie }}</span>
+          @for (secGroup of comGroup.sectorGroups; track secGroup.id) {
+            <!-- Sector sub-heading (only when there is a named sector) -->
+            @if (secGroup.label) {
+              <div class="sector-heading">
+                <span class="sector-kicker">SECTOR</span>
+                <h3 class="sector-name">{{ secGroup.label }}</h3>
+                <span class="sector-count">
+                  {{ secGroup.items.length }} {{ secGroup.items.length === 1 ? 'novedad' : 'novedades' }}
+                </span>
+              </div>
+            }
+
+            <!-- Cards grid for this sector -->
+            <div class="anomaly-list">
+              @for (item of secGroup.items; track item.novedadId || 'local-' + item.localId) {
+                <div class="anomaly-card">
+                  @if (item.meterDto) {
+                    <app-meter-card [meter]="item.meterDto" [showArrow]="false" />
+                  } @else {
+                    <div class="meter-fallback">
+                      <i class="bi bi-speedometer2"></i>
+                      <span>Serie: {{ item.medidorSerie }}</span>
+                    </div>
+                  }
+
+                  <div class="anomaly-footer">
+                    <span class="anomaly-fecha">
+                      <i class="bi bi-calendar3"></i>
+                      {{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}
+                    </span>
+                    <span class="anomaly-estado estado-{{ item.estado.toLowerCase() }}">
+                      {{ item.estado }}
+                    </span>
+                    @if (item.isPending) {
+                      <span class="anomaly-chip pending-sync">
+                        <i class="bi bi-cloud-slash"></i>
+                        Pendiente de sync
+                      </span>
+                    }
+                  </div>
+
+                  <div class="anomaly-chips">
+                    <span class="anomaly-chip">
+                      <i class="bi bi-exclamation-triangle-fill"></i>
+                      {{ item.tipo }}
+                    </span>
+                    <span class="anomaly-order">OT #{{ item.ordenTrabajoId }}</span>
+                  </div>
+                  @if (item.observacion) {
+                    <p class="anomaly-observation">{{ item.observacion }}</p>
+                  }
+
+                  <div class="anomaly-actions">
+                    @if (item.novedadId && !isOffline()) {
+                      <button class="btn-edit" type="button" (click)="editNovedad(item)">
+                        <i class="bi bi-pencil-fill"></i> Editar
+                      </button>
+                    }
+                  </div>
+                </div>
+              }
             </div>
           }
-
-          <div class="anomaly-footer">
-            <span class="anomaly-fecha">
-              <i class="bi bi-calendar3"></i>
-              {{ item.createdAt | date: 'dd/MM/yyyy HH:mm' }}
-            </span>
-            <span class="anomaly-estado estado-{{ item.estado.toLowerCase() }}">
-              {{ item.estado }}
-            </span>
-            @if (item.isPending) {
-              <span class="anomaly-chip pending-sync">
-                <i class="bi bi-cloud-slash"></i>
-                Pendiente de sync
-              </span>
-            }
-          </div>
-
-          <div class="anomaly-chips">
-            <span class="anomaly-chip">
-              <i class="bi bi-exclamation-triangle-fill"></i>
-              {{ item.tipo }}
-            </span>
-          </div>
-          @if (item.observacion) {
-            <p class="anomaly-observation">{{ item.observacion }}</p>
-          }
-
-          <div class="anomaly-actions">
-            @if (item.novedadId && !isOffline()) {
-              <button class="btn-edit" type="button" (click)="editNovedad(item)">
-                <i class="bi bi-pencil-fill"></i> Editar
-              </button>
-            }
-          </div>
-        </div>
+        </section>
       }
     </div>
   }
