@@ -651,6 +651,39 @@ describe('ServiceContractFormComponent', () => {
       expect(component.form.get('procedure')?.valid).toBe(true);
     });
 
+    it('clears representative fields when switching back to titular via selection cards', () => {
+      component.activeStep.set(2);
+      fixture.detectChanges();
+
+      const ownerNoInput = fixture.nativeElement.querySelector(
+        '#procedure-owner-no',
+      ) as HTMLInputElement;
+      const ownerYesInput = fixture.nativeElement.querySelector(
+        '#procedure-owner-yes',
+      ) as HTMLInputElement;
+
+      ownerNoInput.checked = true;
+      ownerNoInput.dispatchEvent(new Event('change', { bubbles: true }));
+      fixture.detectChanges();
+
+      component.form.get('procedure')?.patchValue({
+        tramitadorNombre: 'Carlos Gomez',
+        tramitadorIdentificacion: '0987654321',
+        relacionTramitador: 'Hermano',
+      });
+      expect(component.form.get('procedure.tramitadorNombre')?.value).toBe('Carlos Gomez');
+
+      ownerYesInput.checked = true;
+      ownerYesInput.dispatchEvent(new Event('change', { bubbles: true }));
+      fixture.detectChanges();
+
+      expect(component.form.get('procedure.tramitadorEsTitular')?.value).toBe(true);
+      expect(component.form.get('procedure.tramitadorNombre')?.value).toBe('');
+      expect(component.form.get('procedure.tramitadorIdentificacion')?.value).toBe('');
+      expect(component.form.get('procedure.relacionTramitador')?.value).toBe('');
+      expect(component.form.get('procedure')?.valid).toBe(true);
+    });
+
     it('requires Other details only when selected and clears stored notes when unchecked', () => {
       fixture.componentRef.setInput('contractToEdit', {
         ...mockContract,

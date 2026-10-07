@@ -147,6 +147,7 @@
                 class="visually-hidden"
                 [value]="true"
                 formControlName="tramitadorEsTitular"
+                (change)="setTramitadorEsTitular(true)"
               />
               <span class="selection-icon">
                 <i class="bi bi-person-check-fill"></i>
@@ -177,6 +178,7 @@
                 class="visually-hidden"
                 [value]="false"
                 formControlName="tramitadorEsTitular"
+                (change)="setTramitadorEsTitular(false)"
               />
               <span class="selection-icon">
                 <i class="bi bi-person-badge"></i>
@@ -216,7 +218,6 @@
                 formControlName="tramitadorNombre"
                 placeholder="Nombre y apellido"
                 maxlength="200"
-                required
                 [class.is-invalid]="isProcedureControlInvalid('tramitadorNombre')"
               />
               @if (isProcedureControlInvalid('tramitadorNombre')) {
@@ -234,7 +235,6 @@
                 formControlName="tramitadorIdentificacion"
                 placeholder="Cédula / RUC / Pasaporte"
                 maxlength="30"
-                required
                 [class.is-invalid]="isProcedureControlInvalid('tramitadorIdentificacion')"
               />
               @if (isProcedureControlInvalid('tramitadorIdentificacion')) {
@@ -252,7 +252,6 @@
                 formControlName="relacionTramitador"
                 placeholder="Ej. Familiar, Arrendatario"
                 maxlength="100"
-                required
                 [class.is-invalid]="isProcedureControlInvalid('relacionTramitador')"
               />
               @if (isProcedureControlInvalid('relacionTramitador')) {

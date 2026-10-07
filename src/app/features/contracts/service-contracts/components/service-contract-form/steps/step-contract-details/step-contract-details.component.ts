@@ -37,6 +37,27 @@ export class StepContractDetailsComponent {
     this.coordinatesChange.emit(coords);
   }
 
+  setTramitadorEsTitular(isTitular: boolean): void {
+    const procedureGroup = this.form().get('procedure') as FormGroup;
+    if (!procedureGroup) return;
+
+    if (isTitular) {
+      procedureGroup.patchValue({
+        tramitadorEsTitular: true,
+        tramitadorNombre: '',
+        tramitadorIdentificacion: '',
+        relacionTramitador: '',
+      });
+      procedureGroup.get('tramitadorNombre')?.markAsUntouched();
+      procedureGroup.get('tramitadorIdentificacion')?.markAsUntouched();
+      procedureGroup.get('relacionTramitador')?.markAsUntouched();
+    } else {
+      procedureGroup.patchValue({
+        tramitadorEsTitular: false,
+      });
+    }
+  }
+
   isProcedureControlInvalid(controlName: string): boolean {
     const control = this.form().get(`procedure.${controlName}`);
     return (
