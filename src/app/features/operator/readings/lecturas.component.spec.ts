@@ -124,6 +124,7 @@ describe('LecturasComponent State Machine', () => {
       clienteNombre: `Cliente ${index + 1}`,
     }));
     component.metersList.set(meters);
+    component.routeSyntheticMeters.set([]);
     fixture.detectChanges();
 
     expect(component.orderCounts().total).toBe(25);
@@ -153,6 +154,7 @@ describe('LecturasComponent State Machine', () => {
         clienteNombre: `Cliente ${index + 1}`,
       })),
     );
+    component.routeSyntheticMeters.set([]);
     component.completedWorkOrderIds.set(new Set(['1', '2', '3']));
     fixture.detectChanges();
 
@@ -179,6 +181,7 @@ describe('LecturasComponent State Machine', () => {
         serie: `SER-${index + 1}`,
       })),
     );
+    component.routeSyntheticMeters.set([]);
     fixture.detectChanges();
     component.goToOrderPage(3);
     expect(component.currentOrderPage()).toBe(3);
