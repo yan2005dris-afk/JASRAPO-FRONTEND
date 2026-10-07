@@ -33,27 +33,33 @@ const novelty: OperatorNovelty = {
 };
 
 describe('NovedadesComponent', () => {
-  async function setup(options: {
-    online?: boolean;
-    results?: OperatorNovelty[];
-    cached?: OperatorNovelty[] | null;
-    savedAt?: string;
-    pending?: object[];
-    failOnline?: boolean;
-  } = {}) {
+  async function setup(
+    options: {
+      online?: boolean;
+      results?: OperatorNovelty[];
+      cached?: OperatorNovelty[] | null;
+      savedAt?: string;
+      pending?: object[];
+      failOnline?: boolean;
+    } = {},
+  ) {
     const operator = {
-      getNovelties: vi.fn().mockReturnValue(
-        options.failOnline
-          ? throwError(() => new Error('network'))
-          : of({ data: options.results ?? [], total: (options.results ?? []).length }),
-      ),
+      getNovelties: vi
+        .fn()
+        .mockReturnValue(
+          options.failOnline
+            ? throwError(() => new Error('network'))
+            : of({ data: options.results ?? [], total: (options.results ?? []).length }),
+        ),
     };
     const db = {
-      getOperatorNoveltiesCache: vi.fn().mockResolvedValue(
-        options.cached == null
-          ? null
-          : { items: options.cached, savedAt: options.savedAt ?? new Date().toISOString() },
-      ),
+      getOperatorNoveltiesCache: vi
+        .fn()
+        .mockResolvedValue(
+          options.cached == null
+            ? null
+            : { items: options.cached, savedAt: options.savedAt ?? new Date().toISOString() },
+        ),
       saveOperatorNoveltiesCache: vi.fn().mockResolvedValue(undefined),
       getPendingAnomalies: vi.fn().mockResolvedValue(options.pending ?? []),
     };
@@ -118,8 +124,24 @@ describe('NovedadesComponent', () => {
     const { component } = await setup({
       results: [novelty],
       pending: [
-        { id: 1, ordenTrabajoId: '45', medidorId: '6', serie: 'SER-6', tipo: 'OTRO', observacion: 'Primera', syncState: 'PENDIENTE_SYNC' },
-        { id: 2, ordenTrabajoId: '45', medidorId: '6', serie: 'SER-6', tipo: 'FUGA', observacion: 'Segunda', syncState: 'PENDIENTE_SYNC' },
+        {
+          id: 1,
+          ordenTrabajoId: '45',
+          medidorId: '6',
+          serie: 'SER-6',
+          tipo: 'OTRO',
+          observacion: 'Primera',
+          syncState: 'PENDIENTE_SYNC',
+        },
+        {
+          id: 2,
+          ordenTrabajoId: '45',
+          medidorId: '6',
+          serie: 'SER-6',
+          tipo: 'FUGA',
+          observacion: 'Segunda',
+          syncState: 'PENDIENTE_SYNC',
+        },
       ],
     });
     await vi.waitFor(() => expect(component.anomalies()).toHaveLength(3));
@@ -149,7 +171,9 @@ describe('NovedadesComponent', () => {
   it('shows queued novelties without a server reading and never offers Edit for them', async () => {
     const { component, fixture } = await setup({
       online: false,
-      pending: [{ id: 3, ordenTrabajoId: '45', medidorId: '6', tipo: 'FUGA', observacion: 'Pendiente' }],
+      pending: [
+        { id: 3, ordenTrabajoId: '45', medidorId: '6', tipo: 'FUGA', observacion: 'Pendiente' },
+      ],
     });
     expect(component.anomalies()).toHaveLength(1);
     expect(component.anomalies()[0].lecturaId).toBeNull();

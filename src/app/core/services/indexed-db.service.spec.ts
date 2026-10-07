@@ -514,9 +514,7 @@ describe('IndexedDbService - Multi-operator Snapshot Isolation', () => {
     expect((await service.getOperatorNoveltiesCache<typeof item>('operator:1'))?.items).toEqual([
       item,
     ]);
-    expect((await service.getOperatorNoveltiesCache<typeof item>('operator:2'))?.items).toEqual(
-      [],
-    );
+    expect((await service.getOperatorNoveltiesCache<typeof item>('operator:2'))?.items).toEqual([]);
     expect(await service.getOperatorNoveltiesCache('operator:3')).toBeNull();
   });
 });
