@@ -86,7 +86,6 @@ export interface RoutePoint {
   clienteNombre: string;
 }
 
-
 export interface OperatorNovelty {
   novedadId: string;
   ordenTrabajoId: string;

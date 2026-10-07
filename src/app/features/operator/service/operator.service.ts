@@ -38,7 +38,6 @@ export class OperatorService {
     return this.http.patch<unknown>(`${this.endpoint}/routes/${rutaId}/state`, dto);
   }
 
-
   getNovelties(page = 1, limit = 100): Observable<{ data: OperatorNovelty[]; total: number }> {
     return this.http.get<{ data: OperatorNovelty[]; total: number }>(`${this.endpoint}/novelties`, {
       params: new HttpParams().set('page', page).set('limit', limit),
