@@ -623,6 +623,9 @@ export class RutasComponent implements OnInit, OnDestroy {
         if (sId) idToEstado.set(sId.toString(), sEstado);
         const sSerie = s['medidorSerie'] || s['serie'];
         if (sSerie) statusMap.set(String(sSerie), sEstado);
+        if (s['numeroGuia'] || s['numeroContrato']) {
+          statusMap.set(String(s['numeroGuia'] || s['numeroContrato']), sEstado);
+        }
         if (s['ordenTrabajoId']) {
           statusMap.set(String(s['ordenTrabajoId']), sEstado);
           statusMap.set(`OT-${s['ordenTrabajoId']}`, sEstado);
@@ -634,6 +637,8 @@ export class RutasComponent implements OnInit, OnDestroy {
         if (mId) idToEstado.set(mId.toString(), r.estado);
         const s = r.medidor?.serie ?? r.medidorSerie;
         if (s) statusMap.set(String(s), r.estado);
+        const guia = r.contrato?.numeroGuia ?? (r as unknown as Record<string, unknown>)['numeroGuia'] ?? (r as unknown as Record<string, unknown>)['numeroContrato'];
+        if (guia) statusMap.set(String(guia), r.estado);
         const otId = (r as unknown as Record<string, unknown>)['ordenTrabajoId'];
         if (otId != null && otId !== '') {
           statusMap.set(String(otId), r.estado);
@@ -647,6 +652,9 @@ export class RutasComponent implements OnInit, OnDestroy {
         if (pId) idToEstado.set(pId.toString(), pEstado);
         const pSerie = p['medidorSerie'] || p['serie'];
         if (pSerie) statusMap.set(String(pSerie), pEstado);
+        if (p['numeroGuia'] || p['numeroContrato']) {
+          statusMap.set(String(p['numeroGuia'] || p['numeroContrato']), pEstado);
+        }
         if (p['ordenTrabajoId']) {
           statusMap.set(String(p['ordenTrabajoId']), pEstado);
           statusMap.set(`OT-${p['ordenTrabajoId']}`, pEstado);
@@ -920,6 +928,8 @@ export class RutasComponent implements OnInit, OnDestroy {
         const st =
           statusMap.get(serie) ||
           statusMap.get(o.medidor?.serie ?? '') ||
+          (o.contrato?.numeroGuia ? statusMap.get(String(o.contrato.numeroGuia)) : null) ||
+          (o.contrato?.numeroContrato ? statusMap.get(String(o.contrato.numeroContrato)) : null) ||
           (o.ordenTrabajoId ? statusMap.get(String(o.ordenTrabajoId)) : null) ||
           (o.medidor?.medidorId ? statusMap.get(String(o.medidor.medidorId)) : null) ||
           o.estado;

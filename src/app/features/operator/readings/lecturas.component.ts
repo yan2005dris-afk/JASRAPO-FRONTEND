@@ -160,6 +160,9 @@ export class LecturasComponent implements OnInit {
       if (s['contratoId']) {
         map.set(String(s['contratoId']), record as ReadingRecord);
       }
+      if (s['numeroGuia'] || s['numeroContrato']) {
+        map.set(String(s['numeroGuia'] || s['numeroContrato']), record as ReadingRecord);
+      }
       if (s['ordenTrabajoId']) {
         map.set(String(s['ordenTrabajoId']), record as ReadingRecord);
         map.set(`OT-${s['ordenTrabajoId']}`, record as ReadingRecord);
@@ -173,7 +176,9 @@ export class LecturasComponent implements OnInit {
       const merged = { ...prev, ...r } as ReadingRecord;
       if (mId != null) map.set(mId.toString(), merged);
       if (r.medidor?.serie) map.set(r.medidor.serie, merged);
-      if (r.contratoId) map.set(r.contratoId.toString(), merged);
+      const cObj = (r as Record<string, unknown>)['contrato'] as { numeroGuia?: string } | undefined;
+      const guia = cObj?.numeroGuia ?? (r as Record<string, unknown>)['numeroGuia'] ?? (r as Record<string, unknown>)['numeroContrato'];
+      if (guia) map.set(String(guia), merged);
       const otId = (r as Record<string, unknown>)['ordenTrabajoId'];
       if (otId != null && otId !== '') {
         map.set(String(otId), merged);
@@ -197,6 +202,9 @@ export class LecturasComponent implements OnInit {
       }
       if (p['contratoId']) {
         map.set(String(p['contratoId']), record as ReadingRecord);
+      }
+      if (p['numeroGuia'] || p['numeroContrato']) {
+        map.set(String(p['numeroGuia'] || p['numeroContrato']), record as ReadingRecord);
       }
       if (p['ordenTrabajoId']) {
         map.set(String(p['ordenTrabajoId']), record as ReadingRecord);
@@ -348,6 +356,9 @@ export class LecturasComponent implements OnInit {
     if (meter.contratoId && map.get(meter.contratoId.toString())) {
       return map.get(meter.contratoId.toString());
     }
+    if (meter.numeroGuia && map.get(meter.numeroGuia)) {
+      return map.get(meter.numeroGuia);
+    }
     const assignments = this.workOrdersByMeter().get(meter.serie);
     if (assignments) {
       for (const wo of assignments.values()) {
@@ -369,8 +380,10 @@ export class LecturasComponent implements OnInit {
     }
     if (this.completedWorkOrderIds().has(meter.medidorId.toString())) return true;
     if (this.completedWorkOrderIds().has(meter.serie)) return true;
+    if (meter.numeroGuia && this.completedWorkOrderIds().has(meter.numeroGuia)) return true;
     if (this.readMetersIds().has(meter.medidorId.toString())) return true;
     if (this.readMetersIds().has(meter.serie)) return true;
+    if (meter.numeroGuia && this.readMetersIds().has(meter.numeroGuia)) return true;
 
     // Si todas las órdenes de trabajo asignadas a este medidor están en COMPLETADA
     const assignments = this.workOrdersByMeter().get(meter.serie);
@@ -390,8 +403,10 @@ export class LecturasComponent implements OnInit {
       const isDone =
         this.completedWorkOrderIds().has(meter.medidorId.toString()) ||
         this.completedWorkOrderIds().has(meter.serie) ||
+        (!!meter.numeroGuia && this.completedWorkOrderIds().has(meter.numeroGuia)) ||
         this.readMetersIds().has(meter.medidorId.toString()) ||
-        this.readMetersIds().has(meter.serie);
+        this.readMetersIds().has(meter.serie) ||
+        (!!meter.numeroGuia && this.readMetersIds().has(meter.numeroGuia));
       if (isDone) {
         return { label: 'Completada', cssClass: 'badge-completada', icon: 'bi-check-circle-fill' };
       }

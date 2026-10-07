@@ -25,6 +25,7 @@ export interface OperatorUserInfo {
 
 export interface OperatorWorkOrderContract {
   numeroContrato: string;
+  numeroGuia?: string;
   clienteNombre: string;
   direccion: string;
   latitud?: number;
