@@ -405,15 +405,13 @@ export class ServiceContractFormStateService {
       ...(original || value.hasObservations
         ? {
             observacionesTramite: value.hasObservations
-              ? value.observacionesTramite?.trim() ?? ''
+              ? (value.observacionesTramite?.trim() ?? '')
               : null,
           }
         : {}),
       ...(original || value.hasOtherIssues
         ? {
-            otrasNovedades: value.hasOtherIssues
-              ? value.otrasNovedades?.trim() ?? ''
-              : null,
+            otrasNovedades: value.hasOtherIssues ? (value.otrasNovedades?.trim() ?? '') : null,
           }
         : {}),
     };
