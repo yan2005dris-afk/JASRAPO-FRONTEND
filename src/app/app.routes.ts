@@ -63,13 +63,13 @@ export const routes: Routes = [
         path: 'rutas',
         data: { breadcrumb: 'Rutas' },
         loadComponent: () =>
-          import('./features/operator/rutas/rutas.component').then((m) => m.RutasComponent),
+          import('./features/operator/rutas/pages/rutas.component').then((m) => m.RutasComponent),
       },
       {
         path: 'lecturas',
         data: { breadcrumb: 'Lecturas' },
         loadComponent: () =>
-          import('./features/operator/readings/lecturas.component').then(
+          import('./features/operator/readings/pages/lecturas.component').then(
             (m) => m.LecturasComponent,
           ),
       },
@@ -81,7 +81,7 @@ export const routes: Routes = [
             path: '',
             pathMatch: 'full',
             loadComponent: () =>
-              import('./features/operator/novelties/novedades.component').then(
+              import('./features/operator/novelties/pages/novedades.component').then(
                 (m) => m.NovedadesComponent,
               ),
           },
@@ -89,7 +89,7 @@ export const routes: Routes = [
             path: 'new',
             data: { breadcrumb: 'Nueva Novedad' },
             loadComponent: () =>
-              import('./features/operator/novelties/novedades-form/novedades-form.component').then(
+              import('./features/operator/novelties/pages/novedades-form/novedades-form.component').then(
                 (m) => m.NovedadesFormComponent,
               ),
           },
@@ -97,7 +97,7 @@ export const routes: Routes = [
             path: ':id/edit',
             data: { breadcrumb: 'Editar Novedad' },
             loadComponent: () =>
-              import('./features/operator/novelties/novedades-form/novedades-form.component').then(
+              import('./features/operator/novelties/pages/novedades-form/novedades-form.component').then(
                 (m) => m.NovedadesFormComponent,
               ),
           },
@@ -107,7 +107,7 @@ export const routes: Routes = [
         path: 'sincronizar',
         data: { breadcrumb: 'Sincronizar' },
         loadComponent: () =>
-          import('./features/operator/sync-queue/sincronizar.component').then(
+          import('./features/operator/sync-queue/pages/sincronizar.component').then(
             (m) => m.SincronizarComponent,
           ),
       },

@@ -15,14 +15,23 @@ import {
 import {
   MANIFEST_PROTOCOL_VERSION,
   type OperatorManifestPage,
-} from '../../features/operator/models/operator.models';
+} from '../../features/operator/rutas/domain/operator.models';
 
 type PayloadValue = string | number | boolean | Blob | null | undefined;
 type WorkOrderDtoField =
-  'estado' | 'resultadoObservacion' | 'completadoEn' | 'latitud' | 'longitud';
+  | 'estado'
+  | 'resultadoObservacion'
+  | 'completadoEn'
+  | 'latitud'
+  | 'longitud'
+  | 'lecturaActual'
+  | 'lecturaAnterior'
+  | 'descripcionAnomalia'
+  | 'fechaLectura';
 type WorkOrderDtoPayload = Partial<Record<WorkOrderDtoField, PayloadValue>>;
 export interface ReadingSubmission {
   _lecturaId?: string | number;
+  ordenTrabajoId?: string | number;
   fotoBlob?: Blob | null;
   [key: string]: PayloadValue;
 }
@@ -159,6 +168,10 @@ export class OperatorSyncService {
       'completadoEn',
       'latitud',
       'longitud',
+      'lecturaActual',
+      'lecturaAnterior',
+      'descripcionAnomalia',
+      'fechaLectura',
     ];
 
     for (const field of acceptedFields) {
@@ -193,12 +206,19 @@ export class OperatorSyncService {
       'lecturaActual',
       'descripcionAnomalia',
       'lecturaInicial',
+      'latitud',
+      'longitud',
     ];
 
     for (const field of acceptedFields) {
       const value = reading[field];
       if (value !== null && value !== undefined && value !== '') {
-        if (field === 'lecturaAnterior' || field === 'lecturaActual') {
+        if (
+          field === 'lecturaAnterior' ||
+          field === 'lecturaActual' ||
+          field === 'latitud' ||
+          field === 'longitud'
+        ) {
           payload[field] = Number(value);
         } else if (field === 'lecturaInicial') {
           payload[field] = Boolean(value);
@@ -315,11 +335,14 @@ export class OperatorSyncService {
       }
     }
 
-    const hasId =
-      targetLecturaId !== null &&
-      targetLecturaId !== undefined &&
-      String(targetLecturaId).trim() !== '';
-    if (this.networkService.isOnline() && !hasId) {
+    const hasTarget =
+      (targetLecturaId !== null &&
+        targetLecturaId !== undefined &&
+        String(targetLecturaId).trim() !== '') ||
+      (payload.ordenTrabajoId !== null &&
+        payload.ordenTrabajoId !== undefined &&
+        String(payload.ordenTrabajoId).trim() !== '');
+    if (this.networkService.isOnline() && !hasTarget) {
       throw new Error(
         'No se puede enviar una lectura nueva en línea: el backend no expone un endpoint de creación.',
       );
@@ -344,13 +367,13 @@ export class OperatorSyncService {
         }
         this.appendPhoto(formData, preparedReading.fotoBlob);
 
-        const request$ = this.http.patch<unknown>(
-          `${this.OPERATOR_API}/readings/${targetLecturaId}`,
-          formData,
-          {
-            withCredentials: true,
-          },
-        );
+        const url = payload.ordenTrabajoId
+          ? `${this.OPERATOR_API}/work-orders/${payload.ordenTrabajoId}`
+          : `${this.OPERATOR_API}/readings/${targetLecturaId}`;
+
+        const request$ = this.http.patch<unknown>(url, formData, {
+          withCredentials: true,
+        });
 
         const response = await firstValueFrom(request$);
         await this.dbService.saveSyncedReading({
@@ -792,11 +815,15 @@ export class OperatorSyncService {
             await prepareOperatorEvidencePhoto(fotoBlob, OPERATOR_PHOTO_MAX_BYTES),
           );
 
-          if (
-            targetLecturaId === null ||
-            targetLecturaId === undefined ||
-            String(targetLecturaId).trim() === ''
-          ) {
+          const hasSyncTarget =
+            (targetLecturaId !== null &&
+              targetLecturaId !== undefined &&
+              String(targetLecturaId).trim() !== '') ||
+            (payload['ordenTrabajoId'] !== null &&
+              payload['ordenTrabajoId'] !== undefined &&
+              String(payload['ordenTrabajoId']).trim() !== '');
+
+          if (!hasSyncTarget) {
             await this.dbService.updatePendingReading(pending.id!, {
               syncState: 'RECHAZADA',
               errorMessage:
@@ -805,8 +832,12 @@ export class OperatorSyncService {
             rejectedCount++;
             continue;
           }
+          const syncUrl = payload['ordenTrabajoId']
+            ? `${this.OPERATOR_API}/work-orders/${payload['ordenTrabajoId']}`
+            : `${this.OPERATOR_API}/readings/${targetLecturaId}`;
+
           await firstValueFrom(
-            this.http.patch<unknown>(`${this.OPERATOR_API}/readings/${targetLecturaId}`, formData, {
+            this.http.patch<unknown>(syncUrl, formData, {
               withCredentials: true,
             }),
           );

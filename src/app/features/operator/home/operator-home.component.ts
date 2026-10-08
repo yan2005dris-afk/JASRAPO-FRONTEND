@@ -12,8 +12,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { NetworkService } from '../../../core/services/network.service';
 import { OperatorSyncService } from '../../../core/services/operator-sync.service';
 import { IndexedDbService } from '../../../core/services/indexed-db.service';
-import { OperatorRouteOfflineService } from '../service/operator-route-offline.service';
-import type { OperatorRouteResponse } from '../models/operator.models';
+import { OperatorRouteOfflineService } from '../rutas/data/operator-route-offline.service';
+import type { OperatorRouteResponse } from '../rutas/domain/operator.models';
 
 @Component({
   selector: 'app-operator-home',

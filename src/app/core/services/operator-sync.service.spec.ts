@@ -7,7 +7,7 @@ import { IndexedDbService } from './indexed-db.service';
 import { ToastService } from '../../shared/components/toast/toast.service';
 import { AuthService } from './auth.service';
 import { OperatorLocationService } from './operator-location.service';
-import { MANIFEST_PROTOCOL_VERSION } from '../../features/operator/models/operator.models';
+import { MANIFEST_PROTOCOL_VERSION } from '../../features/operator/rutas/domain/operator.models';
 
 const VALID_DATA_URI = new Blob(['photo'], { type: 'image/png' });
 const INVALID_DATA_URI = null;
@@ -242,6 +242,30 @@ describe('OperatorSyncService', () => {
       expect(fields['foto']).toHaveLength(1);
       expect(fields['foto'][0]).toBeInstanceOf(Blob);
       expect(fields['file']).toBeUndefined();
+    });
+
+    it('PATCH con ordenTrabajoId: envía la lectura al endpoint unificado de orden de trabajo', async () => {
+      httpPatch.mockReturnValue(of({ ordenTrabajoId: 'wo-10', estado: 'COMPLETADA' }));
+      const reading = {
+        ordenTrabajoId: 'wo-10',
+        _lecturaId: 1,
+        medidorId: 1,
+        lecturaActual: '150',
+        lecturaAnterior: '120',
+        descripcionAnomalia: 'Sin anomalías',
+        fotoBlob: VALID_DATA_URI,
+      };
+
+      await service.submitReading(reading);
+
+      expect(httpPatch).toHaveBeenCalledOnce();
+      const [url, formData] = httpPatch.mock.calls[0];
+      expect(url).toContain('/operator/work-orders/wo-10');
+      const fields = formDataToObject(formData as FormData);
+      expect(fields['lecturaActual']).toEqual(['150']);
+      expect(fields['lecturaAnterior']).toEqual(['120']);
+      expect(fields['descripcionAnomalia']).toEqual(['Sin anomalías']);
+      expect(fields['foto']).toHaveLength(1);
     });
 
     it('PATCH sin foto: no agrega archivo al FormData', async () => {

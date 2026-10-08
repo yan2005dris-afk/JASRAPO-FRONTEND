@@ -41,6 +41,7 @@ export interface IEditMeterStatusPayload {
 export interface IMeterDto extends Omit<IMeter, 'estado'> {
   estado?: string | IMeterStatus;
   direccionSuministro?: string | null;
+  numeroGuia?: string | null;
 }
 
 export interface IUpdateMeterStatusBody {
