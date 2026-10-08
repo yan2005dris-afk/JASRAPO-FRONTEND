@@ -201,11 +201,10 @@ export class OperatorSyncService {
   private normalizeReadingPayload(reading: Record<string, unknown>): Record<string, unknown> {
     const payload: Record<string, unknown> = {};
     const acceptedFields = [
-      'fecha',
+      'fechaLectura',
       'lecturaAnterior',
       'lecturaActual',
       'descripcionAnomalia',
-      'lecturaInicial',
       'latitud',
       'longitud',
     ];
@@ -220,8 +219,6 @@ export class OperatorSyncService {
           field === 'longitud'
         ) {
           payload[field] = Number(value);
-        } else if (field === 'lecturaInicial') {
-          payload[field] = Boolean(value);
         } else {
           payload[field] = value;
         }

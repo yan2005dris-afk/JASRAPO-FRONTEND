@@ -1069,7 +1069,7 @@ export class LecturasComponent implements OnInit {
         await this.syncService.submitReadingCoordinates(ordenTrabajoId);
         const lecturaPayload = {
           ordenTrabajoId,
-          fecha: new Date().toISOString(),
+          fechaLectura: new Date().toISOString(),
           medidorId: meter.medidorId.toString(),
           medidorSerie: meter.serie,
           lecturaAnterior: formPayload.lecturaAnterior,
@@ -1096,7 +1096,7 @@ export class LecturasComponent implements OnInit {
           ordenTrabajoId,
           ...formPayload,
           medidorId: meter.medidorId.toString(),
-          fecha: new Date().toISOString(),
+          fechaLectura: new Date().toISOString(),
         };
         const response = await this.syncService.submitWorkOrder(workOrderPayload);
         this.setSubmissionSuccess(response as { offline?: boolean });
@@ -1124,7 +1124,7 @@ export class LecturasComponent implements OnInit {
             );
           }
           await this.dbService.savePendingReading({
-            fecha: new Date().toISOString(),
+            fechaLectura: new Date().toISOString(),
             medidorId: meter.medidorId.toString(),
             medidorSerie: meter.serie,
             ordenTrabajoId,
