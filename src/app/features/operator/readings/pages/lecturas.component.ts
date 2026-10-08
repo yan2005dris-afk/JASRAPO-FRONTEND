@@ -1120,6 +1120,7 @@ export class LecturasComponent implements OnInit {
           if (!ordenTrabajoId) {
             throw new Error(
               'No se encontró la orden de trabajo asociada a esta lectura. Actualiza los datos del operador e intenta nuevamente.',
+              { cause: e },
             );
           }
           await this.dbService.savePendingReading({
