@@ -207,18 +207,18 @@ describe('OperatorSyncService', () => {
       isOnline.mockReturnValue(true);
     });
 
-    it('sin _lecturaId en línea rechaza la lectura y no hace ninguna petición', async () => {
+    it('sin ordenTrabajoId en línea rechaza la lectura y no hace ninguna petición', async () => {
       await expect(service.submitReading({ medidorId: 1, lecturaActual: '123' })).rejects.toThrow(
-        /no expone un endpoint de creación/,
+        /falta la orden de trabajo asociada/,
       );
       expect(httpPost).not.toHaveBeenCalled();
       expect(httpPatch).not.toHaveBeenCalled();
     });
 
-    it('sin _lecturaId y con foto en línea rechaza sin hacer ninguna petición', async () => {
+    it('sin ordenTrabajoId y con foto en línea rechaza sin hacer ninguna petición', async () => {
       await expect(
         service.submitReading({ medidorId: 1, lecturaActual: '123', fotoBlob: VALID_DATA_URI }),
-      ).rejects.toThrow(/no expone un endpoint de creación/);
+      ).rejects.toThrow(/falta la orden de trabajo asociada/);
       expect(httpPost).not.toHaveBeenCalled();
       expect(httpPatch).not.toHaveBeenCalled();
     });
@@ -226,6 +226,7 @@ describe('OperatorSyncService', () => {
     it('PATCH con foto: envía archivo bajo "foto" (no "file")', async () => {
       httpPatch.mockReturnValue(of({ id: 1, lecturaActual: '150' }));
       const reading = {
+        ordenTrabajoId: 'wo-1',
         _lecturaId: 1,
         medidorId: 1,
         lecturaActual: '150',
@@ -237,7 +238,7 @@ describe('OperatorSyncService', () => {
       expect(httpPatch).toHaveBeenCalledOnce();
       expect(httpPost).not.toHaveBeenCalled();
       const [url, formData] = httpPatch.mock.calls[0];
-      expect(url).toContain('/operator/readings/1');
+      expect(url).toContain('/operator/work-orders/wo-1');
       const fields = formDataToObject(formData as FormData);
       expect(fields['foto']).toHaveLength(1);
       expect(fields['foto'][0]).toBeInstanceOf(Blob);
@@ -270,7 +271,7 @@ describe('OperatorSyncService', () => {
 
     it('PATCH sin foto: no agrega archivo al FormData', async () => {
       httpPatch.mockReturnValue(of({ id: 1 }));
-      await service.submitReading({ _lecturaId: 1, lecturaActual: '150' });
+      await service.submitReading({ ordenTrabajoId: 'wo-1', _lecturaId: 1, lecturaActual: '150' });
 
       const [, formData] = httpPatch.mock.calls[0];
       const fields = formDataToObject(formData as FormData);
@@ -282,6 +283,7 @@ describe('OperatorSyncService', () => {
       httpPatch.mockReturnValue(of({ id: 1 }));
       await expect(
         service.submitReading({
+          ordenTrabajoId: 'wo-1',
           _lecturaId: 1,
           medidorId: 1,
           lecturaActual: '1',
@@ -298,6 +300,7 @@ describe('OperatorSyncService', () => {
     const blob = new Blob(['photo'], { type: 'image/jpeg' });
 
     await service.submitReading({
+      ordenTrabajoId: 'wo-1',
       _lecturaId: 1,
       medidorId: 1,
       lecturaActual: '1',
@@ -316,6 +319,7 @@ describe('OperatorSyncService', () => {
     it('guarda lectura en IndexedDB', async () => {
       isOnline.mockReturnValue(false);
       const reading = {
+        ordenTrabajoId: 'wo-1',
         _lecturaId: 1,
         medidorId: 1,
         lecturaActual: '150',
@@ -334,7 +338,7 @@ describe('OperatorSyncService', () => {
       isOnline.mockReturnValue(false);
       const heic = new Blob(['heic'], { type: 'image/heic' });
 
-      await service.submitReading({ _lecturaId: 1, fotoBlob: heic });
+      await service.submitReading({ ordenTrabajoId: 'wo-1', _lecturaId: 1, fotoBlob: heic });
 
       const queued = savePendingReading.mock.calls[0][0];
       expect(queued.fotoBlob.type).toBe('image/jpeg');
@@ -597,6 +601,7 @@ describe('OperatorSyncService', () => {
           id: 1,
           syncState: 'PENDIENTE_SYNC',
           errorMessage: null,
+          ordenTrabajoId: 'wo-1',
           _lecturaId: 99,
           lecturaId: 1,
           medidorId: 1,
@@ -609,12 +614,13 @@ describe('OperatorSyncService', () => {
 
       expect(updatePendingReading).not.toHaveBeenCalled();
       expect(httpPatch).toHaveBeenCalledOnce();
+      expect(httpPatch.mock.calls[0][0]).toContain('/operator/work-orders/wo-1');
     });
 
     it('si falla la red en lecturas no continúa con órdenes ni novedades', async () => {
       isOnline.mockReturnValue(true);
       getPendingReadingsByState.mockResolvedValue([
-        { id: 1, syncState: 'PENDIENTE_SYNC', _lecturaId: 99 },
+        { id: 1, syncState: 'PENDIENTE_SYNC', ordenTrabajoId: 'wo-1', _lecturaId: 99 },
       ]);
       getPendingWorkOrdersByState.mockResolvedValue([
         { id: 2, syncState: 'PENDIENTE_SYNC', ordenTrabajoId: 'wo-2' },
@@ -635,7 +641,7 @@ describe('OperatorSyncService', () => {
     it('libera el estado de sincronización si IndexedDB falla al actualizar la cola', async () => {
       isOnline.mockReturnValue(true);
       getPendingReadingsByState.mockResolvedValue([
-        { id: 1, syncState: 'PENDIENTE_SYNC', _lecturaId: 99 },
+        { id: 1, syncState: 'PENDIENTE_SYNC', ordenTrabajoId: 'wo-1', _lecturaId: 99 },
       ]);
       httpPatch.mockReturnValue(throwError(() => makeHttpError(400, 'invalid')));
       updatePendingReading.mockRejectedValue(new Error('IndexedDB unavailable'));
@@ -652,6 +658,7 @@ describe('OperatorSyncService', () => {
           id: 1,
           syncState: 'PENDIENTE_SYNC',
           errorMessage: null,
+          ordenTrabajoId: 'wo-1',
           _lecturaId: 99,
           lecturaId: 1,
           medidorId: 1,
@@ -660,6 +667,7 @@ describe('OperatorSyncService', () => {
           id: 2,
           syncState: 'PENDIENTE_SYNC',
           errorMessage: null,
+          ordenTrabajoId: 'wo-2',
           _lecturaId: 100,
           lecturaId: 2,
           medidorId: 2,
@@ -811,7 +819,7 @@ describe('OperatorSyncService', () => {
       expect(httpPatch).toHaveBeenCalledOnce();
     });
 
-    it('rechaza lectura pendiente sin _lecturaId sin hacer POST y continúa', async () => {
+    it('rechaza lectura pendiente sin ordenTrabajoId sin hacer POST/PATCH y continúa', async () => {
       isOnline.mockReturnValue(true);
       getPendingReadingsByState.mockResolvedValue([
         { id: 3, syncState: 'PENDIENTE_SYNC', medidorId: 1, lecturaActual: '10' },
@@ -822,8 +830,7 @@ describe('OperatorSyncService', () => {
 
       expect(updatePendingReading).toHaveBeenCalledWith(3, {
         syncState: 'RECHAZADA',
-        errorMessage:
-          'Lectura nueva conservada, pero no sincronizada: el backend no expone un endpoint de creación.',
+        errorMessage: 'Lectura rechazada: falta la orden de trabajo asociada (ordenTrabajoId).',
       });
       expect(httpPost).not.toHaveBeenCalled();
       expect(httpPatch).not.toHaveBeenCalled();
@@ -836,6 +843,7 @@ describe('OperatorSyncService', () => {
           id: 1,
           syncState: 'PENDIENTE_SYNC',
           errorMessage: null,
+          ordenTrabajoId: 'wo-99',
           _lecturaId: 99,
           medidorId: 1,
           lecturaActual: '150',
@@ -847,6 +855,7 @@ describe('OperatorSyncService', () => {
 
       await service.syncPendingData();
 
+      expect(httpPatch.mock.calls[0][0]).toContain('/operator/work-orders/wo-99');
       const [, formData] = httpPatch.mock.calls[0];
       const fields = formDataToObject(formData as FormData);
       expect(fields['foto']).toHaveLength(1);
