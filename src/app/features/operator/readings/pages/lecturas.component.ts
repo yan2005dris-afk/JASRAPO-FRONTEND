@@ -1027,13 +1027,12 @@ export class LecturasComponent implements OnInit {
   /**
    * Entry point called by each work-order sub-form via (formSubmit).
    * Dispatches by `tipoActividad` to the right backend endpoint:
-   *   - LECTURA       → PATCH /operator/readings/:id or POST /readings (submitReading)
+   *   - LECTURA       → PATCH /operator/work-orders/:ordenTrabajoId (submitReading)
    *   - INSTALACION
    *     INSPECCION
-   *     RECONEXION    → PATCH /operator/work-orders/:id (submitWorkOrder, ticket #261)
+   *     RECONEXION    → PATCH /operator/work-orders/:ordenTrabajoId (submitWorkOrder)
    *
-   * Antes este handler reusaba submitReading para los 4 tipos → bug que rompía
-   * los 3 forms nuevos en producción. Ver Shortcut #262 para el contexto completo.
+   * Unified under work orders (SC-359).
    */
   async onWorkOrderSubmit(formPayload: WorkOrderFormPayload): Promise<void> {
     const meter = this.selectedMeter();
@@ -1065,7 +1064,7 @@ export class LecturasComponent implements OnInit {
             'No se encontró la orden de trabajo asociada a esta lectura. Actualiza los datos del operador e intenta nuevamente.',
           );
         }
-        // El backend guarda GPS en la orden, no en PATCH /readings/:id. Se registra primero
+        // El backend guarda GPS en la orden de trabajo. Se registra primero
         // para no dejar una lectura aceptada sin su ubicación si la operación GPS falla.
         await this.syncService.submitReadingCoordinates(ordenTrabajoId);
         const lecturaPayload = {

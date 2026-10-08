@@ -197,7 +197,7 @@ export class OperatorSyncService {
     }
   }
 
-  /** Normaliza el contrato estricto aceptado por PATCH /operator/readings/:id (UpdateOperatorReadingDto). */
+  /** Normaliza los campos de lectura para el payload enviado a PATCH /operator/work-orders/:id. */
   private normalizeReadingPayload(reading: Record<string, unknown>): Record<string, unknown> {
     const payload: Record<string, unknown> = {};
     const acceptedFields = [
@@ -335,16 +335,16 @@ export class OperatorSyncService {
       }
     }
 
-    const hasTarget =
-      (targetLecturaId !== null &&
-        targetLecturaId !== undefined &&
-        String(targetLecturaId).trim() !== '') ||
-      (payload.ordenTrabajoId !== null &&
-        payload.ordenTrabajoId !== undefined &&
-        String(payload.ordenTrabajoId).trim() !== '');
-    if (this.networkService.isOnline() && !hasTarget) {
+    const ordenTrabajoId =
+      payload.ordenTrabajoId !== null &&
+      payload.ordenTrabajoId !== undefined &&
+      String(payload.ordenTrabajoId).trim() !== ''
+        ? String(payload.ordenTrabajoId).trim()
+        : null;
+
+    if (!ordenTrabajoId) {
       throw new Error(
-        'No se puede enviar una lectura nueva en línea: el backend no expone un endpoint de creación.',
+        'No se puede enviar la lectura: falta la orden de trabajo asociada (ordenTrabajoId).',
       );
     }
 
@@ -367,9 +367,7 @@ export class OperatorSyncService {
         }
         this.appendPhoto(formData, preparedReading.fotoBlob);
 
-        const url = payload.ordenTrabajoId
-          ? `${this.OPERATOR_API}/work-orders/${payload.ordenTrabajoId}`
-          : `${this.OPERATOR_API}/readings/${targetLecturaId}`;
+        const url = `${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`;
 
         const request$ = this.http.patch<unknown>(url, formData, {
           withCredentials: true,
@@ -379,6 +377,7 @@ export class OperatorSyncService {
         await this.dbService.saveSyncedReading({
           ...payload,
           _lecturaId: targetLecturaId,
+          ordenTrabajoId,
           estado:
             response && typeof response === 'object' && 'estado' in response && response.estado
               ? String(response.estado)
@@ -524,7 +523,7 @@ export class OperatorSyncService {
    * Envia una orden de trabajo (INSTALACION / INSPECCION / RECONEXION) al backend
    * o la encola si está offline. Requiere ticket #261 mergeado para tener endpoint real.
    *
-   * Field name del archivo: 'foto' (consistente con PATCH /operator/readings/:id).
+   * Field name del archivo: 'foto'.
    * El contrato completo (campo por tipo de actividad, validaciones server-side) se
    * documenta en Shortcut #261.
    */
@@ -539,7 +538,7 @@ export class OperatorSyncService {
 
   /**
    * Persists the measured position on the LECTURA work order before its reading is submitted.
-   * Coordinates never become editable form fields and are never sent to PATCH /readings/:id.
+   * Coordinates never become editable form fields.
    */
   async submitReadingCoordinates(ordenTrabajoId: string | number): Promise<unknown> {
     return this.submitWorkOrderUpdate(
@@ -815,26 +814,24 @@ export class OperatorSyncService {
             await prepareOperatorEvidencePhoto(fotoBlob, OPERATOR_PHOTO_MAX_BYTES),
           );
 
-          const hasSyncTarget =
-            (targetLecturaId !== null &&
-              targetLecturaId !== undefined &&
-              String(targetLecturaId).trim() !== '') ||
-            (payload['ordenTrabajoId'] !== null &&
-              payload['ordenTrabajoId'] !== undefined &&
-              String(payload['ordenTrabajoId']).trim() !== '');
+          const ordenTrabajoId =
+            payload['ordenTrabajoId'] !== null &&
+            payload['ordenTrabajoId'] !== undefined &&
+            String(payload['ordenTrabajoId']).trim() !== ''
+              ? String(payload['ordenTrabajoId']).trim()
+              : '';
 
-          if (!hasSyncTarget) {
+          if (!ordenTrabajoId) {
             await this.dbService.updatePendingReading(pending.id!, {
               syncState: 'RECHAZADA',
               errorMessage:
-                'Lectura nueva conservada, pero no sincronizada: el backend no expone un endpoint de creación.',
+                'Lectura rechazada: falta la orden de trabajo asociada (ordenTrabajoId).',
             });
             rejectedCount++;
             continue;
           }
-          const syncUrl = payload['ordenTrabajoId']
-            ? `${this.OPERATOR_API}/work-orders/${payload['ordenTrabajoId']}`
-            : `${this.OPERATOR_API}/readings/${targetLecturaId}`;
+
+          const syncUrl = `${this.OPERATOR_API}/work-orders/${ordenTrabajoId}`;
 
           await firstValueFrom(
             this.http.patch<unknown>(syncUrl, formData, {
@@ -1198,18 +1195,17 @@ export class OperatorSyncService {
   }
 
   /**
-   * Obtiene todas las lecturas del período de facturación actual/activo
+   * Obtiene las lecturas del período registradas desde el caché offline local (IndexedDB).
+   * El endpoint legacy GET /operator/readings fue eliminado en la Fase 3 en favor del manifest sync.
    */
   async getCurrentPeriodReadings(): Promise<Record<string, unknown>[]> {
     try {
-      return await firstValueFrom(
-        this.http.get<Record<string, unknown>[]>(`${this.OPERATOR_API}/readings`, {
-          withCredentials: true,
-        }),
-      );
+      const currentUserId = this.authService.currentUser()?.id;
+      const scope = currentUserId ? `operator:${currentUserId}` : undefined;
+      return (await this.dbService.getRegisteredReadingsCache(scope)) ?? [];
     } catch (error) {
-      console.error('Error al obtener lecturas del período actual:', error);
-      throw error;
+      console.error('Error al obtener lecturas del período en caché:', error);
+      return [];
     }
   }
 }
