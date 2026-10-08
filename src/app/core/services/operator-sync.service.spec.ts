@@ -344,6 +344,50 @@ describe('OperatorSyncService', () => {
       expect(queued.fotoBlob.type).toBe('image/jpeg');
       expect(queued.fotoBlob).not.toBe(heic);
     });
+
+    it('preserva ordenTrabajoId cuando el backend falla con 5xx y la lectura cae a offline', async () => {
+      isOnline.mockReturnValue(true);
+      httpPatch.mockReturnValue(throwError(() => makeHttpError(500, 'server down')));
+
+      const result = await service.submitReading({
+        ordenTrabajoId: 'wo-99',
+        _lecturaId: 9,
+        medidorId: 19,
+        lecturaActual: '125',
+      });
+
+      expect(result).toEqual({ offline: true });
+      expect(savePendingReading).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ordenTrabajoId: 'wo-99',
+          _lecturaId: 9,
+          medidorId: 19,
+          lecturaActual: '125',
+        }),
+      );
+      expect(saveSyncedReading).not.toHaveBeenCalled();
+    });
+
+    it('preserva ordenTrabajoId cuando la red está caída y se enruta por offline explícito', async () => {
+      isOnline.mockReturnValue(false);
+
+      const result = await service.submitReading({
+        ordenTrabajoId: 'wo-77',
+        _lecturaId: 7,
+        medidorId: 17,
+        lecturaActual: '250',
+      });
+
+      expect(result).toEqual({ offline: true });
+      expect(savePendingReading).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ordenTrabajoId: 'wo-77',
+          _lecturaId: 7,
+          medidorId: 17,
+          lecturaActual: '250',
+        }),
+      );
+    });
   });
 
   // ── submitWorkOrder ──────────────────────────────────────────────────────

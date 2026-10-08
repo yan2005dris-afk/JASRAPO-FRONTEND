@@ -388,6 +388,7 @@ export class OperatorSyncService {
       } catch (error: unknown) {
         const httpError = error as HttpErrorResponse;
         if (!httpError.status || httpError.status === 0 || httpError.status >= 500) {
+          this.assertReadingOfflineInvariants(preparedReading);
           console.warn('Fallo de red al enviar lectura, guardando localmente:', error);
           await this.dbService.savePendingReading(preparedReading);
           await this.refreshPendingCounts();
@@ -404,6 +405,7 @@ export class OperatorSyncService {
         throw error;
       }
     } else {
+      this.assertReadingOfflineInvariants(preparedReading);
       await this.dbService.savePendingReading(preparedReading); // keeps _lecturaId in record
       await this.refreshPendingCounts();
       this.toastService.warning(
@@ -411,6 +413,25 @@ export class OperatorSyncService {
         'Guardado Local',
       );
       return { offline: true };
+    }
+  }
+
+  /**
+   * Las lecturas offline DEBEN llevar `ordenTrabajoId`. Si por algún bug un caller
+   * omite el id, fallamos en voz alta en vez de guardar un registro que la cola
+   * rechazará después con "falta la orden de trabajo asociada".
+   */
+  private assertReadingOfflineInvariants(
+    prepared: ReadingSubmission & { fotoBlob?: Blob | null },
+  ): void {
+    const ordenTrabajoId =
+      prepared.ordenTrabajoId !== null && prepared.ordenTrabajoId !== undefined
+        ? String(prepared.ordenTrabajoId).trim()
+        : '';
+    if (!ordenTrabajoId) {
+      throw new Error(
+        'No se puede guardar la lectura en cola: falta la orden de trabajo asociada (ordenTrabajoId).',
+      );
     }
   }
 
