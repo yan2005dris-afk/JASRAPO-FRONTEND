@@ -341,9 +341,7 @@ describe('LecturasComponent State Machine', () => {
       { lecturaId: 'lec-1', medidorId: mockMeter.medidorId, estado: 'PENDIENTE' },
     ]);
     component.selectMeter(mockMeter);
-    submitReading.mockRejectedValueOnce(
-      new Error('Error de conexión con el servidor.'),
-    );
+    submitReading.mockRejectedValueOnce(new Error('Error de conexión con el servidor.'));
 
     await component.onWorkOrderSubmit({
       tipoActividad: 'LECTURA',
@@ -361,9 +359,7 @@ describe('LecturasComponent State Machine', () => {
         lecturaAnterior: 100,
       }),
     );
-    expect(component.submissionFeedback()).toEqual(
-      expect.objectContaining({ kind: 'queued' }),
-    );
+    expect(component.submissionFeedback()).toEqual(expect.objectContaining({ kind: 'queued' }));
   });
 
   describe('Route synthetic meters and meter-less work orders', () => {
