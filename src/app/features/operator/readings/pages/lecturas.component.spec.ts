@@ -9,6 +9,7 @@ import { MeterCacheService } from '../../../../core/services/meter-cache.service
 import { ToastService } from '../../../../shared/components/toast/toast.service';
 import { signal } from '@angular/core';
 import { IMeterDto } from '../../../contracts/meters/domain/models/meter.model';
+import type { ReadingRecord } from '../domain/reading-order.rules';
 
 describe('LecturasComponent State Machine', () => {
   let component: LecturasComponent;
@@ -465,7 +466,7 @@ describe('LecturasComponent State Machine', () => {
           medidorSerie: 'SER-101',
           estado: 'POR_REVISION',
           lecturaActual: 45,
-        } as any,
+        } as ReadingRecord,
       ]);
 
       expect(component.isOrderCompleted(mockMeter)).toBe(true);
