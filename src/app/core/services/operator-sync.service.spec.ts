@@ -7,7 +7,7 @@ import { IndexedDbService } from './indexed-db.service';
 import { ToastService } from '../../shared/components/toast/toast.service';
 import { AuthService } from './auth.service';
 import { OperatorLocationService } from './operator-location.service';
-import { MANIFEST_PROTOCOL_VERSION } from '../../features/operator/domain/models/operator.models';
+import { MANIFEST_PROTOCOL_VERSION } from '../../features/operator/rutas/domain/operator.models';
 
 const VALID_DATA_URI = new Blob(['photo'], { type: 'image/png' });
 const INVALID_DATA_URI = null;

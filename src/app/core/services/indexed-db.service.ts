@@ -4,7 +4,7 @@ import {
   MANIFEST_PHYSICAL_ENTITY_TYPE,
   MANIFEST_PROTOCOL_VERSION,
   type OperatorManifestPage,
-} from '../../features/operator/domain/models/operator.models';
+} from '../../features/operator/rutas/domain/operator.models';
 
 export type SyncState = 'PENDIENTE_SYNC' | 'RECHAZADA';
 
