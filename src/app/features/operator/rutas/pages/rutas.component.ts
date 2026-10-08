@@ -314,7 +314,9 @@ export class RutasComponent implements OnInit, OnDestroy {
       } else if (ordenes && ordenes.length > 0) {
         // Backend puede no garantizar orden estable entre requests; ordenamos acá
         // por ordenVisita para que la secuencia de visita sea consistente en UI.
-        for (const ord of ordenes.slice().sort((a: OperatorWorkOrder, b: OperatorWorkOrder) => a.ordenVisita - b.ordenVisita)) {
+        for (const ord of ordenes
+          .slice()
+          .sort((a: OperatorWorkOrder, b: OperatorWorkOrder) => a.ordenVisita - b.ordenVisita)) {
           const lat = ord.contrato?.latitud;
           const lng = ord.contrato?.longitud;
           const serie = ord.medidor?.serie;
@@ -653,7 +655,10 @@ export class RutasComponent implements OnInit, OnDestroy {
         if (mId) idToEstado.set(mId.toString(), r.estado);
         const s = r.medidor?.serie ?? r.medidorSerie;
         if (s) statusMap.set(String(s), r.estado);
-        const guia = r.contrato?.numeroGuia ?? (r as unknown as Record<string, unknown>)['numeroGuia'] ?? (r as unknown as Record<string, unknown>)['numeroContrato'];
+        const guia =
+          r.contrato?.numeroGuia ??
+          (r as unknown as Record<string, unknown>)['numeroGuia'] ??
+          (r as unknown as Record<string, unknown>)['numeroContrato'];
         if (guia) statusMap.set(String(guia), r.estado);
         const otId = (r as unknown as Record<string, unknown>)['ordenTrabajoId'];
         if (otId != null && otId !== '') {
@@ -857,7 +862,9 @@ export class RutasComponent implements OnInit, OnDestroy {
       if (first?.clienteNombre) return first.clienteNombre;
     }
     if (task.ordenesTrabajo?.length) {
-      const first = task.ordenesTrabajo.find((o: OperatorWorkOrder) => o.contrato?.clienteNombre?.trim());
+      const first = task.ordenesTrabajo.find((o: OperatorWorkOrder) =>
+        o.contrato?.clienteNombre?.trim(),
+      );
       if (first?.contrato?.clienteNombre) return first.contrato.clienteNombre;
     }
     if (task.rutaPuntos?.length) {

@@ -36,12 +36,7 @@ export function getRouteCompletedCount(
   if (task.paradas?.length) {
     for (const p of task.paradas) {
       const st = readingStatusBySerie.get(p.serie ?? '') ?? p.estado;
-      if (
-        st &&
-        st !== 'PENDIENTE' &&
-        st !== '__SIN_LECTURA__' &&
-        st !== 'RECHAZADA_VERIFICACION'
-      ) {
+      if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION') {
         count++;
       }
     }
@@ -49,21 +44,14 @@ export function getRouteCompletedCount(
     for (const o of task.ordenesTrabajo) {
       const serie =
         o.medidor?.serie ||
-        (o.contrato?.numeroContrato
-          ? String(o.contrato.numeroContrato)
-          : `OT-${o.ordenTrabajoId}`);
+        (o.contrato?.numeroContrato ? String(o.contrato.numeroContrato) : `OT-${o.ordenTrabajoId}`);
       const st =
         readingStatusBySerie.get(serie) ||
         readingStatusBySerie.get(o.medidor?.serie ?? '') ||
         (o.ordenTrabajoId ? readingStatusBySerie.get(String(o.ordenTrabajoId)) : null) ||
         (o.medidor?.medidorId ? readingStatusBySerie.get(String(o.medidor.medidorId)) : null) ||
         o.estado;
-      if (
-        st &&
-        st !== 'PENDIENTE' &&
-        st !== '__SIN_LECTURA__' &&
-        st !== 'RECHAZADA_VERIFICACION'
-      ) {
+      if (st && st !== 'PENDIENTE' && st !== '__SIN_LECTURA__' && st !== 'RECHAZADA_VERIFICACION') {
         count++;
       }
     }

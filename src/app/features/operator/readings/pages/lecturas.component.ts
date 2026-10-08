@@ -176,8 +176,12 @@ export class LecturasComponent implements OnInit {
       const merged = { ...prev, ...r } as ReadingRecord;
       if (mId != null) map.set(mId.toString(), merged);
       if (r.medidor?.serie) map.set(r.medidor.serie, merged);
-      const cObj = (r as Record<string, unknown>)['contrato'] as { numeroGuia?: string } | undefined;
-      const guia = cObj?.numeroGuia ?? (r as Record<string, unknown>)['numeroGuia'] ?? (r as Record<string, unknown>)['numeroContrato'];
+      const cObj = (r as Record<string, unknown>)['contrato'] as
+        { numeroGuia?: string } | undefined;
+      const guia =
+        cObj?.numeroGuia ??
+        (r as Record<string, unknown>)['numeroGuia'] ??
+        (r as Record<string, unknown>)['numeroContrato'];
       if (guia) map.set(String(guia), merged);
       const otId = (r as Record<string, unknown>)['ordenTrabajoId'];
       if (otId != null && otId !== '') {
@@ -866,9 +870,7 @@ export class LecturasComponent implements OnInit {
         if (type === 'LECTURA') {
           if (isLecturaTaken) return false;
           return (
-            workOrder.estado === 'PENDIENTE' ||
-            workOrder.estado === 'EN_PROGRESO' ||
-            isRelectura
+            workOrder.estado === 'PENDIENTE' || workOrder.estado === 'EN_PROGRESO' || isRelectura
           );
         }
         return workOrder.estado === 'PENDIENTE' || workOrder.estado === 'EN_PROGRESO';

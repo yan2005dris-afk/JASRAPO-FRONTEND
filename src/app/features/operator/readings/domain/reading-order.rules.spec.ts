@@ -101,14 +101,26 @@ describe('reading-order.rules', () => {
       expect(
         isOrderCompletedRule({
           meter,
-          existingRecord: { lecturaId: '1', estado: 'PENDIENTE', lecturaActual: 0, lecturaAnterior: 0, fecha: '' },
+          existingRecord: {
+            lecturaId: '1',
+            estado: 'PENDIENTE',
+            lecturaActual: 0,
+            lecturaAnterior: 0,
+            fecha: '',
+          },
         }),
       ).toBe(false);
 
       expect(
         isOrderCompletedRule({
           meter,
-          existingRecord: { lecturaId: '1', estado: 'RECHAZADA_VERIFICACION', lecturaActual: 0, lecturaAnterior: 0, fecha: '' },
+          existingRecord: {
+            lecturaId: '1',
+            estado: 'RECHAZADA_VERIFICACION',
+            lecturaActual: 0,
+            lecturaAnterior: 0,
+            fecha: '',
+          },
         }),
       ).toBe(false);
     });
@@ -117,14 +129,26 @@ describe('reading-order.rules', () => {
       expect(
         isOrderCompletedRule({
           meter,
-          existingRecord: { lecturaId: '1', estado: 'POR_REVISION', lecturaActual: 10, lecturaAnterior: 5, fecha: '' },
+          existingRecord: {
+            lecturaId: '1',
+            estado: 'POR_REVISION',
+            lecturaActual: 10,
+            lecturaAnterior: 5,
+            fecha: '',
+          },
         }),
       ).toBe(true);
 
       expect(
         isOrderCompletedRule({
           meter,
-          existingRecord: { lecturaId: '1', estado: 'APROBADA', lecturaActual: 10, lecturaAnterior: 5, fecha: '' },
+          existingRecord: {
+            lecturaId: '1',
+            estado: 'APROBADA',
+            lecturaActual: 10,
+            lecturaAnterior: 5,
+            fecha: '',
+          },
         }),
       ).toBe(true);
     });

@@ -67,7 +67,11 @@ export function nextPendingWorkOrder(task: OperatorRouteResponse): OperatorWorkO
       order.contrato?.latitud != null &&
       order.contrato?.longitud != null,
   );
-  return pendingWithCoords.sort((a: OperatorWorkOrder, b: OperatorWorkOrder) => a.ordenVisita - b.ordenVisita)[0] ?? null;
+  return (
+    pendingWithCoords.sort(
+      (a: OperatorWorkOrder, b: OperatorWorkOrder) => a.ordenVisita - b.ordenVisita,
+    )[0] ?? null
+  );
 }
 
 /**
@@ -101,8 +105,10 @@ export function resolveOrderRecord(
     if (assignments) {
       for (const wo of assignments.values()) {
         if (wo.id && existingReadingMap.has(wo.id)) return existingReadingMap.get(wo.id);
-        if (wo.id && existingReadingMap.has(`OT-${wo.id}`)) return existingReadingMap.get(`OT-${wo.id}`);
-        if (wo.lecturaId && existingReadingMap.has(wo.lecturaId)) return existingReadingMap.get(wo.lecturaId);
+        if (wo.id && existingReadingMap.has(`OT-${wo.id}`))
+          return existingReadingMap.get(`OT-${wo.id}`);
+        if (wo.lecturaId && existingReadingMap.has(wo.lecturaId))
+          return existingReadingMap.get(wo.lecturaId);
       }
     }
   }
@@ -123,7 +129,10 @@ export function isOrderCompletedRule(params: {
   const { meter, existingRecord, completedWorkOrderIds, readMetersIds, workOrdersByMeter } = params;
 
   if (existingRecord) {
-    if (existingRecord.estado === 'RECHAZADA_VERIFICACION' || existingRecord.estado === 'PENDIENTE') {
+    if (
+      existingRecord.estado === 'RECHAZADA_VERIFICACION' ||
+      existingRecord.estado === 'PENDIENTE'
+    ) {
       return false;
     }
     return true;
@@ -161,17 +170,11 @@ export function getActionableWorkOrders(
     existingRecord.estado !== 'PENDIENTE' &&
     existingRecord.estado !== 'RECHAZADA_VERIFICACION';
 
-  return [...(workOrdersByMeter.get(meter.serie)?.entries() ?? [])].filter(
-    ([type, workOrder]) => {
-      if (type === 'LECTURA') {
-        if (isLecturaTaken) return false;
-        return (
-          workOrder.estado === 'PENDIENTE' ||
-          workOrder.estado === 'EN_PROGRESO' ||
-          isRelectura
-        );
-      }
-      return workOrder.estado === 'PENDIENTE' || workOrder.estado === 'EN_PROGRESO';
-    },
-  );
+  return [...(workOrdersByMeter.get(meter.serie)?.entries() ?? [])].filter(([type, workOrder]) => {
+    if (type === 'LECTURA') {
+      if (isLecturaTaken) return false;
+      return workOrder.estado === 'PENDIENTE' || workOrder.estado === 'EN_PROGRESO' || isRelectura;
+    }
+    return workOrder.estado === 'PENDIENTE' || workOrder.estado === 'EN_PROGRESO';
+  });
 }

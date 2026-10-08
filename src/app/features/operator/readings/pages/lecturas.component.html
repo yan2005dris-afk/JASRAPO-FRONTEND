@@ -334,7 +334,10 @@
         </div>
         <div class="action-buttons">
           @if (primaryOrder; as order) {
-            @if (actionableWorkOrdersFor(meter).length > 0 && actionableWorkOrdersFor(meter)[0][0] === order[0]) {
+            @if (
+              actionableWorkOrdersFor(meter).length > 0 &&
+              actionableWorkOrdersFor(meter)[0][0] === order[0]
+            ) {
               <button
                 class="action-btn action-primary"
                 (click)="goToWorkOrderForm(order[0])"
