@@ -5,6 +5,7 @@ import {
   MANIFEST_PROTOCOL_VERSION,
   type OperatorManifestPage,
 } from '../../features/operator/rutas/domain/operator.models';
+import type { ReadingSubmission, WorkOrderSubmission } from './operator-sync.service';
 
 export type SyncState = 'PENDIENTE_SYNC' | 'RECHAZADA';
 
@@ -374,10 +375,16 @@ export class IndexedDbService {
 
   // --- LECTURAS PENDIENTES ---
 
-  async savePendingReading(reading: any): Promise<number> {
+  /**
+   * Persiste una lectura pendiente. La invariante de `ordenTrabajoId` se valida
+   * en el caller (OperatorSyncService.assertReadingOfflineInvariants); este
+   * tipo documenta el contrato esperado sin obligar a repetirlo en cada call
+   * site de tests de IndexedDB.
+   */
+  async savePendingReading(reading: ReadingSubmission): Promise<number> {
     const db = await this.initDb();
     const record: PendingRecord = {
-      estado: reading.estado || 'POR_REVISION',
+      estado: reading['estado'] || 'POR_REVISION',
       ...reading,
       syncState: 'PENDIENTE_SYNC',
       errorMessage: null,
@@ -453,7 +460,7 @@ export class IndexedDbService {
 
   // --- ANOMALIAS PENDIENTES ---
 
-  async savePendingAnomaly(anomaly: any): Promise<number> {
+  async savePendingAnomaly(anomaly: Record<string, unknown>): Promise<number> {
     const db = await this.initDb();
     const record: PendingRecord = {
       ...anomaly,
@@ -531,10 +538,10 @@ export class IndexedDbService {
 
   // --- ORDENES DE TRABAJO PENDIENTES ---
 
-  async savePendingWorkOrder(workOrder: any): Promise<number> {
+  async savePendingWorkOrder(workOrder: WorkOrderSubmission): Promise<number> {
     const db = await this.initDb();
     const record: PendingRecord = {
-      estado: workOrder.estado || 'COMPLETADA',
+      estado: workOrder['estado'] || 'COMPLETADA',
       ...workOrder,
       syncState: 'PENDIENTE_SYNC',
       errorMessage: null,
