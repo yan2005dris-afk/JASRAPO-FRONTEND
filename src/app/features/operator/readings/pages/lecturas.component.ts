@@ -1116,10 +1116,17 @@ export class LecturasComponent implements OnInit {
       // Fallback a almacenamiento local offline si falló la llamada remota por red para no perder los datos del operario
       if (formPayload.tipoActividad === 'LECTURA' && !isFatalError) {
         try {
+          const ordenTrabajoId = this.workOrderIdFor(meter, 'LECTURA');
+          if (!ordenTrabajoId) {
+            throw new Error(
+              'No se encontró la orden de trabajo asociada a esta lectura. Actualiza los datos del operador e intenta nuevamente.',
+            );
+          }
           await this.dbService.savePendingReading({
             fecha: new Date().toISOString(),
             medidorId: meter.medidorId.toString(),
             medidorSerie: meter.serie,
+            ordenTrabajoId,
             ...formPayload,
           });
           await this.syncService.refreshPendingCounts();
