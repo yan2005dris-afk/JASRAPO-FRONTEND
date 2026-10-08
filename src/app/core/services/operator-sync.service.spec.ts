@@ -292,6 +292,29 @@ describe('OperatorSyncService', () => {
       );
       expect(httpPost).not.toHaveBeenCalled();
     });
+
+    it('alinea el payload con el DTO post-#184: usa fechaLectura y omite lecturaInicial', async () => {
+      httpPatch.mockReturnValue(of({ ordenTrabajoId: 'wo-21', estado: 'COMPLETADA' }));
+
+      await service.submitReading({
+        ordenTrabajoId: 'wo-21',
+        _lecturaId: 21,
+        medidorId: 19,
+        fechaLectura: '2026-10-08T00:00:00.000Z',
+        lecturaAnterior: 100,
+        lecturaActual: 125,
+        descripcionAnomalia: 'vidrio sucio',
+      });
+
+      const [, formData] = httpPatch.mock.calls[0];
+      const fields = formDataToObject(formData as FormData);
+      expect(fields['fechaLectura']).toEqual(['2026-10-08T00:00:00.000Z']);
+      expect(fields['fecha']).toBeUndefined();
+      expect(fields['lecturaInicial']).toBeUndefined();
+      expect(fields['lecturaActual']).toEqual(['125']);
+      expect(fields['lecturaAnterior']).toEqual(['100']);
+      expect(fields['descripcionAnomalia']).toEqual(['vidrio sucio']);
+    });
   });
 
   it('prefiere Blob sobre cualquier valor legacy y lo sube como foto', async () => {
@@ -343,6 +366,50 @@ describe('OperatorSyncService', () => {
       const queued = savePendingReading.mock.calls[0][0];
       expect(queued.fotoBlob.type).toBe('image/jpeg');
       expect(queued.fotoBlob).not.toBe(heic);
+    });
+
+    it('preserva ordenTrabajoId cuando el backend falla con 5xx y la lectura cae a offline', async () => {
+      isOnline.mockReturnValue(true);
+      httpPatch.mockReturnValue(throwError(() => makeHttpError(500, 'server down')));
+
+      const result = await service.submitReading({
+        ordenTrabajoId: 'wo-99',
+        _lecturaId: 9,
+        medidorId: 19,
+        lecturaActual: '125',
+      });
+
+      expect(result).toEqual({ offline: true });
+      expect(savePendingReading).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ordenTrabajoId: 'wo-99',
+          _lecturaId: 9,
+          medidorId: 19,
+          lecturaActual: '125',
+        }),
+      );
+      expect(saveSyncedReading).not.toHaveBeenCalled();
+    });
+
+    it('preserva ordenTrabajoId cuando la red está caída y se enruta por offline explícito', async () => {
+      isOnline.mockReturnValue(false);
+
+      const result = await service.submitReading({
+        ordenTrabajoId: 'wo-77',
+        _lecturaId: 7,
+        medidorId: 17,
+        lecturaActual: '250',
+      });
+
+      expect(result).toEqual({ offline: true });
+      expect(savePendingReading).toHaveBeenCalledWith(
+        expect.objectContaining({
+          ordenTrabajoId: 'wo-77',
+          _lecturaId: 7,
+          medidorId: 17,
+          lecturaActual: '250',
+        }),
+      );
     });
   });
 

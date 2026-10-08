@@ -1069,7 +1069,7 @@ export class LecturasComponent implements OnInit {
         await this.syncService.submitReadingCoordinates(ordenTrabajoId);
         const lecturaPayload = {
           ordenTrabajoId,
-          fecha: new Date().toISOString(),
+          fechaLectura: new Date().toISOString(),
           medidorId: meter.medidorId.toString(),
           medidorSerie: meter.serie,
           lecturaAnterior: formPayload.lecturaAnterior,
@@ -1096,7 +1096,7 @@ export class LecturasComponent implements OnInit {
           ordenTrabajoId,
           ...formPayload,
           medidorId: meter.medidorId.toString(),
-          fecha: new Date().toISOString(),
+          fechaLectura: new Date().toISOString(),
         };
         const response = await this.syncService.submitWorkOrder(workOrderPayload);
         this.setSubmissionSuccess(response as { offline?: boolean });
@@ -1116,10 +1116,18 @@ export class LecturasComponent implements OnInit {
       // Fallback a almacenamiento local offline si falló la llamada remota por red para no perder los datos del operario
       if (formPayload.tipoActividad === 'LECTURA' && !isFatalError) {
         try {
+          const ordenTrabajoId = this.workOrderIdFor(meter, 'LECTURA');
+          if (!ordenTrabajoId) {
+            throw new Error(
+              'No se encontró la orden de trabajo asociada a esta lectura. Actualiza los datos del operador e intenta nuevamente.',
+              { cause: e },
+            );
+          }
           await this.dbService.savePendingReading({
-            fecha: new Date().toISOString(),
+            fechaLectura: new Date().toISOString(),
             medidorId: meter.medidorId.toString(),
             medidorSerie: meter.serie,
+            ordenTrabajoId,
             ...formPayload,
           });
           await this.syncService.refreshPendingCounts();
