@@ -830,8 +830,7 @@ describe('OperatorSyncService', () => {
 
       expect(updatePendingReading).toHaveBeenCalledWith(3, {
         syncState: 'RECHAZADA',
-        errorMessage:
-          'Lectura rechazada: falta la orden de trabajo asociada (ordenTrabajoId).',
+        errorMessage: 'Lectura rechazada: falta la orden de trabajo asociada (ordenTrabajoId).',
       });
       expect(httpPost).not.toHaveBeenCalled();
       expect(httpPatch).not.toHaveBeenCalled();
