@@ -17,6 +17,7 @@ describe('LecturasComponent State Machine', () => {
   let submitReading: ReturnType<typeof vi.fn>;
   let submitReadingCoordinates: ReturnType<typeof vi.fn>;
   let submitWorkOrder: ReturnType<typeof vi.fn>;
+  let savePendingReading: ReturnType<typeof vi.fn>;
   const mockMeter: IMeterDto = {
     medidorId: 101,
     serie: 'SER-101',
@@ -32,6 +33,7 @@ describe('LecturasComponent State Machine', () => {
     submitReading = vi.fn().mockResolvedValue({ lecturaId: 'lec-1' });
     submitReadingCoordinates = vi.fn().mockResolvedValue({ id: 'wo-reading' });
     submitWorkOrder = vi.fn().mockResolvedValue({ id: 'wo-1' });
+    savePendingReading = vi.fn().mockResolvedValue(1);
     TestBed.configureTestingModule({
       imports: [LecturasComponent],
       providers: [
@@ -62,7 +64,7 @@ describe('LecturasComponent State Machine', () => {
             getRegisteredReadingsCache: vi.fn().mockResolvedValue([]),
             getPendingReadings: vi.fn().mockResolvedValue([]),
             getSyncedReadings: vi.fn().mockResolvedValue([]),
-            savePendingReading: vi.fn().mockResolvedValue(1),
+            savePendingReading,
             getAssignedWorkOrders: vi.fn().mockResolvedValue([]),
             saveMetersCache: vi.fn().mockResolvedValue(undefined),
             saveRegisteredReadingsCache: vi.fn().mockResolvedValue(undefined),
@@ -330,6 +332,37 @@ describe('LecturasComponent State Machine', () => {
         kind: 'error',
         message: expect.stringContaining('Activa el GPS'),
       }),
+    );
+  });
+
+  it('preserves ordenTrabajoId when the LECTURA submission falls into the offline fallback', async () => {
+    component.ngOnInit();
+    component.registeredReadings.set([
+      { lecturaId: 'lec-1', medidorId: mockMeter.medidorId, estado: 'PENDIENTE' },
+    ]);
+    component.selectMeter(mockMeter);
+    submitReading.mockRejectedValueOnce(
+      new Error('Error de conexión con el servidor.'),
+    );
+
+    await component.onWorkOrderSubmit({
+      tipoActividad: 'LECTURA',
+      lecturaAnterior: 100,
+      lecturaActual: 125,
+      fotoBlob: new Blob(['photo'], { type: 'image/jpeg' }),
+    });
+
+    expect(savePendingReading).toHaveBeenCalledWith(
+      expect.objectContaining({
+        ordenTrabajoId: 'wo-reading',
+        medidorId: mockMeter.medidorId.toString(),
+        medidorSerie: mockMeter.serie,
+        lecturaActual: 125,
+        lecturaAnterior: 100,
+      }),
+    );
+    expect(component.submissionFeedback()).toEqual(
+      expect.objectContaining({ kind: 'queued' }),
     );
   });
 
