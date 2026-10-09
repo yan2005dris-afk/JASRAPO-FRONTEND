@@ -428,6 +428,7 @@
                     type="checkbox"
                     class="form-check-input condition-switch"
                     formControlName="aplicaDiscapacidad"
+                    (change)="updateDisabilityValidators()"
                   />
                 </div>
               </div>
@@ -439,6 +440,34 @@
                 }
               </p>
             </label>
+
+            @if (clienteForm.get('aplicaDiscapacidad')?.value) {
+              <div>
+                <label for="porcentajeDiscapacidad" class="form-label">
+                  Porcentaje del carné de discapacidad
+                </label>
+                <div class="input-group">
+                  <input
+                    id="porcentajeDiscapacidad"
+                    type="number"
+                    class="form-control shadow-none"
+                    [class.is-invalid]="campoInvalido('porcentajeDiscapacidad')"
+                    formControlName="porcentajeDiscapacidad"
+                    placeholder="Ej. 50"
+                    min="1"
+                    max="100"
+                    step="0.01"
+                    inputmode="decimal"
+                  />
+                  <span class="input-group-text bg-white text-muted">%</span>
+                </div>
+                @if (campoInvalido('porcentajeDiscapacidad')) {
+                  <div class="invalid-feedback d-block">
+                    {{ obtenerErrorCampo('porcentajeDiscapacidad') }}
+                  </div>
+                }
+              </div>
+            }
           </div>
         </div>
       </div>

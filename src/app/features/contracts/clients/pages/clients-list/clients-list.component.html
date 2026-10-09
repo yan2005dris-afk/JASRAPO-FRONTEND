@@ -419,7 +419,12 @@
                   }
 
                   @if (detalle.aplicaDiscapacidad) {
-                    <span class="badge rounded-pill text-bg-warning">Discapacidad</span>
+                    <span class="badge rounded-pill text-bg-warning">
+                      Discapacidad
+                      @if (detalle.porcentajeDiscapacidad) {
+                        {{ detalle.porcentajeDiscapacidad }}%
+                      }
+                    </span>
                   }
 
                   @if (!detalle.aplicaTerceraEdad && !detalle.aplicaDiscapacidad) {

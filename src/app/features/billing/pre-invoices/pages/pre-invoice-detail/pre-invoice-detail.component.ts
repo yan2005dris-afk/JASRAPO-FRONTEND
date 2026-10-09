@@ -62,6 +62,12 @@ export class PreInvoiceDetailComponent implements OnInit {
     this.loadPreInvoiceDetail();
   }
 
+  get otherDiscounts(): number {
+    if (!this.preInvoice) return 0;
+    const total = this.preInvoice.descuentoTotal - (this.preInvoice.subsidioLey ?? 0);
+    return Math.round(total * 100) / 100;
+  }
+
   loadPreInvoiceDetail(): void {
     this.isLoading = true;
     this.cdr.markForCheck();

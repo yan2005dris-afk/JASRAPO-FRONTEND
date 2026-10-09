@@ -32,6 +32,7 @@ export interface IPreInvoice {
   subtotal: number;
   iva: number;
   descuentoTotal: number;
+  subsidioLey?: number;
   totalPagar: number;
   deudaAnterior?: number;
   saldoVencido?: number;

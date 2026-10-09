@@ -34,6 +34,7 @@ export interface IClient {
   fechaNacimiento?: string;
   aplicaTerceraEdad?: boolean;
   aplicaDiscapacidad?: boolean;
+  porcentajeDiscapacidad?: number | null;
 
   direccionDomicilio: string;
 
@@ -55,6 +56,7 @@ export interface CreateClientRequest {
 
   fechaNacimiento?: string;
   aplicaDiscapacidad: boolean;
+  porcentajeDiscapacidad?: number;
 
   direccionDomicilio: string;
 }
@@ -74,6 +76,7 @@ export interface UpdateClientRequest {
 
   fechaNacimiento?: string;
   aplicaDiscapacidad?: boolean;
+  porcentajeDiscapacidad?: number;
 
   direccionDomicilio?: string;
 

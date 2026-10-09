@@ -143,6 +143,7 @@ export class ClientsFormComponent implements OnInit {
 
     fechaNacimiento: [''],
     aplicaDiscapacidad: [false],
+    porcentajeDiscapacidad: [null as number | null],
 
     direccionDomicilio: [
       '',
@@ -268,9 +269,11 @@ export class ClientsFormComponent implements OnInit {
 
       fechaNacimiento: cliente.fechaNacimiento ?? '',
       aplicaDiscapacidad: cliente.aplicaDiscapacidad ?? false,
+      porcentajeDiscapacidad: cliente.porcentajeDiscapacidad ?? null,
 
       direccionDomicilio: cliente.direccionDomicilio ?? '',
     });
+    this.updateDisabilityValidators();
   }
 
   obtenerTipoIdentificacionIdParaFormulario(cliente: IClient): string {
@@ -406,6 +409,19 @@ export class ClientsFormComponent implements OnInit {
     apellidos?.updateValueAndValidity({ emitEvent: false });
     razonSocial?.updateValueAndValidity({ emitEvent: false });
     identificacion?.updateValueAndValidity({ emitEvent: false });
+  }
+
+  updateDisabilityValidators(): void {
+    const percentage = this.clienteForm.get('porcentajeDiscapacidad');
+
+    if (this.clienteForm.get('aplicaDiscapacidad')?.value) {
+      percentage?.setValidators([Validators.required, Validators.min(1), Validators.max(100)]);
+    } else {
+      percentage?.clearValidators();
+      percentage?.setValue(null, { emitEvent: false });
+    }
+
+    percentage?.updateValueAndValidity({ emitEvent: false });
   }
 
   esConsumidorFinal(): boolean {
@@ -647,6 +663,10 @@ export class ClientsFormComponent implements OnInit {
       cliente.fechaNacimiento = fechaNacimiento;
     }
 
+    if (cliente.aplicaDiscapacidad && formValue.porcentajeDiscapacidad !== null) {
+      cliente.porcentajeDiscapacidad = Number(formValue.porcentajeDiscapacidad);
+    }
+
     if (this.esPersonaJuridica()) {
       cliente.nombres = undefined;
       cliente.apellidos = undefined;
@@ -695,6 +715,8 @@ export class ClientsFormComponent implements OnInit {
           return 'El teléfono es obligatorio.';
         case 'tipoIdentificacionId':
           return 'El tipo de identificación es obligatorio.';
+        case 'porcentajeDiscapacidad':
+          return 'El porcentaje del carné de discapacidad es obligatorio.';
         default:
           return 'Este campo es obligatorio.';
       }
@@ -731,6 +753,10 @@ export class ClientsFormComponent implements OnInit {
     if (control.hasError('minlength')) {
       const min = control.errors['minlength']?.requiredLength;
       return `Debe tener al menos ${min} caracteres.`;
+    }
+
+    if (control.hasError('min') || control.hasError('max')) {
+      return 'El porcentaje debe estar entre 1 y 100.';
     }
 
     return 'Campo no válido.';
